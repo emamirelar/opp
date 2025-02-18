@@ -1,0 +1,105 @@
+{
+    "title": {
+        "countries": "Países",
+        "currency": "Moneda",
+        "details": "Detalles",
+        "docUpload": "Carga de Documento",
+        "doc": "Documento",
+        "docs": "Documentos",
+        "external": {
+            "myProposals": "Mis Propuestas"
+        },
+        "fundingOpportunity": "Oportunidad de Financiamiento",
+        "fundingOpportunities": "Oportunidades de Financiamiento",
+        "newFundingOpportunity": "Nueva Oportunidad de Financiación",
+        "home": "Inicio",
+        "proposals": "Propuestas",
+        "proposal": "Propuesta",
+        "stage": "Etapa",
+        "what": "Qué",
+        "how": "Cómo",
+        "where": "Dónde",
+        "when": "Cuándo",
+        "who": "Quién",
+        "why": "Por qué"
+    },
+    "button": {
+        "cancel": "Cancelar",
+        "close": "Cerrar",
+        "darkMode": "Modo Oscuro",
+        "language": "Idioma",
+        "lightMode": "Modo Claro",
+        "logout": "Cerrar Sesión",
+        "openRecordDetails": "Abrir Detalles del Registro",
+        "profile": "Perfil",
+        "viewProposal": "Ver Propuesta",
+        "save": "Guardar",
+        "submitProposal": "Enviar Propuesta",
+        "upload": "Subir"
+    },
+    "label": {
+        "actions": "Acciones",
+        "audit": {
+            "createdBy": "Creado Por",
+            "createdDate": "Fecha de Creación",
+            "lastModifiedBy": "Última Modificación Por",
+            "lastModifiedDate": "Fecha de Última Modificación"
+        },
+        "clarificationDeadline": "Fecha Límite de Aclaración",
+        "document": {
+            "dragDropMessage": "Arrastra y suelta archivos aquí para subir.",
+            "linked": "Está Vinculado",
+            "name": "Nombre del Documento"
+        },
+        "decisionDate": "Fecha de Decisión",
+        "description": "Descripción",
+        "eligibilityCriteria": "Criterios de Elegibilidad",
+        "eligibleEntities": "Entidades Elegibles",
+        "fundingOpportunity": {
+            "applicationType": "Tipo de Aplicación",
+            "availableFunding": "Financiamiento Disponible",
+            "currency": "Moneda",
+            "dateFrom": "Fecha de Inicio",
+            "dateTo": "Fecha de Finalización",
+            "description": "Descripción",
+            "name": "Nombre",
+            "submissionDueDate": "Fecha Límite de Presentación",
+            "project": "Proyecto"
+        },
+        "informationSession": "Sesión Informativa",
+        "justification": "Justificación",
+        "linkDriveFile": "Vincular Archivo de Drive",
+        "linkFromDrive": "Vincular documentos desde Drive.",
+        "name": "Nombre",
+        "no": "No",
+        "postedDate": "Fecha de Publicación",
+        "proposal": {
+            "applicantId": "ID del Solicitante",
+            "applicantName": "Nombre del Solicitante",
+            "id": "ID de la Propuesta",
+            "initiateProposal": "Iniciar Propuesta",
+            "fundingOpportunityName": "Nombre de la Oportunidad de Financiamiento",
+            "fundingOpportunitySubmissionDueDate": "Fecha Límite de la Oportunidad de Financiamiento",
+            "eligibilityCriteriaMet": "Criterios de Elegibilidad Cumplidos",
+            "eligibilityEntityMet": "Entidad Elegible Cumplida",
+            "meetEligibleEntities": "Cumplir con entidades elegibles",
+            "meetEligibleCriteria": "Cumplir con criterios de elegibilidad",
+            "proposalDetails": "Detalles de la Propuesta",
+            "submissionDate": "Fecha de Presentación"
+        },
+        "sdgs": "ODS",
+        "selectEligibleEntities": "Seleccionar Entidades Elegibles",
+        "selectFromDrive": "Seleccionar desde Drive",
+        "selectionMethodology": "Metodología de Selección",
+        "stage": "Etapa",
+        "status": "Estado",
+        "yes": "Sí"
+    },
+    "message": {
+        "entityMeetEligibleEntitiesRequired": "'Cumplir con entidades elegibles' requerido",
+        "entityMeetEligibleCriteriaRequired": "'Cumplir con criterios de elegibilidad' requerido",
+        "noRecordsFound": "No se encontraron registros.",
+        "proposalRequirements": "La propuesta no puede enviarse hasta que se completen todos los campos obligatorios.",
+        "welcomeTitle": "Bienvenido a Grant+"
+    }
+}

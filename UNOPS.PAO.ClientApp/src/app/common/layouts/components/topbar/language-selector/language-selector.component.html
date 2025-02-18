@@ -1,0 +1,12 @@
+<p-menu #menu
+	[model]="languageItems"
+	[popup]="true"></p-menu>
+<button (click)="menu.toggle($event)"
+	type="button"
+	aria-label="Language Selector"
+	class="layout-topbar-action p-button-text">
+	<i class="pi pi-globe"></i>
+	<span>{{ "button.language" | translate }}</span>
+</button>
+
+

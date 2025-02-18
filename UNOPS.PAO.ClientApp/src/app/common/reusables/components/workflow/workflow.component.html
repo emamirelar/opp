@@ -1,0 +1,15 @@
+<!-- TODO: JW - it seems that the documentation for Aria / Split Button is incorrect. [buttonProps]="{'aria-label': 'Workflow Selector'}" [menuButtonProps]="{'aria-label': 'Options'}" -->
+<p-splitbutton [label]="primaryeStageLabel" (onClick)="_handleOnPrimaryStageClick()" [disabled]="disabled" [model]="items" severity="secondary"/>
+
+<!-- Comment dialog -->
+<p-dialog header="Reason" [modal]="true" [(visible)]="showCommentDialog" styleClass="comemnt-dialog">
+  <div class="flex flex-col w-full h-full">
+    <div class="flex items-center grow">
+      <textarea rows="5" cols="30" pTextarea #comment [autoResize]="false" [fluid]="true" styleClass="comment"></textarea>
+    </div>
+    <div class="flex justify-end gap-2 mt-5">
+        <p-button label="Cancel" severity="secondary" (click)="showCommentDialog = false" styleClass="dialog-button"/>
+        <p-button label="Save" (click)="handleOnCommentSave(comment.value)" styleClass="dialog-button"/>
+    </div>
+  </div>
+</p-dialog>

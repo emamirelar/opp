@@ -1,0 +1,105 @@
+{
+    "title": {
+        "countries": "Países",
+        "currency": "Moeda",
+        "details": "Detalhes",
+        "docUpload": "Envio de Documento",
+        "doc": "Documento",
+        "docs": "Documentos",
+        "external": {
+            "myProposals": "Minhas Propostas"
+        },
+        "fundingOpportunity": "Oportunidade de Financiamento",
+        "fundingOpportunities": "Oportunidades de Financiamento",
+        "newFundingOpportunity": "Nova Oportunidade de Financiamento",
+        "home": "Início",
+        "proposals": "Propostas",
+        "proposal": "Proposta",
+        "stage": "Etapa",
+        "what": "O quê",
+        "how": "Como",
+        "where": "Onde",
+        "when": "Quando",
+        "who": "Quem",
+        "why": "Por quê"
+    },
+    "button": {
+        "cancel": "Cancelar",
+        "close": "Fechar",
+        "darkMode": "Modo Escuro",
+        "language": "Idioma",
+        "lightMode": "Modo Claro",
+        "logout": "Sair",
+        "openRecordDetails": "Abrir Detalhes do Registro",
+        "profile": "Perfil",
+        "viewProposal": "Ver Proposta",
+        "save": "Salvar",
+        "submitProposal": "Enviar Proposta",
+        "upload": "Enviar"
+    },
+    "label": {
+        "actions": "Ações",
+        "audit": {
+            "createdBy": "Criado Por",
+            "createdDate": "Data de Criação",
+            "lastModifiedBy": "Última Modificação Por",
+            "lastModifiedDate": "Data da Última Modificação"
+        },
+        "clarificationDeadline": "Prazo para Esclarecimento",
+        "document": {
+            "dragDropMessage": "Arraste e solte arquivos aqui para enviar.",
+            "linked": "Está Vinculado",
+            "name": "Nome do Documento"
+        },
+        "decisionDate": "Data da Decisão",
+        "description": "Descrição",
+        "eligibilityCriteria": "Critérios de Elegibilidade",
+        "eligibleEntities": "Entidades Elegíveis",
+        "fundingOpportunity": {
+            "applicationType": "Tipo de Aplicação",
+            "availableFunding": "Financiamento Disponível",
+            "currency": "Moeda",
+            "dateFrom": "Data de Início",
+            "dateTo": "Data de Término",
+            "description": "Descrição",
+            "name": "Nome",
+            "submissionDueDate": "Prazo de Envio",
+            "project": "Projeto"
+        },
+        "informationSession": "Sessão de Informação",
+        "justification": "Justificativa",
+        "linkDriveFile": "Vincular Arquivo do Drive",
+        "linkFromDrive": "Vincular documentos do Drive.",
+        "name": "Nome",
+        "no": "Não",
+        "postedDate": "Data de Publicação",
+        "proposal": {
+            "applicantId": "ID do Candidato",
+            "applicantName": "Nome do Candidato",
+            "id": "ID da Proposta",
+            "initiateProposal": "Iniciar Proposta",
+            "fundingOpportunityName": "Nome da Oportunidade de Financiamento",
+            "fundingOpportunitySubmissionDueDate": "Prazo da Oportunidade de Financiamento",
+            "eligibilityCriteriaMet": "Critérios de Elegibilidade Atendidos",
+            "eligibilityEntityMet": "Entidade Elegível Atendida",
+            "meetEligibleEntities": "Atender entidades elegíveis",
+            "meetEligibleCriteria": "Atender critérios de elegibilidade",
+            "proposalDetails": "Detalhes da Proposta",
+            "submissionDate": "Data de Envio"
+        },
+        "sdgs": "ODS",
+        "selectEligibleEntities": "Selecionar Entidades Elegíveis",
+        "selectFromDrive": "Selecionar do Drive",
+        "selectionMethodology": "Metodologia de Seleção",
+        "stage": "Etapa",
+        "status": "Status",
+        "yes": "Sim"
+    },
+    "message": {
+        "entityMeetEligibleEntitiesRequired": "'Atender entidades elegíveis' obrigatório",
+        "entityMeetEligibleCriteriaRequired": "'Atender critérios de elegibilidade' obrigatório",
+        "noRecordsFound": "Nenhum registro encontrado.",
+        "proposalRequirements": "A proposta não pode ser enviada até que todos os campos obrigatórios sejam preenchidos.",
+        "welcomeTitle": "Bem-vindo ao Grant+"
+    }
+}

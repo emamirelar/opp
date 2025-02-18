@@ -1,0 +1,5 @@
+<p-toast></p-toast>
+<p-dialog [(visible)]="visible" [header]="dialogConfig?.summary || 'Error'" [closable]="true" [modal]="true"
+    [draggable]="false" [resizable]="false" [style]="{ width: '30vw' }" (onHide)="onDialogClose()">
+    <p>{{ dialogConfig?.detail }}</p>
+</p-dialog>

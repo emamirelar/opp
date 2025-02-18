@@ -1,0 +1,40 @@
+.main-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--surface-ground);
+}
+
+.login-container {
+    background-color: var(--surface-card);
+    padding: 2rem;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: var(--card-shadow);
+}
+
+.brand-header {
+    font-size: 1.5rem;
+    color: var(--text-color);
+}
+
+.username-password-container {
+    margin-top: 2rem;
+}
+
+:host ::ng-deep {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    
+    .p-password {
+        width: 100%;
+    }
+    
+    .p-password-input {
+        width: 100%;
+    }
+}

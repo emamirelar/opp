@@ -1,0 +1,39 @@
+using UNOPS.PAO.Domain.Entities;
+
+namespace UNOPS.PAO.Domain.Infrastructure;
+
+public class ModifiableDeletableEntity<TId, TUserId>: IModifiableEntity<TId, TUserId>, IDeletableEntity<TUserId>, IBaseBusinessEntity<TId>
+{
+    public TId Id { get; set; }
+    public string Name { get; set; }
+    public EntityStatus Status { get; set; }
+    public TUserId CreatedBy { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public TUserId? LastModifiedBy { get; set; }
+    public DateTime? LastModifiedDate { get; set; }
+    public void SetCreateAuditData(TUserId userId)
+    {
+        CreatedDate = DateTime.UtcNow.ToUniversalTime();
+        CreatedBy = userId;
+    }
+
+    public void SetUpdateAuditData(TUserId userId)
+    {
+        LastModifiedDate = DateTime.UtcNow.ToUniversalTime();
+        LastModifiedBy = userId;
+    }
+
+    public bool IsDeleted { get; set; }
+    public TUserId? DeletedBy { get; set; }
+    public DateTime? DeletedDate { get; set; }
+    public void SetDeleteAuditData(TUserId deletedBy)
+    {
+        IsDeleted = true;
+        DeletedDate = DateTime.UtcNow.ToUniversalTime();
+        DeletedBy = deletedBy;
+    }
+}
+
+public class ModifiableDeletableEntity : ModifiableDeletableEntity<int, int>
+{
+}

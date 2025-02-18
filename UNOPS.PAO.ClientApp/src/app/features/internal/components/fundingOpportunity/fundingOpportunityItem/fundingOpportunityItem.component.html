@@ -1,0 +1,244 @@
+<p-blockui [blocked]="fundingOpportunityService.isLoading() || workflowService.isLoading()" />
+
+<div class="content-wrapper">
+  <form class="content-container" [formGroup]="formGroup" #mainForm>
+
+    <div class="flex items-center p-4 flex-wrap">
+    <div class="flex-none">
+      <div class="header-container">
+        <span class="material-symbols-outlined entity-icon">money_bag</span>
+        <div class="header-text-container">
+          <h5 class="m-0"> {{recordData().name || ''}} </h5>
+          <div class="sub-header"> {{'title.fundingOpportunity' | translate}} </div>
+        </div>
+      </div>
+    </div>
+    <div class="grow"></div>
+    <div class="flex-none">
+      <app-workflow [entityName]="'funding-opportunity'" [entityId]="recordId" (stageChangeSuccess)="handleOnStageChange($event)"></app-workflow>
+      <p-button label="{{'button.viewProposal' | translate}}" class="ml-2" (onClick)="_handleOnViewProposals()"/>
+    </div>
+  </div>
+
+
+  <p-panel header="{{'title.stage' | translate}}" styleClass="section">
+
+    <p-steps [activeIndex]="currentStageIndex" [model]="stages()" [readonly]="true" />
+
+  </p-panel>
+
+    <p-panel header="{{'title.details' | translate}}" [styleClass]="'section'">
+
+      <div class="field-container">
+        <p-floatlabel variant="on">
+          <input pInputText fluid="true" formControlName="name" id="name" />
+          <label for="name">{{'label.name' | translate}}</label>
+        </p-floatlabel>
+
+        <p-floatlabel variant="on">
+          <textarea rows="5" cols="30" pTextarea fluid="true" formControlName="description" id="description"></textarea>
+          <label for="description">{{'label.description' | translate}}</label>
+        </p-floatlabel>
+      </div>
+
+    </p-panel>
+
+    
+    <p-panel header="{{'title.why' | translate}}" [styleClass]="'section'">
+
+      <div class="field-container">
+        <p-floatlabel variant="on">
+          <p-multiselect formControlName="sdGs" [options]="allSDGs()" optionLabel="description" display="chip"
+            fluid="true" [maxSelectedLabels]=100000 id="SDGs" ariaLabel="SDGs">
+            <ng-template let-sdg #item>
+              <div class="flex items-center gap-2">
+                <img src={{sdg.logo}} class="h-[36px] w-[36px]" />
+                <span>{{ sdg.description }}</span>
+              </div>
+            </ng-template>
+          </p-multiselect>
+          <label for="SDGs">{{'label.sdgs' | translate}}</label>
+        </p-floatlabel>
+      </div>
+
+    </p-panel>
+
+    
+    <p-panel header="{{'title.who' | translate}}" [styleClass]="'section'">
+
+      <div class="field-container">
+        <p-floatlabel variant="on">
+          <p-multiselect formControlName="eligibleEntities" [options]="allEligibleEntities()" optionLabel="name"
+            display="chip" fluid="true" [maxSelectedLabels]=100000 id="eligibleEntities"
+            ariaLabel="Eligible Entities" />
+          <label for="eligibleEntities">{{'label.eligibleEntities' | translate}}</label>
+        </p-floatlabel>
+
+        <p-floatlabel variant="on">
+          <textarea rows="5" cols="30" pTextarea fluid="true" formControlName="eligibilityCriteria"
+            id="eligibilityCriteria"></textarea>
+          <label for="eligibilityCriteria">{{'label.eligibilityCriteria' | translate}}</label>
+        </p-floatlabel>
+      </div>
+
+    </p-panel>
+
+
+    <p-panel header="{{'title.what' | translate}}" [styleClass]="'section'">
+
+      <div class="field-container">
+        <div class="row-container">
+          <div class="row-item">
+            <p-floatlabel variant="on">
+              <p-select formControlName="currency" [options]="allCurrencies()" optionLabel="name" fluid="true"
+                id="currency" ariaLabel="Currency" />
+              <label for="currency">{{ 'title.currency' | translate }}</label>
+            </p-floatlabel>
+          </div>
+
+          <div class="row-item">
+            <p-floatlabel variant="on">
+              <p-inputnumber formControlName="fundingAvailable" mode="decimal" [minFractionDigits]="2"
+                [maxFractionDigits]="2" fluid="true" inputId="fundingAvailable" />
+              <label for="fundingAvailable">{{ 'label.fundingOpportunity.availableFunding' | translate }}</label>
+            </p-floatlabel>
+          </div>
+        </div>
+
+        <div>
+          <p-floatlabel variant="on">
+            <p-select formControlName="selectionMethodology" [options]="allSelectionMethodologies()" optionLabel="name"
+              fluid="true" id="selectionMethodology" ariaLabel="Selection Methodology" />
+            <label for="selectionMethodology">{{ 'label.selectionMethodology' | translate }}</label>
+          </p-floatlabel>
+        </div>
+
+        <div>
+          <p-floatlabel variant="on">
+            <textarea rows="5" cols="30" pTextarea fluid="true" formControlName="justification"
+              id="justification"></textarea>
+            <label for="justification">{{ 'label.justification' | translate }}</label>
+          </p-floatlabel>
+        </div>
+
+        <div>
+          <p-floatlabel variant="on">
+            <p-select formControlName="applicationType" [options]="allApplicationTypes()" optionLabel="displayName"
+              fluid="true" id="applicationType" ariaLabel="Application Type" />
+            <label for="applicationType">{{ 'label.fundingOpportunity.applicationType' | translate }}</label>
+          </p-floatlabel>
+        </div>
+
+        <div>
+          <p-floatlabel variant="on">
+            <p-select formControlName="project" [options]="allProjects()" optionLabel="name" fluid="true"
+              [virtualScroll]="true" [virtualScrollItemSize]="50" id="project" ariaLabel="Project" />
+            <label for="project">{{'label.fundingOpportunity.project' | translate}}</label>
+          </p-floatlabel>
+        </div>
+      </div>
+
+    </p-panel>
+
+
+    <p-panel header="{{'title.where' | translate}}" [styleClass]="'section'">
+
+      <div class="field-container">
+        <p-floatlabel variant="on">
+          <p-multiselect formControlName="countries" [options]="allCountries()" optionLabel="name" display="chip"
+            fluid="true" [maxSelectedLabels]=100000 id="countries" ariaLabel="Countries" />
+          <label for="countries">{{ 'title.countries' | translate }}</label>
+        </p-floatlabel>
+      </div>
+
+    </p-panel>
+
+
+    <p-panel header="{{'title.when' | translate}}" [styleClass]="'section'">
+      <div class="field-container">
+        <div class="row-container">
+          <div class="row-item">{{ 'label.postedDate' | translate }} : {{ ( recordData().postingDate | date : 'medium' ) || ''}}</div>
+        </div>
+        <div class="row-container">
+          <div class="row-item">
+            <p-floatlabel variant="on">
+              <p-datepicker formControlName="submissionDueDate" [showTime]="true" [showIcon]="true"
+                [iconDisplay]="'input'" fluid="true" [minDate]="minSubmissionDate" inputId="submissionDueDate" />
+              <label for="submissionDueDate">{{ 'label.fundingOpportunity.submissionDueDate' | translate }}</label>
+            </p-floatlabel>
+          </div>
+          <div class="row-item">
+            <p-floatlabel variant="on">
+              <p-datepicker formControlName="clarificationDeadline" [showTime]="true" [showIcon]="true"
+                [iconDisplay]="'input'" fluid="true" inputId="clarificationDeadline" />
+              <label for="clarificationDeadline">{{ 'label.clarificationDeadline' | translate }}</label>
+            </p-floatlabel>
+          </div>
+        </div>
+        <div class="row-container">
+          <div class="row-item">
+            <p-floatlabel variant="on">
+              <p-datepicker formControlName="informationSessionDate" [showTime]="true" [showIcon]="true"
+                [iconDisplay]="'input'" fluid="true" inputId="informationSessionDate" />
+              <label for="informationSessionDate">{{ 'label.informationSession' | translate }}</label>
+            </p-floatlabel>
+          </div>
+          <div class="row-item">
+            <p-floatlabel variant="on">
+              <p-datepicker formControlName="decisionDate" [showTime]="true" [showIcon]="true" [iconDisplay]="'input'"
+                fluid="true" inputId="decisionDate" />
+              <label for="decisionDate">{{ 'label.decisionDate' | translate }}</label>
+            </p-floatlabel>
+          </div>
+        </div>
+      </div>
+    </p-panel>
+
+
+    <p-panel header="{{ 'title.docUpload' | translate}}" [styleClass]="'section'">
+      <div class="field-container">
+        <app-document-upload
+          [accept]="'image/*,application/pdf'"
+          [maxFileSize]="2000000" [multiple]="false"
+          (fileUploaded)="onFileUploaded($event)"
+          (fileSelected)="onFileSelected($event)"
+          (fileRemoved)="onFileRemoved($event)"
+          (filesCleared)="onFilesCleared()">
+        </app-document-upload>
+
+        <app-drive-document-upload
+          [accept]="'image/*,application/pdf'"
+          [maxFileSize]="2000000"
+          [multiple]="false"
+          (fileUploaded)="onDriveFileUploaded($event)">
+        </app-drive-document-upload>
+      </div>
+    </p-panel>
+  
+    <p-panel header="{{'title.docs' | translate}}" [toggleable]="true">
+      <div class="grid gap-6" >
+        <app-document-list [documents]="recordData().documents"></app-document-list>
+      </div>
+    </p-panel>
+
+    <div class="footer-container">
+      <p-button label="{{'button.cancel' | translate}}" severity="secondary" [styleClass]="'cancel-button'"
+        (onClick)="handleOnCancelClick($event)" />
+      <p-button label="{{'button.save' | translate}}" severity="primary" [styleClass]="'save-button'" (onClick)="handleOnSaveClick($event)" />
+    </div>
+
+  </form>
+</div>
+
+
+@defer (when showCommentDialog) {
+  <!-- Comment dialog -->
+  <p-dialog header="{{ 'title.proposals' | translate }}" [modal]="true" [(visible)]="showCommentDialog" [styleClass]="'proposal-dialog'" [maximizable]="true" (onHide)="_handleOnViewProposalDaialogClose()">
+
+    <app-fundingOpportunityProposal [fundingOpportunityId]="recordId" [fundingOpportunityName]="recordData().name || ''"></app-fundingOpportunityProposal>
+
+    <ng-template #footer>
+      <p-button label="{{'button.close' | translate}}" severity="secondary" (click)="showCommentDialog = false" styleClass="dialog-button"/>
+    </ng-template>
+  </p-dialog>
+}

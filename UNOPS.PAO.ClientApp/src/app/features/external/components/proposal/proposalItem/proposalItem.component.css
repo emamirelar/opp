@@ -1,0 +1,67 @@
+.main-container {
+  height: 99.5vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-container {
+  border-radius: 6px;
+  display: flex;
+  align-items: top; 
+  padding-bottom: 10px;
+}
+
+:host ::ng-deep .error-panel {
+  background:   var(--p-red-50);
+  outline-color: var(--p-red-200);
+  color: var(--p-red-600);
+  box-shadow: 0px 4px 8px 0px
+    color-mix(in srgb, var(--p-red-500), transparent 96%);
+  border-radius: var(--p-content-border-radius);
+  outline-width: 1px;
+  outline-style: solid;
+}
+
+:host ::ng-deep .error-panel .p-panel-header-actions,
+:host ::ng-deep .error-panel .p-panel-header,
+:host ::ng-deep .error-panel .p-panel-title,
+:host ::ng-deep .error-panel .p-panel-content-container,
+:host ::ng-deep .error-panel .p-panel-toggle-button,
+:host ::ng-deep .error-panel .p-panel-icons .p-button,
+:host ::ng-deep .error-panel .p-panel-content {
+  background: var(--p-red-50);
+  color: var(--p-red-600);
+}
+
+.field-container {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.footer-container {
+  padding: 10px 0px 5px 0px;
+  border-radius: 6px;
+}
+
+.entity-icon {
+  font-size: 2.6rem;
+  margin-right: 5px;
+}
+
+.sub-header {
+  font-size: 13px;
+  margin-top: -3px;
+}
+
+:host ::ng-deep .section {
+  margin-bottom: 15px;
+}
+
+:host ::ng-deep .cancel-button {
+  margin-right: 25px;
+  width: 100px;
+}
+
+:host ::ng-deep .button {
+  width: 100px;
+}

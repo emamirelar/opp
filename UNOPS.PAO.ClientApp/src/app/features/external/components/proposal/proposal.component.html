@@ -1,0 +1,67 @@
+<div class="main-container">
+  <h3> {{ 'title.external.myProposals' | translate}} </h3>
+
+  <div class="grid" #cardContainer>
+
+    @if( ( isDataLoading() == false ) && ( proposalData() == undefined || proposalData().length <= 0 ) )
+    {<!-- Here means, no record found. -->
+      <p-table [value]="proposalData()"
+        [resizableColumns]="true"
+        styleClass="p-datatable-gridlines">
+          <ng-template #header>
+              <tr>
+                <th class="w-6"></th>
+                @for( column of columns(); track column.id )
+                {
+                  <th pResizableColumn pSortableColumn={{column.id}}>
+                    {{ column.label | translate }}
+                    <p-sortIcon field={{column.id}} />
+                  </th>
+                }
+              </tr>
+          </ng-template>
+      </p-table>
+      <div class="place-holder center-align">
+        <h5> {{'message.noRecordsFound' | translate }} </h5>
+      </div>
+    }
+    @else{
+      <p-table [value]="proposalData()"
+        stripedRows
+        [loading] = isDataLoading()
+        [resizableColumns]="true"
+        styleClass="p-datatable-gridlines"
+        [scrollable]="true"
+        scrollHeight="flex">
+          <ng-template #header>
+              <tr>
+                <th class="w-6"></th>
+                @for( column of columns(); track column.id )
+                {
+                  <th pResizableColumn pSortableColumn={{column.id}}>
+                    {{ column.label | translate }}
+                    <p-sortIcon field={{column.id}} />
+                  </th>
+                }
+              </tr>
+          </ng-template>
+
+          <ng-template #body let-proposal>
+            <tr>
+                <td>
+                  <p-button icon="pi pi-file-edit" (click)="handleOnOpenRecordDetails(proposal)" title="Open Record Details" rounded />
+                </td>
+                <td>{{ proposal.id }}</td>
+                <td>{{ proposal.fundingOpportunityName }}</td>
+                <td>{{ proposal.fundingOpportunitySubmissionDueDate | date : 'medium' }}</td>
+                <td>{{ (proposal.eligibilityCriteriaMet ? 'label.yes' : 'label.no') | translate }} </td>
+                <td>{{ proposal.submissionDate | date : 'medium' }}</td>
+                <td>{{ proposal.stage }}</td>
+            </tr>
+          </ng-template>
+
+      </p-table>
+    }
+
+  </div>
+</div>

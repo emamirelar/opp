@@ -1,0 +1,13 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+:host ::ng-deep .material-home::before {
+  content: "home";
+  color: var(--text-color);
+}
+
+:host ::ng-deep .p-breadcrumb {
+  @apply p-0;
+}

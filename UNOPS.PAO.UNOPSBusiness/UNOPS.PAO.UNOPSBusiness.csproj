@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UNOPS.PAO.Business\UNOPS.PAO.Business.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.GoogleServices\UNOPS.PAO.GoogleServices.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.UNOPSDataAccess\UNOPS.PAO.UNOPSDataAccess.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.UNOPSDomain\UNOPS.PAO.UNOPSDomain.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.Utilities\UNOPS.PAO.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.68.0.3627" />
+  </ItemGroup>
+
+</Project>
