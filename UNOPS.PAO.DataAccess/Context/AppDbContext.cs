@@ -34,6 +34,8 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<WorkflowLog> WorkflowLogs { get; set; }
     public DbSet<EntityUserRole> EntityUserRoles { get; set; }
 
+    public DbSet<Contact> Contacts { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings
@@ -83,6 +85,8 @@ public class AppDbContext : AuditableDbContext<int, int>
                     .UsingEntity("FundingOpportunityEligibleEntities");
             });
 
+        modelBuilder
+            .Entity<Contact>();
 
         modelBuilder
             .Entity<Proposal>(proposal =>

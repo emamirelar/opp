@@ -34,6 +34,10 @@ public class UNOPSAppDbContext : AppDbContext
             .HasForeignKey(x => x.ProjectNumber)
             .HasPrincipalKey(x => x.ProjectNumber)
             .IsRequired(false);
+
+        modelBuilder
+            .Entity<UNOPSContact>();
+            //.HasPrincipalKey(x => x.ContactNumber);
     }
 
     public new DbSet<UNOPSFundingOpportunity> FundingOpportunities { get; set; }
@@ -43,4 +47,5 @@ public class UNOPSAppDbContext : AppDbContext
     public DbSet<Budget> Budgets { get; set; }
     public DbSet<BudgetLine> BudgetLines { get; set; }
     public DbSet<Donor> Donors { get; set; }
+    public new DbSet<UNOPSContact> Contacts { get; set; }
 }

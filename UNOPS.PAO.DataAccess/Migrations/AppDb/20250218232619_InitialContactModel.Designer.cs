@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.DataAccess.Context;
 
 #nullable disable
 
-namespace UNOPS.PAO.UNOPSDataAccess.Migrations
+namespace UNOPS.PAO.DataAccess.Migrations.AppDb
 {
-    [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20250218232619_InitialContactModel")]
+    partial class InitialContactModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -127,11 +130,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("character varying(13)");
-
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -221,10 +219,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Contacts", "public");
-
-                    b.HasDiscriminator().HasValue("Contact");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Country", b =>
@@ -295,11 +289,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("character varying(13)");
-
                     b.Property<int?>("FundingOpportunityId")
                         .HasColumnType("integer");
 
@@ -336,10 +325,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("ProposalId");
 
                     b.ToTable("Documents", "public");
-
-                    b.HasDiscriminator().HasValue("Document");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.DocumentRelationship", b =>
@@ -513,11 +498,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(34)
-                        .HasColumnType("character varying(34)");
-
                     b.Property<string>("EligibilityCriteria")
                         .IsRequired()
                         .HasColumnType("text");
@@ -571,10 +551,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("SelectionMethodologyId");
 
                     b.ToTable("FundingOpportunities", "public");
-
-                    b.HasDiscriminator().HasValue("FundingOpportunity");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.GrantUser", b =>
@@ -858,230 +834,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("WorkflowLogs", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Budget", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BudgetNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("BudgetVersion")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Version")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId");
-
-                    b.ToTable("Budgets", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.BudgetLine", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("BudgetAccount")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("BudgetId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("DonorId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("FiscalYear")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("NatureOfCost")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("WorkPackageId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BudgetId");
-
-                    b.HasIndex("DonorId");
-
-                    b.HasIndex("WorkPackageId");
-
-                    b.ToTable("BudgetLines", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Donor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Donors", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BudgetCheckingLevel")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("BudgetDuration")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ProjectNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Stage")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Projects", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.WorkPackage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ProjectId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId");
-
-                    b.ToTable("WorkPackages", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSContact", b =>
-                {
-                    b.HasBaseType("UNOPS.PAO.Domain.Entities.Contact");
-
-                    b.Property<string>("ContactNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasDiscriminator().HasValue("UNOPSContact");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSDocument", b =>
-                {
-                    b.HasBaseType("UNOPS.PAO.Domain.Entities.Document");
-
-                    b.Property<bool>("LinkedFile")
-                        .HasColumnType("boolean");
-
-                    b.HasDiscriminator().HasValue("UNOPSDocument");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSFundingOpportunity", b =>
-                {
-                    b.HasBaseType("UNOPS.PAO.Domain.Entities.FundingOpportunity");
-
-                    b.Property<string>("ProjectNumber")
-                        .HasColumnType("text");
-
-                    b.HasIndex("ProjectNumber");
-
-                    b.HasDiscriminator().HasValue("UNOPSFundingOpportunity");
-                });
-
             modelBuilder.Entity("FundingOpportunityCountries", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.Country", null)
@@ -1199,65 +951,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasForeignKey("UNOPS.PAO.Domain.Entities.UserProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Budget", b =>
-                {
-                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.BudgetLine", b =>
-                {
-                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Budget", "Budget")
-                        .WithMany()
-                        .HasForeignKey("BudgetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Donor", "Donor")
-                        .WithMany()
-                        .HasForeignKey("DonorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.WorkPackage", "WorkPackage")
-                        .WithMany()
-                        .HasForeignKey("WorkPackageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Budget");
-
-                    b.Navigation("Donor");
-
-                    b.Navigation("WorkPackage");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.WorkPackage", b =>
-                {
-                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSFundingOpportunity", b =>
-                {
-                    b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectNumber")
-                        .HasPrincipalKey("ProjectNumber");
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Document", b =>

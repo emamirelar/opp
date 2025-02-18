@@ -37,4 +37,7 @@ public class APIDictionary
     // Workflow
     public const string Workflow = APIPrefix + "workflow";
 
+    // Contact
+    public const string Contact = APIPrefix + "contact";
+    public const string ExternalContact = ExternalAPIPrefix + "contact";
 }
