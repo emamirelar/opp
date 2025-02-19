@@ -38,6 +38,10 @@ export class CachedDataService {
   private allSelectionMethodologyData = signal([]);
   allSelectionMethodologies = this.allSelectionMethodologyData.asReadonly();
 
+  //Selection Methodology
+  private allContactData = signal([]);
+  allContacts = this.allContactData.asReadonly();
+
   constructor() { }
 
   clearCachedData(){
@@ -54,6 +58,8 @@ export class CachedDataService {
     this.allEligibleEntitiesData.set( [] );
     //clears cache Eligible Entities
     this.allApplicationTypeData.set( [] );
+
+    this.allContactData.set([]);
   }
 
   loadProjects(){
@@ -118,6 +124,22 @@ export class CachedDataService {
         }
       });
     }
+  }
+
+  loadContacts(){
+   /* if( ( this.allContactData() == undefined ) || ( this.allContactData().length <= 0 ) )
+    {
+      this.isLoading.set( true );
+      this.http.get('/api/values/contact').subscribe({
+        next: (data: any) => {
+          this.allContactData.set( data );
+          this.isLoading.set( false );
+        },
+        error: (err) => {
+          this.isLoading.set( false );
+        }
+      });
+    }*/
   }
 
   loadEligibleEntities(){

@@ -30,6 +30,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       routerLink: ['/'],
     },
     {
+      label: 'title.contacts',
+      icon: 'contacts',
+      routerLink: ['/contacts']
+    },
+    {
       label: 'title.fundingOpportunities',
       icon: 'money_bag',
       routerLink: ['/funding-opportunity'],

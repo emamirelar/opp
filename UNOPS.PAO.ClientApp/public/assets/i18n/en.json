@@ -12,6 +12,7 @@
         "fundingOpportunity": "Funding Opportunity",
         "fundingOpportunities": "Funding Opportunities",
         "newFundingOpportunity": "New Funding Opportunity",
+        "newContact": "New Contact",
         "home": "Home",
         "proposals": "Proposals",
         "proposal": "Proposal",
@@ -21,7 +22,8 @@
         "where": "Where",
         "when": "When",
         "who": "Who",
-        "why": "Why"
+        "why": "Why",
+        "contacts": "Contacts"
     },
     "button": {
         "cancel": "Cancel",
@@ -44,6 +46,14 @@
             "createdDate": "Created Date",
             "lastModifiedBy": "Last Modified By",
             "lastModifiedDate": "Last Modified Date"
+        },
+        "contact": {
+            "id": "ID",
+            "salutation": "Salutation",
+            "firstName": "First Name",
+            "lastName": "Last Name",
+            "email": "Email",
+            "mobile": "Mobile"
         },
         "clarificationDeadline": "Clarification Deadline",
         "document": {

@@ -1,0 +1,64 @@
+<p-blockui [blocked]="contactService.isLoading()" />
+
+@if( showValidationFailedError() === true ){
+  <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
+}
+
+<form class="w-full h-full" [formGroup]="formGroup">
+
+  <div class="flex flex-col h-full">
+    <div class="grow">
+
+      <div class="mb-6">
+        <label class="required">*</label><label> {{'label.contact.salutation' | translate}} </label>
+        <input pInputText [pAutoFocus]="true" fluid="true" formControlName="salutation"/>
+        @if( formGroup.get("salutation")?.invalid && showValidationFailedError() )
+        {
+          <p-message severity="error" variant="simple">Salutation must be entered.</p-message>
+        }
+      </div>
+
+      <div class="mb-6">
+        <label class="required">*</label><label> {{'label.contact.firstName' | translate}} </label>
+        <input pInputText [pAutoFocus]="true" fluid="true" formControlName="firstName"/>
+        @if( formGroup.get("firstName")?.invalid && showValidationFailedError() )
+        {
+          <p-message severity="error" variant="simple">First Name must be entered.</p-message>
+        }
+      </div>
+
+      <div class="mb-6">
+        <label class="required">*</label><label> {{'label.contact.lastName' | translate}} </label>
+        <input pInputText [pAutoFocus]="true" fluid="true" formControlName="lastName"/>
+        @if( formGroup.get("lastName")?.invalid && showValidationFailedError() )
+        {
+          <p-message severity="error" variant="simple">Last Name must be entered.</p-message>
+        }
+      </div>
+
+      <div class="mb-6">
+        <label class="required">*</label><label> {{'label.contact.email' | translate}} </label>
+        <input pInputText [pAutoFocus]="true" fluid="true" formControlName="email"/>
+        @if( formGroup.get("email")?.invalid && showValidationFailedError() )
+        {
+          <p-message severity="error" variant="simple">Email must be entered.</p-message>
+        }
+      </div>
+
+      <div class="mb-6">
+        <label class="required">*</label><label> {{'label.contact.mobile' | translate}} </label>
+        <input pInputText [pAutoFocus]="true" fluid="true" formControlName="mobile"/>
+        @if( formGroup.get("mobile")?.invalid && showValidationFailedError() )
+        {
+          <p-message severity="error" variant="simple">Mobile number must be entered.</p-message>
+        }
+      </div>
+    </div>
+
+
+    <div class="flex justify-end mt-2">
+      <p-button icon="pi pi-save" label="{{'button.save' | translate}}" (click)="_handleOnSaveClick()"/>
+    </div>
+  </div>
+
+</form>

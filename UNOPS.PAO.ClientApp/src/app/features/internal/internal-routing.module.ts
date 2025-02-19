@@ -7,6 +7,8 @@ import { FundingOpportunityComponent } from '../../features/internal/components/
 import { FundingOpportunityItemComponent } from '../../features/internal/components/fundingOpportunity/fundingOpportunityItem/fundingOpportunityItem.component';
 import { ProposalComponent } from '../../features/internal/components/proposal/proposal.component';
 import { ProposalItemComponent } from '../../features/internal/components/proposal/proposalItem/proposalItem.component';
+import { ContactComponent } from './components/contact/contact.component';
+import { Breadcrumb } from 'primeng/breadcrumb';
 
 const internalRoutes: Routes = [
   {
@@ -18,6 +20,12 @@ const internalRoutes: Routes = [
         component: HomeComponent,
         canActivate: [authGuard],
         data: { breadcrumb: 'Home', icon: 'pi pi-home' },
+      },
+      {
+        path: 'contacts',
+        component: ContactComponent,
+        canActivate: [authGuard],
+        data: {Breadcrumb: 'Contacts'}
       },
       {
         path: 'funding-opportunity',
