@@ -33,17 +33,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'title.contacts',
       icon: 'contacts',
       routerLink: ['/contacts']
-    },
-    {
-      label: 'title.fundingOpportunities',
-      icon: 'money_bag',
-      routerLink: ['/funding-opportunity'],
-    },
-    {
-      label: 'title.proposals',
-      icon: 'receipt',
-      routerLink: ['/proposal'],
-    },
+    }
   ];
 
   externalMenuItems: MenuItem[] = [
@@ -51,17 +41,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'title.home',
       icon: 'home',
       routerLink: ['/'],
-    },
-    {
-      label: 'title.fundingOpportunities',
-      icon: 'money_bag',
-      routerLink: ['/external/funding-opportunity'],
-    },
-    {
-      label: 'title.external.myProposals',
-      icon: 'receipt',
-      routerLink: ['/external/proposal'],
-    },
+    }
   ];
 
   isInternalUser = signal<boolean>(false);
