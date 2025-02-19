@@ -1,0 +1,31 @@
+@use './tailwind.css';
+@use '../public/layout/layout.scss';
+@use 'primeicons/primeicons.css';
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border-style: none;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+}
+
+.center-align {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.brand-logo {
+    width: 2rem;
+    height: 2rem;
+    margin: auto;
+}

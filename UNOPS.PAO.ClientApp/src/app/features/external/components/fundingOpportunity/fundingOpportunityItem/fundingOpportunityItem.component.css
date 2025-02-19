@@ -1,0 +1,20 @@
+.main-container {
+  height: 99.5vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.field-container {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.footer-container {
+  padding: 10px 0px 5px 0px;
+  border-radius: 6px;
+}
+
+:host .inititate-proposal-button {
+  margin-right: 25px;
+  width: 150px;
+}

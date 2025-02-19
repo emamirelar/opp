@@ -1,0 +1,8 @@
+<p-breadcrumb class="breadcrumb-bar" [model]="breadcrumbItems" [home]="homeBreadcrumb" [homeAriaLabel]="'Home'">
+    <ng-template #item let-item>
+        <a class="cursor-pointer">
+            <span class="material-symbols-outlined">{{item.icon}}</span>
+            <span>{{ item.label }}</span>
+        </a>
+    </ng-template>
+</p-breadcrumb>

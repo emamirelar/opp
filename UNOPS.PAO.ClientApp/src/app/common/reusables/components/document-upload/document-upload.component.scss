@@ -1,0 +1,9 @@
+// .drop-area {
+//     padding-bottom: 5rem;
+//     border: 1px dashed black;
+// }
+
+:host ::ng-deep .p-fileupload-content {
+    padding-bottom: 5rem;
+    margin: 0 1.25rem 1.25rem 1.25rem,
+}

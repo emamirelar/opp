@@ -1,0 +1,14 @@
+<p-menu #profileMenu [model]="profileItems" [popup]="true">
+<ng-template #item let-item>
+	<a pRipple class="flex items-center px-4 py-2 cursor-pointer group">
+		<i [class]="item.icon + ' text-primary group-hover:text-inherit'"></i>
+		<span class="ml-2">
+			{{ item.label | translate }}
+		</span>
+	</a>
+</ng-template>
+</p-menu>
+<button (click)="profileMenu.toggle($event)" type="button" aria-label="Profile" class="layout-topbar-action">
+	<i class="pi pi-user"></i>
+	<span> {{ 'button.profile' | translate }} </span>
+</button>

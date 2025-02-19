@@ -1,0 +1,73 @@
+<p-dialog header="Sign Up" [(visible)]="visible" [modal]="true" [draggable]="false" [resizable]="false"
+  [breakpoints]="{ '960px': '75vw' }" [style]="{ width: '30vw' }" (onHide)="onHide()">
+
+  <div class="row justify-start">
+    <form [formGroup]="signUpForm" (ngSubmit)="onSubmit()">
+      <div class="flex flex-col gap-3 w-full">
+
+        <div class="p-float-label w-full">
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-envelope" />
+            <input id="email" type="email" pInputText class="w-full" formControlName="email"
+              placeholder="Enter your email" />
+          </p-iconfield>
+          <small class="p-error block" *ngIf="emailControl.touched && emailControl.errors?.['required']">
+            Email is required
+          </small>
+          <small class="p-error block" *ngIf="emailControl.touched && emailControl.errors?.['email']">
+            Please enter a valid email address
+          </small>
+        </div>
+
+        <div class="p-float-label w-full">
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-lock"></p-inputicon>
+            <p-password id="password" formControlName="password" [toggleMask]="true" class="w-full" [feedback]="true" placeholder="Enter your password">
+            </p-password>
+          </p-iconfield>
+          <small class="p-error block" *ngIf="passwordControl.touched && passwordControl.errors?.['required']">
+            Password is required
+          </small>
+          <small class="p-error block" *ngIf="passwordControl.touched && passwordControl.errors?.['pattern']">
+            Password does not meet the requirements
+          </small>
+        </div>
+
+        <div class="p-float-label w-full">
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-lock"></p-inputicon>
+            <p-password id="confirmPassword" formControlName="confirmPassword" [toggleMask]="true" class="w-full"
+              placeholder="Confirm your password">
+            </p-password>
+            </p-iconfield>
+          <small class="p-error block"
+            *ngIf="confirmPasswordControl.touched && confirmPasswordControl.errors?.['required']">
+            Password confirmation is required
+          </small>
+          <small class="p-error block"
+            *ngIf="confirmPasswordControl.touched && signUpForm.errors?.['passwordMismatch']">
+            Passwords do not match
+          </small>
+        </div>
+
+        <p-panel header="Password Policy">
+          <ul class="list-none p-0 m-0">
+            <li *ngFor="let policy of passwordPolicies" class="flex align-items-center mb-2">
+              <i class="pi pi-check-circle mr-2"
+                [ngClass]="{'text-green-500': checkPolicy(policy.validator), 'text-gray-500': !checkPolicy(policy.validator)}"></i>
+              <span>{{ policy.label }}</span>
+            </li>
+          </ul>
+        </p-panel>
+
+        <div class="flex justify-center mt-4">
+          <p-button label="Cancel" icon="pi pi-times" (onClick)="onHide()" styleClass="p-button-text mr-2">
+          </p-button>
+          <p-button label="Sign Up" icon="pi pi-user-plus" type="submit" [loading]="loading"
+            [disabled]="signUpForm.invalid || loading">
+          </p-button>
+        </div>
+      </div>
+    </form>
+  </div>
+</p-dialog>

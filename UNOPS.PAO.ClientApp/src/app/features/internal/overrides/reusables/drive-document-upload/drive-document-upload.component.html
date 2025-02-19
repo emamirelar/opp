@@ -1,0 +1,49 @@
+<div class="grid lg:grid-cols-6">
+	<div class="col-span-full lg:col-span-6">
+		<div class="card">
+			<div class="font-semibold text-xl mb-4"> {{'label.linkDriveFile' | translate}}</div>
+
+			<div class="p-fileupload p-fileupload-advanced p-component">
+				<div class="p-fileupload-header">
+					<p-button (onClick)="driveService.openPicker()"
+						icon="pi pi-google"
+						label="{{ 'label.selectFromDrive' | translate }}"
+						severity="secondary">
+					</p-button>
+					<p-button [disabled]="!selectedDriveFiles.length"
+						(click)="onUpload(selectedDriveFiles)"
+						label="{{ 'button.upload' | translate }}"
+						icon="pi pi-upload"
+						severity="secondary">
+					</p-button>
+					<p-button [disabled]="!selectedDriveFiles.length"
+						(click)="clearFiles()"
+						label="{{ 'button.cancel' | translate }}"
+						icon="pi pi-trash"
+						severity="secondary">
+					</p-button>
+				</div>
+
+				<div class="p-fileupload-content">
+					<span *ngIf="!selectedDriveFiles.length">
+							{{'label.linkFromDrive' | translate}}
+					</span>
+
+					<ul *ngIf="selectedDriveFiles.length"
+						class="mb-4">
+						<li *ngFor="let file of selectedDriveFiles; let i = index">
+							<span>
+								{{ file.name }} ({{ file.size | number }} bytes)
+							</span>
+							<p-button (click)="onRemove(i)"
+								icon="pi pi-times"
+                                severity="danger"
+                                variant="text">
+                            </p-button>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

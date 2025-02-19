@@ -1,0 +1,105 @@
+{
+    "title": {
+        "countries": "Pays",
+        "currency": "Monnaie",
+        "details": "Détails",
+        "docUpload": "Téléchargement de Document",
+        "doc": "Document",
+        "docs": "Documents",
+        "external": {
+            "myProposals": "Mes Propositions"
+        },
+        "fundingOpportunity": "Opportunité de Financement",
+        "fundingOpportunities": "Opportunités de Financement",
+        "newFundingOpportunity": "Nouvelle Opportunité de Financement",
+        "home": "Accueil",
+        "proposals": "Propositions",
+        "proposal": "Proposition",
+        "stage": "Étape",
+        "what": "Quoi",
+        "how": "Comment",
+        "where": "Où",
+        "when": "Quand",
+        "who": "Qui",
+        "why": "Pourquoi"
+    },
+    "button": {
+        "cancel": "Annuler",
+        "close": "Fermer",
+        "darkMode": "Mode Sombre",
+        "language": "Langue",
+        "lightMode": "Mode Clair",
+        "logout": "Déconnexion",
+        "openRecordDetails": "Ouvrir les Détails de l'Enregistrement",
+        "profile": "Profil",
+        "viewProposal": "Voir la Proposition",
+        "save": "Enregistrer",
+        "submitProposal": "Soumettre la Proposition",
+        "upload": "Téléverser"
+    },
+    "label": {
+        "actions": "Actions",
+        "audit": {
+            "createdBy": "Créé Par",
+            "createdDate": "Date de Création",
+            "lastModifiedBy": "Dernière Modification Par",
+            "lastModifiedDate": "Date de Dernière Modification"
+        },
+        "clarificationDeadline": "Date Limite de Clarification",
+        "document": {
+            "dragDropMessage": "Glissez-déposez des fichiers ici pour téléverser.",
+            "linked": "Est Lié",
+            "name": "Nom du Document"
+        },
+        "decisionDate": "Date de Décision",
+        "description": "Description",
+        "eligibilityCriteria": "Critères d'Éligibilité",
+        "eligibleEntities": "Entités Éligibles",
+        "fundingOpportunity": {
+            "applicationType": "Type de Candidature",
+            "availableFunding": "Financement Disponible",
+            "currency": "Monnaie",
+            "dateFrom": "Date de Début",
+            "dateTo": "Date de Fin",
+            "description": "Description",
+            "name": "Nom",
+            "submissionDueDate": "Date Limite de Soumission",
+            "project": "Projet"
+        },
+        "informationSession": "Session d'Information",
+        "justification": "Justification",
+        "linkDriveFile": "Lier un Fichier Drive",
+        "linkFromDrive": "Lier des documents depuis Drive.",
+        "name": "Nom",
+        "no": "Non",
+        "postedDate": "Date de Publication",
+        "proposal": {
+            "applicantId": "ID du Candidat",
+            "applicantName": "Nom du Candidat",
+            "id": "ID de la Proposition",
+            "initiateProposal": "Initier la Proposition",
+            "fundingOpportunityName": "Nom de l'Opportunité de Financement",
+            "fundingOpportunitySubmissionDueDate": "Date Limite de l'Opportunité de Financement",
+            "eligibilityCriteriaMet": "Critères d'Éligibilité Respectés",
+            "eligibilityEntityMet": "Entité Éligible Respectée",
+            "meetEligibleEntities": "Respecter les entités éligibles",
+            "meetEligibleCriteria": "Respecter les critères d'éligibilité",
+            "proposalDetails": "Détails de la Proposition",
+            "submissionDate": "Date de Soumission"
+        },
+        "sdgs": "ODD",
+        "selectEligibleEntities": "Sélectionner des Entités Éligibles",
+        "selectFromDrive": "Sélectionner depuis Drive",
+        "selectionMethodology": "Méthodologie de Sélection",
+        "stage": "Étape",
+        "status": "Statut",
+        "yes": "Oui"
+    },
+    "message": {
+        "entityMeetEligibleEntitiesRequired": "'Respecter les entités éligibles' requis",
+        "entityMeetEligibleCriteriaRequired": "'Respecter les critères d'éligibilité' requis",
+        "noRecordsFound": "Aucun enregistrement trouvé.",
+        "proposalRequirements": "La proposition ne peut pas être soumise tant que tous les champs requis ne sont pas complétés.",
+        "welcomeTitle": "Bienvenue sur Grant+"
+    }
+}

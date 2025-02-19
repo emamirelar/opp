@@ -1,0 +1,115 @@
+{
+    "title": {
+        "countries": "Countries",
+        "currency": "Currency",
+        "details": "Details",
+        "docUpload": "Document Upload",
+        "doc": "Document",
+        "docs": "Documents",
+        "external": {
+            "myProposals": "My Proposals"
+        },
+        "fundingOpportunity": "Funding Opportunity",
+        "fundingOpportunities": "Funding Opportunities",
+        "newFundingOpportunity": "New Funding Opportunity",
+        "newContact": "New Contact",
+        "home": "Home",
+        "proposals": "Proposals",
+        "proposal": "Proposal",
+        "stage": "Stage",
+        "what": "What",
+        "how": "How",
+        "where": "Where",
+        "when": "When",
+        "who": "Who",
+        "why": "Why",
+        "contacts": "Contacts"
+    },
+    "button": {
+        "cancel": "Cancel",
+        "close": "Close",
+        "darkMode": "Dark Mode",
+        "language": "Language",
+        "lightMode": "Light Mode",
+        "logout": "Logout",
+        "openRecordDetails": "Open Record Details",
+        "profile": "Profile",
+        "viewProposal": "View Proposal",
+        "save": "Save",
+        "submitProposal": "Submit Proposal",
+        "upload": "Upload"
+    },
+    "label": {
+        "actions": "Actions",
+        "audit": {
+            "createdBy": "Created By",
+            "createdDate": "Created Date",
+            "lastModifiedBy": "Last Modified By",
+            "lastModifiedDate": "Last Modified Date"
+        },
+        "contact": {
+            "id": "ID",
+            "salutation": "Salutation",
+            "firstName": "First Name",
+            "lastName": "Last Name",
+            "email": "Email",
+            "mobile": "Mobile"
+        },
+        "clarificationDeadline": "Clarification Deadline",
+        "document": {
+            "dragDropMessage": "Drag and drop files to here to upload.",
+            "linked": "Is Linked",
+            "name": "Document Name"
+        },
+        "decisionDate": "Decision Date",
+        "description": "Description",
+        "eligibilityCriteria": "Eligibility Criteria",
+        "eligibleEntities": "Eligible Entities",
+        "fundingOpportunity": {
+            "applicationType": "Application Type",
+            "availableFunding": "Available Funding",
+            "currency": "Currency",
+            "dateFrom": "Start Date",
+            "dateTo": "End Date",
+            "description": "Description",
+            "name": "Name",
+            "submissionDueDate": "Submission Due Date",
+            "project": "Project"
+        },
+        "informationSession": "Information Session",
+        "justification": "Justification",
+        "linkDriveFile": "Link Drive File",
+        "linkFromDrive": "Link documents from drive.",
+        "name": "Name",
+        "no": "No",
+        "postedDate": "Posted Date",
+        "proposal": {
+            "applicantId": "Applicant ID",
+            "applicantName": "Applicant Name",
+            "id": "Proposal ID",
+            "initiateProposal": "Initiate Proposal",
+            "fundingOpportunityName": "Funding Opportunity Name",
+            "fundingOpportunitySubmissionDueDate": "Funding Opportunity Due Date",
+            "eligibilityCriteriaMet": "Eligibility Criteria Met",
+            "eligibilityEntityMet": "Eligibility Entity Met",
+            "meetEligibleEntities": "Meet eligible entities",
+            "meetEligibleCriteria": "Meet eligible criteria",
+            "proposalDetails": "Proposal details",
+            "submissionDate": "Submission Date"
+        },
+        "sdgs": "SDGs",
+        "selectEligibleEntities": "Select Eligible Entities",
+        "selectFromDrive": "Select from Drive",
+        "selectionMethodology": "Selection Methodology",
+        "stage": "Stage",
+        "status": "Status",
+        "yes": "Yes"
+    },
+    "message": {
+        "entityMeetEligibleEntitiesRequired": "'Meet eligible entities' required",
+        "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
+        "noRecordsFound": "No records found.",
+        "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
+        "welcomeTitle": "Welcome to Grant+"
+    }
+}

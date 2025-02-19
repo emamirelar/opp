@@ -1,0 +1,100 @@
+<p-blockui [blocked]="proposalService.isLoading()" />
+
+<form class="main-container" #mainForm>
+
+  <div class="flex items-center p-4 flex-wrap">
+    <div class="flex-none">
+      <div class="header-container">
+        <i class="pi pi-receipt entity-icon"></i>
+        <div>
+          <h5 class="m-0"> {{recordData().name || ''}} </h5>
+          <div class="sub-header"> {{entityName}} </div>
+        </div>
+      </div>
+    </div>
+    <div class="grow"></div>
+    <div class="flex-none">
+      <app-workflow [entityName]="'internal-proposal'" [entityId]="recordId" (stageChangeSuccess)="handleOnStageChange($event)"></app-workflow>
+    </div>
+  </div>
+
+  <div class="field-container">
+
+    <p-panel header="{{ 'title.stage' | translate }}" styleClass="section">
+
+      <p-steps [activeIndex]="currentStageIndex" [model]="stages()" [readonly]="true" />
+
+    </p-panel>
+
+    <p-panel header="{{ 'title.details' | translate }}" [toggleable]="true" [styleClass]="'section'">
+
+      <div class="mb-6">
+
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" >
+          <div>
+            <label class="font-semibold">{{'label.proposal.id' | translate }}</label>
+            <label class="grow ml-1 text-wrap">{{recordData().id}}</label>
+          </div>
+
+          <div >
+            <label class="font-semibold">{{'label.proposal.fundingOpportunityName' | translate }} </label>
+            <label class="ml-1 text-wrap">{{recordData().fundingOpportunity?.name || ''}}</label>
+          </div>
+        </div>
+
+      </div>
+
+    </p-panel>
+
+    <p-panel header="{{ 'title.why' | translate }}" [toggleable]="true" [styleClass]="'section'">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" >
+        <div >
+          <label class="font-semibold">{{'label.proposal.eligibilityCriteriaMet' | translate }}</label>
+          <label class="ml-1">{{ ( recordData().eligibilityCriteriaMet ? 'label.yes' : 'label.no' ) | translate }} </label>
+        </div>
+
+        <div >
+          <label class="font-semibold">{{'label.proposal.eligibilityEntityMet' | translate }} </label>
+          <label class="ml-1">{{ ( recordData().eligibilityEntityMet ? 'label.yes' : 'label.no' ) | translate }} </label>
+        </div>
+      </div>
+
+    </p-panel>
+
+    <p-panel header="{{ 'title.who' | translate }}" [toggleable]="true" [styleClass]="'section'">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" >
+        <div >
+          <label class="font-semibold"> {{'label.proposal.applicantName' | translate}} </label>
+          <label class="ml-1 text-wrap">{{recordData().applicant?.name}}</label>
+        </div>
+
+        <div >
+          <label class="font-semibold">{{'label.proposal.applicantId' | translate}} </label>
+          <label class="ml-1 text-wrap">{{recordData().applicant?.id}}</label>
+        </div>
+      </div>
+
+    </p-panel>
+
+    <p-panel header="{{ 'title.when' | translate }}" [toggleable]="true" [styleClass]="'section'">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" >
+        <div>
+          <label class="font-semibold">{{'label.proposal.submissionDate' | translate }} </label>
+          <label class="ml-1">{{ ( recordData().submissionDate | date : 'medium' ) || ''}} </label>
+        </div>
+      </div>
+    </p-panel>
+
+      
+    <p-panel header="{{ 'title.docs' | translate }}" [toggleable]="true">
+      <div class="grid gap-6" >
+        <app-document-list [documents]="recordData().documents"></app-document-list>
+      </div>
+    </p-panel>
+    
+  </div>
+
+</form>
