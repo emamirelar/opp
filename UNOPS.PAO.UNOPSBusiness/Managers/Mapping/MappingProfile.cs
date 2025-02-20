@@ -19,5 +19,8 @@ public class MappingProfile : Profile
         CreateMap<DocumentModel, UNOPSDocument>();
         CreateMap<DocumentUploadModel, UNOPSDocument>();
         CreateMap<DocumentLinkModel, UNOPSDocument>();
+        CreateMap<ContactRequest, UNOPSContact>();
+        CreateMap<UNOPSContact, ContactModel>();
+        CreateMap<ContactModel, UNOPSContact>();
     }
 }

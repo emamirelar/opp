@@ -32,7 +32,7 @@ public class ContactController : ControllerBase
 
     [HttpGet(APIDictionary.ExternalContact + "/{id}")]
     // External call: details for posted contact
-    public async Task<ActionResult> GetPostedFundingOportunity(int id)
+    public async Task<ActionResult> GetPostedContact(int id)
     {
         var x = await manager.GetPostedContact(id);
 
