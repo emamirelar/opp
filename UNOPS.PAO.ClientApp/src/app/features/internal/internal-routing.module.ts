@@ -3,12 +3,9 @@ import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from '../../common/layouts/components/layout/layout.component';
 import { HomeComponent } from '../../common/pages/components/home/home.component';
 import { authGuard } from '../../essentials/guards/auth.guard';
-import { FundingOpportunityComponent } from '../../features/internal/components/fundingOpportunity/fundingOpportunity.component';
 import { FundingOpportunityItemComponent } from '../../features/internal/components/fundingOpportunity/fundingOpportunityItem/fundingOpportunityItem.component';
-import { ProposalComponent } from '../../features/internal/components/proposal/proposal.component';
-import { ProposalItemComponent } from '../../features/internal/components/proposal/proposalItem/proposalItem.component';
 import { ContactComponent } from './components/contact/contact.component';
-import { Breadcrumb } from 'primeng/breadcrumb';
+import { ContactItemComponent } from './components/contact/contactItem/contact-item/contact-item.component';
 
 const internalRoutes: Routes = [
   {
@@ -28,29 +25,11 @@ const internalRoutes: Routes = [
         data: {Breadcrumb: 'Contacts'}
       },
       {
-        path: 'funding-opportunity',
-        component: FundingOpportunityComponent,
-        canActivate: [authGuard],
-        data: { breadcrumb: 'Funding Opportunity' },
-      },
-      {
-        path: 'funding-opportunity/:recordId',
+        path: 'contact/:recordId',
         data: { breadcrumb: 'Details' },
-        component: FundingOpportunityItemComponent,
+        component: ContactItemComponent,
         canActivate: [authGuard],
-      },
-      {
-        path: 'proposal',
-        data: { breadcrumb: 'Proposal' },
-        component: ProposalComponent,
-        canActivate: [authGuard],
-      },
-      {
-          path: 'proposal/:recordId',
-          data: { breadcrumb: 'Details' },
-          component: ProposalItemComponent,
-          canActivate: [authGuard],
-      },
+      }
     ],
   },
 ];

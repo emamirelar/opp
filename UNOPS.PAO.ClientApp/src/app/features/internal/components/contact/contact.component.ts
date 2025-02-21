@@ -82,6 +82,7 @@ export class ContactComponent implements OnInit, OnDestroy {
   }
 
   handleOnOpenRecordDetails(record: any) {
+    debugger;
     this.router.navigate(['contact', record.id]);
   }
 

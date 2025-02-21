@@ -23,7 +23,12 @@
         "when": "When",
         "who": "Who",
         "why": "Why",
-        "contacts": "Contacts"
+        "contacts": "Contacts",
+        "contactTitles": {
+            "contactInformation": "Contact Information",
+            "addresses": "Addresses",
+            "systemInformation": "System Information"
+        }
     },
     "button": {
         "cancel": "Cancel",
@@ -51,9 +56,29 @@
             "id": "ID",
             "salutation": "Salutation",
             "firstName": "First Name",
+            "middleName": "Middle Name",
             "lastName": "Last Name",
+            "suffix": "Suffix",
             "email": "Email",
-            "mobile": "Mobile"
+            "mobile": "Mobile",
+            "phone": "Phone",
+            "otherPhone": "Other Phone",
+            "assistant": "Assistant",
+            "assistantPhone": "Asst. Phone",
+            "assistantEmail": "Asst. Email",
+            "status": "Status",
+            "title": "Title", 
+            "pronouns": "Pronouns",
+            "department": "Department",
+            "birthDate": "Birth Date",
+            "fax": "Fax",
+            "description": "Description",
+            "mailingStreet": "Mailing Street",
+            "mailingStreet2": "Mailing Street 2",
+            "mailingCity": "Mailing City",
+            "mailingStateProvince": "Mailing State/Province",
+            "mailingPostalCode": "Mailing Postal Code",
+            "mailingCountry": "Mailing Country"
         },
         "clarificationDeadline": "Clarification Deadline",
         "document": {
@@ -110,6 +135,6 @@
         "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
         "noRecordsFound": "No records found.",
         "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
-        "welcomeTitle": "Welcome to Grant+"
+        "welcomeTitle": "Welcome to Partners and Opportunities"
     }
 }

@@ -39,10 +39,20 @@ export class CachedDataService {
   allSelectionMethodologies = this.allSelectionMethodologyData.asReadonly();
 
   //Selection Methodology
-  private allContactData = signal([]);
-  allContacts = this.allContactData.asReadonly();
+  private allSaluationsData = signal([]);
+  allSalutations = this.allSaluationsData.asReadonly();
 
-  constructor() { }
+  private allStatusData = signal([]);
+  allStatus = this.allStatusData.asReadonly();
+
+  private allPronounsData = signal([]);
+  allPronouns = this.allPronounsData.asReadonly();
+
+  constructor() { 
+    this.loadSalutations();
+    this.loadStatus();
+    this.loadPronouns();
+  }
 
   clearCachedData(){
     //clears cache projects
@@ -59,7 +69,8 @@ export class CachedDataService {
     //clears cache Eligible Entities
     this.allApplicationTypeData.set( [] );
 
-    this.allContactData.set([]);
+    this.allSaluationsData.set([]);
+
   }
 
   loadProjects(){
@@ -126,20 +137,58 @@ export class CachedDataService {
     }
   }
 
-  loadContacts(){
-   /* if( ( this.allContactData() == undefined ) || ( this.allContactData().length <= 0 ) )
-    {
-      this.isLoading.set( true );
-      this.http.get('/api/values/contact').subscribe({
-        next: (data: any) => {
-          this.allContactData.set( data );
-          this.isLoading.set( false );
-        },
-        error: (err) => {
-          this.isLoading.set( false );
-        }
-      });
-    }*/
+  loadSalutations(){
+    let salutations:any = [{
+      id: 'Mr.',
+      name: 'Mr.'
+    }, {
+      id: 'Ms.',
+      name: 'Ms.'
+    }, {
+      id: 'Mrs.',
+      name: 'Mrs.'
+    }, {
+      id: 'Dr.',
+      name: 'Dr.'
+    }, {
+      id: 'Prof.',
+      name: 'Prof.'
+    }];
+    this.allSaluationsData.set(salutations);
+  }
+
+  loadStatus(){
+    let statuses:any = [{
+      id: 'Active',
+      name: 'Active'
+    }, {
+      id: 'Inactive',
+      name: 'Inactive'
+    }];
+    this.allStatusData.set(statuses);
+  }
+
+  loadPronouns() {
+    let pronouns:any = [{
+      id: 'He/Him',
+      name: 'He/Him'
+    }, {
+      id: 'She/Her',
+      name: 'She/Her'
+    }, {
+      id: 'They/Them',
+      name: 'They/Them'
+    }, {
+      id: 'He/They',  
+      name: 'He/They'
+    }, {
+      id: 'She/They',
+      name: 'She/They'
+    }, {
+      id: 'Not Listed',
+      name: 'Not Listed'
+    }];
+    this.allPronounsData.set(pronouns);
   }
 
   loadEligibleEntities(){
