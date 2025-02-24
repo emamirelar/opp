@@ -3,7 +3,10 @@ import { CachedDataService } from '../../../../../common/services/cached-data.se
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
-import { FundingOpportunityService } from '../../../services/fundingOpportunity.service';
+import { PanelModule } from 'primeng/panel';
+import { DropdownModule } from "primeng/dropdown"; 
+import { DatePickerModule } from 'primeng/datepicker';
+
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -12,6 +15,7 @@ import { Subscription } from 'rxjs/internal/Subscription';
 
 //PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
+import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
@@ -19,18 +23,24 @@ import { AutoFocusModule } from 'primeng/autofocus';
 import { BlockUI } from 'primeng/blockui';
 import { MessageModule } from 'primeng/message';
 import { ContactService } from '../../../services/contact.service';
+import { CardModule } from 'primeng/card';
 
 @Component({
   selector: 'app-new-contact',
   imports: [
     TranslateModule,
     InputTextModule,
+    DropdownModule,
+    DatePickerModule,
     ButtonModule,
     TextareaModule,
+    PanelModule,
     SelectModule,
     AutoFocusModule,
     BlockUI,
     MessageModule,
+    DividerModule,
+    CardModule,
     ReactiveFormsModule],
   templateUrl: './new-contact.component.html',
   styleUrl: './new-contact.component.scss',
@@ -150,12 +160,16 @@ export class NewContactComponent implements OnInit, OnDestroy {
   private langChangeSubscription: Subscription = new Subscription();
   onRecordCreationSuccess = output();
 
-  allContacts = this.cachedDataService.allContacts;
+  allSalutationsData = this.cachedDataService.allSalutations;
+  allStatusData = this.cachedDataService.allStatus;
+  allPronounsData = this.cachedDataService.allPronouns;
   showValidationFailedError = signal<boolean>(false);
+  maxDate = new Date();
 
   constructor() {
-    //load projects
-    //this.cachedDataService.loadContacts();
+    //load salutations
+    //this.cachedDataService.loadSalutations();
+    //this.cachedDataService.loadStatus();
   }
 
   ngOnDestroy(): void {

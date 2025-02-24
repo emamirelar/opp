@@ -14,6 +14,7 @@ import { Subscription } from 'rxjs';
 import { ContactService } from '../../services/contact.service';
 import { DialogModule } from 'primeng/dialog';
 import { NewContactComponent } from './new-contact/new-contact.component';
+import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
 
 interface columnDefination {
   label: string,
@@ -40,6 +41,7 @@ export class ContactComponent implements OnInit, OnDestroy {
 
   contactData = this.contactService.allContacts;
   isDataLoading = this.contactService.isLoading;
+  feedbackDialogService = inject(FeedbackDialogService);
 
   constructor(public translateService: TranslateService, private languageService: LanguageService, private cdr: ChangeDetectorRef) { }
 
@@ -61,6 +63,9 @@ export class ContactComponent implements OnInit, OnDestroy {
 
   getColumns() {
     return [{
+      label: 'label.contact.actions',
+      id: ''
+    }, {
       label: 'label.contact.id',
       id: 'id'
     }, {
@@ -82,8 +87,17 @@ export class ContactComponent implements OnInit, OnDestroy {
   }
 
   handleOnOpenRecordDetails(record: any) {
-    debugger;
     this.router.navigate(['contact', record.id]);
+  }
+
+  handleOnRecordDelete(record: any) {
+    console.log(record.id);
+    this.contactService.deleteContactById(record.id).subscribe({
+      next: (data: any) => {
+        this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
+        this.contactService.getAllContacts();
+      }
+    });;
   }
 
   ngOnDestroy(): void {

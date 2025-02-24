@@ -60,6 +60,9 @@
                   <td>
                     <p-button icon="pi pi-file-edit" (click)="handleOnOpenRecordDetails(contact)" title="Open Record Details" rounded />
                   </td>
+                  <td>
+                    <p-button icon="pi pi-trash" (click)="handleOnRecordDelete(contact)" title="Delete Record" rounded />
+                  </td>
                   <td>{{ contact.id }}</td>
                   <td>{{ contact.salutation }}</td>
                   <td>{{ contact.firstName }}</td>

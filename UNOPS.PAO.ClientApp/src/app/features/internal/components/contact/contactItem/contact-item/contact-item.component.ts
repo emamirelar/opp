@@ -24,6 +24,7 @@ import { BlockUI } from 'primeng/blockui';
 import { MessageModule } from 'primeng/message';
 import { ContactService } from '../../../../services/contact.service';
 import { CardModule } from 'primeng/card';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-contact-item',
@@ -47,7 +48,12 @@ import { CardModule } from 'primeng/card';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContactItemComponent implements OnInit, OnDestroy {
+  router = inject(Router);
+  activatedRoute = inject(ActivatedRoute);
   formGroup = new FormGroup({
+      id: new FormControl('', {
+        validators: [Validators.required]
+      }),
       salutation: new FormControl('', {
         validators:[Validators.required]
       }),
@@ -165,6 +171,8 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     allPronounsData = this.cachedDataService.allPronouns;
     showValidationFailedError = signal<boolean>(false);
     maxDate = new Date();
+    recordId: string = '';
+    recordData = signal<any>({});
   
     constructor() {
       //load salutations
@@ -177,25 +185,41 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     }
   
     ngOnInit() {
-      this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
-        this.cdr.detectChanges();
+      this.activatedRoute.paramMap.subscribe({
+        next: (paramMap) => {
+          this.recordId = paramMap.get("recordId") || '';
+  
+          if (this.recordId != '') {
+            this._loadRecordDetails();
+          }
+        }
       });
     }
-  
-    _handleOnSaveClick(){
-      let canSave = this._validate();
-  
-      canSave = true;
-  
-      if( canSave === true )
-      {
-        this.contactService.createContact(this._getRequestPayload()).subscribe({
-          next: (data: any) => {
-            this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
-            this.onRecordCreationSuccess.emit(data);
-          }
-        });
+
+    _loadRecordDetails() {
+      //fetch record details
+    this.contactService.getContactById(this.recordId).subscribe({
+      next: (data: any) => {
+
+        this.recordData.set(data);
+
+        this.formGroup.patchValue(data);
       }
+    });
+    }
+
+    handleOnCancelClick(event: MouseEvent) {
+      this.router.navigate(['contacts']);
+    }
+  
+    handleOnSaveClick(event: MouseEvent) {
+  
+      this.contactService.updateContactById(this._getRequestPayload()).subscribe({
+        next: (data: any) => {
+          this._loadRecordDetails();
+          this.feedbackDialogService.showSuccessToast({ detail: 'Changes saved successfully!' });
+        }
+      });
     }
   
     _validate(){

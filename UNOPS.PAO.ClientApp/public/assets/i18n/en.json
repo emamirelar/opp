@@ -53,6 +53,7 @@
             "lastModifiedDate": "Last Modified Date"
         },
         "contact": {
+            "actions": "Actions",
             "id": "ID",
             "salutation": "Salutation",
             "firstName": "First Name",

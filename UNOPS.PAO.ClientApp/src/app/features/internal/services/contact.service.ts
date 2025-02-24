@@ -53,4 +53,31 @@ export class ContactService {
       }
     }));
   }
+
+  updateContactById( requestJson: any ){
+
+    this.isLoading.set( true );
+    return this.http.put('/api/contact', requestJson).pipe(tap(
+    {
+      next: (event) => {
+        this.isLoading.set( false );
+      },
+      error: (err) => {
+        this.isLoading.set( false );
+      }
+    }));
+  }
+
+  deleteContactById(id: any) {
+    this.isLoading.set(true);
+    return this.http.delete(`/api/contact/${id}`).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
+  }
 }
