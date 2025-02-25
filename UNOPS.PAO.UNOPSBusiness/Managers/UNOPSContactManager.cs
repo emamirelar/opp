@@ -21,7 +21,7 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 public class UNOPSContactManager : IContactManager
 {
     private IMapper mapper;
-    private BaseRepository<UNOPSContact> ContactRepository;
+    private BaseRepository<UNOPSContact> contactRepository;
 
     private CommonEntityRepository commonRepository;
 
@@ -72,6 +72,8 @@ public class UNOPSContactManager : IContactManager
     {
         mapper.Map(model, entity);
 
+        entity.Name = String.Concat(model.Salutation, ' ', model.FirstName, ' ', model.MiddleName, ' ', model.LastName);
+
         // Update Eligible Entities
         /*if (entity.EligibleEntities != null)
         {
@@ -106,7 +108,7 @@ public class UNOPSContactManager : IContactManager
     public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context)
     {
         this.mapper = mapper;
-        ContactRepository = new BaseRepository<UNOPSContact>(context);
+        contactRepository = new BaseRepository<UNOPSContact>(context);
 
         commonRepository = new CommonEntityRepository(context);
     }
@@ -115,21 +117,21 @@ public class UNOPSContactManager : IContactManager
     {
         var entity = MapModelToEntity(model);
         
-        await ContactRepository.AddAsync(entity);
+        await contactRepository.AddAsync(entity);
 
         return mapper.Map<ContactModel>(entity);
     }
 
     public IEnumerable<ContactModel> GetContacts(int userId)
     {
-        return ContactRepository
+        return contactRepository
             .GetAll()
             .Select(x => MapEntityToModel(x, mapper));
     }
 
     public async Task<ContactModel?> GetContact(int userId, int id)
     {
-        var item = await ContactRepository.GetByIdAsync(id);
+        var item = await contactRepository.GetByIdAsync(id);
         if (item == null)
         {
             return default;
@@ -140,7 +142,7 @@ public class UNOPSContactManager : IContactManager
 
     /*public async Task<string?> GetContactStage(int id)
     {
-        var item = await ContactRepository.GetByIdAsync(id);
+        var item = await contactRepository.GetByIdAsync(id);
 
         if (item == null)
         {
@@ -152,14 +154,14 @@ public class UNOPSContactManager : IContactManager
 
     public IEnumerable<ExternalContactModel> GetPostedContacts()
     {
-        return ContactRepository
+        return contactRepository
             .GetAll()
             .Select(x => MapEntityToExternalModel(x, mapper));
     }
 
     public async Task<ExternalContactModel?> GetPostedContact(int id)
     {
-        var item = await ContactRepository.GetByIdAsync(id);
+        var item = await contactRepository.GetByIdAsync(id);
 
         if (item == null)
         {
@@ -171,7 +173,7 @@ public class UNOPSContactManager : IContactManager
 
     public async Task<ContactModel?> UpdateContactAsync(int userId, UpdateContactRequest model)
     {
-        var entity = await ContactRepository.GetByIdAsync(model.Id);
+        var entity = await contactRepository.GetByIdAsync(model.Id);
 
         if (entity == null)
         {
@@ -180,14 +182,14 @@ public class UNOPSContactManager : IContactManager
 
         entity = MapModelToEntity(model, entity);
 
-        await ContactRepository.UpdateAsync(entity);
+        await contactRepository.UpdateAsync(entity);
 
         return MapEntityToModel(entity, mapper);
     }
 
     /*public async Task<ContactModel?> UpdateStage(int userId, int id, string newStage)
     {
-        var entity = await ContactRepository.GetByIdAsync(id);
+        var entity = await contactRepository.GetByIdAsync(id);
 
         if (entity == null)
         {
@@ -201,18 +203,18 @@ public class UNOPSContactManager : IContactManager
 
         entity.Stage = newStage;
 
-        await ContactRepository.UpdateAsync(entity);
+        await contactRepository.UpdateAsync(entity);
 
         return mapper.Map<ContactModel>(entity);
     }*/
 
     public async Task DeleteContactAsync(int userId, int id)
     {
-        var entity = await ContactRepository.GetByIdAsync(id);
+        var entity = await contactRepository.GetByIdAsync(id);
 
         if (entity != null)
         {
-            await ContactRepository.Delete(entity);
+            await contactRepository.Delete(entity);
         }
     }
 }

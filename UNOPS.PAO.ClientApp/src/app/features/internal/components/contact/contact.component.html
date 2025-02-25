@@ -1,4 +1,4 @@
-<div class="main-container">
+  <div class="main-container">
     <div class="flex flex-wrap">
         <div>
           <p class="text-2xl font-semibold"> {{ 'title.contacts' | translate }} </p>
@@ -60,14 +60,15 @@
                   <td>
                     <p-button icon="pi pi-file-edit" (click)="handleOnOpenRecordDetails(contact)" title="Open Record Details" rounded />
                   </td>
+                  <td>
+                    <p-button icon="pi pi-trash" (click)="handleOnRecordDelete(contact)" title="Delete Record" rounded />
+                  </td>
                   <td>{{ contact.id }}</td>
-                  <td>{{ contact.fundingOpportunityName }}</td>
-                  <td>{{ contact.applicant.name || contact.applicant.email }}</td>
-                  <td>{{ contact.applicant.id }}</td>
-                  <td>{{ (contact.eligibilityCriteriaMet ? 'label.yes' : 'label.no') | translate }} </td>
-                  <td>{{ (contact.eligibilityEntityMet ? 'label.yes' : 'label.no') | translate }} </td>
-                  <td>{{ contact.submissionDate | date : 'medium' }}</td>
-                  <td>{{ contact.stage }}</td>
+                  <td>{{ contact.salutation }}</td>
+                  <td>{{ contact.firstName }}</td>
+                  <td>{{ contact.lastName }}</td>
+                  <td>{{ contact.email }} </td>
+                  <td>{{ contact.mobile }} </td>
               </tr>
             </ng-template>
   
