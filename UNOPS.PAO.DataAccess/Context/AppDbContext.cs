@@ -36,6 +36,8 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     public DbSet<Contact> Contacts { get; set; }
 
+    public DbSet<PartnerTree> PartnerTrees { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings
@@ -130,5 +132,8 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .WithMany()
                 .HasForeignKey(x => new { x.UserId, x.RoleId });
         });
+
+        modelBuilder
+            .Entity<PartnerTree>();
     }
 }

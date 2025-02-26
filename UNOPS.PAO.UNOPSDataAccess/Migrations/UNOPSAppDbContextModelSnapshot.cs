@@ -583,6 +583,68 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         });
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerTree", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .HasColumnType("text");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Parent")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PartnerTrees", "public");
+
+                    b.HasDiscriminator().HasValue("PartnerTree");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Proposal", b =>
                 {
                     b.Property<int>("Id")
@@ -1063,6 +1125,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("ProjectNumber");
 
                     b.HasDiscriminator().HasValue("UNOPSFundingOpportunity");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartnerTree", b =>
+                {
+                    b.HasBaseType("UNOPS.PAO.Domain.Entities.PartnerTree");
+
+                    b.HasDiscriminator().HasValue("UNOPSPartnerTree");
                 });
 
             modelBuilder.Entity("FundingOpportunityCountries", b =>

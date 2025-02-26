@@ -15,6 +15,7 @@ public class ManagerWrapper : IManagerWrapper
     private ISystemAdminManager systemAdminManager;
     private IWorkflowManager workflowManager;
     private IContactManager contactManager;
+    private IPartnerTreeManager partnerTreeManager;
 
     public ManagerWrapper(IMapper mapper, AppDbContext context)
     {
@@ -38,4 +39,6 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IWorkflowManager WorkflowManager => workflowManager;
 
     public virtual IContactManager ContactManager => contactManager;
+
+    public virtual IPartnerTreeManager PartnerTreeManager => partnerTreeManager;
 }
