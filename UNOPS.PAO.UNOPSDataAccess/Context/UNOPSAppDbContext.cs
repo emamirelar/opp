@@ -48,4 +48,5 @@ public class UNOPSAppDbContext : AppDbContext
     public DbSet<BudgetLine> BudgetLines { get; set; }
     public DbSet<Donor> Donors { get; set; }
     public new DbSet<UNOPSContact> Contacts { get; set; }
+    public new DbSet<UNOPSPartner> Partners { get; set; }
 }

@@ -6,5 +6,6 @@
         public const string FundingOpportunity = nameof(FundingOpportunity);
         public const string Proposal = nameof(Proposal);
         public const string Contact = nameof(Contact);
+        public const string Partner = nameof(Partner);
     }
 }

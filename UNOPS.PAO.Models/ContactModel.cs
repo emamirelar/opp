@@ -28,4 +28,5 @@ public class ContactModel
     public string? MailingStateProvince { get; set; }
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
+    public PartnerModel Partner { get; set; }
 }

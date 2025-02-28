@@ -40,4 +40,7 @@ public class APIDictionary
     // Contact
     public const string Contact = APIPrefix + "contact";
     public const string ExternalContact = ExternalAPIPrefix + "contact";
+
+    // Partner
+    public const string Partner = APIPrefix + "partner";
 }

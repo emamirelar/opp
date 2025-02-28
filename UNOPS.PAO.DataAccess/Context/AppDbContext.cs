@@ -35,6 +35,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<EntityUserRole> EntityUserRoles { get; set; }
 
     public DbSet<Contact> Contacts { get; set; }
+    public DbSet<Partner> Partners { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -86,7 +87,12 @@ public class AppDbContext : AuditableDbContext<int, int>
             });
 
         modelBuilder
-            .Entity<Contact>();
+            .Entity<Contact>(contact =>
+            {
+                contact.HasOne(x => x.Partner)
+                    .WithMany()
+                    .IsRequired(true);
+            });
 
         modelBuilder
             .Entity<Proposal>(proposal =>
