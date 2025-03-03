@@ -24,11 +24,15 @@
         "who": "Who",
         "why": "Why",
         "contacts": "Contacts",
+        "interactions": "Interactions",
+        "newInteraction": "New Interaction",
+        "editInteraction": "Edit Interaction",
         "contactTitles": {
             "contactInformation": "Contact Information",
             "addresses": "Addresses",
             "systemInformation": "System Information"
-        }
+        },
+        "confirmation": "Confirmation"
     },
     "button": {
         "cancel": "Cancel",
@@ -42,7 +46,8 @@
         "viewProposal": "View Proposal",
         "save": "Save",
         "submitProposal": "Submit Proposal",
-        "upload": "Upload"
+        "upload": "Upload",
+        "delete": "Delete"
     },
     "label": {
         "actions": "Actions",
@@ -68,7 +73,7 @@
             "assistantPhone": "Asst. Phone",
             "assistantEmail": "Asst. Email",
             "status": "Status",
-            "title": "Title", 
+            "title": "Title",
             "pronouns": "Pronouns",
             "department": "Department",
             "birthDate": "Birth Date",
@@ -129,13 +134,34 @@
         "selectionMethodology": "Selection Methodology",
         "stage": "Stage",
         "status": "Status",
-        "yes": "Yes"
+        "yes": "Yes",
+        "interaction": {
+            "type": "Type",
+            "date": "Date",
+            "notes": "Notes",
+            "contactId": "Contact ID",
+            "contactName": "Contact Name",
+            "types": {
+                "email": "Email",
+                "chat": "Chat",
+                "phone": "Phone",
+                "video_meeting": "Video Meeting",
+                "in_person_meeting": "In-person Meeting"
+            },
+            "selectType": "Select a type",
+            "selectContact": "Select a contact",
+            "contact": "Contact"
+        }
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Meet eligible entities' required",
         "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
         "noRecordsFound": "No records found.",
         "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
-        "welcomeTitle": "Welcome to Partners and Opportunities"
-    }
+        "welcomeTitle": "Welcome to Partners and Opportunities",
+        "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
+        "interactionDeleted": "Interaction successfully deleted",
+        "errorDeletingInteraction": "Error while deleting interaction"
+    },
+    "label.interaction.contact": "Contact"
 }

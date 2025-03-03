@@ -22,5 +22,8 @@ public class MappingProfile : Profile
         CreateMap<ContactRequest, UNOPSContact>();
         CreateMap<UNOPSContact, ContactModel>();
         CreateMap<ContactModel, UNOPSContact>();
+        CreateMap<InteractionRequest, UNOPSInteraction>();
+        CreateMap<UNOPSInteraction, InteractionModel>();
+        CreateMap<InteractionModel, UNOPSInteraction>();
     }
 }

@@ -15,6 +15,7 @@ public class ManagerWrapper : IManagerWrapper
     private ISystemAdminManager systemAdminManager;
     private IWorkflowManager workflowManager;
     private IContactManager contactManager;
+    private IInteractionManager interactionManager;
 
     public ManagerWrapper(IMapper mapper, AppDbContext context)
     {
@@ -27,6 +28,7 @@ public class ManagerWrapper : IManagerWrapper
         systemAdminManager = new SystemAdminManager(context);
 
         contactManager = new ContactManager(mapper, context);
+        interactionManager = new InteractionManager(mapper, context);
     }
 
     public virtual IFundingOpportunityManager FundingOpportunityManager => fundingOpportunityManager;
@@ -38,4 +40,6 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IWorkflowManager WorkflowManager => workflowManager;
 
     public virtual IContactManager ContactManager => contactManager;
+
+    public virtual IInteractionManager InteractionManager => interactionManager;
 }
