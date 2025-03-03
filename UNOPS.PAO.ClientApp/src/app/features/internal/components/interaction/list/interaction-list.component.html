@@ -1,0 +1,35 @@
+<div class="card">
+  <div class="flex justify-between items-center mb-4">
+    <div class="font-semibold text-xl">Interactions</div>
+    <p-button [label]="'title.newInteraction' | translate" icon="pi pi-plus" (click)="openNewInteractionModal()"></p-button>
+  </div>
+
+  <p-table
+    [value]="interactions()"
+    [loading]="loading()"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>{{ 'label.interaction.type' | translate }}</th>
+        <th>{{ 'label.interaction.contactName' | translate }}</th>
+        <th>{{ 'label.interaction.date' | translate }}</th>
+        <th>{{ 'label.interaction.notes' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-interaction>
+      <tr (click)="openEditInteractionModal(interaction, true)" class="cursor-pointer hover:opacity-75">
+        <td>{{ getInteractionTypeTranslationKey(interaction.type) | translate }}</td>
+        <td>{{ getContactName(interaction) }}</td>
+        <td>{{interaction.date | date }}</td>
+        <td>{{interaction.data}}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <app-interaction-modal
+    *ngIf="displayModal()"
+    [interaction]="selectedInteraction()"
+    (closeModal)="onModalClose()"
+    (deleted)="onInteractionDeleted()"
+  ></app-interaction-modal>
+</div>

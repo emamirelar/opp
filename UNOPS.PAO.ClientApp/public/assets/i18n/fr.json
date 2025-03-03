@@ -21,7 +21,12 @@
         "where": "Où",
         "when": "Quand",
         "who": "Qui",
-        "why": "Pourquoi"
+        "why": "Pourquoi",
+        "contacts": "Contacts",
+        "interactions": "Interactions",
+        "newInteraction": "Nouvelle Interaction",
+        "editInteraction": "Éditer une Interaction",
+        "confirmation": "Confirmation"
     },
     "button": {
         "cancel": "Annuler",
@@ -35,7 +40,8 @@
         "viewProposal": "Voir la Proposition",
         "save": "Enregistrer",
         "submitProposal": "Soumettre la Proposition",
-        "upload": "Téléverser"
+        "upload": "Téléverser",
+        "delete": "Supprimer"
     },
     "label": {
         "actions": "Actions",
@@ -93,13 +99,34 @@
         "selectionMethodology": "Méthodologie de Sélection",
         "stage": "Étape",
         "status": "Statut",
-        "yes": "Oui"
+        "yes": "Oui",
+        "interaction": {
+            "type": "Type",
+            "date": "Date",
+            "notes": "Notes",
+            "contactId": "ID du contact",
+            "contactName": "Nom du Contact",
+            "types": {
+                "email": "Email",
+                "chat": "Chat",
+                "phone": "Téléphone",
+                "video_meeting": "Rendez-vous vidéo",
+                "in_person_meeting": "Rendez-vous en personne"
+            },
+            "selectType": "Sélectionnez un type",
+            "selectContact": "Sélectionnez un contact",
+            "contact": "Contact"
+        },
+        "interaction.contact": "Contact"
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Respecter les entités éligibles' requis",
         "entityMeetEligibleCriteriaRequired": "'Respecter les critères d'éligibilité' requis",
         "noRecordsFound": "Aucun enregistrement trouvé.",
         "proposalRequirements": "La proposition ne peut pas être soumise tant que tous les champs requis ne sont pas complétés.",
-        "welcomeTitle": "Bienvenue sur Grant+"
+        "welcomeTitle": "Bienvenue sur Grant+",
+        "deleteInteractionConfirmation": "Êtes-vous sûr de vouloir supprimer cette interaction ?",
+        "interactionDeleted": "L'interaction a été supprimée avec succès",
+        "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction"
     }
 }

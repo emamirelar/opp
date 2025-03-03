@@ -36,7 +36,7 @@ export class ContactComponent implements OnInit, OnDestroy {
   contactService = inject(ContactService);
 
   newContact : boolean = false;
-  
+
   columns = signal<columnDefination[]>([]);
 
   contactData = this.contactService.allContacts;
@@ -97,7 +97,7 @@ export class ContactComponent implements OnInit, OnDestroy {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
         this.contactService.getAllContacts();
       }
-    });;
+    });
   }
 
   ngOnDestroy(): void {

@@ -21,7 +21,12 @@
         "where": "Dónde",
         "when": "Cuándo",
         "who": "Quién",
-        "why": "Por qué"
+        "why": "Por qué",
+        "contacts": "Contactos",
+        "interactions": "Interacciones",
+        "newInteraction": "Nueva Interacción",
+        "editInteraction": "Editar Interacción",
+        "confirmation": "Confirmación"
     },
     "button": {
         "cancel": "Cancelar",
@@ -35,7 +40,8 @@
         "viewProposal": "Ver Propuesta",
         "save": "Guardar",
         "submitProposal": "Enviar Propuesta",
-        "upload": "Subir"
+        "upload": "Subir",
+        "delete": "Eliminar"
     },
     "label": {
         "actions": "Acciones",
@@ -93,13 +99,32 @@
         "selectionMethodology": "Metodología de Selección",
         "stage": "Etapa",
         "status": "Estado",
-        "yes": "Sí"
+        "yes": "Sí",
+        "interaction": {
+          "type": "Tipo",
+          "date": "Fecha",
+          "notes": "Notas",
+          "contactName": "Nombre del Contacto",
+          "types": {
+            "email": "Correo electrónico",
+            "chat": "Chat",
+            "phone": "Teléfono",
+            "video_meeting": "Reunión por video",
+            "in_person_meeting": "Reunión presencial"
+          },
+          "selectType": "Seleccione un tipo",
+          "selectContact": "Seleccione un contacto",
+          "contact": "Contacto"
+        }
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Cumplir con entidades elegibles' requerido",
         "entityMeetEligibleCriteriaRequired": "'Cumplir con criterios de elegibilidad' requerido",
         "noRecordsFound": "No se encontraron registros.",
         "proposalRequirements": "La propuesta no puede enviarse hasta que se completen todos los campos obligatorios.",
-        "welcomeTitle": "Bienvenido a Grant+"
+        "welcomeTitle": "Bienvenido a Grant+",
+        "deleteInteractionConfirmation": "¿Está seguro de que desea eliminar esta interacción?",
+        "interactionDeleted": "Interacción eliminada con éxito",
+        "errorDeletingInteraction": "Error al eliminar la interacción"
     }
 }

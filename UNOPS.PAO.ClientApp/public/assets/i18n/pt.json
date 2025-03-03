@@ -21,7 +21,13 @@
         "where": "Onde",
         "when": "Quando",
         "who": "Quem",
-        "why": "Por quê"
+        "why": "Por quê",
+        "confirmation": "Confirmação",
+        "contacts": "Contatos",
+        "interactions": "Interações",
+        "newInteraction": "Nova Interação",
+        "editInteraction": "Editar Interação"
+
     },
     "button": {
         "cancel": "Cancelar",
@@ -35,7 +41,8 @@
         "viewProposal": "Ver Proposta",
         "save": "Salvar",
         "submitProposal": "Enviar Proposta",
-        "upload": "Enviar"
+        "upload": "Enviar",
+        "delete": "Excluir"
     },
     "label": {
         "actions": "Ações",
@@ -93,13 +100,33 @@
         "selectionMethodology": "Metodologia de Seleção",
         "stage": "Etapa",
         "status": "Status",
-        "yes": "Sim"
+        "yes": "Sim",
+        "interaction": {
+          "type": "Tipo",
+          "date": "Data",
+          "notes": "Notas",
+          "contactName": "Nome do Contato",
+          "types": {
+            "email": "Email",
+            "chat": "Chat",
+            "phone": "Telefone",
+            "video_meeting": "Reunião por vídeo",
+            "in_person_meeting": "Reunião presencial"
+          },
+          "selectType": "Selecione um tipo",
+          "selectContact": "Selecione um contato",
+          "contact": "Contato"
+        }
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Atender entidades elegíveis' obrigatório",
         "entityMeetEligibleCriteriaRequired": "'Atender critérios de elegibilidade' obrigatório",
         "noRecordsFound": "Nenhum registro encontrado.",
         "proposalRequirements": "A proposta não pode ser enviada até que todos os campos obrigatórios sejam preenchidos.",
-        "welcomeTitle": "Bem-vindo ao Grant+"
-    }
+        "welcomeTitle": "Bem-vindo ao Grant+",
+        "deleteInteractionConfirmation": "Tem certeza que deseja excluir esta interação?",
+        "interactionDeleted": "Interação excluída com sucesso",
+        "errorDeletingInteraction": "Erro ao excluir interação"
+    },
+    "label.interaction.contact": "Contato"
 }

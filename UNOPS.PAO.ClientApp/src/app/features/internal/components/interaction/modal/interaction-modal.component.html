@@ -1,0 +1,73 @@
+<p-confirmDialog></p-confirmDialog>
+<p-dialog
+  [(visible)]="display"
+  [modal]="true"
+  [style]="{ width: '50rem' }" [breakpoints]="{ '1199px': '95vw'}"
+  [contentStyle]="{'overflow': 'visible', 'max-height': 'none'}"
+  [header]="(interaction?.id ? 'title.editInteraction' : 'title.newInteraction') | translate"
+  (onHide)="hide()">
+
+  <form [formGroup]="interactionForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+    <div class="flex flex-col md:flex-row gap-6">
+      <div class="flex flex-col gap-2 w-full">
+        <label for="type">{{ 'label.interaction.type' | translate }}</label>
+        <p-select
+          id="type"
+          [options]="typeOptions"
+          formControlName="type"
+          [placeholder]="'label.interaction.selectType' | translate"
+          optionLabel="translateKey"
+          optionValue="value"
+          class="w-full"
+        >
+          <ng-template pTemplate="selectedItem" let-item>
+            {{ item.translateKey | translate }}
+          </ng-template>
+          <ng-template pTemplate="item" let-item>
+            {{ item.translateKey | translate }}
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="date">{{ 'label.interaction.date' | translate }}</label>
+        <p-calendar id="date" formControlName="date" [showTime]="true" class="w-full"></p-calendar>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="data">{{ 'label.interaction.notes' | translate }}</label>
+      <textarea id="data" pTextarea formControlName="data" class="w-full" rows="6" [autoResize]="true"></textarea>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <label for="contact">{{ 'label.interaction.contact' | translate }}</label>
+      <p-select
+        id="contact"
+        formControlName="contactId"
+        [options]="contactService.allContacts()"
+        optionLabel="firstName"
+        optionValue="id"
+        [filter]="true"
+        filterBy="name"
+        [showClear]="true"
+        placeholder="{{ 'label.interaction.selectContact' | translate }}"
+        class="w-full">
+      </p-select>
+    </div>
+
+    <div class="flex justify-end flex-wrap gap-2">
+      <p-button
+        *ngIf="interactionForm.get('id')?.value"
+        type="button"
+        [label]="'button.delete' | translate"
+        class="p-button-text mr-auto"
+        variant="outlined"
+        severity="danger"
+        (click)="deleteInteraction()"
+      ></p-button>
+      <p-button [label]="'button.cancel' | translate" severity="secondary" (click)="hide()"></p-button>
+      <p-button type="submit" icon="pi pi-check" [label]="'button.save' | translate" [disabled]="!interactionForm.valid"></p-button>
+    </div>
+  </form>
+</p-dialog>
