@@ -91,8 +91,12 @@ public class AppDbContext : AuditableDbContext<int, int>
             {
                 contact.HasOne(x => x.Partner)
                     .WithMany()
+                    .HasForeignKey(x => x.PartnerId)
                     .IsRequired(true);
             });
+
+        modelBuilder
+            .Entity<Partner>();
 
         modelBuilder
             .Entity<Proposal>(proposal =>

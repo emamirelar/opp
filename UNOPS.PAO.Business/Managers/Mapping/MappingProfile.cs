@@ -23,5 +23,8 @@ public class MappingProfile : Profile
         CreateMap<EligibleEntity, EligibleEntityModel>();
         CreateMap<SDG, SDGModel>();
         CreateMap<Country, CountryModel>();
+        CreateMap<PartnerRequest, Partner>();
+        CreateMap<UpdatePartnerRequest, Partner>();
+        CreateMap<Partner, PartnerModel>();
     }
 }

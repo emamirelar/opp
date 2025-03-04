@@ -6,6 +6,8 @@ import { authGuard } from '../../essentials/guards/auth.guard';
 import { FundingOpportunityItemComponent } from '../../features/internal/components/fundingOpportunity/fundingOpportunityItem/fundingOpportunityItem.component';
 import { ContactComponent } from './components/contact/contact.component';
 import { ContactItemComponent } from './components/contact/contactItem/contact-item/contact-item.component';
+import { PartnerComponent } from './components/partner/partner.component';
+import { PartnerItemComponent } from './components/partner/partnerItem/partner-item.component';
 
 const internalRoutes: Routes = [
   {
@@ -28,6 +30,18 @@ const internalRoutes: Routes = [
         path: 'contact/:recordId',
         data: { breadcrumb: 'Details' },
         component: ContactItemComponent,
+        canActivate: [authGuard],
+      },
+      {
+        path: 'partners',
+        component: PartnerComponent,
+        canActivate: [authGuard],
+        data: { Breadcrumb: 'Partners' }
+      },
+      {
+        path: 'partner/:recordId',
+        data: { breadcrumb: 'Details' },
+        component: PartnerItemComponent,
         canActivate: [authGuard],
       }
     ],

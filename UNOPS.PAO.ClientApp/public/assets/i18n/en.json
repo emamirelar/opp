@@ -13,6 +13,7 @@
         "fundingOpportunities": "Funding Opportunities",
         "newFundingOpportunity": "New Funding Opportunity",
         "newContact": "New Contact",
+        "newPartner": "New Partner",
         "home": "Home",
         "proposals": "Proposals",
         "proposal": "Proposal",
@@ -28,7 +29,14 @@
             "contactInformation": "Contact Information",
             "addresses": "Addresses",
             "systemInformation": "System Information"
-        }
+        },
+      "partners": "Partners",
+      "partnerTitles": {
+            "partnerInformation": "Partner Information",
+            "addressInformation": "Address Information",
+            "address1": "Address 1",
+            "address2": "Address 2"
+      }
     },
     "button": {
         "cancel": "Cancel",
@@ -80,6 +88,40 @@
             "mailingStateProvince": "Mailing State/Province",
             "mailingPostalCode": "Mailing Postal Code",
             "mailingCountry": "Mailing Country"
+        },
+        "partner": {
+          "actions": "Actions",
+          "id": "ID",
+          "name": "Name",
+          "status": "Status",
+          "newEngagement": "New Engagement",
+          "phone": "Phone",
+          "website": "Website",
+          "address1Street": "Street",
+          "address1Street2": "Street2",
+          "address1City": "City",
+          "address1StateProvince": "State/Province",
+          "address1PostalCode": "Postal Code",
+          "address1Country": "Country",
+          "address2Street": "Street",
+          "address2Street2": "Street2",
+          "address2City": "City",
+          "address2StateProvince": "State/Province",
+          "address2PostalCode": "Postal Code",
+          "address2Country": "Country",
+          "shortName": "Short Name",
+          "internalReportingLevel": "Internal Reporting Level",
+          "externalReportingLevel": "External Reporting Level",
+          "pooledFund": "Pooled Fund",
+          "dDRequired": "DD Required",
+          "dDEACDone": "DD/EAC Done",
+          "eACReference": "EAC Reference",
+          "globalKeyAccount": "Global Key Account",
+          "uNSecretariatEntity": "UN Secretariat Entity",
+          "levyPotentiallyApplies": "Levy Potentially Applies",
+          "reasonForLevyNotApplying": "Reason For Levy Not Applying",
+          "levyTreatment": "Levy Treatment",
+          "scope": "Scope"
         },
         "clarificationDeadline": "Clarification Deadline",
         "document": {

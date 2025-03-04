@@ -33,4 +33,5 @@ public class Contact : ModifiableDeletableEntity
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
     public Partner Partner { get; set; }
+    public int PartnerId { get; set; }
 }

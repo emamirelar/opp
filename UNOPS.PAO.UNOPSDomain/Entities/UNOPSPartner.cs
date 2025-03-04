@@ -8,6 +8,4 @@ using UNOPS.PAO.UNOPSDomain.Entities.Common;
 
 public class UNOPSPartner : Domain.Entities.Partner
 {
-    public string PartnerNumber { get; set; }
-    //public List<Document> Documents { get; set; }
 }
