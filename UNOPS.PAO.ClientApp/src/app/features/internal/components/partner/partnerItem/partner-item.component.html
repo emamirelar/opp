@@ -8,11 +8,13 @@
   <p-panel header="{{ 'title.partnerTitles.partnerInformation' | translate }}"
            [toggleable]="true"
            [styleClass]="'section'">
-    <div class="flex flex-row justify-between">
-      <div class="mb-6 pr-2">
+    <div class="flex flex-row">
+      <div class="mb-6 pr-3">
         <label>{{ "label.partner.id" | translate }}</label>
         <input pInputText fluid="true" formControlName="id" readonly />
       </div>
+    </div>
+    <div class="flex flex-row justify-between">
       <div class="mb-6 pr-4">
         <label class="required">*</label><label>{{ "label.partner.name" | translate }}</label>
         <input pInputText fluid="true" formControlName="name" />
@@ -21,8 +23,15 @@
         <p-message severity="error" variant="simple">Name must be entered.</p-message>
         }
       </div>
-
-      <div class="mb-6 pr-2">
+      <div class="mb-6 pr-4">
+        <label class="required">*</label><label>{{ "label.partner.shortName" | translate }}</label>
+        <input pInputText fluid="true" formControlName="shortName" />
+        @if( formGroup.get("shortName")?.invalid && showValidationFailedError() )
+        {
+        <p-message severity="error" variant="simple">Short Name must be entered.</p-message>
+        }
+      </div>
+      <div class="mb-6 pr-4">
         <label class="required">*</label><label>{{ "label.partner.status" | translate }}</label>
         <p-select formControlName="status"
                   [options]="allStatusData()"
@@ -46,39 +55,31 @@
         }
       </div>
     </div>
-    <div class="flex flex-row">
-      <div class="mb-6 pr-2">
+
+    <div class="flex flex-row justify-between">
+      <div class="mb-6 pr-4">
         <label>{{ "label.partner.phone" | translate }}</label>
         <input pInputText fluid="true" formControlName="phone" />
       </div>
 
-      <div class="mb-6 pr-2">
+      <div class="mb-6 pr-4">
         <label>{{ "label.partner.website" | translate }}</label>
         <input pInputText fluid="true" formControlName="website" />
       </div>
 
       <div class="mb-6 pr-4">
-        <label class="required">*</label><label>{{ "label.partner.shortName" | translate }}</label>
-        <input pInputText fluid="true" formControlName="shortName" />
-        @if( formGroup.get("shortName")?.invalid && showValidationFailedError() )
-        {
-        <p-message severity="error" variant="simple">Short Name must be entered.</p-message>
-        }
-      </div>
-
-      <div class="mb-6 pr-2">
         <label>{{ "label.partner.internalReportingLevel" | translate }}</label>
         <input pInputText fluid="true" formControlName="internalReportingLevel" />
       </div>
 
-      <div class="mb-6 pr-2">
+      <div class="mb-6 pr-4">
         <label>{{ "label.partner.externalReportingLevel" | translate }}</label>
         <input pInputText fluid="true" formControlName="externalReportingLevel" />
       </div>
     </div>
     <p-divider />
 
-    <div class="flex flex-row">
+    <div class="flex flex-row justify-between">
       <div class="mb-6 pr-4">
         <label class="required">*</label><label>{{ "label.partner.pooledFund" | translate }}</label>
         <input pInputText fluid="true" formControlName="pooledFund" />
@@ -106,29 +107,12 @@
         }
       </div>
 
-      <div class="mb-6 pr-2">
+      <div class="mb-6 pr-4">
         <label>{{ "label.partner.eACReference" | translate }}</label>
         <input pInputText fluid="true" formControlName="eACReference" />
       </div>
-
-      <div class="mb-6 pr-2">
-        <!--<label>{{ "label.partner.globalKeyAccount" | translate }}</label>-->
-        <!--<p-checkbox formControlName="globalKeyAccount" />-->
-        <p-checkbox [binary]="true"
-                    formControlName="globalKeyAccount"
-                    inputId="gka" />
-        <label for="gka" class="ml-2">{{ "label.partner.globalKeyAccount" | translate }}</label>
-      </div>
-
-      <div class="mb-6 pr-2">
-        <!--<label>{{ "label.partner.uNSecretariatEntity" | translate }}</label>-->
-        <!--<p-checkbox formControlName="uNSecretariatEntity" />-->
-        <p-checkbox [binary]="true"
-                    formControlName="uNSecretariatEntity"
-                    inputId="unse" />
-        <label for="unse" class="ml-2">{{ "label.partner.uNSecretariatEntity" | translate }}</label>
-      </div>
-
+    </div>
+    <div class="flex flex-row justify-between">
       <div class="mb-6 pr-4">
         <label class="required">*</label><label>{{ "label.partner.levyPotentiallyApplies" | translate }}</label>
         <input pInputText fluid="true" formControlName="levyPotentiallyApplies" />
@@ -157,13 +141,33 @@
         }
       </div>
     </div>
+    <div class="flex flex-row">
+      <div class="mb-6 pr-2">
+        <!--<label>{{ "label.partner.globalKeyAccount" | translate }}</label>-->
+        <!--<p-checkbox formControlName="globalKeyAccount" />-->
+        <p-checkbox [binary]="true"
+                    formControlName="globalKeyAccount"
+                    inputId="gka" />
+        <label for="gka" class="ml-2">{{ "label.partner.globalKeyAccount" | translate }}</label>
+      </div>
+
+      <div class="mb-6 pr-2">
+
+        <!--<label>{{ "label.partner.uNSecretariatEntity" | translate }}</label>-->
+        <!--<p-checkbox formControlName="uNSecretariatEntity" />-->
+        <p-checkbox [binary]="true"
+                    formControlName="uNSecretariatEntity"
+                    inputId="unse" />
+        <label for="unse" class="ml-2">{{ "label.partner.uNSecretariatEntity" | translate }}</label>
+      </div>
+    </div>
   </p-panel>
-  <p-panel header="{{ 'title.partnerTitles.address1Information' | translate }}"
+  <p-panel header="{{ 'title.partnerTitles.addressInformation' | translate }}"
            [toggleable]="true"
            [styleClass]="'section'">
     <div class="flex flex-row">
       <div class="mb-12 pr-2 w-1/2">
-        <p-card header="{{ 'title.partnerTitles.address1' }}">
+        <p-card header="{{ 'title.partnerTitles.address1' | translate }}">
           <div class="pb-2">
             <label>{{ "label.partner.address1Street" | translate }}</label>
             <input pInputText fluid="true" formControlName="address1Street" />
@@ -191,7 +195,7 @@
         </p-card>
       </div>
       <div class="mb-12 pr-2 w-1/2">
-        <p-card header="{{ 'title.partnerTitles.address2' }}">
+        <p-card header="{{ 'title.partnerTitles.address2' | translate }}">
           <div class="pb-2">
             <label>{{ "label.partner.address2Street" | translate }}</label>
             <input pInputText fluid="true" formControlName="address2Street" />
@@ -218,7 +222,7 @@
           </div>
         </p-card>
       </div>
-    </div>"
+    </div>
   </p-panel>
   <div class="footer-container">
     <p-button label="{{'button.cancel' | translate}}" severity="secondary" [styleClass]="'cancel-button'"
