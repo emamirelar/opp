@@ -28,6 +28,7 @@ public class ManagerWrapper : IManagerWrapper
         systemAdminManager = new SystemAdminManager(context);
 
         contactManager = new ContactManager(mapper, context);
+        partnerTreeManager = new PartnerTreeManager(mapper, context);
     }
 
     public virtual IFundingOpportunityManager FundingOpportunityManager => fundingOpportunityManager;

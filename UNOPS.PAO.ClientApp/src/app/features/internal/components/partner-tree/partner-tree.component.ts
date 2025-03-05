@@ -1,144 +1,177 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, effect, ChangeDetectorRef } from '@angular/core';
 import { TreeTableModule } from 'primeng/treetable';
 import { TreeNode } from "primeng/api"; 
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
+import { TranslateModule } from '@ngx-translate/core';
+import { ColumnDefinition, FeatureBaseComponent } from '../../../../common/reusables/feature-base/feature-base.component';
+import { PartnerTreeService } from '../../services/partner-tree.service';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { SelectModule } from 'primeng/select';
+import { DialogModule } from 'primeng/dialog';
+import { PartnerTreeItemComponent } from './partner-tree-item/partner-tree-item.component';
 
 @Component({
   selector: 'app-partner-tree',
-  imports: [TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule],
+  imports: [DialogModule, PartnerTreeItemComponent, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule],
   templateUrl: './partner-tree.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './partner-tree.component.scss'
 })
-export class PartnerTreeComponent implements OnInit{
-  files: TreeNode[] = []; 
-    cols:any[] = [];
-    constructor() {
-    }
-    ngOnInit() {
-      this.cols = [ 
-        { field: "name", header: "Name" }, 
-        { field: "description", header: "Short Description" } ,
-        { field: "code", header: "Code" },
-        { field: "type", header: "Type" },
-        { field: "parent", header: "Parent Account Level" },
-        { field: "status", header: "Status" },
-        //{ field: "action", header: "Action" },
-    ]; 
-    this.files = [ 
-        { 
-            data: { 
-                name: "Government", 
-                description: "Government",
-                code: "GOVERNMENT",
-                type: "Level 1",
-                status: "Active"
-            }, 
-            children: [ 
-                { 
-                    data: { 
-                      name: "OECD/DAC Government", 
-                      description: "Gov: OECD/DAC",
-                      code: "OECD_DAC",
-                      type: "Level 2",
-                      parent: "Government",
-                      status: "Active",
-                    } ,
-                    children: [{
-                      data: {
-                        name: "Iceland", 
-                        description: "Iceland",
-                        code: "ICELAND",
-                        type: "Level 3",
-                        parent: "OECD/DAC Government",
-                        status: "Active",
-                      }
-                    }, {
-                      data: {
-                        name: "Australia", 
-                        description: "Australia",
-                        code: "AUSTRALIA",
-                        type: "Level 3",
-                        parent: "OECD/DAC Government",
-                        status: "Active",
-                      }
-                    }, {
-                      data: {
-                        name: "Greece", 
-                        description: "Greece",
-                        code: "GREECE",
-                        type: "Level 3",
-                        parent: "OECD/DAC Government",
-                        status: "Active",
-                      }
-                    },{
-                      data: {
-                        name: "Norway", 
-                        description: "Norway",
-                        code: "NORWAY",
-                        type: "Level 3",
-                        parent: "OECD/DAC Government",
-                        status: "Active",
-                      }
-                    }]
-                }, 
-                { 
-                    data: { 
-                      name: "Non-OECD/DAC Government", 
-                      description: "Gov: Non-OECD/DAC",
-                      code: "NON_OECD_DAC",
-                      type: "Level 2",
-                      parent: "Government",
-                      status: "Active"
-                    },
-                    children: [{
-                      data: {
-                        name: "Mexico", 
-                        description: "Mexico",
-                        code: "MEXICO",
-                        type: "Level 3",
-                        parent: "Non-OECD/DAC Government",
-                        status: "Active",
-                      }
-                    }, {
-                      data: {
-                        name: "Panama", 
-                        description: "Panama",
-                        code: "PANAMA",
-                        type: "Level 3",
-                        parent: "Non-OECD/DAC Government",
-                        status: "Active",
-                      }
-                    }, {
-                      data: {
-                        name: "Qatar", 
-                        description: "Qatar",
-                        code: "QATAR",
-                        type: "Level 3",
-                        parent: "Non-OECD/DAC Government",
-                        status: "Active",
-                      }
-                    }, {
-                      data: {
-                        name: "India", 
-                        description: "India",
-                        code: "INDIA",
-                        type: "Level 3",
-                        parent: "Non-OECD/DAC Government",
-                        status: "Active",
-                      }
-                    }]
-                } 
-            ] 
-        }, 
-            ]; 
-    }
-    
+export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit {
+  override data: TreeNode[] = [];
+  cols: ColumnDefinition[] = [];
+  updatedRecords: any[] = [];
+  parentOptions: any[] = [];
+  override service = inject(PartnerTreeService);
+  originalData: any[] = [];
+  override isDataLoading = this.service.isLoading();
+  levelOneOptions: any[] = [];
+  levelTwoOptions: any[] = [];
+  levelThreeOptions: any[] = [];
+  parentUpdated: boolean = false;
+  updatePartnerLevel: boolean = false;
+  createPartnerLevel: boolean = false;
+  changeRecord: any = null;
 
-    handleOnSaveClick() {
-  
-      
+  constructor() {
+    super();
+  }
+
+  override getColumns(): ColumnDefinition[] {
+    return [
+      { id: 'action', label: 'label.partnerTree.actions', editable: false }, 
+      { id: "name", label: "label.partnerTree.name", editable: true }, 
+      { id: "description", label: "label.partnerTree.description", editable: true },
+      { id: "type", label: "label.partnerTree.type", editable: false },
+      { id: "parent", label: "label.partnerTree.parent", editable: true },
+      { id: 'action', label: 'label.partnerTree.actions', editable: false }, 
+    ];
+  }
+
+  handleOnRecordUpdation(event: any) {
+    this.updatePartnerLevel = false;
+    this.createPartnerLevel = false;
+    this.loadPartnerTreeData();
+  }
+
+  onEditComplete(event: any) {
+    console.log('Edit complete', event);
+    if (event.data === 'action') {
+      return;
     }
+    var columns = this.getColumns();
+    var originalData = this.parentOptions.find(option => option.id === event.field?.id);
+    let valueChanged = false;
+    if (originalData) {
+       for (let index = 0; index < columns.length; index++) {
+          if (columns[index].id !== 'action' && originalData[columns[index].id] !== event.field[columns[index].id]) {
+            valueChanged = true;
+            break;
+          }
+       }
+    } else {
+        valueChanged = true;
+    }
+    if (valueChanged) {
+      this.updatedRecords.push(event.field);
+      if (event.data === 'parent') {
+        this.parentUpdated = true;
+      }
+    } else {
+      this.updatedRecords = this.updatedRecords.filter(record => record.id !== event.field.id);
+    }
+    console.log(this.updatedRecords);
+  }
+
+  isRecordUpdated(node: any): boolean {
+    console.log(this.updatedRecords.some(record => record.id === node?.node?.data?.id));
+    return this.updatedRecords.some(record => record.id === node?.node?.data?.id);
+  }
+
+  filterParentOptions(rowData: any) {
+    return this.parentOptions.filter(option => option.value !== rowData.parent && option.value !== rowData.code);
+  }
+
+  override ngOnInit() {
+    this.activatedRoute.paramMap.subscribe({
+      next: (paramMap) => {
+        // Initialize columns
+        this.cols = this.getColumns();
+        this.loadPartnerTreeData();
+      }
+    });
+
+    this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
+      this.cdr.detectChanges();
+    });
+  }
+
+  loadPartnerTreeData() {
+      // Make server call to get all partner tree data
+      this.service.getAllPartnerTree().subscribe({
+        next: (data: any) => {
+          this.updatedRecords = [];
+          console.log('Loaded partner tree data:', data);
+          this.data = data;
+          this.cdr.detectChanges(); // Trigger change detection
+          this.originalData = this.service.originalData;
+          this.parentOptions = this.service.parentOptions;
+          this.parentUpdated = false;
+          this.changeRecord = null;
+        },
+        error: (err: any) => {
+          console.error('Error loading partner tree data:', err);
+        }
+      });
+
+  }
+
+  onCreateNewPartnerLevel() {
+    this.createPartnerLevel = true;
+    let level = 'Level_1';
+    this.changeRecord = {
+      type: level,
+      parent: null,
+      id: null,
+      status: 'Active'
+    };
+
+  }
+
+  onAddPartnerLevel(rowData: any) {
+    this.createPartnerLevel = true;
+    let level = rowData.type.split('_')[0] + '_' + (parseInt(rowData.type.split('_')[1]) + 1);
+    this.changeRecord = {
+      type: level,
+      parent: rowData.code,
+      id: null,
+      status: 'Active'
+    };
+  }
+
+  handleOnRevertClick() {
+    this.loadPartnerTreeData();
+  }
+
+  handleOnSaveClick() {
+    this.service.updatePartnerTreeLevel(this.updatedRecords).subscribe({
+      next: (data: any) => {
+        this.feedbackDialogService.showSuccessToast({ detail: 'Updated successfully!' });
+        this.loadPartnerTreeData();
+      }
+    });
+  }
+
+  handleOnDeleteClick() {
+    this.service.deletePartnerLevel(this.updatedRecords).subscribe({
+      next: (data: any) => {
+        this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
+        this.loadPartnerTreeData();
+      }
+    });
+  }
 }

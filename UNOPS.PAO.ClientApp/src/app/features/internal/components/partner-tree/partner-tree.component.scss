@@ -1,0 +1,37 @@
+td.p-cell-editing {
+    input {
+        background-color: lightblue;
+        padding: 5px;
+    }
+}
+
+.p-treetable .p-treetable-tbody > tr > td {
+    max-width: 200px; /* Adjust the max-width as needed */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.p-treetable .p-treetable-tbody > tr > td.p-editable-column > p-treetablecelleditor {
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.updated-record {
+    background-color: lightseagreen !important;
+}
+
+.table-container {
+    position: relative;
+}
+
+.spinner-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}

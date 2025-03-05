@@ -10,9 +10,9 @@ using UNOPS.PAO.Models;
 
 public interface IPartnerTreeManager
 {
-    Task<PartnerTreeModel> CreatePartnerTreeAsync(PartnerTreeRequest model);
+    Task<PartnerTreeModel> CreatePartnerTreeAsync(PartnerTreeDataModel model);
 
-    IEnumerable<PartnerTreeModel> GetPartnerTrees(int userId);
+    IEnumerable<PartnerTreeModel> GetPartnerTrees(int userId, string sortBy = "Name", bool ascending = true);
 
     Task<PartnerTreeModel?> GetPartnerTree(int userId, int id);
 
@@ -20,7 +20,7 @@ public interface IPartnerTreeManager
 
     Task<ExternalPartnerTreeModel?> GetPostedPartnerTree(int id);
 
-    Task<PartnerTreeModel?> UpdatePartnerTreeAsync(int userId, UpdatePartnerTreeRequest model);
+    Task<PartnerTreeModel?> UpdatePartnerTreeAsync(int userId, PartnerTreeDataModel model);
 
     Task DeletePartnerTreeAsync(int userId, int id);
 }

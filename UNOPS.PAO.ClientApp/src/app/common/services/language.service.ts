@@ -44,7 +44,7 @@ export class LanguageService {
   getLanguages(): Language[] {
     return this.translationService
       .getLangs()
-      .map((lang) => ({ name: lang.toUpperCase(), code: lang }));
+      .map((lang) => ({ name: lang.toUpperCase(), code: lang,  }));
   }
   
 }

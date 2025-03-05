@@ -25,6 +25,8 @@
         "why": "Why",
         "contacts": "Contacts",
         "partnerTree": "Partner Tree",
+        "newPartnerLevel": "New Partner Level",
+        "updatePartnerLevel": "Update Partner Level",
         "contactTitles": {
             "contactInformation": "Contact Information",
             "addresses": "Addresses",
@@ -43,7 +45,9 @@
         "viewProposal": "View Proposal",
         "save": "Save",
         "submitProposal": "Submit Proposal",
-        "upload": "Upload"
+        "upload": "Upload",
+        "inactive": "Mark as Inactive",
+        "active": "Mark as Active"
     },
     "label": {
         "actions": "Actions",
@@ -81,6 +85,20 @@
             "mailingStateProvince": "Mailing State/Province",
             "mailingPostalCode": "Mailing Postal Code",
             "mailingCountry": "Mailing Country"
+        },
+        "partnerTree": {
+            "id": "ID",
+            "name": "Name",
+            "type": "Type",
+            "description": "Description",
+            "parent": "Parent",
+            "code": "Code",
+            "status": "Status",
+            "createdBy": "Created By",
+            "createdDate": "Created Date",
+            "lastModifiedBy": "Last Modified By",
+            "lastModifiedDate": "Last Modified Date",
+            "actions": ""
         },
         "clarificationDeadline": "Clarification Deadline",
         "document": {

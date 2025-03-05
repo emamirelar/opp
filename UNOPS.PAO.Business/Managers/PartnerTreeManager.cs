@@ -25,20 +25,44 @@ public class PartnerTreeManager : IPartnerTreeManager
         this.PartnerTreeRepository = new DataRepository<PartnerTree>(context);
     }
 
-    public async Task<PartnerTreeModel> CreatePartnerTreeAsync(PartnerTreeRequest model)
+    private PartnerTreeModel MapEntityToModel(PartnerTree entity)
+    {
+        var result = new PartnerTreeModel
+        {
+            Data = mapper.Map<PartnerTree, PartnerTreeDataModel>(entity)
+        };
+
+        return result;
+    }
+
+    public async Task<PartnerTreeModel> CreatePartnerTreeAsync(PartnerTreeDataModel model)
     {
         var entity = mapper.Map<PartnerTree>(model);
 
         await PartnerTreeRepository.AddAsync(entity);
 
-        return mapper.Map<PartnerTreeModel>(entity);
+        return MapEntityToModel(entity);
     }
 
-    public IEnumerable<PartnerTreeModel> GetPartnerTrees(int userId)
+    public IEnumerable<PartnerTreeModel> GetPartnerTrees(int userId, string sortBy = "Name", bool ascending = true)
     {
-        return PartnerTreeRepository
-            .GetAll()
-            .Select(mapper.Map<PartnerTreeModel>);
+        var allTrees = PartnerTreeRepository
+            .GetAllSortedAsync(sortBy, ascending)
+            .Result
+            .Select(x => MapEntityToModel(x))
+            .ToList();
+
+        var lookup = allTrees.ToLookup(x => x.Data.Parent);
+        return BuildHierarchy(lookup, string.Empty);
+    }
+
+    private IEnumerable<PartnerTreeModel> BuildHierarchy(ILookup<string, PartnerTreeModel> lookup, string parentCode)
+    {
+        foreach (var item in lookup[parentCode])
+        {
+            item.Children = BuildHierarchy(lookup, item.Data.Code).ToList();
+            yield return item;
+        }
     }
 
     public async Task<PartnerTreeModel?> GetPartnerTree(int userId, int id)
@@ -72,7 +96,7 @@ public class PartnerTreeManager : IPartnerTreeManager
         return mapper.Map<ExternalPartnerTreeModel>(item);
     }
 
-    public async Task<PartnerTreeModel?> UpdatePartnerTreeAsync(int userId, UpdatePartnerTreeRequest model)
+    public async Task<PartnerTreeModel?> UpdatePartnerTreeAsync(int userId, PartnerTreeDataModel model)
     {
         var entity = await PartnerTreeRepository.GetByIdAsync(model.Id);
 
@@ -81,11 +105,11 @@ public class PartnerTreeManager : IPartnerTreeManager
             return default;
         }
 
-        mapper.Map<UpdatePartnerTreeRequest, PartnerTree>(model, entity);
+        mapper.Map(model, entity);
 
         await PartnerTreeRepository.UpdateAsync(entity);
 
-        return mapper.Map<PartnerTreeModel>(entity);
+        return MapEntityToModel(entity);
     }
 
     public async Task DeletePartnerTreeAsync(int userId, int id)

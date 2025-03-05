@@ -31,8 +31,8 @@ public class PartnerTreeController : ControllerBase
 
     [HttpPost(APIDictionary.PartnerTree)]
     // Internal call: Create a Partner Tree
-    public async Task<IActionResult> Create([FromBody] PartnerTreeRequest req)
-    {
+    public async Task<IActionResult> Create([FromBody] PartnerTreeDataModel req)
+    { 
         var result = await manager.CreatePartnerTreeAsync(req);
 
         if (result == null)
@@ -40,15 +40,15 @@ public class PartnerTreeController : ControllerBase
             return BadRequest();
         }
 
-        return CreatedAtAction(nameof(Create), result.Id, result);
+        return CreatedAtAction(nameof(Create), new { id = result.Data.Id }, result);
     }
 
     [HttpGet(APIDictionary.PartnerTree)]
     // Internal call: get partner tree created by logged-in user
     // TODO add permissions
-    public ActionResult GetAll()
+    public ActionResult GetAll([FromQuery] string sortBy = "Name", [FromQuery] bool ascending = true)
     {
-        return Ok(manager.GetPartnerTrees(currentUserId));
+        return Ok(manager.GetPartnerTrees(currentUserId, sortBy, ascending));
     }
 
     [HttpGet(APIDictionary.PartnerTree + "/{id}")]
@@ -69,9 +69,12 @@ public class PartnerTreeController : ControllerBase
 
     [HttpPut(APIDictionary.PartnerTree)]
     // Internal call: update Partner Tree
-    public async Task<IActionResult> Update([FromBody] UpdatePartnerTreeRequest req)
+    public async Task<IActionResult> Update([FromBody] PartnerTreeDataModel[] req)
     {
-        await manager.UpdatePartnerTreeAsync(currentUserId, req);
+        foreach (var item in req)
+        {
+            await manager.UpdatePartnerTreeAsync(currentUserId, item);
+        }
 
         return NoContent();
     }
