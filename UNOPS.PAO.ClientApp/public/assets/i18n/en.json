@@ -6,12 +6,6 @@
         "docUpload": "Document Upload",
         "doc": "Document",
         "docs": "Documents",
-        "external": {
-            "myProposals": "My Proposals"
-        },
-        "fundingOpportunity": "Funding Opportunity",
-        "fundingOpportunities": "Funding Opportunities",
-        "newFundingOpportunity": "New Funding Opportunity",
         "newContact": "New Contact",
         "home": "Home",
         "proposals": "Proposals",
@@ -27,6 +21,9 @@
         "interactions": "Interactions",
         "newInteraction": "New Interaction",
         "editInteraction": "Edit Interaction",
+        "partnerTree": "Partner Tree",
+        "newPartnerLevel": "New Partner Level",
+        "updatePartnerLevel": "Update Partner Level",
         "contactTitles": {
             "contactInformation": "Contact Information",
             "addresses": "Addresses",
@@ -47,7 +44,9 @@
         "save": "Save",
         "submitProposal": "Submit Proposal",
         "upload": "Upload",
-        "delete": "Delete"
+        "delete": "Delete",
+        "inactive": "Mark as Inactive",
+        "active": "Mark as Active"
     },
     "label": {
         "actions": "Actions",
@@ -86,6 +85,20 @@
             "mailingPostalCode": "Mailing Postal Code",
             "mailingCountry": "Mailing Country"
         },
+        "partnerTree": {
+            "id": "ID",
+            "name": "Name",
+            "type": "Type",
+            "description": "Description",
+            "parent": "Parent",
+            "code": "Code",
+            "status": "Status",
+            "createdBy": "Created By",
+            "createdDate": "Created Date",
+            "lastModifiedBy": "Last Modified By",
+            "lastModifiedDate": "Last Modified Date",
+            "actions": ""
+        },
         "clarificationDeadline": "Clarification Deadline",
         "document": {
             "dragDropMessage": "Drag and drop files to here to upload.",
@@ -96,17 +109,6 @@
         "description": "Description",
         "eligibilityCriteria": "Eligibility Criteria",
         "eligibleEntities": "Eligible Entities",
-        "fundingOpportunity": {
-            "applicationType": "Application Type",
-            "availableFunding": "Available Funding",
-            "currency": "Currency",
-            "dateFrom": "Start Date",
-            "dateTo": "End Date",
-            "description": "Description",
-            "name": "Name",
-            "submissionDueDate": "Submission Due Date",
-            "project": "Project"
-        },
         "informationSession": "Information Session",
         "justification": "Justification",
         "linkDriveFile": "Link Drive File",
@@ -114,20 +116,6 @@
         "name": "Name",
         "no": "No",
         "postedDate": "Posted Date",
-        "proposal": {
-            "applicantId": "Applicant ID",
-            "applicantName": "Applicant Name",
-            "id": "Proposal ID",
-            "initiateProposal": "Initiate Proposal",
-            "fundingOpportunityName": "Funding Opportunity Name",
-            "fundingOpportunitySubmissionDueDate": "Funding Opportunity Due Date",
-            "eligibilityCriteriaMet": "Eligibility Criteria Met",
-            "eligibilityEntityMet": "Eligibility Entity Met",
-            "meetEligibleEntities": "Meet eligible entities",
-            "meetEligibleCriteria": "Meet eligible criteria",
-            "proposalDetails": "Proposal details",
-            "submissionDate": "Submission Date"
-        },
         "sdgs": "SDGs",
         "selectEligibleEntities": "Select Eligible Entities",
         "selectFromDrive": "Select from Drive",

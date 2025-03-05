@@ -1,0 +1,16 @@
+using AutoMapper;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Models;
+
+public class MappingProfile : Profile
+{
+    public MappingProfile()
+    {
+        // Add mappings here
+        CreateMap<PartnerTreeDataModel, PartnerTree>().ReverseMap();
+        CreateMap<PartnerTree, PartnerTreeModel>()
+            .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
+        CreateMap<PartnerTree, PartnerTreeDataModel>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status)); // Ensure Status is mapped
+    }
+}

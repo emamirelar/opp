@@ -48,10 +48,14 @@ export class CachedDataService {
   private allPronounsData = signal([]);
   allPronouns = this.allPronounsData.asReadonly();
 
+  private allPartnerLevelTypesData = signal([]);
+  allPartnerLevelTypes = this.allPartnerLevelTypesData.asReadonly();
+
   constructor() { 
     this.loadSalutations();
     this.loadStatus();
     this.loadPronouns();
+    this.loadPartnerLevelTypeData();
   }
 
   clearCachedData(){
@@ -189,6 +193,28 @@ export class CachedDataService {
       name: 'Not Listed'
     }];
     this.allPronounsData.set(pronouns);
+  }
+
+  loadPartnerLevelTypeData() {
+    let partnerLevelTypes:any = [
+      {
+        id: 'Level_1',
+        name: 'Level 1'
+      },
+      {
+        id: 'Level_2',
+        name: 'Level 2'
+      },
+      {
+        id: 'Level_3',
+        name: 'Level 3'
+      },
+      {
+        id: 'Level_4',
+        name: 'Level 4'
+      }
+    ];
+    this.allPartnerLevelTypesData.set(partnerLevelTypes);
   }
 
   loadEligibleEntities(){

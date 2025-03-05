@@ -49,4 +49,5 @@ public class UNOPSAppDbContext : AppDbContext
     public DbSet<Donor> Donors { get; set; }
     public new DbSet<UNOPSContact> Contacts { get; set; }
     public new DbSet<UNOPSInteraction> Interactions { get; set; }
+    public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }
 }

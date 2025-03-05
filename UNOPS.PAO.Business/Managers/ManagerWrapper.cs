@@ -16,6 +16,7 @@ public class ManagerWrapper : IManagerWrapper
     private IWorkflowManager workflowManager;
     private IContactManager contactManager;
     private IInteractionManager interactionManager;
+    private IPartnerTreeManager partnerTreeManager;
 
     public ManagerWrapper(IMapper mapper, AppDbContext context)
     {
@@ -29,6 +30,7 @@ public class ManagerWrapper : IManagerWrapper
 
         contactManager = new ContactManager(mapper, context);
         interactionManager = new InteractionManager(mapper, context);
+        partnerTreeManager = new PartnerTreeManager(mapper, context);
     }
 
     public virtual IFundingOpportunityManager FundingOpportunityManager => fundingOpportunityManager;
@@ -42,4 +44,6 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IContactManager ContactManager => contactManager;
 
     public virtual IInteractionManager InteractionManager => interactionManager;
+
+    public virtual IPartnerTreeManager PartnerTreeManager => partnerTreeManager;
 }

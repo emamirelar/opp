@@ -20,6 +20,7 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Linq.Expressions;
 
 public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity<int>
 {
@@ -80,5 +81,25 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
                          dr.EntityType == entityType.GetEntityTypeName())
             .Select(dr => dr.Document)
             .ToListAsync();
+    }
+
+    public async Task<IEnumerable<TEntity>> GetAllSortedAsync(string sortBy, bool ascending = true)
+    {
+        var parameter = Expression.Parameter(typeof(TEntity), "x");
+        var property = Expression.Property(parameter, sortBy);
+        var lambda = Expression.Lambda<Func<TEntity, object>>(Expression.Convert(property, typeof(object)), parameter);
+
+        IQueryable<TEntity> query = _dbSet;
+
+        if (ascending)
+        {
+            query = query.OrderBy(lambda);
+        }
+        else
+        {
+            query = query.OrderByDescending(lambda);
+        }
+
+        return await query.ToListAsync();
     }
 }

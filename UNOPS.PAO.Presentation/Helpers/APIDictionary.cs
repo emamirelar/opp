@@ -43,4 +43,9 @@ public class APIDictionary
 
     // Interaction
     public const string Interaction = APIPrefix + "interactions";
+
+    // Partner Tree
+    
+    public const string PartnerTree = APIPrefix + "partner-tree";
+    public const string ExternalPartnerTree = ExternalAPIPrefix + "partner-tree";
 }

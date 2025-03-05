@@ -25,5 +25,8 @@ public class MappingProfile : Profile
         CreateMap<InteractionRequest, UNOPSInteraction>();
         CreateMap<UNOPSInteraction, InteractionModel>();
         CreateMap<InteractionModel, UNOPSInteraction>();
+        CreateMap<PartnerTreeRequest, UNOPSPartnerTree>();
+        CreateMap<UNOPSPartnerTree, PartnerTreeModel>();
+        CreateMap<PartnerTreeModel, UNOPSPartnerTree>();
     }
 }

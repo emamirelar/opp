@@ -1,7 +1,7 @@
 ﻿namespace UNOPS.PAO.Domain.Entities;
 public enum EntityStatus
 {
-    Draft,
+    Inactive,
     Active,
     Closed
 }

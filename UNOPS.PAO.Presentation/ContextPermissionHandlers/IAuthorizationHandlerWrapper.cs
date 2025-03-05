@@ -8,4 +8,6 @@ public interface IAuthorizationHandlerWrapper
     AuthorizationHandler<OperationAuthorizationRequirement, ProfileModel> ProfileAuthorizationHandler { get; }
     AuthorizationHandler<OperationAuthorizationRequirement, FundingOpportunityModel> FundingOpportunityAuthorizationHandler { get; }
     AuthorizationHandler<OperationAuthorizationRequirement, ContactModel> ContactAuthorizationHandler { get; }
+
+    AuthorizationHandler<OperationAuthorizationRequirement, PartnerTreeModel> PartnerTreeAuthorizationHandler { get; }
 }
