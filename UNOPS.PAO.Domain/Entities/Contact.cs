@@ -32,4 +32,10 @@ public class Contact : ModifiableDeletableEntity
     public string? MailingStateProvince { get; set; }
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
+    public virtual ICollection<Interaction>? Interactions { get; set; }
+
+    public Contact()
+    {
+        Interactions = new HashSet<Interaction>();
+    }
 }

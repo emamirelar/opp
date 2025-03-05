@@ -5,6 +5,7 @@ import { HomeComponent } from '../../common/pages/components/home/home.component
 import { authGuard } from '../../essentials/guards/auth.guard';
 import { ContactComponent } from './components/contact/contact.component';
 import { ContactItemComponent } from './components/contact/contactItem/contact-item/contact-item.component';
+import {InteractionListComponent} from './components/interaction/list/interaction-list.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 
 const internalRoutes: Routes = [
@@ -29,6 +30,14 @@ const internalRoutes: Routes = [
         data: { breadcrumb: 'Details' },
         component: ContactItemComponent,
         canActivate: [authGuard],
+      },
+      {
+        path: 'interactions',
+        canActivate: [authGuard],
+        children: [
+          { path: '', component: InteractionListComponent},
+          { path: ':id', component: InteractionListComponent, data: { breadcrumb: 'Edit' } }
+        ]
       },
       {
         path: 'partner-tree',

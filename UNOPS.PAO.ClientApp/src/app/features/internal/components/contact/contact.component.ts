@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
@@ -10,14 +10,13 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../../common/services/language.service';
-import { Subscription, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { ContactService } from '../../services/contact.service';
 import { DialogModule } from 'primeng/dialog';
 import { NewContactComponent } from './new-contact/new-contact.component';
 import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
 
-interface ColumnDefinition {
+interface columnDefination {
   label: string,
   id: string
 }
@@ -30,59 +29,71 @@ interface ColumnDefinition {
   imports: [PanelModule, ButtonModule, TableModule, DialogModule, ScrollPanelModule, NewContactComponent, DatePipe, ProgressSpinnerModule, TranslateModule]
 })
 export class ContactComponent implements OnInit, OnDestroy {
-  private langChangeSubscription: Subscription = new Subscription();
-  private destroy$ = new Subject<void>();
+  private langChangeSubscription: Subscription = new Subscription;
+  router = inject(Router);
+  activatedRoute = inject(ActivatedRoute);
 
-  newContact: boolean = false;
-  columns = signal<ColumnDefinition[]>([]);
-  contactData: any;
-  isDataLoading: any;
+  contactService = inject(ContactService);
 
-  constructor(
-    private router: Router,
-    private activatedRoute: ActivatedRoute,
-    private contactService: ContactService,
-    private feedbackDialogService: FeedbackDialogService,
-    public translateService: TranslateService,
-    private languageService: LanguageService,
-    private cdr: ChangeDetectorRef
-  ) {
-    this.contactData = contactService.allContacts;
-    this.isDataLoading = contactService.isLoading;
-   }
+  newContact : boolean = false;
+
+  columns = signal<columnDefination[]>([]);
+
+  contactData = this.contactService.allContacts;
+  isDataLoading = this.contactService.isLoading;
+  feedbackDialogService = inject(FeedbackDialogService);
+
+  constructor(public translateService: TranslateService, private languageService: LanguageService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
-    this.activatedRoute.paramMap.pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
-        this.columns.update(() => this.getColumns());
+    this.activatedRoute.paramMap.subscribe({
+      next: (paramMap) => {
+        //initialize columns
+        this.columns.update(() => {
+          return this.getColumns();
+        });
+        //make server call to get all proposals.
         this.contactService.getAllContacts();
       }
     });
-
-    this.langChangeSubscription = this.languageService.translationService.onLangChange.pipe(takeUntil(this.destroy$)).subscribe(() => {
+    this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
       this.cdr.detectChanges();
     });
   }
 
-  getColumns(): ColumnDefinition[] {
-    return [
-      { label: 'label.contact.actions', id: '' },
-      { label: 'label.contact.id', id: 'id' },
-      { label: 'label.contact.salutation', id: 'salutation' },
-      { label: 'label.contact.firstName', id: 'firstName' },
-      { label: 'label.contact.lastName', id: 'lastName' },
-      { label: 'label.contact.email', id: 'email' },
-      { label: 'label.contact.mobile', id: 'mobile' }
-    ];
+  getColumns() {
+    return [{
+      label: 'label.contact.actions',
+      id: ''
+    }, {
+      label: 'label.contact.id',
+      id: 'id'
+    }, {
+      label: 'label.contact.salutation',
+      id: 'salutation'
+    }, {
+      label: 'label.contact.firstName',
+      id: 'firstName'
+    }, {
+      label: 'label.contact.lastName',
+      id: 'lastName'
+    }, {
+      label: 'label.contact.email',
+      id: 'email'
+    }, {
+      label: 'label.contact.mobile',
+      id: 'mobile'
+    }];
   }
 
-  handleOnOpenRecordDetails(record: { id: string }) {
+  handleOnOpenRecordDetails(record: any) {
     this.router.navigate(['contact', record.id]);
   }
 
-  handleOnRecordDelete(record: { id: string }) {
-    this.contactService.deleteContactById(record.id).pipe(takeUntil(this.destroy$)).subscribe({
-      next: () => {
+  handleOnRecordDelete(record: any) {
+    console.log(record.id);
+    this.contactService.deleteContactById(record.id).subscribe({
+      next: (data: any) => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
         this.contactService.getAllContacts();
       }
@@ -90,14 +101,16 @@ export class ContactComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.langChangeSubscription?.unsubscribe();
   }
 
-  _handleOnRecordCreation(newRecordData: any) {
+  _handleOnRecordCreation( newRecordData: any ){
+    //hides record creation dialog.
     this.newContact = false;
-    if (newRecordData?.id) {
-      this.router.navigate(['contact', newRecordData.id]);
+    //navigate to the newly created record.
+    if( newRecordData !== null && ( newRecordData["id"] !== undefined && newRecordData["id"] !== null ) )
+    {
+      this.router.navigate([ 'contact', newRecordData["id"] ]);
     }
   }
 }

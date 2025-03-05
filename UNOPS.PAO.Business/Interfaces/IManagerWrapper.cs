@@ -11,5 +11,7 @@ public interface IManagerWrapper
 
     IContactManager ContactManager { get; }
 
+    IInteractionManager InteractionManager { get; }
+
     IPartnerTreeManager PartnerTreeManager { get; }
 }

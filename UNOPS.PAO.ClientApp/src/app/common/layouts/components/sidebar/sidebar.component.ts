@@ -35,6 +35,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       routerLink: ['/contacts']
     },
     {
+      label: 'title.interactions',
+      icon: 'link',
+      routerLink: ['/interactions']
+    },
+    {
       label: 'title.partnerTree',
       icon: 'account_tree',
       routerLink: ['/partner-tree']

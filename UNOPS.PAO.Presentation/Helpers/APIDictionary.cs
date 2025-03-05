@@ -41,6 +41,9 @@ public class APIDictionary
     public const string Contact = APIPrefix + "contact";
     public const string ExternalContact = ExternalAPIPrefix + "contact";
 
+    // Interaction
+    public const string Interaction = APIPrefix + "interactions";
+
     // Partner Tree
     
     public const string PartnerTree = APIPrefix + "partner-tree";
