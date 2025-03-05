@@ -42,7 +42,7 @@ export class PartnerTreeService {
           this.partnerTreeData.set(data);
           const originalData = JSON.parse(JSON.stringify(data));
           const flatData: any[] = this.flattenTree(originalData);
-          this.parentOptions = flatData.map(item => { return {value: item.code, name: item.name}});;
+          this.parentOptions = flatData;
           this.isLoading.set(false);
         },
         error: (err) => {
