@@ -61,7 +61,8 @@ public static class QueryExtensions
         Func<TResult, TSource> transform,
         PaginationRequest request)
     {
-        var excludedRows = (request.PageIndex - 1) * request.PageSize;
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
 
         if (request.OrderBy != null)
         {
@@ -84,7 +85,8 @@ public static class QueryExtensions
         Func<TResult, TSource> transform,
         PaginationRequest request)
     {
-        var excludedRows = (request.PageIndex - 1) * request.PageSize;
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
 
         if (request.OrderBy != null)
         {

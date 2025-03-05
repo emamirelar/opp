@@ -7,8 +7,8 @@ import {Button, ButtonDirective, ButtonIcon, ButtonLabel} from 'primeng/button';
 import {RouterLink, Router, ActivatedRoute} from '@angular/router';
 import {InteractionModalComponent} from '../modal/interaction-modal.component';
 import { INTERACTION_TYPE_TRANSLATION_KEYS, InteractionType } from '../../../models/interaction-type.enum';
-import { TranslateModule } from '@ngx-translate/core';
-import { Location } from '@angular/common';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import {InteractionListData} from './interaction-list.data';
 
 @Component({
   selector: 'app-interaction-list',
@@ -27,23 +27,23 @@ import { Location } from '@angular/common';
     TranslateModule
   ],
   templateUrl: './interaction-list.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [InteractionListData]
 })
 export class InteractionListComponent implements OnInit {
-  interactions: WritableSignal<Interaction[]> = signal([]);
   displayModal = signal(false);
   selectedInteraction: WritableSignal<Interaction | undefined> = signal(undefined);
-  loading = signal(false);
-  location = inject(Location);
+
+  public interactionListData = inject(InteractionListData);
 
   constructor(
     private interactionService: InteractionService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit(): void {
-    this.loadInteractions();
+    this.interactionListData.initialLoad();
     this.openModalFromRoute();
   }
 
@@ -62,37 +62,31 @@ export class InteractionListComponent implements OnInit {
     });
   }
 
-  loadInteractions() {
-    this.loading.set(true);
-    this.interactionService.getAll().subscribe(
-      (response) => {
-        this.interactions.set(response.body || []);
-        this.loading.set(false);
-      }
-    );
-  }
-
   openNewInteractionModal(): void {
     this.selectedInteraction.set(undefined);
     this.displayModal.set(true);
   }
 
-  openEditInteractionModal(interaction: Interaction, updateUrl = false): void {
-    this.selectedInteraction.set(interaction);
-    this.displayModal.set(true);
-    if (updateUrl) {
-      this.location.go(`/interactions/${interaction.id}`);
-    }
+  openEditInteractionModal(item: any): void {
+    this.interactionService.getById(item.id).subscribe({
+      next: (response) => {
+        if (response.body) {
+          this.selectedInteraction.set(response.body);
+          this.displayModal.set(true);
+        }
+      },
+      error: (error) => console.error('Error fetching interaction details', error)
+    });
   }
 
   onModalClose(): void {
     this.displayModal.set(false);
-    this.loadInteractions();
+    this.interactionListData.loadInteractions();
     this.router.navigate(['/interactions'], { replaceUrl: true });
   }
 
   onInteractionDeleted() {
-    this.loadInteractions();
+    this.interactionListData.loadInteractions();
   }
 
   getInteractionTypeTranslationKey(type: InteractionType): string {

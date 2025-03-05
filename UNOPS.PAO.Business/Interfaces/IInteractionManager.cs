@@ -9,7 +9,7 @@ public interface IInteractionManager
 {
     Task<InteractionModel> CreateInteractionAsync(InteractionRequest model);
 
-    IEnumerable<InteractionModel> GetInteractions(int userId);
+    PaginationResponse<InteractionModel> GetInteractions(int userId, PaginationRequest request);
 
     Task<InteractionModel?> GetInteraction(int userId, int id);
 
