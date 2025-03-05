@@ -66,7 +66,6 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   }
 
   onEditComplete(event: any) {
-    console.log('Edit complete', event);
     if (event.data === 'action') {
       return;
     }
@@ -92,11 +91,9 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     } else {
       this.updatedRecords = this.updatedRecords.filter(record => record.id !== event.field.id);
     }
-    console.log(this.updatedRecords);
   }
 
   isRecordUpdated(node: any): boolean {
-    console.log(this.updatedRecords.some(record => record.id === node?.node?.data?.id));
     return this.updatedRecords.some(record => record.id === node?.node?.data?.id);
   }
 
@@ -106,7 +103,6 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
         // Initialize columns
         this.cols = this.getColumns();
         this.loadPartnerTreeData();
-        console.log(this.parentOptions);
       }
     });
 
@@ -120,7 +116,6 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       this.service.getAllPartnerTree().subscribe({
         next: (data: any) => {
           this.updatedRecords = [];
-          console.log('Loaded partner tree data:', data);
           this.data = data;
           this.cdr.detectChanges(); // Trigger change detection
           this.originalData = this.service.originalData;

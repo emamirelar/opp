@@ -106,8 +106,6 @@ export class PartnerTreeItemComponent implements OnInit{
     let valueObj = this.formGroup.value,
       requestJsonObj: any = {};
 
-    console.log(valueObj);
-
     for (let key in valueObj) {
       if (valueObj.hasOwnProperty(key)) {
         let indexValue = (valueObj as any)[key];
@@ -121,6 +119,5 @@ export class PartnerTreeItemComponent implements OnInit{
   ngOnInit() {
     this.formGroup.patchValue(this.record);
     this.parentOptions = this.filterParentOptions();
-    console.log(this.record);
   }
 }

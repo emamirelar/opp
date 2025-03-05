@@ -39,12 +39,10 @@ export class PartnerTreeService {
     return this.http.get<TreeNode[]>(`/api/partner-tree`).pipe(
       tap({
         next: (data) => {
-          console.log('Fetched data:', data); // Debugging statement
           this.partnerTreeData.set(data);
           const originalData = JSON.parse(JSON.stringify(data));
           const flatData: any[] = this.flattenTree(originalData);
           this.parentOptions = flatData.map(item => { return {value: item.code, name: item.name}});;
-          console.log(this.parentOptions);
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -94,7 +92,7 @@ export class PartnerTreeService {
         this.isLoading.set( false );
       },
       complete: () => {
-        console.log('Status updated successfully');
+        this.isLoading.set( false );
       }
     })); 
   }

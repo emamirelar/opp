@@ -217,10 +217,7 @@ export class NewContactComponent implements OnInit, OnDestroy {
 
   _getRequestPayload() {
     let valueObj = this.formGroup.value,
-      requestJsonObj: any = {},
-      projectNumber = "";
-
-    console.log(valueObj);
+      requestJsonObj: any = {};
 
     for (let key in valueObj) {
       if (valueObj.hasOwnProperty(key)) {
