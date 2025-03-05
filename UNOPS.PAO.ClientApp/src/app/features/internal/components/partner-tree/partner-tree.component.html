@@ -1,13 +1,11 @@
 <div class="flex justify-end">
-    <label for="switch1" class="mr-2">Include Inactive</label>
-    <p-toggleswitch inputId="switch1" />
-</div>
-<div class="flex justify-end">
-    <p-button icon="pi pi-plus" label="New Partner Level 1" title="title.newPartnerLevel" class="mr-2 mb-2 mt-2" (onClick)="onCreateNewPartnerLevel()"/>
+    <p-button icon="pi pi-plus" label="New Partner Level" class="mr-2 mb-2 mt-2" (onClick)="onCreateNewPartnerLevel()"/>
 </div>
 <div class="table-container">
-    <p-treetable (onEditComplete)="onEditComplete($event)" [value]="data" [columns]="cols" [scrollable]="true" showGridlines [tableStyle]="{ 'min-width': '50rem' }">
-        <ng-template #caption><div class="text-xl font-bold">Partner Tree</div> </ng-template>
+    <p-treetable #treetable (onEditComplete)="onEditComplete($event)" [value]="data" [columns]="cols" [scrollable]="true" showGridlines [tableStyle]="{ 'min-width': '50rem' }">
+        <ng-template #caption>
+            <div class="text-xl font-bold">Partner Tree</div>
+        </ng-template>
         <ng-template #header let-columns>
             <tr>
                 <th *ngFor="let col of columns">
@@ -80,4 +78,4 @@
       <app-partner-tree-item [record]="changeRecord" (onRecordUpdateSuccess)="handleOnRecordUpdation($event)"></app-partner-tree-item>
   
     </p-dialog>
-  }  
+  }

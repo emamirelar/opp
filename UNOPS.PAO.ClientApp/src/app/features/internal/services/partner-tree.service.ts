@@ -44,6 +44,7 @@ export class PartnerTreeService {
           const originalData = JSON.parse(JSON.stringify(data));
           const flatData: any[] = this.flattenTree(originalData);
           this.parentOptions = flatData.map(item => { return {value: item.code, name: item.name}});;
+          console.log(this.parentOptions);
           this.isLoading.set(false);
         },
         error: (err) => {

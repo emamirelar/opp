@@ -10,10 +10,11 @@ import { TextareaModule } from 'primeng/textarea';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { CommonModule } from '@angular/common';
+import { SelectModule } from 'primeng/select';
 
 @Component({
   selector: 'app-partner-tree-item',
-  imports: [BlockUI, ReactiveFormsModule, TranslateModule, ButtonModule, PanelModule,InputTextModule, CommonModule, TextareaModule],
+  imports: [BlockUI, ReactiveFormsModule, SelectModule, TranslateModule, ButtonModule, PanelModule,InputTextModule, CommonModule, TextareaModule],
   templateUrl: './partner-tree-item.component.html',
   styleUrl: './partner-tree-item.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -46,9 +47,16 @@ export class PartnerTreeItemComponent implements OnInit{
       }),
     });
   cachedDataService = inject(CachedDataService);
-  allTypeData = this.cachedDataService.allPartnerLevelTypes();
+  allTypeData = this.cachedDataService.allPartnerLevelTypes;
+  allStatusData = this.cachedDataService.allStatus;
   onRecordUpdateSuccess = output();
+  parentOptions = this.partnerTreeService.parentOptions;
   constructor() { }
+
+  filterParentOptions() {
+    let rowData = this.record;
+    return this.parentOptions.filter(option => option.value !== rowData.parent && option.value !== rowData.code);
+  }
 
   _handleOnSaveClick(activate: boolean = true) {
     let payload = this._getRequestPayload();
@@ -112,6 +120,7 @@ export class PartnerTreeItemComponent implements OnInit{
 
   ngOnInit() {
     this.formGroup.patchValue(this.record);
+    this.parentOptions = this.filterParentOptions();
     console.log(this.record);
   }
 }

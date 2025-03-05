@@ -15,16 +15,15 @@ using UNOPS.PAO.Presentation.Security;
 [Authorize]
 public class PartnerTreeController : ControllerBase
 {
-    private IPartnerTreeManager manager;
-    private IAuthorizationService authorizationService;
-
-    private UserResolverService<int> userResolverService;
+    private readonly IPartnerTreeManager manager;
+    private readonly IAuthorizationService authorizationService;
+    private readonly UserResolverService<int> userResolverService;
 
     private int currentUserId => userResolverService.GetCurrentUserId();
 
-    public PartnerTreeController(IManagerWrapper manager, UserResolverService<int> userResolverService, IAuthorizationService authorizationService)
+    public PartnerTreeController(IManagerWrapper managerWrapper, UserResolverService<int> userResolverService, IAuthorizationService authorizationService)
     {
-        this.manager = manager.PartnerTreeManager;
+        this.manager = managerWrapper.PartnerTreeManager;
         this.userResolverService = userResolverService;
         this.authorizationService = authorizationService;
     }

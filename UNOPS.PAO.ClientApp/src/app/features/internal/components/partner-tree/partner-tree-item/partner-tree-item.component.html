@@ -35,13 +35,20 @@
 
         <div class="mb-6 pr-2">
             <label>{{ "label.partnerTree.parent" | translate }}</label>
-            <!--input pInputText fluid="true" formControlName="name" /-->
             <input pInputText fluid="true" formControlName="parent" readonly/>
         </div>
         <div class="mb-6 pr-2">
             <label>{{ "label.partnerTree.status" | translate }}</label>
             <!--input pInputText fluid="true" formControlName="name" /-->
-            <input pInputText fluid="true" formControlName="status" readonly/>
+            <p-select
+                formControlName="status"
+                [options]="allStatusData()"
+                optionLabel="name"
+                optionValue="id"
+                fluid="true"
+                [showClear]="true"
+                placeholder="Select a Status"
+            />
         </div>
       </div>
     </p-panel>

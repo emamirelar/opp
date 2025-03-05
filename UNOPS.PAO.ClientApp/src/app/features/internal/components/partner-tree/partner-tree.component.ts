@@ -13,10 +13,13 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { PartnerTreeItemComponent } from './partner-tree-item/partner-tree-item.component';
+import { CachedDataService } from '../../../../common/services/cached-data.service';
+import { InputIcon } from 'primeng/inputicon';
+import { IconField } from 'primeng/iconfield';
 
 @Component({
   selector: 'app-partner-tree',
-  imports: [DialogModule, PartnerTreeItemComponent, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule],
+  imports: [DialogModule, PartnerTreeItemComponent, InputIcon, IconField, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule],
   templateUrl: './partner-tree.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './partner-tree.component.scss'
@@ -27,6 +30,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   updatedRecords: any[] = [];
   parentOptions: any[] = [];
   override service = inject(PartnerTreeService);
+  cachedDataService = inject(CachedDataService);
   originalData: any[] = [];
   override isDataLoading = this.service.isLoading();
   levelOneOptions: any[] = [];
@@ -36,6 +40,8 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   updatePartnerLevel: boolean = false;
   createPartnerLevel: boolean = false;
   changeRecord: any = null;
+  allStatusData = this.cachedDataService.allStatus;
+
 
   constructor() {
     super();
@@ -48,6 +54,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       { id: "description", label: "label.partnerTree.description", editable: true },
       { id: "type", label: "label.partnerTree.type", editable: false },
       { id: "parent", label: "label.partnerTree.parent", editable: true },
+      { id: "status", label: "label.partnerTree.status", editable: false },
       { id: 'action', label: 'label.partnerTree.actions', editable: false }, 
     ];
   }
@@ -76,6 +83,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     } else {
         valueChanged = true;
     }
+    //event.field.status = (event.field.status === 'Active') ? '1' : '0';
     if (valueChanged) {
       this.updatedRecords.push(event.field);
       if (event.data === 'parent') {
@@ -92,16 +100,13 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     return this.updatedRecords.some(record => record.id === node?.node?.data?.id);
   }
 
-  filterParentOptions(rowData: any) {
-    return this.parentOptions.filter(option => option.value !== rowData.parent && option.value !== rowData.code);
-  }
-
   override ngOnInit() {
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         // Initialize columns
         this.cols = this.getColumns();
         this.loadPartnerTreeData();
+        console.log(this.parentOptions);
       }
     });
 
@@ -158,6 +163,9 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   }
 
   handleOnSaveClick() {
+    this.updatedRecords.forEach(record => {
+      record.status = (record.status === 'Active') ? '1' : '0';
+    });
     this.service.updatePartnerTreeLevel(this.updatedRecords).subscribe({
       next: (data: any) => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Updated successfully!' });
