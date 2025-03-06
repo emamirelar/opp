@@ -34,4 +34,5 @@ public class ContactRequest : ExtensibleModel
     public string? MailingStateProvince { get; set; }
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
+    public int PartnerId { get; set; }
 }

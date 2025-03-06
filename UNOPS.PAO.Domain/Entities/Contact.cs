@@ -38,4 +38,6 @@ public class Contact : ModifiableDeletableEntity
     {
         Interactions = new HashSet<Interaction>();
     }
+    public Partner Partner { get; set; }
+    public int PartnerId { get; set; }
 }

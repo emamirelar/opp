@@ -15,7 +15,6 @@ import { Subscription } from 'rxjs/internal/Subscription';
 
 //PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
-import { FloatLabelModule } from 'primeng/floatlabel';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
@@ -23,15 +22,15 @@ import { SelectModule } from 'primeng/select';
 import { AutoFocusModule } from 'primeng/autofocus';
 import { BlockUI } from 'primeng/blockui';
 import { MessageModule } from 'primeng/message';
-import { ContactService } from '../../../services/contact.service';
+import { PartnerService } from '../../../services/partner.service';
 import { CardModule } from 'primeng/card';
+import { CheckboxModule } from 'primeng/checkbox';
 
 @Component({
-  selector: 'app-new-contact',
+  selector: 'app-new-partner',
   imports: [
     TranslateModule,
     InputTextModule,
-    FloatLabelModule,
     DropdownModule,
     DatePickerModule,
     ButtonModule,
@@ -43,92 +42,102 @@ import { CardModule } from 'primeng/card';
     MessageModule,
     DividerModule,
     CardModule,
+    CheckboxModule,
     ReactiveFormsModule],
-  templateUrl: './new-contact.component.html',
-  styleUrl: './new-contact.component.scss',
+  templateUrl: './new-partner.component.html',
+  styleUrl: './new-partner.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NewContactComponent implements OnInit, OnDestroy {
+export class NewPartnerComponent implements OnInit, OnDestroy {
   formGroup = new FormGroup({
-    partner: new FormControl(null),
-    salutation: new FormControl('', {
-      validators:[Validators.required]
-    }),
-    firstName: new FormControl(''),
-    lastName: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    email: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    mobile: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    middleName: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    suffix: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    title: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    pronouns: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    department: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    birthDate: new FormControl(new Date(), {
-      validators:[Validators.required]
-    }),
-    fax: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    description: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    phone: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    otherPhone: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    assistant: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    assistantPhone: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    assistantEmail: new FormControl(null, {
+    name: new FormControl('', {
       validators:[Validators.required]
     }),
     status: new FormControl(null, {
       validators:[Validators.required]
     }),
-    mailingStreet: new FormControl(null, {
+    newEngagement: new FormControl(null, {
       validators:[Validators.required]
     }),
-    mailingStreet2: new FormControl(null, {
+    phone: new FormControl(null, {
       validators:[Validators.required]
     }),
-    mailingCity: new FormControl(null, {
+    website: new FormControl(null, {
       validators:[Validators.required]
     }),
-    mailingStateProvince: new FormControl(null, {
+    shortName: new FormControl(null, {
       validators:[Validators.required]
     }),
-    mailingPostalCode: new FormControl(null, {
+    internalReportingLevel: new FormControl(null, {
       validators:[Validators.required]
     }),
-    mailingCountry: new FormControl(null, {
+    externalReportingLevel: new FormControl(null, {
       validators:[Validators.required]
+    }),
+    pooledFund: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    ddRequired: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    ddeacDone: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    eacReference: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    globalKeyAccount: new FormControl(false),
+    unSecretariatEntity: new FormControl(false),
+    levyPotentiallyApplies: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    reasonForLevyNotApplying: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    levyTreatment: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    scope: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address1Street: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address1Street2: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address1City: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address1StateProvince: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address1PostalCode: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address1Country: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address2Street: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address2Street2: new FormControl(null, {
+      validators:[Validators.required]
+    }),
+    address2City: new FormControl(null, {
+      validators: [Validators.required]
+    }),
+    address2StateProvince: new FormControl(null, {
+      validators: [Validators.required]
+    }),
+    address2PostalCode: new FormControl(null, {
+      validators: [Validators.required]
+    }),
+    address2Country: new FormControl(null, {
+      validators: [Validators.required]
     }),
     discriminator: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    contactNumber: new FormControl(null, {
-      validators:[Validators.required]
+      validators: [Validators.required]
     }),
     createdBy: new FormControl(null, {
       validators:[Validators.required]
@@ -155,7 +164,7 @@ export class NewContactComponent implements OnInit, OnDestroy {
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
-  contactService = inject(ContactService);
+  partnerService = inject(PartnerService);
   translateService = inject(TranslateService);
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
@@ -163,12 +172,18 @@ export class NewContactComponent implements OnInit, OnDestroy {
   private langChangeSubscription: Subscription = new Subscription();
   onRecordCreationSuccess = output();
 
-  allSalutationsData = this.cachedDataService.allSalutations;
-  allStatusData = this.cachedDataService.allStatus;
-  allPronounsData = this.cachedDataService.allPronouns;
-  allPartners = this.cachedDataService.allPartners;
+  //allSalutationsData = this.cachedDataService.allSalutations;
+  //allPronounsData = this.cachedDataService.allPronouns;
   showValidationFailedError = signal<boolean>(false);
-  maxDate = new Date();
+  //maxDate = new Date();
+  allPartnerStatusData = this.cachedDataService.allPartnerStatus;
+  allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
+  allPartnerReportingLevelData = this.cachedDataService.allPartnerReportingLevel;
+  allYesNoData = this.cachedDataService.allYesNo;
+  allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
+  allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
+  allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
+  allPartnerScopesData = this.cachedDataService.allPartnerScope;
 
   constructor() {
     //load salutations
@@ -193,7 +208,7 @@ export class NewContactComponent implements OnInit, OnDestroy {
 
     if( canSave === true )
     {
-      this.contactService.createContact(this._getRequestPayload()).subscribe({
+      this.partnerService.createPartner(this._getRequestPayload()).subscribe({
         next: (data: any) => {
           this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
           this.onRecordCreationSuccess.emit(data);
@@ -209,9 +224,9 @@ export class NewContactComponent implements OnInit, OnDestroy {
     {
       this.showValidationFailedError.set( false );
 
-      if( this.formGroup.get("firstName")?.invalid )
+      if( this.formGroup.get("name")?.invalid )
       {
-        this.formGroup.get("firstName")?.markAsDirty();
+        this.formGroup.get("name")?.markAsDirty();
       }
       result = false;
     }
@@ -221,23 +236,15 @@ export class NewContactComponent implements OnInit, OnDestroy {
 
   _getRequestPayload() {
     let valueObj = this.formGroup.value,
-      requestJsonObj: any = {},
-      partnerId = "",
-      projectNumber = "";
+    requestJsonObj: any = {};
 
     for (let key in valueObj) {
       if (valueObj.hasOwnProperty(key)) {
         let indexValue = (valueObj as any)[key];
-        switch (key) {
-          case "partner":
-            if (valueObj["partner"] != null && valueObj["partner"] !== undefined) {
-              partnerId = valueObj["partner"]["id"];
-            }
-            requestJsonObj["partnerId"] = partnerId;
-            break;
 
+        switch (key) {
           default:
-            requestJsonObj[key] = indexValue || '';
+            requestJsonObj[key] = indexValue;
             break;
         }
       }

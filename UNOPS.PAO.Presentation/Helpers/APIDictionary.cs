@@ -33,6 +33,7 @@ public class APIDictionary
     public const string ApplicationType = APIPrefix + "values/application-type";
     public const string SDG = APIPrefix + "values/sdg";
     public const string Country = APIPrefix + "values/country";
+    public const string Partners = APIPrefix + "values/partners";
 
     // Workflow
     public const string Workflow = APIPrefix + "workflow";
@@ -48,4 +49,8 @@ public class APIDictionary
     
     public const string PartnerTree = APIPrefix + "partner-tree";
     public const string ExternalPartnerTree = ExternalAPIPrefix + "partner-tree";
+
+    // Partner
+    public const string Partner = APIPrefix + "partner";
+    public const string PartnerContacts = Partner + "/{partnerId}/contacts";
 }

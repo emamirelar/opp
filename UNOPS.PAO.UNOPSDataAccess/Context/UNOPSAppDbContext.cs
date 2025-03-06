@@ -37,7 +37,10 @@ public class UNOPSAppDbContext : AppDbContext
 
         modelBuilder
             .Entity<UNOPSContact>();
-            //.HasPrincipalKey(x => x.ContactNumber);
+        //.HasPrincipalKey(x => x.ContactNumber);
+
+        modelBuilder
+            .Entity<UNOPSPartner>();
     }
 
     public new DbSet<UNOPSFundingOpportunity> FundingOpportunities { get; set; }
@@ -50,4 +53,5 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<UNOPSContact> Contacts { get; set; }
     public new DbSet<UNOPSInteraction> Interactions { get; set; }
     public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }
+    public new DbSet<UNOPSPartner> Partners { get; set; }
 }

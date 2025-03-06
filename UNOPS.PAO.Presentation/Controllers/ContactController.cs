@@ -83,6 +83,13 @@ public class ContactController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet(APIDictionary.PartnerContacts)]
+    // Internal call: List contacts for an specific partner
+    public ActionResult PartnerContacts(int partnerId)
+    {
+        return Ok(manager.GetPartnerContacts(partnerId));
+    }
+
     [HttpGet(APIDictionary.Contact + "/{id}/permissions")]
     public async Task<IActionResult> PermissionsGet(int id)
     {

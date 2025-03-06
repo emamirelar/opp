@@ -1,6 +1,7 @@
 @use './tailwind.css';
 @use '../public/layout/layout.scss';
 @use 'primeicons/primeicons.css';
+@use './app/common/themes/styles/recordPage.scss';
 
 * {
     margin: 0;

@@ -1,0 +1,57 @@
+.record-page-content-wrapper {
+  @apply flex flex-col gap-4 mt-4 mx-4 w-full border;
+}
+
+/* Control the width of the content with the w- */
+/* Note this usually pegged to 60rem (w-[60rem]) as it is a good width for readability */
+.record-page-content-container {
+  @apply flex flex-col gap-4 justify-end w-full;
+}
+
+.record-page-header-container {
+  @apply flex p-0 m-0 flex-wrap;
+}
+
+.record-page-header-title-container {
+  @apply flex p-0 m-0;
+}
+
+.record-page-header-text-container {
+  @apply flex grow flex-col flex-wrap;
+}
+
+.record-page-entity-icon {
+  @apply text-6xl;
+}
+
+.record-page-header-text {
+  @apply text-2xl m-0;
+}
+
+.record-page-sub-header {
+  @apply text-base;
+}
+
+.record-page-footer-container {
+  @apply flex gap-4 mt-4 justify-end items-center;
+}
+
+.record-page-field-container {
+  @apply flex flex-col items-stretch gap-8;
+}
+
+.record-page-row-container {
+  @apply flex flex-row items-stretch gap-8 flex-wrap;
+
+  .record-page-row-item {
+    @apply flex-grow;
+  }
+
+  .record-page-row-vertical-item {
+    @apply flex flex-col gap-4 justify-end w-full;
+
+    .record-page-row-vertical-value {
+      @apply pl-2;
+    }
+  }
+}

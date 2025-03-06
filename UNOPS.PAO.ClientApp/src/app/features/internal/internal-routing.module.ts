@@ -7,6 +7,8 @@ import { ContactComponent } from './components/contact/contact.component';
 import { ContactItemComponent } from './components/contact/contactItem/contact-item/contact-item.component';
 import {InteractionListComponent} from './components/interaction/list/interaction-list.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
+import { PartnerComponent } from './components/partner/partner.component';
+import { PartnerItemComponent } from './components/partner/partnerItem/partner-item.component';
 
 const internalRoutes: Routes = [
   {
@@ -44,6 +46,18 @@ const internalRoutes: Routes = [
         data: { breadcrumb: 'Details'},
         component: PartnerTreeComponent,
         canActivate: [authGuard]
+      },
+      {
+        path: 'partners',
+        component: PartnerComponent,
+        canActivate: [authGuard],
+        data: { Breadcrumb: 'Partners' }
+      },
+      {
+        path: 'partner/:recordId',
+        data: { breadcrumb: 'Details' },
+        component: PartnerItemComponent,
+        canActivate: [authGuard],
       }
     ],
   },
