@@ -29,4 +29,6 @@ public class ContactModel
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
     public PartnerModel Partner { get; set; }
+    public int? PartnerId { get; set; }
+    public string? PartnerName { get; set; }
 }

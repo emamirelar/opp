@@ -217,4 +217,23 @@ public class UNOPSContactManager : IContactManager
             await contactRepository.Delete(entity);
         }
     }
+
+    public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
+    {
+        // TODO: get stage from workflow?
+        return contactRepository
+            .GetAll(["Partner"])
+            .Where(x => x.PartnerId == partnerId)
+            .Select(x => new ContactModel()
+            {
+                Id = x.Id,
+                PartnerId = x.Partner.Id,
+                PartnerName = x.Partner.Name,
+                Salutation = x.Salutation,
+                FirstName = x.FirstName,
+                LastName = x.LastName,
+                Email = x.Email,
+                Mobile = x.Mobile
+            });
+    }
 }

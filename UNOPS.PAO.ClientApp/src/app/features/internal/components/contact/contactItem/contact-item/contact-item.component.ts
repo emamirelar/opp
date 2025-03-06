@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs/internal/Subscription';
 
 //PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
+import { FloatLabelModule } from 'primeng/floatlabel';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
@@ -31,6 +32,7 @@ import { ActivatedRoute, Router } from '@angular/router';
   imports: [
     TranslateModule,
     InputTextModule,
+    FloatLabelModule,
     DropdownModule,
     DatePickerModule,
     ButtonModule,
@@ -51,6 +53,7 @@ export class ContactItemComponent implements OnInit, OnDestroy {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
   formGroup = new FormGroup({
+      partner: new FormControl(null),
       id: new FormControl('', {
         validators: [Validators.required]
       }),
@@ -169,6 +172,7 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     allSalutationsData = this.cachedDataService.allSalutations;
     allStatusData = this.cachedDataService.allStatus;
     allPronounsData = this.cachedDataService.allPronouns;
+    allPartners = this.cachedDataService.allPartners;
     showValidationFailedError = signal<boolean>(false);
     maxDate = new Date();
     recordId: string = '';
@@ -242,16 +246,29 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     _getRequestPayload() {
       let valueObj = this.formGroup.value,
         requestJsonObj: any = {},
+        partnerId = "",
         projectNumber = "";
-  
-      console.log(valueObj);
   
       for (let key in valueObj) {
         if (valueObj.hasOwnProperty(key)) {
           let indexValue = (valueObj as any)[key];
-          requestJsonObj[key] = indexValue || '';
+
+          switch (key) {
+            case "partner":
+              if (valueObj["partner"] != null && valueObj["partner"] !== undefined) {
+                partnerId = valueObj["partner"]["id"];
+              }
+              requestJsonObj["partnerId"] = partnerId;
+              break;
+
+            default:
+              requestJsonObj[key] = indexValue || '';
+              break;
+          }
         }
       }
+
+      requestJsonObj["id"] = this.recordId;
   
       return requestJsonObj;
     }

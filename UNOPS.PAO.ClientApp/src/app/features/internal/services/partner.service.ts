@@ -80,4 +80,17 @@ export class PartnerService {
         }
       }));
   }
+
+  getAllContactsById(recordId: string) {
+    this.isLoading.set(true);
+    return this.http.get('/api/partner/' + recordId + '/contacts').pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
+  }
 }

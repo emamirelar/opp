@@ -91,7 +91,6 @@ export class ContactComponent implements OnInit, OnDestroy {
   }
 
   handleOnRecordDelete(record: any) {
-    console.log(record.id);
     this.contactService.deleteContactById(record.id).subscribe({
       next: (data: any) => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });

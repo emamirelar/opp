@@ -77,21 +77,17 @@ export class NewPartnerComponent implements OnInit, OnDestroy {
     pooledFund: new FormControl(null, {
       validators:[Validators.required]
     }),
-    dDRequired: new FormControl(null, {
+    ddRequired: new FormControl(null, {
       validators:[Validators.required]
     }),
-    dDEACDone: new FormControl(null, {
+    ddeacDone: new FormControl(null, {
       validators:[Validators.required]
     }),
-    eACReference: new FormControl(null, {
+    eacReference: new FormControl(null, {
       validators:[Validators.required]
     }),
-    globalKeyAccount: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    uNSecretariatEntity: new FormControl(null, {
-      validators:[Validators.required]
-    }),
+    globalKeyAccount: new FormControl(false),
+    unSecretariatEntity: new FormControl(false),
     levyPotentiallyApplies: new FormControl(null, {
       validators:[Validators.required]
     }),
@@ -177,10 +173,17 @@ export class NewPartnerComponent implements OnInit, OnDestroy {
   onRecordCreationSuccess = output();
 
   //allSalutationsData = this.cachedDataService.allSalutations;
-  allStatusData = this.cachedDataService.allStatus;
   //allPronounsData = this.cachedDataService.allPronouns;
   showValidationFailedError = signal<boolean>(false);
   //maxDate = new Date();
+  allPartnerStatusData = this.cachedDataService.allPartnerStatus;
+  allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
+  allPartnerReportingLevelData = this.cachedDataService.allPartnerReportingLevel;
+  allYesNoData = this.cachedDataService.allYesNo;
+  allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
+  allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
+  allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
+  allPartnerScopesData = this.cachedDataService.allPartnerScope;
 
   constructor() {
     //load salutations
@@ -233,15 +236,17 @@ export class NewPartnerComponent implements OnInit, OnDestroy {
 
   _getRequestPayload() {
     let valueObj = this.formGroup.value,
-      requestJsonObj: any = {},
-      projectNumber = "";
-
-    console.log(valueObj);
+    requestJsonObj: any = {};
 
     for (let key in valueObj) {
       if (valueObj.hasOwnProperty(key)) {
         let indexValue = (valueObj as any)[key];
-        requestJsonObj[key] = indexValue || '';
+
+        switch (key) {
+          default:
+            requestJsonObj[key] = indexValue;
+            break;
+        }
       }
     }
 

@@ -21,4 +21,7 @@ public class ValuesRepository
 
     public IEnumerable<SDG> GetSDGs() => context.SDGs.Where(x => x.Status == EntityStatus.Active);
     public IEnumerable<Country> GetCountries() => context.Countries.Where(x => x.Status == EntityStatus.Active);
+
+    public IEnumerable<Partner> GetPartners()
+        => context.Partners.Where(x => x.Status.Equals("Active"));
 }

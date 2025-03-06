@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs/internal/Subscription';
 
 //PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
+import { FloatLabelModule } from 'primeng/floatlabel';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
@@ -30,6 +31,7 @@ import { CardModule } from 'primeng/card';
   imports: [
     TranslateModule,
     InputTextModule,
+    FloatLabelModule,
     DropdownModule,
     DatePickerModule,
     ButtonModule,
@@ -48,6 +50,7 @@ import { CardModule } from 'primeng/card';
 })
 export class NewContactComponent implements OnInit, OnDestroy {
   formGroup = new FormGroup({
+    partner: new FormControl(null),
     salutation: new FormControl('', {
       validators:[Validators.required]
     }),
@@ -163,6 +166,7 @@ export class NewContactComponent implements OnInit, OnDestroy {
   allSalutationsData = this.cachedDataService.allSalutations;
   allStatusData = this.cachedDataService.allStatus;
   allPronounsData = this.cachedDataService.allPronouns;
+  allPartners = this.cachedDataService.allPartners;
   showValidationFailedError = signal<boolean>(false);
   maxDate = new Date();
 
@@ -218,6 +222,7 @@ export class NewContactComponent implements OnInit, OnDestroy {
   _getRequestPayload() {
     let valueObj = this.formGroup.value,
       requestJsonObj: any = {},
+      partnerId = "",
       projectNumber = "";
 
     console.log(valueObj);
@@ -225,7 +230,18 @@ export class NewContactComponent implements OnInit, OnDestroy {
     for (let key in valueObj) {
       if (valueObj.hasOwnProperty(key)) {
         let indexValue = (valueObj as any)[key];
-        requestJsonObj[key] = indexValue || '';
+        switch (key) {
+          case "partner":
+            if (valueObj["partner"] != null && valueObj["partner"] !== undefined) {
+              partnerId = valueObj["partner"]["id"];
+            }
+            requestJsonObj["partnerId"] = partnerId;
+            break;
+
+          default:
+            requestJsonObj[key] = indexValue || '';
+            break;
+        }
       }
     }
 

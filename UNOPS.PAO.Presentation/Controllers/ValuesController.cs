@@ -63,4 +63,10 @@ public class ValuesController : ControllerBase
 
         return Ok(types);
     }
+
+    [HttpGet(APIDictionary.Partners)]
+    public ActionResult GetPartners()
+    {
+        return Ok(manager.GetPartners());
+    }
 }

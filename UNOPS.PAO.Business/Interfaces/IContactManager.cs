@@ -23,4 +23,6 @@ public interface IContactManager
     Task<ContactModel?> UpdateContactAsync(int userId, UpdateContactRequest model);
 
     Task DeleteContactAsync(int userId, int id);
+
+    IEnumerable<ContactModel> GetPartnerContacts(int partnerId);
 }

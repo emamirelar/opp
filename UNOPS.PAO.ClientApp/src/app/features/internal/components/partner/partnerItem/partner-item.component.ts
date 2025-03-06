@@ -21,8 +21,10 @@ import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { AutoFocusModule } from 'primeng/autofocus';
 import { BlockUI } from 'primeng/blockui';
+import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { PartnerService } from '../../../services/partner.service';
+import { PartnerContactsComponent } from "./partnerContacts/partner-contacts.component";
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -40,11 +42,13 @@ import { ActivatedRoute, Router } from '@angular/router';
     SelectModule,
     AutoFocusModule,
     BlockUI,
+    DialogModule,
     MessageModule,
     DividerModule,
     CardModule,
     CheckboxModule,
-    ReactiveFormsModule],
+    ReactiveFormsModule,
+    PartnerContactsComponent],
   templateUrl: './partner-item.component.html',
   styleUrl: './partner-item.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -52,6 +56,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 export class PartnerItemComponent implements OnInit, OnDestroy {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
+
   formGroup = new FormGroup({
       id: new FormControl('', {
         validators: [Validators.required]
@@ -83,21 +88,17 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
       pooledFund: new FormControl(null, {
         validators: [Validators.required]
       }),
-      dDRequired: new FormControl(null, {
+      ddRequired: new FormControl(null, {
         validators: [Validators.required]
       }),
-      dDEACDone: new FormControl(null, {
+      ddeacDone: new FormControl(null, {
         validators: [Validators.required]
       }),
-      eACReference: new FormControl(null, {
+      eacReference: new FormControl(null, {
         validators: [Validators.required]
       }),
-      globalKeyAccount: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      uNSecretariatEntity: new FormControl(null, {
-        validators: [Validators.required]
-      }),
+      globalKeyAccount: new FormControl(false),
+    unSecretariatEntity: new FormControl(false),
       levyPotentiallyApplies: new FormControl(null, {
         validators: [Validators.required]
       }),
@@ -183,12 +184,21 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
     onRecordCreationSuccess = output();
   
     //allSalutationsData = this.cachedDataService.allSalutations;
-    allStatusData = this.cachedDataService.allStatus;
     //allPronounsData = this.cachedDataService.allPronouns;
     showValidationFailedError = signal<boolean>(false);
     //maxDate = new Date();
+    allPartnerStatusData = this.cachedDataService.allPartnerStatus;
+    allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
+    allPartnerReportingLevelData = this.cachedDataService.allPartnerReportingLevel;
+    allYesNoData = this.cachedDataService.allYesNo;
+    allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
+    allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
+    allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
+    allPartnerScopesData = this.cachedDataService.allPartnerScope;
     recordId: string = '';
     recordData = signal<any>({});
+    showCommentDialog = false;
+
   
     constructor() {
       //load salutations
@@ -209,6 +219,16 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
             this._loadRecordDetails();
           }
         }
+      });
+
+      this.activatedRoute.queryParamMap.subscribe({
+        next: (paramMap) => {
+          if (this.recordId != '' && paramMap.get('show-contacts')?.toLowerCase() == 'true') {
+            this._handleOnViewContacts();
+          } else {
+            this.showCommentDialog = false;
+          }
+        },
       });
     }
 
@@ -257,18 +277,42 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
   
     _getRequestPayload() {
       let valueObj = this.formGroup.value,
-        requestJsonObj: any = {},
-        projectNumber = "";
-  
-      console.log(valueObj);
-  
+      requestJsonObj: any = {};
+
       for (let key in valueObj) {
         if (valueObj.hasOwnProperty(key)) {
           let indexValue = (valueObj as any)[key];
-          requestJsonObj[key] = indexValue || '';
+
+          switch (key) {
+            default:
+              requestJsonObj[key] = indexValue;
+              break;
+          }
         }
       }
+
+      requestJsonObj['id'] = this.recordId;
   
       return requestJsonObj;
+    }
+
+    _handleOnViewContacts() {
+      this.showCommentDialog = true;
+
+      this.router.navigate([], {
+        relativeTo: this.activatedRoute,
+        queryParams: {
+          'show-contacts': true,
+        },
+      });
+    }
+
+    _handleOnViewContactsDaialogClose() {
+      this.showCommentDialog = false;
+
+      this.router.navigate([], {
+        relativeTo: this.activatedRoute,
+        queryParams: {},
+      });
     }
 }
