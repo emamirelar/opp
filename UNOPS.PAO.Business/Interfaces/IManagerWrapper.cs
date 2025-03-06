@@ -2,8 +2,6 @@
 
 public interface IManagerWrapper
 {
-    IFundingOpportunityManager FundingOpportunityManager { get; }
-    IProposalManager ProposalManager { get; }
     IDocumentManager DocumentManager { get; }
     ISystemAdminManager SystemAdminManager { get; }
 

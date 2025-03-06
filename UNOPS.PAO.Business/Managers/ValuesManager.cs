@@ -21,11 +21,7 @@ public class ValuesManager : IApplicationService
 
     public IEnumerable<CurrencyModel> GetCurrencies() => repository.GetCurrencies().Select(mapper.Map<CurrencyModel>);
 
-    public IEnumerable<SelectonMethodologyModel> GetSelectionMethodologies()
-         => repository.GetSelectionMethodologies().Select(mapper.Map<SelectonMethodologyModel>);
-
     public IEnumerable<EligibleEntityModel> GetEligibleEntities() => repository.GetEligibleEntities().Select(mapper.Map<EligibleEntityModel>);
-    public IEnumerable<SDGModel> GetSDGs() => repository.GetSDGs().Select(mapper.Map<SDGModel>);
     public IEnumerable<CountryModel> GetCountries() => repository.GetCountries().Select(mapper.Map<CountryModel>);
 
     public IEnumerable<PartnerModel> GetPartners()

@@ -26,22 +26,10 @@ public class ValuesController : ControllerBase
         return Ok(manager.GetCurrencies());
     }
 
-    [HttpGet(APIDictionary.SelectionMethodology)]
-    public ActionResult GetSelectionMethodologies()
-    {
-        return Ok(manager.GetSelectionMethodologies());
-    }
-
     [HttpGet(APIDictionary.EligibleEntity)]
     public ActionResult GetEligibleEntities()
     {
         return Ok(manager.GetEligibleEntities());
-    }
-
-    [HttpGet(APIDictionary.SDG)]
-    public ActionResult GetSDGs()
-    {
-        return Ok(manager.GetSDGs());
     }
 
     [HttpGet(APIDictionary.Country)]
