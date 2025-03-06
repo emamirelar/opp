@@ -22,49 +22,21 @@ public class UNOPSContactManager : IContactManager
 {
     private IMapper mapper;
     private BaseRepository<UNOPSContact> contactRepository;
+    private BaseRepository<UNOPSPartner> partnerRepository;
 
     private CommonEntityRepository commonRepository;
 
     //private string[] includes = ["Currency", "Documents"];
 
-    private static ContactModel MapEntityToModel(UNOPSContact entity, IMapper mapper)
+    private ContactModel MapEntityToModel(UNOPSContact entity, IMapper mapper)
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
-
-        /*result.EligibleEntities = entity.EligibleEntities?.Select(mapper.Map<EligibleEntityModel>).ToList();
-        
-        var appType = typeof(ApplicationType)
-            .GetMembers()
-            .Select(x => new { value = x, attr = x.GetCustomAttributes(typeof(EnumDisplayNameAttribute), true).Cast<EnumDisplayNameAttribute>().SingleOrDefault() })
-            .Where(x => x.attr != null)
-            .Select(x => new ApplicationTypeModel() { Id = x.value.Name, DisplayName = x.attr?.Value })
-            .Where(x => x.Id == entity.ApplicationTypeCode)
-            .FirstOrDefault();
-
-        result.ApplicationType = appType;*/
-
-        //result.Extensions.Add("project", project);
-
+        result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
         return result;
     }
-    private static ExternalContactModel MapEntityToExternalModel(UNOPSContact entity, IMapper mapper)
+    private ExternalContactModel MapEntityToExternalModel(UNOPSContact entity, IMapper mapper)
     {
         var result = mapper.Map<UNOPSContact, ExternalContactModel>(entity);
-
-        /*result.EligibleEntities = entity.EligibleEntities?.Select(mapper.Map<EligibleEntityModel>).ToList();
-        
-        var appType = typeof(ApplicationType)
-            .GetMembers()
-            .Select(x => new { value = x, attr = x.GetCustomAttributes(typeof(EnumDisplayNameAttribute), true).Cast<EnumDisplayNameAttribute>().SingleOrDefault() })
-            .Where(x => x.attr != null)
-            .Select(x => new ApplicationTypeModel() { Id = x.value.Name, DisplayName = x.attr?.Value })
-            .Where(x => x.Id == entity.ApplicationTypeCode)
-            .FirstOrDefault();
-
-        result.ApplicationType = appType;*/
-
-        //result.Extensions.Add("project", project);
-
         return result;
     }
 
@@ -73,30 +45,6 @@ public class UNOPSContactManager : IContactManager
         mapper.Map(model, entity);
 
         entity.Name = String.Concat(model.Salutation, ' ', model.FirstName, ' ', model.MiddleName, ' ', model.LastName);
-
-        // Update Eligible Entities
-        /*if (entity.EligibleEntities != null)
-        {
-            entity.EligibleEntities.Clear();
-        }
-        else
-        {
-            entity.EligibleEntities = [];
-        }
-
-        if (model.EligibleEntityIds != null)
-        {
-            var entities = (from x in commonRepository.GetEligibleEntities()
-                            join id in model.EligibleEntityIds on x.Id equals id
-                            select x
-                            );
-
-            foreach (var e in entities)
-            {
-                entity.EligibleEntities.Add(e);
-            }
-        }*/
-
         return entity;
     }
 
@@ -109,7 +57,7 @@ public class UNOPSContactManager : IContactManager
     {
         this.mapper = mapper;
         contactRepository = new BaseRepository<UNOPSContact>(context);
-
+        partnerRepository = new BaseRepository<UNOPSPartner>(context);
         commonRepository = new CommonEntityRepository(context);
     }
 
@@ -125,32 +73,21 @@ public class UNOPSContactManager : IContactManager
     public IEnumerable<ContactModel> GetContacts(int userId)
     {
         return contactRepository
-            .GetAll()
+            .GetAll(["Partner"])
             .Select(x => MapEntityToModel(x, mapper));
     }
 
     public async Task<ContactModel?> GetContact(int userId, int id)
     {
         var item = await contactRepository.GetByIdAsync(id);
+        var partner = await partnerRepository.GetByIdAsync(item.PartnerId);
         if (item == null)
         {
             return default;
         }
-
+        item.Partner = partner;
         return MapEntityToModel(item, mapper);
     }
-
-    /*public async Task<string?> GetContactStage(int id)
-    {
-        var item = await contactRepository.GetByIdAsync(id);
-
-        if (item == null)
-        {
-            return null;
-        }
-
-        return item.Stage;
-    }*/
 
     public IEnumerable<ExternalContactModel> GetPostedContacts()
     {
@@ -187,27 +124,6 @@ public class UNOPSContactManager : IContactManager
         return MapEntityToModel(entity, mapper);
     }
 
-    /*public async Task<ContactModel?> UpdateStage(int userId, int id, string newStage)
-    {
-        var entity = await contactRepository.GetByIdAsync(id);
-
-        if (entity == null)
-        {
-            return default;
-        }
-
-        if (newStage == "Open")
-        {
-            entity.PostingDate = DateTime.Now.ToUniversalTime();
-        }
-
-        entity.Stage = newStage;
-
-        await contactRepository.UpdateAsync(entity);
-
-        return mapper.Map<ContactModel>(entity);
-    }*/
-
     public async Task DeleteContactAsync(int userId, int id)
     {
         var entity = await contactRepository.GetByIdAsync(id);
@@ -220,7 +136,6 @@ public class UNOPSContactManager : IContactManager
 
     public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
     {
-        // TODO: get stage from workflow?
         return contactRepository
             .GetAll(["Partner"])
             .Where(x => x.PartnerId == partnerId)

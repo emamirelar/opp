@@ -106,11 +106,9 @@
         </div>
 
         <div class="mb-6 pr-2">
-          <p-floatlabel variant="on">
-            <p-select formControlName="partner" [options]="allPartners()" optionLabel="name"
-                      fluid="true" id="partner" ariaLabel="Select Partner" />
-            <label for="partner">{{ 'label.partner.partner' | translate }}</label>
-          </p-floatlabel>
+          <label class="required">*</label><label for="partner">{{ 'label.partner.partner' | translate }}</label>
+          <p-select formControlName="partner" [options]="allPartners()" optionLabel="name"
+                    fluid="true" id="partner" ariaLabel="Select Partner" placeholder="Select Partner" />
         </div>
       </div>
       <p-divider />
