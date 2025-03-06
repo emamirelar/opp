@@ -7,8 +7,6 @@ public static class DocumentExtensions
 {
     private static readonly Dictionary<DocumentParentEntityType, Type> EntityTypeMap = new()
     {
-        { DocumentParentEntityType.FundingOpportunity, typeof(FundingOpportunity) },
-        { DocumentParentEntityType.Proposal, typeof(Proposal) },
     };
 
     public static string GetEntityTypeName(this DocumentParentEntityType parentEntityType)

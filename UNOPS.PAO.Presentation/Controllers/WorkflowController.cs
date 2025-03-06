@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
-using UNOPS.PAO.Business.Workflow;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
@@ -35,10 +34,6 @@ public class WorkflowController : ControllerBase
     {
         return entityName switch
         {
-            "funding-opportunity" => WorkflowManager.GetWorkflowPath(FundingOpportunityWorkflow.StateMachine, Facing.Internal),
-            "external-funding-opportunity" => WorkflowManager.GetWorkflowPath(FundingOpportunityWorkflow.StateMachine, Facing.External),
-            "proposal" => WorkflowManager.GetWorkflowPath(ProposalWorkflow.StateMachine, Facing.External),
-            "internal-proposal" => WorkflowManager.GetWorkflowPath(ProposalWorkflow.StateMachine, Facing.Internal),
             _ => [],
         };
     }
@@ -50,15 +45,6 @@ public class WorkflowController : ControllerBase
 
         switch (entityName)
         {
-            case "funding-opportunity":
-                stage = await manager.FundingOpportunityManager.GetFundingOpportunityStage(id);
-                return manager.WorkflowManager.GetWorkflowState(FundingOpportunityWorkflow.StateMachine, stage ?? string.Empty, Facing.Internal);
-            case "proposal":
-                stage = await manager.ProposalManager.GetProposalStage(id);
-                return manager.WorkflowManager.GetWorkflowState(ProposalWorkflow.StateMachine, stage ?? string.Empty, Facing.External);
-            case "internal-proposal":
-                stage = await manager.ProposalManager.GetProposalStage(id);
-                return manager.WorkflowManager.GetWorkflowState(ProposalWorkflow.StateMachine, stage ?? string.Empty, Facing.Internal);
             default:
                 return null;
         }
@@ -72,18 +58,6 @@ public class WorkflowController : ControllerBase
 
         switch (model.EntityName)
         {
-            case "funding-opportunity":
-                stage = await manager.FundingOpportunityManager.GetFundingOpportunityStage(model.Id);
-                await this.manager.FundingOpportunityManager.UpdateStage(currentUserId, model.Id, model.NewStage);
-                break;
-            case "proposal":
-                stage = await manager.ProposalManager.GetProposalStage(model.Id);
-                await this.manager.ProposalManager.UpdateStage(currentUserId, model.Id, model.NewStage);
-                break;
-            case "internal-proposal":
-                stage = await manager.ProposalManager.GetProposalStage(model.Id);
-                await this.manager.ProposalManager.UpdateStage(currentUserId, model.Id, model.NewStage);
-                break;
         }
 
         await this.manager.WorkflowManager.AddLog(model.EntityName, model.Id.ToString(), stage, model.NewStage, model.Comment);
