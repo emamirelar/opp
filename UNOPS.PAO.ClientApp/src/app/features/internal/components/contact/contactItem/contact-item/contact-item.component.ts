@@ -249,6 +249,7 @@ export class ContactItemComponent implements OnInit, OnDestroy {
         partnerId = "",
         projectNumber = "";
   
+  
       for (let key in valueObj) {
         if (valueObj.hasOwnProperty(key)) {
           let indexValue = (valueObj as any)[key];

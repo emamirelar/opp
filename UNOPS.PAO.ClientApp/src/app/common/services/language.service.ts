@@ -18,7 +18,7 @@ export class LanguageService {
     this.translationService.addLangs(['en', 'fr', 'span', 'pt']);
     this.currentLanguage = this.getCurrentLanguage();
     this.translationService.setDefaultLang(this.currentLanguage.code);
-    
+
     this.translationService.use(this.currentLanguage.code);
   }
 
@@ -44,7 +44,7 @@ export class LanguageService {
   getLanguages(): Language[] {
     return this.translationService
       .getLangs()
-      .map((lang) => ({ name: lang.toUpperCase(), code: lang }));
+      .map((lang) => ({ name: lang.toUpperCase(), code: lang,  }));
   }
-  
+
 }

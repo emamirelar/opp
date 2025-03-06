@@ -6,22 +6,19 @@
         "docUpload": "Carga de Documento",
         "doc": "Documento",
         "docs": "Documentos",
-        "external": {
-            "myProposals": "Mis Propuestas"
-        },
-        "fundingOpportunity": "Oportunidad de Financiamiento",
-        "fundingOpportunities": "Oportunidades de Financiamiento",
-        "newFundingOpportunity": "Nueva Oportunidad de Financiación",
         "home": "Inicio",
-        "proposals": "Propuestas",
-        "proposal": "Propuesta",
         "stage": "Etapa",
         "what": "Qué",
         "how": "Cómo",
         "where": "Dónde",
         "when": "Cuándo",
         "who": "Quién",
-        "why": "Por qué"
+        "why": "Por qué",
+        "contacts": "Contactos",
+        "interactions": "Interacciones",
+        "newInteraction": "Nueva Interacción",
+        "editInteraction": "Editar Interacción",
+        "confirmation": "Confirmación"
     },
     "button": {
         "cancel": "Cancelar",
@@ -32,10 +29,9 @@
         "logout": "Cerrar Sesión",
         "openRecordDetails": "Abrir Detalles del Registro",
         "profile": "Perfil",
-        "viewProposal": "Ver Propuesta",
         "save": "Guardar",
-        "submitProposal": "Enviar Propuesta",
-        "upload": "Subir"
+        "upload": "Subir",
+        "delete": "Eliminar"
     },
     "label": {
         "actions": "Acciones",
@@ -53,19 +49,6 @@
         },
         "decisionDate": "Fecha de Decisión",
         "description": "Descripción",
-        "eligibilityCriteria": "Criterios de Elegibilidad",
-        "eligibleEntities": "Entidades Elegibles",
-        "fundingOpportunity": {
-            "applicationType": "Tipo de Aplicación",
-            "availableFunding": "Financiamiento Disponible",
-            "currency": "Moneda",
-            "dateFrom": "Fecha de Inicio",
-            "dateTo": "Fecha de Finalización",
-            "description": "Descripción",
-            "name": "Nombre",
-            "submissionDueDate": "Fecha Límite de Presentación",
-            "project": "Proyecto"
-        },
         "informationSession": "Sesión Informativa",
         "justification": "Justificación",
         "linkDriveFile": "Vincular Archivo de Drive",
@@ -73,33 +56,37 @@
         "name": "Nombre",
         "no": "No",
         "postedDate": "Fecha de Publicación",
-        "proposal": {
-            "applicantId": "ID del Solicitante",
-            "applicantName": "Nombre del Solicitante",
-            "id": "ID de la Propuesta",
-            "initiateProposal": "Iniciar Propuesta",
-            "fundingOpportunityName": "Nombre de la Oportunidad de Financiamiento",
-            "fundingOpportunitySubmissionDueDate": "Fecha Límite de la Oportunidad de Financiamiento",
-            "eligibilityCriteriaMet": "Criterios de Elegibilidad Cumplidos",
-            "eligibilityEntityMet": "Entidad Elegible Cumplida",
-            "meetEligibleEntities": "Cumplir con entidades elegibles",
-            "meetEligibleCriteria": "Cumplir con criterios de elegibilidad",
-            "proposalDetails": "Detalles de la Propuesta",
-            "submissionDate": "Fecha de Presentación"
-        },
         "sdgs": "ODS",
         "selectEligibleEntities": "Seleccionar Entidades Elegibles",
         "selectFromDrive": "Seleccionar desde Drive",
         "selectionMethodology": "Metodología de Selección",
         "stage": "Etapa",
         "status": "Estado",
-        "yes": "Sí"
+        "yes": "Sí",
+        "interaction": {
+          "type": "Tipo",
+          "date": "Fecha",
+          "notes": "Notas",
+          "contactName": "Nombre del Contacto",
+          "types": {
+            "email": "Correo electrónico",
+            "chat": "Chat",
+            "phone": "Teléfono",
+            "video_meeting": "Reunión por video",
+            "in_person_meeting": "Reunión presencial"
+          },
+          "selectType": "Seleccione un tipo",
+          "selectContact": "Seleccione un contacto",
+          "contact": "Contacto"
+        }
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Cumplir con entidades elegibles' requerido",
         "entityMeetEligibleCriteriaRequired": "'Cumplir con criterios de elegibilidad' requerido",
         "noRecordsFound": "No se encontraron registros.",
-        "proposalRequirements": "La propuesta no puede enviarse hasta que se completen todos los campos obligatorios.",
-        "welcomeTitle": "Bienvenido a Grant+"
+        "welcomeTitle": "Bienvenido a Grant+",
+        "deleteInteractionConfirmation": "¿Está seguro de que desea eliminar esta interacción?",
+        "interactionDeleted": "Interacción eliminada con éxito",
+        "errorDeletingInteraction": "Error al eliminar la interacción"
     }
 }

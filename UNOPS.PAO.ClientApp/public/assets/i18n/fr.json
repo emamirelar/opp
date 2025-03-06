@@ -6,22 +6,19 @@
         "docUpload": "Téléchargement de Document",
         "doc": "Document",
         "docs": "Documents",
-        "external": {
-            "myProposals": "Mes Propositions"
-        },
-        "fundingOpportunity": "Opportunité de Financement",
-        "fundingOpportunities": "Opportunités de Financement",
-        "newFundingOpportunity": "Nouvelle Opportunité de Financement",
         "home": "Accueil",
-        "proposals": "Propositions",
-        "proposal": "Proposition",
         "stage": "Étape",
         "what": "Quoi",
         "how": "Comment",
         "where": "Où",
         "when": "Quand",
         "who": "Qui",
-        "why": "Pourquoi"
+        "why": "Pourquoi",
+        "contacts": "Contacts",
+        "interactions": "Interactions",
+        "newInteraction": "Nouvelle Interaction",
+        "editInteraction": "Éditer une Interaction",
+        "confirmation": "Confirmation"
     },
     "button": {
         "cancel": "Annuler",
@@ -32,10 +29,9 @@
         "logout": "Déconnexion",
         "openRecordDetails": "Ouvrir les Détails de l'Enregistrement",
         "profile": "Profil",
-        "viewProposal": "Voir la Proposition",
         "save": "Enregistrer",
-        "submitProposal": "Soumettre la Proposition",
-        "upload": "Téléverser"
+        "upload": "Téléverser",
+        "delete": "Supprimer"
     },
     "label": {
         "actions": "Actions",
@@ -53,19 +49,6 @@
         },
         "decisionDate": "Date de Décision",
         "description": "Description",
-        "eligibilityCriteria": "Critères d'Éligibilité",
-        "eligibleEntities": "Entités Éligibles",
-        "fundingOpportunity": {
-            "applicationType": "Type de Candidature",
-            "availableFunding": "Financement Disponible",
-            "currency": "Monnaie",
-            "dateFrom": "Date de Début",
-            "dateTo": "Date de Fin",
-            "description": "Description",
-            "name": "Nom",
-            "submissionDueDate": "Date Limite de Soumission",
-            "project": "Projet"
-        },
         "informationSession": "Session d'Information",
         "justification": "Justification",
         "linkDriveFile": "Lier un Fichier Drive",
@@ -73,33 +56,39 @@
         "name": "Nom",
         "no": "Non",
         "postedDate": "Date de Publication",
-        "proposal": {
-            "applicantId": "ID du Candidat",
-            "applicantName": "Nom du Candidat",
-            "id": "ID de la Proposition",
-            "initiateProposal": "Initier la Proposition",
-            "fundingOpportunityName": "Nom de l'Opportunité de Financement",
-            "fundingOpportunitySubmissionDueDate": "Date Limite de l'Opportunité de Financement",
-            "eligibilityCriteriaMet": "Critères d'Éligibilité Respectés",
-            "eligibilityEntityMet": "Entité Éligible Respectée",
-            "meetEligibleEntities": "Respecter les entités éligibles",
-            "meetEligibleCriteria": "Respecter les critères d'éligibilité",
-            "proposalDetails": "Détails de la Proposition",
-            "submissionDate": "Date de Soumission"
-        },
         "sdgs": "ODD",
         "selectEligibleEntities": "Sélectionner des Entités Éligibles",
         "selectFromDrive": "Sélectionner depuis Drive",
         "selectionMethodology": "Méthodologie de Sélection",
         "stage": "Étape",
         "status": "Statut",
-        "yes": "Oui"
+        "yes": "Oui",
+        "interaction": {
+            "type": "Type",
+            "date": "Date",
+            "notes": "Notes",
+            "contactId": "ID du contact",
+            "contactName": "Nom du Contact",
+            "types": {
+                "email": "Email",
+                "chat": "Chat",
+                "phone": "Téléphone",
+                "video_meeting": "Rendez-vous vidéo",
+                "in_person_meeting": "Rendez-vous en personne"
+            },
+            "selectType": "Sélectionnez un type",
+            "selectContact": "Sélectionnez un contact",
+            "contact": "Contact"
+        },
+        "interaction.contact": "Contact"
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Respecter les entités éligibles' requis",
         "entityMeetEligibleCriteriaRequired": "'Respecter les critères d'éligibilité' requis",
         "noRecordsFound": "Aucun enregistrement trouvé.",
-        "proposalRequirements": "La proposition ne peut pas être soumise tant que tous les champs requis ne sont pas complétés.",
-        "welcomeTitle": "Bienvenue sur Grant+"
+        "welcomeTitle": "Bienvenue sur Grant+",
+        "deleteInteractionConfirmation": "Êtes-vous sûr de vouloir supprimer cette interaction ?",
+        "interactionDeleted": "L'interaction a été supprimée avec succès",
+        "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction"
     }
 }

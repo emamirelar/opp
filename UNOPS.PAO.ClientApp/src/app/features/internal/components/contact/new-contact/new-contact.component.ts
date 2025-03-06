@@ -225,8 +225,6 @@ export class NewContactComponent implements OnInit, OnDestroy {
       partnerId = "",
       projectNumber = "";
 
-    console.log(valueObj);
-
     for (let key in valueObj) {
       if (valueObj.hasOwnProperty(key)) {
         let indexValue = (valueObj as any)[key];

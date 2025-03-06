@@ -10,5 +10,9 @@ public interface IManagerWrapper
     IWorkflowManager WorkflowManager { get; }
 
     IContactManager ContactManager { get; }
+
+    IInteractionManager InteractionManager { get; }
+
+    IPartnerTreeManager PartnerTreeManager { get; }
     IPartnerManager PartnerManager { get; }
 }

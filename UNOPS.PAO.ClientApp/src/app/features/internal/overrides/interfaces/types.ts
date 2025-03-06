@@ -7,7 +7,5 @@ export interface DocumentLinkModel {
 }
 
 export enum DocumentType {
-    FundingOpportunity = 0,
-    Proposal = 1,
     Archive = 99
 }

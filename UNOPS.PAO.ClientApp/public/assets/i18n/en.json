@@ -1,43 +1,44 @@
 {
-    "title": {
-        "countries": "Countries",
-        "currency": "Currency",
-        "details": "Details",
-        "docUpload": "Document Upload",
-        "doc": "Document",
-        "docs": "Documents",
-        "external": {
-            "myProposals": "My Proposals"
-        },
-        "fundingOpportunity": "Funding Opportunity",
-        "fundingOpportunities": "Funding Opportunities",
-        "newFundingOpportunity": "New Funding Opportunity",
-        "newContact": "New Contact",
-        "partner": "Partner",
-        "newPartner": "New Partner",
-        "home": "Home",
-        "proposals": "Proposals",
-        "proposal": "Proposal",
-        "stage": "Stage",
-        "what": "What",
-        "how": "How",
-        "where": "Where",
-        "when": "When",
-        "who": "Who",
-        "why": "Why",
-        "contacts": "Contacts",
-        "contactTitles": {
-            "contactInformation": "Contact Information",
-            "addresses": "Addresses",
-            "systemInformation": "System Information"
-        },
-      "partners": "Partners",
-      "partnerTitles": {
-            "partnerInformation": "Partner Information",
-            "addressInformation": "Address Information",
-            "address1": "Address 1",
-            "address2": "Address 2"
-      }
+  "title": {
+    "countries": "Countries",
+    "currency": "Currency",
+    "details": "Details",
+    "docUpload": "Document Upload",
+    "doc": "Document",
+    "docs": "Documents",
+    "newContact": "New Contact",
+    "partner": "Partner",
+    "newPartner": "New Partner",
+    "home": "Home",
+    "proposals": "Proposals",
+    "proposal": "Proposal",
+    "stage": "Stage",
+    "what": "What",
+    "how": "How",
+    "where": "Where",
+    "when": "When",
+    "who": "Who",
+    "why": "Why",
+    "contacts": "Contacts",
+    "interactions": "Interactions",
+    "newInteraction": "New Interaction",
+    "editInteraction": "Edit Interaction",
+    "partnerTree": "Partner Tree",
+    "newPartnerLevel": "New Partner Level",
+    "updatePartnerLevel": "Update Partner Level",
+    "contactTitles": {
+        "contactInformation": "Contact Information",
+        "addresses": "Addresses",
+        "systemInformation": "System Information"
+    },
+    "confirmation": "Confirmation",
+    "partners": "Partners",
+    "partnerTitles": {
+        "partnerInformation": "Partner Information",
+        "addressInformation": "Address Information",
+        "address1": "Address 1",
+        "address2": "Address 2"
+        }
     },
     "button": {
         "cancel": "Cancel",
@@ -52,6 +53,9 @@
         "save": "Save",
         "submitProposal": "Submit Proposal",
         "upload": "Upload",
+        "delete": "Delete",
+        "inactive": "Mark as Inactive",
+        "active": "Mark as Active",
         "viewContacts": "View Contacts"
     },
     "label": {
@@ -78,7 +82,7 @@
             "assistantPhone": "Asst. Phone",
             "assistantEmail": "Asst. Email",
             "status": "Status",
-            "title": "Title", 
+            "title": "Title",
             "pronouns": "Pronouns",
             "department": "Department",
             "birthDate": "Birth Date",
@@ -90,6 +94,20 @@
             "mailingStateProvince": "Mailing State/Province",
             "mailingPostalCode": "Mailing Postal Code",
             "mailingCountry": "Mailing Country"
+        },
+        "partnerTree": {
+            "id": "ID",
+            "name": "Name",
+            "type": "Type",
+            "description": "Description",
+            "parent": "Parent",
+            "code": "Code",
+            "status": "Status",
+            "createdBy": "Created By",
+            "createdDate": "Created Date",
+            "lastModifiedBy": "Last Modified By",
+            "lastModifiedDate": "Last Modified Date",
+            "actions": ""
         },
       "partner": {
         "actions": "Actions",
@@ -136,17 +154,6 @@
         "description": "Description",
         "eligibilityCriteria": "Eligibility Criteria",
         "eligibleEntities": "Eligible Entities",
-        "fundingOpportunity": {
-            "applicationType": "Application Type",
-            "availableFunding": "Available Funding",
-            "currency": "Currency",
-            "dateFrom": "Start Date",
-            "dateTo": "End Date",
-            "description": "Description",
-            "name": "Name",
-            "submissionDueDate": "Submission Due Date",
-            "project": "Project"
-        },
         "informationSession": "Information Session",
         "justification": "Justification",
         "linkDriveFile": "Link Drive File",
@@ -154,33 +161,40 @@
         "name": "Name",
         "no": "No",
         "postedDate": "Posted Date",
-        "proposal": {
-            "applicantId": "Applicant ID",
-            "applicantName": "Applicant Name",
-            "id": "Proposal ID",
-            "initiateProposal": "Initiate Proposal",
-            "fundingOpportunityName": "Funding Opportunity Name",
-            "fundingOpportunitySubmissionDueDate": "Funding Opportunity Due Date",
-            "eligibilityCriteriaMet": "Eligibility Criteria Met",
-            "eligibilityEntityMet": "Eligibility Entity Met",
-            "meetEligibleEntities": "Meet eligible entities",
-            "meetEligibleCriteria": "Meet eligible criteria",
-            "proposalDetails": "Proposal details",
-            "submissionDate": "Submission Date"
-        },
         "sdgs": "SDGs",
         "selectEligibleEntities": "Select Eligible Entities",
         "selectFromDrive": "Select from Drive",
         "selectionMethodology": "Selection Methodology",
         "stage": "Stage",
         "status": "Status",
-        "yes": "Yes"
+        "yes": "Yes",
+        "interaction": {
+            "type": "Type",
+            "date": "Date",
+            "notes": "Notes",
+            "contactId": "Contact ID",
+            "contactName": "Contact Name",
+            "types": {
+                "email": "Email",
+                "chat": "Chat",
+                "phone": "Phone",
+                "video_meeting": "Video Meeting",
+                "in_person_meeting": "In-person Meeting"
+            },
+            "selectType": "Select a type",
+            "selectContact": "Select a contact",
+            "contact": "Contact"
+        }
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Meet eligible entities' required",
         "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
         "noRecordsFound": "No records found.",
         "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
-        "welcomeTitle": "Welcome to Partners and Opportunities"
-    }
+        "welcomeTitle": "Welcome to Partners and Opportunities",
+        "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
+        "interactionDeleted": "Interaction successfully deleted",
+        "errorDeletingInteraction": "Error while deleting interaction"
+    },
+    "label.interaction.contact": "Contact"
 }

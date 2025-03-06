@@ -3,9 +3,10 @@ import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from '../../common/layouts/components/layout/layout.component';
 import { HomeComponent } from '../../common/pages/components/home/home.component';
 import { authGuard } from '../../essentials/guards/auth.guard';
-import { FundingOpportunityItemComponent } from '../../features/internal/components/fundingOpportunity/fundingOpportunityItem/fundingOpportunityItem.component';
 import { ContactComponent } from './components/contact/contact.component';
 import { ContactItemComponent } from './components/contact/contactItem/contact-item/contact-item.component';
+import {InteractionListComponent} from './components/interaction/list/interaction-list.component';
+import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
 import { PartnerItemComponent } from './components/partner/partnerItem/partner-item.component';
 
@@ -31,6 +32,20 @@ const internalRoutes: Routes = [
         data: { breadcrumb: 'Details' },
         component: ContactItemComponent,
         canActivate: [authGuard],
+      },
+      {
+        path: 'interactions',
+        canActivate: [authGuard],
+        children: [
+          { path: '', component: InteractionListComponent},
+          { path: ':id', component: InteractionListComponent, data: { breadcrumb: 'Edit' } }
+        ]
+      },
+      {
+        path: 'partner-tree',
+        data: { breadcrumb: 'Details'},
+        component: PartnerTreeComponent,
+        canActivate: [authGuard]
       },
       {
         path: 'partners',
