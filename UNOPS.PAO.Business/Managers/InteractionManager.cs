@@ -9,6 +9,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Utilities.Helpers;
 
 public class InteractionManager : IInteractionManager
 {
@@ -32,11 +33,16 @@ public class InteractionManager : IInteractionManager
         return mapper.Map<InteractionModel>(entity);
     }
 
-    public IEnumerable<InteractionModel> GetInteractions(int userId)
+    public PaginationResponse<InteractionModel> GetInteractions(int userId, PaginationRequest request)
     {
-        return InteractionRepository
+        var query = InteractionRepository
             .GetAll()
-            .Select(mapper.Map<InteractionModel>);
+            .AsQueryable();
+
+        return query.Paginate(
+            x => mapper.Map<InteractionModel>(x),
+            request
+        );
     }
 
     public async Task<InteractionModel?> GetInteraction(int userId, int id)

@@ -1,23 +1,28 @@
-<div class="card">
-  <div class="flex justify-between items-center mb-4">
+  <div class="flex justify-between items-center my-4">
     <div class="font-semibold text-xl">Interactions</div>
     <p-button [label]="'title.newInteraction' | translate" icon="pi pi-plus" (click)="openNewInteractionModal()"></p-button>
   </div>
-
   <p-table
-    [value]="interactions()"
-    [loading]="loading()"
+    [value]="interactionListData.interactions()"
+    [loading]="interactionListData.isLoading()"
+    rowHover="true"
+    [paginator]="true"
+    [rows]="interactionListData.pageParams().pageSize"
+    [lazy]="true"
+    (onLazyLoad)="interactionListData.onPageChange($event)"
+    [totalRecords]="interactionListData.totalCount()"
+    [lazyLoadOnInit]="false"
   >
     <ng-template pTemplate="header">
       <tr>
-        <th>{{ 'label.interaction.type' | translate }}</th>
-        <th>{{ 'label.interaction.contactName' | translate }}</th>
-        <th>{{ 'label.interaction.date' | translate }}</th>
-        <th>{{ 'label.interaction.notes' | translate }}</th>
+        <th pSortableColumn="type" class="w-[25%]">{{ 'label.interaction.type' | translate }} <p-sortIcon field="type"></p-sortIcon></th>
+        <th class="w-[25%]">{{ 'label.interaction.contactName' | translate }}</th>
+        <th class="w-[25%]">{{ 'label.interaction.date' | translate }}</th>
+        <th class="w-[25%]">{{ 'label.interaction.notes' | translate }}</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-interaction>
-      <tr (click)="openEditInteractionModal(interaction, true)" class="cursor-pointer hover:opacity-75">
+      <tr (click)="openEditInteractionModal(interaction)" class="cursor-pointer">
         <td>{{ getInteractionTypeTranslationKey(interaction.type) | translate }}</td>
         <td>{{ getContactName(interaction) }}</td>
         <td>{{interaction.date | date }}</td>
@@ -32,4 +37,3 @@
     (closeModal)="onModalClose()"
     (deleted)="onInteractionDeleted()"
   ></app-interaction-modal>
-</div>

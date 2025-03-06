@@ -42,9 +42,19 @@ namespace UNOPS.PAO.Presentation.Controllers
 
         [HttpGet(APIDictionary.Interaction)]
         // TODO add permissions
-        public ActionResult GetAll()
+        public ActionResult GetAll(
+            [FromQuery] int pageIndex = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? orderBy = null,
+            [FromQuery] bool? ascending = null)
         {
-            return Ok(manager.GetInteractions(currentUserId));
+            var parameters = new PaginationRequest() {
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                OrderBy = orderBy,
+                Ascending = ascending
+            };
+            return Ok(manager.GetInteractions(currentUserId, parameters));
         }
 
         [HttpGet(APIDictionary.Interaction + "/{id}")]

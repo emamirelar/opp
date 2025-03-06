@@ -3,6 +3,10 @@
 @use 'primeicons/primeicons.css';
 @use './app/common/themes/styles/recordPage.scss';
 
+:root {
+    --p-mask-background: rgba(255, 255, 255, 0.5) !important; /* You can adjust the opacity and color as needed */
+}
+
 * {
     margin: 0;
     padding: 0;
