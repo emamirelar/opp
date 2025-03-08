@@ -25,9 +25,9 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GoogleCredential _credentials;
     private readonly DataRepository<AiScreenMapping> _screenMappingRepository;
     private readonly DataRepository<AiPrompt> _promptRepository;
-    private readonly string _projectId = "unops-partneropportunity";
-    private readonly string _location = "europe-west3"; // Change if needed
-    private readonly string _modelName = "gemini-1.5-flash-001"; // Specify Gemini model
+    private readonly string _projectId;
+    private readonly string _location;
+    private readonly string _modelName;
     private readonly string _url;
     private readonly AppDbContext _context;
 
@@ -38,8 +38,11 @@ public class UNOPSGeminiManager : IGeminiManager
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
         _credentials = GetCredentials();
-        _url = $"https://{_location}-aiplatform.googleapis.com/v1/projects/{_projectId}/locations/{_location}/publishers/google/models/{_modelName}:generateContent";
         _context = context;
+        _projectId = configuration.GetValue<string>("GoogleDriveSettings:ProjectId");
+        _location = configuration.GetValue<string>("GoogleDriveSettings:Location");
+        _modelName = configuration.GetValue<string>("GoogleDriveSettings:GeminiModelName");
+        _url = $"https://{_location}-aiplatform.googleapis.com/v1/projects/{_projectId}/locations/{_location}/publishers/google/models/{_modelName}:generateContent";
     }
 
     // Map AiPrompt entity to AiPromptModel
