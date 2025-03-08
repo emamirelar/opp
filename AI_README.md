@@ -15,7 +15,6 @@ The AI-powered summary tool is designed to dynamically generate context-aware su
    - Processes and returns the AI-generated response to the frontend.
 3. **Database (PostgreSQL)**:
    - Stores AI-related data, including prompts mapped to different screens.
-   - Holds records of past interactions and summaries.
    - Ensures that relevant data is fetched dynamically based on the screen context.
 4. **AI Model (Gemini API via Vertex AI)**:
    - Receives structured prompts from the backend.
@@ -52,6 +51,7 @@ CREATE TABLE AiScreenMapping (
     ComparisonKey TEXT NOT NULL,
     RelatedEntity TEXT NOT NULL,
     RelatedEntityKey TEXT NOT NULL,
+    QueryConditions TEXT,
     CreatedAt TIMESTAMP DEFAULT NOW(),
     Name TEXT NOT NULL,
     Status INTEGER NOT NULL
@@ -59,12 +59,13 @@ CREATE TABLE AiScreenMapping (
 ```
 - The `Type` field should match the `type` value sent in the API request.
 - The table defines how different entities are related for data retrieval.
+- **`QueryConditions`** is a field intended for future use, allowing additional conditions to be applied dynamically.
 
 ##### **Example Entries for Contacts Summary**
 ```sql
-INSERT INTO AiScreenMapping (Type, TableName, ComparisonKey, RelatedEntity, RelatedEntityKey, CreatedAt, Name, Status) VALUES 
-('contacts_summary', 'Contacts', 'Id', 'Interactions', 'ContactId', NOW(), 'Contacts', 1),
-('contacts_summary', 'Contacts', 'PartnerId', 'Partners', 'Id', NOW(), 'Contacts', 1);
+INSERT INTO AiScreenMapping (Type, TableName, ComparisonKey, RelatedEntity, RelatedEntityKey, QueryConditions, CreatedAt, Name, Status) VALUES 
+('contacts_summary', 'Contacts', 'Id', 'Interactions', 'ContactId', NULL, NOW(), 'Contacts', 1),
+('contacts_summary', 'Contacts', 'PartnerId', 'Partners', 'Id', NULL, NOW(), 'Contacts', 1);
 ```
 ```sql
 INSERT INTO AiPrompt (Type, PromptTemplate, CreatedAt, Name, Status) VALUES
@@ -124,36 +125,24 @@ POST /api/process-data
 ### 4. Dynamic Data Retrieval
 The backend dynamically fetches data from various tables based on the `type` sent in the API request. The mapping between `type` and related tables is pre-configured, ensuring only relevant data is included in the AI prompt.
 
-### 5. AI Prompt Construction
-The backend constructs a structured prompt using the stored templates and dynamically retrieved data. Example:
-```markdown
-## Contact Summary
+### 5. AI Integration in Code
+- `GeminiController.js` handles the API request and first fetches the `AiPrompt` data to check if a prompt template is available.
+- If a prompt template is found, it queries the `AiScreenMapping` table to determine which tables to fetch data from.
+- The core logic for data retrieval based on screen mapping is implemented in `UNOPSGeminiManager.cs`.
+- The main method `GetDataBasedOnScreenMapping` uses reflection to dynamically retrieve data from tables.
+- It queries the appropriate `DbSet` from `AppDbContext` based on the mapping configuration.
+- Custom conditions and logic can be added in these methods based on the `type` parameter sent in the request payload.
+- The `QueryConditions` field in `AiScreenMapping` is currently **not being used** but is intended for future enhancements where additional query conditions may be applied dynamically.
+- Calling Gemini directly from .NET was not possible as **Vertex AI** does not have built-in support in the AIPlatform package. Instead, **HTTPClient** was used to call Gemini via a direct URL.
 
-**Name:** [Contact Name]  
-**Email:** [Contact Email]
+### 6. Prompt Engineering
+To refine AI responses, use **Vertex AI Studio** under our GCP project. This allows for interactive testing, fine-tuning, and validation of prompts before deploying them.
 
-**Key Interactions:**
-
-*   **[Date of Interaction] - [Type of Interaction]:** [A brief summary of the interaction. 1-2 sentences.]
-
-**Key Information about Partners**
-* Partner Name
-
-**Overall Summary:**
-
-[A 6-15 sentence paragraph providing an overview of the contact based on the interactions and partners, highlighting key themes, and sentiment.]
-```
-
-## Error Handling
-- **Missing `type` or `id` in Request**: Returns a 400 Bad Request error.
-- **Invalid API Key or Authentication Issues**: Logs error and returns 500 Internal Server Error.
-- **No Data Found for the Given ID**: Returns an appropriate message in the response.
-
-## Future Enhancements
-- **Fine-tuning AI Prompts** for better contextual understanding.
-- **Caching AI Responses** to improve efficiency and reduce API calls.
-- **User Feedback Mechanism** to refine AI-generated summaries over time.
+### 7. Automatic Table Creation
+If you build and run the application via **Visual Studio**, the migration scripts will automatically create these tables. You only need to insert the relevant data as shown above.
 
 ## Conclusion
 This AI integration provides automated and contextual summaries within the application by leveraging Gemini API via Vertex AI. The setup ensures flexibility and adaptability to various screen contexts by dynamically fetching relevant data and constructing AI prompts accordingly.
+
+For further details or troubleshooting, refer to the main project documentation.
 
