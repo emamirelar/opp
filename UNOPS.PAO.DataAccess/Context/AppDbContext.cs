@@ -140,5 +140,11 @@ public class AppDbContext : AuditableDbContext<int, int>
 
         modelBuilder
             .Entity<PartnerTree>();
+
+        modelBuilder
+            .Entity<AiPrompt>();
+
+        modelBuilder
+            .Entity<AiScreenMapping>();
     }
 }

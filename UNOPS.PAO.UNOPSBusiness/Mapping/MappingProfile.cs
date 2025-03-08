@@ -3,14 +3,19 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
-public class MappingProfile : Profile
+namespace UNOPS.PAO.UNOPSBusiness.Mapping
 {
-    public MappingProfile()
+    public class MappingProfile : Profile
     {
-        // Add mappings here
-        CreateMap<PartnerTreeDataModel, UNOPSPartnerTree>().ReverseMap();
-        CreateMap<UNOPSPartnerTree, PartnerTreeModel>()
-            .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
-        CreateMap<UNOPSPartnerTree, PartnerTreeDataModel>();
+        public MappingProfile()
+        {
+            CreateMap<PartnerTreeDataModel, UNOPSPartnerTree>().ReverseMap();
+            CreateMap<UNOPSPartnerTree, PartnerTreeModel>()
+                .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
+            CreateMap<UNOPSPartnerTree, PartnerTreeDataModel>();
+            CreateMap<GeminiProcessRequest, AiPrompt>();
+            CreateMap<AiPrompt, AiPromptModel>().ReverseMap();
+            CreateMap<GeminiProcessRequest, AiPrompt>().ReverseMap();
+        }
     }
 }

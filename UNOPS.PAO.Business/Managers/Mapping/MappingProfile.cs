@@ -25,5 +25,7 @@ public class MappingProfile : Profile
         CreateMap<Country, CountryModel>();
         CreateMap<Interaction, InteractionModel>();
         CreateMap<InteractionRequest, Interaction>();
+        CreateMap<AiPromptModel, AiPrompt>();
+        CreateMap<AiScreenMappingModel, AiScreenMapping>();
     }
 }

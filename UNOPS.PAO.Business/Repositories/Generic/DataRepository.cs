@@ -33,13 +33,13 @@ public class DataRepository<TEntity> where TEntity : class, IBaseBusinessEntity<
         await _dataDbContext.SaveChangesAsync();
     }
 
-    public IEnumerable<TEntity> GetAll(string[] includes)
+    public IQueryable<TEntity> GetAll(string[] includes)
     {
         var set = ApplyIncludes(_dbSet, includes);
-        return set.AsEnumerable();
+        return set.AsQueryable();
     }
 
-    public IEnumerable<TEntity> GetAll() => GetAll(Array.Empty<string>());
+    public IQueryable<TEntity> GetAll() => GetAll(Array.Empty<string>());
 
     public async Task<TEntity?> GetByIdAsync(int id, string[] includes)
     {

@@ -23,6 +23,7 @@ public class GoogleDriveDocumentManager : IGoogleDriveDocumentManager
     public GoogleDriveDocumentManager(IConfiguration configuration)
     {
         _configuration = configuration;
+        var credentials = GetCredentials();
         //_driveService = InitializeDriveService();
     }
 
@@ -51,15 +52,12 @@ public class GoogleDriveDocumentManager : IGoogleDriveDocumentManager
         if (credentialParams == null)
             throw new Exception("GoogleDriveSettings configuration is missing.");
 
-        var secretManagerProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
+        
         var secretName = _configuration.GetValue<string>("GoogleDriveSettings:GoogleDriveConnectionKeySecretId");
-        if (!string.IsNullOrEmpty(secretName))
-        {
-            var secretValue = secretManagerProvider.GetSecretVersion(secretName, "latest");
-            credentialParams.PrivateKey = secretValue?.Replace("\\n", "\n");
-        }
+        var secretManagerProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId, secretName);
+        var secretValue = secretManagerProvider.GetSecretVersion(secretName, "latest");
 
-        return GoogleCredential.FromJsonParameters(credentialParams);
+        return GoogleCredential.FromJson(secretValue);
     }
 
     public async Task<string> UploadFileAsync(IFormFile file, string fileName, string parentFolderId,

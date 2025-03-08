@@ -110,6 +110,9 @@ public class Startup
 
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+        // Register the mapping profile
+        services.AddAutoMapper(cfg => cfg.AddProfile<UNOPS.PAO.UNOPSBusiness.Mapping.MappingProfile>());
+
         services.AddScoped<IPAOExecutionContext, PAOExecutionContext>();
         services.AddScoped<SystemConfigurationManager>();
         services.AddScoped(typeof(UserResolverService<int>));
@@ -196,13 +199,13 @@ public class Startup
             options
                 .UseNpgsql(connectionString)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
-    }
 
+    }
     private string? GetConnectionStringFromSecretManager()
     {
         var envDbConSecretName = Configuration.GetConnectionString("ConnectionSecretName");
         var projectId = Configuration.GetSection("AppConfig")["ProjectId"];
-        var secretManager = new GoogleSecretManagerConfigurationProvider(projectId);
+        var secretManager = new GoogleSecretManagerConfigurationProvider(projectId, envDbConSecretName);
 
         return secretManager.GetSecretVersion(envDbConSecretName, "latest");
     }

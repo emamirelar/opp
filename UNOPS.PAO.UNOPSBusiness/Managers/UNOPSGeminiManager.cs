@@ -1,0 +1,257 @@
+using Google.Apis.Auth.OAuth2;
+using Microsoft.Extensions.Configuration;
+using UNOPS.PAO.GoogleServices;
+using UNOPS.PAO.Models;
+using UNOPS.PAO.Business.Interfaces;
+using System;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.DataAccess.Context;
+using AutoMapper;
+using UNOPS.PAO.Business.Repositories.Generic;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Linq;
+
+namespace UNOPS.PAO.UNOPSBusiness.Managers;
+
+public class UNOPSGeminiManager : IGeminiManager
+{
+    private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
+    private readonly GoogleCredential _credentials;
+    private readonly DataRepository<AiScreenMapping> _screenMappingRepository;
+    private readonly DataRepository<AiPrompt> _promptRepository;
+    private readonly string _projectId = "unops-partneropportunity";
+    private readonly string _location = "europe-west3"; // Change if needed
+    private readonly string _modelName = "gemini-1.5-flash-001"; // Specify Gemini model
+    private readonly string _url;
+    private readonly AppDbContext _context;
+
+    public UNOPSGeminiManager(IMapper mapper, AppDbContext context, IConfiguration configuration)
+    {
+        _mapper = mapper;
+        _screenMappingRepository = new DataRepository<AiScreenMapping>(context);
+        _promptRepository = new DataRepository<AiPrompt>(context);
+        _configuration = configuration;
+        _credentials = GetCredentials();
+        _url = $"https://{_location}-aiplatform.googleapis.com/v1/projects/{_projectId}/locations/{_location}/publishers/google/models/{_modelName}:generateContent";
+        _context = context;
+    }
+
+    // Map AiPrompt entity to AiPromptModel
+    private static AiPromptModel MapEntityToAiPromptModel(AiPrompt entity, IMapper mapper)
+    {
+        var result = mapper.Map<AiPrompt, AiPromptModel>(entity);
+        return result;
+    }
+
+    // Map AiPromptModel to AiPrompt entity
+    private AiPrompt MapModelToEntity(AiPromptModel model)
+    {
+        var entity = _mapper.Map(model, new AiPrompt());
+        return entity;
+    }
+
+    // Get prompt data by type
+    public IEnumerable<AiPromptModel> GetPromptData(string type)
+    {
+        return _promptRepository
+            .GetAll()
+            .Where(x => x.Type == type)
+            .Select(x => MapEntityToAiPromptModel(x, _mapper));
+    }
+
+    // Get screen mappings by type
+    public async Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type)
+    {
+        return await _screenMappingRepository
+            .GetAll()
+            .Where(x => x.Type == type)
+            .ToListAsync();
+    }
+
+    // Fetch result from Gemini
+    public async Task<string> fetchResultFromGemini(string promptTemplate, string relatedJsonData) {
+        string finalPrompt = promptTemplate.Replace("{jsonData}", relatedJsonData);
+        string geminiResponse = await callGemini(finalPrompt);
+        return geminiResponse;
+    }
+
+    // Call Gemini API
+    public async Task<string> callGemini(string prompt)
+    {
+        string accessToken = await GetAccessTokenAsync();
+
+        // Create the request
+        var requestBody = new
+        {
+            contents = new[]
+            {
+                new { role = "user", parts = new[] { new { text = prompt } } }
+            }
+        };
+
+        string jsonRequest = JsonConvert.SerializeObject(requestBody);
+        string response = await CallGeminiApiAsync(_url, jsonRequest, accessToken);
+        return response;
+    }
+
+    // Map GeminiProcessRequest to AiPrompt entity
+    private AiPrompt MapModelToEntity(GeminiProcessRequest model)
+    {
+        var entity = _mapper.Map<AiPrompt>(model);
+        return entity;
+    }
+
+    AiPrompt IGeminiManager.MapModelToEntity(GeminiProcessRequest req)
+    {
+        return MapModelToEntity(req);
+    }
+
+    // Get access token for Gemini API
+    static async Task<string> GetAccessTokenAsync()
+    {
+        GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+        credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+        return await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+    }
+
+    // Call Gemini API with the request
+    static async Task<string> CallGeminiApiAsync(string url, string jsonRequest, string accessToken)
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await client.PostAsync(url, content);
+            return await response.Content.ReadAsStringAsync();
+        }
+    }
+
+    // Get Google credentials from configuration
+    private GoogleCredential GetCredentials()
+    {
+        var credentialParams = _configuration.GetSection("GoogleDriveSettings")
+            .Get<JsonCredentialParameters>();
+        if (credentialParams == null)
+            throw new Exception("GoogleDriveSettings configuration is missing.");
+
+        var secretName = _configuration.GetValue<string>("GoogleDriveSettings:GoogleDriveConnectionKeySecretId");
+        var secretManagerProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId, secretName);
+        var secretValue = secretManagerProvider.GetSecretVersion(secretName, "latest");
+
+        return GoogleCredential.FromJson(secretValue);
+    }
+
+    // Get data based on screen mappings
+    public async Task<string> GetDataBasedOnScreenMapping(int recordId, AiScreenMapping[] mappings)
+    {
+        var dbProperties = typeof(AppDbContext).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var resultData = new Dictionary<string, object>();
+        object mainTableRecord = null;
+        string lastTableName = null;
+
+        foreach (var mapping in mappings)
+        {
+            // Check if the main table has changed
+            if (lastTableName != mapping.TableName)
+            {
+                mainTableRecord = await GetMainTableRecord(recordId, mapping.TableName, dbProperties);
+                resultData[mapping.TableName] = mainTableRecord;
+                lastTableName = mapping.TableName;
+            }
+
+            // Check if there is a related entity and related entity key
+            if (mapping.RelatedEntity != null && mapping.RelatedEntityKey != null)
+            {
+                var relatedRecords = await GetRelatedRecords(recordId, mapping, dbProperties);
+                resultData[mapping.RelatedEntity] = relatedRecords;
+            }
+        }
+
+        return JsonConvert.SerializeObject(resultData, new JsonSerializerSettings
+        {
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            Formatting = Formatting.Indented
+        });
+    }
+
+    // Get main table record by ID
+    private async Task<object> GetMainTableRecord(int recordId, string tableName, PropertyInfo[] dbProperties)
+    {
+        var mainDbSet = dbProperties.FirstOrDefault(p => p.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+        if (mainDbSet == null) throw new InvalidOperationException($"Table '{tableName}' not found in DbContext.");
+
+        var entityType = mainDbSet.PropertyType.GetGenericArguments().FirstOrDefault();
+        if (entityType == null) throw new InvalidOperationException($"Could not determine entity type for table '{tableName}'.");
+
+        var mainTableRecord = await _context.FindAsync(entityType, recordId);
+        if (mainTableRecord == null) throw new InvalidOperationException($"Record with ID '{recordId}' not found in table '{tableName}'.");
+
+        return mainTableRecord;
+    }
+
+    // Get related records by foreign key
+    private async Task<IEnumerable<dynamic>> GetRelatedRecords(int recordId, AiScreenMapping mapping, PropertyInfo[] dbProperties)
+    {
+        var relatedTableSet = dbProperties.FirstOrDefault(p => p.Name.Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
+        if (relatedTableSet == null) throw new InvalidOperationException($"Table '{mapping.RelatedEntity}' not found in DbContext.");
+
+        var relatedEntityType = relatedTableSet.PropertyType.GetGenericArguments().FirstOrDefault();
+        if (relatedEntityType == null) throw new InvalidOperationException($"Could not determine entity type for table '{mapping.RelatedEntity}'.");
+
+        var foreignKeyProperty = relatedEntityType.GetProperty(mapping.RelatedEntityKey);
+        if (foreignKeyProperty == null) throw new InvalidOperationException($"Foreign key '{mapping.RelatedEntityKey}' not found in table '{mapping.RelatedEntity}'.");
+
+        var parameter = Expression.Parameter(relatedEntityType, "x");
+        var foreignKeyExpression = Expression.Equal(
+            Expression.Property(parameter, foreignKeyProperty),
+            Expression.Constant(recordId)
+        );
+        var lambda = Expression.Lambda(foreignKeyExpression, parameter);
+
+        var whereMethod = typeof(Queryable)
+            .GetMethods()
+            .FirstOrDefault(m => m.Name == "Where" && m.GetParameters().Length == 2);
+
+        if (whereMethod == null) throw new InvalidOperationException($"Could not find Queryable.Where() method.");
+
+        var genericWhereMethod = whereMethod.MakeGenericMethod(relatedEntityType);
+        var relatedDbSet = relatedTableSet.GetValue(_context);
+        if (relatedDbSet == null) throw new InvalidOperationException($"Could not get DbSet for '{mapping.RelatedEntity}'.");
+
+        var queryable = genericWhereMethod.Invoke(null, new object[] { relatedDbSet, lambda });
+        return await ((IQueryable<dynamic>)queryable).ToListAsync();
+    }
+
+    // Apply JSON conditions to the query
+    private IQueryable<object> ApplyJsonConditions(IQueryable<object> query, string jsonCondition)
+    {
+        if (string.IsNullOrEmpty(jsonCondition)) return query;
+        var conditions = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonCondition);
+        var parameter = Expression.Parameter(query.ElementType, "x");
+        Expression finalExpression = null;
+
+        foreach (var condition in conditions)
+        {
+            var property = Expression.Property(parameter, condition.Key);
+            var value = Expression.Constant(condition.Value);
+            var comparison = Expression.Equal(property, value);
+            finalExpression = finalExpression == null ? comparison : Expression.AndAlso(finalExpression, comparison);
+        }
+
+        if (finalExpression != null)
+        {
+            var lambda = Expression.Lambda(finalExpression, parameter);
+            query = (IQueryable<object>)typeof(Queryable).GetMethods().First(m => m.Name == "Where" && m.GetParameters().Length == 2)
+                .MakeGenericMethod(query.ElementType)
+                .Invoke(null, new object[] { query, lambda });
+        }
+        return query;
+    }
+}

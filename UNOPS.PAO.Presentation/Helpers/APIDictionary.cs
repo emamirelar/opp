@@ -48,4 +48,6 @@ public class APIDictionary
     
     public const string PartnerTree = APIPrefix + "partner-tree";
     public const string ExternalPartnerTree = ExternalAPIPrefix + "partner-tree";
+
+    public const string Gemini = APIPrefix + "process-data";
 }

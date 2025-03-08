@@ -14,4 +14,6 @@ public interface IManagerWrapper
     IInteractionManager InteractionManager { get; }
 
     IPartnerTreeManager PartnerTreeManager { get; }
+
+    IGeminiManager GeminiManager { get; }
 }
