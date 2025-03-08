@@ -126,7 +126,7 @@ POST /api/process-data
 The backend dynamically fetches data from various tables based on the `type` sent in the API request. The mapping between `type` and related tables is pre-configured, ensuring only relevant data is included in the AI prompt.
 
 ### 5. AI Integration in Code
-- `GeminiController.js` handles the API request and first fetches the `AiPrompt` data to check if a prompt template is available.
+- `GeminiController.cs` handles the API request and first fetches the `AiPrompt` data to check if a prompt template is available.
 - If a prompt template is found, it queries the `AiScreenMapping` table to determine which tables to fetch data from.
 - The core logic for data retrieval based on screen mapping is implemented in `UNOPSGeminiManager.cs`.
 - The main method `GetDataBasedOnScreenMapping` uses reflection to dynamically retrieve data from tables.
