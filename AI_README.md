@@ -116,7 +116,7 @@ POST /api/process-data
 ```json
 {
    "id": 10,
-   "type": "contacts-summary"
+   "type": "contacts_summary"
 }
 ```
 ##### Response:
