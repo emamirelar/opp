@@ -9,22 +9,20 @@ using UNOPS.PAO.Models;
 
 public class ManagerWrapper : IManagerWrapper
 {
-    private IFundingOpportunityManager fundingOpportunityManager;
-    private IProposalManager proposalManager;
     private IDocumentManager documentManager;
     private ISystemAdminManager systemAdminManager;
     private IWorkflowManager workflowManager;
     private IContactManager contactManager;
     private IInteractionManager interactionManager;
     private IPartnerTreeManager partnerTreeManager;
+    private IPartnerManager partnerManager;
+
     private IGeminiManager geminiManager;
 
     public ManagerWrapper(IMapper mapper, AppDbContext context)
     {
         workflowManager = new WorkflowManager(context);
 
-        fundingOpportunityManager = new FundingOpportunityManager(mapper, context);
-        proposalManager = new ProposalManager(mapper, context, workflowManager);
 
         documentManager = new DocumentManager(mapper, context);
         systemAdminManager = new SystemAdminManager(context);
@@ -32,13 +30,11 @@ public class ManagerWrapper : IManagerWrapper
         contactManager = new ContactManager(mapper, context);
         interactionManager = new InteractionManager(mapper, context);
         partnerTreeManager = new PartnerTreeManager(mapper, context);
+        partnerManager = new PartnerManager(mapper, context);
 
         geminiManager = new GeminiManager(mapper, context);
     }
 
-    public virtual IFundingOpportunityManager FundingOpportunityManager => fundingOpportunityManager;
-
-    public virtual IProposalManager ProposalManager => proposalManager;
     public virtual IDocumentManager DocumentManager => documentManager;
     public virtual ISystemAdminManager SystemAdminManager => systemAdminManager;
 
@@ -49,6 +45,8 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IInteractionManager InteractionManager => interactionManager;
 
     public virtual IPartnerTreeManager PartnerTreeManager => partnerTreeManager;
+
+    public virtual IPartnerManager PartnerManager => partnerManager;
 
     public virtual IGeminiManager GeminiManager => geminiManager;
 }

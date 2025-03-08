@@ -28,19 +28,13 @@ public class UNOPSAppDbContext : AppDbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder
-            .Entity<UNOPSFundingOpportunity>()
-            .HasOne(x => x.Project)
-            .WithMany()
-            .HasForeignKey(x => x.ProjectNumber)
-            .HasPrincipalKey(x => x.ProjectNumber)
-            .IsRequired(false);
+            .Entity<UNOPSContact>();
+        //.HasPrincipalKey(x => x.ContactNumber);
 
         modelBuilder
-            .Entity<UNOPSContact>();
-            //.HasPrincipalKey(x => x.ContactNumber);
+            .Entity<UNOPSPartner>();
     }
 
-    public new DbSet<UNOPSFundingOpportunity> FundingOpportunities { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
     public DbSet<Project> Projects { get; set; }
     public DbSet<WorkPackage> WorkPackages { get; set; }
@@ -50,4 +44,5 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<UNOPSContact> Contacts { get; set; }
     public new DbSet<UNOPSInteraction> Interactions { get; set; }
     public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }
+    public new DbSet<UNOPSPartner> Partners { get; set; }
 }

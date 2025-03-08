@@ -111,7 +111,7 @@ export class InteractionModalComponent {
 
       if (formValue.id) {
         // Update existing interaction
-        this.interactionService.update(formValue.id, formValue).subscribe({
+        this.interactionService.update(formValue).subscribe({
           next: () => {
             this.showSuccessMessage('message.interactionUpdated');
             this.hide();

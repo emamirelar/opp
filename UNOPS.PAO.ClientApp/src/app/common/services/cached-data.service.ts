@@ -45,6 +45,33 @@ export class CachedDataService {
   private allStatusData = signal([]);
   allStatus = this.allStatusData.asReadonly();
 
+  private allPartnersData = signal([]);
+  allPartners = this.allPartnersData.asReadonly();
+
+  private allPartnerStatusData = signal([]);
+  allPartnerStatus = this.allPartnerStatusData.asReadonly();
+
+  private allPartnerNewEngagementData = signal([]);
+  allPartnerNewEngagement = this.allPartnerNewEngagementData.asReadonly();
+
+  private allPartnerReportingLevelData = signal([]);
+  allPartnerReportingLevel = this.allPartnerReportingLevelData.asReadonly();
+
+  private allYesNoData = signal([]);
+  allYesNo = this.allYesNoData.asReadonly();
+
+  private allPartnerLevyAppliesData = signal([]);
+  allPartnerLevyApplies = this.allPartnerLevyAppliesData.asReadonly();
+
+  private allPartnerReasonForLevyNotData = signal([]);
+  allPartnerReasonForLevyNot = this.allPartnerReasonForLevyNotData.asReadonly();
+
+  private allPartnerLevyTreatmentData = signal([]);
+  allPartnerLevyTreatment = this.allPartnerLevyTreatmentData.asReadonly();
+
+  private allPartnerScopesData = signal([]);
+  allPartnerScope = this.allPartnerScopesData.asReadonly();
+
   private allPronounsData = signal([]);
   allPronouns = this.allPronounsData.asReadonly();
 
@@ -55,6 +82,15 @@ export class CachedDataService {
     this.loadSalutations();
     this.loadStatus();
     this.loadPronouns();
+    this.loadPartnerLevyAppliesData();
+    this.loadPartnerLevyTreatmentData();
+    this.loadPartnerNewEngagement();
+    this.loadPartnerReasonForLevyNotData();
+    this.loadPartnerReportingLevelData();
+    this.loadPartnerScopeData();
+    this.loadPartnerStatus();
+    this.loadYesNo();
+    this.loadPartners();
     this.loadPartnerLevelTypeData();
   }
 
@@ -75,6 +111,15 @@ export class CachedDataService {
 
     this.allSaluationsData.set([]);
 
+    this.allPartnerStatusData.set([]);
+    this.allPartnerNewEngagementData.set([]);
+    this.allPartnerReportingLevelData.set([]);
+    this.allYesNoData.set([]);
+    this.allPartnerLevyAppliesData.set([]);
+    this.allPartnerReasonForLevyNotData.set([]);
+    this.allPartnerLevyTreatmentData.set([]);
+    this.allPartnerScopesData.set([]);
+    this.allPartnersData.set([]);
   }
 
   loadProjects(){
@@ -172,6 +217,136 @@ export class CachedDataService {
     this.allStatusData.set(statuses);
   }
 
+  loadPartnerStatus() {
+    let partnerStatuses: any = [{
+      id: 'Active',
+      name: 'Active'
+    }, {
+      id: 'Locked',
+      name: 'Locked'
+    }, {
+      id: 'Inactive',
+      name: 'Inactive'
+    }];
+    this.allPartnerStatusData.set(partnerStatuses);
+  }
+
+  loadPartnerNewEngagement() {
+    let partnerNewEngagements: any = [{
+      id: 'Allowed',
+      name: 'Allowed'
+    }, {
+      id: 'Not Allowed',
+      name: 'Not Allowed'
+    }];
+    this.allPartnerNewEngagementData.set(partnerNewEngagements);
+  }
+
+  loadPartnerReportingLevelData() {
+    let partnerReportingLevels: any = [{
+      id: '1',
+      name: '1'
+    }, {
+      id: '2',
+      name: '2'
+    }, {
+      id: '3',
+      name: '3'
+    }, {
+      id: '4',
+      name: '4'
+    }, {
+      id: '5',
+      name: '5'
+    }, {
+      id: '6',
+      name: '6'
+    }];
+    this.allPartnerReportingLevelData.set(partnerReportingLevels);
+  }
+
+  loadYesNo() {
+    let yesNo: any = [{
+      id: 'Yes',
+      name: 'Yes'
+    }, {
+      id: 'No',
+      name: 'No'
+    }];
+    this.allYesNoData.set(yesNo);
+  }
+
+  loadPartnerLevyAppliesData() {
+    let partnerLevyApplies: any = [{
+      id: 'Potentially does not apply',
+      name: 'Potentially does not apply'
+    }, {
+      id: 'Does not apply',
+      name: 'Does not apply'
+    }, {
+      id: 'Potentially applies',
+      name: 'Potentially applies'
+    }];
+    this.allPartnerLevyAppliesData.set(partnerLevyApplies);
+  }
+
+  loadPartnerReasonForLevyNotData() {
+    let partnerReasonForLevyNot: any = [{
+      id: '3a) Vertical Fund',
+      name: '3a) Vertical Fund'
+    }, {
+      id: '3d) International Financial Institution',
+      name: '3d) International Financial Institution'
+    }, {
+      id: '3c) Programme Country',
+      name: '3c) Programme Country'
+    }, {
+      id: '4) Pooled Fund',
+      name: '4) Pooled Fund'
+    }, {
+      id: '3b) Funds from UN entity',
+      name: '3b) Funds from UN entity'
+    }, {
+      id: '3a / 4) Vertical Fund / Pooled Fund',
+      name: '3a / 4) Vertical Fund / Pooled Fund'
+    }, {
+      id: '6) Thematic Fund',
+      name: '6) Thematic Fund'
+    }];
+    this.allPartnerReasonForLevyNotData.set(partnerReasonForLevyNot);
+  }
+
+  loadPartnerLevyTreatmentData() {
+    let partnerLevyTreatment: any = [{
+      id: 'Please consult funding source',
+      name: 'Please consult funding source'
+    }, {
+      id: 'UNOPS administers',
+      name: 'UNOPS administers'
+    }, {
+      id: 'Funding source administers directly (no changes required to the partner agreement)',
+      name: 'Funding source administers directly (no changes required to the partner agreement)'
+    }, {
+      id: 'N/A',
+      name: 'N/A'
+    }];
+    this.allPartnerLevyTreatmentData.set(partnerLevyTreatment);
+  }
+
+  loadPartnerScopeData() {
+    let partnerScopes: any = [{
+      id: 'Global',
+      name: 'Global'
+    }, {
+      id: 'Regional',
+      name: 'Regional'
+    }, {
+      id: 'Local',
+      name: 'Local'
+    }];
+    this.allPartnerScopesData.set(partnerScopes);
+  }
+
   loadPronouns() {
     let pronouns:any = [{
       id: 'He/Him',
@@ -256,6 +431,22 @@ export class CachedDataService {
       this.http.get('/api/values/selection-methodology').subscribe({
         next: (data: any) => {
           this.allSelectionMethodologyData.set( data );
+          this.isLoading.set( false );
+        },
+        error: (err) => {
+          this.isLoading.set( false );
+        }
+      });
+    }
+  }
+
+  loadPartners(){
+    if( ( this.allApplicationTypeData() == undefined ) || ( this.allApplicationTypeData().length <= 0 ) )
+    {
+      this.isLoading.set( true );
+      this.http.get('/api/values/partners').subscribe({
+        next: (data: any) => {
+          this.allPartnersData.set( data );
           this.isLoading.set( false );
         },
         error: (err) => {

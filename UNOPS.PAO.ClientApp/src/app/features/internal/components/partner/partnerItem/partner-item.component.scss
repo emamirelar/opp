@@ -1,0 +1,20 @@
+:host {
+  @apply flex grow;
+}
+
+:host ::ng-deep .section {
+  @apply p-0;
+}
+
+:host ::ng-deep .cancel-button {
+  /* width : 100px; */
+}
+
+:host ::ng-deep .save-button {
+  /* width : 100px; */
+}
+
+:host ::ng-deep .contact-dialog {
+  width: 75%;
+  height: 70%;
+}

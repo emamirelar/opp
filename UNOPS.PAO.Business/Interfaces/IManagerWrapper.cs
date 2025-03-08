@@ -2,8 +2,6 @@
 
 public interface IManagerWrapper
 {
-    IFundingOpportunityManager FundingOpportunityManager { get; }
-    IProposalManager ProposalManager { get; }
     IDocumentManager DocumentManager { get; }
     ISystemAdminManager SystemAdminManager { get; }
 
@@ -14,6 +12,7 @@ public interface IManagerWrapper
     IInteractionManager InteractionManager { get; }
 
     IPartnerTreeManager PartnerTreeManager { get; }
+    IPartnerManager PartnerManager { get; }
 
     IGeminiManager GeminiManager { get; }
 }

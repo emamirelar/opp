@@ -11,9 +11,6 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<FundingOpportunityRequest, UNOPSFundingOpportunity>();
-        CreateMap<UNOPSFundingOpportunity, FundingOpportunityModel>();
-        CreateMap<FundingOpportunityModel, UNOPSFundingOpportunity>();
         CreateMap<Project, ProjectModel>();
         CreateMap<UNOPSDocument, DocumentModel>();
         CreateMap<DocumentModel, UNOPSDocument>();

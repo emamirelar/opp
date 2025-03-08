@@ -1,0 +1,301 @@
+<p-blockui [blocked]="partnerService.isLoading()" />
+
+@if( showValidationFailedError() === true ){
+  <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
+}
+
+<form class="w-full h-full content-container" [formGroup]="formGroup">
+      <p-panel
+        header="{{ 'title.partnerTitles.partnerInformation' | translate }}"
+        [toggleable]="true"
+        [styleClass]="'section'"
+      >
+      <div class="flex flex-row justify-between">
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.name" | translate }}</label>
+          <input pInputText fluid="true" formControlName="name" />
+          @if( formGroup.get("name")?.invalid && showValidationFailedError() )
+          {
+            <p-message severity="error" variant="simple">Name must be entered.</p-message>
+          }
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.shortName" | translate }}</label>
+          <input pInputText fluid="true" formControlName="shortName" />
+          @if( formGroup.get("shortName")?.invalid && showValidationFailedError() )
+          {
+          <p-message severity="error" variant="simple">Short Name must be entered.</p-message>
+          }
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.status" | translate }}</label>
+          <p-select
+            formControlName="status"
+            [options]="allPartnerStatusData()"
+            optionLabel="name"
+            optionValue="id"
+            fluid="true"
+            [showClear]="true"
+            placeholder="Select a Status"
+          />
+          @if( formGroup.get("status")?.invalid && showValidationFailedError() )
+          {
+            <p-message severity="error" variant="simple">Status must be entered.</p-message>
+          }
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.newEngagement" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="newEngagement" />-->
+          <p-select formControlName="newEngagement"
+                    [options]="allPartnerNewEngagementData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select New Engagement" />
+          @if( formGroup.get("newEngagement")?.invalid && showValidationFailedError() )
+          {
+          <p-message severity="error" variant="simple">New Engagement must be entered.</p-message>
+          }
+        </div>
+      </div>
+
+      <div class="flex flex-row justify-between">
+        <div class="mb-6 pr-4">
+          <label>{{ "label.partner.phone" | translate }}</label>
+          <input pInputText fluid="true" formControlName="phone" />
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label>{{ "label.partner.website" | translate }}</label>
+          <input pInputText fluid="true" formControlName="website" />
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label>{{ "label.partner.internalReportingLevel" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="internalReportingLevel" />-->
+          <p-select formControlName="internalReportingLevel"
+                    [options]="allPartnerReportingLevelData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select Internal Reporting Level" />
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label>{{ "label.partner.externalReportingLevel" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="externalReportingLevel" />-->
+          <p-select formControlName="externalReportingLevel"
+                    [options]="allPartnerReportingLevelData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select External Reporting Level" />
+        </div>
+      </div>
+      <p-divider />
+
+      <div class="flex flex-row justify-between">
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.pooledFund" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="pooledFund" />-->
+          <p-select formControlName="pooledFund"
+                    [options]="allYesNoData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select Pooled Fund" />
+          @if( formGroup.get("pooledFund")?.invalid && showValidationFailedError() )
+          {
+          <p-message severity="error" variant="simple">Pooled Fund must be entered.</p-message>
+          }
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.ddRequired" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="ddRequired" />-->
+          <p-select formControlName="ddRequired"
+                    [options]="allYesNoData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select DD Required" />
+          @if( formGroup.get("ddRequired")?.invalid && showValidationFailedError() )
+          {
+          <p-message severity="error" variant="simple">DD Required must be entered.</p-message>
+          }
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.ddeacDone" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="ddeacDone" />-->
+          <p-select formControlName="ddeacDone"
+                    [options]="allYesNoData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select DD/EAC Done" />
+          @if( formGroup.get("ddeacDone")?.invalid && showValidationFailedError() )
+          {
+          <p-message severity="error" variant="simple">DD/EAC Done must be entered.</p-message>
+          }
+        </div>
+
+        <div class="mb-6 pr-2">
+          <label>{{ "label.partner.eacReference" | translate }}</label>
+          <input pInputText fluid="true" formControlName="eacReference" />
+        </div>
+      </div>
+
+      <div class="flex flex-row justify-between">
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.levyPotentiallyApplies" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="levyPotentiallyApplies" />-->
+          <p-select formControlName="levyPotentiallyApplies"
+                    [options]="allPartnerLevyAppliesData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select Levy Potentially Applies" />
+          @if( formGroup.get("levyPotentiallyApplies")?.invalid && showValidationFailedError() )
+          {
+          <p-message severity="error" variant="simple">Levy Potentially Applies must be entered.</p-message>
+          }
+        </div>
+
+        <div class="mb-6 pr-2">
+          <label>{{ "label.partner.reasonForLevyNotApplying" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="reasonForLevyNotApplying" />-->
+          <p-select formControlName="reasonForLevyNotApplying"
+                    [options]="allPartnerReasonForLevyNotData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select Reason For Levy Not Applying" />
+        </div>
+
+        <div class="mb-6 pr-2">
+          <label>{{ "label.partner.levyTreatment" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="levyTreatment" />-->
+          <p-select formControlName="levyTreatment"
+                    [options]="allPartnerLevyTreatmentData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select Levy Treatment" />
+        </div>
+
+        <div class="mb-6 pr-4">
+          <label class="required">*</label><label>{{ "label.partner.scope" | translate }}</label>
+          <!--<input pInputText fluid="true" formControlName="scope" />-->
+          <p-select formControlName="scope"
+                    [options]="allPartnerScopesData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select Scope" />
+          @if( formGroup.get("scope")?.invalid && showValidationFailedError() )
+          {
+          <p-message severity="error" variant="simple">Scope must be entered.</p-message>
+          }
+        </div>
+      </div>
+      <div class="flex flex-row">
+        <div class="mb-6 pr-2">
+          <!--<label>{{ "label.partner.globalKeyAccount" | translate }}</label>-->
+          <!--<p-checkbox formControlName="globalKeyAccount" />-->
+          <p-checkbox [binary]="true"
+                      formControlName="globalKeyAccount"
+                      inputId="gka" />
+          <label for="gka" class="ml-2">{{ "label.partner.globalKeyAccount" | translate }}</label>
+        </div>
+
+        <div class="mb-6 pr-2">
+          <!--<label>{{ "label.partner.unSecretariatEntity" | translate }}</label>-->
+          <!--<p-checkbox formControlName="unSecretariatEntity" />-->
+          <p-checkbox [binary]="true"
+                      formControlName="unSecretariatEntity"
+                      inputId="unse" />
+          <label for="unse" class="ml-2">{{ "label.partner.unSecretariatEntity" | translate }}</label>
+        </div>
+      </div>
+    </p-panel>
+    <p-panel
+      header="{{ 'title.partnerTitles.addressInformation' | translate }}"
+      [toggleable]="true"
+      [styleClass]="'section'">
+      <div class="flex flex-row">
+          <div class="mb-12 pr-2 w-1/2">
+              <p-card header="{{ 'title.partnerTitles.address1' | translate }}">
+                <div class="pb-2">
+                  <label>{{ "label.partner.address1Street" | translate }}</label>
+                  <input pInputText fluid="true" formControlName="address1Street" />
+                </div>
+                <div class="pb-2">
+                  <label>{{ "label.partner.address1Street2" | translate }}</label>
+                  <input pInputText fluid="true" formControlName="address1Street2" />
+                </div>
+                <div class="pb-2">
+                  <label>{{ "label.partner.address1City" | translate }}</label>
+                  <input pInputText fluid="true" formControlName="address1City" />
+                </div>
+                <div class="pb-2">
+                  <label>{{ "label.partner.address1StateProvince" | translate }}</label>
+                  <input pInputText fluid="true" formControlName="address1StateProvince" />
+                </div>
+                <div class="pb-2">
+                  <label>{{ "label.partner.address1PostalCode" | translate }}</label>
+                  <input pInputText fluid="true" formControlName="address1PostalCode" />
+                </div> 
+                <div class="pb-2">
+                  <label>{{ "label.partner.address1Country" | translate }}</label>
+                  <input pInputText fluid="true" formControlName="address1Country" />
+                </div>  
+              </p-card>
+          </div>
+          <div class="mb-12 pr-2 w-1/2">
+            <p-card header="{{ 'title.partnerTitles.address2' | translate }}">
+              <div class="pb-2">
+                <label>{{ "label.partner.address2Street" | translate }}</label>
+                <input pInputText fluid="true" formControlName="address2Street" />
+              </div>
+              <div class="pb-2">
+                <label>{{ "label.partner.address2Street2" | translate }}</label>
+                <input pInputText fluid="true" formControlName="address2Street2" />
+              </div>
+              <div class="pb-2">
+                <label>{{ "label.partner.address2City" | translate }}</label>
+                <input pInputText fluid="true" formControlName="address2City" />
+              </div>
+              <div class="pb-2">
+                <label>{{ "label.partner.address2StateProvince" | translate }}</label>
+                <input pInputText fluid="true" formControlName="address2StateProvince" />
+              </div>
+              <div class="pb-2">
+                <label>{{ "label.partner.address2PostalCode" | translate }}</label>
+                <input pInputText fluid="true" formControlName="address2PostalCode" />
+              </div> 
+              <div class="pb-2">
+                <label>{{ "label.partner.address2Country" | translate }}</label>
+                <input pInputText fluid="true" formControlName="address2Country" />
+              </div>  
+            </p-card>
+          </div>
+      </div>
+    </p-panel>
+    <div class="flex justify-end mt-2">
+      <p-button icon="pi pi-save" label="{{'button.save' | translate}}" (click)="_handleOnSaveClick()"/>
+    </div>
+</form>

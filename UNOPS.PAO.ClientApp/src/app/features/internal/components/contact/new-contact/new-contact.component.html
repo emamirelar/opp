@@ -92,19 +92,23 @@
 
         <div class="mb-6 pr-2">
           <label class="required">*</label><label>{{ "label.contact.status" | translate }}</label>
-          <p-select
-            formControlName="status"
-            [options]="allStatusData()"
-            optionLabel="name"
-            optionValue="id"
-            fluid="true"
-            [showClear]="true"
-            placeholder="Select a Status"
-          />
+          <p-select formControlName="status"
+                    [options]="allStatusData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select a Status" />
           @if( formGroup.get("status")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Status must be entered.</p-message>
+          <p-message severity="error" variant="simple">Status must be entered.</p-message>
           }
+        </div>
+
+        <div class="mb-6 pr-2">
+          <label class="required">*</label><label for="partner">{{ 'label.partner.partner' | translate }}</label>
+          <p-select formControlName="partner" [options]="allPartners()" optionLabel="name"
+                    fluid="true" id="partner" ariaLabel="Select Partner" placeholder="Select Partner" />
         </div>
       </div>
       <p-divider />

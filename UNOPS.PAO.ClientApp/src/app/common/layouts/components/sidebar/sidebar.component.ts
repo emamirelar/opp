@@ -43,6 +43,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
       label: 'title.partnerTree',
       icon: 'account_tree',
       routerLink: ['/partner-tree']
+    },
+    {
+      label: 'title.partners',
+      icon: 'corporate_fare',
+      routerLink: ['/partners']
     }
   ];
 

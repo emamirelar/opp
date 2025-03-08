@@ -12,6 +12,7 @@ using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Microsoft.EntityFrameworkCore;
+using UNOPS.PAO.Utilities.Helpers;
 
 public class UNOPSInteractionManager : IInteractionManager
 {
@@ -61,15 +62,52 @@ public class UNOPSInteractionManager : IInteractionManager
         await interactionRepository.AddAsync(entity);
         return mapper.Map<InteractionModel>(entity);
     }
-
-    public IEnumerable<InteractionModel> GetInteractions(int userId)
+    public PaginationResponse<InteractionModel> GetInteractions(int userId, PaginationRequest request)
     {
-        return interactionRepository
+        var query = interactionRepository
             .GetAll()
             .AsQueryable()
             .Include(i => i.Contact)
-            .Where(x => !x.IsDeleted)
-            .Select(x => mapper.Map<InteractionModel>(x));
+            .Where(x => !x.IsDeleted);
+
+        if (!string.IsNullOrEmpty(request.OrderBy))
+        {
+            switch (request.OrderBy.ToLower())
+            {
+                case "type":
+                    query = request.Ascending ?? true 
+                        ? query.OrderBy(x => x.Type)
+                        : query.OrderByDescending(x => x.Type);
+                    break;
+                case "contactid":
+                    query = request.Ascending ?? true
+                        ? query.OrderBy(x => x.Contact.Name)
+                        : query.OrderByDescending(x => x.Contact.Name);
+                    break;
+                case "date":
+                    query = request.Ascending ?? true
+                        ? query.OrderBy(x => x.Date)
+                        : query.OrderByDescending(x => x.Date);
+                    break;
+                case "data":
+                    query = request.Ascending ?? true
+                        ? query.OrderBy(x => x.Data)
+                        : query.OrderByDescending(x => x.Data);
+                    break;
+                default:
+                    query = query.OrderByDescending(x => x.Date);
+                    break;
+            }
+        }
+        else
+        {
+            query = query.OrderByDescending(x => x.Date);
+        }
+
+        return query.Paginate(
+            x => mapper.Map<InteractionModel>(x),
+            request
+        );
     }
 
     public async Task<InteractionModel?> GetInteraction(int userId, int id)

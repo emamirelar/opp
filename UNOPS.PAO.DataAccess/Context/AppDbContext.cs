@@ -20,13 +20,9 @@ public class AppDbContext : AuditableDbContext<int, int>
     }
 
     public DbSet<GrantUser> GrantUsers { get; set; }
-    public DbSet<FundingOpportunity> FundingOpportunities { get; set; }
-    public DbSet<SelectionMethodology> SelectionMethodologies { get; set; }
-    public DbSet<Proposal> Proposals { get; set; }
     public DbSet<Document> Documents { get; set; }
     public DbSet<DocumentRelationship> DocumentRelationships { get; set; }
     public DbSet<Currency> Currencies { get; set; }
-    public DbSet<SDG> SDGs { get; set; }
     public DbSet<Country> Countries { get; set; }
 
     public DbSet<EligibleEntity> EligibleEntities { get; set; }
@@ -36,6 +32,7 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     public DbSet<Contact> Contacts { get; set; }
     public DbSet<Interaction> Interactions { get; set; }
+    public DbSet<Partner> Partners { get; set; }
 
     public DbSet<PartnerTree> PartnerTrees { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -64,45 +61,7 @@ public class AppDbContext : AuditableDbContext<int, int>
             .IsRequired();
 
         modelBuilder
-            .Entity<FundingOpportunity>(opp =>
-            {
-                opp.HasOne(x => x.SelectionMethodology)
-                    .WithMany()
-                    .IsRequired(false);
-
-                opp.HasMany(x => x.SDGs)
-                    .WithMany()
-                    .UsingEntity("FundingOpportunitySDGs");
-
-                opp.HasMany(x => x.Countries)
-                    .WithMany()
-                    .UsingEntity("FundingOpportunityCountries");
-
-                opp.HasOne(x => x.Currency)
-                    .WithMany()
-                    .IsRequired(false);
-
-                opp.HasMany(x => x.EligibleEntities)
-                    .WithMany()
-                    .UsingEntity("FundingOpportunityEligibleEntities");
-            });
-
-        modelBuilder
             .Entity<Contact>();
-
-        modelBuilder
-            .Entity<Proposal>(proposal =>
-            {
-                proposal.HasOne(x => x.FundingOpportunity)
-                    .WithMany(x => x.Proposals)
-                    .HasForeignKey(x => x.FundingOpportunityId)
-                    .IsRequired();
-
-                proposal.HasOne(x => x.Applicant)
-                    .WithMany()
-                    .HasForeignKey(x => x.ApplicantId)
-                    .IsRequired(false);
-            });
         
         modelBuilder.Entity<DocumentRelationship>()
             .HasKey(dr => new { dr.DocumentId, dr.EntityId, dr.EntityType });

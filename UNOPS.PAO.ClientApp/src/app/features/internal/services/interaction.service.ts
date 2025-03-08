@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import {HttpClient, HttpResponse} from '@angular/common/http';
+import {HttpClient, HttpResponse, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Interaction } from '../models/interaction.model';
+import { PaginationResponse } from '../../../common/models/pagination-response.model';
+import {PaginationParams, toHttpParams} from '../../../common/models/pagination-params.model';
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +13,11 @@ export class InteractionService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(): Observable<HttpResponse<Interaction[]>> {
-    return this.http.get<Interaction[]>(this.apiUrl, { observe: 'response' });
+  getAll(queryParams: PaginationParams): Observable<HttpResponse<PaginationResponse<Interaction>>> {
+    return this.http.get<PaginationResponse<Interaction>>(`${this.apiUrl}`, {
+      params: toHttpParams(queryParams),
+      observe: 'response'
+    });
   }
 
   getById(id: number): Observable<HttpResponse<Interaction>> {
@@ -23,7 +28,7 @@ export class InteractionService {
     return this.http.post<Interaction>(this.apiUrl, interaction, { observe: 'response' });
   }
 
-  update(id: number, interaction: Interaction): Observable<HttpResponse<Interaction>> {
+  update(interaction: Interaction): Observable<HttpResponse<Interaction>> {
     return this.http.put<Interaction>(`${this.apiUrl}`, interaction, { observe: 'response' });
   }
 
