@@ -149,27 +149,49 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Get data based on screen mappings
-    public async Task<string> GetDataBasedOnScreenMapping(int recordId, AiScreenMapping[] mappings)
+    public async Task<string> GetDataBasedOnScreenMapping(string type, int recordId, AiScreenMapping[] mappings)
     {
         var dbProperties = typeof(AppDbContext).GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var resultData = new Dictionary<string, object>();
+        string lastMainTableName = null;
+
         object mainTableRecord = null;
-        string lastTableName = null;
 
         foreach (var mapping in mappings)
         {
-            // Check if the main table has changed
-            if (lastTableName != mapping.TableName)
-            {
-                mainTableRecord = await GetMainTableRecord(recordId, mapping.TableName, dbProperties);
+            if (lastMainTableName != mapping.TableName) {
+                mainTableRecord = await GetMainTableRecord(recordId, mapping.TableName, dbProperties, "Id");
                 resultData[mapping.TableName] = mainTableRecord;
-                lastTableName = mapping.TableName;
+                lastMainTableName = mapping.TableName;
+            }
+            // Fetch the main record only once per table
+            if (mapping.ComparisonKey.Equals("Id", StringComparison.OrdinalIgnoreCase) && resultData[mapping.TableName] == null) // It is expected that ID is the primary key of a table
+            {
+                mainTableRecord = await GetMainTableRecord(recordId, mapping.TableName, dbProperties, mapping.ComparisonKey);
+                resultData[mapping.TableName] = mainTableRecord;
             }
 
-            // Check if there is a related entity and related entity key
-            if (mapping.RelatedEntity != null && mapping.RelatedEntityKey != null)
+            // If there's a related entity, fetch it
+            if (!string.IsNullOrEmpty(mapping.RelatedEntity) && !string.IsNullOrEmpty(mapping.RelatedEntityKey))
             {
-                var relatedRecords = await GetRelatedRecords(recordId, mapping, dbProperties);
+                object relatedRecords = null;
+                
+                if (mapping.ComparisonKey.Equals("Id", StringComparison.OrdinalIgnoreCase))
+                {
+                    // If ComparisonKey is 'Id', use recordId directly
+                    relatedRecords = await GetRelatedRecords(recordId, mapping, dbProperties);
+                }
+                else
+                {
+                    // Fetch the foreign key value dynamically
+                    var foreignKeyValue = mainTableRecord?.GetType().GetProperty(mapping.ComparisonKey, BindingFlags.Public | BindingFlags.Instance)?.GetValue(mainTableRecord);
+
+                    if (foreignKeyValue != null)
+                    {
+                        relatedRecords = await GetRelatedRecords(Convert.ToInt32(foreignKeyValue), mapping, dbProperties);
+                    }
+                }
+
                 resultData[mapping.RelatedEntity] = relatedRecords;
             }
         }
@@ -181,56 +203,74 @@ public class UNOPSGeminiManager : IGeminiManager
         });
     }
 
+
     // Get main table record by ID
-    private async Task<object> GetMainTableRecord(int recordId, string tableName, PropertyInfo[] dbProperties)
+    private async Task<object> GetMainTableRecord(int recordId, string tableName, PropertyInfo[] dbProperties, string comparisonKey)
     {
-        var mainDbSet = dbProperties.FirstOrDefault(p => p.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase));
-        if (mainDbSet == null) throw new InvalidOperationException($"Table '{tableName}' not found in DbContext.");
+        var tableProperty = dbProperties.FirstOrDefault(p => p.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+        if (tableProperty == null) throw new InvalidOperationException($"Table '{tableName}' not found in DbContext.");
 
-        var entityType = mainDbSet.PropertyType.GetGenericArguments().FirstOrDefault();
-        if (entityType == null) throw new InvalidOperationException($"Could not determine entity type for table '{tableName}'.");
+        var entityType = tableProperty.PropertyType.GetGenericArguments().FirstOrDefault();
+        if (entityType == null) throw new InvalidOperationException($"Could not determine entity type for '{tableName}'.");
 
-        var mainTableRecord = await _context.FindAsync(entityType, recordId);
-        if (mainTableRecord == null) throw new InvalidOperationException($"Record with ID '{recordId}' not found in table '{tableName}'.");
+        var dbSet = (IQueryable<object>)tableProperty.GetValue(_context);
 
-        return mainTableRecord;
+        // Handle both direct (Id) and indirect (foreign key) lookups
+        if (comparisonKey.Equals("Id", StringComparison.OrdinalIgnoreCase))
+        {
+            return await _context.FindAsync(entityType, recordId);
+        }
+        else
+        {
+            var property = entityType.GetProperty(comparisonKey, BindingFlags.Public | BindingFlags.Instance);
+            
+            if (property == null) throw new InvalidOperationException($"Column '{comparisonKey}' not found in table '{tableName}'.");
+
+            var parameter = Expression.Parameter(entityType, "x");
+            var condition = Expression.Equal(Expression.Property(parameter, property), Expression.Constant(recordId));
+            var lambda = Expression.Lambda(condition, parameter);
+
+            var whereMethod = typeof(Queryable).GetMethods()
+                .First(m => m.Name == "Where" && m.GetParameters().Length == 2)
+                .MakeGenericMethod(entityType);
+
+            var filteredQuery = whereMethod.Invoke(null, new object[] { dbSet, lambda });
+
+            return await ((IQueryable<object>)filteredQuery).FirstOrDefaultAsync();
+        }
     }
 
+
     // Get related records by foreign key
-    private async Task<IEnumerable<dynamic>> GetRelatedRecords(int recordId, AiScreenMapping mapping, PropertyInfo[] dbProperties)
+    private async Task<IEnumerable<object>> GetRelatedRecords(int relatedRecordId, AiScreenMapping mapping, PropertyInfo[] dbProperties)
     {
-        var relatedTableSet = dbProperties.FirstOrDefault(p => p.Name.Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
-        if (relatedTableSet == null) throw new InvalidOperationException($"Table '{mapping.RelatedEntity}' not found in DbContext.");
+        var relatedTableProperty = dbProperties.FirstOrDefault(p => p.Name.Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
+        if (relatedTableProperty == null) throw new InvalidOperationException($"Table '{mapping.RelatedEntity}' not found in DbContext.");
 
-        var relatedEntityType = relatedTableSet.PropertyType.GetGenericArguments().FirstOrDefault();
-        if (relatedEntityType == null) throw new InvalidOperationException($"Could not determine entity type for table '{mapping.RelatedEntity}'.");
+        var relatedEntityType = relatedTableProperty.PropertyType.GetGenericArguments().FirstOrDefault();
+        if (relatedEntityType == null) throw new InvalidOperationException($"Could not determine entity type for '{mapping.RelatedEntity}'.");
 
-        var foreignKeyProperty = relatedEntityType.GetProperty(mapping.RelatedEntityKey);
+        var foreignKeyProperty = relatedEntityType.GetProperty(mapping.RelatedEntityKey, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
         if (foreignKeyProperty == null) throw new InvalidOperationException($"Foreign key '{mapping.RelatedEntityKey}' not found in table '{mapping.RelatedEntity}'.");
 
         var parameter = Expression.Parameter(relatedEntityType, "x");
-        var foreignKeyExpression = Expression.Equal(
-            Expression.Property(parameter, foreignKeyProperty),
-            Expression.Constant(recordId)
-        );
-        var lambda = Expression.Lambda(foreignKeyExpression, parameter);
+        var foreignKeyCondition = Expression.Equal(Expression.Property(parameter, foreignKeyProperty), Expression.Constant(relatedRecordId));
+        var lambda = Expression.Lambda(foreignKeyCondition, parameter);
 
-        var whereMethod = typeof(Queryable)
-            .GetMethods()
-            .FirstOrDefault(m => m.Name == "Where" && m.GetParameters().Length == 2);
+        var whereMethod = typeof(Queryable).GetMethods()
+            .First(m => m.Name == "Where" && m.GetParameters().Length == 2)
+            .MakeGenericMethod(relatedEntityType);
 
-        if (whereMethod == null) throw new InvalidOperationException($"Could not find Queryable.Where() method.");
-
-        var genericWhereMethod = whereMethod.MakeGenericMethod(relatedEntityType);
-        var relatedDbSet = relatedTableSet.GetValue(_context);
+        var relatedDbSet = relatedTableProperty.GetValue(_context);
         if (relatedDbSet == null) throw new InvalidOperationException($"Could not get DbSet for '{mapping.RelatedEntity}'.");
 
-        var queryable = genericWhereMethod.Invoke(null, new object[] { relatedDbSet, lambda });
-        return await ((IQueryable<dynamic>)queryable).ToListAsync();
+        var queryable = whereMethod.Invoke(null, new object[] { relatedDbSet, lambda });
+        return await ((IQueryable<object>)queryable).ToListAsync();
     }
 
+
     // Apply JSON conditions to the query
-    private IQueryable<object> ApplyJsonConditions(IQueryable<object> query, string jsonCondition)
+    /*private IQueryable<object> ApplyJsonConditions(IQueryable<object> query, string jsonCondition)
     {
         if (string.IsNullOrEmpty(jsonCondition)) return query;
         var conditions = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonCondition);
@@ -253,5 +293,5 @@ public class UNOPSGeminiManager : IGeminiManager
                 .Invoke(null, new object[] { query, lambda });
         }
         return query;
-    }
+    }*/
 }

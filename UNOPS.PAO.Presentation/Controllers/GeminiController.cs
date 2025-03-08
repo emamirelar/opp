@@ -29,22 +29,27 @@ public class GeminiController : ControllerBase
     // Internal call: Create a Gemini
     public async Task<ActionResult> FetchResponseFromGemini([FromBody] GeminiProcessRequest req)
     {
-        AiPrompt request = manager.MapModelToEntity(req);
+        try {
+            AiPrompt promptModel = manager.MapModelToEntity(req);
 
-        // Call the GetPromptData method and get the first prompt
-        var prompt = manager.GetPromptData(request.Type).FirstOrDefault();
+            // Call the GetPromptData method and get the first prompt
+            var promptData = manager.GetPromptData(promptModel.Type).FirstOrDefault();
 
-        if (prompt == null)
-        {
-            return BadRequest();
+            if (promptData == null)
+            {
+                return NotFound(new { message = $"Prompt configuration for the screen '{req.Type}' is not found." });
+            }
+
+            // Query the AiScreenMapping table based on Type
+
+            var screenMappings = (await manager.GetScreenMappingsByType(promptData.Type)).ToArray();
+            var relatedJsonData = await manager.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+
+            // Fetch result from Gemini
+            return Ok(await manager.fetchResultFromGemini(promptData.Prompt, relatedJsonData));
+
+        } catch (Exception ex) {
+            return BadRequest(new { message = ex.Message });
         }
-
-        // Query the AiScreenMapping table based on Type
-
-        var screenMappings = (await manager.GetScreenMappingsByType(request.Type)).ToArray();
-        var relatedJsonData = await manager.GetDataBasedOnScreenMapping(req.Id, screenMappings);
-
-        // Fetch result from Gemini
-        return Ok(await manager.fetchResultFromGemini(prompt.Prompt, relatedJsonData));
     }
 }

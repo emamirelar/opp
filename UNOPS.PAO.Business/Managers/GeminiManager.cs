@@ -45,7 +45,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<string> GetDataBasedOnScreenMapping(int recordId, AiScreenMapping[] mapping)
+    public Task<string> GetDataBasedOnScreenMapping(string type, int recordId, AiScreenMapping[] mapping)
     {
         throw new NotImplementedException();
     }

@@ -12,5 +12,5 @@ public interface IGeminiManager
     IEnumerable<AiPromptModel> GetPromptData(string type);
     Task<string> fetchResultFromGemini(string promptTemplate, string relatedJsonData);
     Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type);
-    Task<string> GetDataBasedOnScreenMapping(int recordId, AiScreenMapping[] mapping);
+    Task<string> GetDataBasedOnScreenMapping(string type, int recordId, AiScreenMapping[] mapping);
 }
