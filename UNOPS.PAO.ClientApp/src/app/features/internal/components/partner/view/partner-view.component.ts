@@ -4,7 +4,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { PanelModule } from 'primeng/panel';
-import { DropdownModule } from "primeng/dropdown"; 
+import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
 
@@ -24,13 +24,17 @@ import { BlockUI } from 'primeng/blockui';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { PartnerService } from '../../../services/partner.service';
-import { PartnerContactsComponent } from "./partnerContacts/partner-contacts.component";
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ActivatedRoute, Router } from '@angular/router';
+import {PartnerContactsComponent} from '../contacts/partner-contacts.component';
+import {Tooltip} from 'primeng/tooltip';
+import { GeminiService } from '../../../services/gemini.service';
+import {JsonPipe} from '@angular/common';
+import {MarkdownPipe} from '../../../pipes/markdown.pipe';
 
 @Component({
-  selector: 'app-partner-item',
+  selector: 'app-partner-view',
   imports: [
     TranslateModule,
     InputTextModule,
@@ -48,12 +52,17 @@ import { ActivatedRoute, Router } from '@angular/router';
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
-    PartnerContactsComponent],
-  templateUrl: './partner-item.component.html',
-  styleUrl: './partner-item.component.scss',
+    PartnerContactsComponent,
+    Tooltip,
+    JsonPipe,
+    MarkdownPipe
+  ],
+  templateUrl: './partner-view.component.html',
+  styleUrl: './partner-view.component.scss',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PartnerItemComponent implements OnInit, OnDestroy {
+export class PartnerViewComponent implements OnInit {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
 
@@ -172,17 +181,18 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
         validators: [Validators.required]
       }),
     });
-  
+
     cachedDataService = inject(CachedDataService);
     feedbackDialogService = inject(FeedbackDialogService);
     partnerService = inject(PartnerService);
+    geminiService = inject(GeminiService);
     translateService = inject(TranslateService);
     languageService = inject(LanguageService);
     cdr = inject( ChangeDetectorRef);
-  
+
     private langChangeSubscription: Subscription = new Subscription();
     onRecordCreationSuccess = output();
-  
+
     //allSalutationsData = this.cachedDataService.allSalutations;
     //allPronounsData = this.cachedDataService.allPronouns;
     showValidationFailedError = signal<boolean>(false);
@@ -198,25 +208,19 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
     recordId: string = '';
     recordData = signal<any>({});
     showCommentDialog = false;
+    riskProfile = signal<string>('');
+    riskIsLoading = signal<boolean>(true);
+    summaryOfInteractionsIsLoading = signal<boolean>(true);
+    summaryOfInteractions = signal<string>('');
 
-  
-    constructor() {
-      //load salutations
-      //this.cachedDataService.loadSalutations();
-      //this.cachedDataService.loadStatus();
-    }
-  
-    ngOnDestroy(): void {
-      this.langChangeSubscription?.unsubscribe();
-    }
-  
     ngOnInit() {
       this.activatedRoute.paramMap.subscribe({
         next: (paramMap) => {
           this.recordId = paramMap.get("recordId") || '';
-  
+
           if (this.recordId != '') {
             this._loadRecordDetails();
+            this._loadGeminiData();
           }
         }
       });
@@ -234,22 +238,48 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
 
     _loadRecordDetails() {
       //fetch record details
-    this.partnerService.getPartnerById(this.recordId).subscribe({
-      next: (data: any) => {
+      this.partnerService.getPartnerById(this.recordId).subscribe({
+        next: (data: any) => {
+          this.recordData.set(data);
+          this.formGroup.patchValue(data);
 
-        this.recordData.set(data);
+        }
+      });
+    }
 
-        this.formGroup.patchValue(data);
-      }
-    });
+    _loadGeminiData() {
+      this.summaryOfInteractionsIsLoading.set(true);
+      this.riskIsLoading.set(true);
+      this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
+        next: (summary: string) => {
+          this.summaryOfInteractions.set(summary);
+          this.summaryOfInteractionsIsLoading.set(false);
+        },
+        error: () => {
+          this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
+          this.summaryOfInteractionsIsLoading.set(false);
+        }
+      });
+
+      this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
+        next: (risk: string) => {
+          this.riskProfile.set(risk);
+          this.riskIsLoading.set(false);
+        },
+        error: () => {
+          this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
+          this.riskIsLoading.set(false);
+        }
+      });
     }
 
     handleOnCancelClick(event: MouseEvent) {
       this.router.navigate(['partners']);
     }
-  
+
     handleOnSaveClick(event: MouseEvent) {
-  
+      this._validate()
+
       this.partnerService.updatePartnerById(this._getRequestPayload()).subscribe({
         next: (data: any) => {
           this._loadRecordDetails();
@@ -257,24 +287,24 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
         }
       });
     }
-  
+
     _validate(){
       let result = true;
-  
-      if( this.formGroup.status == "INVALID" )
+
+      if( this.formGroup.invalid )
       {
         this.showValidationFailedError.set( false );
-  
+
         if( this.formGroup.get("firstName")?.invalid )
         {
           this.formGroup.get("firstName")?.markAsDirty();
         }
         result = false;
       }
-  
+
       return result;
     }
-  
+
     _getRequestPayload() {
       let valueObj = this.formGroup.value,
       requestJsonObj: any = {};
@@ -292,7 +322,7 @@ export class PartnerItemComponent implements OnInit, OnDestroy {
       }
 
       requestJsonObj['id'] = this.recordId;
-  
+
       return requestJsonObj;
     }
 

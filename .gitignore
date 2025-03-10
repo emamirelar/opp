@@ -237,3 +237,5 @@ _Pvt_Extensions
 */.angular/*
 */.vscode/*
 /UNOPS.PAO.ClientApp/.vscode
+
+UNOPS.PAO.ClientApp/.cursor/

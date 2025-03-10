@@ -92,5 +92,8 @@
         "interactionDeleted": "Interação excluída com sucesso",
         "errorDeletingInteraction": "Erro ao excluir interação"
     },
-    "label.interaction.contact": "Contato"
+    "label.interaction.contact": "Contato",
+    "errors": {
+        "failedToLoad": "Falha ao carregar"
+    }
 }
