@@ -1,5 +1,5 @@
-INSERT INTO AiPrompt (Type, PromptTemplate, CreatedAt, Name, Status) VALUES
-(1, '"""I\'m providing an array of objects containing contact information, partner information and interaction history. Each object will have the contact details, partner detail and interaction detail in a flat structure. I need you to generate a summary in Markdown format, using the following template:
+INSERT INTO public."AiPrompt" ("Type", "Prompt", "CreatedAt", "Name", "Status") VALUES
+(1, 'I am providing an array of objects containing contact information, partner information and interaction history. Each object will have the contact details, partner detail and interaction detail in a flat structure. I need you to generate a summary in Markdown format, using the following template:
 
 ## Contact Summary
 
@@ -19,7 +19,7 @@ INSERT INTO AiPrompt (Type, PromptTemplate, CreatedAt, Name, Status) VALUES
 
 Instructions:
 
-Extract the contact\'s name from the field Contacts_Name in the object. Similarly, all the Contact related fields will be prefixed with Contacts_. Partner related fields will be prefixed with Partners_ and Interaction related ones with Interactions_. .  
+Extract the contacts name from the field Contacts_Name in the object. Similarly, all the Contact related fields will be prefixed with Contacts_. Partner related fields will be prefixed with Partners_ and Interaction related ones with Interactions_. .  
 
 Extract the Date and use it for [Date of Interaction]. Format the timestamp in a human readable format.  
 Determine the [Type of Interaction] based on the Type field. Use the following mapping:  
@@ -38,7 +38,7 @@ JSON Data:
 
 Please provide the generated Markdown summary based on these instructions. If any detail that you are instructed to provide is unavailable, mention that this detail is unavailable."""', '2025-03-09 23:37:52.959573+01', 'Contacts', 1),
 
-(2, '"""I\'m providing an array of objects containing contact information, partner information and interaction history. Each object will have the contact details, partner detail and interaction detail in a flat structure. I need you to generate a summary in Markdown format, using the following template:
+(2, 'I am providing an array of objects containing contact information, partner information and interaction history. Each object will have the contact details, partner detail and interaction detail in a flat structure. I need you to generate a summary in Markdown format, using the following template:
 
 ## Contact Summary
 
@@ -58,7 +58,7 @@ Please provide the generated Markdown summary based on these instructions. If an
 
 Instructions:
 
-Extract the contact\'s name from the field Contacts_Name in the object. Similarly, all the Contact related fields will be prefixed with Contacts_. Partner related fields will be prefixed with Partners_ and Interaction related ones with Interactions_. .  
+Extract the contacts name from the field Contacts_Name in the object. Similarly, all the Contact related fields will be prefixed with Contacts_. Partner related fields will be prefixed with Partners_ and Interaction related ones with Interactions_. .  
 
 Extract the Date and use it for [Date of Interaction]. Format the timestamp in a human readable format.  
 Determine the [Type of Interaction] based on the Type field. Use the following mapping:  
@@ -77,7 +77,7 @@ JSON Data:
 
 Please provide the generated Markdown summary based on these instructions. If any detail that you are instructed to provide is unavailable, mention that this detail is unavailable."""', '2025-03-09 23:37:52.959573+01', 'Partners', 1);
 
-INSERT INTO AiScreenMapping (Type, TableName, ComparisonKey, RelatedEntity, RelatedEntityKey, QueryConditions, Order, CreatedAt, Name, Status) VALUES 
+INSERT INTO public."AiScreenMapping" ("Type", "TableName", "ComparisonKey", "RelatedEntity", "RelatedEntityKey", "QueryConditions", "Order", "CreatedAt", "Name", "Status") VALUES 
 ('contacts_summary', 'Contacts', 'Id', 'Interactions', 'ContactId', NULL, 1, NOW(), 'Contacts', 1),
 ('contacts_summary', 'Contacts', 'PartnerId', 'Partners', 'Id', NULL, 2, NOW(), 'Contacts', 1),
 ('partner_interactions_summary', 'Partners', 'Id', 'Contacts', 'PartnerId', NULL, 1, NOW(), 'Partners', 1),
