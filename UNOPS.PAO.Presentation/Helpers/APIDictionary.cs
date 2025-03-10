@@ -53,4 +53,6 @@ public class APIDictionary
     // Partner
     public const string Partner = APIPrefix + "partner";
     public const string PartnerContacts = Partner + "/{partnerId}/contacts";
+
+    public const string Gemini = APIPrefix + "process-data";
 }

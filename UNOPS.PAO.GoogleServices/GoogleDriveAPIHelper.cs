@@ -26,9 +26,9 @@ public class GoogleDriveAPIHelper
         // TODO
         // ConfigureClient(); 
     }
-    public BigQueryClient GetBigQueryClient()
+    public void GetBigQueryClient()
     {
-        var secretManager = new GoogleSecretManagerConfigurationProvider();
+      /*  var secretManager = new GoogleSecretManagerConfigurationProvider();
 
         var credentialParams = configuration.GetSection("BigQuerySettings")
             .Get<JsonCredentialParameters>();
@@ -47,7 +47,7 @@ public class GoogleDriveAPIHelper
 
         var client = BigQueryClient.Create(credentialParams.ProjectId, credentials);
 
-        return client;
+        return client;*/
     }
 
     private void ConfigureClient()
@@ -87,8 +87,8 @@ public class GoogleDriveAPIHelper
         if (credentialParams == null)
             throw new Exception("GoogleDriveSettings needs to be setup in appsettings.");
 
-        var secretManager = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
         var secretName = configuration?.GetSection("GoogleDriveSettings")["GoogleDriveConnectionKeySecretId"];
+        var secretManager = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId, secretName);
         if (secretName != null)
         {
             var googleDriveSecret = secretManager.GetSecretVersion(secretName, "latest");

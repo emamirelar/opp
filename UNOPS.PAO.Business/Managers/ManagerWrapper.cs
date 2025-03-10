@@ -17,6 +17,8 @@ public class ManagerWrapper : IManagerWrapper
     private IPartnerTreeManager partnerTreeManager;
     private IPartnerManager partnerManager;
 
+    private IGeminiManager geminiManager;
+
     public ManagerWrapper(IMapper mapper, AppDbContext context)
     {
         workflowManager = new WorkflowManager(context);
@@ -29,6 +31,8 @@ public class ManagerWrapper : IManagerWrapper
         interactionManager = new InteractionManager(mapper, context);
         partnerTreeManager = new PartnerTreeManager(mapper, context);
         partnerManager = new PartnerManager(mapper, context);
+
+        geminiManager = new GeminiManager(mapper, context);
     }
 
     public virtual IDocumentManager DocumentManager => documentManager;
@@ -43,4 +47,6 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IPartnerTreeManager PartnerTreeManager => partnerTreeManager;
 
     public virtual IPartnerManager PartnerManager => partnerManager;
+
+    public virtual IGeminiManager GeminiManager => geminiManager;
 }

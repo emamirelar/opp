@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System;
 using UNOPS.PAO.Domain.Infrastructure;
+using Newtonsoft.Json;
+
 
 namespace UNOPS.PAO.Domain.Entities;
 
@@ -32,8 +34,9 @@ public class Contact : ModifiableDeletableEntity
     public string? MailingStateProvince { get; set; }
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
+    [JsonIgnore]  // Prevents circular reference in serialization
     public virtual ICollection<Interaction>? Interactions { get; set; }
-
+    
     public Contact()
     {
         Interactions = new HashSet<Interaction>();

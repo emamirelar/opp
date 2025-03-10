@@ -19,5 +19,7 @@ public class MappingProfile : Profile
         CreateMap<PartnerRequest, Partner>();
         CreateMap<UpdatePartnerRequest, Partner>();
         CreateMap<Partner, PartnerModel>();
+        CreateMap<AiPromptModel, AiPrompt>();
+        CreateMap<AiScreenMappingModel, AiScreenMapping>();
     }
 }

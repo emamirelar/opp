@@ -25,5 +25,6 @@ public class MappingProfile : Profile
         CreateMap<PartnerTreeRequest, UNOPSPartnerTree>();
         CreateMap<UNOPSPartnerTree, PartnerTreeModel>();
         CreateMap<PartnerTreeModel, UNOPSPartnerTree>();
+        CreateMap<GeminiProcessRequest, AiPromptModel>();
     }
 }

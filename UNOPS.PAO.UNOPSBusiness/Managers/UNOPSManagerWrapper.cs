@@ -18,6 +18,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSInteractionManager interactionManager;
     private readonly UNOPSPartnerTreeManager partnerTreeManager;
     private readonly UNOPSPartnerManager partnerManager;
+    private readonly UNOPSGeminiManager geminiManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IGoogleDriveDocumentManager driveManager, IConfiguration configuration) : base(mapper, context)
     {
@@ -27,6 +28,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         interactionManager = new UNOPSInteractionManager(mapper, opsContext);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext);
         partnerManager = new UNOPSPartnerManager(mapper,opsContext);
+        geminiManager = new UNOPSGeminiManager(mapper, context, configuration);
     }
 
     public override IDocumentManager DocumentManager => documentManager;
@@ -35,4 +37,5 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override IInteractionManager InteractionManager => interactionManager;
     public override IPartnerTreeManager PartnerTreeManager => partnerTreeManager;
     public override IPartnerManager PartnerManager => partnerManager;
+    public override IGeminiManager GeminiManager => geminiManager;
 }
