@@ -7,5 +7,6 @@ public class AiScreenMapping : BaseBusinessEntity
     public string? RelatedEntity { get; set; }
     public string? RelatedEntityKey { get; set; }
     public string? QueryConditions { get; set; }
+    public int Order { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

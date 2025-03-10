@@ -49,9 +49,10 @@ CREATE TABLE AiScreenMapping (
     Type TEXT NOT NULL,
     TableName TEXT NOT NULL,
     ComparisonKey TEXT NOT NULL,
-    RelatedEntity TEXT NOT NULL,
-    RelatedEntityKey TEXT NOT NULL,
+    RelatedEntity TEXT,
+    RelatedEntityKey TEXT,
     QueryConditions TEXT,
+    Order INT NOT NULL,
     CreatedAt TIMESTAMP DEFAULT NOW(),
     Name TEXT NOT NULL,
     Status INTEGER NOT NULL
@@ -60,51 +61,20 @@ CREATE TABLE AiScreenMapping (
 - The `Type` field should match the `type` value sent in the API request.
 - The table defines how different entities are related for data retrieval.
 - **`QueryConditions`** is a field intended for future use, allowing additional conditions to be applied dynamically.
+- **`Order`** determines the order in which the join should be made when multiple tables are involved.
 
 ##### **Example Entries for Contacts Summary**
 ```sql
-INSERT INTO AiScreenMapping (Type, TableName, ComparisonKey, RelatedEntity, RelatedEntityKey, QueryConditions, CreatedAt, Name, Status) VALUES 
-('contacts_summary', 'Contacts', 'Id', 'Interactions', 'ContactId', NULL, NOW(), 'Contacts', 1),
-('contacts_summary', 'Contacts', 'PartnerId', 'Partners', 'Id', NULL, NOW(), 'Contacts', 1);
+INSERT INTO AiScreenMapping (Type, TableName, ComparisonKey, RelatedEntity, RelatedEntityKey, QueryConditions, Order, CreatedAt, Name, Status) VALUES 
+('contacts_summary', 'Contacts', 'Id', 'Interactions', 'ContactId', NULL, 1, NOW(), 'Contacts', 1),
+('contacts_summary', 'Contacts', 'PartnerId', 'Partners', 'Id', NULL, 2, NOW(), 'Contacts', 1),
+('partner_interactions_summary', 'Partners', 'Id', 'Contacts', 'PartnerId', NULL, 1, NOW(), 'Partners', 1),
+('partner_interactions_summary', 'Contacts', 'Id', 'Interactions', 'ContactId', NULL, 2, NOW(), 'Partners', 1);
+
 ```
 ```sql
 INSERT INTO AiPrompt (Type, PromptTemplate, CreatedAt, Name, Status) VALUES
-('contacts_summary', '"""I\'m providing a JSON object containing contact information, partner information and interaction history. I need you to generate a summary in Markdown format, using the following template:
-
-## Contact Summary
-
-**Name:** [Contact Name]  
-**Email:** [Contact Email]
-
-**Key Interactions:**
-
-*   **[Date of Interaction] - [Type of Interaction]:** [A brief summary of the interaction. 1-2 sentences.]
-
-**Key Information about Partners**
-* Partner Name
-
-**Overall Summary:**
-
-[A 6-15 sentence paragraph providing an overview of the contact based on the interactions and partners, highlighting key themes, and sentiment.]
-
-Instructions:
-
-Contact Information: Extract the contact\'s name and email from the """"Contacts"""" object in the JSON and populate the Name and Email fields in the template.  
-Key Interactions: For each interaction in the """"Interactions"""" array:  
-Extract the Date and use it for [Date of Interaction]. Format the date as YYYY-MM-DD.  
-Determine the [Type of Interaction] based on the Type field. Use the following mapping:  
-3: """"Note""""  
-Decode the Base64 encoded Data field.  
-Create a brief 1-2 sentence summary of the interaction using the decoded Data and populate the [A brief summary of the interaction. 1-2 sentences.] field.  
-Overall Summary: Based on all the interactions, create a 6-15 sentence paragraph providing an overall summary of the contact. Include key themes, sentiment (if discernible from the interaction data), and any potential needs or concerns that emerge from the interactions.  
-Markdown Formatting: Ensure the entire summary is correctly formatted in Markdown.  
-Focus: The primary focus of the summary should be to understand the general topics discussed and the tone of any interactions.
-
-JSON Data:
-
-{jsonData}
-
-Please provide the generated Markdown summary based on these instructions."""', NOW(), 'Contacts', 1);
+('contacts_summary', "Sample Prompt", NOW(), 'Contacts', 1);
 ```
 
 ### 3. API Endpoint
@@ -129,14 +99,17 @@ The backend dynamically fetches data from various tables based on the `type` sen
 - `GeminiController.cs` handles the API request and first fetches the `AiPrompt` data to check if a prompt template is available.
 - If a prompt template is found, it queries the `AiScreenMapping` table to determine which tables to fetch data from.
 - The core logic for data retrieval based on screen mapping is implemented in `UNOPSGeminiManager.cs`.
-- The main method `GetDataBasedOnScreenMapping` uses reflection to dynamically retrieve data from tables.
-- It queries the appropriate `DbSet` from `AppDbContext` based on the mapping configuration.
+- The main method `GetDataBasedOnScreenMapping` uses reflection to dynamically retrieve data from tables. It also dynamically constructs SQL queries based on the entries in the AiScreenMapping table. This allows the backend to intelligently determine which tables and columns should be queried for a given screen type (i.e., the type parameter sent in the request payload).
+    - **`Dynamic SQL Creation`**: The SQL queries are generated programmatically based on the mapping configuration stored in `AiScreenMapping`, ensuring that only relevant data is retrieved for each screen context. This dynamic query generation ensures flexibility in handling different types of requests while maintaining a structured and secure approach to database querying.
+    - **`Order Field`**: The `Order` field ensures that the joins are executed in the correct sequence when multiple related tables are involved. This guarantees that the join operations respect the logical order of the database relationships, preserving data integrity and consistency.
+    - **`Handling Missing Related Entities`**: If the `RelatedEntity` and `RelatedEntityKey` are not specified in the `AiScreenMapping` table, the code will default to performing a regular `SELECT` query with a `WHERE` clause to retrieve the relevant data. This fallback mechanism ensures that even when complex relationships are not defined, the system can still fetch the necessary data and construct the AI prompt accordingly.
+- The method leverages reflection to ensure that the tables and columns being queried exist in the database before executing any SQL commands. This helps prevent issues like querying non-existent tables or columns, which could lead to runtime errors or security vulnerabilities.
 - Custom conditions and logic can be added in these methods based on the `type` parameter sent in the request payload.
 - The `QueryConditions` field in `AiScreenMapping` is currently **not being used** but is intended for future enhancements where additional query conditions may be applied dynamically.
 - Calling Gemini directly from .NET was not possible as **Vertex AI** does not have built-in support in the AIPlatform package. Instead, **HTTPClient** was used to call Gemini via a direct URL.
 
 ### 6. Prompt Engineering
-To refine AI responses, use **Vertex AI Studio** under our GCP project. This allows for interactive testing, fine-tuning, and validation of prompts before deploying them.
+To refine AI responses, use **Vertex AI Studio** under the GCP project unops-partneropportunity. This allows for interactive testing, fine-tuning, and validation of prompts before deploying them.
 
 ### 7. Automatic Table Creation
 If you build and run the application via **Visual Studio**, the migration scripts will automatically create these tables. You only need to insert the relevant data as shown above.

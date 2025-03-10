@@ -12,7 +12,7 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    [Migration("20250308172204_AiModelsV3")]
+    [Migration("20250309223450_AiModelsV3")]
     partial class AiModelsV3
     {
         /// <inheritdoc />
@@ -90,6 +90,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
 
                     b.Property<string>("QueryConditions")
                         .HasColumnType("text");

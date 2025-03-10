@@ -30,6 +30,7 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly string _modelName;
     private readonly string _url;
     private readonly AppDbContext _context;
+    private readonly string _connectionString;
 
     public UNOPSGeminiManager(IMapper mapper, AppDbContext context, IConfiguration configuration)
     {
@@ -42,6 +43,7 @@ public class UNOPSGeminiManager : IGeminiManager
         _projectId = configuration.GetValue<string>("GoogleDriveSettings:ProjectId");
         _location = configuration.GetValue<string>("GoogleDriveSettings:Location");
         _modelName = configuration.GetValue<string>("GoogleDriveSettings:GeminiModelName");
+        _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
         _url = $"https://{_location}-aiplatform.googleapis.com/v1/projects/{_projectId}/locations/{_location}/publishers/google/models/{_modelName}:generateContent";
     }
 
@@ -68,12 +70,13 @@ public class UNOPSGeminiManager : IGeminiManager
             .Select(x => MapEntityToAiPromptModel(x, _mapper));
     }
 
-    // Get screen mappings by type
+    // Get screen mappings by type and sort the response
     public async Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type)
     {
         return await _screenMappingRepository
             .GetAll()
             .Where(x => x.Type == type)
+            .OrderBy(x => x.Order) // Sort by TableName or any other property
             .ToListAsync();
     }
 
@@ -154,147 +157,138 @@ public class UNOPSGeminiManager : IGeminiManager
     // Get data based on screen mappings
     public async Task<string> GetDataBasedOnScreenMapping(string type, int recordId, AiScreenMapping[] mappings)
     {
+        // To add custom logic, uncomment the following code-block and edit it (example)
+        /*
+        if (type == 'contacts_summary') {
+            // custom logic
+            // ensure to return a string (json)
+        }
+        */
+        if (mappings == null || mappings.Length == 0)
+        {
+            throw new InvalidOperationException("Screen mappings are missing.");
+        }
+
         var dbProperties = typeof(AppDbContext).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var resultData = new Dictionary<string, object>();
-        string lastMainTableName = null;
+        var selectColumns = BuildSelectColumns(mappings);
+        var joinClauses = BuildJoinClauses(mappings);
+        string baseTableName = mappings[0].Name;
+        string baseTable = $"{_connectionString}.\"{baseTableName}\"";
+        string columnWithQuotes = "\"Id\"";
+        string baseTableKeyCheck = $"{baseTable}.{columnWithQuotes}";
 
-        object mainTableRecord = null;
+        // Build SQL Query
+        string sqlQuery = $@"
+            SELECT {string.Join(", ", selectColumns)}
+            FROM {baseTable}
+            {string.Join(" ", joinClauses)}
+            WHERE {baseTableKeyCheck} = @RecordId";
 
+        var result = await ExecuteSqlQuery(sqlQuery, recordId);
+
+        // Transform result into Nested JSON
+        var structuredResponse = BuildNestedJson(result, mappings);
+
+        return JsonConvert.SerializeObject(structuredResponse, Formatting.Indented);
+    }
+
+    private List<string> BuildSelectColumns(AiScreenMapping[] mappings)
+    {
+        var selectColumns = new List<string>();
         foreach (var mapping in mappings)
         {
-            if (lastMainTableName != mapping.TableName) {
-                mainTableRecord = await GetMainTableRecord(recordId, mapping.TableName, dbProperties, "Id");
-                resultData[mapping.TableName] = mainTableRecord;
-                lastMainTableName = mapping.TableName;
-            }
-            // Fetch the main record only once per table
-            if (mapping.ComparisonKey.Equals("Id", StringComparison.OrdinalIgnoreCase) && resultData[mapping.TableName] == null) // It is expected that ID is the primary key of a table
+            var tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.TableName, StringComparison.OrdinalIgnoreCase));
+            if (tableRecord == null)
             {
-                mainTableRecord = await GetMainTableRecord(recordId, mapping.TableName, dbProperties, mapping.ComparisonKey);
-                resultData[mapping.TableName] = mainTableRecord;
+                throw new InvalidOperationException($"Table '{mapping.TableName}' does not exist in the context.");
             }
 
-            // If there's a related entity, fetch it
+            string tableWithSchema = $"{_connectionString}.\"{mapping.TableName}\"";
+            var tableProperties = tableRecord.GetProperties();
+
+            if (!selectColumns.Any(col => col.StartsWith(tableWithSchema)))
+            {
+                foreach (var property in tableProperties)
+                {
+                    var p = $"\"{property.Name}\" AS \"{mapping.TableName}_{property.Name}\"";
+                    selectColumns.Add($"{tableWithSchema}.{p}");
+                }
+            }
+
             if (!string.IsNullOrEmpty(mapping.RelatedEntity) && !string.IsNullOrEmpty(mapping.RelatedEntityKey))
             {
-                object relatedRecords = null;
-                
-                if (mapping.ComparisonKey.Equals("Id", StringComparison.OrdinalIgnoreCase))
+                string relatedTableWithSchema = $"{_connectionString}.\"{mapping.RelatedEntity}\"";
+                tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
+                if (tableRecord == null)
                 {
-                    // If ComparisonKey is 'Id', use recordId directly
-                    relatedRecords = await GetRelatedRecords(recordId, mapping, dbProperties);
+                    throw new InvalidOperationException($"Related entity '{mapping.RelatedEntity}' does not exist in the context.");
                 }
-                else
-                {
-                    // Fetch the foreign key value dynamically
-                    var foreignKeyValue = mainTableRecord?.GetType().GetProperty(mapping.ComparisonKey, BindingFlags.Public | BindingFlags.Instance)?.GetValue(mainTableRecord);
 
-                    if (foreignKeyValue != null)
+                if (!selectColumns.Any(col => col.StartsWith(relatedTableWithSchema)))
+                {
+                    tableProperties = tableRecord.GetProperties();
+                    foreach (var property in tableProperties)
                     {
-                        relatedRecords = await GetRelatedRecords(Convert.ToInt32(foreignKeyValue), mapping, dbProperties);
+                        var p = $"\"{property.Name}\" AS \"{mapping.RelatedEntity}_{property.Name}\"";
+                        selectColumns.Add($"{relatedTableWithSchema}.{p}");
                     }
                 }
-
-                resultData[mapping.RelatedEntity] = relatedRecords;
             }
         }
-
-        return JsonConvert.SerializeObject(resultData, new JsonSerializerSettings
-        {
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-            Formatting = Formatting.Indented
-        });
+        return selectColumns;
     }
 
-
-    // Get main table record by ID
-    private async Task<object> GetMainTableRecord(int recordId, string tableName, PropertyInfo[] dbProperties, string comparisonKey)
+    private List<string> BuildJoinClauses(AiScreenMapping[] mappings)
     {
-        var tableProperty = dbProperties.FirstOrDefault(p => p.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase));
-        if (tableProperty == null) throw new InvalidOperationException($"Table '{tableName}' not found in DbContext.");
-
-        var entityType = tableProperty.PropertyType.GetGenericArguments().FirstOrDefault();
-        if (entityType == null) throw new InvalidOperationException($"Could not determine entity type for '{tableName}'.");
-
-        var dbSet = (IQueryable<object>)tableProperty.GetValue(_context);
-
-        // Handle both direct (Id) and indirect (foreign key) lookups
-        if (comparisonKey.Equals("Id", StringComparison.OrdinalIgnoreCase))
+        var joinClauses = new List<string>();
+        foreach (var mapping in mappings)
         {
-            return await _context.FindAsync(entityType, recordId);
+            if (!string.IsNullOrEmpty(mapping.RelatedEntity) && !string.IsNullOrEmpty(mapping.RelatedEntityKey))
+            {
+                string tableWithSchema = $"{_connectionString}.\"{mapping.TableName}\"";
+                string relatedTableWithSchema = $"{_connectionString}.\"{mapping.RelatedEntity}\"";
+                joinClauses.Add($"LEFT JOIN {relatedTableWithSchema} ON {tableWithSchema}.\"{mapping.ComparisonKey}\" = {relatedTableWithSchema}.\"{mapping.RelatedEntityKey}\"");
+            }
         }
-        else
-        {
-            var property = entityType.GetProperty(comparisonKey, BindingFlags.Public | BindingFlags.Instance);
-            
-            if (property == null) throw new InvalidOperationException($"Column '{comparisonKey}' not found in table '{tableName}'.");
-
-            var parameter = Expression.Parameter(entityType, "x");
-            var condition = Expression.Equal(Expression.Property(parameter, property), Expression.Constant(recordId));
-            var lambda = Expression.Lambda(condition, parameter);
-
-            var whereMethod = typeof(Queryable).GetMethods()
-                .First(m => m.Name == "Where" && m.GetParameters().Length == 2)
-                .MakeGenericMethod(entityType);
-
-            var filteredQuery = whereMethod.Invoke(null, new object[] { dbSet, lambda });
-
-            return await ((IQueryable<object>)filteredQuery).FirstOrDefaultAsync();
-        }
+        return joinClauses;
     }
 
-
-    // Get related records by foreign key
-    private async Task<IEnumerable<object>> GetRelatedRecords(int relatedRecordId, AiScreenMapping mapping, PropertyInfo[] dbProperties)
+    private async Task<List<Dictionary<string, object>>> ExecuteSqlQuery(string sqlQuery, int recordId)
     {
-        var relatedTableProperty = dbProperties.FirstOrDefault(p => p.Name.Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
-        if (relatedTableProperty == null) throw new InvalidOperationException($"Table '{mapping.RelatedEntity}' not found in DbContext.");
+        var result = new List<Dictionary<string, object>>();
+        using (var connection = _context.Database.GetDbConnection())
+        {
+            await connection.OpenAsync();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = sqlQuery;
+                command.CommandType = System.Data.CommandType.Text;
+                var param = command.CreateParameter();
+                param.ParameterName = "@RecordId";
+                param.Value = recordId;
+                command.Parameters.Add(param);
 
-        var relatedEntityType = relatedTableProperty.PropertyType.GetGenericArguments().FirstOrDefault();
-        if (relatedEntityType == null) throw new InvalidOperationException($"Could not determine entity type for '{mapping.RelatedEntity}'.");
-
-        var foreignKeyProperty = relatedEntityType.GetProperty(mapping.RelatedEntityKey, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-        if (foreignKeyProperty == null) throw new InvalidOperationException($"Foreign key '{mapping.RelatedEntityKey}' not found in table '{mapping.RelatedEntity}'.");
-
-        var parameter = Expression.Parameter(relatedEntityType, "x");
-        var foreignKeyCondition = Expression.Equal(Expression.Property(parameter, foreignKeyProperty), Expression.Constant(relatedRecordId));
-        var lambda = Expression.Lambda(foreignKeyCondition, parameter);
-
-        var whereMethod = typeof(Queryable).GetMethods()
-            .First(m => m.Name == "Where" && m.GetParameters().Length == 2)
-            .MakeGenericMethod(relatedEntityType);
-
-        var relatedDbSet = relatedTableProperty.GetValue(_context);
-        if (relatedDbSet == null) throw new InvalidOperationException($"Could not get DbSet for '{mapping.RelatedEntity}'.");
-
-        var queryable = whereMethod.Invoke(null, new object[] { relatedDbSet, lambda });
-        return await ((IQueryable<object>)queryable).ToListAsync();
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var row = new Dictionary<string, object>();
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            row[reader.GetName(i)] = reader.GetValue(i);
+                        }
+                        result.Add(row);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
-
-    // Apply JSON conditions to the query
-    /*private IQueryable<object> ApplyJsonConditions(IQueryable<object> query, string jsonCondition)
+    private object BuildNestedJson(List<Dictionary<string, object>> result, AiScreenMapping[] mappings)
     {
-        if (string.IsNullOrEmpty(jsonCondition)) return query;
-        var conditions = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonCondition);
-        var parameter = Expression.Parameter(query.ElementType, "x");
-        Expression finalExpression = null;
-
-        foreach (var condition in conditions)
-        {
-            var property = Expression.Property(parameter, condition.Key);
-            var value = Expression.Constant(condition.Value);
-            var comparison = Expression.Equal(property, value);
-            finalExpression = finalExpression == null ? comparison : Expression.AndAlso(finalExpression, comparison);
-        }
-
-        if (finalExpression != null)
-        {
-            var lambda = Expression.Lambda(finalExpression, parameter);
-            query = (IQueryable<object>)typeof(Queryable).GetMethods().First(m => m.Name == "Where" && m.GetParameters().Length == 2)
-                .MakeGenericMethod(query.ElementType)
-                .Invoke(null, new object[] { query, lambda });
-        }
-        return query;
-    }*/
+        // Implement the logic to build nested JSON from the result and mappings
+        // This is a placeholder implementation
+        return result;
+    }
 }

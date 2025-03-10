@@ -43,6 +43,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     RelatedEntity = table.Column<string>(type: "text", nullable: true),
                     RelatedEntityKey = table.Column<string>(type: "text", nullable: true),
                     QueryConditions = table.Column<string>(type: "text", nullable: true),
+                    Order = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false)
