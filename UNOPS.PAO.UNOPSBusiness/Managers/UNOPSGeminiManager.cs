@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -177,24 +178,23 @@ public class UNOPSGeminiManager : IGeminiManager
         string columnWithQuotes = "\"Id\"";
         string baseTableKeyCheck = $"{baseTable}.{columnWithQuotes}";
 
-        // Build SQL Query
         string sqlQuery = $@"
-            SELECT {string.Join(", ", selectColumns)}
-            FROM {baseTable}
-            {string.Join(" ", joinClauses)}
-            WHERE {baseTableKeyCheck} = @RecordId";
+            SELECT ROW_TO_JSON(t)
+            FROM (
+                SELECT {string.Join(", ", selectColumns)}
+                FROM {baseTable}
+                {string.Join(" ", joinClauses)}
+                WHERE {baseTableKeyCheck} = @RecordId
+            ) t;";
 
         var result = await ExecuteSqlQuery(sqlQuery, recordId);
-
-        // Transform result into Nested JSON
-        var structuredResponse = BuildNestedJson(result, mappings);
-
-        return JsonConvert.SerializeObject(structuredResponse, Formatting.Indented);
+        return JsonConvert.SerializeObject(result[0]?["row_to_json"], Formatting.Indented);
     }
 
     private List<string> BuildSelectColumns(AiScreenMapping[] mappings)
     {
         var selectColumns = new List<string>();
+        var aggregates = new List<string>();
         foreach (var mapping in mappings)
         {
             var tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.TableName, StringComparison.OrdinalIgnoreCase));
@@ -205,18 +205,30 @@ public class UNOPSGeminiManager : IGeminiManager
 
             string tableWithSchema = $"{_connectionString}.\"{mapping.TableName}\"";
             var tableProperties = tableRecord.GetProperties();
+            string aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
 
-            if (!selectColumns.Any(col => col.StartsWith(tableWithSchema)))
+            if (!selectColumns.Any(col => col.Contains(tableWithSchema)))
             {
                 foreach (var property in tableProperties)
                 {
-                    var p = $"\"{property.Name}\" AS \"{mapping.TableName}_{property.Name}\"";
-                    selectColumns.Add($"{tableWithSchema}.{p}");
+                    var commaSeparation = string.Empty;
+                    if (tableProperties.First().Name != property.Name)
+                    {
+                        commaSeparation = ",";
+                    }
+                    aggregation = string.Concat(aggregation, $"{commaSeparation} '{property.Name}', ", $"{tableWithSchema}.\"{property.Name}\"");
+                }
+                if (!string.IsNullOrEmpty(aggregation))
+                {
+                    aggregation = string.Concat(aggregation, $")) AS {mapping.TableName}");
+                    selectColumns.Add(aggregation);
                 }
             }
 
+
             if (!string.IsNullOrEmpty(mapping.RelatedEntity) && !string.IsNullOrEmpty(mapping.RelatedEntityKey))
             {
+                aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
                 string relatedTableWithSchema = $"{_connectionString}.\"{mapping.RelatedEntity}\"";
                 tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
                 if (tableRecord == null)
@@ -224,13 +236,22 @@ public class UNOPSGeminiManager : IGeminiManager
                     throw new InvalidOperationException($"Related entity '{mapping.RelatedEntity}' does not exist in the context.");
                 }
 
-                if (!selectColumns.Any(col => col.StartsWith(relatedTableWithSchema)))
+                if (!selectColumns.Any(col => col.Contains(relatedTableWithSchema)))
                 {
                     tableProperties = tableRecord.GetProperties();
                     foreach (var property in tableProperties)
                     {
-                        var p = $"\"{property.Name}\" AS \"{mapping.RelatedEntity}_{property.Name}\"";
-                        selectColumns.Add($"{relatedTableWithSchema}.{p}");
+                        var commaSeparation = string.Empty;
+                        if (tableProperties.First().Name != property.Name)
+                        {
+                            commaSeparation = ",";
+                        }
+                        aggregation = string.Concat(aggregation, $"{commaSeparation} '{property.Name}', ", $"{relatedTableWithSchema}.\"{property.Name}\"");
+                    }
+                    if (!string.IsNullOrEmpty(aggregation))
+                    {
+                        aggregation = string.Concat(aggregation, $")) AS {mapping.RelatedEntity}");
+                        selectColumns.Add(aggregation);
                     }
                 }
             }
