@@ -33,6 +33,10 @@ public class UNOPSAppDbContext : AppDbContext
 
         modelBuilder
             .Entity<UNOPSPartner>();
+        //need to make PartnerNumber unique but can not autogenerate as this can conflict with existing data from ERP
+        //making PartnerNumber optional for now
+        //.HasIndex(x => x.PartnerNumber) 
+        //.IsUnique();
     }
 
     public new DbSet<UNOPSDocument> Documents { get; set; }

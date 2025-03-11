@@ -11,4 +11,5 @@ public class Project : BaseBusinessEntity
     public string Stage { get; set; }
     public string BudgetCheckingLevel { get; set; }
     public string BudgetDuration { get; set; }
+    public UNOPSPartner? Partner { get; set; } 
 }
