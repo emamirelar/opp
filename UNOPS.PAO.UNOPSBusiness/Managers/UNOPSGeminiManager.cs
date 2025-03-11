@@ -16,6 +16,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -30,10 +31,10 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly string _location;
     private readonly string _modelName;
     private readonly string _url;
-    private readonly AppDbContext _context;
+    private readonly UNOPSAppDbContext _context;
     private readonly string _connectionString;
 
-    public UNOPSGeminiManager(IMapper mapper, AppDbContext context, IConfiguration configuration)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
         _mapper = mapper;
         _screenMappingRepository = new DataRepository<AiScreenMapping>(context);
@@ -99,6 +100,10 @@ public class UNOPSGeminiManager : IGeminiManager
             contents = new[]
             {
                 new { role = "user", parts = new[] { new { text = prompt } } }
+            },
+            generationConfig = new {
+                temperature = 0.1,
+                top_p = 0.2
             }
         };
 
@@ -170,7 +175,7 @@ public class UNOPSGeminiManager : IGeminiManager
             throw new InvalidOperationException("Screen mappings are missing.");
         }
 
-        var dbProperties = typeof(AppDbContext).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var dbProperties = typeof(UNOPSAppDbContext).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
         var selectColumns = BuildSelectColumns(mappings);
         var joinClauses = BuildJoinClauses(mappings);
         string baseTableName = mappings[0].Name;
@@ -198,16 +203,15 @@ public class UNOPSGeminiManager : IGeminiManager
         foreach (var mapping in mappings)
         {
             var tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.TableName, StringComparison.OrdinalIgnoreCase));
-            if (tableRecord == null)
-            {
-                throw new InvalidOperationException($"Table '{mapping.TableName}' does not exist in the context.");
-            }
+            var foreignKeys = tableRecord?.GetForeignKeys()?.ToList();
+            var primaryKey = tableRecord?.FindPrimaryKey();
 
             string tableWithSchema = $"{_connectionString}.\"{mapping.TableName}\"";
-            var tableProperties = tableRecord.GetProperties();
+            var tableProperties = tableRecord?.GetProperties();
+            var tablePropetiesAsList = tableProperties?.ToList();
             string aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
 
-            if (!selectColumns.Any(col => col.Contains(tableWithSchema)))
+            if (!selectColumns.Any(col => col.Contains(tableWithSchema)) && (tableRecord?.ClrType != null && tablePropetiesAsList.Count != 2 && foreignKeys.Count != 2))
             {
                 foreach (var property in tableProperties)
                 {
@@ -231,14 +235,13 @@ public class UNOPSGeminiManager : IGeminiManager
                 aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
                 string relatedTableWithSchema = $"{_connectionString}.\"{mapping.RelatedEntity}\"";
                 tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
-                if (tableRecord == null)
-                {
-                    throw new InvalidOperationException($"Related entity '{mapping.RelatedEntity}' does not exist in the context.");
-                }
+                tableProperties = tableRecord?.GetProperties();
+                tablePropetiesAsList = tableProperties?.ToList();
+                foreignKeys = tableRecord?.GetForeignKeys()?.ToList();
+                primaryKey = tableRecord?.FindPrimaryKey();
 
-                if (!selectColumns.Any(col => col.Contains(relatedTableWithSchema)))
+                if (!selectColumns.Any(col => col.Contains(relatedTableWithSchema)) && (tableRecord?.ClrType != null && tablePropetiesAsList.Count != 2 && foreignKeys.Count != 2))
                 {
-                    tableProperties = tableRecord.GetProperties();
                     foreach (var property in tableProperties)
                     {
                         var commaSeparation = string.Empty;
