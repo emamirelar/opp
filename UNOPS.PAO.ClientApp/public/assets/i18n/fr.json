@@ -90,5 +90,8 @@
         "deleteInteractionConfirmation": "Êtes-vous sûr de vouloir supprimer cette interaction ?",
         "interactionDeleted": "L'interaction a été supprimée avec succès",
         "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction"
+    },
+    "errors": {
+        "failedToLoad": "Échec du chargement"
     }
 }

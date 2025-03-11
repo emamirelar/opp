@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { tap } from 'rxjs';
+import {Partner} from '../models/partner.model';
 
 @Injectable({
   providedIn: 'root',
@@ -29,7 +30,7 @@ export class PartnerService {
 
   getPartnerById(recordId: string) {
     this.isLoading.set(true);
-    return this.http.get(`/api/partner/${recordId}`).pipe(tap(
+    return this.http.get<Partner>(`/api/partner/${recordId}`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);

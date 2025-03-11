@@ -8,7 +8,7 @@ import { ContactItemComponent } from './components/contact/contactItem/contact-i
 import {InteractionListComponent} from './components/interaction/list/interaction-list.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
-import { PartnerItemComponent } from './components/partner/partnerItem/partner-item.component';
+import {PartnerViewComponent} from './components/partner/view/partner-view.component';
 
 const internalRoutes: Routes = [
   {
@@ -56,7 +56,7 @@ const internalRoutes: Routes = [
       {
         path: 'partner/:recordId',
         data: { breadcrumb: 'Details' },
-        component: PartnerItemComponent,
+        component: PartnerViewComponent,
         canActivate: [authGuard],
       }
     ],
