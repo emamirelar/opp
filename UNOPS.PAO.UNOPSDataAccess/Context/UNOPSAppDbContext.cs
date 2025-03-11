@@ -32,7 +32,10 @@ public class UNOPSAppDbContext : AppDbContext
         //.HasPrincipalKey(x => x.ContactNumber);
 
         modelBuilder
-            .Entity<UNOPSPartner>();
+            .Entity<UNOPSPartner>()
+            .HasMany(x => x.Projects)
+            .WithMany(x => x.Partners)
+            .UsingEntity("PartnerProjects");
         //need to make PartnerNumber unique but can not autogenerate as this can conflict with existing data from ERP
         //making PartnerNumber optional for now
         //.HasIndex(x => x.PartnerNumber) 

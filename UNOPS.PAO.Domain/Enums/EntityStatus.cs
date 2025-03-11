@@ -3,5 +3,6 @@ public enum EntityStatus
 {
     Inactive,
     Active,
-    Closed
+    Closed,
+    Draft
 }
