@@ -11,8 +11,8 @@ export class GeminiService {
 
   private readonly API_URL = '/api/process-data';
 
-  get(partnerId: string, type: GeminiType): Observable<string> {
-    return this.http.post<GeminiResponse>(this.API_URL, { partnerId, type }).pipe(
+  get(id: string, type: GeminiType): Observable<string> {
+    return this.http.post<GeminiResponse>(this.API_URL, { id, type }).pipe(
       map(response => {
         if (!response.candidates?.[0]?.content?.parts) {
           return '';
