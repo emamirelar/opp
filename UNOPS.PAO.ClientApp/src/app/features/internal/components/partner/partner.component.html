@@ -1,17 +1,17 @@
   <div class="main-container">
     <div class="flex flex-wrap">
-        <div>
-          <p class="text-2xl font-semibold"> {{ 'title.partners' | translate }} </p>
-        </div>
-        <div class="grow"></div>
-        <div>
-          <p-button icon="pi pi-money-bill" label="New" title="New Partner"
-          (onClick)="newPartner = true"/>
-        </div>
+      <div>
+        <p class="text-2xl font-semibold"> {{ 'title.partners' | translate }} </p>
       </div>
-  
+      <div class="grow"></div>
+      <div>
+        <p-button icon="pi pi-money-bill" label="New" title="New Partner"
+        (onClick)="newPartner = true"/>
+      </div>
+    </div>
+
     <div class="grid" #cardContainer>
-  
+
       @if( ( isDataLoading() == false ) && ( partnerData() == undefined || partnerData().length <= 0 ) )
       {<!-- Here means, no record found. -->
         <p-table [value]="partnerData()"
@@ -54,7 +54,7 @@
                   }
                 </tr>
             </ng-template>
-  
+
             <ng-template #body let-partner>
               <tr>
                   <td>
@@ -71,13 +71,13 @@
                   <td>{{ partner.newEngagement }} </td>
               </tr>
             </ng-template>
-  
+
         </p-table>
       }
-  
+
     </div>
   </div>
-  
+
   @if(newPartner) {
     <!-- New Funding Opportunity dialog -->
     <p-dialog header="{{ 'title.newPartner' | translate }}"
@@ -87,8 +87,8 @@
       [styleClass]="'new-partner-dialog'"
       [maximizable]="true"
       (onHide)="newPartner = false" >
-  
+
       <app-new-partner (onRecordCreationSuccess)="_handleOnRecordCreation($event)" ></app-new-partner>
-  
+
     </p-dialog>
-  }  
+  }

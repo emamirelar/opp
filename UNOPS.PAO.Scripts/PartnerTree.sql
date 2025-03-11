@@ -1,4 +1,3 @@
-delete from public."PartnerTrees"
 INSERT INTO public."PartnerTrees"
 ("Name", "Code", "Description", "Type", "Parent", "Status", "Discriminator", "CreatedBy", "CreatedDate", "LastModifiedBy", "LastModifiedDate", "IsDeleted", "DeletedBy")
 VALUES

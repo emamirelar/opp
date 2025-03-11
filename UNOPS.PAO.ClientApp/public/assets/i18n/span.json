@@ -88,5 +88,8 @@
         "deleteInteractionConfirmation": "¿Está seguro de que desea eliminar esta interacción?",
         "interactionDeleted": "Interacción eliminada con éxito",
         "errorDeletingInteraction": "Error al eliminar la interacción"
+    },
+    "errors": {
+      "failedToLoad": "Falha ao carregar"
     }
 }
