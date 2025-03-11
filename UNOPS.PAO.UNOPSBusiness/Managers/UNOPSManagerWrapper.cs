@@ -28,7 +28,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         interactionManager = new UNOPSInteractionManager(mapper, opsContext);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext);
         partnerManager = new UNOPSPartnerManager(mapper,opsContext);
-        geminiManager = new UNOPSGeminiManager(mapper, context, configuration);
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
     }
 
     public override IDocumentManager DocumentManager => documentManager;
