@@ -93,5 +93,8 @@
     },
     "errors": {
         "failedToLoad": "Échec du chargement"
+    },
+    "common": {
+        "poweredByAI": "Powered by IA"
     }
 }

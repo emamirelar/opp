@@ -95,5 +95,8 @@
     "label.interaction.contact": "Contato",
     "errors": {
         "failedToLoad": "Falha ao carregar"
+    },
+    "common": {
+        "poweredByAI": "Desenvolvido por IA"
     }
 }
