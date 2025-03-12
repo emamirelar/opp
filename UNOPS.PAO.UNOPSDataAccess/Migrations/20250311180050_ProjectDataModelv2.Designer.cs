@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250311180050_ProjectDataModelv2")]
+    partial class ProjectDataModelv2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,15 +44,15 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             modelBuilder.Entity("PartnerProjects", b =>
                 {
-                    b.Property<int>("PartnersId")
+                    b.Property<int>("PartnerId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProjectsId")
+                    b.Property<int>("ProjectId")
                         .HasColumnType("integer");
 
-                    b.HasKey("PartnersId", "ProjectsId");
+                    b.HasKey("PartnerId", "ProjectId");
 
-                    b.HasIndex("ProjectsId");
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("PartnerProjects", "public");
                 });
@@ -1149,13 +1152,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 {
                     b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartner", null)
                         .WithMany()
-                        .HasForeignKey("PartnersId")
+                        .HasForeignKey("PartnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("UNOPS.PAO.UNOPSDomain.Entities.Common.Project", null)
                         .WithMany()
-                        .HasForeignKey("ProjectsId")
+                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
