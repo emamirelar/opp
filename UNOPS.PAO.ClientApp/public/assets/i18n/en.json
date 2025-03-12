@@ -201,5 +201,8 @@
   "label.interaction.contact": "Contact",
   "errors": {
     "failedToLoad": "Error al cargar"
+  },
+  "common": {
+    "poweredByAI": "Powered by AI"
   }
 }
