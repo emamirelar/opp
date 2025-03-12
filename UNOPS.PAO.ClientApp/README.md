@@ -57,3 +57,43 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+
+## Front End Principles
+
+### CSS
+
+1. **Stick to tailwind / [Sakai template](https://sakai.primeng.org/)**. Use divs and spans as much as possible.
+2. Use **gap-2, gap-4 or gap-8** for spacing between elements. Avoid using margin or padding classes.
+3. For the layout : **layout (page level) / p-panel / elements**. Avoid double frames.
+
+### Angular (suggesting)
+
+#### 1. Structure of components :
+
+Suggestion of structure for the components :
+
+```
+contact
++-- new
+    +-- contact-new.component.html
+    +-- contact-new.component.ts
++-- list
+    +-- contact-list.component.html
+    +-- contact-list.component.ts
++-- contact.component.html
++-- contact.component.ts
+```
+
+The standard is to use snake case for the file names.
+
+#### 2. Managing data :
+  - **contact.service.ts** : for the API calls
+  - **contact.data.ts** : for the data (not standard)
+  - **contact.model.ts** : for the interface
+
+#### 3. Pagination
+
+**pagination-url.service.ts** : for the pagination in the URL.
+
+I could be nice to have an abstract class for DataServices that would handle the pagination.

@@ -1,16 +1,16 @@
 import { afterNextRender, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
-import { CachedDataService } from '../../../../../../common/services/cached-data.service';
+import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { FeedbackDialogService } from '../../../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { PanelModule } from 'primeng/panel';
-import { DropdownModule } from "primeng/dropdown"; 
+import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { LanguageService } from '../../../../../../common/services/language.service';
+import { LanguageService } from '../../../../../common/services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 
 //PrimeNG imports
@@ -23,7 +23,7 @@ import { SelectModule } from 'primeng/select';
 import { AutoFocusModule } from 'primeng/autofocus';
 import { BlockUI } from 'primeng/blockui';
 import { MessageModule } from 'primeng/message';
-import { ContactService } from '../../../../services/contact.service';
+import { ContactService } from '../../../services/contact.service';
 import { CardModule } from 'primeng/card';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -46,7 +46,6 @@ import { ActivatedRoute, Router } from '@angular/router';
     CardModule,
     ReactiveFormsModule],
   templateUrl: './contact-item.component.html',
-  styleUrl: './contact-item.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContactItemComponent implements OnInit, OnDestroy {
@@ -158,17 +157,17 @@ export class ContactItemComponent implements OnInit, OnDestroy {
         validators:[Validators.required]
       }),
     });
-  
+
     cachedDataService = inject(CachedDataService);
     feedbackDialogService = inject(FeedbackDialogService);
     contactService = inject(ContactService);
     translateService = inject(TranslateService);
     languageService = inject(LanguageService);
     cdr = inject( ChangeDetectorRef);
-  
+
     private langChangeSubscription: Subscription = new Subscription();
     onRecordCreationSuccess = output();
-  
+
     allSalutationsData = this.cachedDataService.allSalutations;
     allStatusData = this.cachedDataService.allStatus;
     allPronounsData = this.cachedDataService.allPronouns;
@@ -177,22 +176,22 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     maxDate = new Date();
     recordId: string = '';
     recordData = signal<any>({});
-  
+
     constructor() {
       //load salutations
       //this.cachedDataService.loadSalutations();
       //this.cachedDataService.loadStatus();
     }
-  
+
     ngOnDestroy(): void {
       this.langChangeSubscription?.unsubscribe();
     }
-  
+
     ngOnInit() {
       this.activatedRoute.paramMap.subscribe({
         next: (paramMap) => {
           this.recordId = paramMap.get("recordId") || '';
-  
+
           if (this.recordId != '') {
             this._loadRecordDetails();
           }
@@ -215,9 +214,9 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     handleOnCancelClick(event: MouseEvent) {
       this.router.navigate(['contacts']);
     }
-  
+
     handleOnSaveClick(event: MouseEvent) {
-  
+
       this.contactService.updateContactById(this._getRequestPayload()).subscribe({
         next: (data: any) => {
           this._loadRecordDetails();
@@ -225,31 +224,31 @@ export class ContactItemComponent implements OnInit, OnDestroy {
         }
       });
     }
-  
+
     _validate(){
       let result = true;
-  
+
       if( this.formGroup.status == "INVALID" )
       {
         this.showValidationFailedError.set( false );
-  
+
         if( this.formGroup.get("firstName")?.invalid )
         {
           this.formGroup.get("firstName")?.markAsDirty();
         }
         result = false;
       }
-  
+
       return result;
     }
-  
+
     _getRequestPayload() {
       let valueObj = this.formGroup.value,
         requestJsonObj: any = {},
         partnerId = "",
         projectNumber = "";
-  
-  
+
+
       for (let key in valueObj) {
         if (valueObj.hasOwnProperty(key)) {
           let indexValue = (valueObj as any)[key];
@@ -270,7 +269,7 @@ export class ContactItemComponent implements OnInit, OnDestroy {
       }
 
       requestJsonObj["id"] = this.recordId;
-  
+
       return requestJsonObj;
     }
 }
