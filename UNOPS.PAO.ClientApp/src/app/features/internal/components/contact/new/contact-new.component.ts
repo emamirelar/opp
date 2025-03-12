@@ -1,19 +1,15 @@
-import { afterNextRender, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { PanelModule } from 'primeng/panel';
-import { DropdownModule } from "primeng/dropdown"; 
+import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
-
-//Language translation import
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { LanguageService } from '../../../../../common/services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
-
-//PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { DividerModule } from 'primeng/divider';
@@ -27,7 +23,7 @@ import { ContactService } from '../../../services/contact.service';
 import { CardModule } from 'primeng/card';
 
 @Component({
-  selector: 'app-new-contact',
+  selector: 'app-contact-new',
   imports: [
     TranslateModule,
     InputTextModule,
@@ -44,119 +40,64 @@ import { CardModule } from 'primeng/card';
     DividerModule,
     CardModule,
     ReactiveFormsModule],
-  templateUrl: './new-contact.component.html',
-  styleUrl: './new-contact.component.scss',
+  templateUrl: './contact-new.component.html',
+  styleUrl: './contact-new.component.scss',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NewContactComponent implements OnInit, OnDestroy {
+export class ContactNewComponent implements OnInit, OnDestroy {
   formGroup = new FormGroup({
-    partner: new FormControl(null),
-    salutation: new FormControl('', {
-      validators:[Validators.required]
-    }),
+    // Basic contact information
+    salutation: new FormControl('', { validators: [Validators.required] }),
     firstName: new FormControl(''),
-    lastName: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    email: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    mobile: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    middleName: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    suffix: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    title: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    pronouns: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    department: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    birthDate: new FormControl(new Date(), {
-      validators:[Validators.required]
-    }),
-    fax: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    description: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    phone: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    otherPhone: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    assistant: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    assistantPhone: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    assistantEmail: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    status: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    mailingStreet: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    mailingStreet2: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    mailingCity: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    mailingStateProvince: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    mailingPostalCode: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    mailingCountry: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    discriminator: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    contactNumber: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    createdBy: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    createdDate: new FormControl(new Date(), {
-      validators:[Validators.required]
-    }),
-    lastModifiedBy: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    lastModifiedDate: new FormControl(new Date(), {
-      validators:[Validators.required]
-    }),
-    isDeleted: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    deletedBy: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    deletedDate: new FormControl(null, {
-      validators:[Validators.required]
-    }),
+    middleName: new FormControl(null, { validators: [Validators.required] }),
+    lastName: new FormControl(null, { validators: [Validators.required] }),
+    suffix: new FormControl(null, { validators: [Validators.required] }),
+    title: new FormControl(null, { validators: [Validators.required] }),
+    pronouns: new FormControl(null, { validators: [Validators.required] }),
+    birthDate: new FormControl(new Date(), { validators: [Validators.required] }),
+
+    // Contact details
+    email: new FormControl(null, { validators: [Validators.required] }),
+    phone: new FormControl(null, { validators: [Validators.required] }),
+    mobile: new FormControl(null, { validators: [Validators.required] }),
+    otherPhone: new FormControl(null, { validators: [Validators.required] }),
+    fax: new FormControl(null, { validators: [Validators.required] }),
+
+    // Professional information
+    partner: new FormControl(null, { validators: [Validators.required] }),
+    department: new FormControl(null, { validators: [Validators.required] }),
+    description: new FormControl(null, { validators: [Validators.required] }),
+    status: new FormControl(null, { validators: [Validators.required] }),
+    contactNumber: new FormControl(null, { validators: [Validators.required] }),
+
+    // Assistant information
+    assistant: new FormControl(null, { validators: [Validators.required] }),
+    assistantPhone: new FormControl(null, { validators: [Validators.required] }),
+    assistantEmail: new FormControl(null, { validators: [Validators.required] }),
+
+    // Mailing address
+    mailingStreet: new FormControl(null, { validators: [Validators.required] }),
+    mailingStreet2: new FormControl(null, { validators: [Validators.required] }),
+    mailingCity: new FormControl(null, { validators: [Validators.required] }),
+    mailingStateProvince: new FormControl(null, { validators: [Validators.required] }),
+    mailingPostalCode: new FormControl(null, { validators: [Validators.required] }),
+    mailingCountry: new FormControl(null, { validators: [Validators.required] }),
+
+    // System fields
+    discriminator: new FormControl(null, { validators: [Validators.required] }),
+    createdBy: new FormControl(null, { validators: [Validators.required] }),
+    createdDate: new FormControl(new Date(), { validators: [Validators.required] }),
+    lastModifiedBy: new FormControl(null, { validators: [Validators.required] }),
+    lastModifiedDate: new FormControl(new Date(), { validators: [Validators.required] }),
+    isDeleted: new FormControl(null, { validators: [Validators.required] }),
+    deletedBy: new FormControl(null, { validators: [Validators.required] }),
+    deletedDate: new FormControl(null, { validators: [Validators.required] }),
   });
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
   contactService = inject(ContactService);
-  translateService = inject(TranslateService);
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
 

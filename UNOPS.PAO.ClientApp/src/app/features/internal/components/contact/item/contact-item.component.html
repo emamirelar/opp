@@ -4,13 +4,17 @@
   <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
 }
 
-<form class="w-full h-full content-container" [formGroup]="formGroup">
+<form [formGroup]="formGroup">
       <p-panel
         header="{{ 'title.contactTitles.contactInformation' | translate }}"
         [toggleable]="true"
         [styleClass]="'section'"
       >
       <div class="flex flex-row justify-between">
+        <div class="mb-6 pr-2">
+            <label>{{ "label.contact.id" | translate }}</label>
+            <input pInputText fluid="true" formControlName="id" readonly/>
+        </div>
         <div class="mb-6 pr-2">
           <label>{{ "label.contact.salutation" | translate }}</label>
           <p-select
@@ -92,16 +96,18 @@
 
         <div class="mb-6 pr-2">
           <label class="required">*</label><label>{{ "label.contact.status" | translate }}</label>
-          <p-select formControlName="status"
-                    [options]="allStatusData()"
-                    optionLabel="name"
-                    optionValue="id"
-                    fluid="true"
-                    [showClear]="true"
-                    placeholder="Select a Status" />
+          <p-select
+            formControlName="status"
+            [options]="allStatusData()"
+            optionLabel="name"
+            optionValue="id"
+            fluid="true"
+            [showClear]="true"
+            placeholder="Select a Status"
+          />
           @if( formGroup.get("status")?.invalid && showValidationFailedError() )
           {
-          <p-message severity="error" variant="simple">Status must be entered.</p-message>
+            <p-message severity="error" variant="simple">Status must be entered.</p-message>
           }
         </div>
 
@@ -152,13 +158,13 @@
             <input pInputText fluid="true" formControlName="description" />
           </div>
       </div>
-    </p-panel>  
+    </p-panel>
     <p-panel
       header="{{ 'title.contactTitles.addresses' | translate }}"
       [toggleable]="true"
       [styleClass]="'section'">
       <div class="flex flex-row">
-          <div class="mb-12 pr-2 w-1/2">
+          <div class="mb-12 pr-2 w-full">
               <p-card header="Mailing Address">
                 <div class="pb-2">
                   <label>{{ "label.contact.mailingStreet" | translate }}</label>
@@ -175,14 +181,14 @@
                 <div class="pb-2">
                   <label>{{ "label.contact.mailingStateProvince" | translate }}</label>
                   <input pInputText fluid="true" formControlName="mailingStateProvince" />
-                </div>  
+                </div>
                 <div class="pb-2">
                   <label>{{ "label.contact.mailingCountry" | translate }}</label>
                   <input pInputText fluid="true" formControlName="mailingCountry" />
-                </div>  
+                </div>
               </p-card>
           </div>
-          <div class="mb-12 pr-2 w-1/2">
+          <!--div class="mb-12 pr-2 w-1/2">
             <p-card header="Other Address">
               <div class="pb-2">
                 <label>{{ "label.contact.mailingStreet" | translate }}</label>
@@ -199,16 +205,18 @@
               <div class="pb-2">
                 <label>{{ "label.contact.mailingStateProvince" | translate }}</label>
                 <input pInputText fluid="true" formControlName="mailingStateProvince" />
-              </div>  
+              </div>
               <div class="pb-2">
                 <label>{{ "label.contact.mailingCountry" | translate }}</label>
                 <input pInputText fluid="true" formControlName="mailingCountry" />
-              </div>  
+              </div>
             </p-card>
-        </div>
-      </div>"
+        </div-->
+      </div>
     </p-panel>
-    <div class="flex justify-end mt-2">
-      <p-button icon="pi pi-save" label="{{'button.save' | translate}}" (click)="_handleOnSaveClick()"/>
-    </div>
+    <div class="footer-container">
+        <p-button label="{{'button.cancel' | translate}}" severity="secondary" [styleClass]="'cancel-button'"
+          (onClick)="handleOnCancelClick($event)" />
+        <p-button label="{{'button.save' | translate}}" severity="primary" [styleClass]="'save-button'" (onClick)="handleOnSaveClick($event)" />
+      </div>
 </form>

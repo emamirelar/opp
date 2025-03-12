@@ -4,7 +4,7 @@ import { LayoutComponent } from '../../common/layouts/components/layout/layout.c
 import { HomeComponent } from '../../common/pages/components/home/home.component';
 import { authGuard } from '../../essentials/guards/auth.guard';
 import { ContactComponent } from './components/contact/contact.component';
-import { ContactItemComponent } from './components/contact/contactItem/contact-item/contact-item.component';
+import { ContactItemComponent } from './components/contact/item/contact-item.component';
 import {InteractionListComponent} from './components/interaction/list/interaction-list.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
