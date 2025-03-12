@@ -12,30 +12,52 @@ def generate_partner_projects_insert(csv_file):
             partner_number = row[0]  # PartnerNumber
             project_number = row[1]  # ProjectNumber
 
-            # Generate the VALUES clause with subqueries to look up PartnerId and ProjectId
-            values = f"""(
-                (SELECT "Id" FROM public."Partners" WHERE "PartnerNumber" = '{partner_number}' LIMIT 1),
-                (SELECT "Id" FROM public."Projects" WHERE "ProjectNumber" = '{project_number}' LIMIT 1)
-            )"""
-            values_list.append(values)
+            # Add the PartnerNumber and ProjectNumber to the VALUES list
+            values_list.append(f"('{partner_number}', '{project_number}')")
 
-        # Combine all rows into a single INSERT statement
-        sql = f"""
-        INSERT INTO public."PartnerProjects" ("PartnerId", "ProjectId")
+        # Create a temporary table and insert the CSV data
+        temp_table_sql = """
+        CREATE TEMP TABLE "temp_partner_projects" (
+            "PartnerNumber" VARCHAR(50),
+            "ProjectNumber" VARCHAR(50)
+        );
+        """
+
+        # Insert the CSV data into the temporary table
+        insert_temp_table_sql = f"""
+        INSERT INTO "temp_partner_projects" ("PartnerNumber", "ProjectNumber")
         VALUES
         {',\n'.join(values_list)};
         """
-        return sql
+
+        # Generate the final INSERT statement using a JOIN
+        final_insert_sql = """
+        INSERT INTO public."PartnerProjects" ("PartnersId", "ProjectsId")
+        SELECT p."Id", pr."Id"
+        FROM "temp_partner_projects" t
+        JOIN public."Partners" p ON t."PartnerNumber" = p."PartnerNumber"
+        JOIN public."Projects" pr ON t."ProjectNumber" = pr."ProjectNumber";
+
+        DROP TABLE "temp_partner_projects";
+        """
+
+        # Combine all SQL statements into one script
+        full_sql_script = f"""
+        {temp_table_sql}
+        {insert_temp_table_sql}
+        {final_insert_sql}
+        """
+        return full_sql_script
 
 # Example usage
 csv_file = 'partner-projects-export-erp.csv'  # Path to your CSV file
 
-# Generate the SQL INSERT statement
-sql_statement = generate_partner_projects_insert(csv_file)
+# Generate the SQL script
+sql_script = generate_partner_projects_insert(csv_file)
 
-# Write the SQL statement to a file or print it
-with open('partner_projects_insert.sql', 'w', encoding='utf-8') as output_file:
-    output_file.write(sql_statement + '\n')
+# Write the SQL script to a file or print it
+with open('partner_projects_insert_optimized.sql', 'w', encoding='utf-8') as output_file:
+    output_file.write(sql_script + '\n')
 
-# Optionally, print the SQL statement to the console
-print(sql_statement)
+# Optionally, print the SQL script to the console
+print(sql_script)

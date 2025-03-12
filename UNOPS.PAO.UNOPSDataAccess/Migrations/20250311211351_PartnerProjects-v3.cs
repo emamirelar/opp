@@ -38,6 +38,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 table: "PartnerProjects",
                 newName: "IX_PartnerProjects_ProjectsId");
 
+            migrationBuilder.RenameIndex(
+                name: "IX_PartnerProjects_PartnerId",
+                schema: "public",
+                table: "PartnerProjects",
+                newName: "IX_PartnerProjects_PartnersId");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_PartnerProjects_Partners_PartnersId",
                 schema: "public",
@@ -55,16 +61,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 column: "ProjectsId",
                 principalSchema: "public",
                 principalTable: "Projects",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_PartnerProjects_Projects_PartnersId",
-                schema: "public",
-                table: "PartnerProjects",
-                column: "PartnersId",
-                principalSchema: "public",
-                principalTable: "Partners",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
         }
@@ -100,6 +96,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 table: "PartnerProjects",
                 newName: "IX_PartnerProjects_ProjectId");
 
+            migrationBuilder.RenameIndex(
+                name: "IX_PartnerProjects_PartnersId",
+                schema: "public",
+                table: "PartnerProjects",
+                newName: "IX_PartnerProjects_PartnerId");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_PartnerProjects_Partners_PartnerId",
                 schema: "public",
@@ -117,16 +119,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 column: "ProjectId",
                 principalSchema: "public",
                 principalTable: "Projects",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_PartnerProjects_Projects_PartnersId",
-                schema: "public",
-                table: "PartnerProjects",
-                column: "PartnersId",
-                principalSchema: "public",
-                principalTable: "Partners",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
         }

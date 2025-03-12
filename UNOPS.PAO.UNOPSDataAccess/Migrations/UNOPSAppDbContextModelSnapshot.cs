@@ -49,7 +49,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasKey("PartnersId", "ProjectsId");
 
-                    b.HasIndex("ProjectsId");
+                    b.HasIndex("PartnersId", "ProjectsId");
 
                     b.ToTable("PartnerProjects", "public");
                 });
