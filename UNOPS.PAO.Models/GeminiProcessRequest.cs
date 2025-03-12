@@ -11,4 +11,6 @@ public class GeminiProcessRequest
 {
     public int Id { get; set; }
     public string Type { get; set; }
+    public bool AiAssistant { get; set; }
+    public string? Message { get; set; }
 }
