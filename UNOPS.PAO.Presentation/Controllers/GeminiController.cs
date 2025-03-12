@@ -30,11 +30,8 @@ public class GeminiController : ControllerBase
     public async Task<ActionResult> FetchResponseFromGemini([FromBody] GeminiProcessRequest req)
     {
         try {
-            bool isFromAiAssistant = false;
+            bool isFromAiAssistant = req.AiAssistant;
             string relatedMessage = "";
-            if (!string.IsNullOrEmpty(req.Message)) {
-                isFromAiAssistant = true;
-            }
 
             AiPrompt promptModel = manager.MapModelToEntity(req);
 
