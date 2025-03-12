@@ -57,6 +57,16 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 principalTable: "Projects",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_PartnerProjects_Projects_PartnersId",
+                schema: "public",
+                table: "PartnerProjects",
+                column: "PartnersId",
+                principalSchema: "public",
+                principalTable: "Partners",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
@@ -107,6 +117,16 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 column: "ProjectId",
                 principalSchema: "public",
                 principalTable: "Projects",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_PartnerProjects_Projects_PartnersId",
+                schema: "public",
+                table: "PartnerProjects",
+                column: "PartnersId",
+                principalSchema: "public",
+                principalTable: "Partners",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
         }

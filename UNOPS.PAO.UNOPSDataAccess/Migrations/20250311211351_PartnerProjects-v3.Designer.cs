@@ -54,6 +54,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasIndex("ProjectsId");
 
+                    b.HasIndex("PartnersId");
+
                     b.ToTable("PartnerProjects", "public");
                 });
 

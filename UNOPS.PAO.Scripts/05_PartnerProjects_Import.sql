@@ -1,4 +1,4 @@
-INSERT INTO public."PartnerProjects" ("PartnerId", "ProjectId")
+INSERT INTO public."PartnerProjects" ("PartnersId", "ProjectsId")
 VALUES
 (
     (SELECT "Id" FROM public."Partners" WHERE "PartnerNumber" = '1183' LIMIT 1),
