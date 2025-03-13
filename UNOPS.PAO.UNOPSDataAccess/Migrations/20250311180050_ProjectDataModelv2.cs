@@ -71,6 +71,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 schema: "public",
                 table: "PartnerProjects",
                 column: "ProjectId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PartnerProjects_PartnerId",
+                schema: "public",
+                table: "PartnerProjects",
+                column: "PartnerId");
         }
 
         /// <inheritdoc />
