@@ -96,14 +96,9 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<dynamic> GetRequestBody(string prompt, AiPromptModel promptData)
     {
-        //tried this first but this is invalidating the JSON format as prompt also has double quotes and JSON
-        //promptData.ContentConfig = promptData.ContentConfig.Replace("{promptData}", prompt);
-
-        //Create the request
         dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
         dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
 
-        //need to make this dynamic for different types of prompts i.e., text vs image, etc. 
         contentConfig.parts[0].text = prompt;
 
         var requestBody = new
