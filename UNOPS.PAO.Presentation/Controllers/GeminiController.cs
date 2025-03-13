@@ -30,6 +30,9 @@ public class GeminiController : ControllerBase
     public async Task<ActionResult> FetchResponseFromGemini([FromBody] GeminiProcessRequest req)
     {
         try {
+            bool isFromAiAssistant = req.AiAssistant;
+            string relatedMessage = "";
+
             AiPrompt promptModel = manager.MapModelToEntity(req);
 
             // Call the GetPromptData method and get the first prompt
@@ -40,10 +43,13 @@ public class GeminiController : ControllerBase
                 return NotFound(new { message = $"Prompt configuration for the screen '{req.Type}' is not found." });
             }
 
-            // Query the AiScreenMapping table based on Type
-
-            var screenMappings = (await manager.GetScreenMappingsByType(promptData.Type)).ToArray();
-            var relatedJsonData = await manager.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+            if (!isFromAiAssistant) {
+                // Query the AiScreenMapping table based on Type
+                var screenMappings = (await manager.GetScreenMappingsByType(promptData.Type)).ToArray();
+                relatedMessage = await manager.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+            } else {
+                relatedMessage = req.Message;
+            }
 
             // Fetch result from Gemini
             return Ok(await manager.fetchResultFromGemini(promptData, relatedJsonData));
