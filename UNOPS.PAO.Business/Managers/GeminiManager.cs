@@ -34,7 +34,7 @@ public class GeminiManager : IGeminiManager
             .Select(x => _mapper.Map<AiPrompt, AiPromptModel>(x));
     }
 
-    public async Task<string> fetchResultFromGemini(string promptTemplate, string relatedJsonData)
+    public async Task<string> fetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
     {
         // Implement the logic to fetch result from Gemini
         throw new NotImplementedException();

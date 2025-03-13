@@ -52,7 +52,7 @@ public class GeminiController : ControllerBase
             }
 
             // Fetch result from Gemini
-            return Ok(await manager.fetchResultFromGemini(promptData.Prompt, relatedMessage));
+            return Ok(await manager.fetchResultFromGemini(promptData, relatedMessage));
 
         } catch (Exception ex) {
             return BadRequest(new { message = ex.Message });

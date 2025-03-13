@@ -1,6 +1,6 @@
 DELETE FROM public."AiPrompt"
 WHERE "Type" = 'partner_interactions_summary';
-INSERT INTO public."AiPrompt" ("Type", "Prompt", "CreatedAt", "Name", "Status") VALUES
+INSERT INTO public."AiPrompt" ("Type", "Prompt", "CreatedAt", "Name", "Status", "GenerationConfig", "ContentConfig", "Project", "Location", "Model") VALUES
 ('partner_interactions_summary', 'I am providing a JSON object containing partner information, contact information and interaction history. The Each object will have the contact details with the property "contacts", partner detail with the property "partners" and interaction detail in "interactions" in a flat structure. I need you to generate a summary in Markdown format, using the following template:
 
 
@@ -32,7 +32,7 @@ JSON Data:
 
 {jsonData}
 
-Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. The final response from you should give me a quick summary of the partner. Do not assume any detail.', NOW(), 'Partners', 1);
+Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. The final response from you should give me a quick summary of the partner. Do not assume any detail.', NOW(), 'Partners', 1, '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }', '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', 'unops-partneropportunity', 'europe-west3', 'gemini-1.5-flash-001');
 
 DELETE FROM public."AiScreenMapping"
 WHERE "Type" = 'partner_interactions_summary';

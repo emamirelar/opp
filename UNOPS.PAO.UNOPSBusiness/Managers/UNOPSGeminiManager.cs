@@ -17,6 +17,7 @@ using System.Reflection;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using UNOPS.PAO.UNOPSDataAccess.Context;
+using System.Dynamic;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -27,10 +28,6 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GoogleCredential _credentials;
     private readonly DataRepository<AiScreenMapping> _screenMappingRepository;
     private readonly DataRepository<AiPrompt> _promptRepository;
-    private readonly string _projectId;
-    private readonly string _location;
-    private readonly string _modelName;
-    private readonly string _url;
     private readonly UNOPSAppDbContext _context;
     private readonly string _connectionString;
 
@@ -42,11 +39,7 @@ public class UNOPSGeminiManager : IGeminiManager
         _configuration = configuration;
         _credentials = GetCredentials();
         _context = context;
-        _projectId = configuration.GetValue<string>("GoogleDriveSettings:ProjectId");
-        _location = configuration.GetValue<string>("GoogleDriveSettings:Location");
-        _modelName = configuration.GetValue<string>("GoogleDriveSettings:GeminiModelName");
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
-        _url = $"https://{_location}-aiplatform.googleapis.com/v1/projects/{_projectId}/locations/{_location}/publishers/google/models/{_modelName}:generateContent";
     }
 
     // Map AiPrompt entity to AiPromptModel
@@ -83,34 +76,49 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Fetch result from Gemini
-    public async Task<string> fetchResultFromGemini(string promptTemplate, string relatedJsonData) {
+    public async Task<string> fetchResultFromGemini(AiPromptModel promptData, string relatedJsonData) {
+        string promptTemplate = promptData.Prompt;
         string finalPrompt = promptTemplate.Replace("{jsonData}", relatedJsonData);
-        string geminiResponse = await callGemini(finalPrompt);
+        string geminiResponse = await callGemini(finalPrompt, promptData);
         return geminiResponse;
     }
 
     // Call Gemini API
-    public async Task<string> callGemini(string prompt)
+    public async Task<string> callGemini(string prompt, AiPromptModel promptData)
     {
         string accessToken = await GetAccessTokenAsync();
-
-        // Create the request
-        var requestBody = new
-        {
-            contents = new[]
-            {
-                new { role = "user", parts = new[] { new { text = prompt } } }
-            },
-            generationConfig = new {
-                temperature = 0.1,
-                top_p = 0.2
-            }
-        };
-
+        var requestBody = await GetRequestBody(prompt, promptData);
+        string url = await GetURL(promptData);
         string jsonRequest = JsonConvert.SerializeObject(requestBody);
-        string response = await CallGeminiApiAsync(_url, jsonRequest, accessToken);
+        string response = await CallGeminiApiAsync(url, jsonRequest, accessToken);
         return response;
     }
+
+    public async Task<dynamic> GetRequestBody(string prompt, AiPromptModel promptData)
+    {
+        //tried this first but this is invalidating the JSON format as prompt also has double quotes and JSON
+        //promptData.ContentConfig = promptData.ContentConfig.Replace("{promptData}", prompt);
+
+        //Create the request
+        dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
+        dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
+
+        //need to make this dynamic for different types of prompts i.e., text vs image, etc. 
+        contentConfig.parts[0].text = prompt;
+
+        var requestBody = new
+        {
+            contents = new[] { contentConfig },
+            generationConfig = generationConfig
+        };
+
+        return requestBody;
+    }
+
+    public async Task<string> GetURL(AiPromptModel promptData)
+    {
+        return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{promptData.Project}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
+    } 
 
     // Map GeminiProcessRequest to AiPrompt entity
     private AiPrompt MapModelToEntity(GeminiProcessRequest model)

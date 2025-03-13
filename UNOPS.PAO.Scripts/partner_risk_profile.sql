@@ -6,7 +6,7 @@ INSERT INTO public."AiScreenMapping" ("Type", "TableName", "ComparisonKey", "Rel
 
 DELETE FROM public."AiPrompt"
 WHERE "Type" = 'partner_risk_profile';
-INSERT INTO public."AiPrompt" ("Type", "Prompt", "CreatedAt", "Name", "Status") VALUES
+INSERT INTO public."AiPrompt" ("Type", "Prompt", "CreatedAt", "Name", "Status", "GenerationConfig", "ContentConfig", "Project", "Location", "Model") VALUES
 ('partner_risk_profile', 'I need to determine the risk profile of a partner based on their involvement in one or more projects. I will provide a JSON object containing partner details in the partners array and project details in the projects array. A partner may be involved in multiple projects, linked by the PartnerId field in the projects array matching the Id field in the partners array.
 
 **Risk Factors to Consider:**
@@ -39,4 +39,4 @@ Now, here is the JSON data:
 
 {jsonData}
 
-Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail.', NOW(), 'Partners', 1);
+Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail.', NOW(), 'Partners', 1, '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }', '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', 'unops-partneropportunity', 'europe-west3', 'gemini-1.5-flash-001');
