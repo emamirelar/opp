@@ -46,7 +46,7 @@ public class GeminiController : ControllerBase
             var relatedJsonData = await manager.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
 
             // Fetch result from Gemini
-            return Ok(await manager.fetchResultFromGemini(promptData.Prompt, relatedJsonData));
+            return Ok(await manager.fetchResultFromGemini(promptData, relatedJsonData));
 
         } catch (Exception ex) {
             return BadRequest(new { message = ex.Message });
