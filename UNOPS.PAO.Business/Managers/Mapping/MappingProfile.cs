@@ -21,5 +21,7 @@ public class MappingProfile : Profile
         CreateMap<Partner, PartnerModel>();
         CreateMap<AiPromptModel, AiPrompt>();
         CreateMap<AiScreenMappingModel, AiScreenMapping>();
+        CreateMap<AiChatHistoryModel, AiChatHistory>();
+        CreateMap<AiChatSessionModel, AiChatSession>();
     }
 }

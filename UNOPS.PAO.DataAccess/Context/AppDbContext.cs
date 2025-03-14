@@ -105,5 +105,14 @@ public class AppDbContext : AuditableDbContext<int, int>
 
         modelBuilder
             .Entity<AiScreenMapping>();
+
+        modelBuilder
+            .Entity<AiChatHistory>()
+            .HasOne(a => a.Session)
+            .WithMany(a => a.Chats)
+            .HasForeignKey(a => a.SessionId);
+
+        modelBuilder
+            .Entity<AiChatSession>();
     }
 }

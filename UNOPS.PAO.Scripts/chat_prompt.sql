@@ -12,9 +12,11 @@ The following are the type of actions that the user may want to perform:
 3. Create A contact interaction record
 4. Create A partner tree record
 
-If the user is seeking information, then respond with ONE WORD: "information" 
+If the user is seeking information, then respond with the following JSON: 
+{ "request_type": "information", "entity": "" }
 
-If the user wants to perform an action, then respond with ONE WORD in this format: {entityname}_{operation}
+If the user wants to perform an action, then respond with the following JSON substituting {entity_name} with the determined entity name: 
+{ "request_type": "action", "entity": "{entity_name}" }
 
 The acceptable values for {entityname} are contact, partner, interaction and partnertree
 The acceptable values for {operation} are create
