@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import {DatePipe, NgIf} from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
 import { TableModule } from 'primeng/table';
@@ -13,8 +13,8 @@ import { LanguageService } from '../../../../common/services/language.service';
 import { Subscription } from 'rxjs';
 import { PartnerService } from '../../services/partner.service';
 import { DialogModule } from 'primeng/dialog';
-import { NewPartnerComponent } from './newPartner/new-partner.component';
 import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
+import {PartnerNewComponent} from './new/partner-new.component';
 
 interface columnDefination {
   label: string,
@@ -26,7 +26,8 @@ interface columnDefination {
   templateUrl: './partner.component.html',
   styleUrl: './partner.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [PanelModule, ButtonModule, TableModule, DialogModule, ScrollPanelModule, NewPartnerComponent, DatePipe, ProgressSpinnerModule, TranslateModule]
+  standalone: true,
+  imports: [PanelModule, ButtonModule, TableModule, DialogModule, ScrollPanelModule, PartnerNewComponent, DatePipe, ProgressSpinnerModule, TranslateModule, NgIf]
 })
 export class PartnerComponent implements OnInit, OnDestroy {
   private langChangeSubscription: Subscription = new Subscription;
@@ -36,7 +37,7 @@ export class PartnerComponent implements OnInit, OnDestroy {
   partnerService = inject(PartnerService);
 
   newPartner : boolean = false;
-  
+
   columns = signal<columnDefination[]>([]);
 
   partnerData = this.partnerService.allPartners;
@@ -63,9 +64,6 @@ export class PartnerComponent implements OnInit, OnDestroy {
 
   getColumns() {
     return [{
-      label: 'label.partner.actions',
-      id: ''
-    }, {
       label: 'label.partner.id',
       id: 'id'
     }, {
@@ -82,7 +80,10 @@ export class PartnerComponent implements OnInit, OnDestroy {
       id: 'website'
     }, {
       label: 'label.partner.newEngagement',
-      id: 'newEngagement'
+      id: 'website'
+    },{
+      label: 'label.partner.actions',
+      id: ''
     }];
   }
 
@@ -105,8 +106,6 @@ export class PartnerComponent implements OnInit, OnDestroy {
   }
 
   _handleOnRecordCreation( newRecordData: any ){
-    //hides record creation dialog.
-    this.newPartner = false;
     //navigate to the newly created record.
     if( newRecordData !== null && ( newRecordData["id"] !== undefined && newRecordData["id"] !== null ) )
     {

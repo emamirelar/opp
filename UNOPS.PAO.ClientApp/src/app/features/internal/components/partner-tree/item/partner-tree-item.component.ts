@@ -1,4 +1,4 @@
-import { Component, Input, ChangeDetectionStrategy, inject, OnInit, output } from '@angular/core';
+import { Component, EventEmitter, Input, ChangeDetectionStrategy, inject, OnInit, OnChanges, output, Output } from '@angular/core';
 import { BlockUI } from 'primeng/blockui';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,16 +11,21 @@ import { CachedDataService } from '../../../../../common/services/cached-data.se
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-partner-tree-item',
-  imports: [BlockUI, ReactiveFormsModule, SelectModule, TranslateModule, ButtonModule, PanelModule,InputTextModule, CommonModule, TextareaModule],
+  imports: [BlockUI, ReactiveFormsModule, SelectModule, TranslateModule, ButtonModule, PanelModule, InputTextModule, CommonModule, TextareaModule, DialogModule],
   templateUrl: './partner-tree-item.component.html',
   styleUrl: './partner-tree-item.component.scss',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PartnerTreeItemComponent implements OnInit{
+export class PartnerTreeItemComponent implements OnInit, OnChanges {
   @Input() record: any = null;
+  @Output() closeModal = new EventEmitter<void>();
+  display = true;
+  
   partnerTreeService = inject(PartnerTreeService);
   feedbackDialogService = inject(FeedbackDialogService);
   formGroup = new FormGroup({
@@ -37,7 +42,7 @@ export class PartnerTreeItemComponent implements OnInit{
         validators:[Validators.required]
       }),
       type: new FormControl('', {
-        validators:[Validators.required]  
+        validators:[Validators.required]
       }),
       parent: new FormControl('', {
         validators:[Validators.required]
@@ -52,6 +57,13 @@ export class PartnerTreeItemComponent implements OnInit{
   onRecordUpdateSuccess = output();
   parentOptions = this.partnerTreeService.parentOptions;
   constructor() { }
+
+  ngOnChanges() {
+    this.display = true;
+    if (this.record) {
+      this.formGroup.patchValue(this.record);
+    }
+  }
 
   filterParentOptions() {
     let rowData = this.record;
@@ -70,6 +82,7 @@ export class PartnerTreeItemComponent implements OnInit{
       next: (data: any) => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Changes saved successfully!' });
         this.onRecordUpdateSuccess.emit(data);
+        this.hide();
       }
     });
   }
@@ -84,6 +97,7 @@ export class PartnerTreeItemComponent implements OnInit{
       next: (data: any) => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
         this.onRecordUpdateSuccess.emit(data);
+        this.hide();
       }
     });
   }
@@ -96,6 +110,7 @@ export class PartnerTreeItemComponent implements OnInit{
           next: (data: any) => {
             this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
             this.onRecordUpdateSuccess.emit(data);
+            this.hide();
           }
         });
       }
@@ -114,6 +129,11 @@ export class PartnerTreeItemComponent implements OnInit{
     }
 
     return requestJsonObj;
+  }
+
+  hide(): void {
+    this.display = false;
+    this.closeModal.emit();
   }
 
   ngOnInit() {

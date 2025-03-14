@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnDestroy, OnInit, output, Output, signal } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -21,6 +21,7 @@ import { BlockUI } from 'primeng/blockui';
 import { MessageModule } from 'primeng/message';
 import { ContactService } from '../../../services/contact.service';
 import { CardModule } from 'primeng/card';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-contact-new',
@@ -39,13 +40,14 @@ import { CardModule } from 'primeng/card';
     MessageModule,
     DividerModule,
     CardModule,
-    ReactiveFormsModule],
+    ReactiveFormsModule,
+    DialogModule
+  ],
   templateUrl: './contact-new.component.html',
-  styleUrl: './contact-new.component.scss',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ContactNewComponent implements OnInit, OnDestroy {
+export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
   formGroup = new FormGroup({
     // Basic contact information
     salutation: new FormControl('', { validators: [Validators.required] }),
@@ -102,7 +104,8 @@ export class ContactNewComponent implements OnInit, OnDestroy {
   cdr = inject( ChangeDetectorRef);
 
   private langChangeSubscription: Subscription = new Subscription();
-  onRecordCreationSuccess = output();
+  @Output()
+  onRecordCreationSuccess = new EventEmitter<any>();
 
   allSalutationsData = this.cachedDataService.allSalutations;
   allStatusData = this.cachedDataService.allStatus;
@@ -110,6 +113,9 @@ export class ContactNewComponent implements OnInit, OnDestroy {
   allPartners = this.cachedDataService.allPartners;
   showValidationFailedError = signal<boolean>(false);
   maxDate = new Date();
+
+  @Output() closeModal = new EventEmitter<void>();
+  display = true;
 
   constructor() {
     //load salutations
@@ -127,6 +133,10 @@ export class ContactNewComponent implements OnInit, OnDestroy {
     });
   }
 
+  ngOnChanges() {
+    this.display = true;
+  }
+
   _handleOnSaveClick(){
     let canSave = this._validate();
 
@@ -138,6 +148,7 @@ export class ContactNewComponent implements OnInit, OnDestroy {
         next: (data: any) => {
           this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
           this.onRecordCreationSuccess.emit(data);
+          this.hide();
         }
       });
     }
@@ -146,7 +157,7 @@ export class ContactNewComponent implements OnInit, OnDestroy {
   _validate(){
     let result = true;
 
-    if( this.formGroup.status == "INVALID" )
+    if( this.formGroup.invalid )
     {
       this.showValidationFailedError.set( false );
 
@@ -185,5 +196,10 @@ export class ContactNewComponent implements OnInit, OnDestroy {
     }
 
     return requestJsonObj;
+  }
+
+  hide(): void {
+    this.display = false;
+    this.closeModal.emit();
   }
 }

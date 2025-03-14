@@ -1,8 +1,5 @@
-<div class="h-full flex flex-col gap-4">
-  <div class="flex gap-2 items-center">
-    <span class="font-semibold">Partner:</span>
-    <span>{{partnerName()}}</span>
-  </div>
+<div class="flex flex-col gap-8">
+  <div class="font-semibold">Partner: {{partnerName()}}</div>
 
   <p-table [value]="contactData()"
            [resizableColumns]="true"
@@ -13,7 +10,6 @@
            scrollHeight="flex">
     <ng-template #header>
       <tr>
-        <th class="w-6"></th>
         <th pResizableColumn pSortableColumn="id">
           {{ 'Contact Id' | translate }}
           <p-sortIcon field="id" />
@@ -42,17 +38,13 @@
           {{ 'Mobile' | translate }}
           <p-sortIcon field="mobile" />
         </th>
+        <th class="w-6"></th>
       </tr>
     </ng-template>
 
     <ng-template #body let-contact>
       <tr>
-        <td>
-          <p-button icon="pi pi-external-link" 
-                    (click)="handleOnOpenRecordDetails(contact)" 
-                    title="Open Record Details" 
-                    rounded />
-        </td>
+
         <td>{{ contact.id }}</td>
         <td>{{ contact.partnerName }}</td>
         <td>{{ contact.salutation }}</td>
@@ -60,6 +52,12 @@
         <td>{{ contact.lastName }}</td>
         <td>{{ contact.email }}</td>
         <td>{{ contact.mobile }}</td>
+        <td>
+          <p-button icon="pi pi-external-link"
+                    (click)="handleOnOpenRecordDetails(contact)"
+                    title="Open Record Details"
+                    rounded />
+        </td>
       </tr>
     </ng-template>
 

@@ -34,8 +34,6 @@ export class PartnerContactsComponent implements OnInit {
   contactData = signal<any>([]);
   isDataLoading = this.partnerService.isLoading;
 
-  constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) { }
-
   ngOnInit() {
     this.partnerService.getAllContactsById(this.partnerId()).subscribe((data: any) => {
         this.contactData.set(data);

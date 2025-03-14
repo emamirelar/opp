@@ -1,4 +1,4 @@
-import { afterNextRender, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -7,13 +7,10 @@ import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
-
-//Language translation import
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { LanguageService } from '../../../../../common/services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 
-//PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { DividerModule } from 'primeng/divider';
@@ -46,6 +43,7 @@ import { ActivatedRoute, Router } from '@angular/router';
     CardModule,
     ReactiveFormsModule],
   templateUrl: './contact-item.component.html',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContactItemComponent implements OnInit, OnDestroy {
@@ -161,7 +159,6 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     cachedDataService = inject(CachedDataService);
     feedbackDialogService = inject(FeedbackDialogService);
     contactService = inject(ContactService);
-    translateService = inject(TranslateService);
     languageService = inject(LanguageService);
     cdr = inject( ChangeDetectorRef);
 
@@ -176,12 +173,6 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     maxDate = new Date();
     recordId: string = '';
     recordData = signal<any>({});
-
-    constructor() {
-      //load salutations
-      //this.cachedDataService.loadSalutations();
-      //this.cachedDataService.loadStatus();
-    }
 
     ngOnDestroy(): void {
       this.langChangeSubscription?.unsubscribe();
@@ -228,7 +219,7 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     _validate(){
       let result = true;
 
-      if( this.formGroup.status == "INVALID" )
+      if( this.formGroup.invalid )
       {
         this.showValidationFailedError.set( false );
 

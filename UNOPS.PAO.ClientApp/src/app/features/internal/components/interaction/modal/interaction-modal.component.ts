@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal} from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
@@ -45,6 +45,8 @@ export class InteractionModalComponent {
   @Output() closeModal = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
 
+  isSaving = signal(false);
+
   interactionForm: FormGroup;
   display = true;
 
@@ -87,6 +89,7 @@ export class InteractionModalComponent {
   }
 
   private showSuccessMessage(messageKey: string): void {
+    this.isSaving.set(false);
     this.messageService.add({
       severity: 'success',
       summary: this.translateService.instant('message.success'),
@@ -95,6 +98,7 @@ export class InteractionModalComponent {
   }
 
   private showErrorMessage(messageKey: string, error?: any): void {
+    this.isSaving.set(false);
     this.messageService.add({
       severity: 'error',
       summary: this.translateService.instant('message.error'),
@@ -108,6 +112,7 @@ export class InteractionModalComponent {
   onSubmit(): void {
     if (this.interactionForm.valid) {
       const formValue = this.interactionForm.value;
+      this.isSaving.set(true);
 
       if (formValue.id) {
         // Update existing interaction
