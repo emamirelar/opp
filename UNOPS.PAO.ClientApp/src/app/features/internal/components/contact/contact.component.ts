@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
+import {DatePipe, NgIf} from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
 import { TableModule } from 'primeng/table';
@@ -19,6 +19,7 @@ import {ContactNewComponent} from './new/contact-new.component';
   selector: 'app-contact',
   templateUrl: './contact.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
   imports: [
     PanelModule,
     ButtonModule,
@@ -28,14 +29,15 @@ import {ContactNewComponent} from './new/contact-new.component';
     ContactNewComponent,
     DatePipe,
     ProgressSpinnerModule,
-    TranslateModule
+    TranslateModule,
+    NgIf
   ]
 })
 export class ContactComponent {
   router = inject(Router);
   contactService = inject(ContactService);
 
-  newContact = false;
+  newContact = signal(false);
 
   contactData = this.contactService.allContacts;
   isDataLoading = this.contactService.isLoading;
@@ -59,8 +61,6 @@ export class ContactComponent {
   }
 
   _handleOnRecordCreation( newRecordData: any ){
-    //hides record creation dialog.
-    this.newContact = false;
     //navigate to the newly created record.
     if( newRecordData !== null && ( newRecordData["id"] !== undefined && newRecordData["id"] !== null ) )
     {

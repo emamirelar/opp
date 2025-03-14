@@ -1,0 +1,62 @@
+<p-dialog
+  [(visible)]="display"
+  [modal]="true"
+  [style]="{ width: '50rem' }"
+  [header]="(record?.id ? 'title.updatePartnerLevel' : 'title.newPartnerLevel') | translate"
+  (onHide)="hide()">
+
+<form class="grid sm:grid-cols-2 gap-4" [formGroup]="formGroup">
+        <div class="flex flex-col gap-2">
+            <label>{{ "label.partnerTree.id" | translate }}</label>
+            <input pInputText fluid="true" formControlName="id" placeholder="Autopopulated" readonly/>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label>{{ "label.partnerTree.name" | translate }}</label>
+          <input pInputText fluid="true" formControlName="name" />
+        </div>
+
+        <div class="flex flex-col gap-2 col-span-2">
+            <label>{{ "label.partnerTree.description" | translate }}</label>
+            <textarea rows="5" cols="30" pTextarea fluid="true" formControlName="description" ></textarea>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <label>{{ "label.partnerTree.code" | translate }}</label>
+            <input pInputText fluid="true" formControlName="code" [readonly]="record?.id !== null"/>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <label>{{ "label.partnerTree.type" | translate }}</label>
+            <input pInputText fluid="true" formControlName="type" readonly/>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <label>{{ "label.partnerTree.parent" | translate }}</label>
+            <input pInputText fluid="true" formControlName="parent" readonly/>
+        </div>
+        <div class="flex flex-col gap-2">
+            <label>{{ "label.partnerTree.status" | translate }}</label>
+            <p-select
+                formControlName="status"
+                [options]="allStatusData()"
+                optionLabel="name"
+                optionValue="id"
+                fluid="true"
+                [showClear]="true"
+                [appendTo]="'body'"
+                placeholder="Select a Status"
+            />
+        </div>
+</form>
+
+<ng-template pTemplate="footer">
+  <div class="flex gap-2 mt-4 w-full">
+    <p-button icon="pi pi-trash" outlined="" *ngIf="record?.status === 'Active' && record?.id !== null" severity="warn" label="{{'button.inactive' | translate}}" (click)="_handleOnDeleteClick()"/>
+    <p-button icon="pi pi-trash" outlined="" *ngIf="record?.status === 'Inactive' && record?.id !== null" severity="warn" label="{{'button.active' | translate}}" (click)="_handleOnSaveClick(true)"/>
+    <div class="grow"></div>
+    <p-button icon="pi pi-times" label="{{'button.cancel' | translate}}" (click)="hide()" severity="secondary"/>
+    <p-button icon="pi pi-check" severity="success" label="{{'button.save' | translate}}" (click)="record?.id !== null ? _handleOnSaveClick() : _handleOnCreateClick()"/>
+  </div>
+</ng-template>
+</p-dialog>

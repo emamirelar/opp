@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, effect, ChangeDetectorRef } from '@angular/core';
 import { TreeTableModule } from 'primeng/treetable';
-import { TreeNode } from "primeng/api"; 
+import { TreeNode } from "primeng/api";
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,10 +12,10 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
-import { PartnerTreeItemComponent } from './partner-tree-item/partner-tree-item.component';
 import { CachedDataService } from '../../../../common/services/cached-data.service';
 import { InputIcon } from 'primeng/inputicon';
 import { IconField } from 'primeng/iconfield';
+import {PartnerTreeItemComponent} from './item/partner-tree-item.component';
 
 @Component({
   selector: 'app-partner-tree',
@@ -33,9 +33,6 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   cachedDataService = inject(CachedDataService);
   originalData: any[] = [];
   override isDataLoading = this.service.isLoading();
-  levelOneOptions: any[] = [];
-  levelTwoOptions: any[] = [];
-  levelThreeOptions: any[] = [];
   parentUpdated: boolean = false;
   updatePartnerLevel: boolean = false;
   createPartnerLevel: boolean = false;
@@ -49,13 +46,13 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
 
   override getColumns(): ColumnDefinition[] {
     return [
-      { id: 'action', label: 'label.partnerTree.actions', editable: false }, 
-      { id: "name", label: "label.partnerTree.name", editable: true }, 
+      { id: 'action', label: 'label.partnerTree.actions', editable: false },
+      { id: "name", label: "label.partnerTree.name", editable: true },
       { id: "description", label: "label.partnerTree.description", editable: true },
       { id: "type", label: "label.partnerTree.type", editable: false },
       { id: "parent", label: "label.partnerTree.parent", editable: true },
       { id: "status", label: "label.partnerTree.status", editable: false },
-      { id: 'action', label: 'label.partnerTree.actions', editable: false }, 
+      { id: 'action', label: 'label.partnerTree.actions', editable: false },
     ];
   }
 

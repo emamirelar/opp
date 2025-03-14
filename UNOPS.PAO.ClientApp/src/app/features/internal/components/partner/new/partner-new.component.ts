@@ -1,19 +1,26 @@
-import { afterNextRender, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component, ElementRef,
+  EventEmitter,
+  inject,
+  OnChanges,
+  OnDestroy,
+  OnInit, Output,
+  output,
+  signal, ViewChild
+} from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { PanelModule } from 'primeng/panel';
-import { DropdownModule } from "primeng/dropdown"; 
+import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
-
-//Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../../../common/services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
-
-//PrimeNG imports
 import { InputTextModule } from 'primeng/inputtext';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
@@ -25,9 +32,11 @@ import { MessageModule } from 'primeng/message';
 import { PartnerService } from '../../../services/partner.service';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
+import { DialogModule } from 'primeng/dialog';
+import { DialogService, DynamicDialogComponent, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 @Component({
-  selector: 'app-new-partner',
+  selector: 'app-partner-new',
   imports: [
     TranslateModule,
     InputTextModule,
@@ -43,12 +52,17 @@ import { CheckboxModule } from 'primeng/checkbox';
     DividerModule,
     CardModule,
     CheckboxModule,
-    ReactiveFormsModule],
-  templateUrl: './new-partner.component.html',
-  styleUrl: './new-partner.component.scss',
+    ReactiveFormsModule,
+    DialogModule
+  ],
+  templateUrl: './partner-new.component.html',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NewPartnerComponent implements OnInit, OnDestroy {
+export class PartnerNewComponent implements OnChanges {
+  @Output() closeModal = new EventEmitter<void>();
+  display = true;
+
   formGroup = new FormGroup({
     name: new FormControl('', {
       validators:[Validators.required]
@@ -165,17 +179,13 @@ export class NewPartnerComponent implements OnInit, OnDestroy {
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
   partnerService = inject(PartnerService);
-  translateService = inject(TranslateService);
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
 
   private langChangeSubscription: Subscription = new Subscription();
-  onRecordCreationSuccess = output();
+  @Output() onRecordCreationSuccess = new EventEmitter<any>();
 
-  //allSalutationsData = this.cachedDataService.allSalutations;
-  //allPronounsData = this.cachedDataService.allPronouns;
   showValidationFailedError = signal<boolean>(false);
-  //maxDate = new Date();
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
   allPartnerReportingLevelData = this.cachedDataService.allPartnerReportingLevel;
@@ -184,21 +194,10 @@ export class NewPartnerComponent implements OnInit, OnDestroy {
   allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
+  isSaving = signal(false);
 
-  constructor() {
-    //load salutations
-    //this.cachedDataService.loadSalutations();
-    //this.cachedDataService.loadStatus();
-  }
-
-  ngOnDestroy(): void {
-    this.langChangeSubscription?.unsubscribe();
-  }
-
-  ngOnInit() {
-    this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
-      this.cdr.detectChanges();
-    });
+  ngOnChanges() {
+    this.display = true;
   }
 
   _handleOnSaveClick(){
@@ -208,19 +207,28 @@ export class NewPartnerComponent implements OnInit, OnDestroy {
 
     if( canSave === true )
     {
+      this.isSaving.set(true)
       this.partnerService.createPartner(this._getRequestPayload()).subscribe({
         next: (data: any) => {
+          this.isSaving.set(false);
           this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
           this.onRecordCreationSuccess.emit(data);
-        }
+          this.hide();
+        },
+        error: () => this.isSaving.set(false)
       });
     }
+  }
+
+  hide(): void {
+    this.display = false;
+    this.closeModal.emit();
   }
 
   _validate(){
     let result = true;
 
-    if( this.formGroup.status == "INVALID" )
+    if( this.formGroup.invalid )
     {
       this.showValidationFailedError.set( false );
 

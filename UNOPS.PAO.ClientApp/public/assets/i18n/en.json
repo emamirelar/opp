@@ -56,7 +56,8 @@
     "delete": "Delete",
     "inactive": "Mark as Inactive",
     "active": "Mark as Active",
-    "viewContacts": "View Contacts"
+    "viewContacts": "View Contacts",
+    "new": "New"
   },
   "label": {
     "actions": "Actions",
@@ -88,6 +89,8 @@
       "birthDate": "Birth Date",
       "fax": "Fax",
       "description": "Description",
+      "mailingAddress": "Address",
+
       "mailingStreet": "Mailing Street",
       "mailingStreet2": "Mailing Street 2",
       "mailingCity": "Mailing City",

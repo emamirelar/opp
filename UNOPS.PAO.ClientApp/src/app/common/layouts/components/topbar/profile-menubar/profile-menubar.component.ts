@@ -23,15 +23,15 @@ export class ProfileMenubarComponent implements OnInit, OnDestroy {
   profileItems: MenuItem[] = [];
   private langChangeSubscription: Subscription = new Subscription;
 
-  constructor(private authService: AuthService, private router: Router, private languageService: LanguageService, private cdr: ChangeDetectorRef) 
+  constructor(private authService: AuthService, private router: Router, private languageService: LanguageService, private cdr: ChangeDetectorRef)
   {
     this.profileItems = [
-      {
-        label: 'button.profile',
-        icon: 'pi pi-user',
-        command: () => {
-        }
-      },
+      // {
+      //   label: 'button.profile',
+      //   icon: 'pi pi-user',
+      //   command: () => {
+      //   }
+      // },
       {
         label: 'button.logout',
         icon: 'pi pi-sign-out',
@@ -58,5 +58,5 @@ export class ProfileMenubarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
-  } 
+  }
 }

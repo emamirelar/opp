@@ -29,7 +29,7 @@ const internalRoutes: Routes = [
       },
       {
         path: 'contact/:recordId',
-        data: { breadcrumb: 'Details' },
+        data: { breadcrumb: 'Contact' },
         component: ContactItemComponent,
         canActivate: [authGuard],
       },
@@ -43,7 +43,7 @@ const internalRoutes: Routes = [
       },
       {
         path: 'partner-tree',
-        data: { breadcrumb: 'Details'},
+        data: { breadcrumb: 'Partner Tree' },
         component: PartnerTreeComponent,
         canActivate: [authGuard]
       },
