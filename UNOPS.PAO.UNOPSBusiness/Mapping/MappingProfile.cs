@@ -16,6 +16,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Mapping
             CreateMap<GeminiProcessRequest, AiPrompt>();
             CreateMap<AiPrompt, AiPromptModel>().ReverseMap();
             CreateMap<GeminiProcessRequest, AiPrompt>().ReverseMap();
+            CreateMap<AiChatHistory, AiChatHistoryModel>().ReverseMap();
+            CreateMap<AiChatSession, AiChatSessionModel>().ReverseMap();
         }
     }
 }
