@@ -55,4 +55,9 @@ public class APIDictionary
     public const string PartnerContacts = Partner + "/{partnerId}/contacts";
 
     public const string Gemini = APIPrefix + "process-data";
+    public const string AiAssistantCreateSession = APIPrefix + "ai-assistant/create-session";
+    public const string AiAssistantGetSession = APIPrefix + "ai-assistant/get-session";
+    public const string AiAssistantGetUserSessions = APIPrefix + "ai-assistant/get-user-sessions";
+    public const string AiAssistantEndSession = APIPrefix + "ai-assistant/end-session";
+    public const string AiAssistantChat = APIPrefix + "ai-assistant/chat";
 }

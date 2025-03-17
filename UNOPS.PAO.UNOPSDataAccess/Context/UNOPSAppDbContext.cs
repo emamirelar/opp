@@ -52,4 +52,8 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<UNOPSInteraction> Interactions { get; set; }
     public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }
     public new DbSet<UNOPSPartner> Partners { get; set; }
+
+    public new DbSet<AiChatSession> AiChatSession { get; set; }
+
+    public new DbSet<AiChatHistory> AiChatHistory { get; set; }
 }
