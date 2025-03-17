@@ -220,7 +220,7 @@ public class UNOPSGeminiManager : IGeminiManager
             promptData = GetPromptData(promptType).FirstOrDefault();
         }
         string promptTemplate = promptData.Prompt;
-        string finalPrompt = promptTemplate.Replace("{jsonData}", message);
+        string finalPrompt = promptTemplate.Replace("{promptData}", message);
         string accessToken = await GetAccessTokenAsync();
         var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
         chatHistoryList.Add(new
@@ -246,7 +246,7 @@ public class UNOPSGeminiManager : IGeminiManager
     // Fetch result from Gemini
     public async Task<string> fetchResultFromGemini(AiPromptModel promptData, string relatedJsonData) {
         string promptTemplate = promptData.Prompt;
-        string finalPrompt = promptTemplate.Replace("{jsonData}", relatedJsonData);
+        string finalPrompt = promptTemplate.Replace("{promptData}", relatedJsonData);
         string geminiResponse = await callGemini(finalPrompt, promptData);
         return geminiResponse;
     }

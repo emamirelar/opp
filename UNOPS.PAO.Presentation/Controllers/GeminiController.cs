@@ -83,8 +83,9 @@ public class GeminiController : ControllerBase
         var intent = entityResponse["Intent"].ToString();
         var promptType = entityResponse["Type"].ToString();
         var modelMessage = entityResponse["Message"].ToString();
+        var forward = entityResponse["Forward"].ToString();
 
-        if (entity == "General" || entity == "UNKNOWN") {
+        if (forward == "No") {
             manager.UpdateChatHistoryTable(req.sessionId, req.Message, modelMessage, entity, intent);
             return Ok(entityDetectionResponse);
         }
