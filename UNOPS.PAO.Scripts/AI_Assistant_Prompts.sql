@@ -36,7 +36,7 @@ Also, mention some details about the partner.
 
 JSON Data:
 
-{jsonData}
+{promptData}
 
 Please provide the generated Markdown summary based on these instructions. If any detail that you are instructed to provide is unavailable, mention that this detail is unavailable."""',
 NOW(), 'Contacts', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }'
@@ -70,7 +70,7 @@ Also, mention some details about the partner.
 
 JSON Data:
 
-{jsonData}
+{promptData}
 
 Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. The final response from you should give me a quick summary of the partner. Do not assume any detail.', NOW(), 'Partners'
 , 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
@@ -105,39 +105,83 @@ Provide a Markdown-formatted summary of risk profile of partner, including:
 
 Now, here is the JSON data:
 
-{jsonData}
+{promptData}
 
 Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail.'
 , NOW(), 'Partners', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'),
-('general_information', '{jsonData}
+('general_information', '{promptData}
 
 Strictly return the response in JSON format as below - 
 
 {Category: "General", ResponseType: "INFORMATION", Message: "Add your response here"}', NOW(), 'General', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'),
-('entity_intent_detection', 'Can you detect the type of entity from the following message? Final response should be strictly a JSON in Markdown.
+('entity_intent_detection', 'I am going to send you a message from the user. Your task is to extract the most accurate and closest entity and intent of the user. NOTE that the same word or set of words may be associated with MORE THAN ONE entity. Use your knowledge to extract the right entity.
 
-{jsonData}
+Entity lists can be: 
+Contact
+Parter
+PartnerTree
+Interaction
+General
 
-Entity could be a Contact, Partner, Partner Level (partners at different levels) or Interaction (meeting/chat/etc). The Category could be action / information. I want you to detect the following from the messages from the user - 
-Entity - Contact/Partner/PartnerTree/Interaction/General/UNKNOWN (If the message is very generic detail, then the entity is General. If it is difficult to predict the entity, return UNKNOWN. If the message is asking about any entity, please pass it as General)
-Intent - ACTION/INFORMATION
-Message - If the intent is information, respond to the user''s message with the information you know. If the user is asking you to create/do something, then it is ACTION. 
-Note: A Partner tree is something that talks about levels. It can also be called as Partner Level.
+Intent can be:
+Action
+Information
 
-Strictly, return the final response as JSON in the following format - 
+It is considered to be General if you are not able to derive any entity. 
+If the Entity is General, the intent should always be considered as Information.
+It is considered an Action if there is anything related to creation or updation or deletion of an entity other than General.
+
+
+Result should be strictly in JSON format as follows:
 {
-   Entity: ""whatever you predicted"",
-   Intent: ""whatever you predicted"",
-   Message: ""whatever is the response to send back to the user"",
-   Type: Type will be <Entity that you predicted>_<if the actual purpose was to create/update/action, then use "action"> (all in lower case)
-}"', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
+	Entity: Name of the entity derived from the list of entities provided
+	Intent: Derived intent
+	Message: Add a response message to the user
+	Type: Derive the type by concatenating Entity and Intent with _ (all in lowercase)
+	Forward: If the intent is Action but there is no information about the entity provided in the prompt or the Intent is Information with Entity other than General, then send it as false. Otherwise send it as true.
+}
+
+Consider the following example:
+
+Prompt: Can you create a contact for me?
+Response: 
+{
+	Entity: ''Contact'',
+	Intent: ''Action'',
+	Message: ''Sure, can you give me the details of the contact.''
+	Type: ''contact_action''
+	Forward: ''No''
+}
+
+Prompt: Anusha Swaminathan, UNOPS, anushas@unops.org, 12345
+Response:
+{
+	Entity: ''Contact'',
+	Intent: ''Information'',
+	Message: ''These look like details of a Contact. Do you want to create a contact with these details?''
+	Type: ''contact_information''
+	Forward: ''No''
+}
+
+Prompt: Yes (continuation of previous chat)
+Response: 
+{
+	Entity: ''Contact'',
+	Intent: ''Action'',
+	Message: ''Action completed successfully.''
+	Type: ''contact_action''
+	Forward: ''Yes''
+}
+
+Make sure to refer to the complete conversation to understand the current context. With the above instruction and examples, following is the prompt from the user:
+Prompt: {promptData}', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'), 
 ('contact_action', 'I am sending you some data/information in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
 
 Raw Data:
-{jsonData}
+{promptData}
 
 JSON format:
 {"Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Contact", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "salutation": ", "firstName": ", "middleName": "", "lastName": "", "suffix": "", "title": "", "pronouns": "", "birthDate": "", "email": "", "phone": "", "mobile": "", "otherPhone": "", "fax": "", "partner": "", "department": "", "description": "", "status": "", "contactNumber": "", "assistant": "", "assistantPhone": "", "assistantEmail": "", "mailingStreet": "", "mailingStreet2": "", "mailingCity": "", "mailingStateProvince": "", "mailingPostalCode": "", "mailingCountry": "" }
