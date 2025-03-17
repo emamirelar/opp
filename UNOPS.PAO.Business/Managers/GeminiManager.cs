@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
@@ -50,9 +52,51 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    AiPrompt IGeminiManager.MapModelToEntity(GeminiProcessRequest req)
+    AiPrompt IGeminiManager.MapModelToEntity(GeminiProcessDataRequest req)
     {
         var entity = _mapper.Map<AiPrompt>(req);
         return entity;
+    }
+
+    public IEnumerable<AiChatSession> GetSessionData(Guid sessionId, int userId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<AiChatSession> GetUserSessions(int userId) {
+        throw new NotImplementedException();
+    }
+
+    public Guid CreateNewSession(int userId) {
+        throw new NotImplementedException();
+    }
+
+    public bool EndSession(Guid sessionId) {
+        throw new NotImplementedException();
+    }
+
+    public Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, string message) {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, string message, string promptType) {
+        throw new NotImplementedException();
+    }
+
+    public JObject GetDetailsFromGeminiResponse(string modelResponse) {
+        throw new NotImplementedException();
+    }
+
+    public bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent) {
+        throw new NotImplementedException();
+    }
+
+    public void UpdateCurrentSessionIfInactive(int userId, Guid sessionId) {
+        throw new NotImplementedException();
     }
 }

@@ -49,6 +49,12 @@ public class UNOPSGeminiManager : IGeminiManager
         return result;
     }
 
+    // Map AiChatSession entity to AiChatSessionModel
+    private static AiChatSessionModel MapEntityToChatSessionModel(AiChatSession sessionDetails, IMapper mapper) {
+        var result = mapper.Map<AiChatSession, AiChatSessionModel>(sessionDetails);
+        return result;
+    }
+
     // Map AiPromptModel to AiPrompt entity
     private AiPrompt MapModelToEntity(AiPromptModel model)
     {
@@ -65,6 +71,79 @@ public class UNOPSGeminiManager : IGeminiManager
             .Select(x => MapEntityToAiPromptModel(x, _mapper));
     }
 
+    // Get user sessions by user ID
+    public IEnumerable<AiChatSession> GetUserSessions(int userId) {
+        return (IEnumerable<AiChatSession>)_context.AiChatSession
+                .Where(x => x.UserId == userId)
+                .OrderBy(x => x.EndTime ?? DateTime.MaxValue); // Place active sessions last
+    }
+
+    // Get session data by session ID and user ID
+    public IEnumerable<AiChatSession> GetSessionData(Guid sessionId, int userId) {
+        return (IEnumerable<AiChatSession>)_context.AiChatSession
+                .Include(x => x.Chats)
+                .Where(x => x.Id == sessionId && x.UserId == userId);
+    }
+
+    private void EndDateActiveSessions(int userId, Guid sessionId) {
+        var activeSessions = _context.AiChatSession
+                                .Where(x => x.UserId == userId && (sessionId != Guid.Empty && x.Id != sessionId) && x.EndTime == null)
+                                .ToList();
+
+        foreach (var session in activeSessions) {
+            // End the active session by setting EndTime
+            session.EndTime = DateTime.UtcNow.ToUniversalTime();
+            session.Status = "Inactive";
+        }
+
+        _context.SaveChanges(); // Save changes before creating a new session
+    }
+
+    // Create a new session for the user
+    public Guid CreateNewSession(int userId) {
+        EndDateActiveSessions(userId, Guid.Empty);
+        // Create a new session
+        var newSession = new AiChatSession
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            StartTime = DateTime.UtcNow,
+            Status = "Active",
+            EndTime = null, // This is a new active session
+            Chats = new List<AiChatHistory>() 
+        };
+
+        _context.AiChatSession.Add(newSession);
+        _context.SaveChanges(); // Commit to the database
+
+        return newSession.Id;
+    }
+
+    // End the session by session ID
+    public bool EndSession(Guid sessionId) {
+        var activeSession = _context.AiChatSession
+                                .FirstOrDefault(x => x.Id == sessionId && x.EndTime == null);
+
+        var success = false;
+        if (activeSession != null) {
+            // End the active session by setting EndTime
+            activeSession.EndTime = DateTime.UtcNow;
+            activeSession.Status = "Inactive";
+            _context.SaveChanges(); // Save changes before creating a new session
+            success = true;
+        }
+
+        return success;
+    }
+
+    // Get chat history by session ID
+    public async Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId) {
+        return await _context.AiChatHistory
+                    .Where(x => x.SessionId == sessionId)
+                    .OrderBy(x => x.TimeStamp)
+                    .ToListAsync();
+    }
+
     // Get screen mappings by type and sort the response
     public async Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type)
     {
@@ -73,6 +152,95 @@ public class UNOPSGeminiManager : IGeminiManager
             .Where(x => x.Type == type)
             .OrderBy(x => x.Order) // Sort by TableName or any other property
             .ToListAsync();
+    }
+
+    // Fetch detailed response from Gemini
+    public async Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, string message, string promptType) {
+        string geminiResponse = await ChatWithGemini(message, promptType, formattedChatHistory);
+        return geminiResponse;
+    }
+
+    // Entity detection through Gemini
+    public async Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, string message) {
+        string geminiResponse = await ChatWithGemini(message, "entity_intent_detection", formattedChatHistory);
+        return geminiResponse;
+    }
+    
+    // Get details from Gemini response
+    public JObject GetDetailsFromGeminiResponse(string modelResponse) {
+        JObject json = JObject.Parse(modelResponse);
+        var candidates = json["candidates"];
+        var parts = candidates[0]?["content"]["parts"];
+        var textJson = parts[0]["text"].ToString(); ;
+        textJson = textJson.Replace("```json", "").Replace("```", "").Trim();
+
+        var entityResponse = JObject.Parse(textJson);
+
+        return entityResponse;
+    }
+
+    // Update chat history table
+    public bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent) {
+        var newUserChatHistory = new AiChatHistory{
+            SessionId = sessionId,
+            Sender = "user",
+            Message = userMessage,
+            EntityType = entity,
+            RequestType = intent,
+            TimeStamp = DateTime.Now.ToUniversalTime()
+        };
+
+        var newModelChatHistory = new AiChatHistory {
+            SessionId = sessionId,
+            Sender = "model",
+            Message = modelResponse,
+            EntityType = entity,
+            RequestType = intent,
+            TimeStamp = DateTime.Now.ToUniversalTime()
+        };
+
+        _context.AiChatHistory
+                .Add(newUserChatHistory);
+
+        _context.AiChatHistory
+                .Add(newModelChatHistory);
+
+        _context.SaveChanges();
+
+        return true;
+    }
+
+    // Chat with Gemini
+    private async Task<string> ChatWithGemini(string message, string promptType, IEnumerable<dynamic> formattedChatHistory) {
+        var promptData = GetPromptData(promptType).FirstOrDefault();
+        if (promptData == null)
+        {
+            //throw new Exception("Prompt data not found for the given type.");
+            promptType = "general_information";
+            promptData = GetPromptData(promptType).FirstOrDefault();
+        }
+        string promptTemplate = promptData.Prompt;
+        string finalPrompt = promptTemplate.Replace("{jsonData}", message);
+        string accessToken = await GetAccessTokenAsync();
+        var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
+        chatHistoryList.Add(new
+        {
+            role = "user",
+            parts = new[] { new { text = finalPrompt } }
+        });
+        dynamic generationConfig = string.IsNullOrEmpty(promptData.GenerationConfig)
+                        ? new ExpandoObject() : JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
+
+        var requestBody = new
+        {
+            contents = new[] { chatHistoryList },
+            generationConfig = generationConfig
+        };
+
+        string url = await GetURL(promptData);
+        string jsonRequest = JsonConvert.SerializeObject(requestBody);
+        string response = await CallGeminiApiAsync(url, jsonRequest, accessToken);
+        return response;
     }
 
     // Fetch result from Gemini
@@ -94,6 +262,7 @@ public class UNOPSGeminiManager : IGeminiManager
         return response;
     }
 
+    // Get request body for Gemini API
     public async Task<dynamic> GetRequestBody(string prompt, AiPromptModel promptData)
     {
         dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
@@ -110,19 +279,20 @@ public class UNOPSGeminiManager : IGeminiManager
         return requestBody;
     }
 
+    // Get URL for Gemini API
     public async Task<string> GetURL(AiPromptModel promptData)
     {
         return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{promptData.Project}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
     } 
 
-    // Map GeminiProcessRequest to AiPrompt entity
-    private AiPrompt MapModelToEntity(GeminiProcessRequest model)
+    // Map GeminiProcessDataRequest to AiPrompt entity
+    private AiPrompt MapModelToEntity(GeminiProcessDataRequest model)
     {
         var entity = _mapper.Map<AiPrompt>(model);
         return entity;
     }
 
-    AiPrompt IGeminiManager.MapModelToEntity(GeminiProcessRequest req)
+    AiPrompt IGeminiManager.MapModelToEntity(GeminiProcessDataRequest req)
     {
         return MapModelToEntity(req);
     }
@@ -199,6 +369,7 @@ public class UNOPSGeminiManager : IGeminiManager
         return JsonConvert.SerializeObject(result[0]?["row_to_json"], Formatting.Indented);
     }
 
+    // Build select columns for SQL query
     private List<string> BuildSelectColumns(AiScreenMapping[] mappings)
     {
         var selectColumns = new List<string>();
@@ -265,6 +436,7 @@ public class UNOPSGeminiManager : IGeminiManager
         return selectColumns;
     }
 
+    // Build join clauses for SQL query
     private List<string> BuildJoinClauses(AiScreenMapping[] mappings)
     {
         var joinClauses = new List<string>();
@@ -280,6 +452,7 @@ public class UNOPSGeminiManager : IGeminiManager
         return joinClauses;
     }
 
+    // Execute SQL query
     private async Task<List<Dictionary<string, object>>> ExecuteSqlQuery(string sqlQuery, int recordId)
     {
         var result = new List<Dictionary<string, object>>();
@@ -312,10 +485,24 @@ public class UNOPSGeminiManager : IGeminiManager
         return result;
     }
 
+    // Build nested JSON from result and mappings
     private object BuildNestedJson(List<Dictionary<string, object>> result, AiScreenMapping[] mappings)
     {
         // Implement the logic to build nested JSON from the result and mappings
         // This is a placeholder implementation
         return result;
+    }
+
+    public void UpdateCurrentSessionIfInactive(int userId, Guid sessionId) {
+        EndDateActiveSessions(userId, sessionId);
+
+        var currentSession = _context.AiChatSession
+                                .FirstOrDefault(x => x.Id == sessionId && x.EndTime != null);
+
+        if (currentSession != null) {
+            currentSession.EndTime = null;
+            currentSession.Status = "Active";
+            _context.SaveChanges();
+        }
     }
 }

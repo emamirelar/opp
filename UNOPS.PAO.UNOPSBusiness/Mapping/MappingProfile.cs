@@ -13,9 +13,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Mapping
             CreateMap<UNOPSPartnerTree, PartnerTreeModel>()
                 .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
             CreateMap<UNOPSPartnerTree, PartnerTreeDataModel>();
-            CreateMap<GeminiProcessRequest, AiPrompt>();
             CreateMap<AiPrompt, AiPromptModel>().ReverseMap();
-            CreateMap<GeminiProcessRequest, AiPrompt>().ReverseMap();
+            CreateMap<GeminiProcessDataRequest, AiPrompt>().ReverseMap();
             CreateMap<AiChatHistory, AiChatHistoryModel>().ReverseMap();
             CreateMap<AiChatSession, AiChatSessionModel>().ReverseMap();
         }
