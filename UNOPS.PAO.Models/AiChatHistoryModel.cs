@@ -7,6 +7,7 @@ public class AiChatHistoryModel
     public string Sender { get; set; }
     public string Message { get; set; }
     public DateTime TimeStamp { get; set; }
+    public string Type { get; set; }
     public string? EntityType { get; set; }
     public string? RequestType { get; set; }
     public Guid? SessionId { get; set; }
