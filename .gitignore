@@ -238,4 +238,4 @@ _Pvt_Extensions
 */.vscode/*
 /UNOPS.PAO.ClientApp/.vscode
 
-UNOPS.PAO.ClientApp/.cursor/
+*/.cursor/*
