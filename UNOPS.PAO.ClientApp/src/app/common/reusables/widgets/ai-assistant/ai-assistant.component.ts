@@ -46,7 +46,7 @@ export class AiAssistantComponent {
   ) {}
 
   ngOnInit() {
-    this.aiAssistantData.loadLatestSession();
+    this.aiAssistantData.initializeSession();
   }
 
   toggleChat() {

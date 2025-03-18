@@ -3,13 +3,8 @@ import { AiAssistantService } from '../../../../features/internal/services/ai-as
 import { SessionData } from '../../../../features/internal/models/ai-assistant.model';
 import { Observable, of, throwError } from 'rxjs';
 import { map, catchError, tap, switchMap, finalize } from 'rxjs/operators';
+import { ChatMessage, ChatFile, AiResponse } from './ai-assistant.model';
 
-export interface ChatMessage {
-  text?: string;
-  isUser?: boolean;
-  timestamp?: Date;
-  files?: { name?: string, content?: string }[];
-}
 
 @Injectable({
   providedIn: 'root',
@@ -21,152 +16,166 @@ export class AiAssistantData {
 
   constructor(private aiAssistantService: AiAssistantService) {}
 
-  public loadLatestSession(): void {
-    this.loadOrCreateSession().subscribe();
+  public initializeSession(): void {
+    this.loadOrCreateSession().subscribe({
+      error: (error) => console.error('Failed to initialize session:', error)
+    });
   }
 
-  loadOrCreateSession(): Observable<any> {
+  public sendMessage(message: string, files: ChatFile[] = []): Observable<void> {
+    if (!this.isValidMessage(message, files)) {
+      return of();
+    }
+
+    this.addUserMessage(message, files);
+
+    const sessionId = this.currentSessionId();
+    if (!sessionId) {
+      this.addSystemMessage('No active session. Please try refreshing the page.');
+      return of();
+    }
+
+    return this.sendMessageToServer(sessionId, message);
+  }
+
+  public clearConversation(): void {
+    this.chatHistory.set([]);
+    this.isLoading.set(true);
+
+    const sessionId = this.currentSessionId();
+    if (sessionId) {
+      this.aiAssistantService.endSession(sessionId).subscribe({
+        next: () => this.createNewSession().subscribe(),
+        error: (error) => console.error('Failed to end session:', error)
+      });
+    }
+  }
+
+  private loadOrCreateSession(): Observable<void> {
     this.isLoading.set(true);
 
     return this.aiAssistantService.getUserSessions().pipe(
       switchMap(sessionsResponse => {
-        if (sessionsResponse?.body && sessionsResponse.body.length > 0) {
+        if (this.hasValidSessions(sessionsResponse?.body)) {
           return this.getHistoryFromServer(sessionsResponse.body);
-        } else {
-          return this.createNewSession();
         }
+        return this.createNewSession();
       }),
       catchError(error => {
-        console.error('Error in session management:', error);
-        return throwError(() => error);
+        console.error('Session management error:', error);
+        return throwError(() => new Error('Failed to load or create session'));
       }),
-      finalize(() => {
-        this.isLoading.set(false);
-      })
+      finalize(() => this.isLoading.set(false))
     );
   }
 
-  private createNewSession() {
+  private hasValidSessions(sessions: SessionData[] | null | undefined): sessions is SessionData[] {
+    return Array.isArray(sessions) && sessions.length > 0;
+  }
+
+  private createNewSession(): Observable<void> {
     return this.aiAssistantService.createSession().pipe(
-      tap(newSessionResponse => {
-        if (newSessionResponse?.body?.sessionId) {
-          this.currentSessionId.set(newSessionResponse.body.sessionId);
-          this.isLoading.set(false);
+      tap(response => {
+        this.isLoading.set(false);
+        if (response?.body?.sessionId) {
+          this.currentSessionId.set(response.body.sessionId);
         } else {
-          throw new Error('Failed to create new session');
+          throw new Error('Invalid session response');
         }
-      })
+      }),
+      map(() => void 0)
     );
   }
 
   private getHistoryFromServer(sessions: SessionData[]): Observable<void> {
-    if (!sessions.length) {
-      return of();
-    }
-
-    const lastSession: SessionData = sessions[sessions.length - 1];
-    const sessionId = lastSession?.id;
-
-    if (!sessionId) {
+    const lastSession = sessions[sessions.length - 1];
+    if (!lastSession?.id) {
       console.error('Invalid session data received');
       return of();
     }
 
-    this.currentSessionId.set(sessionId);
-
-    return this.getSessionDetails(sessionId);
+    this.currentSessionId.set(lastSession.id);
+    return this.fetchSessionDetails(lastSession.id);
   }
 
-  private parseJsonInMessage(message: string): string {
-    console.log(message)
-    try {
-      message = message.replace(/^```json\s*/, '');
-      message = message.replace(/```$/, '');
-      return JSON.parse(message)["Message"];
-    } catch (error) {
-      return message;
-    }
-  }
-
-  private getSessionDetails(sessionId: string) {
+  private fetchSessionDetails(sessionId: string): Observable<void> {
     return this.aiAssistantService.getSessionDetails(sessionId).pipe(
       tap(detailsResponse => {
-        if (detailsResponse?.body) {
-          const history = detailsResponse.body[0]['chats']?.map(item => ({
-            text: this.parseJsonInMessage(item.message || ''),
-            isUser: item.sender === 'user',
-            timestamp: item.timestamp ? new Date(item.timestamp) : undefined
-          })).filter(Boolean);
-          this.chatHistory.set(history as ChatMessage[]);
+        if (detailsResponse?.body?.[0]?.chats) {
+          const history = this.processSessionHistory(detailsResponse.body[0].chats);
+          this.chatHistory.set(history);
         }
       }),
       catchError(error => {
         console.error('Error fetching session details:', error);
         this.chatHistory.set([]);
-        return of(void 0);
+        return of();
       }),
       map(() => void 0)
     );
   }
 
-  sendMessage(message: string, files: { name: string, content: string }[] = []): Observable<void> {
-    if (!message.trim() && !files.length) {
-      return of();
-    }
+  private processSessionHistory(chats: any[]): ChatMessage[] {
+    return chats
+      .map(chat => ({
+        text: this.parseMessageContent(chat.message || ''),
+        isUser: chat.sender === 'user',
+        timestamp: chat.timestamp ? new Date(chat.timestamp) : new Date(),
+      }))
+      .filter(message => message.text);
+  }
 
-    const userMessage: ChatMessage = {
+  private parseMessageContent(message: string): string {
+    try {
+      const cleanedMessage = message
+        .replace(/^```json\s*/, '')
+        .replace(/```$/, '');
+      const parsedMessage: AiResponse = JSON.parse(cleanedMessage);
+      return parsedMessage.Message || message;
+    } catch {
+      return message;
+    }
+  }
+
+  private isValidMessage(message: string, files: ChatFile[]): boolean {
+    return Boolean(message.trim() || files.length);
+  }
+
+  private addUserMessage(message: string, files: ChatFile[]): void {
+    this.addMessage({
       text: message,
       isUser: true,
       timestamp: new Date(),
-      files: [...files]
-    };
-    this.addMessage(userMessage);
+      files
+    });
+  }
 
-    const sessionId = this.currentSessionId();
-    if (!sessionId) {
-      this.addMessage({
-        text: 'No active session. Please try refreshing the page.',
-        isUser: false,
-        timestamp: new Date()
-      });
-      return of();
-    }
+  private addSystemMessage(message: string): void {
+    this.addMessage({
+      text: message,
+      isUser: false,
+      timestamp: new Date()
+    });
+  }
 
+  private addMessage(message: ChatMessage): void {
+    this.chatHistory.update(history => [...history, message]);
+  }
+
+  private sendMessageToServer(sessionId: string, message: string): Observable<void> {
     return this.aiAssistantService.chat(sessionId, message).pipe(
       tap(response => {
-        const text = response.body?.candidates[0].content.parts[0].text;
+        const text = response.body?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          const aiMessage: ChatMessage = {
-            text: this.parseJsonInMessage(text || ''),
-            isUser: false,
-            timestamp: new Date()
-          };
-          this.addMessage(aiMessage);
+          this.addSystemMessage(this.parseMessageContent(text));
         }
       }),
       catchError(error => {
         console.error('Error sending message:', error);
-        this.addMessage({
-          text: 'Sorry, there was an error processing your message. Please try again.',
-          isUser: false,
-          timestamp: new Date()
-        });
-        return of(void 0);
+        this.addSystemMessage('Sorry, there was an error processing your message. Please try again.');
+        return of();
       }),
       map(() => void 0)
     );
-  }
-
-  addMessage(message: ChatMessage) {
-    this.chatHistory.update(history => [...history, message]);
-  }
-
-  clearHistory() {
-    this.chatHistory.set([]);
-    this.isLoading.set(true);
-    const sessionId = this.currentSessionId();
-    if (sessionId) {
-      this.aiAssistantService.endSession(sessionId).subscribe(()=> this.createNewSession().subscribe());
-    }
   }
 }
