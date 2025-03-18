@@ -81,6 +81,7 @@ public class GeminiController : ControllerBase
         var entityResponse = manager.GetDetailsFromGeminiResponse(entityDetectionResponse);
         var promptType = entityResponse["Type"].ToString();
         var forward = entityResponse["Forward"].ToString();
+        var summary = entityResponse["Summary"].ToString();
         if (forward == "No") {
             return Ok(entityDetectionResponse);
         }
@@ -91,6 +92,8 @@ public class GeminiController : ControllerBase
             role = x.Sender,
             parts = new[] { new { text = x.Message } }
         }).ToList();
+
+        req.Message = summary;
         
         var detailedResponse = await manager.FetchDetailedResponseFromGemini(formattedChatHistory, req, promptType);
         var parsedDetailedResponse = manager.GetDetailsFromGeminiResponse(detailedResponse);
