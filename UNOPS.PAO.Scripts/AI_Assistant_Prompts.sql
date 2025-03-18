@@ -156,10 +156,10 @@ Result should be strictly in JSON format as follows:
 {
 	Entity: Name of the entity derived from the list of entities provided
 	Intent: Derived intent
-	Message: Add a response message to the user,
+	Message: Add a response message to the user. Once the information is there and the user confirms that these are the details, end the conversation.,
     Summary: Summarize the complete conversation so far,
 	Type: Derive the type by concatenating Entity and Intent with _ (all in lowercase)
-	Forward: If the Intent is Information, then send it as "No". Otherwise send it as "Yes". If you intent on asking more details to the user or want the user to answer something before proceeding, Forward as "No".
+	Forward: If the Intent is Information and there is no context about the entities yet, then send it as "No". Otherwise send it as "Yes". If you intent on asking more details to the user or want the user to answer something before proceeding, Forward as "No".
             When Forward is "Yes", ALWAYS summarize the entire conversation in the Message property. The Summary needs to list every single detail that the user has shared. It is very important to have a detailed summary.
 }
 
@@ -243,7 +243,9 @@ JSON format:
 Somethings to consider about the JSON format above are:
 partner is the organization where the contact works"
 
-The conversation starts from here:
+Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
+
+This is the summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Contact and the latest details. For example, there could have been multiple discussions about contacts. Pick the latest request. Use this to form the JSON.
 {promptData}', NOW(), 'Contacts', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'),
 ('partner_action', 'I am sending you partner data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
@@ -265,7 +267,8 @@ Accpetable values for "reasonForLevyNotApplying" are: "3a) Vertical Fund", "3d) 
 Accpetable values for "levyTreatment" are: "Please consult funding source", "UNOPS administers", "Funding source administers directly (no changes required to the partner agreement)", "N/A"
 Accpetable values for "scope" are: "Global", "Regional", "Local"
 
-The conversation starts from here:
+Be very polite and kind and greet the user. The summary could be talking about multiple entities. Only extract the details relevant to Partners. For example, there could have been multiple discussions about partners. Pick the latest request. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
+This is the summary of the conversation with the user. Use this to form the JSON.
 {promptData}', NOW(), 'Partners', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'),
 ('partnertree_action', 'I am sending you partner tree (level) data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
@@ -278,7 +281,9 @@ Somethings to consider about the JSON format above are:
 ""parent"" is also look-alike of code but the code of the parent. If you cannot find it in the data, leave it blank. If parent is left blank, consider ""type"" as Level_1 and mention it in the Message.
 ""type"" can be Level_1, Level_2, Level_3 or Level_4. Level_1 will always have parent as blank.
 
-The conversation starts from here:
+Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
+
+This is the summary of the conversation with the user. The summary could be talking about multiple entities. For example, there could have been multiple discussions about partner tree or level. Pick the latest request. Only extract the details relevant to Partner Tree/Level. Use this to form the JSON.
 {promptData}
 ', NOW(), 'PartnerTrees', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'),
@@ -293,7 +298,9 @@ Somethings to consider about the JSON format above are:
 Ensure the Date is formatted as YYYY-MM-DD HH:mm:ss in UTC
 We require the ID of the Contact. If the user gives you a Contact Name, ask for the ID of that particular contact. If they do not have, mention that the data extraction is incomplete and return the response.
 
-The conversation starts from here:
+Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
+
+This is the summary of the conversation with the user. The summary could be talking about multiple entities. For example, there could have been multiple discussions about interaction. Pick the latest request.  Only extract the details relevant to Interactions. Use this to form the JSON.
 {promptData}
 ', NOW(), 'Interactions', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity');
