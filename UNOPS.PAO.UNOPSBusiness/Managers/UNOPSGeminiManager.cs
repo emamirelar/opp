@@ -137,9 +137,9 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Get chat history by session ID
-    public async Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId) {
+    public async Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type) {
         return await _context.AiChatHistory
-                    .Where(x => x.SessionId == sessionId)
+                    .Where(x => x.SessionId == sessionId && x.Type == type)
                     .OrderBy(x => x.TimeStamp)
                     .ToListAsync();
     }
@@ -155,14 +155,14 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Fetch detailed response from Gemini
-    public async Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, string message, string promptType) {
-        string geminiResponse = await ChatWithGemini(message, promptType, formattedChatHistory);
+    public async Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType) {
+        string geminiResponse = await ChatWithGemini(request.sessionId, request.Message, promptType, formattedChatHistory);
         return geminiResponse;
     }
 
     // Entity detection through Gemini
-    public async Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, string message) {
-        string geminiResponse = await ChatWithGemini(message, "entity_intent_detection", formattedChatHistory);
+    public async Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request) {
+        string geminiResponse = await ChatWithGemini(request.sessionId, request.Message, "entity_intent_detection", formattedChatHistory);
         return geminiResponse;
     }
     
@@ -180,13 +180,14 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Update chat history table
-    public bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent) {
+    public bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent, string promptType) {
         var newUserChatHistory = new AiChatHistory{
             SessionId = sessionId,
             Sender = "user",
             Message = userMessage,
             EntityType = entity,
             RequestType = intent,
+            Type = promptType,
             TimeStamp = DateTime.Now.ToUniversalTime()
         };
 
@@ -196,6 +197,7 @@ public class UNOPSGeminiManager : IGeminiManager
             Message = modelResponse,
             EntityType = entity,
             RequestType = intent,
+            Type = promptType,
             TimeStamp = DateTime.Now.ToUniversalTime()
         };
 
@@ -211,7 +213,9 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Chat with Gemini
-    private async Task<string> ChatWithGemini(string message, string promptType, IEnumerable<dynamic> formattedChatHistory) {
+    private async Task<string> ChatWithGemini(Guid sessionId, string message, string promptType, IEnumerable<dynamic> formattedChatHistory) {
+        var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
+        string finalPrompt = message;
         var promptData = GetPromptData(promptType).FirstOrDefault();
         if (promptData == null)
         {
@@ -219,10 +223,12 @@ public class UNOPSGeminiManager : IGeminiManager
             promptType = "general_information";
             promptData = GetPromptData(promptType).FirstOrDefault();
         }
-        string promptTemplate = promptData.Prompt;
-        string finalPrompt = promptTemplate.Replace("{promptData}", message);
+        if (chatHistoryList.Count() == 0)
+        {
+            string promptTemplate = promptData.Prompt;
+            finalPrompt = promptTemplate.Replace("{promptData}", message);
+        }
         string accessToken = await GetAccessTokenAsync();
-        var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
         chatHistoryList.Add(new
         {
             role = "user",
@@ -240,6 +246,11 @@ public class UNOPSGeminiManager : IGeminiManager
         string url = await GetURL(promptData);
         string jsonRequest = JsonConvert.SerializeObject(requestBody);
         string response = await CallGeminiApiAsync(url, jsonRequest, accessToken);
+        var parsedResponse = GetDetailsFromGeminiResponse(response);
+        var entity = parsedResponse["Entity"]?.ToString() ?? parsedResponse["Category"]?.ToString();
+        var intent = parsedResponse["Intent"]?.ToString() ?? parsedResponse["ResponseType"]?.ToString();
+        var modelMessage = parsedResponse["Message"].ToString();
+        UpdateChatHistoryTable(sessionId, finalPrompt, modelMessage, entity, intent, promptType);
         return response;
     }
 

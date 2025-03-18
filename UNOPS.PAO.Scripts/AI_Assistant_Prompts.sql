@@ -133,6 +133,7 @@ It is considered to be General if you are not able to derive any entity.
 If the Entity is General, the intent should always be considered as Information.
 It is considered an Action if there is anything related to creation or updation or deletion of an entity other than General.
 
+If the user asks you to summarize something (could have more than one entity detected), then continue to stick to the JSON format and add the summary in the Message property.
 
 Result should be strictly in JSON format as follows:
 {
@@ -178,21 +179,52 @@ Response:
 Make sure to refer to the complete conversation to understand the current context. With the above instruction and examples, following is the prompt from the user:
 Prompt: {promptData}', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'), 
-('contact_action', 'I am sending you some data/information in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
+('contact_action', 'I am sending you some data/information in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Make sure to refer to the complete conversation to understand the current context. Send the response in the Message property of the JSON (look at the given format below)
 
-Raw Data:
-{promptData}
+Example:
+Prompt 1: Can you create a contact for me?
+Response: 
+{
+	Category: ''Contact'',
+	ResponseType: ''Information'',
+	Message: ''Sure, can you give me the details of the contact.''
+	salutation: '',
+	firstName: '',
+	lastName: ''.....
+}
+
+Prompt 2: Anusha Swaminathan, UNOPS, anushas@unops.org, 12345 (continuation of previous chat)
+Response:
+{
+	Category: ''Contact'',
+	ResponseType: ''Information'',
+	Message: ''These look like details of a Contact. Do you want to create a contact with these details?''
+	salutation: '',
+	firstName: '',
+	lastName: ''.....
+}
+
+Prompt 3: Yes (continuation of previous chat, instead of Prompt 1)
+Response: 
+{
+	Category: ''Contact'',
+	ResponseType: ''Action'',
+	Message: ''Action completed successfully!''
+	salutation: '',
+	firstName: ''Anusha'',
+	lastName: ''Swaminathan''..... (extract the rest)
+}
 
 JSON format:
 {"Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Contact", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "salutation": ", "firstName": ", "middleName": "", "lastName": "", "suffix": "", "title": "", "pronouns": "", "birthDate": "", "email": "", "phone": "", "mobile": "", "otherPhone": "", "fax": "", "partner": "", "department": "", "description": "", "status": "", "contactNumber": "", "assistant": "", "assistantPhone": "", "assistantEmail": "", "mailingStreet": "", "mailingStreet2": "", "mailingCity": "", "mailingStateProvince": "", "mailingPostalCode": "", "mailingCountry": "" }
 
 Somethings to consider about the JSON format above are:
-partner is the organization where the contact works"', NOW(), 'Contacts', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
+partner is the organization where the contact works"
+
+The conversation starts from here:
+{promptData}', NOW(), 'Contacts', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'),
 ('partner_action', 'I am sending you partner data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
-
-Raw Data:
-{promptData}
 
 JSON format:
 { "Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Partner", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "name": "", "status": "", "newEngagement": "", "phone": "", "website": "", "shortName": "", "internalReportingLevel": "", "externalReportingLevel": "", "pooledFund": "", "ddRequired": "", "ddeacDone": "", "eacReference": "", "globalKeyAccount": "", "unSecretariatEntity": "", "levyPotentiallyApplies": "", "reasonForLevyNotApplying": "", "levyTreatment": "", "scope": "", "address1Street": "", "address1Street2": "", "address1City": "", "address1StateProvince": "", "address1PostalCode": "", "address1Country": "", "address2Street": "", "address2Street2": "", "address2City": "", "address2StateProvince": "", "address2PostalCode": "", "address2Country": "" }
@@ -209,12 +241,12 @@ Accpetable values for "unSecretariatEntity" are: true, false
 Accpetable values for "levyPotentiallyApplies" are: "Potentially does not apply", "Does not apply", "Potentially applies"
 Accpetable values for "reasonForLevyNotApplying" are: "3a) Vertical Fund", "3d) International Financial Institution", "3c) Programme Country", "4) Pooled Fund", "3b) Funds from UN entity", "3a / 4) Vertical Fund / Pooled Fund", "6) Thematic Fund"
 Accpetable values for "levyTreatment" are: "Please consult funding source", "UNOPS administers", "Funding source administers directly (no changes required to the partner agreement)", "N/A"
-Accpetable values for "scope" are: "Global", "Regional", "Local"', NOW(), 'Partners', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
+Accpetable values for "scope" are: "Global", "Regional", "Local"
+
+The conversation starts from here:
+{promptData}', NOW(), 'Partners', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'),
 ('partnertree_action', 'I am sending you partner tree (level) data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
-
-Raw Data:
-{promptData}
 
 JSON format:
 { ""Message"": ""Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message"", ""Category"": ""PartnerTree"", ResponseType: ""Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION"", ""description"": """", ""code"": """", ""type"": """", ""parent"": """", ""name"": """" }
@@ -223,5 +255,23 @@ Somethings to consider about the JSON format above are:
 ""code"" looks like an ID field but text which will be similar to ""ACADEMIC_TRAINING_RESEARC"". If you cannot find a data in such a format, autogenerate a code of the similar kind based on the name and description you extract.
 ""parent"" is also look-alike of code but the code of the parent. If you cannot find it in the data, leave it blank. If parent is left blank, consider ""type"" as Level_1 and mention it in the Message.
 ""type"" can be Level_1, Level_2, Level_3 or Level_4. Level_1 will always have parent as blank.
+
+The conversation starts from here:
+{promptData}
 ', NOW(), 'PartnerTrees', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
+'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity'),
+('interaction_action', 'I am sending you interaction data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
+
+JSON format:
+{ ""Message"": ""Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message"", ""Category"": ""Interaction"", ResponseType: ""Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION""
+, "Type": "", "Date": "", "Data": "", "ContactId": "" }
+
+Somethings to consider about the JSON format above are:
+"Type" is the Interaction type which could be Email, Chat, Phone, VideoMeeting, InPersonMeeting
+Ensure the Date is formatted as YYYY-MM-DD HH:mm:ss in UTC
+We require the ID of the Contact. If the user gives you a Contact Name, ask for the ID of that particular contact. If they do not have, mention that the data extraction is incomplete and return the response.
+
+The conversation starts from here:
+{promptData}
+', NOW(), 'Interactions', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west3', 'gemini-1.5-flash-001', 'unops-partneropportunity');

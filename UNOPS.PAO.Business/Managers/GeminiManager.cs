@@ -75,16 +75,16 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId)
+    public Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type)
     {
         throw new NotImplementedException();
     }
 
-    public Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, string message) {
+    public Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request) {
         throw new NotImplementedException();
     }
 
-    public Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, string message, string promptType) {
+    public Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType) {
         throw new NotImplementedException();
     }
 
@@ -92,7 +92,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent) {
+    public bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent, string promptType) {
         throw new NotImplementedException();
     }
 

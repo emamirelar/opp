@@ -18,10 +18,10 @@ public interface IGeminiManager
     IEnumerable<AiChatSession> GetUserSessions(int userId);
     Guid CreateNewSession(int userId);
     bool EndSession(Guid sessionId);
-    Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId);
-    Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, string message);
-    Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, string message, string promptType);
+    Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type);
+    Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request);
+    Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType);
     JObject GetDetailsFromGeminiResponse(string modelResponse);
-    bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent);
+    bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent, string promptType);
     void UpdateCurrentSessionIfInactive(int userId, Guid sessionId);
 }

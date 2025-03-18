@@ -68,7 +68,8 @@ public class GeminiController : ControllerBase
         // If any other session is active, mark it as inactive and activate this session (if required)
         manager.UpdateCurrentSessionIfInactive(currentUserId, req.sessionId);
 
-        var chatHistory = await manager.GetChatHistory(req.sessionId);
+        var chatHistory = await manager.GetChatHistory(req.sessionId, "entity_intent_detection");
+        bool hasEntityHistory = false;
 
         var formattedChatHistory = chatHistory.Select(x => new {
             role = x.Sender,
@@ -76,24 +77,23 @@ public class GeminiController : ControllerBase
         }).ToList();
 
         // Entity detection and intent classification to be done
-        var entityDetectionResponse = await manager.EntityDetectionThroughGemini(formattedChatHistory, req.Message);
+        var entityDetectionResponse = await manager.EntityDetectionThroughGemini(formattedChatHistory, req);
         var entityResponse = manager.GetDetailsFromGeminiResponse(entityDetectionResponse);
-
-        var entity = entityResponse["Entity"].ToString();
-        var intent = entityResponse["Intent"].ToString();
         var promptType = entityResponse["Type"].ToString();
-        var modelMessage = entityResponse["Message"].ToString();
         var forward = entityResponse["Forward"].ToString();
-
         if (forward == "No") {
-            manager.UpdateChatHistoryTable(req.sessionId, req.Message, modelMessage, entity, intent);
             return Ok(entityDetectionResponse);
         }
-        
-        var detailedResponse = await manager.FetchDetailedResponseFromGemini(formattedChatHistory, req.Message, promptType);
-        var parsedDetailedResponse = manager.GetDetailsFromGeminiResponse(detailedResponse);
 
-        manager.UpdateChatHistoryTable(req.sessionId, req.Message, modelMessage, entity, intent);
+        chatHistory = await manager.GetChatHistory(req.sessionId, promptType);
+
+        formattedChatHistory = chatHistory.Select(x => new {
+            role = x.Sender,
+            parts = new[] { new { text = x.Message } }
+        }).ToList();
+        
+        var detailedResponse = await manager.FetchDetailedResponseFromGemini(formattedChatHistory, req, promptType);
+        var parsedDetailedResponse = manager.GetDetailsFromGeminiResponse(detailedResponse);
         
         return Ok(detailedResponse);
     }
