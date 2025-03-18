@@ -152,6 +152,9 @@ It is considered an Action if there is anything related to creation or updation 
 
 If the user asks you to summarize something (could have more than one entity detected), then continue to stick to the JSON format and add the summary in the Message property.
 
+Instruction regarding Summary property in the JSON: 
+Once a particular entity related action is completed and the user switches to another entity / wants to talk about another instance of the same entity, mention that in the summary.
+
 Result should be strictly in JSON format as follows:
 {
 	Entity: Name of the entity derived from the list of entities provided
@@ -183,7 +186,7 @@ Response:
 	Intent: ''Information'',
 	Message: ''These look like details of a Contact. Do you want to create a contact with these details?''
 	Type: ''contact_information''
-    Summary: ''The user wants to create a contact. I have asked for details. The user responded with name, organisation, email and phone number. I have asked if I can proceed with these details.''
+    Summary: ''The user wants to create a contact. I have asked for details. The user responded with name as Anusha Swaminathan, organisation as UNOPS, email as anushas@unops.org and phone number as 12345. I have asked if I can proceed with these details.''
 	Forward: ''No''
 }
 
@@ -193,10 +196,45 @@ Response:
 	Entity: ''Contact'',
 	Intent: ''Action'',
 	Message: ''Action completed successfully.''
-    Summary: ''The user wants to create a contact. I have asked for details. The user responded with name, organisation, email and phone number. I have asked if I can proceed with these details. My entity detection work is done and I have some data for the contact now. So, action is complete.''
+    Summary: ''The user wants to create a contact. I have asked for details. The user responded with name as Anusha Swaminathan, organisation as UNOPS, email as anushas@unops.org and phone number as 12345. I have asked if I can proceed with these details. The user responded yes and hence the contact creation is done.''
 	Type: ''contact_action''
 	Forward: ''Yes''
 }
+
+Prompt: I want to create another contact with the name Lars, email ID as larsj@unops.org.
+Response:
+{
+    Entity: ''Contact'',
+    Intent: ''Information'',
+    Message: ''Sure, I will create a contact for you with the mentioned details. Can you confirm if I can proceed?'',
+    Summary: ''The user wants to create another contact with name as Lars, email Id as larsj@unops.org. I asked the user if I can proceed with these details.'',
+    Type: ''contact_information'',
+    Forward: ''No''
+}
+
+Prompt: Yes, go ahead.
+Response:
+{
+    Entity: ''Contact'',
+    Intent: ''Information'',
+    Message: ''Sure, the contact is now created.'',
+    Summary: ''The user wants to create another contact with name as Lars, email Id as larsj@unops.org. I asked the user if I can proceed with these details. The user asked me to proceed.'',
+    Type: ''contact_action'',
+    Forward: ''Yes''
+}
+
+Prompt: Can you update the country of this contact to Denmark?.
+Response:
+{
+    Entity: ''Contact'',
+    Intent: ''Information'',
+    Message: ''Sure, the contact now updated.'',
+    Summary: ''The user wants to create another contact with name as Lars, email Id as larsj@unops.org. I asked the user if I can proceed with these details. The user asked me to proceed. The user now wants to update the country to Denmark. I confirmed the same.'',
+    Type: ''contact_action'',
+    Forward: ''Yes''
+}
+
+The above examples summarizes 2 different contacts. When the user wants to create another contact / starts talking about another entity, the summary should start from scratch only for the new one.
 
 Make sure to refer to the complete conversation to understand the current context. With the above instruction and examples, following is the prompt from the user:
 Prompt: {promptData}', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
@@ -204,38 +242,18 @@ Prompt: {promptData}', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": 
 ('contact_action', 'I am sending you some data/information in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Make sure to refer to the complete conversation to understand the current context. Send the response in the Message property of the JSON (look at the given format below)
 
 Example:
-Prompt 1: Can you create a contact for me?
+Example 1: The user wants to create a contact. I have asked for details. The user responded with name, organisation, email and phone number. I have asked if I can proceed with these details. The user responded yes and hence the contact creation is done.
 Response: 
 {
-	Category: ''Contact'',
-	ResponseType: ''Information'',
-	Message: ''Sure, can you give me the details of the contact.''
-	salutation: '',
-	firstName: '',
-	lastName: ''.....
+    Message: ''Action completed successfully. Do you want assistance with anything else?'',
+    ResponseType: ''Action'',
+    Category: ''Contact'',
+    firstName: ''Anusha'',
+    emailAddress: ''anushas@unops.org'',
+    ... extract the remaining based on the JSON
 }
 
-Prompt 2: Anusha Swaminathan, UNOPS, anushas@unops.org, 12345 (continuation of previous chat)
-Response:
-{
-	Category: ''Contact'',
-	ResponseType: ''Information'',
-	Message: ''These look like details of a Contact. Do you want to create a contact with these details?''
-	salutation: '',
-	firstName: '',
-	lastName: ''.....
-}
-
-Prompt 3: Yes (continuation of previous chat, instead of Prompt 1)
-Response: 
-{
-	Category: ''Contact'',
-	ResponseType: ''Action'',
-	Message: ''Action completed successfully!''
-	salutation: '',
-	firstName: ''Anusha'',
-	lastName: ''Swaminathan''..... (extract the rest)
-}
+Example 2: ''The user wants to create a contact. I have asked for details. The user responded with name, organisation, email and phone number. I have asked if I can proceed with these details. The user responded yes and hence the contact creation is done.''
 
 JSON format:
 {"Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Contact", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "salutation": ", "firstName": ", "middleName": "", "lastName": "", "suffix": "", "title": "", "pronouns": "", "birthDate": "", "email": "", "phone": "", "mobile": "", "otherPhone": "", "fax": "", "partner": "", "department": "", "description": "", "status": "", "contactNumber": "", "assistant": "", "assistantPhone": "", "assistantEmail": "", "mailingStreet": "", "mailingStreet2": "", "mailingCity": "", "mailingStateProvince": "", "mailingPostalCode": "", "mailingCountry": "" }
