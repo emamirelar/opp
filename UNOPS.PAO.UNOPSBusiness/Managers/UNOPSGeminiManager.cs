@@ -250,7 +250,8 @@ public class UNOPSGeminiManager : IGeminiManager
         var entity = parsedResponse["Entity"]?.ToString() ?? parsedResponse["Category"]?.ToString();
         var intent = parsedResponse["Intent"]?.ToString() ?? parsedResponse["ResponseType"]?.ToString();
         var modelMessage = parsedResponse["Message"].ToString();
-        UpdateChatHistoryTable(sessionId, finalPrompt, modelMessage, entity, intent, promptType);
+        string responseInString = JsonConvert.SerializeObject(parsedResponse);
+        UpdateChatHistoryTable(sessionId, finalPrompt, responseInString, entity, intent, promptType);
         return response;
     }
 
