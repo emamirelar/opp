@@ -1,23 +1,25 @@
-import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { GeminiResponse, GeminiType } from '../models/gemini.models';
+import { GeminiResponse, GeminiType } from '../models/gemini.model';
+
 
 @Injectable({
   providedIn: 'root',
 })
 export class GeminiService {
-  private http = inject(HttpClient);
+  private readonly apiUrl = '/api';
 
-  private readonly API_URL = '/api/process-data';
+  constructor(private http: HttpClient) {}
 
+  // Original method for Gemini process-data
   get(id: string, type: GeminiType): Observable<string> {
-    return this.http.post<GeminiResponse>(this.API_URL, { id, type }).pipe(
+    return this.http.post<GeminiResponse>(`${this.apiUrl}/process-data`, { id, type }, { observe: 'response' }).pipe(
       map(response => {
-        if (!response.candidates?.[0]?.content?.parts) {
+        if (!response.body?.candidates?.[0]?.content?.parts) {
           return '';
         }
-        return response.candidates[0].content.parts
+        return response.body?.candidates[0].content.parts
           .map(part => part.text)
           .join('');
       })

@@ -94,5 +94,16 @@
     },
     "common": {
         "poweredByAI": "Impulsado por IA"
+    },
+    "aiAssistant": {
+        "openButton": "Abrir Asistente de IA",
+        "dialogHeader": "Asistente de IA",
+        "newConversation": "Nueva conversación",
+        "dropFilesHere": "Suelta archivos aquí",
+        "assistPrompt": "¿Cómo puedo ayudarte hoy?",
+        "dragDropInfo": "Puedes arrastrar y soltar archivos directamente en este chat",
+        "filesToSend": "Archivos a enviar:",
+        "removeFile": "Eliminar archivo",
+        "typeMessage": "Escribe tu mensaje..."
     }
 }

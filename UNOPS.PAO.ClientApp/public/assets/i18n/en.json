@@ -207,5 +207,16 @@
   },
   "common": {
     "poweredByAI": "Powered by AI"
+  },
+  "aiAssistant": {
+    "openButton": "Open AI Assistant",
+    "dialogHeader": "AI Assistant",
+    "newConversation": "New conversation",
+    "dropFilesHere": "Drop files here",
+    "assistPrompt": "How can I assist you today?",
+    "dragDropInfo": "You can drag and drop files directly into this chat",
+    "filesToSend": "Files to send:",
+    "removeFile": "Remove file",
+    "typeMessage": "Type your message..."
   }
 }
