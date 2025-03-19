@@ -133,9 +133,9 @@ export class AiAssistantData {
     try {
       const cleanedMessage = message
         .replace(/^```json\s*/, '')
-        .replace(/```$/, '');
+        .replace(/```/, '');
       return JSON.parse(cleanedMessage);
-    } catch {
+    } catch (error) {
       return {Message: message};
     }
   }
