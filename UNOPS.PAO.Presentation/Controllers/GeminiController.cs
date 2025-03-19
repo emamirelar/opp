@@ -72,7 +72,7 @@ public class GeminiController : ControllerBase
 
         var formattedChatHistory = chatHistory.Select(x => new {
             role = x.Sender,
-            parts = new[] { new { text = x.Message } }
+            parts = new[] { new { text = x.RawMessage } }
         }).ToList();
 
         // Entity detection and intent classification to be done
@@ -89,7 +89,7 @@ public class GeminiController : ControllerBase
 
         formattedChatHistory = chatHistory.Select(x => new {
             role = x.Sender,
-            parts = new[] { new { text = x.Message } }
+            parts = new[] { new { text = x.RawMessage } }
         }).ToList();
 
         req.Message = summary;

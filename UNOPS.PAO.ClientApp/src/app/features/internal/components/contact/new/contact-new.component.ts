@@ -132,13 +132,13 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
     this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
       this.cdr.detectChanges();
     });
-    if (Object.keys(this.record).length > 0) {
-      this.formGroup.patchValue(this.record);
-    }
   }
 
   ngOnChanges() {
     this.display = true;
+    if (Object.keys(this.record).length > 0) {
+      this.formGroup.patchValue(this.record);
+    }
   }
 
   _handleOnSaveClick(){

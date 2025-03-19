@@ -21,8 +21,8 @@ export class ComponentResolverService {
     if (component) {
       viewContainerRef.clear(); // Clear previous content if needed
       const componentRef = viewContainerRef.createComponent(component, { injector: this.injector });
-      componentRef.formGroup.patchValue(response);
-      componentRef.cdr.detectChanges();
+      componentRef.setInput('record', response);
+      componentRef.cdr?.detectChanges();
     } else {
       console.error('Component not found!');
     }

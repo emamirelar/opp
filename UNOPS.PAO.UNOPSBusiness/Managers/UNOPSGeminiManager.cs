@@ -206,7 +206,7 @@ public class UNOPSGeminiManager : IGeminiManager
             SessionId = sessionId,
             Sender = "model",
             Message = modelResponse ?? "",
-            RawMessage = originalMessage ?? "",
+            RawMessage = modelResponse ?? "",
             EntityType = entity,
             RequestType = intent,
             Type = promptType,
