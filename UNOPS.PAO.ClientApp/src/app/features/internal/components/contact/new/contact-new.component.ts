@@ -48,7 +48,7 @@ import { DialogModule } from 'primeng/dialog';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
-  formGroup = new FormGroup({
+  public formGroup = new FormGroup({
     // Basic contact information
     salutation: new FormControl('', { validators: [Validators.required] }),
     firstName: new FormControl(''),
@@ -101,7 +101,8 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
   feedbackDialogService = inject(FeedbackDialogService);
   contactService = inject(ContactService);
   languageService = inject(LanguageService);
-  cdr = inject( ChangeDetectorRef);
+  public cdr = inject( ChangeDetectorRef);
+  @Input() public record: any = {};
 
   private langChangeSubscription: Subscription = new Subscription();
   @Output()
@@ -131,6 +132,9 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
     this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
       this.cdr.detectChanges();
     });
+    if (Object.keys(this.record).length > 0) {
+      this.formGroup.patchValue(this.record);
+    }
   }
 
   ngOnChanges() {

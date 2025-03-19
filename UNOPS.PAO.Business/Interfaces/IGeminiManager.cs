@@ -22,6 +22,6 @@ public interface IGeminiManager
     Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request);
     Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType);
     JObject GetDetailsFromGeminiResponse(string modelResponse);
-    bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent, string promptType);
+    bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType);
     void UpdateCurrentSessionIfInactive(int userId, Guid sessionId);
 }

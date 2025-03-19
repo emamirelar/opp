@@ -1,9 +1,10 @@
-import {Injectable, signal} from '@angular/core';
+import {Injectable, signal, ViewChild, ViewContainerRef} from '@angular/core';
 import { AiAssistantService } from '../../../../features/internal/services/ai-assistant.service';
 import { SessionData } from '../../../../features/internal/models/ai-assistant.model';
 import { Observable, of, throwError } from 'rxjs';
 import { map, catchError, tap, switchMap, finalize } from 'rxjs/operators';
 import { ChatMessage, ChatFile, AiResponse } from './ai-assistant.model';
+import { ComponentResolverService } from '../../../../features/internal/services/component-resolver.service';
 
 
 @Injectable({
@@ -13,8 +14,19 @@ export class AiAssistantData {
   readonly chatHistory = signal<ChatMessage[]>([]);
   readonly currentSessionId = signal<string | null>(null);
   readonly isLoading = signal(false);
+  currentModelMessage: any = {};
 
-  constructor(private aiAssistantService: AiAssistantService) {}
+  private viewContainerRef?: ViewContainerRef; // Store ViewContainerRef
+
+
+  constructor(private aiAssistantService: AiAssistantService,
+    private componentResolverService: ComponentResolverService
+  ) {}
+
+  public setViewContainerRef(viewContainerRef: ViewContainerRef) {
+    this.viewContainerRef = viewContainerRef;
+    debugger;
+  }
 
   public initializeSession(): void {
     this.loadOrCreateSession().subscribe({
@@ -131,6 +143,7 @@ export class AiAssistantData {
         .replace(/^```json\s*/, '')
         .replace(/```$/, '');
       const parsedMessage: AiResponse = JSON.parse(cleanedMessage);
+      this.currentModelMessage = parsedMessage;
       return parsedMessage.Message || message;
     } catch {
       return message;
@@ -149,13 +162,18 @@ export class AiAssistantData {
       files
     });
   }
+  
 
-  private addSystemMessage(message: string): void {
+  private addSystemMessage(message: string, takeAction?: boolean): void {
     this.addMessage({
       text: message,
       isUser: false,
       timestamp: new Date()
     });
+    if (takeAction && this.currentModelMessage && this.currentModelMessage?.ResponseType == "Action") {
+      this.componentResolverService.loadComponent(this.currentModelMessage.Category, this.viewContainerRef, this.currentModelMessage);
+    }
+    this.currentModelMessage = {};
   }
 
   private addMessage(message: ChatMessage): void {
@@ -167,7 +185,7 @@ export class AiAssistantData {
       tap(response => {
         const text = response.body?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          this.addSystemMessage(this.parseMessageContent(text));
+          this.addSystemMessage(this.parseMessageContent(text), true);
         }
       }),
       catchError(error => {

@@ -4,6 +4,8 @@ import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { AppComponent } from './app.component';
+import { ComponentResolverService } from './features/internal/services/component-resolver.service';
+import { ContactNewComponent } from './features/internal/components/contact/new/contact-new.component';
 
 // AoT requires an exported function for factories
 export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
@@ -13,6 +15,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
 @NgModule({
   declarations: [
     AppComponent,
+    ContactNewComponent
     // ...other components...
   ],
   imports: [
@@ -27,7 +30,7 @@ export function HttpLoaderFactory(http: HttpClient): TranslateHttpLoader {
     }),
     // ...other modules...
   ],
-  providers: [TranslateService],
+  providers: [TranslateService, ComponentResolverService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

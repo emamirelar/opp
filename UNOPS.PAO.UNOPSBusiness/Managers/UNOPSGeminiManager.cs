@@ -18,6 +18,8 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using System.Dynamic;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -173,18 +175,27 @@ public class UNOPSGeminiManager : IGeminiManager
         var parts = candidates[0]?["content"]["parts"];
         var textJson = parts[0]["text"].ToString(); ;
         textJson = textJson.Replace("```json", "").Replace("```", "").Trim();
+        var entityResponse = new JObject();
 
-        var entityResponse = JObject.Parse(textJson);
+        try
+        {
+            entityResponse = JObject.Parse(textJson); // Try parsing as JSON
+        }
+        catch (JsonReaderException)
+        {
+            entityResponse = new JObject { { "Message", textJson } }; // Wrap in JSON
+        }
 
         return entityResponse;
     }
 
     // Update chat history table
-    public bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent, string promptType) {
+    public bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType) {
         var newUserChatHistory = new AiChatHistory{
             SessionId = sessionId,
             Sender = "user",
-            Message = userMessage,
+            Message = originalMessage ?? "",
+            RawMessage = userMessage ?? "",
             EntityType = entity,
             RequestType = intent,
             Type = promptType,
@@ -194,7 +205,8 @@ public class UNOPSGeminiManager : IGeminiManager
         var newModelChatHistory = new AiChatHistory {
             SessionId = sessionId,
             Sender = "model",
-            Message = modelResponse,
+            Message = modelResponse ?? "",
+            RawMessage = originalMessage ?? "",
             EntityType = entity,
             RequestType = intent,
             Type = promptType,
@@ -251,7 +263,7 @@ public class UNOPSGeminiManager : IGeminiManager
         var intent = parsedResponse["Intent"]?.ToString() ?? parsedResponse["ResponseType"]?.ToString();
         var modelMessage = parsedResponse["Message"].ToString();
         string responseInString = JsonConvert.SerializeObject(parsedResponse);
-        UpdateChatHistoryTable(sessionId, finalPrompt, responseInString, entity, intent, promptType);
+        UpdateChatHistoryTable(sessionId, message, finalPrompt, responseInString, entity, intent, promptType);
         return response;
     }
 
@@ -326,7 +338,7 @@ public class UNOPSGeminiManager : IGeminiManager
             var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = await client.PostAsync(url, content);
-            return await response.Content.ReadAsStringAsync();
+                return await response.Content.ReadAsStringAsync();
         }
     }
 

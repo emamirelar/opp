@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, Input, ViewContainerRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -31,6 +31,7 @@ import { signal } from '@angular/core';
 })
 export class AiAssistantComponent {
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
+  @Input() viewContainerRef!: ViewContainerRef;  // Accept ViewContainerRef
 
   // Local UI state signals
   visible = false;
@@ -47,6 +48,7 @@ export class AiAssistantComponent {
 
   ngOnInit() {
     this.aiAssistantData.initializeSession();
+    this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
   }
 
   toggleChat() {
@@ -74,6 +76,7 @@ export class AiAssistantComponent {
     this.scrollToBottom();
 
     if ((currentMessage.trim() || (this.fileUploadEnabled() && currentFiles.length > 0))) {
+      this.message.set('');
       this.isWaitingResponse.set(true);
       this.aiAssistantData.sendMessage(currentMessage, currentFiles).subscribe({
         next: () => {
