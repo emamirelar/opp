@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnDestroy, OnInit, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnDestroy, OnInit, output, Output, signal, SimpleChanges } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -104,8 +104,9 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
   feedbackDialogService = inject(FeedbackDialogService);
   contactService = inject(ContactService);
   languageService = inject(LanguageService);
-  public cdr = inject( ChangeDetectorRef);
+  public cdr = inject(ChangeDetectorRef);
   @Input() public record: any = {};
+  @Input() public aiGeneratedData: any = null;
 
   private langChangeSubscription: Subscription = new Subscription();
   @Output()
@@ -137,11 +138,39 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  ngOnChanges() {
+  ngOnChanges(changes: SimpleChanges) {
     this.display = true;
-    if (Object.keys(this.record).length > 0) {
+    
+    // Handle pre-filled data from either direct record input or AI assistant
+    if (changes['aiGeneratedData'] && this.aiGeneratedData) {
+      this.preFillFormWithData(this.aiGeneratedData);
+    } else if (changes['record'] && Object.keys(this.record).length > 0) {
       this.formGroup.patchValue(this.record);
     }
+  }
+
+  preFillFormWithData(data: any) {
+    // Map AI response fields to form fields if needed
+    const formData: any = {};
+    
+    // Directly map matching fields
+    Object.keys(this.formGroup.controls).forEach(key => {
+      if (data[key] !== undefined) {
+        formData[key] = data[key];
+      }
+    });
+    
+    // Handle specific field mappings if the AI data structure differs from the form
+    if (data.name) {
+      const nameParts = data.name.split(' ');
+      if (nameParts.length > 0) formData.firstName = nameParts[0];
+      if (nameParts.length > 1) formData.lastName = nameParts[nameParts.length - 1];
+      if (nameParts.length > 2) formData.middleName = nameParts.slice(1, -1).join(' ');
+    }
+    
+    // Apply the data to the form
+    this.formGroup.patchValue(formData);
+    this.cdr.detectChanges();
   }
 
   _handleOnSaveClick(){
