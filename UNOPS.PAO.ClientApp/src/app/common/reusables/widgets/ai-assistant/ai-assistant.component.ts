@@ -48,7 +48,6 @@ export class AiAssistantComponent {
 
   ngOnInit() {
     this.aiAssistantData.initializeSession();
-    this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
   }
 
   toggleChat() {

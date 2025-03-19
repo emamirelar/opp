@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, OnInit, signal, OnDestroy} from '@angular/core';
 import {DatePipe, NgIf} from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
@@ -7,10 +7,12 @@ import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ContactService } from '../../services/contact.service';
 import { DialogModule } from 'primeng/dialog';
+import { Subject } from 'rxjs';
+import { takeUntil, filter } from 'rxjs/operators';
 
 import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
 import {ContactNewComponent} from './new/contact-new.component';
@@ -33,11 +35,14 @@ import {ContactNewComponent} from './new/contact-new.component';
     NgIf
   ]
 })
-export class ContactComponent {
+export class ContactComponent implements OnInit {
+
   router = inject(Router);
+  route = inject(ActivatedRoute);
   contactService = inject(ContactService);
 
   newContact = signal(false);
+  newContactData = signal<any>(null);
 
   contactData = this.contactService.allContacts;
   isDataLoading = this.contactService.isLoading;
@@ -45,6 +50,29 @@ export class ContactComponent {
 
   ngOnInit() {
     this.contactService.getAllContacts();
+
+    // Combine route parameters and navigation state
+    this.route.queryParams
+
+      .subscribe(params => {
+        if (params['openNewDialog'] === 'true') {
+          // Get contact data from history state
+          const state = history.state;
+          if (state?.contactData) {
+            this.newContactData.set(state.contactData);
+          }
+
+          // Open the new contact dialog
+          this.newContact.set(true);
+
+          // Remove the query parameter to avoid reopening on page refresh
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { openNewDialog: null },
+            queryParamsHandling: 'merge'
+          });
+        }
+      });
   }
 
   handleOnOpenRecordDetails(record: any) {
@@ -60,11 +88,14 @@ export class ContactComponent {
     });
   }
 
-  _handleOnRecordCreation( newRecordData: any ){
-    //navigate to the newly created record.
-    if( newRecordData !== null && ( newRecordData["id"] !== undefined && newRecordData["id"] !== null ) )
-    {
-      this.router.navigate([ 'contact', newRecordData["id"] ]);
+  _handleOnRecordCreation(newRecordData: any) {
+    if (newRecordData?.id) {
+      this.router.navigate(['contact', newRecordData.id]);
     }
+  }
+
+  closeNewContactDialog() {
+    this.newContact.set(false);
+    this.newContactData.set(null);
   }
 }

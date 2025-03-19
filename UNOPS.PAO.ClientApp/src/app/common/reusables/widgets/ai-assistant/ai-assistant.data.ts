@@ -4,7 +4,7 @@ import { SessionData } from '../../../../features/internal/models/ai-assistant.m
 import { Observable, of, throwError } from 'rxjs';
 import { map, catchError, tap, switchMap, finalize } from 'rxjs/operators';
 import { ChatMessage, ChatFile, AiResponse } from './ai-assistant.model';
-import { ComponentResolverService } from '../../../../features/internal/services/component-resolver.service';
+import { Router } from '@angular/router';
 
 
 @Injectable({
@@ -14,18 +14,11 @@ export class AiAssistantData {
   readonly chatHistory = signal<ChatMessage[]>([]);
   readonly currentSessionId = signal<string | null>(null);
   readonly isLoading = signal(false);
-  currentModelMessage: any = {};
 
-  private viewContainerRef?: ViewContainerRef; // Store ViewContainerRef
-
-
-  constructor(private aiAssistantService: AiAssistantService,
-    private componentResolverService: ComponentResolverService
+  constructor(
+    private aiAssistantService: AiAssistantService,
+    private router: Router
   ) {}
-
-  public setViewContainerRef(viewContainerRef: ViewContainerRef) {
-    this.viewContainerRef = viewContainerRef;
-  }
 
   public initializeSession(): void {
     this.loadOrCreateSession().subscribe({
@@ -42,7 +35,7 @@ export class AiAssistantData {
 
     const sessionId = this.currentSessionId();
     if (!sessionId) {
-      this.addSystemMessage('No active session. Please try refreshing the page.');
+      this.addSystemMessage({Message:'No active session. Please try refreshing the page.'});
       return of();
     }
 
@@ -129,23 +122,21 @@ export class AiAssistantData {
   private processSessionHistory(chats: any[]): ChatMessage[] {
     return chats
       .map(chat => ({
-        text: this.parseMessageContent(chat.message || ''),
+        text: this.parseMessageContent(chat.message || '').Message,
         isUser: chat.sender === 'user',
         timestamp: chat.timestamp ? new Date(chat.timestamp) : new Date(),
       }))
       .filter(message => message.text);
   }
 
-  private parseMessageContent(message: string): string {
+  private parseMessageContent(message: string): AiResponse {
     try {
       const cleanedMessage = message
         .replace(/^```json\s*/, '')
         .replace(/```$/, '');
-      const parsedMessage: AiResponse = JSON.parse(cleanedMessage);
-      this.currentModelMessage = parsedMessage;
-      return parsedMessage.Message || message;
+      return JSON.parse(cleanedMessage);
     } catch {
-      return message;
+      return {Message: message};
     }
   }
 
@@ -161,18 +152,25 @@ export class AiAssistantData {
       files
     });
   }
-  
 
-  private addSystemMessage(message: string, takeAction?: boolean): void {
+
+  private addSystemMessage(aiResponse: AiResponse ): void {
+    if (aiResponse.ResponseType === 'Action') {
+      this.handleActionResponse(aiResponse);
+    }
+
     this.addMessage({
-      text: message,
+      text: aiResponse.Message,
       isUser: false,
       timestamp: new Date()
     });
-    if (takeAction && this.currentModelMessage && this.currentModelMessage?.ResponseType == "Action") {
-      this.componentResolverService.loadComponent(this.currentModelMessage.Category, this.viewContainerRef, this.currentModelMessage);
-    }
-    this.currentModelMessage = {};
+  }
+
+  private handleActionResponse(aiResponse: AiResponse): void {
+    this.router.navigate(['contacts'], {
+      state: { contactData: aiResponse },
+      queryParams: { openNewDialog: 'true' }
+    });
   }
 
   private addMessage(message: ChatMessage): void {
@@ -184,12 +182,12 @@ export class AiAssistantData {
       tap(response => {
         const text = response.body?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
-          this.addSystemMessage(this.parseMessageContent(text), true);
+          this.addSystemMessage(this.parseMessageContent(text));
         }
       }),
       catchError(error => {
         console.error('Error sending message:', error);
-        this.addSystemMessage('Sorry, there was an error processing your message. Please try again.');
+        this.addSystemMessage({Message:'Sorry, there was an error processing your message. Please try again.'});
         return of();
       }),
       map(() => void 0)
