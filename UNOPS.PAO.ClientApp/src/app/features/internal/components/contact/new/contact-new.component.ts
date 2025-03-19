@@ -23,6 +23,8 @@ import { ContactService } from '../../../services/contact.service';
 import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 
+import { Router } from '@angular/router';
+
 @Component({
   selector: 'app-contact-new',
   imports: [
@@ -48,7 +50,8 @@ import { DialogModule } from 'primeng/dialog';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
-  formGroup = new FormGroup({
+  router = inject(Router);
+  public formGroup = new FormGroup({
     // Basic contact information
     salutation: new FormControl('', { validators: [Validators.required] }),
     firstName: new FormControl(''),
@@ -101,7 +104,8 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
   feedbackDialogService = inject(FeedbackDialogService);
   contactService = inject(ContactService);
   languageService = inject(LanguageService);
-  cdr = inject( ChangeDetectorRef);
+  public cdr = inject( ChangeDetectorRef);
+  @Input() public record: any = {};
 
   private langChangeSubscription: Subscription = new Subscription();
   @Output()
@@ -135,6 +139,9 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges() {
     this.display = true;
+    if (Object.keys(this.record).length > 0) {
+      this.formGroup.patchValue(this.record);
+    }
   }
 
   _handleOnSaveClick(){
@@ -147,7 +154,11 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
       this.contactService.createContact(this._getRequestPayload()).subscribe({
         next: (data: any) => {
           this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
-          this.onRecordCreationSuccess.emit(data);
+          if (Object.keys(this.record).length > 0) {
+              this.router.navigate([ 'contact', data.id ]);
+          } else {
+              this.onRecordCreationSuccess.emit(data);
+          }
           this.hide();
         }
       });

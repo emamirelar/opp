@@ -92,7 +92,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public bool UpdateChatHistoryTable(Guid sessionId, string userMessage, string modelResponse, string entity, string intent, string promptType) {
+    public bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType) {
         throw new NotImplementedException();
     }
 

@@ -17,4 +17,6 @@ export interface AiResponse {
   Type?: string;
   Summary?: string;
   Forward?: string;
+  Category?: string;
+  ResponseType?: string;
 }

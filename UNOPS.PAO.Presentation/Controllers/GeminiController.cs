@@ -1,19 +1,18 @@
 namespace UNOPS.PAO.Presentation.Controllers;
 
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Domain.Entities;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
 
 [Route("/")]
 [ApiController]
@@ -54,7 +53,7 @@ public class GeminiController : ControllerBase
     {
         var success = manager.EndSession(req.sessionId);
         return Ok(new { success = success });
-        
+
     }
 
     [HttpPost(APIDictionary.AiAssistantChat)]
@@ -73,16 +72,16 @@ public class GeminiController : ControllerBase
 
         var formattedChatHistory = chatHistory.Select(x => new {
             role = x.Sender,
-            parts = new[] { new { text = x.Message } }
+            parts = new[] { new { text = x.RawMessage } }
         }).ToList();
 
         // Entity detection and intent classification to be done
         var entityDetectionResponse = await manager.EntityDetectionThroughGemini(formattedChatHistory, req);
         var entityResponse = manager.GetDetailsFromGeminiResponse(entityDetectionResponse);
-        var promptType = entityResponse["Type"].ToString();
-        var forward = entityResponse["Forward"].ToString();
-        var summary = entityResponse["Summary"].ToString();
-        if (forward == "No") {
+        var promptType = entityResponse["Type"]?.ToString();
+        var forward = entityResponse["Forward"]?.ToString();
+        var summary = entityResponse["Summary"]?.ToString();
+        if (forward == string.Empty || forward == "No") {
             return Ok(entityDetectionResponse);
         }
 
@@ -90,11 +89,11 @@ public class GeminiController : ControllerBase
 
         formattedChatHistory = chatHistory.Select(x => new {
             role = x.Sender,
-            parts = new[] { new { text = x.Message } }
+            parts = new[] { new { text = x.RawMessage } }
         }).ToList();
 
         req.Message = summary;
-        
+
         var detailedResponse = await manager.FetchDetailedResponseFromGemini(formattedChatHistory, req, promptType);
         var parsedDetailedResponse = manager.GetDetailsFromGeminiResponse(detailedResponse);
         
