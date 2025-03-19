@@ -330,16 +330,33 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Call Gemini API with the request
-    static async Task<string> CallGeminiApiAsync(string url, string jsonRequest, string accessToken)
+    static async Task<string> CallGeminiApiAsync(string url, string jsonRequest, string accessToken, int maxRetries = 5)
     {
-        using (HttpClient client = new HttpClient())
+        HttpResponseMessage response = new HttpResponseMessage();
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-            var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await client.PostAsync(url, content);
-                return await response.Content.ReadAsStringAsync();
+                response = await client.PostAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    //retry the prompt after a delay incase of an error response
+                    TimeSpan waitTime = TimeSpan.FromSeconds(Math.Pow(2, attempt)) + TimeSpan.FromMilliseconds(new Random().Next(0, 1000));  //jitter up to 1 second.
+                    Console.WriteLine($"Rate limit exceeded. Retrying in {waitTime.TotalSeconds:F2} seconds (Attempt {attempt + 1}/{maxRetries})");
+                    await Task.Delay(waitTime);
+                }
+            }
         }
+        //respond with the most recent error after max retries are reached
+        return await response.Content.ReadAsStringAsync();
     }
 
     // Get Google credentials from configuration
