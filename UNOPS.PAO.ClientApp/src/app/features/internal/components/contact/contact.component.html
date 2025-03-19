@@ -58,6 +58,7 @@
 
 <app-contact-new
   *ngIf="newContact()"
+  [aiGeneratedData]="newContactData()"
   (onRecordCreationSuccess)="_handleOnRecordCreation($event)"
-  (closeModal)="newContact.set(false)"
+  (closeModal)="closeNewContactDialog()"
 ></app-contact-new>
