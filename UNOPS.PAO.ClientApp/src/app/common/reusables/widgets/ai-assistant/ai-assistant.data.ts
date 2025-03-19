@@ -25,7 +25,6 @@ export class AiAssistantData {
 
   public setViewContainerRef(viewContainerRef: ViewContainerRef) {
     this.viewContainerRef = viewContainerRef;
-    debugger;
   }
 
   public initializeSession(): void {
