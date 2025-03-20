@@ -205,9 +205,6 @@
   "errors": {
     "failedToLoad": "Error al cargar"
   },
-  "common": {
-    "poweredByAI": "Powered by AI"
-  },
   "aiAssistant": {
     "openButton": "Open AI Assistant",
     "dialogHeader": "AI Assistant",

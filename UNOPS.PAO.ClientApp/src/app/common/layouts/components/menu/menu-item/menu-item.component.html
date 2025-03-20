@@ -1,17 +1,18 @@
 <div [ngClass]="{'active-menuitem': active}" [class]="'menu-item'">
     <a *ngIf="item.items && !item.routerLink" (click)="itemClick($event)" [attr.tabindex]="0"
         [ngClass]="{'active-menuitem-routerlink': active}" [class]="'menu-item-link'">
-        
+
         <span class="material-symbols-outlined entity-icon">{{item.icon}}</span>
         <span>{{ item.label! | translate }}</span>
-  
+
         <i class="pi pi-angle-down layout-submenu-toggler"></i>
-      
+
     </a>
+
 
     <a *ngIf="item.routerLink" (click)="itemClick($event)" [routerLink]="item.routerLink"
         routerLinkActive="active-menuitem-routerlink" [routerLinkActiveOptions]="{exact: true}" [attr.tabindex]="0" [class]="'menu-item-link'">
-        
+
       <!-- <i [class]="item.icon"></i> -->
         <span class="material-symbols-outlined entity-icon">{{item.icon}}</span>
         <span>{{ item.label! | translate }}</span>
