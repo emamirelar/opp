@@ -14,6 +14,7 @@
         <p-select
           id="type"
           [options]="typeOptions"
+          [appendTo]="'body'"
           formControlName="type"
           [placeholder]="'label.interaction.selectType' | translate"
           optionLabel="translateKey"
@@ -50,6 +51,7 @@
         optionValue="id"
         [filter]="true"
         filterBy="name"
+        [appendTo]="'body'"
         [showClear]="true"
         placeholder="{{ 'label.interaction.selectContact' | translate }}"
         class="w-full">

@@ -92,9 +92,6 @@
     "errors": {
       "failedToLoad": "Falha ao carregar"
     },
-    "common": {
-        "poweredByAI": "Impulsado por IA"
-    },
     "aiAssistant": {
         "openButton": "Abrir Asistente de IA",
         "dialogHeader": "Asistente de IA",

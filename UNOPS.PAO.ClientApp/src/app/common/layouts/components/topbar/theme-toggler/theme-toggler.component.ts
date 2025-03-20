@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-theme-toggler',
   imports: [ButtonModule, CommonModule],
   templateUrl: './theme-toggler.component.html',
+  standalone: true,
   styleUrl: './theme-toggler.component.scss'
 })
 export class ThemeTogglerComponent {
