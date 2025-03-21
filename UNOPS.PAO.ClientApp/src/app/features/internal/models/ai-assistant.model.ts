@@ -3,6 +3,7 @@ export interface AiAssistantSessionRequest {
   }
 
   export interface AiAssistantRequest {
+    file?: File,
     message?: string;
     sessionId?: string;
   }

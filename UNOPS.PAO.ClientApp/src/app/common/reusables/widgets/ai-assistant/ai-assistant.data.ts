@@ -189,7 +189,11 @@ export class AiAssistantData {
   }
 
   private sendMessageToServer(sessionId: string, message: string): Observable<void> {
-    return this.aiAssistantService.chat(sessionId, message).pipe(
+    const formData = new FormData();
+    formData.append("sessionId", sessionId);
+    formData.append("message", message);
+    // TODO: Add the file to the formData
+    return this.aiAssistantService.chat(formData).pipe(
       tap(response => {
         const text = response.body?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {
