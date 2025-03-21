@@ -1,4 +1,4 @@
-export type GeminiType = 'contacts_summary' | 'partner_interactions_summary' | 'partner_risk_profile';
+export type GeminiType = 'contacts_summary' | 'partner_interactions_summary' | 'partner_risk_profile' | 'partner_news';
 
 export interface GeminiPart {
   text: string;

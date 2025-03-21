@@ -7,6 +7,8 @@ public class AiPromptModel
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string GenerationConfig { get; set; }
     public string ContentConfig { get; set; }
+    public string? ToolsConfig { get; set; }
+    public string? SafetySettings { get; set; }
     public string Project { get; set; }
     public string Location { get; set; }
     public string Model { get; set; }

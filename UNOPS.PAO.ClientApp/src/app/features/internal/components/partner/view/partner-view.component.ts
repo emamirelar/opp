@@ -212,6 +212,8 @@ export class PartnerViewComponent implements OnInit {
     riskIsLoading = signal<boolean>(true);
     summaryOfInteractionsIsLoading = signal<boolean>(true);
     summaryOfInteractions = signal<string>('');
+    partnerNewsIsLoading = signal<boolean>(true);
+    partnerNews = signal<string>('');
 
     ngOnInit() {
       this.activatedRoute.paramMap.subscribe({
@@ -269,6 +271,17 @@ export class PartnerViewComponent implements OnInit {
         error: () => {
           this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
           this.riskIsLoading.set(false);
+        }
+      });
+
+      this.geminiService.get(this.recordId, 'partner_news').subscribe({
+        next: (news: string) => {
+          this.partnerNews.set(news);
+          this.partnerNewsIsLoading.set(false);
+        },
+        error: () => {
+          this.partnerNews.set(this.translateService.instant('errors.failedToLoad'));
+          this.partnerNewsIsLoading.set(false);
         }
       });
     }

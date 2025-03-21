@@ -79,6 +79,26 @@
         </p-panel>
     </div>
 
+    <div class="flex flex-col md:flex-row gap-8">
+      <p-panel class="md:w-1/2"
+               [header]="'label.partner.partnerNews' | translate">
+        @if (partnerNewsIsLoading()) {
+        <div class="w-full flex justify-center h-24 items-center">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        } @else {
+        <div [innerHTML]="partnerNews() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
+        }
+
+        <ng-template #footer>
+          <div class="flex flex-wrap items-center gap-2 text-sm text-surface-600">
+            <i class="pi pi-sparkles"></i>
+            <span>{{ 'common.poweredByAI' | translate }}</span>
+          </div>
+        </ng-template>
+      </p-panel>
+    </div>
+
 
     <!-- Partner Information Panel -->
     <p-panel

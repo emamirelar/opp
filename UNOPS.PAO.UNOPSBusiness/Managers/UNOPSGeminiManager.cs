@@ -248,11 +248,17 @@ public class UNOPSGeminiManager : IGeminiManager
         });
         dynamic generationConfig = string.IsNullOrEmpty(promptData.GenerationConfig)
                         ? new ExpandoObject() : JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
+        dynamic toolsConfig = string.IsNullOrEmpty(promptData.ToolsConfig)
+                        ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
+        dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
+                        ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
 
         var requestBody = new
         {
             contents = new[] { chatHistoryList },
-            generationConfig = generationConfig
+            generationConfig = generationConfig,
+            tools = new[] { toolsConfig },
+            safetySettings = new[] { safetySettings }
         };
 
         string url = await GetURL(promptData);
@@ -291,13 +297,19 @@ public class UNOPSGeminiManager : IGeminiManager
     {
         dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
         dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
+        dynamic toolsConfig = string.IsNullOrEmpty(promptData.ToolsConfig)
+                        ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
+        dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
+                        ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
 
         contentConfig.parts[0].text = prompt;
 
         var requestBody = new
         {
             contents = new[] { contentConfig },
-            generationConfig = generationConfig
+            generationConfig = generationConfig,
+            tools = new[] { toolsConfig },
+            safetySettings = new[] { safetySettings }
         };
 
         return requestBody;
