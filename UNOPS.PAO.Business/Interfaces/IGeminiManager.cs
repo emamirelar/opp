@@ -24,4 +24,7 @@ public interface IGeminiManager
     JObject GetDetailsFromGeminiResponse(string modelResponse);
     bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType);
     void UpdateCurrentSessionIfInactive(int userId, Guid sessionId);
+    Task<string> ProcessImage(IFormFile file);
+    Task<string> ProcessAudio(IFormFile file);
+    Task<string> ExtractDataFromFile(IFormFile file);
 }

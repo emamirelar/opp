@@ -1,25 +1,32 @@
 # AI Integration - ReadMe
 
+## Abstract
+This document outlines the integration of AI features within the project, detailing the architecture, setup, and configuration necessary for utilizing AI-powered functionalities. The AI component is designed to process meeting minutes, summarize content, and generate context-aware responses through the Gemini API via Vertex AI. Additionally, recent enhancements include the introduction of an AI Assistant (Chatbot) that facilitates user interactions for creating and retrieving various entities.
+
 ## Overview
 This document provides details on the AI integration in the project, including the architecture, setup, and configuration required to use the AI-powered features. The AI component is responsible for processing meeting minutes, summarizing content, and generating context-aware responses using Gemini API via Vertex AI.
 
 ## Architecture
 The AI-powered summary tool is designed to dynamically generate context-aware summaries based on the current screen in the web application. The architecture consists of the following components:
 
-1. **Frontend (Angular 19)**: Sends requests to the backend, specifying the screen context.
-2. **Backend (.NET Core API)**:
-   - Receives requests from the frontend.
-   - Determines the relevant database tables and retrieves necessary data.
-   - Constructs an appropriate prompt for the AI model.
-   - Calls the Gemini API via Vertex AI.
-   - Processes and returns the AI-generated response to the frontend.
-3. **Database (PostgreSQL)**:
-   - Stores AI-related data, including prompts mapped to different screens.
-   - Ensures that relevant data is fetched dynamically based on the screen context.
-4. **AI Model (Gemini API via Vertex AI)**:
-   - Receives structured prompts from the backend.
-   - Generates summaries based on provided data.
-   - Returns structured responses for further processing and display.
+### Frontend (Angular 19)
+- Sends requests to the backend, specifying the screen context.
+
+### Backend (.NET Core API)
+- Receives requests from the frontend.
+- Determines the relevant database tables and retrieves necessary data.
+- Constructs an appropriate prompt for the AI model.
+- Calls the Gemini API via Vertex AI.
+- Processes and returns the AI-generated response to the frontend.
+
+### Database (PostgreSQL)
+- Stores AI-related data, including prompts mapped to different screens.
+- Ensures that relevant data is fetched dynamically based on the screen context.
+
+### AI Model (Gemini API via Vertex AI)
+- Receives structured prompts from the backend.
+- Generates summaries based on provided data.
+- Returns structured responses for further processing and display.
 
 ## Setup & Configuration
 ### 1. Authentication
@@ -29,10 +36,10 @@ gcloud auth application-default login --impersonate-service-account=pno-ai-servi
 ```
 
 ### 2. Database Setup
-We have two tables: `AiPrompt` and `AiScreenMapping`.
+We have four tables: `AiPrompt`, `AiScreenMapping`, `AiChatHistory`, and `AiChatSession`.
 
-#### **AiPrompt Table**
-```sql
+#### AiPrompt Table
+```
 CREATE TABLE AiPrompt (
     Type TEXT PRIMARY KEY,
     PromptTemplate TEXT NOT NULL,
@@ -41,10 +48,10 @@ CREATE TABLE AiPrompt (
     Status INTEGER NOT NULL
 );
 ```
-- The `Type` field should match the `type` value sent in the API request.
+- The `Type` field should match the type value sent in the API request.
 
-#### **AiScreenMapping Table**
-```sql
+#### AiScreenMapping Table
+```
 CREATE TABLE AiScreenMapping (
     Type TEXT NOT NULL,
     TableName TEXT NOT NULL,
@@ -58,32 +65,60 @@ CREATE TABLE AiScreenMapping (
     Status INTEGER NOT NULL
 );
 ```
-- The `Type` field should match the `type` value sent in the API request.
+- The `Type` field should match the type value sent in the API request.
 - The table defines how different entities are related for data retrieval.
-- **`QueryConditions`** is a field intended for future use, allowing additional conditions to be applied dynamically.
-- **`Order`** determines the order in which the join should be made when multiple tables are involved.
+- `QueryConditions` is intended for future use, allowing additional conditions to be applied dynamically.
+- `Order` determines the order in which the join should be made when multiple tables are involved.
 
-##### **Example Entries for Contacts Summary**
-```sql
+#### AiChatHistory Table
+```
+CREATE TABLE AiChatHistory (
+    Id SERIAL PRIMARY KEY,
+    Sender TEXT NOT NULL,
+    Message TEXT NOT NULL,
+    RawMessage TEXT,
+    TimeStamp TIMESTAMP DEFAULT NOW(),
+    Type TEXT NOT NULL,
+    EntityType TEXT,
+    RequestType TEXT,
+    SessionId UUID REFERENCES AiChatSession(Id)
+);
+```
+- Stores chat history for AI Assistant interactions.
+- `RawMessage` captures only the user's input before processing.
+- `SessionId` links messages to their respective sessions.
+
+#### AiChatSession Table
+```
+CREATE TABLE AiChatSession (
+    Id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    StartTime TIMESTAMP DEFAULT NOW(),
+    EndTime TIMESTAMP,
+    UserId INT NOT NULL,
+    Status TEXT DEFAULT 'Active'
+);
+```
+- Tracks the lifecycle of a chat session.
+- `Status` determines if the session is still active.
+
+##### Example Entries for Contacts Summary
+```
 INSERT INTO AiScreenMapping (Type, TableName, ComparisonKey, RelatedEntity, RelatedEntityKey, QueryConditions, Order, CreatedAt, Name, Status) VALUES 
 ('contacts_summary', 'Contacts', 'Id', 'Interactions', 'ContactId', NULL, 1, NOW(), 'Contacts', 1),
 ('contacts_summary', 'Contacts', 'PartnerId', 'Partners', 'Id', NULL, 2, NOW(), 'Contacts', 1),
 ('partner_interactions_summary', 'Partners', 'Id', 'Contacts', 'PartnerId', NULL, 1, NOW(), 'Partners', 1),
 ('partner_interactions_summary', 'Contacts', 'Id', 'Interactions', 'ContactId', NULL, 2, NOW(), 'Partners', 1);
 
-```
-```sql
 INSERT INTO AiPrompt (Type, PromptTemplate, CreatedAt, Name, Status) VALUES
 ('contacts_summary', "Sample Prompt", NOW(), 'Contacts', 1);
 ```
 
-### 3. API Endpoint
-#### **Process AI Data**
-```
-POST /api/process-data
-```
+### 3. API Endpoints
+#### Process AI Data
+**POST** `/api/process-data`
+
 ##### Request Body:
-```json
+```
 {
    "id": 10,
    "type": "contacts_summary"
@@ -92,30 +127,35 @@ POST /api/process-data
 ##### Response:
 - Returns the processed summary from Gemini based on the requested entity.
 
-### 4. Dynamic Data Retrieval
-The backend dynamically fetches data from various tables based on the `type` sent in the API request. The mapping between `type` and related tables is pre-configured, ensuring only relevant data is included in the AI prompt.
+#### AI Assistant Chatbot
+**POST** `/api/ai-assistant/chat`
 
-### 5. AI Integration in Code
-- `GeminiController.cs` handles the API request and first fetches the `AiPrompt` data to check if a prompt template is available.
-- If a prompt template is found, it queries the `AiScreenMapping` table to determine which tables to fetch data from.
-- The core logic for data retrieval based on screen mapping is implemented in `UNOPSGeminiManager.cs`.
-- The main method `GetDataBasedOnScreenMapping` uses reflection to dynamically retrieve data from tables. It also dynamically constructs SQL queries based on the entries in the AiScreenMapping table. This allows the backend to intelligently determine which tables and columns should be queried for a given screen type (i.e., the type parameter sent in the request payload).
-    - **`Dynamic SQL Creation`**: The SQL queries are generated programmatically based on the mapping configuration stored in `AiScreenMapping`, ensuring that only relevant data is retrieved for each screen context. This dynamic query generation ensures flexibility in handling different types of requests while maintaining a structured and secure approach to database querying.
-    - **`Order Field`**: The `Order` field ensures that the joins are executed in the correct sequence when multiple related tables are involved. This guarantees that the join operations respect the logical order of the database relationships, preserving data integrity and consistency.
-    - **`Handling Missing Related Entities`**: If the `RelatedEntity` and `RelatedEntityKey` are not specified in the `AiScreenMapping` table, the code will default to performing a regular `SELECT` query with a `WHERE` clause to retrieve the relevant data. This fallback mechanism ensures that even when complex relationships are not defined, the system can still fetch the necessary data and construct the AI prompt accordingly.
-- The method leverages reflection to ensure that the tables and columns being queried exist in the database before executing any SQL commands. This helps prevent issues like querying non-existent tables or columns, which could lead to runtime errors or security vulnerabilities.
-- Custom conditions and logic can be added in these methods based on the `type` parameter sent in the request payload.
-- The `QueryConditions` field in `AiScreenMapping` is currently **not being used** but is intended for future enhancements where additional query conditions may be applied dynamically.
-- Calling Gemini directly from .NET was not possible as **Vertex AI** does not have built-in support in the AIPlatform package. Instead, **HTTPClient** was used to call Gemini via a direct URL.
+- Enables users to interactively create and retrieve entities such as contacts, partners, partner levels, and interactions.
 
-### 6. Prompt Engineering
-To refine AI responses, use **Vertex AI Studio** under the GCP project unops-partneropportunity. This allows for interactive testing, fine-tuning, and validation of prompts before deploying them.
+#### Image & Audio Upload
+**POST** `/api/scan-data`
 
-### 7. Automatic Table Creation
-If you build and run the application via **Visual Studio**, the migration scripts will automatically create these tables. You only need to insert the relevant data as shown above.
+- Accepts `form-data` with an optional file and a `type` parameter.
+- Image data is extracted using **Google Cloud Vision (OCR)**.
+- Audio data is transcribed using **Google Cloud Speech**.
+
+### 4. Entity Intent Detection
+The prompt type for entity detection is `entity_intent_detection`. It will respond in the following JSON format:
+```
+{
+  "Entity": "<entity>",
+  "Intent": "<action/information>",
+  "Summary": "<summary of the complete conversation>",
+  "Message": "<response to the user>",
+  "Forward": "<yes/no>",
+  "Type": "<next prompt type derived from entity and intent>"
+}
+```
+
+- The `Summary` field from the response is sent to the next prompt type, where the `promptType` is the `Type` field in the JSON response.
 
 ## Conclusion
-This AI integration provides automated and contextual summaries within the application by leveraging Gemini API via Vertex AI. The setup ensures flexibility and adaptability to various screen contexts by dynamically fetching relevant data and constructing AI prompts accordingly.
+This AI integration provides automated and contextual summaries within the application by leveraging **Gemini API via Vertex AI**. The setup ensures flexibility and adaptability to various screen contexts by dynamically fetching relevant data and constructing AI prompts accordingly. The **new AI Assistant** enhances user interaction, while **image and audio processing capabilities** extend the application's functionality. 
 
 For further details or troubleshooting, refer to the main project documentation.
 

@@ -332,9 +332,10 @@ Response:
   ""Forward"": ""No""
 }
 
-Now, I am going to send you a message from the user. Your task is to extract the most accurate and closest entity and intent of the user according to the instructions above. Ensure to STRICTLY stick to the instructions provided above. Do not deviate from the responses. With the above instruction and examples, following is the prompt from the user:
+STRICTLY avoid using the word markdown when you convert the final result to Markdown.
+Now, I am going to send you a message from the user. It could be a text extracted from an image or audio. Or could be a message directly from the user. Or it could be a combination of both. Your task is to extract the most accurate and closest entity and intent of the user according to the instructions above. Ensure to STRICTLY stick to the instructions provided above. Do not deviate from the responses. If the prompt is empty, strictly Respond that "I am unable to read any message. Kindly try again.". With the above instruction and examples, following is the prompt from the user:
 
-Prompt from the user: {promptData}"', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
+Prompt from the user: {promptData}', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity'), 
 ('contact_action', 'I am sending you some data/information in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Make sure to refer to the complete conversation to understand the current context. Send the response in the Message property of the JSON (look at the given format below)
 
@@ -352,6 +353,7 @@ Response:
 
 Example 2: ''The user wants to create a contact. I have asked for details. The user responded with name, organisation, email and phone number. I have asked if I can proceed with these details. The user responded yes and hence the contact creation is done.''
 
+STRICTLY do not use the word Markdown while converting the final response to
 JSON format:
 {"Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Contact", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "salutation": ", "firstName": ", "middleName": "", "lastName": "", "suffix": "", "title": "", "pronouns": "", "birthDate": "", "email": "", "phone": "", "mobile": "", "otherPhone": "", "fax": "", "partner": "", "department": "", "description": "", "status": "", "contactNumber": "", "assistant": "", "assistantPhone": "", "assistantEmail": "", "mailingStreet": "", "mailingStreet2": "", "mailingCity": "", "mailingStateProvince": "", "mailingPostalCode": "", "mailingCountry": "" }
 
@@ -360,7 +362,9 @@ partner is the organization where the contact works"
 
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
 
-This is the summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Contact and the latest details. For example, there could have been multiple discussions about contacts. Pick the latest request. Use this to form the JSON.
+The prompt could be an extracted text from an audio or an image OR could be a summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Contact and the latest details. For example, there could have been multiple discussions about contacts. Pick the latest request. Use this to form the JSON. Whether the prompt is an extracted text or a summary will be highlighted before the message begins (for example: Summary: <summary> OR Extracted text: <extracted text>)
+
+Prompt: 
 {promptData}', NOW(), 'Contacts', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity'),
 ('partner_action', 'I am sending you partner data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
@@ -382,8 +386,11 @@ Accpetable values for "reasonForLevyNotApplying" are: "3a) Vertical Fund", "3d) 
 Accpetable values for "levyTreatment" are: "Please consult funding source", "UNOPS administers", "Funding source administers directly (no changes required to the partner agreement)", "N/A"
 Accpetable values for "scope" are: "Global", "Regional", "Local"
 
-Be very polite and kind and greet the user. The summary could be talking about multiple entities. Only extract the details relevant to Partners. For example, there could have been multiple discussions about partners. Pick the latest request. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
-This is the summary of the conversation with the user. Use this to form the JSON.
+Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
+
+The prompt could be an extracted text from an audio or an image OR could be a summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Partner and the latest details. For example, there could have been multiple discussions about contacts. Pick the latest request. Use this to form the JSON. Whether the prompt is an extracted text or a summary will be highlighted before the message begins (for example: Summary: <summary> OR Extracted text: <extracted text>)
+
+Prompt: 
 {promptData}', NOW(), 'Partners', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity'),
 ('partnertree_action', 'I am sending you partner tree (level) data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
@@ -398,7 +405,9 @@ Somethings to consider about the JSON format above are:
 
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
 
-This is the summary of the conversation with the user. The summary could be talking about multiple entities. For example, there could have been multiple discussions about partner tree or level. Pick the latest request. Only extract the details relevant to Partner Tree/Level. Use this to form the JSON.
+The prompt could be an extracted text from an audio or an image OR could be a summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Partner level and the latest details. For example, there could have been multiple discussions about the partner levels. Pick the latest request. Use this to form the JSON. Whether the prompt is an extracted text or a summary will be highlighted before the message begins (for example: Summary: <summary> OR Extracted text: <extracted text>)
+
+Prompt: 
 {promptData}
 ', NOW(), 'PartnerTrees', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity'),
@@ -415,7 +424,9 @@ We require the ID of the Contact. If the user gives you a Contact Name, ask for 
 
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
 
-This is the summary of the conversation with the user. The summary could be talking about multiple entities. For example, there could have been multiple discussions about interaction. Pick the latest request.  Only extract the details relevant to Interactions. Use this to form the JSON.
+The prompt could be an extracted text from an audio or an image OR could be a summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Interactions and the latest details. For example, there could have been multiple discussions about Interactions. Pick the latest request. Use this to form the JSON. Whether the prompt is an extracted text or a summary will be highlighted before the message begins (for example: Summary: <summary> OR Extracted text: <extracted text>)
+
+Prompt: 
 {promptData}
 ', NOW(), 'Interactions', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity');

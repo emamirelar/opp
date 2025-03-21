@@ -17,6 +17,8 @@
   <ItemGroup>
     <PackageReference Include="Google.Apis.Drive.v3" Version="1.68.0.3627" />
     <PackageReference Include="Google.Cloud.AIPlatform.V1" Version="3.21.0" />
+    <PackageReference Include="Google.Cloud.Speech.V1" Version="3.8.0" />
+    <PackageReference Include="Google.Cloud.Vision.V1" Version="3.7.0" />
   </ItemGroup>
 
 </Project>
