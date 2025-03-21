@@ -15,8 +15,9 @@ import { PartnerService } from '../../services/partner.service';
 import { DialogModule } from 'primeng/dialog';
 import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
 import {PartnerNewComponent} from './new/partner-new.component';
+import {Partner} from '../../models/partner.model';
 
-interface columnDefination {
+interface columnDefinition {
   label: string,
   id: string
 }
@@ -36,38 +37,18 @@ export class PartnerComponent implements OnInit, OnDestroy {
 
   partnerService = inject(PartnerService);
 
-  newPartner = signal(false);
-  newPartnerData = signal<any>(null);
+  newPartnerData = signal<Partner|null>(null);
 
-  columns = signal<columnDefination[]>([]);
+  columns = signal<columnDefinition[]>([]);
 
   partnerData = this.partnerService.allPartners;
   isDataLoading = this.partnerService.isLoading;
   feedbackDialogService = inject(FeedbackDialogService);
 
-  constructor(public translateService: TranslateService, private languageService: LanguageService, private cdr: ChangeDetectorRef) { }
+  constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
-    this.activatedRoute.queryParams.subscribe(params => {
-      if (params['openNewDialog'] === 'true') {
-        // Get partner data from history state
-        const state = history.state;
-        if (state?.partnerData) {
-          this.newPartnerData.set(state.partnerData);
-        }
-
-        // Open the new partner dialog
-        this.newPartner.set(true);
-
-        // Remove the query parameter to avoid reopening on page refresh
-        this.router.navigate([], {
-          relativeTo: this.activatedRoute,
-          queryParams: { openNewDialog: null },
-          queryParamsHandling: 'merge'
-        });
-      }
-    });
-
+    this.setNewPartnerFromAIAssistant();
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         //initialize columns
@@ -80,6 +61,26 @@ export class PartnerComponent implements OnInit, OnDestroy {
     });
     this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
       this.cdr.detectChanges();
+    });
+  }
+
+  private setNewPartnerFromAIAssistant() {
+    this.activatedRoute.queryParams.subscribe(params => {
+      if (params['openNewDialog'] === 'true') {
+        const state = history.state;
+        if (state?.data) {
+          this.newPartnerData.set(state.data);
+        }
+        this.removeOpenNewDialogFromUrl();
+      }
+    });
+  }
+
+  private removeOpenNewDialogFromUrl() {
+    this.router.navigate([], {
+      relativeTo: this.activatedRoute,
+      queryParams: {openNewDialog: null},
+      queryParamsHandling: 'merge'
     });
   }
 
@@ -119,7 +120,7 @@ export class PartnerComponent implements OnInit, OnDestroy {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
         this.partnerService.getAllPartners();
       }
-    });;
+    });
   }
 
   ngOnDestroy(): void {
@@ -127,15 +128,9 @@ export class PartnerComponent implements OnInit, OnDestroy {
   }
 
   _handleOnRecordCreation( newRecordData: any ){
-    //navigate to the newly created record.
     if( newRecordData !== null && ( newRecordData["id"] !== undefined && newRecordData["id"] !== null ) )
     {
       this.router.navigate([ 'partner', newRecordData["id"] ]);
     }
-  }
-
-  closeNewPartnerDialog() {
-    this.newPartner.set(false);
-    this.newPartnerData.set(null);
   }
 }

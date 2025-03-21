@@ -49,7 +49,7 @@
 
   <app-interaction-modal
     *ngIf="displayModal()"
-    [interaction]="selectedInteraction()"
+    [record]="selectedInteraction()"
     (closeModal)="onModalClose()"
     (deleted)="onInteractionDeleted()"
   ></app-interaction-modal>

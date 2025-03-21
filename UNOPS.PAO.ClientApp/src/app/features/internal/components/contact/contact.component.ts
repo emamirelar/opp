@@ -51,25 +51,15 @@ export class ContactComponent implements OnInit {
   ngOnInit() {
     this.contactService.getAllContacts();
 
-    // Combine route parameters and navigation state
     this.route.queryParams
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
-          // Get contact data from history state
           const state = history.state;
-          if (state?.contactData) {
-            this.newContactData.set(state.contactData);
+          if (state?.data) {
+            this.newContactData.set(state.data);
           }
 
-          // Open the new contact dialog
           this.newContact.set(true);
-
-          // Remove the query parameter to avoid reopening on page refresh
-          this.router.navigate([], {
-            relativeTo: this.route,
-            queryParams: { openNewDialog: null },
-            queryParamsHandling: 'merge'
-          });
         }
       });
   }

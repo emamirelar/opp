@@ -9,7 +9,7 @@ import {
   OnInit, Output,
   output,
   signal, ViewChild,
-  Input
+  Input, SimpleChanges
 } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -35,6 +35,7 @@ import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DialogModule } from 'primeng/dialog';
 import { DialogService, DynamicDialogComponent, DynamicDialogRef } from 'primeng/dynamicdialog';
+import {Partner} from '../../../models/partner.model';
 
 @Component({
   selector: 'app-partner-new',
@@ -61,7 +62,7 @@ import { DialogService, DynamicDialogComponent, DynamicDialogRef } from 'primeng
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PartnerNewComponent implements OnChanges, OnInit {
-  @Input() partnerData: any;
+  @Input() partnerData: Partner | null = null;
   @Output() closeModal = new EventEmitter<void>();
   display = true;
 
@@ -199,13 +200,20 @@ export class PartnerNewComponent implements OnChanges, OnInit {
   isSaving = signal(false);
 
   ngOnInit() {
-    if (this.partnerData) {
-      this.formGroup.patchValue(this.partnerData);
+    this.updateForm(this.partnerData)
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    this.display = true;
+
+    if (changes['partnerData'] && this.partnerData) {
+      this.updateForm(this.partnerData);
     }
   }
 
-  ngOnChanges() {
-    this.display = true;
+  updateForm(data: Partner | null) {
+    if (!data) return;
+    this.formGroup.patchValue(data as any);
   }
 
   _handleOnSaveClick(){

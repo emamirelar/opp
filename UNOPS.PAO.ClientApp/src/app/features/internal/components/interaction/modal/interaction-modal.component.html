@@ -4,10 +4,10 @@
   [modal]="true"
   [style]="{ width: '50rem' }" [breakpoints]="{ '1199px': '95vw'}"
   [contentStyle]="{'overflow': 'visible', 'max-height': 'none'}"
-  [header]="(interaction?.id ? 'title.editInteraction' : 'title.newInteraction') | translate"
+  [header]="(record?.id ? 'title.editInteraction' : 'title.newInteraction') | translate"
   (onHide)="hide()">
 
-  <form [formGroup]="interactionForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+  <form [formGroup]="formGroup" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
     <div class="flex flex-col md:flex-row gap-4">
       <div class="flex flex-col gap-2 w-full">
         <label for="type">{{ 'label.interaction.type' | translate }}</label>
@@ -64,7 +64,7 @@
   <ng-template pTemplate="footer">
     <div class="flex justify-end flex-wrap w-full gap-4">
       <p-button
-        *ngIf="interactionForm.get('id')?.value"
+        *ngIf="formGroup.get('id')?.value"
         type="button"
         [label]="'button.delete' | translate"
         class="p-button-text mr-auto"
@@ -73,7 +73,7 @@
         (click)="deleteInteraction()"
       ></p-button>
       <p-button class="ml-auto" [label]="'button.cancel' | translate" severity="secondary" (click)="hide()"></p-button>
-      <p-button (onClick)="onSubmit()" [loading]="isSaving()" icon="pi pi-check" [label]="'button.save' | translate" [disabled]="!interactionForm.valid"></p-button>
+      <p-button (onClick)="onSubmit()" [loading]="isSaving()" icon="pi pi-check" [label]="'button.save' | translate" [disabled]="!formGroup.valid"></p-button>
     </div>
   </ng-template>
 </p-dialog>

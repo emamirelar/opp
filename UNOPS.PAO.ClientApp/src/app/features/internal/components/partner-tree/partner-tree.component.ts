@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, effect, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, effect, ChangeDetectorRef, signal } from '@angular/core';
 import { TreeTableModule } from 'primeng/treetable';
 import { TreeNode } from "primeng/api";
 import { ButtonModule } from 'primeng/button';
@@ -16,6 +16,7 @@ import { CachedDataService } from '../../../../common/services/cached-data.servi
 import { InputIcon } from 'primeng/inputicon';
 import { IconField } from 'primeng/iconfield';
 import {PartnerTreeItemComponent} from './item/partner-tree-item.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-partner-tree',
@@ -39,8 +40,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   changeRecord: any = null;
   allStatusData = this.cachedDataService.allStatus;
 
-
-  constructor() {
+  constructor(public override router: Router) {
     super();
   }
 
@@ -94,7 +94,20 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     return this.updatedRecords.some(record => record.id === node?.node?.data?.id);
   }
 
+  private setNewPartnerFromAIAssistant() {
+    this.activatedRoute.queryParams.subscribe(params => {
+      if (params['openNewDialog'] === 'true') {
+        const state = history.state;
+        if (state?.data) {
+          this.changeRecord = state.data;
+          this.createPartnerLevel = true;
+        }
+      }
+    });
+  }
+
   override ngOnInit() {
+    this.setNewPartnerFromAIAssistant();
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         // Initialize columns

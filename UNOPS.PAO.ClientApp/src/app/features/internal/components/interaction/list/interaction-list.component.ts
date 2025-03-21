@@ -45,6 +45,19 @@ export class InteractionListComponent implements OnInit {
   ngOnInit(): void {
     this.interactionListData.initialLoad();
     this.openModalFromRoute();
+    this.setInteractionFromHistoryState();
+  }
+
+  private setInteractionFromHistoryState() {
+    this.route.queryParams.subscribe(params => {
+      if (params['openNewDialog'] === 'true') {
+        const state = history.state;
+        if (state?.data) {
+          this.selectedInteraction.set(state.data);
+          this.displayModal.set(true);
+        }
+      }
+    });
   }
 
   openModalFromRoute(): void {

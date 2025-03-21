@@ -414,12 +414,11 @@ Prompt:
 ('interaction_action', 'I am sending you interaction data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
 
 JSON format:
-{ ""Message"": ""Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message"", ""Category"": ""Interaction"", ResponseType: ""Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION""
-, "Type": "", "Date": "", "Data": "", "ContactId": "" }
+{ ""Message"": ""Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message"", ""Category"": ""Interaction"", ResponseType: ""Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION"", ""type"": """", ""date"": """", ""data"": """", ""contactId"": """" }
 
 Somethings to consider about the JSON format above are:
-"Type" is the Interaction type which could be Email, Chat, Phone, VideoMeeting, InPersonMeeting
-Ensure the Date is formatted as YYYY-MM-DD HH:mm:ss in UTC
+""type"" is the Interaction type which could be ""email"", ""chat"", ""phone"", ""video_meeting"", ""in_person_meeting""
+""date"" Ensure the date is formatted as ISO 8601 timestamp
 We require the ID of the Contact. If the user gives you a Contact Name, ask for the ID of that particular contact. If they do not have, mention that the data extraction is incomplete and return the response.
 
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
