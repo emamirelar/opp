@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, Input, ViewContainerRef } from '@angular/core';
+import {Component, ViewChild, ElementRef, Input, ViewContainerRef, inject, effect} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -10,6 +10,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AiAssistantData } from './ai-assistant.data';
 import { signal } from '@angular/core';
+import {LayoutService} from '../../../layouts/services/layout.service';
 
 @Component({
   selector: 'app-ai-assistant',
@@ -31,56 +32,61 @@ import { signal } from '@angular/core';
 })
 export class AiAssistantComponent {
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
-  @Input() viewContainerRef!: ViewContainerRef;  // Accept ViewContainerRef
 
-  // Local UI state signals
-  visible = false;
+  firstScroll = signal(true);
   message = signal('');
   selectedFiles = signal<{ name: string, content: string }[]>([]);
   isProcessingFile = signal(false);
   isDragging = signal(false);
   fileUploadEnabled = signal(false);
   isWaitingResponse = signal(false);
+  layoutService = inject(LayoutService);
 
   constructor(
-    public aiAssistantData: AiAssistantData  // Make it public to access in template
-  ) {}
-
-  ngOnInit() {
-    this.aiAssistantData.initializeSession();
-  }
-
-  toggleChat() {
-    this.visible = !this.visible;
-    this.scrollToBottom(false);
+    public aiAssistantData: AiAssistantData
+  ) {
+    effect(() => {
+      const chatHistory = this.aiAssistantData.chatHistory();
+      if (chatHistory.length > 0) {
+        this.scrollToBottom(!this.firstScroll());
+      }
+      if (this.firstScroll()) {
+        this.firstScroll.set(false);
+      }
+    });
   }
 
   private scrollToBottom(smooth = true): void {
     try {
-      setTimeout(() => {
-        const dialogContent = this.chatContainer.nativeElement.closest('.p-dialog-content');
-        if (dialogContent) {
-          dialogContent.scrollTo({
-            top: dialogContent.scrollHeight,
-            behavior: smooth ? 'smooth' : 'instant'
-          });
-        }
-      }, 100);
-    } catch (err) { }
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const chatContainer = this.chatContainer?.nativeElement;
+          if (chatContainer) {
+            const scrollHeight = chatContainer.scrollHeight;
+            if (scrollHeight) {
+              chatContainer.scrollTo({
+                top: scrollHeight,
+                behavior: smooth ? 'smooth' : 'instant'
+              });
+            }
+          }
+        }, 50);
+      });
+    } catch (err) {
+      console.error('Error scrolling to bottom:', err);
+    }
   }
 
   sendMessage() {
     const currentMessage = this.message();
     const currentFiles = this.selectedFiles();
-    this.scrollToBottom();
 
     if ((currentMessage.trim() || (this.fileUploadEnabled() && currentFiles.length > 0))) {
       this.message.set('');
       this.isWaitingResponse.set(true);
+
       this.aiAssistantData.sendMessage(currentMessage, currentFiles).subscribe({
         next: () => {
-          this.scrollToBottom();
-          // Clear the message input and selected files
           this.message.set('');
           this.selectedFiles.set([]);
           this.isWaitingResponse.set(false);

@@ -20,3 +20,15 @@ export interface AiResponse {
   Category?: string;
   ResponseType?: string;
 }
+
+export enum ScreenToOpenByAiActionCategory {
+  "Contact" = "contacts",
+  "Partner" = "partners",
+}
+
+export function getUrlPageByAiResponseCategory(category: string | undefined): string | null {
+  if (!category || !(category in ScreenToOpenByAiActionCategory)) {
+    return null;
+  }
+  return ScreenToOpenByAiActionCategory[category as keyof typeof ScreenToOpenByAiActionCategory];
+}

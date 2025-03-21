@@ -53,7 +53,6 @@ export class ContactComponent implements OnInit {
 
     // Combine route parameters and navigation state
     this.route.queryParams
-
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
           // Get contact data from history state

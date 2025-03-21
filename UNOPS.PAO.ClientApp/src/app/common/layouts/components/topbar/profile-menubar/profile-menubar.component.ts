@@ -8,12 +8,14 @@ import { AuthService } from '../../../../../essentials/services/auth.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../../services/language.service';
 import { Subscription } from 'rxjs';
+import {Ripple} from 'primeng/ripple';
 
 @Component({
   selector: 'app-profile-menubar',
-  imports: [MenubarModule, MenuModule, ButtonModule, TranslateModule],
+  imports: [MenubarModule, MenuModule, ButtonModule, TranslateModule, Ripple],
   templateUrl: './profile-menubar.component.html',
   styleUrl: './profile-menubar.component.scss',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProfileMenubarComponent implements OnInit, OnDestroy {
