@@ -7,10 +7,11 @@ import { ThemeTogglerComponent } from './theme-toggler/theme-toggler.component';
 import { StyleClassModule } from 'primeng/styleclass';
 import {AiAssistantComponent} from '../../../reusables/widgets/ai-assistant/ai-assistant.component';
 import {Menu} from 'primeng/menu';
+import {NgOptimizedImage} from '@angular/common';
 
 @Component({
   selector: 'app-topbar',
-  imports: [LanguageSelectorComponent, ProfileMenubarComponent, ThemeTogglerComponent, StyleClassModule, AiAssistantComponent, Menu],
+  imports: [LanguageSelectorComponent, ProfileMenubarComponent, ThemeTogglerComponent, StyleClassModule, AiAssistantComponent, Menu, NgOptimizedImage],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
   standalone: true,

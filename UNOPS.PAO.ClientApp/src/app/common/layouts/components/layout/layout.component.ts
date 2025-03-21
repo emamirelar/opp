@@ -1,4 +1,4 @@
-import { CommonModule, NgClass } from '@angular/common';
+import {CommonModule, NgClass, NgIf} from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterModule } from '@angular/router';
 import { FooterComponent } from '../footer/footer.component';
@@ -8,12 +8,14 @@ import { Subscription, filter } from 'rxjs';
 import { LayoutService } from '../../services/layout.service';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { LanguageService } from '../../../services/language.service';
+import {AiAssistantComponent} from '../../../reusables/widgets/ai-assistant/ai-assistant.component';
 
 @Component({
   selector: 'app-layout',
-  imports: [TopbarComponent, SidebarComponent, RouterModule, FooterComponent, BreadcrumbComponent, NgClass],
+  imports: [TopbarComponent, SidebarComponent, RouterModule, FooterComponent, BreadcrumbComponent, AiAssistantComponent, NgIf, NgClass],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LayoutComponent implements OnInit, OnDestroy{
@@ -30,7 +32,7 @@ export class LayoutComponent implements OnInit, OnDestroy{
       public renderer: Renderer2,
       public router: Router,
       private activatedRoute: ActivatedRoute,
-      private languageService: LanguageService, 
+      private languageService: LanguageService,
       private cdr: ChangeDetectorRef
   ) {
       this.overlayMenuOpenSubscription = this.layoutService.overlayOpen$.subscribe(() => {
