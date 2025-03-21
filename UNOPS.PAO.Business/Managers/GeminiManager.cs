@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -97,6 +98,18 @@ public class GeminiManager : IGeminiManager
     }
 
     public void UpdateCurrentSessionIfInactive(int userId, Guid sessionId) {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> ProcessImage(IFormFile file) {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> ProcessAudio(IFormFile file) {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> ExtractDataFromFile(IFormFile file) {
         throw new NotImplementedException();
     }
 }

@@ -8,9 +8,8 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
-public class GeminiAssistantRequest
+public class GeminiFileRequest
 {
-    public string? Message { get; set; }
-    public Guid sessionId { get; set; }
     public IFormFile? File { get; set; }
+    public string? Type { get; set; }
 }
