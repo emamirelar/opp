@@ -8,7 +8,8 @@ import {
   OnDestroy,
   OnInit, Output,
   output,
-  signal, ViewChild
+  signal, ViewChild,
+  Input
 } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -59,7 +60,8 @@ import { DialogService, DynamicDialogComponent, DynamicDialogRef } from 'primeng
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PartnerNewComponent implements OnChanges {
+export class PartnerNewComponent implements OnChanges, OnInit {
+  @Input() partnerData: any;
   @Output() closeModal = new EventEmitter<void>();
   display = true;
 
@@ -195,6 +197,12 @@ export class PartnerNewComponent implements OnChanges {
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
   isSaving = signal(false);
+
+  ngOnInit() {
+    if (this.partnerData) {
+      this.formGroup.patchValue(this.partnerData);
+    }
+  }
 
   ngOnChanges() {
     this.display = true;

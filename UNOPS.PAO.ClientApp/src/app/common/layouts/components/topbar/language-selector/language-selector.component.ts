@@ -10,6 +10,7 @@ import { Language, LanguageService } from '../../../../services/language.service
   selector: 'app-language-selector',
   imports: [MenubarModule, MenuModule, ButtonModule, TranslateModule],
   templateUrl: './language-selector.component.html',
+  standalone: true,
   styleUrl: './language-selector.component.scss'
 })
 

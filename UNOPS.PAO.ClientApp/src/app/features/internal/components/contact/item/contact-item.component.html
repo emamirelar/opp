@@ -96,6 +96,7 @@
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
           <label for="partner">{{ 'label.partner.partner' | translate }}&nbsp;*</label>
           <p-select formControlName="partner" [options]="allPartners()" optionLabel="name"
+                    [appendTo]="'body'"
                     fluid="true" id="partner" ariaLabel="Select Partner" placeholder="Select Partner" />
         </div>
 
@@ -131,6 +132,7 @@
             optionLabel="name"
             optionValue="id"
             fluid="true"
+            [appendTo]="'body'"
             [showClear]="true"
             placeholder="Select a Pronoun"
           />

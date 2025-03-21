@@ -9,6 +9,7 @@ import { MenuItemComponent } from './menu-item/menu-item.component';
   imports: [CommonModule, MenuItemComponent, RouterModule],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MenuComponent {

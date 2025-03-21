@@ -3,7 +3,13 @@ import { AiAssistantService } from '../../../../features/internal/services/ai-as
 import { SessionData } from '../../../../features/internal/models/ai-assistant.model';
 import { Observable, of, throwError } from 'rxjs';
 import { map, catchError, tap, switchMap, finalize } from 'rxjs/operators';
-import { ChatMessage, ChatFile, AiResponse } from './ai-assistant.model';
+import {
+  ChatMessage,
+  ChatFile,
+  AiResponse,
+  ScreenToOpenByAiActionCategory,
+  getUrlPageByAiResponseCategory
+} from './ai-assistant.model';
 import { Router } from '@angular/router';
 
 
@@ -18,9 +24,7 @@ export class AiAssistantData {
   constructor(
     private aiAssistantService: AiAssistantService,
     private router: Router
-  ) {}
-
-  public initializeSession(): void {
+  ) {
     this.loadOrCreateSession().subscribe({
       error: (error) => console.error('Failed to initialize session:', error)
     });
@@ -167,7 +171,14 @@ export class AiAssistantData {
   }
 
   private handleActionResponse(aiResponse: AiResponse): void {
-    this.router.navigate(['contacts'], {
+    const pageUrl = getUrlPageByAiResponseCategory(aiResponse.Category);
+
+    if (!pageUrl) {
+      this.addSystemMessage({Message: 'Sorry, I cannot navigate to that page.'});
+      return;
+    }
+
+    this.router.navigate([pageUrl], {
       state: { contactData: aiResponse },
       queryParams: { openNewDialog: 'true' }
     });
@@ -178,7 +189,11 @@ export class AiAssistantData {
   }
 
   private sendMessageToServer(sessionId: string, message: string): Observable<void> {
-    return this.aiAssistantService.chat(sessionId, message).pipe(
+    const formData = new FormData();
+    formData.append("sessionId", sessionId);
+    formData.append("message", message);
+    // TODO: Add the file to the formData
+    return this.aiAssistantService.chat(formData).pipe(
       tap(response => {
         const text = response.body?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (text) {

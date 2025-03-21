@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs/internal/Subscription';
   imports: [MenuComponent],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent implements OnInit, OnDestroy {

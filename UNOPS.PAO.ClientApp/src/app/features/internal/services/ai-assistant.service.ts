@@ -50,10 +50,10 @@ export class AiAssistantService {
   }
 
   // Chat with AiAssistant AI
-  chat(sessionId: string, message: string): Observable<HttpResponse<GeminiResponse>> {
+  chat(formdata: FormData): Observable<HttpResponse<GeminiResponse>> {
     return this.http.post<GeminiResponse>(
       `${this.aiAssistantUrl}/chat`,
-      { sessionId, message } as AiAssistantRequest,
+      formdata,
       { observe: 'response' }
     );
   }

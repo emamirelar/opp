@@ -2,12 +2,13 @@
 	class="layout-wrapper">
 	<app-topbar></app-topbar>
 	<app-sidebar></app-sidebar>
-	<div class="layout-main-container">
+	<div class="layout-main-container " [ngClass]="layoutService.layoutState().aiAssistantActive ? 'mr-[28rem]': ''">
 		<div class="layout-main gap-4">
 			<app-breadcrumb></app-breadcrumb>
 			<router-outlet></router-outlet>
 		</div>
 		<app-footer></app-footer>
 	</div>
+  <app-ai-assistant></app-ai-assistant>
 	<div class="layout-mask animate-fadein"></div>
 </div>

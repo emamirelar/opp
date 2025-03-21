@@ -15,12 +15,19 @@
 	</div>
 
 	<div class="layout-topbar-actions">
-		<div>
-			<div>
-<!--				<app-theme-toggler></app-theme-toggler>-->
-				<app-language-selector></app-language-selector>
-				<app-profile-menubar></app-profile-menubar>
-			</div>
+		<div class="flex items-center">
+      <!--				<app-theme-toggler></app-theme-toggler>-->
+
+
+
+      <app-language-selector></app-language-selector>
+	  <button (click)="layoutService.onAIAssistantToggle()"
+			type="button"
+			aria-label="Language Selector"
+			class="layout-topbar-action p-button-text">
+			<img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+		</button>
+      <app-profile-menubar></app-profile-menubar>
 		</div>
 	</div>
 

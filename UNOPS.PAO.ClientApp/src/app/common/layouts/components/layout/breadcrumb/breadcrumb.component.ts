@@ -6,8 +6,9 @@ import { BreadcrumbModule } from 'primeng/breadcrumb';
 
 @Component({
   selector: 'app-breadcrumb',
-  imports: [ BreadcrumbModule ],
+  imports: [BreadcrumbModule],
   templateUrl: './breadcrumb.component.html',
+  standalone: true,
   styleUrl: './breadcrumb.component.scss'
 })
 export class BreadcrumbComponent implements OnInit {
@@ -33,10 +34,10 @@ export class BreadcrumbComponent implements OnInit {
 
     while (route.firstChild) {
       route = route.firstChild;
-      
+
       const routeSnapshot = route.snapshot;
       const url = routeSnapshot.url.map(segment => segment.path).join('/');
-      const label = routeSnapshot.data['breadcrumb'] || 
+      const label = routeSnapshot.data['breadcrumb'] ||
                     this.formatLabel(routeSnapshot.routeConfig?.path || '');
 
       if (label) {

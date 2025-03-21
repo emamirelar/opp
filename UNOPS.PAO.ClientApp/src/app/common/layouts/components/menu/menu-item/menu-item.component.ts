@@ -9,6 +9,7 @@ import { MenuItem } from 'primeng/api';
   imports: [CommonModule, RouterModule, TranslateModule],
   templateUrl: './menu-item.component.html',
   styleUrl: './menu-item.component.scss',
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MenuItemComponent {

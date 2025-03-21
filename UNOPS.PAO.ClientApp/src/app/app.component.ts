@@ -10,9 +10,6 @@ import { AiAssistantComponent } from './common/reusables/widgets/ai-assistant/ai
   imports: [RouterOutlet, RouterModule, ToastModule, FeedbackDialogComponent, AiAssistantComponent],
   template: `
   <app-feedback-dialog></app-feedback-dialog>
-  @if(isLoggedIn) {
-    <app-ai-assistant [viewContainerRef]="viewContainerRef"></app-ai-assistant>
-  }
     <div #dynamicComponent></div>
   <router-outlet></router-outlet>`,
   standalone: true,

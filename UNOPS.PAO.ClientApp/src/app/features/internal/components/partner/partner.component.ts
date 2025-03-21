@@ -36,7 +36,8 @@ export class PartnerComponent implements OnInit, OnDestroy {
 
   partnerService = inject(PartnerService);
 
-  newPartner : boolean = false;
+  newPartner = signal(false);
+  newPartnerData = signal<any>(null);
 
   columns = signal<columnDefination[]>([]);
 
@@ -47,6 +48,26 @@ export class PartnerComponent implements OnInit, OnDestroy {
   constructor(public translateService: TranslateService, private languageService: LanguageService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit() {
+    this.activatedRoute.queryParams.subscribe(params => {
+      if (params['openNewDialog'] === 'true') {
+        // Get partner data from history state
+        const state = history.state;
+        if (state?.partnerData) {
+          this.newPartnerData.set(state.partnerData);
+        }
+
+        // Open the new partner dialog
+        this.newPartner.set(true);
+
+        // Remove the query parameter to avoid reopening on page refresh
+        this.router.navigate([], {
+          relativeTo: this.activatedRoute,
+          queryParams: { openNewDialog: null },
+          queryParamsHandling: 'merge'
+        });
+      }
+    });
+
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         //initialize columns
@@ -111,5 +132,10 @@ export class PartnerComponent implements OnInit, OnDestroy {
     {
       this.router.navigate([ 'partner', newRecordData["id"] ]);
     }
+  }
+
+  closeNewPartnerDialog() {
+    this.newPartner.set(false);
+    this.newPartnerData.set(null);
   }
 }

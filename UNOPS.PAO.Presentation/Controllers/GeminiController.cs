@@ -2,6 +2,8 @@ namespace UNOPS.PAO.Presentation.Controllers;
 
 using System;
 using System.Linq;
+using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +15,8 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Domain.Entities;
+using Google.Cloud.Vision.V1;
+using Newtonsoft.Json;
 
 [Route("/")]
 [ApiController]
@@ -57,18 +61,33 @@ public class GeminiController : ControllerBase
     }
 
     [HttpPost(APIDictionary.AiAssistantChat)]
-    public async Task<ActionResult> ChatWithGemini([FromBody] GeminiAssistantRequest req) {
+    public async Task<ActionResult> ChatWithGemini([FromForm] GeminiAssistantRequest req) {
 
-        if (req == null)
+        if (req == null || req?.sessionId == Guid.Empty)
         {
             return BadRequest("Invalid request.");
+        }
+
+        if (string.IsNullOrEmpty(req?.Message)) {
+            req.Message = "";
         }
 
         // If any other session is active, mark it as inactive and activate this session (if required)
         manager.UpdateCurrentSessionIfInactive(currentUserId, req.sessionId);
 
+        string extractedText = "";
+
+        if (req.File != null) {
+            extractedText = await manager.ExtractDataFromFile(req.File);
+            if (extractedText != null && extractedText.StartsWith("Error in extraction")) {
+                return BadRequest(extractedText);
+            }
+        }
+
         var chatHistory = await manager.GetChatHistory(req.sessionId, "entity_intent_detection");
         bool hasEntityHistory = false;
+
+        req.Message = req.Message + "\\n " + extractedText + ".\\n"; 
 
         var formattedChatHistory = chatHistory.Select(x => new {
             role = x.Sender,
@@ -92,12 +111,45 @@ public class GeminiController : ControllerBase
             parts = new[] { new { text = x.RawMessage } }
         }).ToList();
 
-        req.Message = summary;
+        req.Message = "Summary: " + summary;
 
         var detailedResponse = await manager.FetchDetailedResponseFromGemini(formattedChatHistory, req, promptType);
         var parsedDetailedResponse = manager.GetDetailsFromGeminiResponse(detailedResponse);
         
         return Ok(detailedResponse);
+    }
+
+    [HttpPost(APIDictionary.GeminiFileScan)]
+    public async Task<ActionResult> ScanFile([FromForm] GeminiFileRequest req) {
+        string errorMessage = "An error occurred while processing the file.";
+        try
+        {
+            if (req?.File == null || req?.File.Length == 0)
+            {
+                return BadRequest(new { message = "No valid file detected." });
+            }
+
+            string extractedText = await manager.ExtractDataFromFile(req.File);
+            string type = req?.Type;
+
+            if (!string.IsNullOrEmpty(type)) {
+                var promptData = manager.GetPromptData(type).FirstOrDefault();
+
+                if (promptData == null)
+                {
+                    return NotFound(new { message = $"Prompt configuration for the screen '{type}' is not found." });
+                }
+
+                // Fetch result from Gemini
+                return Ok(await manager.fetchResultFromGemini(promptData, extractedText));
+            }
+
+            return Ok(new { extractedText = extractedText.Trim() });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = errorMessage, details = ex.Message });
+        }
     }
 
     [HttpPost(APIDictionary.Gemini)]

@@ -15,6 +15,7 @@ interface LayoutState {
     configSidebarVisible?: boolean;
     staticMenuMobileActive?: boolean;
     menuHoverActive?: boolean;
+    aiAssistantActive?: boolean;
 }
 
 interface MenuChangeEvent {
@@ -38,7 +39,8 @@ export class LayoutService {
         overlayMenuActive: false,
         configSidebarVisible: false,
         staticMenuMobileActive: false,
-        menuHoverActive: false
+        menuHoverActive: false,
+        aiAssistantActive: false
     };
 
     layoutConfig = signal<layoutConfig>(this._config);
@@ -151,6 +153,14 @@ export class LayoutService {
             if (this.layoutState().staticMenuMobileActive) {
                 this.overlayOpen.next(null);
             }
+        }
+    }
+
+    onAIAssistantToggle() {
+        this.layoutState.update((prev) => ({ ...prev, aiAssistantActive: !this.layoutState().aiAssistantActive }));
+        
+        if (this.layoutState().aiAssistantActive) {
+            this.overlayOpen.next(null);
         }
     }
 
