@@ -145,7 +145,7 @@ public class Startup
         services.AddProblemDetails();
 
         //services.AddScoped<IManagerWrapper, ManagerWrapper>();
-        services.AddSingleton<IManagerWrapper, UNOPSManagerWrapper>();
+        services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();
 
         services.AddScoped<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
