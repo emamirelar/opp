@@ -38,7 +38,7 @@ JSON Data:
 
 {promptData}
 
-Please provide the generated Markdown summary based on these instructions. If any detail that you are instructed to provide is unavailable, mention that this detail is unavailable. Please do not include "```markdown\n" in the response."""',
+STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. If any detail that you are instructed to provide is unavailable, mention that this detail is unavailable. Please do not include "```markdown\n" in the response."""',
 NOW(), 'Contacts', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }'
 , 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL),
 ('partner_interactions_summary', 'I am providing a JSON object containing partner information, contact information and interaction history. The Each object will have the contact details with the property "contacts", partner detail with the property "partners" and interaction detail in "interactions" in a flat structure. I need you to generate a summary in Markdown format, using the following template:
@@ -72,7 +72,7 @@ JSON Data:
 
 {promptData}
 
-Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. The final response from you should give me a quick summary of the partner. Do not assume any detail. Please do not include "```markdown\n" in the response.', NOW(), 'Partners'
+STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. The final response from you should give me a quick summary of the partner. Do not assume any detail. Please do not include "```markdown\n" in the response.', NOW(), 'Partners'
 , 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL),
 ('partner_risk_profile', 'I need to determine the risk profile of a partner based on their involvement in one or more projects. I will provide a JSON object containing partner details in the partners array and project details in the projects array. A partner may be involved in multiple projects, linked by the PartnerId field in the projects array matching the Id field in the partners array.
@@ -107,10 +107,12 @@ Now, here is the JSON data:
 
 {promptData}
 
-Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail. Please do not include "```markdown\n" in the response.'
+STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail. Please do not include "```markdown\n" in the response.'
 , NOW(), 'Partners', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL),
 ('general_information', '{promptData}
+
+STRICTLY do not use the word "markdown" while converting the final response to the final JSON.
 
 Strictly return the response in JSON format as below - 
 
@@ -332,7 +334,7 @@ Response:
   ""Forward"": ""No""
 }
 
-STRICTLY avoid using the word markdown when you convert the final result to Markdown.
+STRICTLY do not use the word "markdown" when you convert the final result to Markdown.
 Now, I am going to send you a message from the user. It could be a text extracted from an image or audio. Or could be a message directly from the user. Or it could be a combination of both. Your task is to extract the most accurate and closest entity and intent of the user according to the instructions above. Ensure to STRICTLY stick to the instructions provided above. Do not deviate from the responses. If the prompt is empty, strictly Respond that "I am unable to read any message. Kindly try again.". With the above instruction and examples, following is the prompt from the user:
 
 Prompt from the user: {promptData}', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }',
@@ -343,7 +345,7 @@ Example:
 Example 1: The user wants to create a contact. I have asked for details. The user responded with name, organisation, email and phone number. I have asked if I can proceed with these details. The user responded yes and hence the contact creation is done.
 Response: 
 {
-    Message: ''Action completed successfully. Do you want assistance with anything else?'',
+    Message: ''Requested action initiated but please revalidate the details as AI can make mistakes. Do you want assistance with anything else?'',
     ResponseType: ''Action'',
     Category: ''Contact'',
     firstName: ''Anusha'',
@@ -353,7 +355,7 @@ Response:
 
 Example 2: ''The user wants to create a contact. I have asked for details. The user responded with name, organisation, email and phone number. I have asked if I can proceed with these details. The user responded yes and hence the contact creation is done.''
 
-STRICTLY do not use the word Markdown while converting the final response to the final JSON.
+STRICTLY do not use the word "markdown" while converting the final response to the final JSON.
 JSON format:
 {"Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Contact", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "salutation": ", "firstName": ", "middleName": "", "lastName": "", "suffix": "", "title": "", "pronouns": "", "birthDate": "", "email": "", "phone": "", "mobile": "", "otherPhone": "", "fax": "", "partner": "", "department": "", "description": "", "status": "", "contactNumber": "", "assistant": "", "assistantPhone": "", "assistantEmail": "", "mailingStreet": "", "mailingStreet2": "", "mailingCity": "", "mailingStateProvince": "", "mailingPostalCode": "", "mailingCountry": "" }
 
@@ -386,6 +388,8 @@ Accpetable values for "reasonForLevyNotApplying" are: "3a) Vertical Fund", "3d) 
 Accpetable values for "levyTreatment" are: "Please consult funding source", "UNOPS administers", "Funding source administers directly (no changes required to the partner agreement)", "N/A"
 Accpetable values for "scope" are: "Global", "Regional", "Local"
 
+STRICTLY do not use the word "markdown" while converting the final response to the final JSON.
+
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
 
 The prompt could be an extracted text from an audio or an image OR could be a summary of the conversation with the user. The summary could be talking about multiple entities. Only extract the details relevant to Partner and the latest details. For example, there could have been multiple discussions about contacts. Pick the latest request. Use this to form the JSON. Whether the prompt is an extracted text or a summary will be highlighted before the message begins (for example: Summary: <summary> OR Extracted text: <extracted text>)
@@ -402,6 +406,8 @@ Somethings to consider about the JSON format above are:
 ""code"" looks like an ID field but text which will be similar to ""ACADEMIC_TRAINING_RESEARC"". If you cannot find a data in such a format, autogenerate a code of the similar kind based on the name and description you extract.
 ""parent"" is also look-alike of code but the code of the parent. If you cannot find it in the data, leave it blank. If parent is left blank, consider ""type"" as Level_1 and mention it in the Message.
 ""type"" can be Level_1, Level_2, Level_3 or Level_4. Level_1 will always have parent as blank.
+
+STRICTLY do not use the word "markdown" while converting the final response to the final JSON.
 
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
 
@@ -421,6 +427,8 @@ Somethings to consider about the JSON format above are:
 "Type" is the Interaction type which could be Email, Chat, Phone, VideoMeeting, InPersonMeeting
 Ensure the Date is formatted as YYYY-MM-DD HH:mm:ss in UTC
 We require the ID of the Contact. If the user gives you a Contact Name, ask for the ID of that particular contact. If they do not have, mention that the data extraction is incomplete and return the response.
+
+STRICTLY do not use the word "markdown" while converting the final response to the final JSON.
 
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
 
@@ -455,15 +463,19 @@ Identify the name of the partner from that JSON data and find 5 latest news arti
 (add a line break)
 **[Focus Area]**
 (add a line break)
-[Details about Focus Area]
+[Provide explanation about how partner news relates to this focus area]
 (add 2 line breaks)
 **[Focus Area]**
 (add a line break)
-[Details about Focus Area]
+[Provide explanation about how partner news relates to this focus area]
+(add 2 line breaks)
+**[Focus Area]**
+(add a line break)
+[Provide explanation about how partner news relates to this focus area]
 (add 2 line breaks)
 ...
 
 JSON Data:
 {promptData}
 
-Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail. Please do not include "```markdown\n" in the response.', 'NOW()', 'Partners', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }', 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', '[{ "googleSearch": {} }]', '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]');
+STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail. Please do not include "```markdown\n" in the response.', 'NOW()', 'Partners', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }', 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', '[{ "googleSearch": {} }]', '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]');
