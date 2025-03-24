@@ -7,7 +7,6 @@ import {
   ChatMessage,
   ChatFile,
   AiResponse,
-  ScreenToOpenByAiActionCategory,
   getUrlPageByAiResponseCategory
 } from './ai-assistant.model';
 import { Router } from '@angular/router';
@@ -171,7 +170,7 @@ export class AiAssistantData {
   }
 
   private handleActionResponse(aiResponse: AiResponse): void {
-    const pageUrl = getUrlPageByAiResponseCategory(aiResponse.Category);
+    const pageUrl = getUrlPageByAiResponseCategory(aiResponse?.Category || '');
 
     if (!pageUrl) {
       this.addSystemMessage({Message: 'Sorry, I cannot navigate to that page.'});
@@ -179,7 +178,7 @@ export class AiAssistantData {
     }
 
     this.router.navigate([pageUrl], {
-      state: { contactData: aiResponse },
+      state: { data: aiResponse },
       queryParams: { openNewDialog: 'true' }
     });
   }

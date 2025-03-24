@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges} from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
@@ -17,6 +17,7 @@ import { MessageService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import {Contact} from '../../../models/contact.model';
 import { ActivatedRoute, Router } from '@angular/router';
+import {Partner} from '../../../models/partner.model';
 
 @Component({
   selector: 'app-interaction-modal',
@@ -41,13 +42,13 @@ import { ActivatedRoute, Router } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InteractionModalComponent {
-  @Input() interaction?: Interaction;
+  @Input() record?: Interaction;
   @Output() closeModal = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
 
   isSaving = signal(false);
 
-  interactionForm: FormGroup;
+  formGroup: FormGroup;
   display = true;
 
   typeOptions = Object.values(InteractionType).map(type => ({
@@ -66,7 +67,7 @@ export class InteractionModalComponent {
     private messageService: MessageService,
     private translateService: TranslateService,
   ) {
-    this.interactionForm = this.fb.group({
+    this.formGroup = this.fb.group({
       id: [''],
       type: ['', Validators.required],
       date: [new Date(), Validators.required],
@@ -77,14 +78,22 @@ export class InteractionModalComponent {
   }
 
   ngOnInit() {
-    if (this.interaction) {
-      this.interactionForm.patchValue({
-        id: this.interaction.id,
-        type: this.interaction.type,
-        date: new Date(this.interaction.date),
-        data: this.interaction.data,
-        contactId: this.interaction.contactId
+    if (this.record) {
+      this.formGroup.patchValue({
+        id: this.record.id,
+        type: this.record.type,
+        date: new Date(this.record.date),
+        data: this.record.data,
+        contactId: this.record.contactId
       });
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    this.display = true;
+    if (changes['record'] && this.record && Object.keys(this.record).length > 0) {
+      console.log()
+      this.formGroup.patchValue(this.record!);
     }
   }
 
@@ -110,8 +119,8 @@ export class InteractionModalComponent {
   }
 
   onSubmit(): void {
-    if (this.interactionForm.valid) {
-      const formValue = this.interactionForm.value;
+    if (this.formGroup.valid) {
+      const formValue = this.formGroup.value;
       this.isSaving.set(true);
 
       if (formValue.id) {
@@ -147,7 +156,7 @@ export class InteractionModalComponent {
       header: this.translateService.instant('title.confirmation'),
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        const interactionId = this.interactionForm.get('id')?.value;
+        const interactionId = this.formGroup.get('id')?.value;
         if (interactionId) {
           this.interactionService.delete(interactionId).subscribe({
             next: () => {
