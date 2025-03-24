@@ -20,7 +20,7 @@ export class GeminiService {
           return '';
         }
         return response.body?.candidates[0].content.parts
-          .map(part => part.text)
+          .map(part => part.text.replace('```markdown\n',''))
           .join('');
       })
     );
