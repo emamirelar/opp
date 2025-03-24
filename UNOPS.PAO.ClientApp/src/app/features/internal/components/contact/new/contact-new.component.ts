@@ -24,6 +24,7 @@ import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 
 import { Router } from '@angular/router';
+import {Contact} from '../../../models/contact.model';
 
 @Component({
   selector: 'app-contact-new',
@@ -105,8 +106,7 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
   contactService = inject(ContactService);
   languageService = inject(LanguageService);
   public cdr = inject(ChangeDetectorRef);
-  @Input() public record: any = {};
-  @Input() public aiGeneratedData: any = null;
+  @Input() public record: Contact = {};
 
   private langChangeSubscription: Subscription = new Subscription();
   @Output()
@@ -122,12 +122,6 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
   @Output() closeModal = new EventEmitter<void>();
   display = true;
 
-  constructor() {
-    //load salutations
-    //this.cachedDataService.loadSalutations();
-    //this.cachedDataService.loadStatus();
-  }
-
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
   }
@@ -140,37 +134,9 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     this.display = true;
-    
-    // Handle pre-filled data from either direct record input or AI assistant
-    if (changes['aiGeneratedData'] && this.aiGeneratedData) {
-      this.preFillFormWithData(this.aiGeneratedData);
-    } else if (changes['record'] && Object.keys(this.record).length > 0) {
-      this.formGroup.patchValue(this.record);
+    if (changes['record'] && Object.keys(this.record).length > 0) {
+      this.formGroup.patchValue(this.record as any);
     }
-  }
-
-  preFillFormWithData(data: any) {
-    // Map AI response fields to form fields if needed
-    const formData: any = {};
-    
-    // Directly map matching fields
-    Object.keys(this.formGroup.controls).forEach(key => {
-      if (data[key] !== undefined) {
-        formData[key] = data[key];
-      }
-    });
-    
-    // Handle specific field mappings if the AI data structure differs from the form
-    if (data.name) {
-      const nameParts = data.name.split(' ');
-      if (nameParts.length > 0) formData.firstName = nameParts[0];
-      if (nameParts.length > 1) formData.lastName = nameParts[nameParts.length - 1];
-      if (nameParts.length > 2) formData.middleName = nameParts.slice(1, -1).join(' ');
-    }
-    
-    // Apply the data to the form
-    this.formGroup.patchValue(formData);
-    this.cdr.detectChanges();
   }
 
   _handleOnSaveClick(){

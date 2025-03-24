@@ -7,15 +7,15 @@ import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
-import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ContactService } from '../../services/contact.service';
 import { DialogModule } from 'primeng/dialog';
-import { Subject } from 'rxjs';
-import { takeUntil, filter } from 'rxjs/operators';
 
 import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
-import {ContactNewComponent} from './new/contact-new.component';
+import { ContactNewComponent } from './new/contact-new.component';
+import { BusinessCardScannerComponent } from './business-card-scanner/business-card-scanner.component';
+import {Contact} from '../../models/contact.model';
 
 @Component({
   selector: 'app-contact',
@@ -29,6 +29,7 @@ import {ContactNewComponent} from './new/contact-new.component';
     DialogModule,
     ScrollPanelModule,
     ContactNewComponent,
+    BusinessCardScannerComponent,
     DatePipe,
     ProgressSpinnerModule,
     TranslateModule,
@@ -36,17 +37,16 @@ import {ContactNewComponent} from './new/contact-new.component';
   ]
 })
 export class ContactComponent implements OnInit {
-
   router = inject(Router);
   route = inject(ActivatedRoute);
   contactService = inject(ContactService);
+  feedbackDialogService = inject(FeedbackDialogService);
 
   newContact = signal(false);
   newContactData = signal<any>(null);
 
   contactData = this.contactService.allContacts;
   isDataLoading = this.contactService.isLoading;
-  feedbackDialogService = inject(FeedbackDialogService);
 
   ngOnInit() {
     this.contactService.getAllContacts();
@@ -86,5 +86,10 @@ export class ContactComponent implements OnInit {
   closeNewContactDialog() {
     this.newContact.set(false);
     this.newContactData.set(null);
+  }
+
+  onScannedContact(scannedContact: Contact) {
+    this.newContact.set(true);
+    this.newContactData.set(scannedContact);
   }
 }
