@@ -217,6 +217,13 @@
     "dragDropInfo": "You can drag and drop files directly into this chat",
     "filesToSend": "Files to send:",
     "removeFile": "Remove file",
-    "typeMessage": "Type your message..."
+    "typeMessage": "Type your message...",
+    "takePhoto": "Take a Photo",
+    "attachFile": "Attach file",
+    "recordAudio": "Record audio message"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "capture": "Capture"
   }
 }
