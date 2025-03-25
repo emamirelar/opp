@@ -105,6 +105,13 @@
         "dragDropInfo": "Vous pouvez faire glisser et déposer des fichiers directement dans ce chat",
         "filesToSend": "Fichiers à envoyer:",
         "removeFile": "Supprimer le fichier",
-        "typeMessage": "Tapez votre message..."
+        "typeMessage": "Tapez votre message...",
+        "takePhoto": "Prendre une photo",
+        "attachFile": "Joindre un fichier",
+        "recordAudio": "Enregistrer un message vocal"
+    },
+    "common": {
+        "cancel": "Annuler",
+        "capture": "Capturer"
     }
 }

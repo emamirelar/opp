@@ -41,8 +41,7 @@ export class AiAssistantData {
       this.addSystemMessage({Message:'No active session. Please try refreshing the page.'});
       return of();
     }
-
-    return this.sendMessageToServer(sessionId, message);
+    return this.sendMessageToServer(sessionId, message, files[0]?.file);
   }
 
   public clearConversation(): void {
@@ -187,10 +186,11 @@ export class AiAssistantData {
     this.chatHistory.update(history => [...history, message]);
   }
 
-  private sendMessageToServer(sessionId: string, message: string): Observable<void> {
+  private sendMessageToServer(sessionId: string, message: string, file: File): Observable<void> {
     const formData = new FormData();
     formData.append("sessionId", sessionId);
     formData.append("message", message);
+    formData.append("file", file);
     // TODO: Add the file to the formData
     return this.aiAssistantService.chat(formData).pipe(
       tap(response => {

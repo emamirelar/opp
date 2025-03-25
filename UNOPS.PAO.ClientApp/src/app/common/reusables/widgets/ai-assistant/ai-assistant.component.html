@@ -32,8 +32,8 @@
          class="flex flex-col flex-1 p-4 space-y-4 relative flex-grow overflow-y-auto"
          (dragover)="onDragOver($event)"
          (dragleave)="onDragLeave($event)"
-         (drop)="onDrop($event)"
-         [ngClass]="{'bg-blue-50 border-2 border-dashed border-blue-300': (isDragging() && fileUploadEnabled())}">
+         (drop)="onFileSelect($event)"
+         [ngClass]="{'bg-blue-50 border-2 border-dashed border-blue-300': isDragging()}">
 
       <!-- Loading state -->
       <div *ngIf="aiAssistantData.isLoading()"
@@ -44,7 +44,7 @@
       </div>
 
       <!-- Drag and drop overlay -->
-      <div *ngIf="isDragging() && fileUploadEnabled()" class="absolute inset-0 flex items-center justify-center bg-blue-50 bg-opacity-70 z-10 rounded-xl">
+      <div *ngIf="isDragging()" class="absolute inset-0 flex items-center justify-center bg-blue-50 bg-opacity-70 z-10 rounded-xl">
         <div class="text-blue-600 flex flex-col items-center">
           <i class="pi pi-upload text-3xl mb-2"></i>
           <span>{{ 'aiAssistant.dropFilesHere' | translate }}</span>
@@ -55,7 +55,6 @@
       <div *ngFor="let message of aiAssistantData.chatHistory()"
            class="flex flex-col"
            [ngClass]="message.isUser ? 'items-end' : ''">
-
 
         <div class="py-3 rounded-2xl rounded-tr-sm break-words animate-fade-in"
              [ngClass]="message.isUser ? 'p-3 bg-blue-50 shadow-sm text-gray-800  max-w-[85%]' : ''">
@@ -84,71 +83,116 @@
       <!-- Empty state -->
       <div *ngIf="aiAssistantData.chatHistory().length === 0" class="text-center text-gray-500 p-5">
         <p class="text-lg font-light">{{ 'aiAssistant.assistPrompt' | translate }}</p>
-        @if(fileUploadEnabled()) {
-          <p class="mt-2 text-sm text-blue-500">
-            <i class="pi pi-info-circle mr-1"></i>
-            {{ 'aiAssistant.dragDropInfo' | translate }}
-          </p>
-        }
+        <p class="mt-2 text-sm text-blue-500">
+          <i class="pi pi-info-circle mr-1"></i>
+          {{ 'aiAssistant.dragDropInfo' | translate }}
+        </p>
       </div>
   </div>
   <div class="flex-col flex w-full gap-2 mt-2 self-end shrink">
-    <div *ngIf="fileUploadEnabled() && selectedFiles().length > 0" class="mt-2 p-2 bg-gray-50 rounded-xl">
+    <div *ngIf="selectedFiles().length > 0" class="mt-2 p-2 bg-gray-50 rounded-xl">
       <div class="text-sm font-medium mb-1 text-gray-700">{{ 'aiAssistant.filesToSend' | translate }}</div>
       <div class="max-h-24 overflow-y-auto">
-        <div *ngFor="let file of selectedFiles(); let i = index" class="flex items-center justify-between py-1 hover:bg-gray-100 rounded px-2">
-          <div class="flex items-center gap-1">
-            <span class="pi pi-file text-blue-500"></span>
-            <span class="truncate max-w-[180px]">{{ file.name }}</span>
+        <div *ngFor="let fileData of selectedFiles(); let i = index" class="flex items-center gap-2 justify-between py-1 hover:bg-gray-100 rounded rounded-r-3xl px-2">
+          <div class="flex items-center gap-2 flex-grow">
+            @if (fileData.file.type.startsWith('image/')) {
+              <div class="size-8 rounded overflow-hidden flex-shrink-0">
+                <img [src]="fileData.file | safeUrl" class="w-full h-full object-cover" alt="thumbnail" />
+              </div>
+              <span class="truncate max-w-[180px]">{{ fileData.name }}</span>
+            } @else if (fileData.file.type.startsWith('audio/')) {
+              <audio controls class="h-8 w-full">
+                <source [src]="fileData.file | safeUrl" [type]="fileData.file.type">
+              </audio>
+            } @else {
+              <span class="pi pi-file text-blue-500"></span>
+              <span class="truncate max-w-[180px]">{{ fileData.name }}</span>
+            }
+
           </div>
           <div class="flex gap-2">
             <p-button
               icon="pi pi-times"
               rounded="true"
               outlined="true"
-              pTooltip="{{ 'aiAssistant.removeFile' | translate }}"
               (click)="removeFile(i)">
             </p-button>
           </div>
         </div>
       </div>
     </div>
-    <div class="w-full flex gap-2 bg-gray-50 p-2 rounded-xl">
-              <textarea
-                pTextarea
-                [ngModel]="message()"
-                (ngModelChange)="message.set($event)"
-                placeholder="{{ 'aiAssistant.typeMessage' | translate }}"
-                [rows]="1"
-                [autoResize]="true"
-                class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent"
-                (keydown.enter)="$event.preventDefault(); sendMessage()">
-              </textarea>
+    <div class="w-full flex flex-col gap-2 bg-gray-50 p-2 rounded-xl">
+      <textarea
+        pTextarea
+        [ngModel]="message()"
+        (ngModelChange)="message.set($event)"
+        placeholder="{{ 'aiAssistant.typeMessage' | translate }}"
+        [rows]="1"
+        [autoResize]="true"
+        class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent"
+        (keydown.enter)="$event.preventDefault(); sendMessage()">
+      </textarea>
 
-      <div class="flex gap-2 items-center">
-        <p-button
-          icon="pi pi-send"
-          (click)="sendMessage()"
-          [text]="true"
-          [disabled]="!message().trim() && selectedFiles().length === 0">
-        </p-button>
-        <p-fileUpload
-          *ngIf="fileUploadEnabled()"
-          mode="basic"
-          chooseIcon="pi pi-paperclip"
-          [chooseLabel]="''"
-          [auto]="true"
-          [maxFileSize]="10000000"
-          [showUploadButton]="false"
-          [showCancelButton]="false"
-          [disabled]="isProcessingFile()"
-          (onSelect)="onFileSelect($event)"
-          accept="image/*,application/pdf,text/*">
-        </p-fileUpload>
+      <div class="flex justify-between items-center">
+        <div class="flex gap-2">
+          <p-button
+            icon="pi pi-camera"
+            (onClick)="startCamera()"
+            [text]="true"
+            [rounded]="true"
+            pTooltip="{{ 'aiAssistant.takePhoto' | translate }}"
+            [disabled]="isWaitingResponse()">
+          </p-button>
+          <input
+            #fileInput
+            type="file"
+            class="hidden"
+            (change)="onFileSelect($event)"
+            [accept]="'image/*,application/pdf,text/*,audio/*'"
+            [multiple]="false">
+          <p-button
+            icon="pi pi-paperclip"
+            (onClick)="fileInput.click()"
+            [text]="true"
+            [rounded]="true"
+            pTooltip="{{ 'aiAssistant.attachFile' | translate }}"
+            [disabled]="isProcessingFile()">
+          </p-button>
+        </div>
+        <div class="flex gap-2">
+          <div class="flex justify-center items-center relative">
+            <p-button
+            icon="pi pi-microphone"
+            (mousedown)="startRecording()"
+            (mouseup)="stopRecording()"
+            (mouseleave)="stopRecording()"
+            [text]="!isRecording()"
+            [rounded]="true"
+            [ngClass]="{'recording': isRecording()}"
+            pTooltip="{{ 'aiAssistant.recordAudio' | translate }}"
+            [disabled]="isWaitingResponse()">
+            
+          </p-button>
+          <div *ngIf="isRecording()" class="voice-activity">
+          </div>
+          </div>
+          
+          <p-button
+            icon="pi pi-send"
+            (onClick)="sendMessage()"
+            [text]="true"
+            [disabled]="!message().trim() && selectedFiles().length === 0">
+          </p-button>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<app-ai-assistant-scan
+  #scanComponent
+  (onImageCaptured)="onImageCaptured($event)">
+</app-ai-assistant-scan>
 
 
 
