@@ -58,7 +58,8 @@
     "inactive": "Mark as Inactive",
     "active": "Mark as Active",
     "viewContacts": "View Contacts",
-    "new": "New"
+    "new": "New",
+    "uploadImage": "Upload Image"
   },
   "label": {
     "actions": "Actions",
