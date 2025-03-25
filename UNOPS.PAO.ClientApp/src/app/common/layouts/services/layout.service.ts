@@ -40,7 +40,7 @@ export class LayoutService {
         configSidebarVisible: false,
         staticMenuMobileActive: false,
         menuHoverActive: false,
-        aiAssistantActive: false
+        aiAssistantActive: true
     };
 
     layoutConfig = signal<layoutConfig>(this._config);
@@ -158,7 +158,7 @@ export class LayoutService {
 
     onAIAssistantToggle() {
         this.layoutState.update((prev) => ({ ...prev, aiAssistantActive: !this.layoutState().aiAssistantActive }));
-        
+
         if (this.layoutState().aiAssistantActive) {
             this.overlayOpen.next(null);
         }

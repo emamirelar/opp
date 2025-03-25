@@ -103,6 +103,13 @@
         "dragDropInfo": "Puedes arrastrar y soltar archivos directamente en este chat",
         "filesToSend": "Archivos a enviar:",
         "removeFile": "Eliminar archivo",
-        "typeMessage": "Escribe tu mensaje..."
+        "typeMessage": "Escribe tu mensaje...",
+        "takePhoto": "Tomar una foto",
+        "attachFile": "Adjuntar archivo",
+        "recordAudio": "Grabar mensaje de voz"
+    },
+    "common": {
+        "cancel": "Cancelar",
+        "capture": "Capturar"
     }
 }

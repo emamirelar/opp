@@ -6,6 +6,7 @@ export interface ChatMessage {
 }
 
 export interface ChatFile {
+  file: File;
   name: string;
   content: string;
 }
