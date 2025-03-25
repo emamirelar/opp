@@ -13,6 +13,8 @@
     <PackageReference Include="Google.Cloud.BigQuery.V2" Version="3.10.0" />
     <PackageReference Include="Google.Cloud.SecretManager.V1" Version="2.5.0" />
     <PackageReference Include="Google.Cloud.Speech.V1" Version="3.8.0" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.11.0" />
+    <PackageReference Include="Google.Cloud.TextToSpeech.V1" Version="3.10.0" />
     <PackageReference Include="Google.Cloud.Vision.V1" Version="3.7.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

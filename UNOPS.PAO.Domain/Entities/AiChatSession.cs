@@ -8,6 +8,7 @@ public class AiChatSession
     public DateTime? EndTime { get; set; }
     public int UserId { get; set; }
     public string Status { get; set; } = "Active";
+    public bool TextToSpeech { get; set; } = false;
     //[JsonIgnore]  // Prevents circular reference in serialization
     public virtual ICollection<AiChatHistory>? Chats { get; set; }
 }

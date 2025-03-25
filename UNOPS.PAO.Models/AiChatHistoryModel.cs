@@ -11,6 +11,8 @@ public class AiChatHistoryModel
     public string Type { get; set; }
     public string? EntityType { get; set; }
     public string? RequestType { get; set; }
+    public string? MediaUrl { get; set; }
+    public string? MediaType { get; set; }
     public Guid? SessionId { get; set; }
     public AiChatSessionModel? Session { get; set; }
 }
