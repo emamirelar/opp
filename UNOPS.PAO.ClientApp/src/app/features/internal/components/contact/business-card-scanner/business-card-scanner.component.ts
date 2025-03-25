@@ -1,20 +1,22 @@
 import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, inject } from '@angular/core';
-import {CommonModule, NgOptimizedImage} from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Dialog } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { TranslateModule } from '@ngx-translate/core';
+import { FileUploadModule } from 'primeng/fileupload';
 
 import { from, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { GeminiService } from '../../../services/gemini.service';
 import {Contact} from '../../../models/contact.model';
+import {ProgressSpinner} from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-business-card-scanner',
   templateUrl: './business-card-scanner.component.html',
   standalone: true,
-  imports: [CommonModule, Dialog, ButtonModule, MessageModule, NgOptimizedImage, TranslateModule]
+  imports: [CommonModule, Dialog, ButtonModule, MessageModule, TranslateModule, FileUploadModule, ProgressSpinner]
 })
 export class BusinessCardScannerComponent {
   @ViewChild('video') videoElement!: ElementRef;
@@ -23,7 +25,7 @@ export class BusinessCardScannerComponent {
 
   private geminiService = inject(GeminiService);
 
-  visible: boolean = false;
+  visible = false;
   stream: MediaStream | null = null;
   capturedImage: string | null = null;
   scanning: boolean = false;
@@ -102,7 +104,6 @@ export class BusinessCardScannerComponent {
     this.geminiService.scanFile(file, 'contact_action')
       .pipe(
         map(result => {
-          debugger
           this.onScannedContact.emit(result);
           this.hide();
           return result;
@@ -123,5 +124,33 @@ export class BusinessCardScannerComponent {
   retake(): void {
     this.capturedImage = null;
     this.startCamera();
+  }
+
+  handleFileUpload(event: any): void {
+    const file = event.files[0];
+    if (file) {
+      this.scanning = true;
+      this.error = null;
+
+
+      this.geminiService.scanFile(file, 'contact_action')
+        .pipe(
+          map(result => {
+            this.onScannedContact.emit(result);
+            this.hide();
+            return result;
+          }),
+          catchError(error => {
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            this.error = 'Failed to scan business card. Please try again.';
+            console.error('Scanning error:', errorMessage);
+            return of(null);
+          }),
+          tap(() => {
+            this.scanning = false;
+          })
+        )
+        .subscribe();
+    }
   }
 }
