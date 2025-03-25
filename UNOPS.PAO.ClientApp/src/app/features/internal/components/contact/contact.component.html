@@ -3,12 +3,18 @@
     <div class="text-2xl font-semibold">
       {{ 'title.contacts' | translate }}
     </div>
-    <p-button
-      class="ml-auto"
-      icon="pi pi-plus"
-      [label]="'button.new' | translate"
-      (onClick)="newContact.set(true)"
-    />
+    <div class="ml-auto flex gap-2">
+      <p-button
+        icon="pi pi-camera"
+        [label]="'title.scanBusinessCard' | translate"
+        (onClick)="scanner.show()"
+      />
+      <p-button
+        icon="pi pi-plus"
+        [label]="'button.new' | translate"
+        (onClick)="newContact.set(true)"
+      />
+    </div>
   </div>
 
   <p-table
@@ -58,7 +64,12 @@
 
 <app-contact-new
   *ngIf="newContact()"
-  [aiGeneratedData]="newContactData()"
+  [record]="newContactData()"
   (onRecordCreationSuccess)="_handleOnRecordCreation($event)"
   (closeModal)="closeNewContactDialog()"
 ></app-contact-new>
+
+<app-business-card-scanner
+  #scanner
+  (onScannedContact)="onScannedContact($event)"
+></app-business-card-scanner>
