@@ -1,0 +1,37 @@
+<p-dialog [(visible)]="visible" [modal]="true" [style]="{width: '90vw', maxWidth: '800px'}"
+          [draggable]="false" [resizable]="false" (onHide)="hide()"
+          [header]="'title.scanBusinessCard' | translate"
+          >
+
+  <div class="flex flex-col items-center gap-4">
+    <div class="relative w-full aspect-video bg-black rounded-lg overflow-hidden" *ngIf="!capturedImage">
+      <video #video class="w-full h-full object-cover" autoplay playsinline></video>
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="w-4/5 h-3/5 border-2 border-white/50 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"></div>
+      </div>
+    </div>
+
+    <div class="w-full aspect-video rounded-lg overflow-hidden shadow-sm" *ngIf="capturedImage">
+      <img [src]="capturedImage" alt="Captured business card" class="w-full h-full object-cover bg-black">
+    </div>
+
+    <div class="w-full" *ngIf="error">
+      <p-message severity="error" [text]="error"></p-message>
+    </div>
+
+
+  </div>
+  <ng-template pTemplate="footer">
+    <div class="flex gap-2 mt-4">
+        @if (capturedImage) {
+            <p-button label="Retake" icon="pi pi-refresh" (onClick)="retake()" styleClass="p-button-secondary" outlined="true"></p-button>
+            <p-button label="Scan" icon="pi pi-search" (onClick)="scanBusinessCard()" [loading]="scanning"></p-button>
+        } @else {
+            <p-button label="Capture" icon="pi pi-camera" (onClick)="captureImage()"></p-button>
+        }
+    </div>
+
+</ng-template>
+</p-dialog>
+
+<canvas #canvas class="hidden"></canvas>

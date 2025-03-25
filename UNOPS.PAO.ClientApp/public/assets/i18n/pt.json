@@ -20,8 +20,8 @@
         "contacts": "Contatos",
         "interactions": "Interações",
         "newInteraction": "Nova Interação",
-        "editInteraction": "Editar Interação"
-
+        "editInteraction": "Editar Interação",
+        "scanBusinessCard": "Digitalizar Cartão de Visita"
     },
     "button": {
         "cancel": "Cancelar",

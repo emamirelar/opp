@@ -25,4 +25,23 @@ export class GeminiService {
       })
     );
   }
+
+  // Method to scan files using Gemini
+  scanFile(file: File, type: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    return this.http.post(`${this.apiUrl}/scan-data`, formData)
+      .pipe(map(this.parseGeminiResponseToJson));
+  }
+
+  private parseGeminiResponseToJson(body: any) {
+    if (!body.candidates?.[0]?.content?.parts?.[0]?.text) {
+      return '';
+    }
+    const cleanedMessage = body?.candidates?.[0]?.content?.parts?.[0]?.text
+      .replace(/^```json\s*/, '')
+      .replace(/```/, '');
+    return JSON.parse(cleanedMessage);
+  }
 }
