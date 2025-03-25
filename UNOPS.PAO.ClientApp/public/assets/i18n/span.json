@@ -32,7 +32,8 @@
         "profile": "Perfil",
         "save": "Guardar",
         "upload": "Subir",
-        "delete": "Eliminar"
+        "delete": "Eliminar",
+        "uploadImage": "Subir Imagen"
     },
     "label": {
         "actions": "Acciones",

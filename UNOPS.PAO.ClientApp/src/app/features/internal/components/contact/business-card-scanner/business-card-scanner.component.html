@@ -1,9 +1,16 @@
 <p-dialog [(visible)]="visible" [modal]="true" [style]="{width: '90vw', maxWidth: '800px'}"
           [draggable]="false" [resizable]="false" (onHide)="hide()"
-          [header]="'title.scanBusinessCard' | translate"
-          >
+          [header]="'title.scanBusinessCard' | translate">
 
-  <div class="flex flex-col items-center gap-4">
+  <div class="flex flex-col items-center justify-center gap-4 relative" [ngClass]="scanning ? 'opacity-50' : ''">
+
+    @if (scanning) {
+      <p-progress-spinner styleClass class="absolute z-10"/>
+    }
+
+
+
+
     <div class="relative w-full aspect-video bg-black rounded-lg overflow-hidden" *ngIf="!capturedImage">
       <video #video class="w-full h-full object-cover" autoplay playsinline></video>
       <div class="absolute inset-0 flex items-center justify-center">
@@ -18,20 +25,27 @@
     <div class="w-full" *ngIf="error">
       <p-message severity="error" [text]="error"></p-message>
     </div>
-
-
   </div>
-  <ng-template pTemplate="footer">
-    <div class="flex gap-2 mt-4">
-        @if (capturedImage) {
-            <p-button label="Retake" icon="pi pi-refresh" (onClick)="retake()" styleClass="p-button-secondary" outlined="true"></p-button>
-            <p-button label="Scan" icon="pi pi-search" (onClick)="scanBusinessCard()" [loading]="scanning"></p-button>
-        } @else {
-            <p-button label="Capture" icon="pi pi-camera" (onClick)="captureImage()"></p-button>
-        }
-    </div>
 
-</ng-template>
+  <ng-template pTemplate="footer">
+    <div class="flex w-full gap-2 mt-4 justify-end">
+
+      @if (capturedImage) {
+
+        <p-button label="Retake" icon="pi pi-refresh" (onClick)="retake()" styleClass="p-button-secondary" [outlined]="true"></p-button>
+        <p-button label="Scan" icon="pi pi-search" (onClick)="scanBusinessCard()" [loading]="scanning"></p-button>
+      } @else {
+        <p-fileUpload #fileUpload mode="basic" chooseIcon="pi pi-upload"
+                    [auto]="true" accept="image/*" [maxFileSize]="5000000"
+                    (uploadHandler)="handleFileUpload($event)"
+                    [customUpload]="true"
+                    [chooseLabel]="'button.uploadImage' | translate">
+
+                    </p-fileUpload>
+        <p-button label="Capture" icon="pi pi-camera" class="ml-auto" (onClick)="captureImage()"></p-button>
+      }
+    </div>
+  </ng-template>
 </p-dialog>
 
 <canvas #canvas class="hidden"></canvas>
