@@ -19,12 +19,14 @@ public interface IGeminiManager
     Guid CreateNewSession(int userId);
     bool EndSession(Guid sessionId);
     Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type);
-    Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request);
-    Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType);
+    Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string fileUrl, string fileType);
+    Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType, string fileUrl, string fileType);
     JObject GetDetailsFromGeminiResponse(string modelResponse);
-    bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType);
+    bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType, string fileUrl, string fileType);
     void UpdateCurrentSessionIfInactive(int userId, Guid sessionId);
     Task<string> ProcessImage(IFormFile file);
     Task<string> ProcessAudio(IFormFile file);
-    Task<string> ExtractDataFromFile(IFormFile file);
+    Task<string> ExtractDataFromFile(IFormFile file, string fileType);
+    string FindFileType(IFormFile file);
+    Task<string> UploadFileToGCS(IFormFile file);
 }

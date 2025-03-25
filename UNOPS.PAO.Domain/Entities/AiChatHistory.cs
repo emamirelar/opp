@@ -11,6 +11,8 @@ public class AiChatHistory
     public string Type { get; set; }
     public string? EntityType { get; set; }
     public string? RequestType { get; set; }
+    public string? MediaUrl { get; set; }
+    public string? MediaType { get; set; }
     public Guid? SessionId { get; set; }
     [JsonIgnore]  // Prevents circular reference in serialization
     public AiChatSession? Session { get; set; }

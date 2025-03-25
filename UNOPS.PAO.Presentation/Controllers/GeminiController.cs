@@ -76,12 +76,16 @@ public class GeminiController : ControllerBase
         manager.UpdateCurrentSessionIfInactive(currentUserId, req.sessionId);
 
         string extractedText = "";
+        string fileUrl = "";
+        string fileType = "";
 
         if (req.File != null) {
-            extractedText = await manager.ExtractDataFromFile(req.File);
-            if (extractedText != null && extractedText.StartsWith("Error in extraction")) {
-                return BadRequest(extractedText);
+            fileType = manager.FindFileType(req.File);
+            if (string.IsNullOrEmpty(fileType)) {
+                return StatusCode(500, new { message = "File type not compatible" });
             }
+            extractedText = await manager.ExtractDataFromFile(req.File, fileType);
+            fileUrl = await manager.UploadFileToGCS(req.File);
         }
 
         var chatHistory = await manager.GetChatHistory(req.sessionId, "entity_intent_detection");
@@ -95,7 +99,7 @@ public class GeminiController : ControllerBase
         }).ToList();
 
         // Entity detection and intent classification to be done
-        var entityDetectionResponse = await manager.EntityDetectionThroughGemini(formattedChatHistory, req);
+        var entityDetectionResponse = await manager.EntityDetectionThroughGemini(formattedChatHistory, req, fileUrl, fileType);
         var entityResponse = manager.GetDetailsFromGeminiResponse(entityDetectionResponse);
         var promptType = entityResponse["Type"]?.ToString();
         var forward = entityResponse["Forward"]?.ToString();
@@ -113,7 +117,7 @@ public class GeminiController : ControllerBase
 
         req.Message = "Summary: " + summary;
 
-        var detailedResponse = await manager.FetchDetailedResponseFromGemini(formattedChatHistory, req, promptType);
+        var detailedResponse = await manager.FetchDetailedResponseFromGemini(formattedChatHistory, req, promptType, fileUrl, fileType);
         var parsedDetailedResponse = manager.GetDetailsFromGeminiResponse(detailedResponse);
         
         return Ok(detailedResponse);
@@ -129,7 +133,13 @@ public class GeminiController : ControllerBase
                 return BadRequest(new { message = "No valid file detected." });
             }
 
-            string extractedText = await manager.ExtractDataFromFile(req.File);
+            string fileType = manager.FindFileType(req.File);
+
+            if (string.IsNullOrEmpty(fileType)) {
+                return StatusCode(500, new { message = "File type not compatible" });
+            }
+
+            string extractedText = await manager.ExtractDataFromFile(req.File, fileType);
             string type = req?.Type;
 
             if (!string.IsNullOrEmpty(type)) {

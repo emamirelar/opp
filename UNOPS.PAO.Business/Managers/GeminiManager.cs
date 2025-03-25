@@ -81,11 +81,11 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request) {
+    public Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string fileUrl, string fileType) {
         throw new NotImplementedException();
     }
 
-    public Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType) {
+    public Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType, string fileUrl, string fileType) {
         throw new NotImplementedException();
     }
 
@@ -93,7 +93,8 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType) {
+    public bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType
+                                        , string fileUrl, string fileType) {
         throw new NotImplementedException();
     }
 
@@ -109,7 +110,15 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<string> ExtractDataFromFile(IFormFile file) {
+    public Task<string> ExtractDataFromFile(IFormFile file, string fileType) {
+        throw new NotImplementedException();
+    }
+
+    public string FindFileType(IFormFile file) {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> UploadFileToGCS(IFormFile file) {
         throw new NotImplementedException();
     }
 }

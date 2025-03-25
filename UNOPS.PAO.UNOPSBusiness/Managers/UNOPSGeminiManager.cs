@@ -22,7 +22,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Google.Cloud.Vision.V1;
 using Google.Cloud.Speech.V1;
+using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Http;
+using Google.Cloud.TextToSpeech.V1;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -37,6 +39,9 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly string _connectionString;
     private readonly ImageAnnotatorClient _visionClient;
     private readonly SpeechClient _speechClient;
+    private readonly StorageClient _storageClient;
+    private readonly TextToSpeechClient _ttsClient;
+    private readonly string _bucketName;
 
     public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
@@ -49,6 +54,9 @@ public class UNOPSGeminiManager : IGeminiManager
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
         _visionClient = ImageAnnotatorClient.Create();
         _speechClient = SpeechClient.Create();
+        _storageClient = StorageClient.Create();
+        _ttsClient = TextToSpeechClient.Create();
+        _bucketName = configuration.GetValue<string>("GoogleDriveSettings:GoogleCloudStorageBucketName");
     }
 
     // Map AiPrompt entity to AiPromptModel
@@ -164,14 +172,16 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Fetch detailed response from Gemini
-    public async Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType) {
-        string geminiResponse = await ChatWithGemini(request.sessionId, request.Message, promptType, formattedChatHistory);
+    public async Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType
+                                                                , string fileUrl, string fileType) {
+        string geminiResponse = await ChatWithGemini(request.sessionId, request.Message, promptType, formattedChatHistory, fileUrl, fileType);
         return geminiResponse;
     }
 
     // Entity detection through Gemini
-    public async Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request) {
-        string geminiResponse = await ChatWithGemini(request.sessionId, request.Message, "entity_intent_detection", formattedChatHistory);
+    public async Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request
+                                                                , string fileUrl, string fileType) {
+        string geminiResponse = await ChatWithGemini(request.sessionId, request.Message, "entity_intent_detection", formattedChatHistory, fileUrl, fileType);
         return geminiResponse;
     }
     
@@ -197,7 +207,8 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Update chat history table
-    public bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType) {
+    public bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType
+                                        , string fileUrl, string fileType) {
         var newUserChatHistory = new AiChatHistory{
             SessionId = sessionId,
             Sender = "user",
@@ -206,6 +217,8 @@ public class UNOPSGeminiManager : IGeminiManager
             EntityType = entity,
             RequestType = intent,
             Type = promptType,
+            MediaUrl = fileUrl,
+            MediaType = fileType,
             TimeStamp = DateTime.Now.ToUniversalTime()
         };
 
@@ -217,6 +230,8 @@ public class UNOPSGeminiManager : IGeminiManager
             EntityType = entity,
             RequestType = intent,
             Type = promptType,
+            MediaUrl = fileUrl,
+            MediaType = fileType,
             TimeStamp = DateTime.Now.ToUniversalTime()
         };
 
@@ -232,7 +247,7 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Chat with Gemini
-    private async Task<string> ChatWithGemini(Guid sessionId, string message, string promptType, IEnumerable<dynamic> formattedChatHistory) {
+    private async Task<string> ChatWithGemini(Guid sessionId, string message, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType) {
         var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
         string finalPrompt = message;
         var promptData = GetPromptData(promptType).FirstOrDefault();
@@ -276,7 +291,7 @@ public class UNOPSGeminiManager : IGeminiManager
         var intent = parsedResponse["Intent"]?.ToString() ?? parsedResponse["ResponseType"]?.ToString();
         var modelMessage = parsedResponse["Message"].ToString();
         string responseInString = JsonConvert.SerializeObject(parsedResponse);
-        UpdateChatHistoryTable(sessionId, message, finalPrompt, responseInString, entity, intent, promptType);
+        UpdateChatHistoryTable(sessionId, message, finalPrompt, responseInString, entity, intent, promptType, fileUrl, fileType);
         return response;
     }
 
@@ -566,38 +581,67 @@ public class UNOPSGeminiManager : IGeminiManager
         }
     }
 
-    public async Task<string> ExtractDataFromFile(IFormFile file) {
-        string errorMessage = "";
-        var contentType = file.ContentType ?? "";
+    public async Task<string> ExtractDataFromFile(IFormFile file, string fileType) {
         string extractedText = "";
-        string fileType = "";
+        string fileTypeText = "";
+        string fileUrl = "";
             
-        if (contentType.StartsWith("image/")) {
-            fileType = "(Image uploaded by User)";
+        if (fileType == "img") {
+            fileTypeText = "(Image uploaded by User)";
             extractedText = await ProcessImage(file);
-            if (string.IsNullOrEmpty(extractedText))
-            {
-                errorMessage += " Try to re-upload a higher resolution of the same image.";
-            }
-        } else if (contentType.StartsWith("audio/") || contentType == "application/octet-stream") {
-            fileType = "(Audio uploaded by User)";
+        } else if (fileType == "audio") {
+            fileTypeText = "(Audio uploaded by User)";
             extractedText = await ProcessAudio(file);
-            if (string.IsNullOrEmpty(extractedText))
-            {
-                errorMessage += " Try to re-upload a better quality of the same audio. Ensure the volume is good enough to understand.";
-            }
-        } else {
-            errorMessage = "Unsupported file type";
         }
 
-        if (!string.IsNullOrEmpty(errorMessage))
-        {
-            return "Error in extraction: " + errorMessage;
-        }
-
-        extractedText = "Extracted Text " + fileType + ": " + extractedText;
+        extractedText = "Extracted Text " + fileTypeText + ": " + extractedText;
         return extractedText;
 
+    }
+
+    public string FindFileType(IFormFile file) 
+    {
+        string type = file?.ContentType ?? "";
+        if (type.StartsWith("image/")) 
+        {
+            return "img";
+        }
+        else if (type.StartsWith("audio/") || type == "application/octet-stream")
+        {
+            return "audio";
+        }
+        return "";
+    }
+
+    private async Task<string> UploadToGCS(Stream stream, string objectName, string contentType)
+    {
+        try
+        {
+            stream.Position = 0; // Ensure the stream is at the beginning
+            await _storageClient.UploadObjectAsync(_bucketName, objectName, contentType, stream);
+            return $"https://storage.cloud.google.com/{_bucketName}/{objectName}";
+        }
+        catch (Exception ex)
+        {
+            return ""; // Handle errors as needed
+        }
+    }
+
+    // Overload for IFormFile
+    public async Task<string> UploadFileToGCS(IFormFile file)
+    {
+        string objectName = $"{Guid.NewGuid()}_{file.FileName}"; // Unique filename
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream);
+        return await UploadToGCS(memoryStream, objectName, file.ContentType);
+    }
+
+    // Overload for byte array (TTS audio)
+    private async Task<string> UploadAudioToGCS(byte[] audioBytes)
+    {
+        string objectName = $"tts_audio_{Guid.NewGuid()}.mp3"; // Unique filename
+        using var memoryStream = new MemoryStream(audioBytes);
+        return await UploadToGCS(memoryStream, objectName, "audio/mpeg");
     }
 
     public async Task<string> ProcessImage(IFormFile file) {

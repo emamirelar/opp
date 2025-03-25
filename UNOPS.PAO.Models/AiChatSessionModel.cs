@@ -6,4 +6,5 @@ public class AiChatSessionModel
     public DateTime? EndTime { get; set; }
     public int UserId { get; set; }
     public string Status { get; set; } = "Active";
+    public bool TextToSpeech { get; set; } = false;
 }
