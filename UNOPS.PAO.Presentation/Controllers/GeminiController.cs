@@ -41,13 +41,12 @@ public class GeminiController : ControllerBase
 
     [HttpPost(APIDictionary.AiAssistantGetSession)]
     public async Task<ActionResult> GetSessionDetails([FromBody] GeminiSessionRequest req) {
-        var sessionData = manager.GetSessionData(req.sessionId, currentUserId).ToList();
+        var sessionData = manager.GetSessionDataWithChats(req.sessionId, currentUserId).ToList();
         return Ok(sessionData);
     }
 
     [HttpPost(APIDictionary.AiAssistantCreateSession)]
     public async Task<ActionResult> CreateSession() {
-        // Check if an active session exists (where EndDate is null)
         var sessionId = manager.CreateNewSession(currentUserId);
         return Ok(new {sessionId = sessionId});
     }
@@ -61,71 +60,28 @@ public class GeminiController : ControllerBase
     }
 
     [HttpPost(APIDictionary.AiAssistantChat)]
-    public async Task<ActionResult> ChatWithGemini([FromForm] GeminiAssistantRequest req) {
-
+    public async Task<ActionResult> ChatWithGemini([FromForm] GeminiAssistantRequest req) 
+    {
         if (req == null || req?.sessionId == Guid.Empty)
         {
             return BadRequest("Invalid request.");
         }
 
-        if (string.IsNullOrEmpty(req?.Message)) {
-            req.Message = "";
-        }
-
-        // If any other session is active, mark it as inactive and activate this session (if required)
-        manager.UpdateCurrentSessionIfInactive(currentUserId, req.sessionId);
-
-        string extractedText = "";
-        string fileUrl = "";
-        string fileType = "";
-
-        if (req.File != null) {
-            fileType = manager.FindFileType(req.File);
+        if (req.File != null)
+        {
+            var fileType = manager.FindFileType(req.File);
             if (string.IsNullOrEmpty(fileType)) {
                 return StatusCode(500, new { message = "File type not compatible" });
             }
-            extractedText = await manager.ExtractDataFromFile(req.File, fileType);
-            fileUrl = await manager.UploadFileToGCS(req.File);
         }
 
-        var chatHistory = await manager.GetChatHistory(req.sessionId, "entity_intent_detection");
-        bool hasEntityHistory = false;
-
-        req.Message = req.Message + "\\n " + extractedText + ".\\n"; 
-
-        var formattedChatHistory = chatHistory.Select(x => new {
-            role = x.Sender,
-            parts = new[] { new { text = x.RawMessage } }
-        }).ToList();
-
-        // Entity detection and intent classification to be done
-        var entityDetectionResponse = await manager.EntityDetectionThroughGemini(formattedChatHistory, req, fileUrl, fileType);
-        var entityResponse = manager.GetDetailsFromGeminiResponse(entityDetectionResponse);
-        var promptType = entityResponse["Type"]?.ToString();
-        var forward = entityResponse["Forward"]?.ToString();
-        var summary = entityResponse["Summary"]?.ToString();
-        if (forward == string.Empty || forward == "No") {
-            return Ok(entityDetectionResponse);
-        }
-
-        chatHistory = await manager.GetChatHistory(req.sessionId, promptType);
-
-        formattedChatHistory = chatHistory.Select(x => new {
-            role = x.Sender,
-            parts = new[] { new { text = x.RawMessage } }
-        }).ToList();
-
-        req.Message = "Summary: " + summary;
-
-        var detailedResponse = await manager.FetchDetailedResponseFromGemini(formattedChatHistory, req, promptType, fileUrl, fileType);
-        var parsedDetailedResponse = manager.GetDetailsFromGeminiResponse(detailedResponse);
+        var response = await manager.ProcessChatWithGemini(req, currentUserId);
         
-        return Ok(detailedResponse);
+        return Ok(response);
     }
 
     [HttpPost(APIDictionary.GeminiFileScan)]
     public async Task<ActionResult> ScanFile([FromForm] GeminiFileRequest req) {
-        string errorMessage = "An error occurred while processing the file.";
         try
         {
             if (req?.File == null || req?.File.Length == 0)
@@ -139,55 +95,57 @@ public class GeminiController : ControllerBase
                 return StatusCode(500, new { message = "File type not compatible" });
             }
 
-            string extractedText = await manager.ExtractDataFromFile(req.File, fileType);
-            string type = req?.Type;
+            string response = await manager.ScanFileForGeminiProcessing(req);
 
-            if (!string.IsNullOrEmpty(type)) {
-                var promptData = manager.GetPromptData(type).FirstOrDefault();
-
-                if (promptData == null)
-                {
-                    return NotFound(new { message = $"Prompt configuration for the screen '{type}' is not found." });
-                }
-
-                // Fetch result from Gemini
-                return Ok(await manager.fetchResultFromGemini(promptData, extractedText));
+            if (string.IsNullOrEmpty(response))
+            {
+                return NotFound(new { message = $"Prompt configuration for the screen is not found." });
             }
 
-            return Ok(new { extractedText = extractedText.Trim() });
+            return Ok(response.Trim());
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = errorMessage, details = ex.Message });
+            return StatusCode(500, new { message = "An error occurred while processing the file.", details = ex.Message });
         }
     }
 
-    [HttpPost(APIDictionary.Gemini)]
-    // Internal call: Create a Gemini
-    public async Task<ActionResult> FetchResponseFromGemini([FromBody] GeminiProcessDataRequest req)
+    [HttpPost(APIDictionary.GeminiProcessDataSummary)]
+    // Internal call: Process Data Related Summary
+    public async Task<ActionResult> ProcessDataRelatedSummaryDetails([FromBody] GeminiProcessDataRequest req)
     {
         try {
-           // bool isFromAiAssistant = req.AiAssistant;
-            string relatedMessage = "";
-
-            AiPrompt promptModel = manager.MapModelToEntity(req);
-
-            // Call the GetPromptData method and get the first prompt
-            var promptData = manager.GetPromptData(promptModel.Type).FirstOrDefault();
-
-            if (promptData == null)
+            if (req == null || req?.Id == null)
             {
-                return NotFound(new { message = $"Prompt configuration for the screen '{req.Type}' is not found." });
+                return BadRequest(new { message = "Invalid request" });
             }
 
-            // Query the AiScreenMapping table based on Type
-            var screenMappings = (await manager.GetScreenMappingsByType(promptData.Type)).ToArray();
-            relatedMessage = await manager.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+            var response = await manager.ProcessDataRelatedSummaryDetails(req);
+            
+            if (string.IsNullOrEmpty(response))
+            {
+                return NotFound(new { message = $"Prompt configuration for the screen is not found." });
+            }
 
-            // Fetch result from Gemini
-            return Ok(await manager.fetchResultFromGemini(promptData, relatedMessage));
+            return Ok(response.Trim());
 
         } catch (Exception ex) {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost(APIDictionary.AiAssistantAccessibility)]
+    public async Task<ActionResult> UpdateAiAssistantAccessibility([FromBody] GeminiAccessibilityRequest req)
+    {
+        try {
+            if (req == null || req?.SessionId == Guid.Empty)
+            {
+                return BadRequest(new { message = "Invalid request" });
+            }
+            var success = await manager.UpdateAiAssistantAccessibility(req);
+            return Ok(new { success = success });
+
+        } catch(Exception ex) {
             return BadRequest(new { message = ex.Message });
         }
     }
