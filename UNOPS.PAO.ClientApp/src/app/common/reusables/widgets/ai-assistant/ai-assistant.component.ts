@@ -12,6 +12,7 @@ import { AiAssistantData } from './ai-assistant.data';
 import { signal } from '@angular/core';
 import { LayoutService } from '../../../layouts/services/layout.service';
 import { InputTextarea } from 'primeng/inputtextarea';
+import { ToggleSwitch } from 'primeng/toggleswitch';
 import { AiAssistantScanComponent } from './scan/ai-assistant-scan.component';
 import { SafeUrlPipe } from './safe-url.pipe';
 
@@ -31,6 +32,7 @@ import { SafeUrlPipe } from './safe-url.pipe';
     TooltipModule,
     TranslatePipe,
     InputTextarea,
+    ToggleSwitch,
     AiAssistantScanComponent,
     SafeUrlPipe
   ]

@@ -10,8 +10,16 @@
     <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6 mx-2" />
     <span class="text-xl font-light">{{ 'aiAssistant.dialogHeader' | translate }}</span>
     <div class="flex gap-2 ml-auto">
-            <p-button
-        icon="pi pi-refresh"
+      <p-toggleswitch
+        pTooltip="{{ 'aiAssistant.textToSpeech' | translate }}"
+          [ngModel]="aiAssistantData.textToSpeech()"
+          (ngModelChange)="aiAssistantData.onTextToSpeechToggle($event)">
+          <input type="checkbox"
+            aria-checked="false"
+            data-pc-section="hiddenInput"
+            class="p-toggleswitch-input">
+      </p-toggleswitch>
+      <p-button icon="pi pi-refresh"
         (onClick)="aiAssistantData.clearConversation()"
         [text]="true"
         [rounded]="true"

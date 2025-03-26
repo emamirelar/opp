@@ -19,6 +19,7 @@ export class AiAssistantData {
   readonly chatHistory = signal<ChatMessage[]>([]);
   readonly currentSessionId = signal<string | null>(null);
   readonly isLoading = signal(false);
+  textToSpeech = signal(false);
 
   constructor(
     private aiAssistantService: AiAssistantService,
@@ -222,5 +223,24 @@ export class AiAssistantData {
       }),
       map(() => void 0)
     );
+  }
+
+  onTextToSpeechToggle(event: any): void {
+    this.isLoading.set(true);
+    const sessionId = this.currentSessionId();
+    this.textToSpeech = signal(event);
+    if (sessionId) {
+      this.aiAssistantService.toggleAccessibility(this.textToSpeech(), sessionId).pipe(
+        tap(response => {
+          this.isLoading.set(false);
+          if (response?.body?.success) {
+            //code to handle success
+          } else {
+            throw new Error('Error with setting text to speech value.');
+          }
+        }),
+        map(() => void 0)
+      );
+    }
   }
 }
