@@ -1,5 +1,5 @@
-import {ChangeDetectionStrategy, Component, inject, OnInit, signal, OnDestroy} from '@angular/core';
-import {DatePipe, NgIf} from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal, OnDestroy} from '@angular/core';
+import { NgIf } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
 import { TableModule } from 'primeng/table';
@@ -30,7 +30,6 @@ import {Contact} from '../../models/contact.model';
     ScrollPanelModule,
     ContactNewComponent,
     BusinessCardScannerComponent,
-    DatePipe,
     ProgressSpinnerModule,
     TranslateModule,
     NgIf

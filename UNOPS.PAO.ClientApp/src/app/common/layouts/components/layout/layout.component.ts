@@ -1,4 +1,4 @@
-import {CommonModule, NgClass, NgIf} from '@angular/common';
+import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterModule } from '@angular/router';
 import { FooterComponent } from '../footer/footer.component';
@@ -12,7 +12,7 @@ import {AiAssistantComponent} from '../../../reusables/widgets/ai-assistant/ai-a
 
 @Component({
   selector: 'app-layout',
-  imports: [TopbarComponent, SidebarComponent, RouterModule, FooterComponent, BreadcrumbComponent, AiAssistantComponent, NgIf, NgClass],
+  imports: [TopbarComponent, SidebarComponent, RouterModule, FooterComponent, BreadcrumbComponent, AiAssistantComponent, NgClass],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
   standalone: true,

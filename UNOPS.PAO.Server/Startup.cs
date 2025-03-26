@@ -205,8 +205,8 @@ public class Startup
     {
         var envDbConSecretName = Configuration.GetConnectionString("ConnectionSecretName");
         var projectId = Configuration.GetSection("AppConfig")["ProjectId"];
-        var secretManager = new GoogleSecretManagerConfigurationProvider(projectId, envDbConSecretName);
-
+        var secretManager = new GoogleSecretManagerConfigurationProvider(projectId);
+    
         return secretManager.GetSecretVersion(envDbConSecretName, "latest");
     }
 
