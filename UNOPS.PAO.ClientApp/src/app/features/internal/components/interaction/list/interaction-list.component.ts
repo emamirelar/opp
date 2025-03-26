@@ -1,13 +1,13 @@
 import {ChangeDetectionStrategy, Component, inject, OnInit, signal, WritableSignal} from '@angular/core';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
-import {TableModule} from 'primeng/table';
-import {DatePipe, JsonPipe, NgIf} from '@angular/common';
-import {Button, ButtonDirective, ButtonIcon, ButtonLabel} from 'primeng/button';
-import {RouterLink, Router, ActivatedRoute} from '@angular/router';
+import { TableModule} from 'primeng/table';
+import { DatePipe, NgIf} from '@angular/common';
+import { Button } from 'primeng/button';
+import { Router, ActivatedRoute} from '@angular/router';
 import {InteractionModalComponent} from '../modal/interaction-modal.component';
 import { INTERACTION_TYPE_TRANSLATION_KEYS, InteractionType } from '../../../models/interaction-type.enum';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import {InteractionListData} from './interaction-list.data';
 
 @Component({
@@ -16,14 +16,9 @@ import {InteractionListData} from './interaction-list.data';
   imports: [
     TableModule,
     DatePipe,
-    ButtonDirective,
-    ButtonIcon,
-    RouterLink,
     InteractionModalComponent,
-    ButtonLabel,
     Button,
     NgIf,
-    JsonPipe,
     TranslateModule
   ],
   templateUrl: './interaction-list.component.html',

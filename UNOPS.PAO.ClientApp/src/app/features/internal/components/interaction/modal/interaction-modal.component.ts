@@ -3,7 +3,6 @@ import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
 import {Dialog} from 'primeng/dialog';
-import {InputText} from 'primeng/inputtext';
 import {Calendar} from 'primeng/calendar';
 import {Button} from 'primeng/button';
 import {Textarea} from 'primeng/textarea';
@@ -24,7 +23,6 @@ import {Partner} from '../../../models/partner.model';
   templateUrl: './interaction-modal.component.html',
   imports: [
     Dialog,
-    InputText,
     ReactiveFormsModule,
     Calendar,
     Button,

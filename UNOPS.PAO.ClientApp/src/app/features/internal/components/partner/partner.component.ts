@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import {DatePipe, NgIf} from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
 import { TableModule } from 'primeng/table';
@@ -8,7 +7,7 @@ import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { LanguageService } from '../../../../common/services/language.service';
 import { Subscription } from 'rxjs';
 import { PartnerService } from '../../services/partner.service';
@@ -28,7 +27,7 @@ interface columnDefinition {
   styleUrl: './partner.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [PanelModule, ButtonModule, TableModule, DialogModule, ScrollPanelModule, PartnerNewComponent, DatePipe, ProgressSpinnerModule, TranslateModule, NgIf]
+  imports: [PanelModule, ButtonModule, TableModule, DialogModule, ScrollPanelModule, PartnerNewComponent, ProgressSpinnerModule, TranslateModule]
 })
 export class PartnerComponent implements OnInit, OnDestroy {
   private langChangeSubscription: Subscription = new Subscription;

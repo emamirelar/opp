@@ -1,4 +1,4 @@
-import { afterNextRender, ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -20,7 +20,6 @@ import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { AutoFocusModule } from 'primeng/autofocus';
-import { BlockUI } from 'primeng/blockui';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { PartnerService } from '../../../services/partner.service';
@@ -28,9 +27,7 @@ import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ActivatedRoute, Router } from '@angular/router';
 import {PartnerContactsComponent} from '../contacts/partner-contacts.component';
-import {Tooltip} from 'primeng/tooltip';
 import { GeminiService } from '../../../services/gemini.service';
-import {JsonPipe} from '@angular/common';
 import {MarkdownPipe} from '../../../pipes/markdown.pipe';
 
 @Component({
@@ -45,7 +42,6 @@ import {MarkdownPipe} from '../../../pipes/markdown.pipe';
     PanelModule,
     SelectModule,
     AutoFocusModule,
-    BlockUI,
     DialogModule,
     MessageModule,
     DividerModule,
@@ -53,8 +49,6 @@ import {MarkdownPipe} from '../../../pipes/markdown.pipe';
     CheckboxModule,
     ReactiveFormsModule,
     PartnerContactsComponent,
-    Tooltip,
-    JsonPipe,
     MarkdownPipe
   ],
   templateUrl: './partner-view.component.html',
