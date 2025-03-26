@@ -63,7 +63,7 @@ export class AiAssistantService {
   toggleAccessibility(textToSpeech: boolean, sessionId: string): Observable<HttpResponse<{ success: boolean }>> {
     return this.http.post<{ success: boolean }>(
       `${this.aiAssistantUrl}/accessibility`,
-      {},
+      { textToSpeech, sessionId },
       { observe: 'response' }
     );
   }

@@ -155,6 +155,14 @@ export class AiAssistantData {
   }
 
   private addUserMessage(message: string, files: ChatFile[]): void {
+    if (files.length > 0) {
+      const file = files[0]?.file;
+      if (file)
+      {
+        files[0].mediaType = file?.type.split('/')[0];
+        files[0].mediaUrl = URL.createObjectURL(file);
+      }
+    }
     this.addMessage({
       text: message,
       isUser: true,
@@ -166,7 +174,6 @@ export class AiAssistantData {
 
   private addSystemMessage(aiResponse: AiResponse ): void {
     if (aiResponse.intent === 'Action') {
-      debugger;
       this.handleActionResponse(aiResponse);
     }
 
@@ -225,22 +232,20 @@ export class AiAssistantData {
     );
   }
 
-  onTextToSpeechToggle(event: any): void {
+  onTextToSpeechToggle(): void {
     this.isLoading.set(true);
     const sessionId = this.currentSessionId();
-    this.textToSpeech = signal(event);
+    const textToSpeech = !this.textToSpeech();
+
     if (sessionId) {
-      this.aiAssistantService.toggleAccessibility(this.textToSpeech(), sessionId).pipe(
-        tap(response => {
+      this.aiAssistantService.toggleAccessibility(textToSpeech, sessionId).subscribe(response => {
           this.isLoading.set(false);
           if (response?.body?.success) {
-            //code to handle success
+            this.textToSpeech.set(textToSpeech);
           } else {
             throw new Error('Error with setting text to speech value.');
           }
-        }),
-        map(() => void 0)
-      );
+        });
     }
   }
 }
