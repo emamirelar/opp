@@ -186,7 +186,7 @@ public class UNOPSGeminiManager : IGeminiManager
         {
             byte[] audioBytes = await _ttsService.ConvertTextToAudio(message);
             fileUrl = await _gcsService.UploadAudioToGCS(audioBytes);
-            fileType = "audio/mpeg";
+            fileType = "audio";
         } else {
             fileUrl = null;
             fileType = null;
