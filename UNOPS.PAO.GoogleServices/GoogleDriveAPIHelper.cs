@@ -86,20 +86,19 @@ public class GoogleDriveAPIHelper
             .Get<JsonCredentialParameters>();
         if (credentialParams == null)
             throw new Exception("GoogleDriveSettings needs to be setup in appsettings.");
-
-        var secretName = configuration?.GetSection("GoogleDriveSettings")["GoogleDriveConnectionKeySecretId"];
-        var secretManager = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId, secretName);
+    
+        var secretName = configuration?.GetSection("GoogleDriveSettings")["GoogleDriveServiceAccountJSONSecretName"];
+        var secretManager = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
+    
         if (secretName != null)
         {
             var googleDriveSecret = secretManager.GetSecretVersion(secretName, "latest");
-
             if (googleDriveSecret != null)
             {
                 credentialParams.PrivateKey = googleDriveSecret?
                     .Replace("\\n", "\n");
             }
         }
-
         return GoogleCredential.FromJsonParameters(credentialParams);
     }
 

@@ -310,15 +310,15 @@ public class UNOPSGeminiManager : IGeminiManager
     // Get Google credentials from configuration
     private GoogleCredential GetCredentials()
     {
-        var credentialParams = _configuration.GetSection("GoogleDriveSettings")
+        var credentialParams = _configuration.GetSection("AISettings")
             .Get<JsonCredentialParameters>();
         if (credentialParams == null)
-            throw new Exception("GoogleDriveSettings configuration is missing.");
-
-        var secretName = _configuration.GetValue<string>("GoogleDriveSettings:GoogleDriveConnectionKeySecretId");
-        var secretManagerProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId, secretName);
-        var secretValue = secretManagerProvider.GetSecretVersion(secretName, "latest");
-
+            throw new Exception("AISettings configuration is missing.");
+    
+        var secretName = _configuration.GetValue<string>("AISettings:AIServiceAccountJSONSecretName");
+        
+        var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
+        var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
         return GoogleCredential.FromJson(secretValue);
     }
 

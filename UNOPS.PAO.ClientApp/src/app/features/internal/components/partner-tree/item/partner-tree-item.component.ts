@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, ChangeDetectionStrategy, inject, OnInit, OnChanges, output, Output } from '@angular/core';
-import { BlockUI } from 'primeng/blockui';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -15,7 +14,7 @@ import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-partner-tree-item',
-  imports: [BlockUI, ReactiveFormsModule, SelectModule, TranslateModule, ButtonModule, PanelModule, InputTextModule, CommonModule, TextareaModule, DialogModule],
+  imports: [ReactiveFormsModule, SelectModule, TranslateModule, ButtonModule, PanelModule, InputTextModule, CommonModule, TextareaModule, DialogModule],
   templateUrl: './partner-tree-item.component.html',
   styleUrl: './partner-tree-item.component.scss',
   standalone: true,

@@ -13,14 +13,12 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { CachedDataService } from '../../../../common/services/cached-data.service';
-import { InputIcon } from 'primeng/inputicon';
-import { IconField } from 'primeng/iconfield';
 import {PartnerTreeItemComponent} from './item/partner-tree-item.component';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-partner-tree',
-  imports: [DialogModule, PartnerTreeItemComponent, InputIcon, IconField, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule],
+  imports: [DialogModule, PartnerTreeItemComponent, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule],
   templateUrl: './partner-tree.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './partner-tree.component.scss'

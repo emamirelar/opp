@@ -51,12 +51,12 @@ public class GoogleDriveDocumentManager : IGoogleDriveDocumentManager
             .Get<JsonCredentialParameters>();
         if (credentialParams == null)
             throw new Exception("GoogleDriveSettings configuration is missing.");
-
-        
-        var secretName = _configuration.GetValue<string>("GoogleDriveSettings:GoogleDriveConnectionKeySecretId");
-        var secretManagerProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId, secretName);
+    
+        var secretName = _configuration.GetValue<string>("GoogleDriveSettings:GoogleDriveServiceAccountJSONSecretName");
+    
+        var secretManagerProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
         var secretValue = secretManagerProvider.GetSecretVersion(secretName, "latest");
-
+    
         return GoogleCredential.FromJson(secretValue);
     }
 
