@@ -51,11 +51,6 @@ public class UNOPSGeminiManager : IGeminiManager
         _configuration = configuration;
         _credentials = GetCredentials();
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
-        _visionClient = ImageAnnotatorClient.Create();
-        _speechClient = SpeechClient.Create();
-        _storageClient = StorageClient.Create();
-        _ttsClient = TextToSpeechClient.Create();
-        _bucketName = configuration.GetValue<string>("AISettings:GoogleCloudStorageBucketName");
         _textExtractionService = new TextExtractionService();
         _gcsService = new GoogleCloudStorageService(configuration);
         _sessionService = new GeminiSessionService(context);
