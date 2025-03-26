@@ -133,7 +133,7 @@ public class UNOPSGeminiManager : IGeminiManager
         string message = req.Message;
         string extractedText = req.ExtractedText ?? "";
         string accessToken = await GetAccessTokenAsync();
-        string finalPrompt = extractedText ?? message;
+        string finalPrompt = (string.IsNullOrEmpty(extractedText) ? message : extractedText);
         var promptData = GetPromptData(promptType).FirstOrDefault();
         if (promptData == null)
         {
