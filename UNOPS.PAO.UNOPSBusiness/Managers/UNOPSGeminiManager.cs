@@ -46,6 +46,7 @@ public class UNOPSGeminiManager : IGeminiManager
     public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
         _mapper = mapper;
+        _context = context;
         _screenMappingRepository = new DataRepository<AiScreenMapping>(context);
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
