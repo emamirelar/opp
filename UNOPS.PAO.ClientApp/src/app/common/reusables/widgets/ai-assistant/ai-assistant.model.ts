@@ -6,20 +6,24 @@ export interface ChatMessage {
 }
 
 export interface ChatFile {
-  file: File;
-  name: string;
-  content: string;
+  file?: File;
+  name?: string;
+  content?: string;
+  mediaUrl?: string;
+  mediaType?: string;
 }
 
 export interface AiResponse {
-  Entity?: string;
-  Intent?: string;
-  Message: string;
-  Type?: string;
-  Summary?: string;
-  Forward?: string;
-  Category?: string;
-  ResponseType?: string;
+  entity?: string;
+  intent?: string;
+  message: string;
+  type?: string;
+  summary?: string;
+  forward?: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  rawMessage?: string;
+  files?: any[];   
 }
 
 export enum ScreenToOpenByAiActionCategory {

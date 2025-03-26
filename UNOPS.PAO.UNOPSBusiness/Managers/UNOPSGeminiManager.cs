@@ -25,6 +25,7 @@ using Google.Cloud.Speech.V1;
 using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Http;
 using Google.Cloud.TextToSpeech.V1;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -37,11 +38,10 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly DataRepository<AiPrompt> _promptRepository;
     private readonly UNOPSAppDbContext _context;
     private readonly string _connectionString;
-    private readonly ImageAnnotatorClient _visionClient;
-    private readonly SpeechClient _speechClient;
-    private readonly StorageClient _storageClient;
-    private readonly TextToSpeechClient _ttsClient;
-    private readonly string _bucketName;
+    private readonly GoogleTextToSpeechService _ttsService;
+    private readonly TextExtractionService _textExtractionService;
+    private readonly GoogleCloudStorageService _gcsService;
+    private readonly GeminiSessionService _sessionService;
 
     public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
@@ -50,25 +50,17 @@ public class UNOPSGeminiManager : IGeminiManager
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
         _credentials = GetCredentials();
-        _context = context;
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
-        _visionClient = ImageAnnotatorClient.Create();
-        _speechClient = SpeechClient.Create();
-        _storageClient = StorageClient.Create();
-        _ttsClient = TextToSpeechClient.Create();
-        _bucketName = configuration.GetValue<string>("GoogleDriveSettings:GoogleCloudStorageBucketName");
+        _textExtractionService = new TextExtractionService();
+        _gcsService = new GoogleCloudStorageService(configuration);
+        _sessionService = new GeminiSessionService(context);
+        _ttsService = new GoogleTextToSpeechService();
     }
 
     // Map AiPrompt entity to AiPromptModel
     private static AiPromptModel MapEntityToAiPromptModel(AiPrompt entity, IMapper mapper)
     {
         var result = mapper.Map<AiPrompt, AiPromptModel>(entity);
-        return result;
-    }
-
-    // Map AiChatSession entity to AiChatSessionModel
-    private static AiChatSessionModel MapEntityToChatSessionModel(AiChatSession sessionDetails, IMapper mapper) {
-        var result = mapper.Map<AiChatSession, AiChatSessionModel>(sessionDetails);
         return result;
     }
 
@@ -88,79 +80,6 @@ public class UNOPSGeminiManager : IGeminiManager
             .Select(x => MapEntityToAiPromptModel(x, _mapper));
     }
 
-    // Get user sessions by user ID
-    public IEnumerable<AiChatSession> GetUserSessions(int userId) {
-        return (IEnumerable<AiChatSession>)_context.AiChatSession
-                .Where(x => x.UserId == userId)
-                .OrderBy(x => x.EndTime ?? DateTime.MaxValue); // Place active sessions last
-    }
-
-    // Get session data by session ID and user ID
-    public IEnumerable<AiChatSession> GetSessionData(Guid sessionId, int userId) {
-        return (IEnumerable<AiChatSession>)_context.AiChatSession
-                .Include(x => x.Chats)
-                .Where(x => x.Id == sessionId && x.UserId == userId);
-    }
-
-    private void EndDateActiveSessions(int userId, Guid sessionId) {
-        var activeSessions = _context.AiChatSession
-                                .Where(x => x.UserId == userId && (sessionId != Guid.Empty && x.Id != sessionId) && x.EndTime == null)
-                                .ToList();
-
-        foreach (var session in activeSessions) {
-            // End the active session by setting EndTime
-            session.EndTime = DateTime.UtcNow.ToUniversalTime();
-            session.Status = "Inactive";
-        }
-
-        _context.SaveChanges(); // Save changes before creating a new session
-    }
-
-    // Create a new session for the user
-    public Guid CreateNewSession(int userId) {
-        EndDateActiveSessions(userId, Guid.Empty);
-        // Create a new session
-        var newSession = new AiChatSession
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            StartTime = DateTime.UtcNow,
-            Status = "Active",
-            EndTime = null, // This is a new active session
-            Chats = new List<AiChatHistory>() 
-        };
-
-        _context.AiChatSession.Add(newSession);
-        _context.SaveChanges(); // Commit to the database
-
-        return newSession.Id;
-    }
-
-    // End the session by session ID
-    public bool EndSession(Guid sessionId) {
-        var activeSession = _context.AiChatSession
-                                .FirstOrDefault(x => x.Id == sessionId && x.EndTime == null);
-
-        var success = false;
-        if (activeSession != null) {
-            // End the active session by setting EndTime
-            activeSession.EndTime = DateTime.UtcNow;
-            activeSession.Status = "Inactive";
-            _context.SaveChanges(); // Save changes before creating a new session
-            success = true;
-        }
-
-        return success;
-    }
-
-    // Get chat history by session ID
-    public async Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type) {
-        return await _context.AiChatHistory
-                    .Where(x => x.SessionId == sessionId && x.Type == type)
-                    .OrderBy(x => x.TimeStamp)
-                    .ToListAsync();
-    }
-
     // Get screen mappings by type and sort the response
     public async Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type)
     {
@@ -172,16 +91,16 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Fetch detailed response from Gemini
-    public async Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType
+    public async Task<dynamic> FetchDetailedResponseFromGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType
                                                                 , string fileUrl, string fileType) {
-        string geminiResponse = await ChatWithGemini(request.sessionId, request.Message, promptType, formattedChatHistory, fileUrl, fileType);
+        var geminiResponse = await ChatWithGemini(session, request.sessionId, request.Message, promptType, formattedChatHistory, fileUrl, fileType);
         return geminiResponse;
     }
 
     // Entity detection through Gemini
-    public async Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request
+    public async Task<dynamic> EntityDetectionThroughGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request
                                                                 , string fileUrl, string fileType) {
-        string geminiResponse = await ChatWithGemini(request.sessionId, request.Message, "entity_intent_detection", formattedChatHistory, fileUrl, fileType);
+        var geminiResponse = await ChatWithGemini(session, request.sessionId, request.Message, "entity_intent_detection", formattedChatHistory, fileUrl, fileType);
         return geminiResponse;
     }
     
@@ -191,7 +110,7 @@ public class UNOPSGeminiManager : IGeminiManager
         var candidates = json["candidates"];
         var parts = candidates[0]?["content"]["parts"];
         var textJson = parts[0]["text"].ToString(); ;
-        textJson = textJson.Replace("```json", "").Replace("```", "").Trim();
+        textJson = textJson.Replace("```json", "").Replace("```", "").Replace("\\n", "").Trim();
         var entityResponse = new JObject();
 
         try
@@ -206,49 +125,10 @@ public class UNOPSGeminiManager : IGeminiManager
         return entityResponse;
     }
 
-    // Update chat history table
-    public bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType
-                                        , string fileUrl, string fileType) {
-        var newUserChatHistory = new AiChatHistory{
-            SessionId = sessionId,
-            Sender = "user",
-            Message = originalMessage ?? "",
-            RawMessage = userMessage ?? "",
-            EntityType = entity,
-            RequestType = intent,
-            Type = promptType,
-            MediaUrl = fileUrl,
-            MediaType = fileType,
-            TimeStamp = DateTime.Now.ToUniversalTime()
-        };
-
-        var newModelChatHistory = new AiChatHistory {
-            SessionId = sessionId,
-            Sender = "model",
-            Message = modelResponse ?? "",
-            RawMessage = modelResponse ?? "",
-            EntityType = entity,
-            RequestType = intent,
-            Type = promptType,
-            MediaUrl = fileUrl,
-            MediaType = fileType,
-            TimeStamp = DateTime.Now.ToUniversalTime()
-        };
-
-        _context.AiChatHistory
-                .Add(newUserChatHistory);
-
-        _context.AiChatHistory
-                .Add(newModelChatHistory);
-
-        _context.SaveChanges();
-
-        return true;
-    }
-
     // Chat with Gemini
-    private async Task<string> ChatWithGemini(Guid sessionId, string message, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType) {
+    private async Task<dynamic> ChatWithGemini(AiChatSession session, Guid sessionId, string message, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType) {
         var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
+        string accessToken = await GetAccessTokenAsync();
         string finalPrompt = message;
         var promptData = GetPromptData(promptType).FirstOrDefault();
         if (promptData == null)
@@ -257,23 +137,25 @@ public class UNOPSGeminiManager : IGeminiManager
             promptType = "general_information";
             promptData = GetPromptData(promptType).FirstOrDefault();
         }
-        if (chatHistoryList.Count() == 0)
-        {
-            string promptTemplate = promptData.Prompt;
-            finalPrompt = promptTemplate.Replace("{promptData}", message);
-        }
-        string accessToken = await GetAccessTokenAsync();
-        chatHistoryList.Add(new
-        {
-            role = "user",
-            parts = new[] { new { text = finalPrompt } }
-        });
         dynamic generationConfig = string.IsNullOrEmpty(promptData.GenerationConfig)
                         ? new ExpandoObject() : JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
         dynamic toolsConfig = string.IsNullOrEmpty(promptData.ToolsConfig)
                         ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
         dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
                         ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
+        string url = await GetURL(promptData);
+
+        if (chatHistoryList.Count() == 0)
+        {
+            string promptTemplate = promptData.Prompt;
+            finalPrompt = promptTemplate.Replace("{promptData}", message);
+        }
+        
+        chatHistoryList.Add(new
+        {
+            role = "user",
+            parts = new[] { new { text = finalPrompt } }
+        });
 
         var requestBody = new
         {
@@ -283,20 +165,48 @@ public class UNOPSGeminiManager : IGeminiManager
             safetySettings = new[] { safetySettings }
         };
 
-        string url = await GetURL(promptData);
         string jsonRequest = JsonConvert.SerializeObject(requestBody);
         string response = await CallGeminiApiAsync(url, jsonRequest, accessToken);
         var parsedResponse = GetDetailsFromGeminiResponse(response);
         var entity = parsedResponse["Entity"]?.ToString() ?? parsedResponse["Category"]?.ToString();
         var intent = parsedResponse["Intent"]?.ToString() ?? parsedResponse["ResponseType"]?.ToString();
-        var modelMessage = parsedResponse["Message"].ToString();
+        var forward = parsedResponse["Forward"]?.ToString() ?? "No";
+        if (intent == "Action" && forward == "No" && promptType == "entity_intent_detection")
+        {
+            intent = "Information";
+        }
         string responseInString = JsonConvert.SerializeObject(parsedResponse);
-        UpdateChatHistoryTable(sessionId, message, finalPrompt, responseInString, entity, intent, promptType, fileUrl, fileType);
-        return response;
+        _sessionService.UpdateChatHistoryTable(sessionId, "user", message, finalPrompt, entity, intent, promptType, fileUrl, fileType);
+        message = parsedResponse["Message"]?.ToString();
+        if (session.TextToSpeech == true)
+        {
+            byte[] audioBytes = await _ttsService.ConvertTextToAudio(message);
+            fileUrl = await _gcsService.UploadAudioToGCS(audioBytes);
+            fileType = "audio/mpeg";
+        } else {
+            fileUrl = null;
+            fileType = null;
+        }
+        if (parsedResponse["Forward"]?.ToString() == "No")
+        {
+            _sessionService.UpdateChatHistoryTable(sessionId, "model", message, responseInString, entity, intent, promptType, fileUrl, fileType);
+        }
+        var finalResponse = new {Entity = entity
+                            , Intent = intent
+                            , Message = parsedResponse["Message"]?.ToString() ?? ""
+                            , Type = parsedResponse["Type"]?.ToString() ?? ""
+                            , Summary = parsedResponse["Summary"]?.ToString() ?? ""
+                            , Forward = parsedResponse["Forward"]?.ToString() ?? "No"
+                            , RawMessage = responseInString
+                            , MediaUrl = fileUrl
+                            , MediaType = fileType
+                            , Files = new[] { new { MediaUrl = fileUrl, MediaType = fileType } }
+                            };
+        return finalResponse;
     }
 
     // Fetch result from Gemini
-    public async Task<string> fetchResultFromGemini(AiPromptModel promptData, string relatedJsonData) {
+    public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData) {
         string promptTemplate = promptData.Prompt;
         string finalPrompt = promptTemplate.Replace("{promptData}", relatedJsonData);
         string geminiResponse = await callGemini(finalPrompt, promptData);
@@ -338,7 +248,7 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Get URL for Gemini API
-    public async Task<string> GetURL(AiPromptModel promptData)
+    private async Task<string> GetURL(AiPromptModel promptData)
     {
         return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{promptData.Project}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
     } 
@@ -356,7 +266,7 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Get access token for Gemini API
-    static async Task<string> GetAccessTokenAsync()
+    private static async Task<string> GetAccessTokenAsync()
     {
         GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
         credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
@@ -364,7 +274,7 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Call Gemini API with the request
-    static async Task<string> CallGeminiApiAsync(string url, string jsonRequest, string accessToken, int maxRetries = 5)
+    private static async Task<string> CallGeminiApiAsync(string url, string jsonRequest, string accessToken, int maxRetries = 5)
     {
         HttpResponseMessage response = new HttpResponseMessage();
         for (int attempt = 0; attempt < maxRetries; attempt++)
@@ -568,156 +478,165 @@ public class UNOPSGeminiManager : IGeminiManager
         return result;
     }
 
-    public void UpdateCurrentSessionIfInactive(int userId, Guid sessionId) {
-        EndDateActiveSessions(userId, sessionId);
+    public async Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req)
+    {
+        string relatedMessage = "";
 
-        var currentSession = _context.AiChatSession
-                                .FirstOrDefault(x => x.Id == sessionId && x.EndTime != null);
+        AiPrompt promptModel = MapModelToEntity(req);
 
-        if (currentSession != null) {
-            currentSession.EndTime = null;
-            currentSession.Status = "Active";
-            _context.SaveChanges();
+        // Call the GetPromptData method and get the first prompt
+        var promptData = GetPromptData(promptModel.Type).FirstOrDefault();
+
+        if (promptData == null)
+        {
+            return "";
         }
+
+        // Query the AiScreenMapping table based on Type
+        var screenMappings = (await GetScreenMappingsByType(promptData.Type)).ToArray();
+        relatedMessage = await GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+
+        // Fetch result from Gemini
+        return await FetchResultFromGemini(promptData, relatedMessage);
     }
 
-    public async Task<string> ExtractDataFromFile(IFormFile file, string fileType) {
-        string extractedText = "";
-        string fileTypeText = "";
-        string fileUrl = "";
-            
-        if (fileType == "img") {
-            fileTypeText = "(Image uploaded by User)";
-            extractedText = await ProcessImage(file);
-        } else if (fileType == "audio") {
-            fileTypeText = "(Audio uploaded by User)";
-            extractedText = await ProcessAudio(file);
+    public async Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req)
+    {
+        string extractedText = await ExtractDataFromFile(req.File);
+        string type = req?.Type;
+
+        if (!string.IsNullOrEmpty(type)) {
+            var promptData = GetPromptData(type).FirstOrDefault();
+
+            if (promptData == null)
+            {
+                return "";
+            }
+
+            // Fetch result from Gemini
+            return await FetchResultFromGemini(promptData, extractedText);
         }
 
-        extractedText = "Extracted Text " + fileTypeText + ": " + extractedText;
         return extractedText;
+    }
 
+    public async Task<dynamic> ProcessChatWithGemini(GeminiAssistantRequest req, int currentUserId)
+    {
+        string extractedText = "";
+        string fileUrl = "";
+        string fileType = "";
+
+        if (string.IsNullOrEmpty(req?.Message)) {
+            req.Message = "";
+        }
+
+        // If any other session is active, mark it as inactive and activate this session (if required)
+        var session = await UpdateCurrentSessionIfInactive(currentUserId, req.sessionId);
+
+        if (req.File != null) {
+            fileType = FindFileType(req.File);
+            extractedText = await ExtractDataFromFile(req.File);
+            fileUrl = await UploadFileToGCS(req.File);
+
+        }
+
+        var chatHistory = await GetChatHistory(req.sessionId, "entity_intent_detection");
+
+        if (!string.IsNullOrEmpty(extractedText)) 
+        {
+            if (!string.IsNullOrEmpty(req.Message))
+            {
+                req.Message = req.Message + "\\n";
+            }
+            req.Message = req.Message + extractedText + ".\\n"; 
+        }
+
+        var formattedChatHistory = chatHistory.Select(x => new {
+            role = x.Sender,
+            parts = new[] { new { text = x.RawMessage } }
+        }).ToList();
+
+        // Entity detection and intent classification to be done
+        var entityResponse = await EntityDetectionThroughGemini(session, formattedChatHistory, req, fileUrl, fileType);
+        //var entityResponse = GetDetailsFromGeminiResponse(entityDetectionResponse);
+        var forward = entityResponse.Forward.ToString();
+        if (forward == string.Empty || forward == "No") {
+            return entityResponse;
+        }
+
+        var promptType = entityResponse.Type.ToString();
+        var summary = entityResponse.Summary.ToString();
+
+        chatHistory = await GetChatHistory(req.sessionId, promptType);
+
+        formattedChatHistory = chatHistory.Select(x => new {
+            role = x.Sender,
+            parts = new[] { new { text = x.RawMessage } }
+        }).ToList();
+
+        req.Message = "Summary: " + summary;
+
+        var detailedResponse = await FetchDetailedResponseFromGemini(session, formattedChatHistory, req, promptType, fileUrl, fileType);
+
+        _sessionService.UpdateChatHistoryTable(req.sessionId, "model", detailedResponse.Message.ToString(), detailedResponse.RawMessage
+                                        , detailedResponse.Entity, detailedResponse.Intent, "entity_intent_detection", detailedResponse.MediaUrl, detailedResponse.MediaType);
+        
+        return detailedResponse;
+
+    }
+
+    public IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId) 
+    {
+        return _sessionService.GetSessionDataWithChats(sessionId, userId);
+    }
+
+    public async Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId) 
+    {
+        return await _sessionService.GetSessionData(sessionId, userId);
+    }
+
+    public IEnumerable<AiChatSession> GetUserSessions(int userId) 
+    {
+        return _sessionService.GetUserSessions(userId);
+    }
+
+    public Guid CreateNewSession(int userId) 
+    {
+        return _sessionService.CreateNewSession(userId);
+    }
+
+    public bool EndSession(Guid sessionId) 
+    {
+        return _sessionService.EndSession(sessionId);
+    }
+
+    public async Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type) 
+    {
+        return await _sessionService.GetChatHistory(sessionId, type);
+    }
+
+    public async Task<AiChatSession> UpdateCurrentSessionIfInactive(int userId, Guid sessionId)
+    {
+        return await _sessionService.UpdateCurrentSessionIfInactive(userId, sessionId);
+    }
+
+    public async Task<string> ExtractDataFromFile(IFormFile file) {
+        return await _textExtractionService.ExtractDataFromFile(file);
     }
 
     public string FindFileType(IFormFile file) 
     {
-        string type = file?.ContentType ?? "";
-        if (type.StartsWith("image/")) 
-        {
-            return "img";
-        }
-        else if (type.StartsWith("audio/") || type == "application/octet-stream")
-        {
-            return "audio";
-        }
-        return "";
-    }
-
-    private async Task<string> UploadToGCS(Stream stream, string objectName, string contentType)
-    {
-        try
-        {
-            stream.Position = 0; // Ensure the stream is at the beginning
-            await _storageClient.UploadObjectAsync(_bucketName, objectName, contentType, stream);
-            return $"https://storage.cloud.google.com/{_bucketName}/{objectName}";
-        }
-        catch (Exception ex)
-        {
-            return ""; // Handle errors as needed
-        }
+        return _textExtractionService.FindFileType(file);
     }
 
     // Overload for IFormFile
     public async Task<string> UploadFileToGCS(IFormFile file)
     {
-        string objectName = $"{Guid.NewGuid()}_{file.FileName}"; // Unique filename
-        using var memoryStream = new MemoryStream();
-        await file.CopyToAsync(memoryStream);
-        return await UploadToGCS(memoryStream, objectName, file.ContentType);
+        return await _gcsService.UploadFileToGCS(file);
     }
 
-    // Overload for byte array (TTS audio)
-    private async Task<string> UploadAudioToGCS(byte[] audioBytes)
+    public async Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
     {
-        string objectName = $"tts_audio_{Guid.NewGuid()}.mp3"; // Unique filename
-        using var memoryStream = new MemoryStream(audioBytes);
-        return await UploadToGCS(memoryStream, objectName, "audio/mpeg");
-    }
-
-    public async Task<string> ProcessImage(IFormFile file) {
-        using var memoryStream = new MemoryStream();
-        await file.CopyToAsync(memoryStream);
-        byte[] fileBytes = memoryStream.ToArray();
-
-        var image = Image.FromBytes(fileBytes);
-        var response = await _visionClient.DetectTextAsync(image);
-
-        if (response == null || response.Count == 0)
-        {
-            return "";
-        }
-
-        return string.Join(" ", response.Select(r => r.Description));
-    }
-
-    public async Task<string> ProcessAudio(IFormFile file) {
-        using var memoryStream = new MemoryStream();
-        await file.CopyToAsync(memoryStream);
-        byte[] fileBytes = memoryStream.ToArray();
-
-
-        // Detect encoding based on the file extension or content
-        var encoding = GetAudioEncoding(file.FileName.ToLower());
-        if (encoding == null)
-        {
-            return "Unsupported audio format";
-        }
-
-        var audio = RecognitionAudio.FromBytes(fileBytes);
-        var config = new RecognitionConfig
-        {
-            Encoding = encoding.Value,
-            SampleRateHertz = 16000,
-            LanguageCode = "en-US",
-            Model = "default",
-            EnableAutomaticPunctuation = true
-        };
-
-        var response = await _speechClient.RecognizeAsync(config, audio);
-
-        if (response == null || response.Results.Count == 0)
-        {
-            return "";
-        }
-
-        return string.Join(" ", response.Results.SelectMany(r => r.Alternatives).Select(a => a.Transcript));
-    }
-
-    // Helper method to get the encoding based on file extension
-    private RecognitionConfig.Types.AudioEncoding? GetAudioEncoding(string fileName)
-    {
-        if (fileName.EndsWith(".wav"))
-        {
-            return RecognitionConfig.Types.AudioEncoding.Linear16;  // WAV files are usually uncompressed PCM (Linear16)
-        }
-        if (fileName.EndsWith(".mp3"))
-        {
-            return RecognitionConfig.Types.AudioEncoding.Mp3;  // MP3 files
-        }
-        if (fileName.EndsWith(".flac"))
-        {
-            return RecognitionConfig.Types.AudioEncoding.Flac;  // FLAC files
-        }
-        if (fileName.EndsWith(".ogg") || fileName.EndsWith(".opus"))
-        {
-            return RecognitionConfig.Types.AudioEncoding.OggOpus;  // OGG and OPUS files
-        }
-        if (fileName.EndsWith(".mulaw"))
-        {
-            return RecognitionConfig.Types.AudioEncoding.Mulaw;  // Mu-law encoded audio
-        }
-
-        // Return null if the format is not supported
-        return null;
+        return await _sessionService.UpdateAiAssistantAccessibility(req);
     }
 }

@@ -58,13 +58,32 @@
 
         <div class="py-3 rounded-2xl rounded-tr-sm break-words animate-fade-in"
              [ngClass]="message.isUser ? 'p-3 bg-blue-50 shadow-sm text-gray-800  max-w-[85%]' : ''">
-          <div>{{ message.text }}</div>
+          <div style="white-space: pre-line;">{{ message.text }}</div>
           <!-- Display files if any -->
-          <div *ngIf="message.files && message.files.length > 0" class="mt-2 border-t border-opacity-20"
+          <div *ngIf="message.files && message.files.length > 0;" class="mt-2 border-t border-opacity-20"
                [ngClass]="message.isUser ? 'border-white' : 'border-gray-300'">
             <div *ngFor="let file of message.files" class="mt-1.5 flex items-center gap-1">
-              <span class="pi pi-file"></span>
-              <span>{{ file.name }}</span>
+              
+              <div [ngSwitch]="file.mediaType">
+  
+                <!-- Audio File -->
+                <audio *ngSwitchCase="'audio/mpeg'" controls>
+                  <source [src]="file.mediaUrl" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+
+                <audio *ngSwitchCase="'audio'" controls>
+                  <source [src]="file.mediaUrl" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+              
+                <!-- Image File -->
+                <img *ngSwitchCase="'image'" [src]="file.mediaUrl" alt="Uploaded Image" class="uploaded-image"/>
+              
+                <!-- Other File Types -->
+                <span *ngSwitchDefault>{{ file.name }}</span>
+              
+              </div>
             </div>
           </div>
         </div>

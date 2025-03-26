@@ -38,7 +38,7 @@ export class AiAssistantData {
 
     const sessionId = this.currentSessionId();
     if (!sessionId) {
-      this.addSystemMessage({Message:'No active session. Please try refreshing the page.'});
+      this.addSystemMessage({message:'No active session. Please try refreshing the page.'});
       return of();
     }
     return this.sendMessageToServer(sessionId, message, files[0]?.file);
@@ -123,22 +123,29 @@ export class AiAssistantData {
 
   private processSessionHistory(chats: any[]): ChatMessage[] {
     return chats
-      .map(chat => ({
-        text: this.parseMessageContent(chat.message || '').Message,
-        isUser: chat.sender === 'user',
-        timestamp: chat.timestamp ? new Date(chat.timestamp) : new Date(),
-      }))
+      .map(chat => {
+          const files: ChatFile[] = [{
+            mediaUrl: chat.mediaUrl,
+            mediaType: chat.mediaType
+          }];
+          return {
+            text: this.parseMessageContent(chat.message || ''),
+            isUser: chat.sender === 'user',
+            timestamp: chat.timestamp ? new Date(chat.timestamp) : new Date(),
+            files
+          }
+      })
       .filter(message => message.text);
   }
 
-  private parseMessageContent(message: string): AiResponse {
+  private parseMessageContent(message: string): string {
     try {
       const cleanedMessage = message
         .replace(/^```json\s*/, '')
         .replace(/```/, '');
-      return JSON.parse(cleanedMessage);
+      return cleanedMessage;
     } catch (error) {
-      return {Message: message};
+      return message;
     }
   }
 
@@ -157,22 +164,24 @@ export class AiAssistantData {
 
 
   private addSystemMessage(aiResponse: AiResponse ): void {
-    if (aiResponse.ResponseType === 'Action') {
+    if (aiResponse.intent === 'Action') {
+      debugger;
       this.handleActionResponse(aiResponse);
     }
 
     this.addMessage({
-      text: aiResponse.Message,
+      text: aiResponse.message,
       isUser: false,
-      timestamp: new Date()
+      timestamp: new Date(),
+      files: aiResponse.files
     });
   }
 
   private handleActionResponse(aiResponse: AiResponse): void {
-    const pageUrl = getUrlPageByAiResponseCategory(aiResponse?.Category || '');
+    const pageUrl = getUrlPageByAiResponseCategory(aiResponse?.entity || '');
 
     if (!pageUrl) {
-      this.addSystemMessage({Message: 'Sorry, I cannot navigate to that page.'});
+      this.addSystemMessage({message: 'Sorry, I cannot navigate to that page.'});
       return;
     }
 
@@ -186,22 +195,29 @@ export class AiAssistantData {
     this.chatHistory.update(history => [...history, message]);
   }
 
-  private sendMessageToServer(sessionId: string, message: string, file: File): Observable<void> {
+  private sendMessageToServer(sessionId: string, message: string, file?: File): Observable<void> {
     const formData = new FormData();
     formData.append("sessionId", sessionId);
     formData.append("message", message);
-    formData.append("file", file);
+    if (file) {
+        formData.append("file", file);
+    }
     // TODO: Add the file to the formData
     return this.aiAssistantService.chat(formData).pipe(
       tap(response => {
-        const text = response.body?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const serverResponse: any = response.body;
+        let text = serverResponse?.message;
         if (text) {
-          this.addSystemMessage(this.parseMessageContent(text));
+          text = this.parseMessageContent(text);
+          if (serverResponse) {
+            serverResponse.message = text;
+          }
+          this.addSystemMessage(serverResponse);
         }
       }),
       catchError(error => {
         console.error('Error sending message:', error);
-        this.addSystemMessage({Message:'Sorry, there was an error processing your message. Please try again.'});
+        this.addSystemMessage({message:'Sorry, there was an error processing your message. Please try again.'});
         return of();
       }),
       map(() => void 0)

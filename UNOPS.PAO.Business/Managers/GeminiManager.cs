@@ -37,7 +37,7 @@ public class GeminiManager : IGeminiManager
             .Select(x => _mapper.Map<AiPrompt, AiPromptModel>(x));
     }
 
-    public async Task<string> fetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
     {
         // Implement the logic to fetch result from Gemini
         throw new NotImplementedException();
@@ -59,7 +59,12 @@ public class GeminiManager : IGeminiManager
         return entity;
     }
 
-    public IEnumerable<AiChatSession> GetSessionData(Guid sessionId, int userId)
+    public IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId)
     {
         throw new NotImplementedException();
     }
@@ -81,11 +86,11 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<string> EntityDetectionThroughGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string fileUrl, string fileType) {
+    public Task<dynamic> EntityDetectionThroughGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string fileUrl, string fileType) {
         throw new NotImplementedException();
     }
 
-    public Task<string> FetchDetailedResponseFromGemini(IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType, string fileUrl, string fileType) {
+    public Task<dynamic> FetchDetailedResponseFromGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType, string fileUrl, string fileType) {
         throw new NotImplementedException();
     }
 
@@ -93,12 +98,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public bool UpdateChatHistoryTable(Guid sessionId, string originalMessage, string userMessage, string modelResponse, string entity, string intent, string promptType
-                                        , string fileUrl, string fileType) {
-        throw new NotImplementedException();
-    }
-
-    public void UpdateCurrentSessionIfInactive(int userId, Guid sessionId) {
+    public Task<AiChatSession> UpdateCurrentSessionIfInactive(int userId, Guid sessionId) {
         throw new NotImplementedException();
     }
 
@@ -110,7 +110,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<string> ExtractDataFromFile(IFormFile file, string fileType) {
+    public Task<string> ExtractDataFromFile(IFormFile file) {
         throw new NotImplementedException();
     }
 
@@ -119,6 +119,26 @@ public class GeminiManager : IGeminiManager
     }
 
     public Task<string> UploadFileToGCS(IFormFile file) {
+        throw new NotImplementedException();
+    }
+
+    public Task<dynamic> ProcessChatWithGemini(GeminiAssistantRequest req, int currentUserId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
+    {
         throw new NotImplementedException();
     }
 }

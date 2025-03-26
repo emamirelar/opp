@@ -9,6 +9,7 @@ import {
   SessionResponse
 } from '../models/ai-assistant.model';
 import {GeminiResponse} from '../models/gemini.model';
+import { AiResponse } from '../../../common/reusables/widgets/ai-assistant/ai-assistant.model';
 
 
 @Injectable({
@@ -50,8 +51,8 @@ export class AiAssistantService {
   }
 
   // Chat with AiAssistant AI
-  chat(formdata: FormData): Observable<HttpResponse<GeminiResponse>> {
-    return this.http.post<GeminiResponse>(
+  chat(formdata: FormData): Observable<HttpResponse<AiResponse>> {
+    return this.http.post<AiResponse>(
       `${this.aiAssistantUrl}/chat`,
       formdata,
       { observe: 'response' }
