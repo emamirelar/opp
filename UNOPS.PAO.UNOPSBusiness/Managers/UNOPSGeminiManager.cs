@@ -93,14 +93,14 @@ public class UNOPSGeminiManager : IGeminiManager
     // Fetch detailed response from Gemini
     public async Task<dynamic> FetchDetailedResponseFromGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType
                                                                 , string fileUrl, string fileType) {
-        var geminiResponse = await ChatWithGemini(session, request.sessionId, request.Message, promptType, formattedChatHistory, fileUrl, fileType);
+        var geminiResponse = await ChatWithGemini(session, request, promptType, formattedChatHistory, fileUrl, fileType);
         return geminiResponse;
     }
 
     // Entity detection through Gemini
     public async Task<dynamic> EntityDetectionThroughGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request
                                                                 , string fileUrl, string fileType) {
-        var geminiResponse = await ChatWithGemini(session, request.sessionId, request.Message, "entity_intent_detection", formattedChatHistory, fileUrl, fileType);
+        var geminiResponse = await ChatWithGemini(session, request, "entity_intent_detection", formattedChatHistory, fileUrl, fileType);
         return geminiResponse;
     }
     
@@ -126,10 +126,13 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Chat with Gemini
-    private async Task<dynamic> ChatWithGemini(AiChatSession session, Guid sessionId, string message, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType) {
+    private async Task<dynamic> ChatWithGemini(AiChatSession session, GeminiAssistantRequest req, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType) {
         var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
+        Guid sessionId = req.sessionId;
+        string message = req.Message;
+        string extractedText = req.ExtractedText ?? "";
         string accessToken = await GetAccessTokenAsync();
-        string finalPrompt = message;
+        string finalPrompt = extractedText ?? message;
         var promptData = GetPromptData(promptType).FirstOrDefault();
         if (promptData == null)
         {
@@ -546,9 +549,9 @@ public class UNOPSGeminiManager : IGeminiManager
         {
             if (!string.IsNullOrEmpty(req.Message))
             {
-                req.Message = req.Message + "\\n";
+                req.ExtractedText = req.Message + "\\n";
             }
-            req.Message = req.Message + extractedText + ".\\n"; 
+            req.ExtractedText = req.ExtractedText + extractedText + ".\\n"; 
         }
 
         var formattedChatHistory = chatHistory.Select(x => new {
