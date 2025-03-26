@@ -220,7 +220,8 @@
     "typeMessage": "Type your message...",
     "takePhoto": "Take a Photo",
     "attachFile": "Attach file",
-    "recordAudio": "Record audio message"
+    "recordAudio": "Record audio message",
+    "textToSpeech":  "Text to speech"
   },
   "common": {
     "cancel": "Cancel",

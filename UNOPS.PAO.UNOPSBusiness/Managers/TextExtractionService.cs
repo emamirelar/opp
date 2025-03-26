@@ -45,7 +45,7 @@ public class TextExtractionService
         string fileTypeText = "";
         string fileUrl = "";
             
-        if (fileType == "img") {
+        if (fileType == "image") {
             fileTypeText = "(Image uploaded by User)";
             extractedText = await ProcessImage(file);
         } else if (fileType == "audio") {

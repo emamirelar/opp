@@ -58,4 +58,13 @@ export class AiAssistantService {
       { observe: 'response' }
     );
   }
+
+  //Set Text to Speech
+  toggleAccessibility(textToSpeech: boolean, sessionId: string): Observable<HttpResponse<{ success: boolean }>> {
+    return this.http.post<{ success: boolean }>(
+      `${this.aiAssistantUrl}/accessibility`,
+      { textToSpeech, sessionId },
+      { observe: 'response' }
+    );
+  }
 }

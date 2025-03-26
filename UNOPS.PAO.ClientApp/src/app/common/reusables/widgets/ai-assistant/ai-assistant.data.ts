@@ -19,6 +19,7 @@ export class AiAssistantData {
   readonly chatHistory = signal<ChatMessage[]>([]);
   readonly currentSessionId = signal<string | null>(null);
   readonly isLoading = signal(false);
+  textToSpeech = signal(false);
 
   constructor(
     private aiAssistantService: AiAssistantService,
@@ -154,6 +155,14 @@ export class AiAssistantData {
   }
 
   private addUserMessage(message: string, files: ChatFile[]): void {
+    if (files.length > 0) {
+      const file = files[0]?.file;
+      if (file)
+      {
+        files[0].mediaType = file?.type.split('/')[0];
+        files[0].mediaUrl = URL.createObjectURL(file);
+      }
+    }
     this.addMessage({
       text: message,
       isUser: true,
@@ -165,7 +174,6 @@ export class AiAssistantData {
 
   private addSystemMessage(aiResponse: AiResponse ): void {
     if (aiResponse.intent === 'Action') {
-      debugger;
       this.handleActionResponse(aiResponse);
     }
 
@@ -222,5 +230,22 @@ export class AiAssistantData {
       }),
       map(() => void 0)
     );
+  }
+
+  onTextToSpeechToggle(): void {
+    this.isLoading.set(true);
+    const sessionId = this.currentSessionId();
+    const textToSpeech = !this.textToSpeech();
+
+    if (sessionId) {
+      this.aiAssistantService.toggleAccessibility(textToSpeech, sessionId).subscribe(response => {
+          this.isLoading.set(false);
+          if (response?.body?.success) {
+            this.textToSpeech.set(textToSpeech);
+          } else {
+            throw new Error('Error with setting text to speech value.');
+          }
+        });
+    }
   }
 }
