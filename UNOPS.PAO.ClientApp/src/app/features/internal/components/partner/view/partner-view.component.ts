@@ -29,28 +29,31 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {PartnerContactsComponent} from '../contacts/partner-contacts.component';
 import { GeminiService } from '../../../services/gemini.service';
 import {MarkdownPipe} from '../../../pipes/markdown.pipe';
+import {LinkListComponent} from "../../../../../common/reusables/components/link/list/link-list.component";
+import {EntityType} from '../../../../../common/models/link.model';
 
 @Component({
   selector: 'app-partner-view',
-  imports: [
-    TranslateModule,
-    InputTextModule,
-    DropdownModule,
-    DatePickerModule,
-    ButtonModule,
-    TextareaModule,
-    PanelModule,
-    SelectModule,
-    AutoFocusModule,
-    DialogModule,
-    MessageModule,
-    DividerModule,
-    CardModule,
-    CheckboxModule,
-    ReactiveFormsModule,
-    PartnerContactsComponent,
-    MarkdownPipe
-  ],
+    imports: [
+        TranslateModule,
+        InputTextModule,
+        DropdownModule,
+        DatePickerModule,
+        ButtonModule,
+        TextareaModule,
+        PanelModule,
+        SelectModule,
+        AutoFocusModule,
+        DialogModule,
+        MessageModule,
+        DividerModule,
+        CardModule,
+        CheckboxModule,
+        ReactiveFormsModule,
+        PartnerContactsComponent,
+        MarkdownPipe,
+        LinkListComponent
+    ],
   templateUrl: './partner-view.component.html',
   styleUrl: './partner-view.component.scss',
   standalone: true,
@@ -208,6 +211,7 @@ export class PartnerViewComponent implements OnInit {
     summaryOfInteractions = signal<string>('');
     partnerNewsIsLoading = signal<boolean>(true);
     partnerNews = signal<string>('');
+    entityTypePartner =  EntityType.Partner;
 
     ngOnInit() {
       this.activatedRoute.paramMap.subscribe({

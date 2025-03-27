@@ -18,7 +18,11 @@ public class ManagerWrapper : IManagerWrapper
 
     private IGeminiManager geminiManager;
 
-    public ManagerWrapper(IMapper mapper, AppDbContext context)
+    private ILinkManager linkManager;
+
+    public ManagerWrapper(
+        IMapper mapper,
+        AppDbContext context)   
     {
         workflowManager = new WorkflowManager(context);
 
@@ -30,6 +34,8 @@ public class ManagerWrapper : IManagerWrapper
         partnerManager = new PartnerManager(mapper, context);
 
         geminiManager = new GeminiManager(mapper, context);
+
+        linkManager = new LinkManager(mapper, context);
     }
 
     public virtual ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -45,4 +51,6 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IPartnerManager PartnerManager => partnerManager;
 
     public virtual IGeminiManager GeminiManager => geminiManager;
+
+    public virtual ILinkManager LinkManager => linkManager;
 }

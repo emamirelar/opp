@@ -92,6 +92,17 @@
           <div [innerHTML]="partnerNews() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
         }
       </p-panel>
+      <p-panel
+        class="md:w-1/2"
+        header="{{ 'title.links' | translate }}"
+        [toggleable]="true"
+      >
+        <app-link-list
+          [entityType]="entityTypePartner"
+          [entityId]="+recordId"
+          [title]="' '"
+        />
+      </p-panel>
     </div>
 
 

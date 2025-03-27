@@ -23,6 +23,8 @@ import { MessageModule } from 'primeng/message';
 import { ContactService } from '../../../services/contact.service';
 import { CardModule } from 'primeng/card';
 import { ActivatedRoute, Router } from '@angular/router';
+import { EntityType } from '../../../../../common/models/link.model';
+import {LinkListComponent} from '../../../../../common/reusables/components/link/list/link-list.component';
 
 @Component({
   selector: 'app-contact-item',
@@ -41,7 +43,9 @@ import { ActivatedRoute, Router } from '@angular/router';
     MessageModule,
     DividerModule,
     CardModule,
-    ReactiveFormsModule],
+    ReactiveFormsModule,
+    LinkListComponent,
+  ],
   templateUrl: './contact-item.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -174,6 +178,8 @@ export class ContactItemComponent implements OnInit, OnDestroy {
     recordId: string = '';
     recordData = signal<any>({});
 
+    readonly entityTypeContact = EntityType.Contact;
+
     ngOnDestroy(): void {
       this.langChangeSubscription?.unsubscribe();
     }
@@ -263,4 +269,6 @@ export class ContactItemComponent implements OnInit, OnDestroy {
 
       return requestJsonObj;
     }
+
+  protected readonly EntityType = EntityType;
 }
