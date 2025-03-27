@@ -42,7 +42,6 @@ public class UNOPSAppDbContext : AppDbContext
         //.IsUnique();
     }
 
-    public new DbSet<UNOPSDocument> Documents { get; set; }
     public DbSet<Project> Projects { get; set; }
     public DbSet<WorkPackage> WorkPackages { get; set; }
     public DbSet<Budget> Budgets { get; set; }
