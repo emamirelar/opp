@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -12,7 +11,6 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 
 public class UNOPSManagerWrapper : ManagerWrapper
 {
-    private readonly DocumentManager documentManager;
     private readonly UNOPSSystemAdminManager systemAdminManager;
     private readonly UNOPSContactManager contactManager;
     private readonly UNOPSInteractionManager interactionManager;
@@ -20,9 +18,8 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSPartnerManager partnerManager;
     private readonly UNOPSGeminiManager geminiManager;
 
-    public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IGoogleDriveDocumentManager driveManager, IConfiguration configuration) : base(mapper, context)
+    public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration) : base(mapper, context)
     {
-        documentManager = new DocumentManager(driveManager, configuration, mapper, opsContext);
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
         contactManager = new UNOPSContactManager(mapper, opsContext);
         interactionManager = new UNOPSInteractionManager(mapper, opsContext);
@@ -31,7 +28,6 @@ public class UNOPSManagerWrapper : ManagerWrapper
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
     }
 
-    public override IDocumentManager DocumentManager => documentManager;
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
     public override IContactManager ContactManager => contactManager;
     public override IInteractionManager InteractionManager => interactionManager;

@@ -2,7 +2,6 @@
 
 public interface IManagerWrapper
 {
-    IDocumentManager DocumentManager { get; }
     ISystemAdminManager SystemAdminManager { get; }
 
     IWorkflowManager WorkflowManager { get; }

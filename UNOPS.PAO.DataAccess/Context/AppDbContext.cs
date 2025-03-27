@@ -20,8 +20,6 @@ public class AppDbContext : AuditableDbContext<int, int>
     }
 
     public DbSet<GrantUser> GrantUsers { get; set; }
-    public DbSet<Document> Documents { get; set; }
-    public DbSet<DocumentRelationship> DocumentRelationships { get; set; }
     public DbSet<Currency> Currencies { get; set; }
     public DbSet<Country> Countries { get; set; }
 
@@ -63,28 +61,6 @@ public class AppDbContext : AuditableDbContext<int, int>
         modelBuilder
             .Entity<Contact>();
         
-        modelBuilder.Entity<DocumentRelationship>()
-            .HasKey(dr => new { dr.DocumentId, dr.EntityId, dr.EntityType });
-        
-        modelBuilder.Entity<DocumentRelationship>(entity =>
-        {
-            entity.HasKey(e => new { e.DocumentId, e.EntityId, e.EntityType });
-
-            entity.HasOne(e => e.Document)
-                .WithMany(d => d.DocumentRelationships)
-                .HasForeignKey(e => e.DocumentId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.Property(e => e.EntityId)
-                .IsRequired();
-
-            entity.Property(e => e.EntityType)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            entity.HasIndex(e => new { e.EntityId, e.EntityType });
-        });
-
         modelBuilder.Entity<EntityUserRole>(entity =>
         {
             entity.HasOne(e => e.UserRole)

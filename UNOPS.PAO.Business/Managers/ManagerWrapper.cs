@@ -9,7 +9,6 @@ using UNOPS.PAO.Models;
 
 public class ManagerWrapper : IManagerWrapper
 {
-    private IDocumentManager documentManager;
     private ISystemAdminManager systemAdminManager;
     private IWorkflowManager workflowManager;
     private IContactManager contactManager;
@@ -23,8 +22,6 @@ public class ManagerWrapper : IManagerWrapper
     {
         workflowManager = new WorkflowManager(context);
 
-
-        documentManager = new DocumentManager(mapper, context);
         systemAdminManager = new SystemAdminManager(context);
 
         contactManager = new ContactManager(mapper, context);
@@ -35,7 +32,6 @@ public class ManagerWrapper : IManagerWrapper
         geminiManager = new GeminiManager(mapper, context);
     }
 
-    public virtual IDocumentManager DocumentManager => documentManager;
     public virtual ISystemAdminManager SystemAdminManager => systemAdminManager;
 
     public virtual IWorkflowManager WorkflowManager => workflowManager;

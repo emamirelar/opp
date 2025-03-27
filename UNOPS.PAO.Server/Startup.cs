@@ -11,7 +11,6 @@ using UNOPS.PAO.GoogleServices;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.Identity.Extensions;
 using UNOPS.PAO.Server.Infrastructure;
-using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSIdentity;
@@ -155,7 +154,6 @@ public class Startup
         services.AddScoped<IAuthorizationHandlerWrapper, UNOPSAuthorizationHandlerWrapper>();
 
         AddServices(services);
-        services.AddScoped<IGoogleDriveDocumentManager, GoogleDriveDocumentManager>();
         ApplyMigrations(services);
         services.SeedAsync();
         ConfigureRegisters(services);
