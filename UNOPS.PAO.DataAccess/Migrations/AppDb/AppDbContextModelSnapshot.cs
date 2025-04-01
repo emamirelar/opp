@@ -18,55 +18,12 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("public")
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "9.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("FundingOpportunityCountries", b =>
-                {
-                    b.Property<int>("CountriesId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("FundingOpportunityId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("CountriesId", "FundingOpportunityId");
-
-                    b.HasIndex("FundingOpportunityId");
-
-                    b.ToTable("FundingOpportunityCountries", "public");
-                });
-
-            modelBuilder.Entity("FundingOpportunityEligibleEntities", b =>
-                {
-                    b.Property<int>("EligibleEntitiesId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("FundingOpportunityId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("EligibleEntitiesId", "FundingOpportunityId");
-
-                    b.HasIndex("FundingOpportunityId");
-
-                    b.ToTable("FundingOpportunityEligibleEntities", "public");
-                });
-
-            modelBuilder.Entity("FundingOpportunitySDGs", b =>
-                {
-                    b.Property<int>("FundingOpportunityId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("SDGsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("FundingOpportunityId", "SDGsId");
-
-                    b.HasIndex("SDGsId");
-
-                    b.ToTable("FundingOpportunitySDGs", "public");
-                });
+            modelBuilder.HasSequence("LinkSequence");
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
                 {
@@ -82,6 +39,184 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                         {
                             t.ExcludeFromMigrations();
                         });
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EntityType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MediaType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MediaUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RawMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequestType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Sender")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("SessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("TimeStamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId");
+
+                    b.ToTable("AiChatHistory", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TextToSpeech")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AiChatSession", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiPrompt", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentConfig")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GenerationConfig")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Project")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Prompt")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SafetySettings")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ToolsConfig")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AiPrompt", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiScreenMapping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ComparisonKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("QueryConditions")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RelatedEntity")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RelatedEntityKey")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TableName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AiScreenMapping", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Contact", b =>
@@ -176,6 +311,9 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.Property<string>("OtherPhone")
                         .HasColumnType("text");
 
+                    b.Property<int>("PartnerId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Phone")
                         .HasColumnType("text");
 
@@ -197,6 +335,8 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PartnerId");
 
                     b.ToTable("Contacts", "public");
                 });
@@ -269,9 +409,6 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("FundingOpportunityId")
-                        .HasColumnType("integer");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -289,9 +426,6 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("ProposalId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -299,10 +433,6 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FundingOpportunityId");
-
-                    b.HasIndex("ProposalId");
 
                     b.ToTable("Documents", "public");
                 });
@@ -436,103 +566,6 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.ToTable("EntityUserRoles", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.FundingOpportunity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ApplicationTypeCode")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("ClarificationDeadline")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("CurrencyId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("DateFrom")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("DateTo")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("DecisionDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DeletedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("EligibilityCriteria")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("FundingAvailable")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTime?>("InformationSessionDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Justification")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("LastModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("PostingDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("SelectionMethodologyId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("SingleSubmition")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Stage")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("SubmissionDueDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CurrencyId");
-
-                    b.HasIndex("SelectionMethodologyId");
-
-                    b.ToTable("FundingOpportunities", "public");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.GrantUser", b =>
                 {
                     b.Property<int>("Id")
@@ -611,113 +644,14 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.ToTable("Interactions", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Proposal", b =>
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Link", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasDefaultValueSql("nextval('public.\"LinkSequence\"')");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ApplicantId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DeletedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("EligibilityCriteriaMet")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("EligibilityEntityMet")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("FundingOpportunityId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LastModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Stage")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("SubmissionDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApplicantId");
-
-                    b.HasIndex("FundingOpportunityId");
-
-                    b.ToTable("Proposals", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.SDG", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Logo")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("LongDescription")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Number")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SDGs", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.SelectionMethodology", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseSequence(b.Property<int>("Id"));
 
                     b.Property<int>("CreatedBy")
                         .HasColumnType("integer");
@@ -732,8 +666,14 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Entity")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -751,9 +691,204 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.ToTable("SelectionMethodologies", "public");
+                    b.ToTable("Links", "public");
+
+                    b.UseTpcMappingStrategy();
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Partner", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address1City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address1Country")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address1PostalCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address1StateProvince")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address1Street")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address1Street2")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address2City")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address2Country")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address2PostalCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address2StateProvince")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address2Street")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Address2Street2")
+                        .HasColumnType("text");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DDEACDone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DDRequired")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EACReference")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalReportingLevel")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("GlobalKeyAccount")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("InternalReportingLevel")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LevyPotentiallyApplies")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LevyTreatment")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NewEngagement")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PooledFund")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReasonForLevyNotApplying")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ShortName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("UNSecretariatEntity")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Website")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Partners", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerTree", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Parent")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PartnerTrees", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UserProfile", b =>
@@ -869,60 +1004,31 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.ToTable("WorkflowLogs", "public");
                 });
 
-            modelBuilder.Entity("FundingOpportunityCountries", b =>
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSLink", b =>
                 {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Country", null)
-                        .WithMany()
-                        .HasForeignKey("CountriesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasBaseType("UNOPS.PAO.Domain.Entities.Link");
 
-                    b.HasOne("UNOPS.PAO.Domain.Entities.FundingOpportunity", null)
-                        .WithMany()
-                        .HasForeignKey("FundingOpportunityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.ToTable("UNOPSLinks", "public");
                 });
 
-            modelBuilder.Entity("FundingOpportunityEligibleEntities", b =>
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatHistory", b =>
                 {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.EligibleEntity", null)
-                        .WithMany()
-                        .HasForeignKey("EligibleEntitiesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("UNOPS.PAO.Domain.Entities.AiChatSession", "Session")
+                        .WithMany("Chats")
+                        .HasForeignKey("SessionId");
 
-                    b.HasOne("UNOPS.PAO.Domain.Entities.FundingOpportunity", null)
-                        .WithMany()
-                        .HasForeignKey("FundingOpportunityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Session");
                 });
 
-            modelBuilder.Entity("FundingOpportunitySDGs", b =>
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Contact", b =>
                 {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.FundingOpportunity", null)
+                    b.HasOne("UNOPS.PAO.Domain.Entities.Partner", "Partner")
                         .WithMany()
-                        .HasForeignKey("FundingOpportunityId")
+                        .HasForeignKey("PartnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("UNOPS.PAO.Domain.Entities.SDG", null)
-                        .WithMany()
-                        .HasForeignKey("SDGsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Document", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.FundingOpportunity", null)
-                        .WithMany("Documents")
-                        .HasForeignKey("FundingOpportunityId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Proposal", null)
-                        .WithMany("Documents")
-                        .HasForeignKey("ProposalId");
+                    b.Navigation("Partner");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.DocumentRelationship", b =>
@@ -947,21 +1053,6 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.Navigation("UserRole");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.FundingOpportunity", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Currency", "Currency")
-                        .WithMany()
-                        .HasForeignKey("CurrencyId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.SelectionMethodology", "SelectionMethodology")
-                        .WithMany()
-                        .HasForeignKey("SelectionMethodologyId");
-
-                    b.Navigation("Currency");
-
-                    b.Navigation("SelectionMethodology");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Interaction", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.Contact", "Contact")
@@ -973,23 +1064,6 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.Navigation("Contact");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Proposal", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.GrantUser", "Applicant")
-                        .WithMany()
-                        .HasForeignKey("ApplicantId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.FundingOpportunity", "FundingOpportunity")
-                        .WithMany("Proposals")
-                        .HasForeignKey("FundingOpportunityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Applicant");
-
-                    b.Navigation("FundingOpportunity");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UserProfile", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.GrantUser", null)
@@ -997,6 +1071,11 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                         .HasForeignKey("UNOPS.PAO.Domain.Entities.UserProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatSession", b =>
+                {
+                    b.Navigation("Chats");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Contact", b =>
@@ -1009,21 +1088,9 @@ namespace UNOPS.PAO.DataAccess.Migrations.AppDb
                     b.Navigation("DocumentRelationships");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.FundingOpportunity", b =>
-                {
-                    b.Navigation("Documents");
-
-                    b.Navigation("Proposals");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.GrantUser", b =>
                 {
                     b.Navigation("UserProfile");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Proposal", b =>
-                {
-                    b.Navigation("Documents");
                 });
 #pragma warning restore 612, 618
         }

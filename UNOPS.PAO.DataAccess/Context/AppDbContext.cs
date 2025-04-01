@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.DataAccess.Context;
 
@@ -33,6 +34,8 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<Partner> Partners { get; set; }
 
     public DbSet<PartnerTree> PartnerTrees { get; set; }
+    public DbSet<UNOPS.PAO.Domain.Entities.Link> Links { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings
@@ -90,5 +93,15 @@ public class AppDbContext : AuditableDbContext<int, int>
 
         modelBuilder
             .Entity<AiChatSession>();
+
+        modelBuilder
+            .Entity<UNOPS.PAO.Domain.Entities.Link>()
+            .ToTable("Links", "public")
+            .HasDiscriminator<string>("Discriminator")
+            .HasValue<UNOPS.PAO.Domain.Entities.Link>("Link")
+            .HasValue<UNOPSLink>("UNOPSLink");
+            
+        modelBuilder
+            .Entity<UNOPSLink>();
     }
 }

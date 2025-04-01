@@ -4,7 +4,20 @@
   <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
 }
 
+
+
 <form [formGroup]="formGroup" class="flex flex-col gap-8">
+  <p-panel
+  header="{{ 'title.links' | translate }}"
+  [toggleable]="true"
+  >
+  <app-link-list
+    [entityType]="entityTypeContact"
+    [entityId]="+recordId"
+    [title]="' '"
+  />
+  </p-panel>
+
       <p-panel
         header="{{ 'title.contactTitles.contactInformation' | translate }}"
         [toggleable]="true"
@@ -162,8 +175,7 @@
     </p-panel>
     <p-panel
       header="{{ 'title.contactTitles.addresses' | translate }}"
-      [toggleable]="true"
-      [styleClass]="'section mt-4'">
+      [toggleable]="true">
       <div class="flex flex-col md:flex-row gap-8">
         <div class="flex flex-col gap-4 w-full">
           <div class="text-2xl font-semibold">
@@ -218,9 +230,11 @@
         </div>
       </div>
     </p-panel>
-    <div class="flex justify-end gap-4">
-        <p-button label="{{'button.cancel' | translate}}" severity="secondary" [styleClass]="'cancel-button'"
+
+    <div class="flex justify-end gap-2">
+        <p-button label="{{'button.cancel' | translate}}" icon="pi pi-times" [styleClass]="'cancel-button p-button-text'"
+        rounded
           (onClick)="handleOnCancelClick($event)" />
-        <p-button label="{{'button.save' | translate}}" severity="primary" [styleClass]="'save-button'" (onClick)="handleOnSaveClick($event)" />
+        <p-button         rounded label="{{'button.save' | translate}}" icon="pi pi-check" severity="primary" [styleClass]="'save-button'" (onClick)="handleOnSaveClick($event)" />
     </div>
 </form>

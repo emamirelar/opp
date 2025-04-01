@@ -17,6 +17,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSPartnerTreeManager partnerTreeManager;
     private readonly UNOPSPartnerManager partnerManager;
     private readonly UNOPSGeminiManager geminiManager;
+    private readonly LinkManager linkManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration) : base(mapper, context)
     {
@@ -26,6 +27,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext);
         partnerManager = new UNOPSPartnerManager(mapper,opsContext);
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
+        linkManager = new LinkManager(mapper, opsContext);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -34,4 +36,5 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override IPartnerTreeManager PartnerTreeManager => partnerTreeManager;
     public override IPartnerManager PartnerManager => partnerManager;
     public override IGeminiManager GeminiManager => geminiManager;
+    public override ILinkManager LinkManager => linkManager;
 }

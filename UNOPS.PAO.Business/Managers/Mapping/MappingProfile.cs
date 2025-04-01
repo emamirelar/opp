@@ -20,5 +20,8 @@ public class MappingProfile : Profile
         CreateMap<AiScreenMappingModel, AiScreenMapping>();
         CreateMap<AiChatHistoryModel, AiChatHistory>();
         CreateMap<AiChatSessionModel, AiChatSession>();
+        CreateMap<Link, LinkModel>();
+        CreateMap<LinkRequest, Link>();
+        CreateMap<UpdateLinkRequest, Link>();
     }
 }

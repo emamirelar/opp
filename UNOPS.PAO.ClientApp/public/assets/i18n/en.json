@@ -39,7 +39,10 @@
       "addressInformation": "Address Information",
       "address1": "Address 1",
       "address2": "Address 2"
-    }
+    },
+    "links": "Links",
+    "editLink": "Edit Link",
+    "addLink": "Add Link"
   },
   "button": {
     "cancel": "Cancel",
@@ -59,7 +62,9 @@
     "active": "Mark as Active",
     "viewContacts": "View Contacts",
     "new": "New",
-    "uploadImage": "Upload Image"
+    "uploadImage": "Upload Image",
+    "addLink": "Add Link",
+    "seeMore": "See More"
   },
   "label": {
     "actions": "Actions",
@@ -192,6 +197,10 @@
       "selectType": "Select a type",
       "selectContact": "Select a contact",
       "contact": "Contact"
+    },
+    "link": {
+      "url": "URL",
+      "description": "Description"
     }
   },
   "message": {
@@ -202,7 +211,8 @@
     "welcomeTitle": "Welcome to Partners and Opportunities",
     "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
     "interactionDeleted": "Interaction successfully deleted",
-    "errorDeletingInteraction": "Error while deleting interaction"
+    "errorDeletingInteraction": "Error while deleting interaction",
+    "dropUrlToAddLink": "Drop URL or file to add link"
   },
   "label.interaction.contact": "Contact",
   "errors": {
@@ -226,5 +236,19 @@
   "common": {
     "cancel": "Cancel",
     "capture": "Capture"
+  },
+  "placeholder": {
+    "enterUrl": "Enter URL",
+    "enterDescription": "Enter description"
+  },
+  "table": {
+    "noRecords": "No records found"
+  },
+  "tooltip": {
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "link": {
+    "relatesTo": "relates to"
   }
 }

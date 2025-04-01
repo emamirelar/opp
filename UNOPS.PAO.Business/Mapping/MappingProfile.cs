@@ -12,5 +12,8 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
         CreateMap<PartnerTree, PartnerTreeDataModel>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status)); // Ensure Status is mapped
+        CreateMap<Link, LinkModel>();
+        CreateMap<LinkRequest, Link>();
+        CreateMap<UpdateLinkRequest, Link>();
     }
 }
