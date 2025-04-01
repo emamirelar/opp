@@ -97,4 +97,8 @@ export class LinkListComponent {
       this.linkDataService.createLink(url);
     }
   }
+
+  displayUrl(url: string) {
+    return url.substring(0, 256)
+  }
 }

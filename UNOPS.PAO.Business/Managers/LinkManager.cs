@@ -32,7 +32,7 @@ public class LinkManager : ILinkManager
     {
         await ValidateEntityExists(model.Entity, model.EntityId);
         var entity = mapper.Map<Link>(model);
-        entity.Name = model.Url;
+        entity.Name = model.Name ?? model.Url;
         await linkRepository.AddAsync(entity);
         var linkModel = mapper.Map<LinkModel>(entity);
         return linkModel;
@@ -71,7 +71,7 @@ public class LinkManager : ILinkManager
         {
             await ValidateEntityExists(model.Entity, model.EntityId);
             mapper.Map<UpdateLinkRequest, Link>(model, entity);
-            entity.Name = model.Url;
+            entity.Name = model.Name ?? model.Url;
             await linkRepository.UpdateAsync(entity);
             var linkModel = mapper.Map<LinkModel>(entity);
             return linkModel;

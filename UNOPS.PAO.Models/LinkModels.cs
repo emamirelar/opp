@@ -1,5 +1,6 @@
 using UNOPS.PAO.Domain.Enums;
 using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace UNOPS.PAO.Models;
 
@@ -8,8 +9,10 @@ public class LinkRequest
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public LinkEntityType Entity { get; set; }
     public int EntityId { get; set; }
+    [StringLength(2000)]
     public string Url { get; set; }
-    public string? Description { get; set; }
+    [StringLength(2000)]
+    public string? Name { get; set; }
 }
 
 public class UpdateLinkRequest : LinkRequest
@@ -24,5 +27,5 @@ public class LinkModel
     public LinkEntityType Entity { get; set; }
     public int EntityId { get; set; }
     public string Url { get; set; }
-    public string? Description { get; set; }
+    public string? Name { get; set; }
 } 
