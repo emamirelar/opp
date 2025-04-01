@@ -22,7 +22,7 @@ public class ManagerWrapper : IManagerWrapper
     private IDocumentTypeManager documentTypeManager;
 
     private IGeminiManager geminiManager;
-
+    private ILinkManager linkManager;
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager)
     {
@@ -39,6 +39,8 @@ public class ManagerWrapper : IManagerWrapper
         documentTypeManager = new DocumentTypeManager(mapper, context);
 
         geminiManager = new GeminiManager(mapper, context);
+
+        linkManager = new LinkManager(mapper, context);
     }
 
     public virtual ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -56,4 +58,6 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IGeminiManager GeminiManager => geminiManager;
     public virtual IDocumentManager DocumentManager => documentManager;
     public virtual IDocumentTypeManager DocumentTypeManager => documentTypeManager;
+
+    public virtual ILinkManager LinkManager => linkManager;
 }

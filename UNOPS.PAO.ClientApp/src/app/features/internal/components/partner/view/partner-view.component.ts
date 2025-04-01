@@ -36,6 +36,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {PartnerContactsComponent} from '../contacts/partner-contacts.component';
 import { GeminiService } from '../../../services/gemini.service';
 import {MarkdownPipe} from '../../../pipes/markdown.pipe';
+import {LinkListComponent} from "../../../../../common/reusables/components/link/list/link-list.component";
+import {EntityType} from '../../../../../common/models/link.model';
 
 @Component({
   selector: 'app-partner-view',
@@ -60,7 +62,8 @@ import {MarkdownPipe} from '../../../pipes/markdown.pipe';
     CheckboxModule,
     ReactiveFormsModule,
     PartnerContactsComponent,
-    MarkdownPipe
+    MarkdownPipe,
+    LinkListComponent
   ],
   templateUrl: './partner-view.component.html',
   styleUrl: './partner-view.component.scss',
@@ -221,6 +224,7 @@ export class PartnerViewComponent implements OnInit {
     summaryOfInteractions = signal<string>('');
     partnerNewsIsLoading = signal<boolean>(true);
     partnerNews = signal<string>('');
+    entityTypePartner =  EntityType.Partner;
 
     ngOnInit() {
       this.activatedRoute.paramMap.subscribe({

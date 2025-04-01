@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250327103720_AddLink")]
+    partial class AddLink
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -419,9 +422,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ContactId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("CreatedBy")
                         .HasColumnType("integer");
 
@@ -438,9 +438,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasMaxLength(13)
                         .HasColumnType("character varying(13)");
-
-                    b.Property<int?>("DocumentTypeId")
-                        .HasColumnType("integer");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -459,9 +456,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("PartnerId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -469,12 +463,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ContactId");
-
-                    b.HasIndex("DocumentTypeId");
-
-                    b.HasIndex("PartnerId");
 
                     b.ToTable("Documents", "public");
 
@@ -534,51 +522,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("EntityId", "EntityType");
 
                     b.ToTable("DocumentRelationships", "public");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.DocumentType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DeletedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LastModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DocumentTypes", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.EligibleEntity", b =>
@@ -1284,8 +1227,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<int>("Entity")
-                        .HasColumnType("integer");
+                    b.Property<string>("Entity")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("EntityId")
                         .HasColumnType("integer");
@@ -1329,10 +1273,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSDocument", b =>
                 {
                     b.HasBaseType("UNOPS.PAO.Domain.Entities.Document");
-
-                    b.Property<string>("GoogleId")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<bool>("LinkedFile")
                         .HasColumnType("boolean");
@@ -1397,23 +1337,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("Partner");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Document", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Contact", null)
-                        .WithMany("Documents")
-                        .HasForeignKey("ContactId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.DocumentType", "DocumentType")
-                        .WithMany()
-                        .HasForeignKey("DocumentTypeId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.Partner", null)
-                        .WithMany("Documents")
-                        .HasForeignKey("PartnerId");
-
-                    b.Navigation("DocumentType");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.DocumentRelationship", b =>
@@ -1514,8 +1437,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Contact", b =>
                 {
-                    b.Navigation("Documents");
-
                     b.Navigation("Interactions");
                 });
 
@@ -1527,11 +1448,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.GrantUser", b =>
                 {
                     b.Navigation("UserProfile");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Partner", b =>
-                {
-                    b.Navigation("Documents");
                 });
 #pragma warning restore 612, 618
         }

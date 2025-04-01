@@ -20,4 +20,6 @@ public interface IManagerWrapper
     IDocumentManager DocumentManager { get; }
     IDocumentTypeManager DocumentTypeManager { get; }
     UserManager<PAOIdentityUser> UserManager { get; }
+
+    ILinkManager LinkManager { get; }
 }

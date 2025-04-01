@@ -26,5 +26,8 @@ public class MappingProfile : Profile
         CreateMap<DocumentUploadModel, Document>();
         CreateMap<DocumentType, DocumentTypeModel>();
         CreateMap<UpdateDocumentRequest, Document>();
+        CreateMap<Link, LinkModel>();
+        CreateMap<LinkRequest, Link>();
+        CreateMap<UpdateLinkRequest, Link>();
     }
 }
