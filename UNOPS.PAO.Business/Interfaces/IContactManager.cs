@@ -25,4 +25,5 @@ public interface IContactManager
     Task DeleteContactAsync(int userId, int id);
 
     IEnumerable<ContactModel> GetPartnerContacts(int partnerId);
+    Task<ContactModel?> GetContactAsync(int id);
 }

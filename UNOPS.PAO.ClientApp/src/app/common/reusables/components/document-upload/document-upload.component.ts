@@ -1,7 +1,7 @@
 import { NgFor, NgIf } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FileUploadModule } from 'primeng/fileupload';
-import { FeedbackDialogService } from '../../../pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../services/feedback-dialog.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -10,7 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './document-upload.component.html',
   styleUrl: './document-upload.component.scss',
   imports: [NgIf, NgFor, FileUploadModule, TranslateModule],
-  providers: [ FileUploadModule ]
+  providers: [FileUploadModule]
 })
 
 export class DocumentUploadComponent {
@@ -24,7 +24,7 @@ export class DocumentUploadComponent {
 
   uploadedFiles: any[] = [];
 
-  constructor(private feedbackService: FeedbackDialogService) {}
+  constructor(private feedbackService: FeedbackDialogService) { }
 
   onUpload(event: any) {
     for (let file of event.files) {
@@ -35,7 +35,7 @@ export class DocumentUploadComponent {
   }
 
   onSelect(event: any) {
-    this.feedbackService.showInfoToast({detail: `${event.currentFiles.length} file(s) ready for upload.`});
+    this.feedbackService.showInfoToast({ detail: `${event.currentFiles.length} file(s) ready for upload.` });
     this.fileSelected.emit(event);
   }
 
@@ -45,13 +45,13 @@ export class DocumentUploadComponent {
       this.uploadedFiles.splice(index, 1);
     }
 
-    this.feedbackService.showInfoToast({detail: 'File removed successfully!'});
+    this.feedbackService.showInfoToast({ detail: 'File removed successfully!' });
     this.fileRemoved.emit(event);
   }
 
   clearFiles() {
     this.uploadedFiles = [];
-    this.feedbackService.showInfoToast({detail: 'All files have been cleared!'});
+    this.feedbackService.showInfoToast({ detail: 'All files have been cleared!' });
     this.filesCleared.emit();
   }
 }

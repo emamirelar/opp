@@ -55,4 +55,5 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<AiChatSession> AiChatSession { get; set; }
 
     public new DbSet<AiChatHistory> AiChatHistory { get; set; }
+    public new DbSet<UNOPSDocument> Documents { get; set; }
 }

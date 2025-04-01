@@ -1,4 +1,7 @@
-﻿namespace UNOPS.PAO.Business.Interfaces;
+﻿using Microsoft.AspNetCore.Identity;
+using UNOPS.PAO.Identity.Entities;
+
+namespace UNOPS.PAO.Business.Interfaces;
 
 public interface IManagerWrapper
 {
@@ -14,4 +17,7 @@ public interface IManagerWrapper
     IPartnerManager PartnerManager { get; }
 
     IGeminiManager GeminiManager { get; }
+    IDocumentManager DocumentManager { get; }
+    IDocumentTypeManager DocumentTypeManager { get; }
+    UserManager<PAOIdentityUser> UserManager { get; }
 }

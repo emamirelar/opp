@@ -1,0 +1,69 @@
+@if (isReadOnly() !== true) {
+<div class="mb-2 flex gap-2">
+  <!--commenting the upload button functionality as it is not used in the current implementation yet-->
+  <!--<p-button icon="pi pi-upload" label="{{ 'button.upload' | translate }}" (onClick)="showUploadFile = true" />-->
+  <ng-content select="document-toolbar"></ng-content>
+</div>
+}
+
+<div class="table-container">
+  <p-table [value]="documents()" [scrollable]="true" [scrollHeight]="scrollHeightValue" [loading]="isLoading()">
+    <ng-template #header>
+      <tr>
+        <th class="w-[50%]">{{ 'label.document.name' | translate }}</th>
+        <th class="w-[30%]">{{ 'label.document.type' | translate }}</th>
+        <th class="w-[20%]">{{ 'label.audit.createdDate' | translate }}</th>
+        <th class="w-3"></th>
+      </tr>
+    </ng-template>
+    @if (documents().length > 0) {
+    <ng-template #body let-document>
+      <tr>
+        <td class="w-[50%]">
+          <div class="flex items-center gap-1">
+            <i [class]="getDocumentIconCls(document)"></i>
+            {{ document.name }}
+          </div>
+        </td>
+        <td class="w-[30%]">{{ document.documentType?.name }}</td>
+        <td class="w-[20%]">{{ document.createdDate | date: 'medium' }}</td>
+        <td>
+          <p-menu #menu [model]="items" [popup]="true" appendTo="body" />
+          <p-button size="small"
+                    (click)="handleOnMenuButtonClick($event, document, menu)"
+                    icon="pi pi-ellipsis-v"
+                    severity="secondary"
+                    rounded />
+        </td>
+      </tr>
+    </ng-template>
+    }
+  </p-table>
+  @if (isLoading() == false && documents().length <= 0) {
+  <div class="no-data">
+    <h5>{{ 'message.noRecordsFound' | translate }}</h5>
+  </div>
+  }
+</div>
+
+@defer (when showUploadFile) {
+<p-dialog header="{{ 'title.docUpload' | translate }}"
+          [modal]="true"
+          [(visible)]="showUploadFile"
+          [styleClass]="'upload-file-dialog'"
+          [maximizable]="true"
+          (onHide)="handleOnUploadDocumentDialogClose(uploadDocument)">
+  <app-upload-document #uploadDocument
+                      [entityId]="entityId()"
+                      [entityName]="entityName()"
+                      [acceptedFormat]="acceptedFormat()"
+                      (onUploadSuccess)="handleOnUploadDocumentSuccess()"></app-upload-document>
+
+  <ng-template #footer>
+    <p-button label="{{ 'button.cancel' | translate }}" severity="secondary" (click)="showUploadFile = false" />
+    <p-button icon="pi pi-upload"
+              label="{{ 'button.upload' | translate }}"
+              (click)="handleOnClickUploadDocumentDialogUploadBtn(uploadDocument)" />
+  </ng-template>
+</p-dialog>
+}

@@ -151,4 +151,21 @@ public class UNOPSContactManager : IContactManager
                 Mobile = x.Mobile
             });
     }
+    public async Task<ContactModel?> GetContactAsync(int id)
+    {
+        string[] includes = ["Documents"];
+
+        var item = await contactRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        var result = mapper.Map<ContactModel>(item);
+
+        //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
+
+        return result;
+    }
 }

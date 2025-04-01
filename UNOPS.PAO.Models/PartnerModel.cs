@@ -37,4 +37,5 @@ public class PartnerModel
     public string? LevyTreatment { get; set; }
     public string Scope { get; set; }
     //public List<ContactModel>? Contacts { get; set; }
+    public List<DocumentModel>? Documents { get; set; }
 }

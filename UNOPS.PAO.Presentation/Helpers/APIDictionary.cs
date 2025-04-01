@@ -9,6 +9,7 @@ public class APIDictionary
 
     // Document
     public const string Document = APIPrefix + "document";
+    public const string DocumentType = APIPrefix + "document-type";
 
     // FundingOpportunity
     public const string FundingOpportunity = APIPrefix + "funding-opportunity";

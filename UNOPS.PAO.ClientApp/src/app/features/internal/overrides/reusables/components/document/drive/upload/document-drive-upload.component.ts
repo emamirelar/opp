@@ -3,17 +3,17 @@ import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
-import { DrivePickerService } from '../drive-picker.service';
+import { FeedbackDialogService } from '../../../../../../../../common/pages/services/feedback-dialog.service';
+import { DrivePickerService } from '../../../../drive-picker.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 declare const google: any;
 
 @Component({
-  selector: 'app-drive-document-upload',
+  selector: 'app-document-drive-upload',
   standalone: true,
-  templateUrl: './drive-document-upload.component.html',
-  styleUrl: './drive-document-upload.component.scss',
+  templateUrl: './document-drive-upload.component.html',
+  styleUrl: './document-drive-upload.component.scss',
   imports: [NgIf, NgFor, FileUploadModule, ButtonModule, DialogModule, CommonModule, TranslateModule],
   providers: [FileUploadModule]
 })

@@ -117,4 +117,22 @@ public class PartnerManager : IPartnerManager
             await PartnerRepository.Delete(entity);
         }
     }
+
+    public async Task<PartnerModel?> GetPartnerAsync(int id)
+    {
+        string[] includes = ["Documents"];
+
+        var item = await PartnerRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        var result = mapper.Map<PartnerModel>(item);
+
+        //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
+
+        return result;
+    }
 }
