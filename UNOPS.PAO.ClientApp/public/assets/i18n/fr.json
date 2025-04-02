@@ -90,7 +90,7 @@
         "interaction.contact": "Contact",
         "link": {
             "url": "URL",
-            "description": "Description"
+            "name": "Nom"
         }
     },
     "message": {
@@ -126,7 +126,7 @@
     },
     "placeholder": {
         "enterUrl": "Entrez l'URL",
-        "enterDescription": "Entrez la description"
+        "enterName": "Entrez le nom"
     },
     "table": {
         "noRecords": "Aucun enregistrement trouvé"
@@ -137,5 +137,9 @@
     },
     "link": {
         "relatesTo": "relatif à"
+    },
+    "validation": {
+        "required": "Ce champ est obligatoire",
+        "maxLength": "La longueur maximale est de {{max}} caractères"
     }
 }

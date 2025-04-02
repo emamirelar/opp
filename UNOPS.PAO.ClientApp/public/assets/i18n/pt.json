@@ -90,7 +90,7 @@
         },
         "link": {
           "url": "URL",
-          "description": "Descrição"
+          "name": "Nome"
         }
     },
     "message": {
@@ -127,7 +127,8 @@
     },
     "placeholder": {
         "enterUrl": "Digite a URL",
-        "enterDescription": "Digite a descrição"
+        "enterDescription": "Digite a descrição",
+        "enterName": "Digite o nome"
     },
     "table": {
         "noRecords": "Nenhum registro encontrado"
@@ -138,5 +139,9 @@
     },
     "link": {
         "relatesTo": "relacionado a"
+    },
+    "validation": {
+        "required": "Este campo é obrigatório",
+        "maxLength": "O comprimento máximo é de {{max}} caracteres"
     }
 }

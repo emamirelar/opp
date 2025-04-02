@@ -205,7 +205,7 @@
     },
     "link": {
       "url": "URL",
-      "description": "Description"
+      "name": "Name"
     }
   },
   "message": {
@@ -244,7 +244,7 @@
   },
   "placeholder": {
     "enterUrl": "Enter URL",
-    "enterDescription": "Enter description"
+    "enterName": "Enter name"
   },
   "table": {
     "noRecords": "No records found"
@@ -255,5 +255,9 @@
   },
   "link": {
     "relatesTo": "relates to"
+  },
+  "validation": {
+    "required": "This field is required",
+    "maxLength": "Maximum length is {{max}} characters"
   }
 }
