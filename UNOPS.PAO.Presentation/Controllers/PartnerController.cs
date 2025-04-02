@@ -45,9 +45,9 @@ public class PartnerController : ControllerBase
     [HttpGet(APIDictionary.Partner)]
     // Internal call: get Partners created by logged-in user
     // TODO add permissions
-    public ActionResult GetAll()
+    public ActionResult GetAll([FromQuery] PaginationRequest parameters)
     {
-        return Ok(manager.GetPartners(currentUserId));
+        return Ok(manager.GetPartners(currentUserId, parameters));
     }
 
     [HttpGet(APIDictionary.Partner + "/{id}")]

@@ -8,15 +8,21 @@ import { tap } from 'rxjs';
 export class ContactService {
   http = inject(HttpClient);
 
+  public readonly apiUrl = `/api/contact`;
   private contactData = signal([]);
   allContacts = this.contactData.asReadonly();
+
   isLoading = signal(false);
 
   constructor() { }
 
+  getUrl(){
+    return this.apiUrl
+  }
+
   getAllContacts() {
     this.isLoading.set(true);
-    this.http.get(`/api/contact`).subscribe({
+    this.http.get(this.apiUrl).subscribe({
       next: (data: any) => {
         this.contactData.set(data);
         this.isLoading.set(false);
@@ -29,7 +35,7 @@ export class ContactService {
 
   getContactById(recordId: string) {
     this.isLoading.set(true);
-    return this.http.get(`/api/contact/${recordId}`).pipe(tap(
+    return this.http.get(`${this.apiUrl}/${recordId}`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -43,7 +49,7 @@ export class ContactService {
   createContact( requestJson: object ){
 
     this.isLoading.set( true );
-    return this.http.post('/api/contact', requestJson).pipe(tap(
+    return this.http.post(this.apiUrl, requestJson).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -57,7 +63,7 @@ export class ContactService {
   updateContactById( requestJson: any ){
 
     this.isLoading.set( true );
-    return this.http.put('/api/contact', requestJson).pipe(tap(
+    return this.http.put(this.apiUrl, requestJson).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -70,7 +76,7 @@ export class ContactService {
 
   deleteContactById(id: any) {
     this.isLoading.set(true);
-    return this.http.delete(`/api/contact/${id}`).pipe(tap(
+    return this.http.delete(`${this.apiUrl}/${id}`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);

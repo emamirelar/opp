@@ -45,9 +45,9 @@ public class ContactController : ControllerBase
     [HttpGet(APIDictionary.Contact)]
     // Internal call: get contacts created by logged-in user
     // TODO add permissions
-    public ActionResult GetAll()
+    public ActionResult GetAll([FromQuery] PaginationRequest parameters)
     {
-        return Ok(manager.GetContacts(currentUserId));
+        return Ok(manager.GetContacts(currentUserId, parameters));
     }
 
     [HttpGet(APIDictionary.Contact + "/{id}")]

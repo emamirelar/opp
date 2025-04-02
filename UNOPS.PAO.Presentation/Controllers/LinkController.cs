@@ -27,17 +27,8 @@ public class LinkController : ControllerBase
     public async Task<ActionResult> GetLinks(
         [FromQuery] LinkEntityType entity, 
         [FromQuery] int entityId,
-        [FromQuery] int pageIndex = 1,
-        [FromQuery] int pageSize = 10,
-        [FromQuery] string? orderBy = null,
-        [FromQuery] bool? ascending = null)
+        [FromQuery] PaginationRequest parameters)
     {
-        var parameters = new PaginationRequest() {
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            OrderBy = orderBy,
-            Ascending = ascending
-        };
         var links = await manager.GetEntityLinks(entity, entityId, parameters);
         return Ok(links);
     }

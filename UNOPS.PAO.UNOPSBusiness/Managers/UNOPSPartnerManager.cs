@@ -17,6 +17,7 @@ using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Utilities.Helpers;
 
 public class UNOPSPartnerManager : IPartnerManager
 {
@@ -119,11 +120,16 @@ public class UNOPSPartnerManager : IPartnerManager
         return mapper.Map<PartnerModel>(entity);
     }
 
-    public IEnumerable<PartnerModel> GetPartners(int userId)
+    public PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request)
     {
-        return PartnerRepository
+        var query = PartnerRepository
             .GetAll()
-            .Select(x => MapEntityToModel(x, mapper));
+            .AsQueryable();
+
+        return query.Paginate(
+            x => MapEntityToModel(x, mapper),
+            request
+        );
     }
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
