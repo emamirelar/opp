@@ -3,9 +3,11 @@
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
@@ -19,7 +21,8 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSGeminiManager geminiManager;
     private readonly LinkManager linkManager;
 
-    public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration) : base(mapper, context)
+    public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
+                               UserManager<PAOIdentityUser> userManager) : base(mapper, context, userManager)
     {
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
         contactManager = new UNOPSContactManager(mapper, opsContext);

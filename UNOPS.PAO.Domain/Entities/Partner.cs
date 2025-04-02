@@ -40,5 +40,6 @@ public class Partner : ModifiableDeletableEntity
     public string? ReasonForLevyNotApplying { get; set; }
     public string? LevyTreatment { get; set; }
     public string Scope { get; set; }
+    public List<Document>? Documents { get; set; }
 }
 

@@ -2,11 +2,18 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestro
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
+import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
+import { DocumentUploadComponent } from '../../../../../common/reusables/components/document-upload/document-upload.component';
+import { DocumentService } from '../../../services/document.service';
+import { DriveDocumentUploadComponent } from '../../../overrides/reusables/components/document/drive/upload/document-drive-upload.component';
+import { ParentEntityType } from '../../../overrides/interfaces/types';
+import { DocumentLinkModel } from '../../../overrides/interfaces/types';
+import { DocumentComponent } from '../../../../../common/reusables/components/document/document.component';
+import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -34,26 +41,30 @@ import {EntityType} from '../../../../../common/models/link.model';
 
 @Component({
   selector: 'app-partner-view',
-    imports: [
-        TranslateModule,
-        InputTextModule,
-        DropdownModule,
-        DatePickerModule,
-        ButtonModule,
-        TextareaModule,
-        PanelModule,
-        SelectModule,
-        AutoFocusModule,
-        DialogModule,
-        MessageModule,
-        DividerModule,
-        CardModule,
-        CheckboxModule,
-        ReactiveFormsModule,
-        PartnerContactsComponent,
-        MarkdownPipe,
-        LinkListComponent
-    ],
+  imports: [
+    TranslateModule,
+    InputTextModule,
+    DropdownModule,
+    DatePickerModule,
+    DocumentUploadComponent,
+    DriveDocumentUploadComponent,
+    DocumentComponent,
+    GDriveDocumentComponent,
+    ButtonModule,
+    TextareaModule,
+    PanelModule,
+    SelectModule,
+    AutoFocusModule,
+    DialogModule,
+    MessageModule,
+    DividerModule,
+    CardModule,
+    CheckboxModule,
+    ReactiveFormsModule,
+    PartnerContactsComponent,
+    MarkdownPipe,
+    LinkListComponent
+  ],
   templateUrl: './partner-view.component.html',
   styleUrl: './partner-view.component.scss',
   standalone: true,
@@ -62,6 +73,8 @@ import {EntityType} from '../../../../../common/models/link.model';
 export class PartnerViewComponent implements OnInit {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
+  recordPermissions = signal<any>({});
+  documentService = inject(DocumentService);
 
   formGroup = new FormGroup({
       id: new FormControl('', {
@@ -236,6 +249,15 @@ export class PartnerViewComponent implements OnInit {
       });
     }
 
+    /*_loadPermissions() {
+      //fetch permissions for record details
+      this.partnerService.getRecordDetailPermissionsById(this.recordId).subscribe({
+        next: (data: any) => {
+          this.recordPermissions.set(data);
+        },
+      });
+    }*/
+
     _loadRecordDetails() {
       //fetch record details
       this.partnerService.getPartnerById(this.recordId).subscribe({
@@ -355,5 +377,62 @@ export class PartnerViewComponent implements OnInit {
         relativeTo: this.activatedRoute,
         queryParams: {},
       });
+  }
+
+  get acceptedMiMIETypesForgDrive() {
+    return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
+  }
+
+  onFileUploaded(response: any) {
+    const formData = new FormData();
+    for (let file of response.files) {
+      formData.append('file', file);
+      formData.append('parentEntityType', ParentEntityType.Partner.toString());
+      formData.append('parentEntityId', this.recordId);
+      formData.append('name', file.name);
+      formData.append('documentTypeId', '1');
     }
+
+    this.documentService.uploadUnopsFiles(formData).subscribe({
+      next: (response: any) => {
+        this.feedbackDialogService.showSuccessToast({ detail: `File ${response.name} uploaded successfully!` });
+      },
+      error: (error) => {
+        this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
+      },
+    });
+  }
+
+  onDriveFileUploaded(response: any) {
+    // TODO: allow more than one file to be uploaded if multiple is set to true
+    const file = response[0];
+    const req: DocumentLinkModel = {
+      link: file.url,
+      name: file.name,
+      type: file.mimeType,
+      parentEntityType: ParentEntityType.Partner,
+      parentEntityId: parseInt(this.recordId),
+    };
+
+    this.documentService.linkUnopsFiles(req).subscribe({
+      next: (response: any) => {
+        this.feedbackDialogService.showSuccessToast({ detail: `File ${response.name} uploaded successfully!` });
+      },
+      error: (error) => {
+        this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
+      },
+    });
+  }
+
+  onFileSelected(event: any) {
+    console.log('Files selected:', event);
+  }
+
+  onFileRemoved(event: any) {
+    console.log('File removed:', event);
+  }
+
+  onFilesCleared() {
+    console.log('All files cleared');
+  }
 }

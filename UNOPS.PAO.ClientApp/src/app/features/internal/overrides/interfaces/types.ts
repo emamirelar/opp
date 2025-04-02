@@ -2,10 +2,13 @@ export interface DocumentLinkModel {
     link: string;
     name: string;
     type: string;
-    parentEntityType: DocumentType;
+    parentEntityType: ParentEntityType;
     parentEntityId: number;
 }
 
-export enum DocumentType {
-    Archive = 99
+export enum ParentEntityType {
+  Drive = 0,
+  Contact = 1,
+  Partner = 2,
+  Archive = 99
 }

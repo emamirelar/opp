@@ -1,27 +1,27 @@
 <p-table [value]="documents" [paginator]="true" [rows]="5" [responsiveLayout]="'scroll'">
-    <ng-template pTemplate="header">
-        <tr>
-            <th>{{'label.document.name' | translate}}</th>
-            <th>{{'label.document.linked' | translate}}</th>
-            <th>{{'label.audit.createdDate' | translate}}</th>
-            <th>{{'label.actions' | translate}}</th>
-        </tr>
-    </ng-template>
+  <ng-template pTemplate="header">
+    <tr>
+      <th>{{'label.document.name' | translate}}</th>
+      <th>{{'label.document.linked' | translate}}</th>
+      <th>{{'label.audit.createdDate' | translate}}</th>
+      <th>{{'label.actions' | translate}}</th>
+    </tr>
+  </ng-template>
 
-    <ng-template pTemplate="body" let-doc>
-        <tr>
-            <td>{{ doc.name }}</td>
-            <td>
-                <i [ngClass]="doc.linkedFile ? 'pi-check text-green-500' : 'pi-times text-red-500'" class="pi"></i>
-            </td>
-            <td>
-                {{ doc.createdDate }}
-            </td>
-            <td>
-                <p-button [icon]="'pi pi-external-link'" variant="text" (onClick)="openDocument(doc.link)"
-                    target="_blank" rel="noopener noreferrer">
-                </p-button>
-            </td>
-        </tr>
-    </ng-template>
+  <ng-template pTemplate="body" let-doc>
+    <tr>
+      <td>{{ doc.name }}</td>
+      <td>
+        <i [ngClass]="doc.linkedFile ? 'pi-check text-green-500' : 'pi-times text-red-500'" class="pi"></i>
+      </td>
+      <td>
+        {{ doc.createdDate }}
+      </td>
+      <td>
+        <p-button [icon]="'pi pi-external-link'" variant="text" (onClick)="openDocument(doc.link)"
+                  target="_blank" rel="noopener noreferrer">
+        </p-button>
+      </td>
+    </tr>
+  </ng-template>
 </p-table>

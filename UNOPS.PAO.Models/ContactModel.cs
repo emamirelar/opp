@@ -31,4 +31,5 @@ public class ContactModel
     public PartnerModel Partner { get; set; }
     public int? PartnerId { get; set; }
     public string? PartnerName { get; set; }
+    public List<DocumentModel>? Documents { get; set; }
 }

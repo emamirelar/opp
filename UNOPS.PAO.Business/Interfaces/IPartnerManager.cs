@@ -23,4 +23,5 @@ public interface IPartnerManager
     Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model);
 
     Task DeletePartnerAsync(int userId, int id);
+    Task<PartnerModel?> GetPartnerAsync(int id);
 }

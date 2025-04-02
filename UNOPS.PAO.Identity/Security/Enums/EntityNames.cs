@@ -1,12 +1,15 @@
 ﻿namespace UNOPS.PAO.Identity.Security.Enums
 {
-    public static class RoleEntityNames
+    public static class EntityNames
     {
-        public const string Project = nameof(Project);
-        public const string FundingOpportunity = nameof(FundingOpportunity);
-        public const string Proposal = nameof(Proposal);
         public const string Contact = nameof(Contact);
-        public const string PartnerTree = nameof(PartnerTree);
         public const string Partner = nameof(Partner);
+
+        public static string ByName(string name) => name switch
+        {
+            "contact" => Contact,
+            "partner" => Partner,
+            _ => string.Empty
+        };
     }
 }

@@ -26,9 +26,9 @@ public class GoogleDriveAPIHelper
         // TODO
         // ConfigureClient(); 
     }
-    public void GetBigQueryClient()
+    public BigQueryClient GetBigQueryClient()
     {
-      /*  var secretManager = new GoogleSecretManagerConfigurationProvider();
+        var secretManager = new GoogleSecretManagerConfigurationProvider();
 
         var credentialParams = configuration.GetSection("BigQuerySettings")
             .Get<JsonCredentialParameters>();
@@ -47,7 +47,7 @@ public class GoogleDriveAPIHelper
 
         var client = BigQueryClient.Create(credentialParams.ProjectId, credentials);
 
-        return client;*/
+        return client;
     }
 
     private void ConfigureClient()
@@ -86,19 +86,20 @@ public class GoogleDriveAPIHelper
             .Get<JsonCredentialParameters>();
         if (credentialParams == null)
             throw new Exception("GoogleDriveSettings needs to be setup in appsettings.");
-    
-        var secretName = configuration?.GetSection("GoogleDriveSettings")["GoogleDriveServiceAccountJSONSecretName"];
+
         var secretManager = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
-    
+        var secretName = configuration?.GetSection("GoogleDriveSettings")["GoogleDriveConnectionKeySecretId"];
         if (secretName != null)
         {
             var googleDriveSecret = secretManager.GetSecretVersion(secretName, "latest");
+
             if (googleDriveSecret != null)
             {
                 credentialParams.PrivateKey = googleDriveSecret?
                     .Replace("\\n", "\n");
             }
         }
+
         return GoogleCredential.FromJsonParameters(credentialParams);
     }
 
@@ -237,7 +238,7 @@ public class GoogleDriveAPIHelper
         {
             case UploadFileType.Invoice: return "uploadInvoiceTargetFolder";
             case UploadFileType.Claim: return "uploadClaimTargetFolder";
-            case UploadFileType.Grant: return "uploadGrantTargetFolder";
+            case UploadFileType.Contract: return "uploadContractTargetFolder";
             default: throw new NotSupportedException();
         }
     }

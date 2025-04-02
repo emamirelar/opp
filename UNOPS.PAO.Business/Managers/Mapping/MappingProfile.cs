@@ -2,6 +2,7 @@
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Models.Document;
 
 public class MappingProfile : Profile
 {
@@ -20,6 +21,11 @@ public class MappingProfile : Profile
         CreateMap<AiScreenMappingModel, AiScreenMapping>();
         CreateMap<AiChatHistoryModel, AiChatHistory>();
         CreateMap<AiChatSessionModel, AiChatSession>();
+        CreateMap<Document, DocumentModel>();
+        CreateMap<DocumentModel, Document>();
+        CreateMap<DocumentUploadModel, Document>();
+        CreateMap<DocumentType, DocumentTypeModel>();
+        CreateMap<UpdateDocumentRequest, Document>();
         CreateMap<Link, LinkModel>();
         CreateMap<LinkRequest, Link>();
         CreateMap<UpdateLinkRequest, Link>();

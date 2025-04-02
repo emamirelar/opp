@@ -23,6 +23,7 @@ using UNOPS.PAO.Server.Infrastructure.Security;
 using UNOPS.PAO.UNOPSPresentation.ContextPermissionHandlers;
 using UNOPS.PAO.Presentation.ContextPermissionHandlers;
 using UNOPS.PAO.Identity.Context;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 namespace UNOPS.PAO.Server;
 
@@ -154,6 +155,7 @@ public class Startup
         services.AddScoped<IAuthorizationHandlerWrapper, UNOPSAuthorizationHandlerWrapper>();
 
         AddServices(services);
+        services.AddScoped<IGoogleDriveDocumentManager, GoogleDriveDocumentManager>();
         ApplyMigrations(services);
         services.SeedAsync();
         ConfigureRegisters(services);

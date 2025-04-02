@@ -1,0 +1,36 @@
+:host {
+  @apply flex flex-col grow;
+}
+
+.table-container{
+  @apply grow h-[50vh] md:h-[40vh]; /* dummy height given so that grid can takk full scrolling height */
+  border: 1px solid var(--p-unops-color-2blue-50);
+}
+
+.no-data{
+  @apply flex flex-col h-[90%] items-center justify-center;
+}
+
+.dragDrop-container{
+  @apply flex items-center justify-center flex-col pt-4 pb-4 mr-4 ml-4;
+  border: 1px dashed var(--p-unops-color-2blue-50);
+}
+
+:host ::ng-deep .upload-file-dialog{
+  @apply w-[60%] md:w-[60%] h-[60%] md:h-[50%];
+}
+
+.file-pdf{
+  color: var(--p-red-900);
+  font-size: 1.75rem
+}
+
+.file-sheet{
+  color: var(--p-green-900);
+  font-size: 1.75rem
+}
+
+.file-doc{
+  color: var(--p-blue-900);
+  font-size: 1.75rem
+}
