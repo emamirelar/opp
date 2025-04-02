@@ -2,30 +2,39 @@
   [(visible)]="visible"
   [header]="(link ? 'title.editLink' : 'title.addLink') | translate"
   [modal]="true"
-  [style]="{width: '25vw'}"
+  [breakpoints]="{ '960px': '80vw' }" [style]="{ width: '30vw' }"
   [draggable]="false"
   [resizable]="false"
   (onHide)="close()">
-  <div class="flex flex-col gap-4">
+  <form [formGroup]="form" class="flex flex-col gap-4">
     <div class="flex flex-col gap-2">
-      <label for="url">{{ 'label.link.url' | translate }}</label>
+      <label for="name">{{ 'label.link.name' | translate }}</label>
       <input
-        id="url"
+        id="name"
         type="text"
         pInputText
-        [(ngModel)]="newLink.url"
-        [placeholder]="'placeholder.enterUrl' | translate" />
+        formControlName="name"
+        [placeholder]="'placeholder.enterName' | translate" />
+      <small class="text-red-500" *ngIf="form.get('name')?.errors?.['maxlength'] && form.get('name')?.touched">
+        {{ 'validation.maxLength' | translate:{ max: 2000 } }}
+      </small>
     </div>
     <div class="flex flex-col gap-2">
-      <label for="description">{{ 'label.link.description' | translate }}</label>
+      <label for="url">{{ 'label.link.url' | translate }}*</label>
       <textarea
-        id="description"
+        id="url"
         pTextarea
-        [(ngModel)]="newLink.description"
+        formControlName="url"
         [rows]="3"
-        [placeholder]="'placeholder.enterDescription' | translate"></textarea>
+        [placeholder]="'placeholder.enterUrl' | translate"></textarea>
+      <small class="text-red-500" *ngIf="form.get('url')?.errors?.['required'] && form.get('url')?.touched">
+        {{ 'validation.required' | translate }}
+      </small>
+      <small class="text-red-500" *ngIf="form.get('url')?.errors?.['maxlength'] && form.get('url')?.touched">
+        {{ 'validation.maxLength' | translate:{ max: 2000 } }}
+      </small>
     </div>
-  </div>
+  </form>
   <ng-template pTemplate="footer">
     <div class="flex justify-between w-full">
       <div>
@@ -50,7 +59,7 @@
           icon="pi pi-check"
           rounded
           (onClick)="saveLink()"
-          [disabled]="!newLink.url" />
+          [disabled]="form.invalid" />
       </div>
     </div>
   </ng-template>

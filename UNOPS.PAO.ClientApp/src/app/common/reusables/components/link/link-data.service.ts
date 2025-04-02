@@ -53,12 +53,12 @@ export default class LinkDataService {
   createLink(url: string) {
     if (!this.entityType() || !this.entityId()) return;
 
-    const description = this.getDescriptionFromUrl(url);
+    const name = this.getNameFromUrl(url);
     const linkRequest: LinkRequest = {
       entity: this.entityType()!,
       entityId: this.entityId()!,
       url,
-      description
+      name
     };
 
     this.saving.set(true);
@@ -124,11 +124,11 @@ export default class LinkDataService {
       entity: this.entityType()!,
       entityId: this.entityId()!,
       url: '',
-      description: ''
+      name: ''
     };
   }
 
-  private getDescriptionFromUrl(url: string): string {
+  private getNameFromUrl(url: string): string {
     try {
       return new URL(url).hostname;
     } catch {
