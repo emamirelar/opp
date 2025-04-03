@@ -54,9 +54,6 @@ export class CachedDataService {
   private allPartnerNewEngagementData = signal([]);
   allPartnerNewEngagement = this.allPartnerNewEngagementData.asReadonly();
 
-  private allPartnerReportingLevelData = signal([]);
-  allPartnerReportingLevel = this.allPartnerReportingLevelData.asReadonly();
-
   private allYesNoData = signal([]);
   allYesNo = this.allYesNoData.asReadonly();
 
@@ -86,7 +83,6 @@ export class CachedDataService {
     this.loadPartnerLevyTreatmentData();
     this.loadPartnerNewEngagement();
     this.loadPartnerReasonForLevyNotData();
-    this.loadPartnerReportingLevelData();
     this.loadPartnerScopeData();
     this.loadPartnerStatus();
     this.loadYesNo();
@@ -113,7 +109,6 @@ export class CachedDataService {
 
     this.allPartnerStatusData.set([]);
     this.allPartnerNewEngagementData.set([]);
-    this.allPartnerReportingLevelData.set([]);
     this.allYesNoData.set([]);
     this.allPartnerLevyAppliesData.set([]);
     this.allPartnerReasonForLevyNotData.set([]);
@@ -240,29 +235,6 @@ export class CachedDataService {
       name: 'Not Allowed'
     }];
     this.allPartnerNewEngagementData.set(partnerNewEngagements);
-  }
-
-  loadPartnerReportingLevelData() {
-    let partnerReportingLevels: any = [{
-      id: '1',
-      name: '1'
-    }, {
-      id: '2',
-      name: '2'
-    }, {
-      id: '3',
-      name: '3'
-    }, {
-      id: '4',
-      name: '4'
-    }, {
-      id: '5',
-      name: '5'
-    }, {
-      id: '6',
-      name: '6'
-    }];
-    this.allPartnerReportingLevelData.set(partnerReportingLevels);
   }
 
   loadYesNo() {
