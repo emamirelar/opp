@@ -39,13 +39,13 @@ public class UNOPSDocumentManager : IDocumentManager
     {
         _mapper = mapper;
         _unopsAppDbContext = context;
-        _documentRepository = new BaseRepository<UNOPSDocument>(context);
+        _documentRepository = new BaseRepository<UNOPSDocument>(context, configuration);
         _driveManager = driveManager;
         _driveConfig = configuration.GetSection($"GoogleDriveSettings:DefaultGoogleDriveFolderIds");
         _userManager = userManager;
         //_projectManager = new DataRepository<Project>(context); ;
-        _contactRepository = new BaseRepository<UNOPSContact>(context);
-        _partnerRepository = new BaseRepository<UNOPSPartner>(context);
+        _contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
+        _partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
     }
 
     private DocumentModel MapDocumentModel(UNOPSDocument entity)
