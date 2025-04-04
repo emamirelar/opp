@@ -63,6 +63,7 @@ import {Partner} from '../../../models/partner.model';
 })
 export class PartnerNewComponent implements OnChanges, OnInit {
   @Input() partnerData: Partner | null = null;
+  @Input() public record: any = {};
   @Output() closeModal = new EventEmitter<void>();
   display = true;
 
@@ -208,7 +209,10 @@ export class PartnerNewComponent implements OnChanges, OnInit {
 
     if (changes['partnerData'] && this.partnerData) {
       this.updateForm(this.partnerData);
+    } else if (Object.keys(this.record).length > 0) {
+      this.updateForm(this.record);
     }
+
   }
 
   updateForm(data: Partner | null) {

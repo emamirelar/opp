@@ -12,8 +12,6 @@ public interface IGeminiManager
     AiPrompt MapModelToEntity(GeminiProcessDataRequest req);
     IEnumerable<AiPromptModel> GetPromptData(string type);
     Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData);
-    Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type);
-    Task<string> GetDataBasedOnScreenMapping(string type, int recordId, AiScreenMapping[] mapping);
     IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId);
     Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId);
     IEnumerable<AiChatSession> GetUserSessions(int userId);

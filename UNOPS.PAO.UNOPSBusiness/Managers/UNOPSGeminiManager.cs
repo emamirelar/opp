@@ -26,6 +26,7 @@ using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Http;
 using Google.Cloud.TextToSpeech.V1;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using System.Globalization;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -34,7 +35,6 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
     private readonly GoogleCredential _credentials;
-    private readonly DataRepository<AiScreenMapping> _screenMappingRepository;
     private readonly DataRepository<AiPrompt> _promptRepository;
     private readonly UNOPSAppDbContext _context;
     private readonly string _connectionString;
@@ -42,12 +42,12 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly TextExtractionService _textExtractionService;
     private readonly GoogleCloudStorageService _gcsService;
     private readonly GeminiSessionService _sessionService;
+    private readonly AiContextualService _aiService;
 
     public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
         _mapper = mapper;
         _context = context;
-        _screenMappingRepository = new DataRepository<AiScreenMapping>(context);
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
         _credentials = GetCredentials();
@@ -56,6 +56,7 @@ public class UNOPSGeminiManager : IGeminiManager
         _gcsService = new GoogleCloudStorageService(configuration);
         _sessionService = new GeminiSessionService(context);
         _ttsService = new GoogleTextToSpeechService();
+        _aiService = new AiContextualService(configuration, _context);
     }
 
     // Map AiPrompt entity to AiPromptModel
@@ -81,16 +82,6 @@ public class UNOPSGeminiManager : IGeminiManager
             .Select(x => MapEntityToAiPromptModel(x, _mapper));
     }
 
-    // Get screen mappings by type and sort the response
-    public async Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type)
-    {
-        return await _screenMappingRepository
-            .GetAll()
-            .Where(x => x.Type == type)
-            .OrderBy(x => x.Order) // Sort by TableName or any other property
-            .ToListAsync();
-    }
-
     // Fetch detailed response from Gemini
     public async Task<dynamic> FetchDetailedResponseFromGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType
                                                                 , string fileUrl, string fileType) {
@@ -111,7 +102,7 @@ public class UNOPSGeminiManager : IGeminiManager
         var candidates = json["candidates"];
         var parts = candidates[0]?["content"]["parts"];
         var textJson = parts[0]["text"].ToString(); ;
-        textJson = textJson.Replace("```json", "").Replace("```", "").Replace("\\n", "").Trim();
+        textJson = textJson.Replace("```json", "").Replace("```", "").Trim();
         var entityResponse = new JObject();
 
         try
@@ -204,6 +195,9 @@ public class UNOPSGeminiManager : IGeminiManager
                             , RawMessage = responseInString
                             , MediaUrl = fileUrl
                             , MediaType = fileType
+                            , ShortSummary = parsedResponse["ShortSummary"]?.ToString() ?? ""
+                            , Dependents = parsedResponse["dependents"]?.ToString() ?? ""
+                            , Url = parsedResponse["URL"]?.ToString() ?? ""
                             , Files = new[] { new { MediaUrl = fileUrl, MediaType = fileType } }
                             };
         return finalResponse;
@@ -322,166 +316,6 @@ public class UNOPSGeminiManager : IGeminiManager
         return GoogleCredential.FromJson(secretValue);
     }
 
-    // Get data based on screen mappings
-    public async Task<string> GetDataBasedOnScreenMapping(string type, int recordId, AiScreenMapping[] mappings)
-    {
-        // To add custom logic, uncomment the following code-block and edit it (example)
-        /*
-        if (type == 'contacts_summary') {
-            // custom logic
-            // ensure to return a string (json)
-        }
-        */
-        if (mappings == null || mappings.Length == 0)
-        {
-            throw new InvalidOperationException("Screen mappings are missing.");
-        }
-
-        var dbProperties = typeof(UNOPSAppDbContext).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-        var selectColumns = BuildSelectColumns(mappings);
-        var joinClauses = BuildJoinClauses(mappings);
-        string baseTableName = mappings[0].Name;
-        string baseTable = $"{_connectionString}.\"{baseTableName}\"";
-        string columnWithQuotes = "\"Id\"";
-        string baseTableKeyCheck = $"{baseTable}.{columnWithQuotes}";
-
-        string sqlQuery = $@"
-            SELECT ROW_TO_JSON(t)
-            FROM (
-                SELECT {string.Join(", ", selectColumns)}
-                FROM {baseTable}
-                {string.Join(" ", joinClauses)}
-                WHERE {baseTableKeyCheck} = @RecordId
-            ) t;";
-
-        var result = await ExecuteSqlQuery(sqlQuery, recordId);
-        return JsonConvert.SerializeObject(result[0]?["row_to_json"], Formatting.Indented);
-    }
-
-    // Build select columns for SQL query
-    private List<string> BuildSelectColumns(AiScreenMapping[] mappings)
-    {
-        var selectColumns = new List<string>();
-        var aggregates = new List<string>();
-        foreach (var mapping in mappings)
-        {
-            var tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.TableName, StringComparison.OrdinalIgnoreCase));
-            var foreignKeys = tableRecord?.GetForeignKeys()?.ToList();
-            var primaryKey = tableRecord?.FindPrimaryKey();
-
-            string tableWithSchema = $"{_connectionString}.\"{mapping.TableName}\"";
-            var tableProperties = tableRecord?.GetProperties();
-            var tablePropetiesAsList = tableProperties?.ToList();
-            string aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
-
-            if (!selectColumns.Any(col => col.Contains(tableWithSchema)) && (tableRecord?.ClrType != null && tablePropetiesAsList.Count != 2 && foreignKeys.Count != 2))
-            {
-                foreach (var property in tableProperties)
-                {
-                    var commaSeparation = string.Empty;
-                    if (tableProperties.First().Name != property.Name)
-                    {
-                        commaSeparation = ",";
-                    }
-                    aggregation = string.Concat(aggregation, $"{commaSeparation} '{property.Name}', ", $"{tableWithSchema}.\"{property.Name}\"");
-                }
-                if (!string.IsNullOrEmpty(aggregation))
-                {
-                    aggregation = string.Concat(aggregation, $")) AS {mapping.TableName}");
-                    selectColumns.Add(aggregation);
-                }
-            }
-
-
-            if (!string.IsNullOrEmpty(mapping.RelatedEntity) && !string.IsNullOrEmpty(mapping.RelatedEntityKey))
-            {
-                aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
-                string relatedTableWithSchema = $"{_connectionString}.\"{mapping.RelatedEntity}\"";
-                tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
-                tableProperties = tableRecord?.GetProperties();
-                tablePropetiesAsList = tableProperties?.ToList();
-                foreignKeys = tableRecord?.GetForeignKeys()?.ToList();
-                primaryKey = tableRecord?.FindPrimaryKey();
-
-                if (!selectColumns.Any(col => col.Contains(relatedTableWithSchema)) && (tableRecord?.ClrType != null && tablePropetiesAsList.Count != 2 && foreignKeys.Count != 2))
-                {
-                    foreach (var property in tableProperties)
-                    {
-                        var commaSeparation = string.Empty;
-                        if (tableProperties.First().Name != property.Name)
-                        {
-                            commaSeparation = ",";
-                        }
-                        aggregation = string.Concat(aggregation, $"{commaSeparation} '{property.Name}', ", $"{relatedTableWithSchema}.\"{property.Name}\"");
-                    }
-                    if (!string.IsNullOrEmpty(aggregation))
-                    {
-                        aggregation = string.Concat(aggregation, $")) AS {mapping.RelatedEntity}");
-                        selectColumns.Add(aggregation);
-                    }
-                }
-            }
-        }
-        return selectColumns;
-    }
-
-    // Build join clauses for SQL query
-    private List<string> BuildJoinClauses(AiScreenMapping[] mappings)
-    {
-        var joinClauses = new List<string>();
-        foreach (var mapping in mappings)
-        {
-            if (!string.IsNullOrEmpty(mapping.RelatedEntity) && !string.IsNullOrEmpty(mapping.RelatedEntityKey))
-            {
-                string tableWithSchema = $"{_connectionString}.\"{mapping.TableName}\"";
-                string relatedTableWithSchema = $"{_connectionString}.\"{mapping.RelatedEntity}\"";
-                joinClauses.Add($"LEFT JOIN {relatedTableWithSchema} ON {tableWithSchema}.\"{mapping.ComparisonKey}\" = {relatedTableWithSchema}.\"{mapping.RelatedEntityKey}\"");
-            }
-        }
-        return joinClauses;
-    }
-
-    // Execute SQL query
-    private async Task<List<Dictionary<string, object>>> ExecuteSqlQuery(string sqlQuery, int recordId)
-    {
-        var result = new List<Dictionary<string, object>>();
-        using (var connection = _context.Database.GetDbConnection())
-        {
-            await connection.OpenAsync();
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = sqlQuery;
-                command.CommandType = System.Data.CommandType.Text;
-                var param = command.CreateParameter();
-                param.ParameterName = "@RecordId";
-                param.Value = recordId;
-                command.Parameters.Add(param);
-
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        var row = new Dictionary<string, object>();
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            row[reader.GetName(i)] = reader.GetValue(i);
-                        }
-                        result.Add(row);
-                    }
-                }
-            }
-        }
-        return result;
-    }
-
-    // Build nested JSON from result and mappings
-    private object BuildNestedJson(List<Dictionary<string, object>> result, AiScreenMapping[] mappings)
-    {
-        // Implement the logic to build nested JSON from the result and mappings
-        // This is a placeholder implementation
-        return result;
-    }
-
     public async Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req)
     {
         string relatedMessage = "";
@@ -497,8 +331,8 @@ public class UNOPSGeminiManager : IGeminiManager
         }
 
         // Query the AiScreenMapping table based on Type
-        var screenMappings = (await GetScreenMappingsByType(promptData.Type)).ToArray();
-        relatedMessage = await GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+        var screenMappings = (await _aiService.GetScreenMappingsByType(promptData.Type)).ToArray();
+        relatedMessage = await _aiService.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
 
         // Fetch result from Gemini
         return await FetchResultFromGemini(promptData, relatedMessage);
@@ -564,29 +398,91 @@ public class UNOPSGeminiManager : IGeminiManager
         var entityResponse = await EntityDetectionThroughGemini(session, formattedChatHistory, req, fileUrl, fileType);
         //var entityResponse = GetDetailsFromGeminiResponse(entityDetectionResponse);
         var forward = entityResponse.Forward.ToString();
+       // await _aiService.GenerateEmbeddingAsync("Contact", 1, "Name: Anusha Swaminathan, Country: Denmark, Address: Else Alfelts Vej 52N, 1.tv, PartnerName: UNOPS Partner A, Status: Active");
+        //await _aiService.GenerateEmbeddingAsync("Contact", 2, "Name: Raghavendar Murali, Country: Denmark, Address: Else Alfelts Vej 52N, 1.tv, PartnerName: UNOPS Partner X, Status: Active");
         if (forward == string.Empty || forward == "No") {
             return entityResponse;
         }
 
         var promptType = entityResponse.Type.ToString();
         var summary = entityResponse.Summary.ToString();
+        var shortSummary = entityResponse.ShortSummary.ToString();
+
+        var content = "";
 
         chatHistory = await GetChatHistory(req.sessionId, promptType);
+
+        if (forward == "Yes" && promptType.StartsWith("retrieve"))
+        {
+            var embeddingString = await _aiService.CreateEmbeddingForText(shortSummary);
+            var entityId = await _aiService.RetrieveEntityId(entityResponse.Entity.ToString(), embeddingString);
+            content = await _aiService.RetrieveContent(promptType, entityId);
+            req.Message = "Summary of the conversation with the user: " + summary + ". Content: " + content;
+        } else {
+            req.Message = "Summary: " + summary;
+        }
 
         formattedChatHistory = chatHistory.Select(x => new {
             role = x.Sender,
             parts = new[] { new { text = x.RawMessage } }
         }).ToList();
 
-        req.Message = "Summary: " + summary;
-
         var detailedResponse = await FetchDetailedResponseFromGemini(session, formattedChatHistory, req, promptType, fileUrl, fileType);
+        var updatedDetailedResponse = await GetDependentDropdownValues(detailedResponse);
 
-        _sessionService.UpdateChatHistoryTable(req.sessionId, "model", detailedResponse.Message.ToString(), detailedResponse.RawMessage
-                                        , detailedResponse.Entity, detailedResponse.Intent, "entity_intent_detection", detailedResponse.MediaUrl, detailedResponse.MediaType);
+        _sessionService.UpdateChatHistoryTable(req.sessionId, "model", updatedDetailedResponse.Message.ToString(), updatedDetailedResponse.RawMessage
+                                        , updatedDetailedResponse.Entity, updatedDetailedResponse.Intent, "entity_intent_detection", updatedDetailedResponse.MediaUrl, updatedDetailedResponse.MediaType);
         
-        return detailedResponse;
+        return updatedDetailedResponse;
 
+    }
+
+    private async Task<dynamic> GetDependentDropdownValues(dynamic detailedResponse)
+    {
+        var updatedDetailedResponse = detailedResponse;
+
+        if (!string.IsNullOrWhiteSpace(detailedResponse?.Dependents))
+        {
+            var dependentsList = JsonConvert.DeserializeObject<List<string>>(detailedResponse.Dependents);
+
+            if (dependentsList.Count > 0)
+            {
+                var detailedRawMessage = JsonConvert.DeserializeObject(detailedResponse.RawMessage);
+                foreach (var dependent in dependentsList)
+                {
+                    var text = detailedRawMessage[dependent].Value;
+                    var embeddingString = await _aiService.CreateEmbeddingForText(text);
+
+                    var entityName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(dependent.Replace("Id", ""));
+                    var entityId = await _aiService.RetrieveEntityId(entityName, embeddingString);
+
+                    if (entityId != null)
+                    {
+                        detailedRawMessage[dependent] = entityId;
+                    }
+                }
+                var stringifiedRawMessage = JsonConvert.SerializeObject(detailedRawMessage);
+                updatedDetailedResponse = new
+                {
+                    detailedResponse.Entity,
+                    detailedResponse.Intent,
+                    detailedResponse.Message,
+                    detailedResponse.Type,
+                    detailedResponse.Summary,
+                    detailedResponse.Forward,
+                    RawMessage = stringifiedRawMessage,
+                    detailedResponse.MediaUrl,
+                    detailedResponse.MediaType,
+                    detailedResponse.ShortSummary,
+                    detailedResponse.Dependents,
+                    detailedResponse.Url,
+                    detailedResponse.Files
+                };
+            }
+
+        }
+
+        return updatedDetailedResponse;
     }
 
     public IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId) 
@@ -642,5 +538,22 @@ public class UNOPSGeminiManager : IGeminiManager
     public async Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
     {
         return await _sessionService.UpdateAiAssistantAccessibility(req);
+    }
+
+    private static string ToConcatenatedString(object model)
+    {
+        if (model == null) return string.Empty;
+
+        var properties = model.GetType().GetProperties();
+        string result = "";
+
+        foreach (var property in properties)
+        {
+            var value = property.GetValue(model, null);
+            result += $"{property.Name}: {value}, ";
+        }
+
+        // Remove trailing comma and space
+        return result.TrimEnd(',', ' ');
     }
 }

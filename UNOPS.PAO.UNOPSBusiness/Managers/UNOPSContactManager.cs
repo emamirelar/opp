@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UNOPS.PAO.Business.Interfaces;
@@ -53,11 +54,11 @@ public class UNOPSContactManager : IContactManager
         return MapModelToEntity(model, new UNOPSContact());
     }
 
-    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context)
+    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
         this.mapper = mapper;
-        contactRepository = new BaseRepository<UNOPSContact>(context);
-        partnerRepository = new BaseRepository<UNOPSPartner>(context);
+        contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
+        partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
         commonRepository = new CommonEntityRepository(context);
     }
 

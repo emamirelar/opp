@@ -24,10 +24,10 @@ public class UNOPSManagerWrapper : ManagerWrapper
     {
         documentManager = new DocumentManager(driveManager, configuration, mapper, opsContext);
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
-        contactManager = new UNOPSContactManager(mapper, opsContext);
-        interactionManager = new UNOPSInteractionManager(mapper, opsContext);
-        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext);
-        partnerManager = new UNOPSPartnerManager(mapper,opsContext);
+        contactManager = new UNOPSContactManager(mapper, opsContext, configuration);
+        interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration);
+        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration);
+        partnerManager = new UNOPSPartnerManager(mapper,opsContext, configuration);
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
     }
 

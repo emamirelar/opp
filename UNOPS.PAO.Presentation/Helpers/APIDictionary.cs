@@ -62,4 +62,6 @@ public class APIDictionary
     public const string AiAssistantChat = APIPrefix + "ai-assistant/chat";
     public const string GeminiFileScan = APIPrefix + "scan-data";
     public const string AiAssistantAccessibility = APIPrefix + "ai-assistant/accessibility";
+
+    public const string GenerateEmbeddings = APIPrefix + "generate-embeddings";
 }

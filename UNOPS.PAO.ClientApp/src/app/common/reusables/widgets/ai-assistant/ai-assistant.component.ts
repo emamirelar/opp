@@ -1,4 +1,4 @@
-import {Component, ViewChild, ElementRef, Input, ViewContainerRef, inject, effect} from '@angular/core';
+import {Component, ViewChild, ElementRef, Input, ViewContainerRef, inject, effect, OnInit} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -33,9 +33,10 @@ import { SafeUrlPipe } from './safe-url.pipe';
     SafeUrlPipe
   ]
 })
-export class AiAssistantComponent {
+export class AiAssistantComponent implements OnInit {
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
   @ViewChild('scanComponent') private scanComponent!: AiAssistantScanComponent;
+  @Input() viewContainerRef!: ViewContainerRef;  // Accept ViewContainerRef
 
   firstScroll = signal(true);
   message = signal('');
@@ -61,6 +62,12 @@ export class AiAssistantComponent {
         this.firstScroll.set(false);
       }
     });
+  }
+
+  ngOnInit(): void {
+    if (this.viewContainerRef) {
+      this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
+    }
   }
 
   onFileSelect(event: any): void {

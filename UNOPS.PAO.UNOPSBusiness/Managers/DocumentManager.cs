@@ -26,7 +26,7 @@ public class DocumentManager : IDocumentManager
     {
         _mapper = mapper;
         _unopsAppDbContext = context;
-        _documentRepository = new BaseRepository<UNOPSDocument>(context);
+        _documentRepository = new BaseRepository<UNOPSDocument>(context, configuration);
         _driveManager = driveManager;
         _driveConfig = configuration.GetSection($"GoogleDriveSettings:DefaultGoogleDriveFolderIds");
     }

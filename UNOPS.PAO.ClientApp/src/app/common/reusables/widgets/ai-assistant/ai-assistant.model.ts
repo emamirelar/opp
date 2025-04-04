@@ -24,6 +24,7 @@ export interface AiResponse {
   mediaType?: string;
   rawMessage?: string;
   files?: any[];   
+  url?: string;
 }
 
 export enum ScreenToOpenByAiActionCategory {

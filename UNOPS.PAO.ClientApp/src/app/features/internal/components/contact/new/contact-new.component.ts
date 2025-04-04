@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnDestroy, OnInit, output, Output, signal, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, OnDestroy, OnInit, output, Output, signal } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -24,7 +24,6 @@ import { CardModule } from 'primeng/card';
 import { DialogModule } from 'primeng/dialog';
 
 import { Router } from '@angular/router';
-import {Contact} from '../../../models/contact.model';
 
 @Component({
   selector: 'app-contact-new',
@@ -105,8 +104,8 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
   feedbackDialogService = inject(FeedbackDialogService);
   contactService = inject(ContactService);
   languageService = inject(LanguageService);
-  public cdr = inject(ChangeDetectorRef);
-  @Input() public record: Contact = {};
+  public cdr = inject( ChangeDetectorRef);
+  @Input() public record: any = {};
 
   private langChangeSubscription: Subscription = new Subscription();
   @Output()
@@ -122,6 +121,12 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
   @Output() closeModal = new EventEmitter<void>();
   display = true;
 
+  constructor() {
+    //load salutations
+    //this.cachedDataService.loadSalutations();
+    //this.cachedDataService.loadStatus();
+  }
+
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
   }
@@ -132,10 +137,10 @@ export class ContactNewComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  ngOnChanges(changes: SimpleChanges) {
+  ngOnChanges() {
     this.display = true;
-    if (changes['record'] && Object.keys(this.record).length > 0) {
-      this.formGroup.patchValue(this.record as any);
+    if (Object.keys(this.record).length > 0) {
+      this.formGroup.patchValue(this.record);
     }
   }
 

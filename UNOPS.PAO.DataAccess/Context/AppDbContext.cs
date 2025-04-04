@@ -35,6 +35,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<Partner> Partners { get; set; }
 
     public DbSet<PartnerTree> PartnerTrees { get; set; }
+    public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings
@@ -62,10 +63,10 @@ public class AppDbContext : AuditableDbContext<int, int>
 
         modelBuilder
             .Entity<Contact>();
-        
+
         modelBuilder.Entity<DocumentRelationship>()
             .HasKey(dr => new { dr.DocumentId, dr.EntityId, dr.EntityType });
-        
+
         modelBuilder.Entity<DocumentRelationship>(entity =>
         {
             entity.HasKey(e => new { e.DocumentId, e.EntityId, e.EntityType });
@@ -114,5 +115,18 @@ public class AppDbContext : AuditableDbContext<int, int>
 
         modelBuilder
             .Entity<AiChatSession>();
+
+        modelBuilder.Entity<EntityEmbeddings>(entity =>
+        {
+            entity.HasIndex(e => e.EntityName);
+            entity.HasIndex(e => e.EntityId);
+            entity.Property(e => e.FullEmbedding)
+              .HasColumnType("vector(768)");
+            entity.Property(e => e.NameEmbedding)
+              .HasColumnType("vector(768)");
+            entity.HasIndex(e => new { e.EntityName, e.EntityId })
+                    .IsUnique(); // This ensures uniqueness at the database level
+            //entity.HasIndex(e => e.Embedding).HasMethod("hnsw");
+        });
     }
 }

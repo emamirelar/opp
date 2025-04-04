@@ -149,4 +149,10 @@ public class GeminiController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpPost(APIDictionary.GenerateEmbeddings)]
+    public async Task<ActionResult> GenerateAndStoreEmbeddings([FromBody] string entity)
+    {
+        return Ok();
+    }
 }

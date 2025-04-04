@@ -24,6 +24,7 @@ using UNOPS.PAO.Server.Infrastructure.Security;
 using UNOPS.PAO.UNOPSPresentation.ContextPermissionHandlers;
 using UNOPS.PAO.Presentation.ContextPermissionHandlers;
 using UNOPS.PAO.Identity.Context;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.Server;
 
@@ -159,6 +160,7 @@ public class Startup
         ApplyMigrations(services);
         services.SeedAsync();
         ConfigureRegisters(services);
+        services.AddHostedService<PubSubPullService>(); // Register your background service
     }
 
     private void AddServices(ServiceRegistry services)
