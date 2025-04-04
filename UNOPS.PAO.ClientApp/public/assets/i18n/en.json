@@ -44,6 +44,7 @@
     "addLink": "Add Link"
   },
   "button": {
+    "back": "Back",
     "cancel": "Cancel",
     "close": "Close",
     "darkMode": "Dark Mode",
@@ -66,7 +67,6 @@
     "viewContacts": "View Contacts",
     "new": "New",
     "uploadImage": "Upload Image",
-    "addLink": "Add Link",
     "seeMore": "See More"
   },
   "label": {
@@ -100,7 +100,7 @@
       "fax": "Fax",
       "description": "Description",
       "mailingAddress": "Address",
-
+      "partnerInfo": "Partner Information",
       "mailingStreet": "Mailing Street",
       "mailingStreet2": "Mailing Street 2",
       "mailingCity": "Mailing City",

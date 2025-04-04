@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   templateUrl: './document-upload.component.html',
   styleUrl: './document-upload.component.scss',
-  imports: [NgIf, NgFor, FileUploadModule, TranslateModule],
+  imports: [FileUploadModule, TranslateModule],
   providers: [FileUploadModule]
 })
 

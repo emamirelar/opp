@@ -7,12 +7,12 @@
       <p-button
         icon="pi pi-camera"
         [label]="'title.scanBusinessCard' | translate"
-        (onClick)="scanner.show()"
+        (onClick)="openBusinessCardScanner()"
       />
       <p-button
         icon="pi pi-plus"
         [label]="'button.new' | translate"
-        (onClick)="newContact.set(true)"
+        (onClick)="openContactEditDialog()"
       />
     </div>
   </div>
@@ -21,7 +21,6 @@
     [dataUrl]="contactService.getUrl()"
     [columns]="contactColumns"
     [config]="listviewConfig"
-    (rowSelect)="onRowSelected($event)"
     (rowDblClick)="onRowDoubleClicked($event)"
   >
     <ng-template #actionsTemplate let-contact>
@@ -45,15 +44,3 @@
     </ng-template>
   </app-listview>
 </div>
-
-<app-contact-new
-  *ngIf="newContact()"
-  [record]="newContactData()"
-  (onRecordCreationSuccess)="_handleOnRecordCreation($event)"
-  (closeModal)="closeNewContactDialog()"
-></app-contact-new>
-
-<app-business-card-scanner
-  #scanner
-  (onScannedContact)="onScannedContact($event)"
-></app-business-card-scanner>
