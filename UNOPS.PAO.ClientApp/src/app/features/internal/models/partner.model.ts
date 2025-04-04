@@ -6,8 +6,6 @@ export interface Partner {
   newEngagement?: string | null;
   phone?: string | null;
   website?: string | null;
-  internalReportingLevel?: string | null;
-  externalReportingLevel?: string | null;
   pooledFund?: string | null;
   ddRequired?: string | null;
   ddeacDone?: string | null;
@@ -17,19 +15,12 @@ export interface Partner {
   levyPotentiallyApplies?: string | null;
   reasonForLevyNotApplying?: string | null;
   levyTreatment?: string | null;
-  scope?: string | null;
   address1Street?: string | null;
   address1Street2?: string | null;
   address1City?: string | null;
   address1StateProvince?: string | null;
   address1PostalCode?: string | null;
   address1Country?: string | null;
-  address2Street?: string | null;
-  address2Street2?: string | null;
-  address2City?: string | null;
-  address2StateProvince?: string | null;
-  address2PostalCode?: string | null;
-  address2Country?: string | null;
   discriminator?: string | null;
   createdBy?: string | null;
   createdDate?: Date | null;
