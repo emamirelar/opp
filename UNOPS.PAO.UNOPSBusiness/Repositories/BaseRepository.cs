@@ -89,15 +89,6 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         await PublishMessageToPubSub(entity);
     }
     
-    public async Task<IEnumerable<Document>> GetDocumentsForEntityAsync(int entityId, DocumentParentEntityType entityType)
-    {
-        return await _dataDbContext.DocumentRelationships
-            .Where(dr => dr.EntityId == entityId && 
-                         dr.EntityType == entityType.GetEntityTypeName())
-            .Select(dr => dr.Document)
-            .ToListAsync();
-    }
-
     public async Task<IEnumerable<TEntity>> GetAllSortedAsync(string sortBy, bool ascending = true)
     {
         var parameter = Expression.Parameter(typeof(TEntity), "x");

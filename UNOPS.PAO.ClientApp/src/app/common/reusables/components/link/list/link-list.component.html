@@ -1,0 +1,101 @@
+<div class="flex flex-col w-full">
+  @if (title()) {
+    <div class="flex justify-between items-center">
+      <div class="text-xl font-semibold">{{ title() || ('title.links' | translate) }}</div>
+    </div>
+  }
+
+  <div
+    class="flex flex-col gap-4 relative border-2 border-dashed transition-all duration-300 ease-in-out"
+    [ngClass]="{
+           'bg-blue-50/10 !border-blue-300': isDragging(),
+           'bg-transparent border-transparent': !isDragging()
+         }"
+    (dragenter)="onDragEnter($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)">
+
+    <!-- Drag and drop overlay -->
+    <div *ngIf="isDragging()"
+         class="absolute inset-0 flex items-center justify-center bg-blue-50/70 backdrop-blur-sm z-10 rounded-xl">
+      <div class="text-blue-600 flex flex-col items-center gap-4">
+        <i class="pi pi-upload text-4xl"></i>
+        <span  class="text-lg font-medium">{{ 'message.dropUrlToAddLink' | translate }}</span>
+      </div>
+    </div>
+
+      @if (linkDataService.links().length > 0) {
+        <div #scrollContainer class="flex flex-col gap-2 max-h-[300px] overflow-y-auto"
+             [ngClass]="linkDataService.loading() ? 'opacity-80' : ''"
+             infiniteScroll
+             [infiniteScrollDistance]="2"
+             [infiniteScrollThrottle]="50"
+             [scrollWindow]="false"
+             [infiniteScrollDisabled]="linkDataService.loading() || !linkDataService.hasMore() || this.isDragging()"
+             (scrolled)="loadMore()">
+          @for (link of linkDataService.links(); track link.id) {
+            <div (click)="openUrl(link.url)" class="flex items-center gap-4 px-4 py-2 bg-white border border-solid border-surface-100 rounded-lg hover:border-surface-300 group cursor-pointer transition-colors">
+              <div class="flex items-center gap-4 w-full">
+                <div class="flex-shrink-0">
+                  <i class="pi pi-link text-gray-500"></i>
+                </div>
+                <div class="flex flex-col overflow-hidden flex-grow">
+                  <div class="text-blue-600 group-hover:text-blue-800 font-medium line-clamp-2 text-ellipsis">
+                    {{ link.name || link.url }}
+                  </div>
+                  @if (link.name && link.url !== link.name) {
+                    <div class="text-xs text-gray-500 line-clamp-2 text-ellipsis">{{link.url}}</div>
+                  }
+                </div>
+
+                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p-button
+                    icon="pi pi-pencil"
+                    severity="primary"
+                    rounded
+                    text
+                    size="small"
+                    (onClick)="openEditDialog(link, $event)"
+                    pTooltip="{{ 'tooltip.edit' | translate }}" />
+                </div>
+              </div>
+            </div>
+          }
+          @if (linkDataService.saving() || isDragging()) {
+            <div class="flex justify-center p-4 ">
+                  <i class="pi pi-spin pi-spinner"></i>
+            </div>
+          }
+        </div>
+      } @else if (linkDataService.loading()) {
+        <div class="flex justify-center p-4">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+      } @else {
+        <div class="flex flex-col items-center justify-center text-gray-400 h-full pt-2">
+          <div>{{ 'message.dropUrlToAddLink' | translate }}</div>
+        </div>
+      }
+
+
+    <div class="flex justify-between items-center">
+      @if (showAddButton()) {
+        <p-button
+          icon="pi pi-plus"
+          rounded
+          styleClass="p-button-text"
+          [label]="'button.addLink' | translate"
+          (onClick)="openEditDialog()"
+          severity="primary" />
+      }
+    </div>
+  </div>
+
+  <app-link-edit-dialog
+    [(visible)]="showEditDialog"
+    [entityType]="entityType()"
+    [entityId]="entityId()"
+    [link]="selectedLink()"
+    (visibleChange)="this.selectedLink.set(undefined)" />
+</div>

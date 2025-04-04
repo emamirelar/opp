@@ -1,46 +1,77 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  inject,
-  input,
-  OnInit,
-  signal
+  input
 } from '@angular/core';
 
-import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { TableModule } from 'primeng/table';
-import { PartnerService } from '../../../services/partner.service';
+
 import { TranslateModule } from '@ngx-translate/core';
+import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
+import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 
 @Component({
   selector: 'app-partner-contacts',
   templateUrl: './partner-contacts.component.html',
   styleUrls: ['./partner-contacts.component.css'],
-  imports: [ButtonModule, DialogModule, TableModule, TranslateModule],
+  imports: [ButtonModule, TranslateModule, ListviewComponent],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PartnerContactsComponent implements OnInit {
-  partnerService = inject(PartnerService);
-
+export class PartnerContactsComponent {
   partnerId = input.required<string>();
   partnerName = input<string>();
 
-  contactData = signal<any>([]);
-  isDataLoading = this.partnerService.isLoading;
-
-  ngOnInit() {
-    this.partnerService.getAllContactsById(this.partnerId()).subscribe((data: any) => {
-        this.contactData.set(data);
-    });
-  }
+  columns: ListViewColumn[] = [
+    {
+      field: 'id',
+      label: 'Contact Id',
+      sortable: false,
+      type: 'text'
+    },
+    {
+      field: 'partnerName',
+      label: 'Partner Name',
+      sortable: true,
+      type: 'text'
+    },
+    {
+      field: 'salutation',
+      label: 'Salutation',
+      sortable: true,
+      type: 'text'
+    },
+    {
+      field: 'firstName',
+      label: 'First Name',
+      sortable: true,
+      type: 'text'
+    },
+    {
+      field: 'lastName',
+      label: 'Last Name',
+      sortable: true,
+      type: 'text'
+    },
+    {
+      field: 'email',
+      label: 'Email',
+      sortable: true,
+      type: 'text'
+    },
+    {
+      field: 'mobile',
+      label: 'Mobile',
+      sortable: true,
+      type: 'text'
+    }
+  ];
 
   handleOnOpenRecordDetails(record: any) {
     if (record == null) {
       return;
     }
-    let URL = window.location.origin + "/#/contact/" + record["id"];
+    const URL = window.location.origin + "/#/contact/" + record["id"];
     window.open(URL, "_blank");
   }
 }

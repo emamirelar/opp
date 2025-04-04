@@ -1,0 +1,60 @@
+<p-blockui [blocked]="documentService.isLoading()" />
+
+<p-fileupload
+  #fileUploadComponent
+  name="myfile[]"
+  url="https://www.primefaces.org/cdn/api/upload.php"
+  [customUpload]="true"
+  [multiple]="false"
+  [accept]="acceptedFormat()"
+  chooseLabel="{{ 'button.browse' | translate }}"
+  showUploadButton="false"
+  showCancelButton="false"
+  (onSelect)="onSelectedFiles($event)"
+>
+  <ng-template #content let-files> </ng-template>
+  <ng-template #file> </ng-template>
+  <ng-template #empty> </ng-template>
+</p-fileupload>
+
+<div class="table-container">
+  <p-table [value]="files" [scrollable]="true" [scrollHeight]="scrollHeightValue">
+    <ng-template #header>
+      <tr>
+        <th style="width: 3rem"></th>
+        <th class="w-[50%] md:w-[60%]">{{ 'label.document.name' | translate }}</th>
+        <th class="w-[50%] md:w-[40%]">{{ 'label.document.type' | translate }}</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-file let-editing="editing">
+      <tr>
+        <td>
+          <p-button icon="pi pi-trash" (click)="handleOnDeleteFile(file)" severity="secondary" rounded />
+        </td>
+        <td>{{ file.name }}</td>
+        <td [pEditableColumn]="file.docType" pEditableColumnField="docType">
+          <p-cellEditor>
+            <ng-template #input>
+              <p-select
+                [options]="documentTypes"
+                optionLabel="name"
+                optionValue="name"
+                appendTo="body"
+                [(ngModel)]="file.docType"
+                [style]="{ width: '100%' }"
+              />
+            </ng-template>
+            <ng-template #output>
+              {{ file.docType }}
+            </ng-template>
+          </p-cellEditor>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  @if (files.length <= 0) {
+    <div class="no-data">
+      <h5>{{ 'message.noRecordsFound' | translate }}</h5>
+    </div>
+  }
+</div>

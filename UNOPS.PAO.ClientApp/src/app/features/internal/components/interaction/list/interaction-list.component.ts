@@ -1,44 +1,67 @@
-import {ChangeDetectionStrategy, Component, inject, OnInit, signal, WritableSignal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal, ViewChild, WritableSignal} from '@angular/core';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
-import { TableModule} from 'primeng/table';
-import { DatePipe, NgIf} from '@angular/common';
-import { Button } from 'primeng/button';
+import { NgIf} from '@angular/common';
+import {Button, ButtonDirective} from 'primeng/button';
 import { Router, ActivatedRoute} from '@angular/router';
-import {InteractionModalComponent} from '../modal/interaction-modal.component';
+import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { INTERACTION_TYPE_TRANSLATION_KEYS, InteractionType } from '../../../models/interaction-type.enum';
 import { TranslateModule } from '@ngx-translate/core';
-import {InteractionListData} from './interaction-list.data';
+import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
+import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 
 @Component({
   selector: 'app-interaction-list',
   standalone: true,
   imports: [
-    TableModule,
-    DatePipe,
     InteractionModalComponent,
     Button,
     NgIf,
-    TranslateModule
+    TranslateModule,
+    ListviewComponent,
   ],
   templateUrl: './interaction-list.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [InteractionListData]
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InteractionListComponent implements OnInit {
+export class InteractionListComponent {
   displayModal = signal(false);
   selectedInteraction: WritableSignal<Interaction | undefined> = signal(undefined);
 
-  public interactionListData = inject(InteractionListData);
+  @ViewChild("listviewComponent")
+  listviewComponent?: ListviewComponent;
+
+  columns: ListViewColumn[] = [
+    {
+      field: 'type',
+      label: 'label.interaction.type',
+      sortable: true,
+      type: 'text'
+    },
+    {
+      field: 'contactName',
+      label: 'label.interaction.contactName',
+      sortable: false,
+      type: 'text'
+    },
+    {
+      field: 'date',
+      label: 'label.interaction.date',
+      sortable: true,
+      type: 'date'
+    },
+    {
+      field: 'data',
+      label: 'label.interaction.notes',
+      sortable: false,
+      type: 'text'
+    }
+  ];
 
   constructor(
     private interactionService: InteractionService,
     private router: Router,
     private route: ActivatedRoute,
-  ) {}
-
-  ngOnInit(): void {
-    this.interactionListData.initialLoad();
+  ) {
     this.openModalFromRoute();
     this.setInteractionFromHistoryState();
   }
@@ -56,7 +79,7 @@ export class InteractionListComponent implements OnInit {
   }
 
   openModalFromRoute(): void {
-      this.route.params.subscribe(params => {
+    this.route.params.subscribe(params => {
       const interactionId = params['id'];
       if (interactionId) {
         this.interactionService.getById(interactionId).subscribe(
@@ -81,6 +104,7 @@ export class InteractionListComponent implements OnInit {
         if (response.body) {
           this.selectedInteraction.set(response.body);
           this.displayModal.set(true);
+          this.listviewComponent?.refreshData()
         }
       },
       error: (error) => console.error('Error fetching interaction details', error)
@@ -89,19 +113,10 @@ export class InteractionListComponent implements OnInit {
 
   onModalClose(): void {
     this.displayModal.set(false);
-    this.interactionListData.loadInteractions();
     this.router.navigate(['/interactions'], { replaceUrl: true });
   }
 
   onInteractionDeleted() {
-    this.interactionListData.loadInteractions();
-  }
-
-  getInteractionTypeTranslationKey(type: InteractionType): string {
-    return INTERACTION_TYPE_TRANSLATION_KEYS[type];
-  }
-
-  getContactName(interaction: Interaction): string {
-    return interaction.contactName || `Contact ${interaction.contactId}`;
+    this.listviewComponent?.refreshData()
   }
 }

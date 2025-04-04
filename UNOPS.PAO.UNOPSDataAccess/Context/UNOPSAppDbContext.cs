@@ -40,9 +40,11 @@ public class UNOPSAppDbContext : AppDbContext
         //making PartnerNumber optional for now
         //.HasIndex(x => x.PartnerNumber) 
         //.IsUnique();
+
+        modelBuilder
+            .Entity<UNOPSLink>();
     }
 
-    public new DbSet<UNOPSDocument> Documents { get; set; }
     public DbSet<Project> Projects { get; set; }
     public DbSet<WorkPackage> WorkPackages { get; set; }
     public DbSet<Budget> Budgets { get; set; }
@@ -52,10 +54,11 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<UNOPSInteraction> Interactions { get; set; }
     public new DbSet<UNOPSPartnerTree> PartnerTrees { get; set; }
     public new DbSet<UNOPSPartner> Partners { get; set; }
+    public new DbSet<UNOPSLink> Links { get; set; }
 
     public new DbSet<AiChatSession> AiChatSession { get; set; }
 
     public new DbSet<AiChatHistory> AiChatHistory { get; set; }
-
+    public new DbSet<UNOPSDocument> Documents { get; set; }
     public new DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
 }

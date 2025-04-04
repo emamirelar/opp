@@ -4,7 +4,20 @@
   <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
 }
 
+
+
 <form [formGroup]="formGroup" class="flex flex-col gap-8">
+  <p-panel
+  header="{{ 'title.links' | translate }}"
+  [toggleable]="true"
+  >
+  <app-link-list
+    [entityType]="entityTypeContact"
+    [entityId]="+recordId"
+    [title]="' '"
+  />
+  </p-panel>
+
       <p-panel
         header="{{ 'title.contactTitles.contactInformation' | translate }}"
         [toggleable]="true"
@@ -12,20 +25,18 @@
       >
       <div class="grid grid-cols-6 gap-4">
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
-            <label>{{ "label.contact.id" | translate }}</label>
-            <input pInputText fluid="true" formControlName="id" readonly/>
+          <label>{{ "label.contact.id" | translate }}</label>
+          <input pInputText fluid="true" formControlName="id" readonly />
         </div>
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
           <label>{{ "label.contact.salutation" | translate }}</label>
-          <p-select
-            formControlName="salutation"
-            [options]="allSalutationsData()"
-            optionLabel="name"
-            optionValue="id"
-            fluid="true"
-            [showClear]="true"
-            placeholder="Select a Salutation"
-          />
+          <p-select formControlName="salutation"
+                    [options]="allSalutationsData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select a Salutation" />
         </div>
 
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
@@ -43,7 +54,7 @@
           <input pInputText fluid="true" formControlName="lastName" />
           @if( formGroup.get("lastName")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Last Name must be entered.</p-message>
+          <p-message severity="error" variant="simple">Last Name must be entered.</p-message>
           }
         </div>
 
@@ -57,7 +68,7 @@
           <input pInputText fluid="true" formControlName="email" />
           @if( formGroup.get("email")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Email must be entered.</p-message>
+          <p-message severity="error" variant="simple">Email must be entered.</p-message>
           }
         </div>
 
@@ -78,18 +89,16 @@
 
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
           <label>{{ "label.contact.status" | translate }}&nbsp;*</label>
-          <p-select
-            formControlName="status"
-            [options]="allStatusData()"
-            optionLabel="name"
-            optionValue="id"
-            fluid="true"
-            [showClear]="true"
-            placeholder="Select a Status"
-          />
+          <p-select formControlName="status"
+                    [options]="allStatusData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [showClear]="true"
+                    placeholder="Select a Status" />
           @if( formGroup.get("status")?.invalid && showValidationFailedError() )
           {
-            <p-message severity="error" variant="simple">Status must be entered.</p-message>
+          <p-message severity="error" variant="simple">Status must be entered.</p-message>
           }
         </div>
 
@@ -126,16 +135,14 @@
 
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
           <label>{{ "label.contact.pronouns" | translate }}</label>
-          <p-select
-            formControlName="pronouns"
-            [options]="allPronounsData()"
-            optionLabel="name"
-            optionValue="id"
-            fluid="true"
-            [appendTo]="'body'"
-            [showClear]="true"
-            placeholder="Select a Pronoun"
-          />
+          <p-select formControlName="pronouns"
+                    [options]="allPronounsData()"
+                    optionLabel="name"
+                    optionValue="id"
+                    fluid="true"
+                    [appendTo]="'body'"
+                    [showClear]="true"
+                    placeholder="Select a Pronoun" />
         </div>
 
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
@@ -145,7 +152,7 @@
 
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
           <label>{{ "label.contact.birthDate" | translate }}</label>
-          <p-datepicker formControlName="birthDate" [maxDate]="maxDate" [fluid]="true"/>
+          <p-datepicker formControlName="birthDate" [maxDate]="maxDate" [fluid]="true" />
         </div>
 
         <div class="col-span-6 sm:col-span-2 xl:col-span-1 flex flex-col gap-2">
@@ -162,8 +169,7 @@
     </p-panel>
     <p-panel
       header="{{ 'title.contactTitles.addresses' | translate }}"
-      [toggleable]="true"
-      [styleClass]="'section mt-4'">
+      [toggleable]="true">
       <div class="flex flex-col md:flex-row gap-8">
         <div class="flex flex-col gap-4 w-full">
           <div class="text-2xl font-semibold">
@@ -218,9 +224,24 @@
         </div>
       </div>
     </p-panel>
-    <div class="flex justify-end gap-4">
-        <p-button label="{{'button.cancel' | translate}}" severity="secondary" [styleClass]="'cancel-button'"
+    <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
+      <app-document #appDocument
+                    [entityId]="recordId"
+                    [entityName]="'contact'"
+                    [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+        <div ngProjectAs="document-toolbar">
+          <app-document-gdrive [entityId]="recordId"
+                               [entityName]="'contact'"
+                               [appDocumentRef]="appDocument"
+                               [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+        </div>
+      </app-document>
+    </p-panel>
+
+    <div class="flex justify-end gap-2">
+        <p-button label="{{'button.cancel' | translate}}" icon="pi pi-times" [styleClass]="'cancel-button p-button-text'"
+        rounded
           (onClick)="handleOnCancelClick($event)" />
-        <p-button label="{{'button.save' | translate}}" severity="primary" [styleClass]="'save-button'" (onClick)="handleOnSaveClick($event)" />
+        <p-button         rounded label="{{'button.save' | translate}}" icon="pi pi-check" severity="primary" [styleClass]="'save-button'" (onClick)="handleOnSaveClick($event)" />
     </div>
-</form>
+  </form>

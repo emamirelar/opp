@@ -39,7 +39,10 @@
       "addressInformation": "Address Information",
       "address1": "Address 1",
       "address2": "Address 2"
-    }
+    },
+    "links": "Links",
+    "editLink": "Edit Link",
+    "addLink": "Add Link"
   },
   "button": {
     "cancel": "Cancel",
@@ -55,11 +58,17 @@
     "submitProposal": "Submit Proposal",
     "upload": "Upload",
     "delete": "Delete",
+    "browse": "Browse",
+    "selectFromDrive": "Select from Drive",
+    "openDrive": "Open Drive",
+    "addLink": "Add Link",
     "inactive": "Mark as Inactive",
     "active": "Mark as Active",
     "viewContacts": "View Contacts",
     "new": "New",
-    "uploadImage": "Upload Image"
+    "uploadImage": "Upload Image",
+    "addLink": "Add Link",
+    "seeMore": "See More"
   },
   "label": {
     "actions": "Actions",
@@ -150,13 +159,14 @@
       "partner": "Partner",
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",
-      "partnerNews":  "Partner News"
+      "partnerNews": "Partner News"
     },
     "clarificationDeadline": "Clarification Deadline",
     "document": {
       "dragDropMessage": "Drag and drop files to here to upload.",
       "linked": "Is Linked",
-      "name": "Document Name"
+      "name": "Document Name",
+      "type": "Document Type"
     },
     "decisionDate": "Decision Date",
     "description": "Description",
@@ -192,6 +202,10 @@
       "selectType": "Select a type",
       "selectContact": "Select a contact",
       "contact": "Contact"
+    },
+    "link": {
+      "url": "URL",
+      "name": "Name"
     }
   },
   "message": {
@@ -202,7 +216,8 @@
     "welcomeTitle": "Welcome to Partners and Opportunities",
     "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
     "interactionDeleted": "Interaction successfully deleted",
-    "errorDeletingInteraction": "Error while deleting interaction"
+    "errorDeletingInteraction": "Error while deleting interaction",
+    "dropUrlToAddLink": "Drop URL or file to add link"
   },
   "label.interaction.contact": "Contact",
   "errors": {
@@ -226,5 +241,23 @@
   "common": {
     "cancel": "Cancel",
     "capture": "Capture"
+  },
+  "placeholder": {
+    "enterUrl": "Enter URL",
+    "enterName": "Enter name"
+  },
+  "table": {
+    "noRecords": "No records found"
+  },
+  "tooltip": {
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "link": {
+    "relatesTo": "relates to"
+  },
+  "validation": {
+    "required": "This field is required",
+    "maxLength": "Maximum length is {{max}} characters"
   }
 }

@@ -1,8 +1,9 @@
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Interfaces;
 
 namespace UNOPS.PAO.Domain.Infrastructure;
 
-public class ModifiableDeletableEntity<TId, TUserId>: IModifiableEntity<TId, TUserId>, IDeletableEntity<TUserId>, IBaseBusinessEntity<TId>
+public class ModifiableDeletableEntity<TId, TUserId>: IModifiableEntity<TId, TUserId>, IDeletableEntity<TUserId>, IBaseBusinessEntity<TId>, IStatusEntity
 {
     public TId Id { get; set; }
     public string Name { get; set; }

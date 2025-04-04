@@ -25,7 +25,7 @@ module.exports = {
       },
       animation: {
         'scale': 'scale 1s ease-in-out infinite',
-        'fade-in': 'fadeIn 0.3s ease-out forwards',
+        'fade-in': 'fadeIn 0.3s ease-out forwards'
       },
     },
   },

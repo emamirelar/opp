@@ -21,7 +21,10 @@
         "interactions": "Interações",
         "newInteraction": "Nova Interação",
         "editInteraction": "Editar Interação",
-        "scanBusinessCard": "Digitalizar Cartão de Visita"
+        "scanBusinessCard": "Digitalizar Cartão de Visita",
+        "links": "Links",
+        "editLink": "Editar Link",
+        "addLink": "Adicionar Link"
     },
     "button": {
         "cancel": "Cancelar",
@@ -35,7 +38,9 @@
         "save": "Salvar",
         "upload": "Enviar",
         "delete": "Excluir",
-        "uploadImage": "Carregar Imagem"
+        "uploadImage": "Enviar Imagem",
+        "addLink": "Adicionar Link",
+        "seeMore": "Ver mais"
     },
     "label": {
         "actions": "Ações",
@@ -82,6 +87,10 @@
           "selectType": "Selecione um tipo",
           "selectContact": "Selecione um contato",
           "contact": "Contato"
+        },
+        "link": {
+          "url": "URL",
+          "name": "Nome"
         }
     },
     "message": {
@@ -91,7 +100,8 @@
         "welcomeTitle": "Bem-vindo ao Grant+",
         "deleteInteractionConfirmation": "Tem certeza que deseja excluir esta interação?",
         "interactionDeleted": "Interação excluída com sucesso",
-        "errorDeletingInteraction": "Erro ao excluir interação"
+        "errorDeletingInteraction": "Erro ao excluir interação",
+        "dropUrlToAddLink": "Solte uma URL ou arquivo para adicionar link"
     },
     "label.interaction.contact": "Contato",
     "errors": {
@@ -114,5 +124,24 @@
     "common": {
         "cancel": "Cancelar",
         "capture": "Capturar"
+    },
+    "placeholder": {
+        "enterUrl": "Digite a URL",
+        "enterDescription": "Digite a descrição",
+        "enterName": "Digite o nome"
+    },
+    "table": {
+        "noRecords": "Nenhum registro encontrado"
+    },
+    "tooltip": {
+        "delete": "Excluir",
+        "edit": "Editar"
+    },
+    "link": {
+        "relatesTo": "relacionado a"
+    },
+    "validation": {
+        "required": "Este campo é obrigatório",
+        "maxLength": "O comprimento máximo é de {{max}} caracteres"
     }
 }

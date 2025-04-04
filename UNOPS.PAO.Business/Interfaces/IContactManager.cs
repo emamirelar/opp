@@ -12,7 +12,7 @@ public interface IContactManager
 {
     Task<ContactModel> CreateContactAsync(ContactRequest model);
 
-    IEnumerable<ContactModel> GetContacts(int userId);
+    PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request);
 
     Task<ContactModel?> GetContact(int userId, int id);
 
@@ -25,4 +25,5 @@ public interface IContactManager
     Task DeleteContactAsync(int userId, int id);
 
     IEnumerable<ContactModel> GetPartnerContacts(int partnerId);
+    Task<ContactModel?> GetContactAsync(int id);
 }

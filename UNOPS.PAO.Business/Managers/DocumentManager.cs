@@ -1,16 +1,14 @@
 using AutoMapper;
-using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models;
-using UNOPS.PAO.Utilities.Helpers;
 
 namespace UNOPS.PAO.Business.Managers;
 
-public class DocumentManager: IDocumentManager
+public class DocumentManager : IDocumentManager
 {
     private IMapper _mapper;
     private DataRepository<Document> _documentRepository;
@@ -20,72 +18,63 @@ public class DocumentManager: IDocumentManager
         _mapper = mapper;
         _documentRepository = new DataRepository<Document>(context);
     }
-    
-    private Document MapModelToEntity(ExtensibleModel model)
-    {
-        var entity = _mapper.Map(model, new Document());
-        return entity;
-    }
-    
-    private static DocumentModel MapEntityToModel(Document entity, IMapper mapper)
-    {
-        var result = mapper.Map<Document, DocumentModel>(entity);
-        return result;
-    }
 
-    public async Task<DocumentModel> CreateDocumentAsync(DocumentUploadModel model)
-    {
-        var document = await UploadDocumentAsync(model);
-        
-        var entity = MapModelToEntity(document);
-        await _documentRepository.AddAsync(entity);
-        return _mapper.Map<DocumentModel>(entity);
-    }
-
-    public IEnumerable<DocumentModel> ListDocumentsAsync()
+    public IEnumerable<DocumentModel> ListDocumentsAsync(string entityName, int entityId)
     {
         return _documentRepository
-            .GetAll()
+            .GetAll(["DocumentRelationships", "DocumentType"])
+            .Where(x =>
+                !x.IsDeleted &&
+                x.Type != "folder" &&
+                x.DocumentRelationships.Any(y => y.EntityType == entityName && y.EntityId == entityId)
+            )
             .Select(_mapper.Map<DocumentModel>);
     }
 
-    public IEnumerable<DocumentModel> ListUserDocumentsAsync(int userId)
+    public async Task<DocumentModel?> GetDocumentByIdAsync(int documentId)
     {
-        return _documentRepository
-            .GetAll()
-            .Where(x => x.CreatedBy == userId)
-            .Select(_mapper.Map<DocumentModel>);
-    }
+        var item = await _documentRepository.GetByIdAsync(documentId, ["DocumentType"]);
 
-    public async Task<DocumentModel?> GetDocumentByIdAsync(int userId, int documentId)
-    {
-        var item = await _documentRepository.GetByIdAsync(documentId);
-
-        if (item == null || item.CreatedBy != userId)
+        if (item == null)
         {
             return default;
         }
 
-        return MapEntityToModel(item, _mapper);
+        return _mapper.Map<DocumentModel>(item);
     }
 
-    public Task DeleteDocumentAsync(int userId, int documentId)
+    public async Task<(int EntityId, string EntityType)?> GetDocumentParentEntityByIdAsync(int documentId)
     {
-        throw new NotImplementedException();
+        var item = await _documentRepository.GetByIdAsync(documentId, new[] { "DocumentRelationships" });
+
+        if (item == null)
+        {
+            return null;
+        }
+
+        var documentRelationship = item.DocumentRelationships.SingleOrDefault();
+
+        if (documentRelationship == null)
+        {
+            return null;
+        }
+
+        return (documentRelationship.EntityId, documentRelationship.EntityType);
     }
 
-    public Task<DocumentModel> UploadDocumentAsync(DocumentUploadModel model)
+    public async Task<DocumentModel> UpdateDocumentAsync(UpdateDocumentRequest request)
     {
-        throw new NotImplementedException();
-    }
+        var entity = await _documentRepository.GetByIdAsync(request.Id);
 
-    public Task<Stream> DownloadDocumentAsync(string documentLink)
-    {
-        throw new NotImplementedException();
-    }
+        if (entity == null)
+        {
+            return default;
+        }
 
-    public Task<DocumentModel> LinkDocumentAsync(DocumentLinkModel model)
-    {
-        throw new NotImplementedException();
+        _mapper.Map(request, entity);
+
+        await _documentRepository.UpdateAsync(entity);
+
+        return _mapper.Map<DocumentModel>(entity);
     }
 }

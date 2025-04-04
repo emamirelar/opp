@@ -19,7 +19,10 @@
         "newInteraction": "Nouvelle Interaction",
         "editInteraction": "Éditer une Interaction",
         "scanBusinessCard": "Scanner une Carte de Visite",
-        "confirmation": "Confirmation"
+        "confirmation": "Confirmation",
+        "links": "Liens",
+        "editLink": "Modifier le lien",
+        "addLink": "Ajouter un lien"
     },
     "button": {
         "cancel": "Annuler",
@@ -33,7 +36,9 @@
         "save": "Enregistrer",
         "upload": "Téléverser",
         "delete": "Supprimer",
-        "uploadImage": "Télécharger l'image"
+        "uploadImage": "Télécharger l'image",
+        "addLink": "Ajouter un lien",
+        "seeMore": "Voir plus"
     },
     "label": {
         "actions": "Actions",
@@ -82,7 +87,11 @@
             "selectContact": "Sélectionnez un contact",
             "contact": "Contact"
         },
-        "interaction.contact": "Contact"
+        "interaction.contact": "Contact",
+        "link": {
+            "url": "URL",
+            "name": "Nom"
+        }
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Respecter les entités éligibles' requis",
@@ -91,7 +100,8 @@
         "welcomeTitle": "Bienvenue sur Grant+",
         "deleteInteractionConfirmation": "Êtes-vous sûr de vouloir supprimer cette interaction ?",
         "interactionDeleted": "L'interaction a été supprimée avec succès",
-        "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction"
+        "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction",
+        "dropUrlToAddLink": "Déposez une URL ou un fichier pour ajouter un lien"
     },
     "errors": {
         "failedToLoad": "Échec du chargement"
@@ -113,5 +123,23 @@
     "common": {
         "cancel": "Annuler",
         "capture": "Capturer"
+    },
+    "placeholder": {
+        "enterUrl": "Entrez l'URL",
+        "enterName": "Entrez le nom"
+    },
+    "table": {
+        "noRecords": "Aucun enregistrement trouvé"
+    },
+    "tooltip": {
+        "delete": "Supprimer",
+        "edit": "Modifier"
+    },
+    "link": {
+        "relatesTo": "relatif à"
+    },
+    "validation": {
+        "required": "Ce champ est obligatoire",
+        "maxLength": "La longueur maximale est de {{max}} caractères"
     }
 }

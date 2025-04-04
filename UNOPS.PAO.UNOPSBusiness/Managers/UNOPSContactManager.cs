@@ -18,6 +18,7 @@ using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.Utilities.Helpers;
 
 public class UNOPSContactManager : IContactManager
 {
@@ -71,11 +72,16 @@ public class UNOPSContactManager : IContactManager
         return mapper.Map<ContactModel>(entity);
     }
 
-    public IEnumerable<ContactModel> GetContacts(int userId)
+    public PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request)
     {
-        return contactRepository
+        var query = contactRepository
             .GetAll(["Partner"])
-            .Select(x => MapEntityToModel(x, mapper));
+            .AsQueryable();
+
+        return query.Paginate(
+            x => MapEntityToModel(x, mapper),
+            request
+        );
     }
 
     public async Task<ContactModel?> GetContact(int userId, int id)
@@ -151,5 +157,22 @@ public class UNOPSContactManager : IContactManager
                 Email = x.Email,
                 Mobile = x.Mobile
             });
+    }
+    public async Task<ContactModel?> GetContactAsync(int id)
+    {
+        string[] includes = ["Documents"];
+
+        var item = await contactRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        var result = mapper.Map<ContactModel>(item);
+
+        //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
+
+        return result;
     }
 }

@@ -19,7 +19,10 @@
         "newInteraction": "Nueva Interacción",
         "editInteraction": "Editar Interacción",
         "scanBusinessCard": "Escanear Tarjeta de Visita",
-        "confirmation": "Confirmación"
+        "confirmation": "Confirmación",
+        "links": "Enlaces",
+        "editLink": "Editar Enlace",
+        "addLink": "Agregar Enlace"
     },
     "button": {
         "cancel": "Cancelar",
@@ -33,7 +36,9 @@
         "save": "Guardar",
         "upload": "Subir",
         "delete": "Eliminar",
-        "uploadImage": "Subir Imagen"
+        "uploadImage": "Subir Imagen",
+        "addLink": "Agregar Enlace",
+        "seeMore": "Ver más"
     },
     "label": {
         "actions": "Acciones",
@@ -80,6 +85,10 @@
           "selectType": "Seleccione un tipo",
           "selectContact": "Seleccione un contacto",
           "contact": "Contacto"
+        },
+        "link": {
+          "url": "URL",
+          "name": "Nombre"
         }
     },
     "message": {
@@ -89,7 +98,8 @@
         "welcomeTitle": "Bienvenido a Grant+",
         "deleteInteractionConfirmation": "¿Está seguro de que desea eliminar esta interacción?",
         "interactionDeleted": "Interacción eliminada con éxito",
-        "errorDeletingInteraction": "Error al eliminar la interacción"
+        "errorDeletingInteraction": "Error al eliminar la interacción",
+        "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace"
     },
     "errors": {
       "failedToLoad": "Falha ao carregar"
@@ -111,5 +121,23 @@
     "common": {
         "cancel": "Cancelar",
         "capture": "Capturar"
+    },
+    "placeholder": {
+        "enterUrl": "Ingrese la URL",
+        "enterName": "Ingrese el nombre"
+    },
+    "table": {
+        "noRecords": "No se encontraron registros"
+    },
+    "tooltip": {
+        "delete": "Eliminar",
+        "edit": "Editar"
+    },
+    "link": {
+        "relatesTo": "relacionado con"
+    },
+    "validation": {
+        "required": "Este campo es obligatorio",
+        "maxLength": "La longitud máxima es de {{max}} caracteres"
     }
 }

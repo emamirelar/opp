@@ -1,0 +1,216 @@
+import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+
+//NGPrime
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { PaginatorModule } from 'primeng/paginator';
+import { DialogModule } from 'primeng/dialog';
+import { Menu } from 'primeng/menu';
+import { MenuItem } from 'primeng/api';
+
+import { UploadDocumentComponent } from './upload/upload-document.component';
+import { DocumentService } from './../../../services/document.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { FeedbackDialogService } from '../../services/feedback-dialog.service';
+import { AuthService } from '../../../../essentials/services/auth.service';
+
+@Component({
+  selector: 'app-document',
+  imports: [
+    TableModule,
+    ButtonModule,
+    PaginatorModule,
+    DialogModule,
+    UploadDocumentComponent,
+    TranslateModule,
+    Menu,
+    DatePipe,
+  ],
+  templateUrl: './document.component.html',
+  styleUrl: './document.component.scss',
+})
+export class DocumentComponent implements OnInit {
+  documentService = inject(DocumentService);
+  feedbackService = inject(FeedbackDialogService);
+
+  isReadOnly = input<boolean>(false);
+  entityName = input<string>('');
+  entityId = input<string>('');
+  acceptedFormat = input<string>('*');
+  documents = signal([]);
+  canPreview = input<boolean>(true);
+  canDownload = input<boolean>(true);
+  canDelete = input<boolean>(true);
+  isLoading = this.documentService.isLoading;
+
+  showUploadFile: boolean = false;
+  items: MenuItem[] = [];
+  selectedDocument: any = null;
+
+  get scrollHeightValue() {
+    return this.documents().length > 0 ? 'flex' : undefined;
+  }
+
+  constructor(private authService: AuthService) { }
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  load() {
+    this.documentService.getDocuments(this.entityName(), this.entityId()).subscribe({
+      next: (data: any) => {
+        this.documents.set(data);
+      },
+    });
+  }
+
+  handleOnUploadDocumentDialogClose(uploadDocument: any) {
+    uploadDocument.clear();
+  }
+
+  handleOnClickUploadDocumentDialogUploadBtn(uploadDocument: any) {
+    uploadDocument.uploadFiles();
+  }
+
+  handleOnUploadDocumentSuccess() {
+    this.showUploadFile = false;
+    this.load();
+  }
+
+  handleOnMenuButtonClick(event: any, document: any, menu: any) {
+    this.selectedDocument = document;
+    this.configureMenuAsPerDocument(document);
+    menu.show(event);
+  }
+
+  getDocumentIconCls(document: any) {
+    let iconCls = 'pi pi-file';
+    switch (document.type) {
+      case 'application/vnd.google-apps.spreadsheet':
+      case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        iconCls = 'pi pi-file-excel file-sheet';
+        break;
+
+      case 'application/pdf':
+        iconCls = 'pi pi-file-pdf file-pdf';
+        break;
+
+      case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+      case 'text/plain':
+        iconCls = 'pi pi-file-word file-doc';
+        break;
+
+      default:
+        iconCls = 'pi pi-file file-doc';
+        break;
+    }
+    return iconCls;
+  }
+
+  private handleOnDocumentPreview() {
+    //exit
+    if (this.selectedDocument == null) {
+      return;
+    }
+
+    window.open(this.selectedDocument.link, '_blank');
+  }
+
+  private handleOnDocumentDelete() {
+    //exit
+    if (this.selectedDocument == null) {
+      return;
+    }
+
+    this.documentService.delete(this.selectedDocument.id).subscribe({
+      next: () => {
+        this.feedbackService.showSuccessToast({
+          detail: `Document deleted successfully!`,
+        });
+        this.load();
+      },
+    });
+  }
+
+  private getDocumentDownloadType(document: any) {
+    let downloadType = '';
+    switch (document.type) {
+      case 'application/vnd.google-apps.spreadsheet':
+        downloadType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        break;
+
+      case 'application/vnd.google-apps.document':
+        downloadType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        break;
+
+      default:
+        downloadType = document.type;
+        break;
+    }
+    return downloadType;
+  }
+
+  private handleOnDocumentDownload() {
+    //exit
+    if (this.selectedDocument == null) {
+      return;
+    }
+
+    this.documentService.download(this.selectedDocument.id).subscribe({
+      next: (data: any) => {
+        const downloadedFile = new Blob([data], { type: this.getDocumentDownloadType(this.selectedDocument) });
+        const a = document.createElement('a');
+        a.setAttribute('style', 'display:none;');
+        document.body.appendChild(a);
+        a.download = this.selectedDocument.name;
+        a.href = URL.createObjectURL(downloadedFile);
+        a.target = '_blank';
+        a.click();
+        document.body.removeChild(a);
+
+        this.feedbackService.showSuccessToast({
+          detail: `Document downloaded successfully!`,
+        });
+        this.load();
+      },
+    });
+  }
+
+  private configureMenuAsPerDocument(document: any) {
+    let menuItem: MenuItem[] = [];
+
+    if (document.link && this.canPreview()) {
+      menuItem.push({
+        label: 'Preview',
+        icon: 'pi pi-eye',
+        command: () => {
+          this.handleOnDocumentPreview();
+        },
+      });
+    }
+
+    if (this.canDownload()) {
+      menuItem.push({
+        label: 'Download',
+        icon: 'pi pi-download',
+        command: () => {
+          this.handleOnDocumentDownload();
+        },
+      });
+    }
+
+    if (this.isReadOnly() !== true && this.canDelete()) {
+      menuItem.push({
+        label: 'Delete',
+        icon: 'pi pi-trash',
+        command: () => {
+          this.handleOnDocumentDelete();
+        },
+      });
+    }
+
+    this.items = menuItem;
+  }
+}

@@ -1,0 +1,66 @@
+<p-dialog
+  [(visible)]="visible"
+  [header]="(link ? 'title.editLink' : 'title.addLink') | translate"
+  [modal]="true"
+  [breakpoints]="{ '960px': '80vw' }" [style]="{ width: '30vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="close()">
+  <form [formGroup]="form" class="flex flex-col gap-4">
+    <div class="flex flex-col gap-2">
+      <label for="name">{{ 'label.link.name' | translate }}</label>
+      <input
+        id="name"
+        type="text"
+        pInputText
+        formControlName="name"
+        [placeholder]="'placeholder.enterName' | translate" />
+      <small class="text-red-500" *ngIf="form.get('name')?.errors?.['maxlength'] && form.get('name')?.touched">
+        {{ 'validation.maxLength' | translate:{ max: 2000 } }}
+      </small>
+    </div>
+    <div class="flex flex-col gap-2">
+      <label for="url">{{ 'label.link.url' | translate }}*</label>
+      <textarea
+        id="url"
+        pTextarea
+        formControlName="url"
+        [rows]="3"
+        [placeholder]="'placeholder.enterUrl' | translate"></textarea>
+      <small class="text-red-500" *ngIf="form.get('url')?.errors?.['required'] && form.get('url')?.touched">
+        {{ 'validation.required' | translate }}
+      </small>
+      <small class="text-red-500" *ngIf="form.get('url')?.errors?.['maxlength'] && form.get('url')?.touched">
+        {{ 'validation.maxLength' | translate:{ max: 2000 } }}
+      </small>
+    </div>
+  </form>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between w-full">
+      <div>
+        @if (link) {
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            rounded
+            text
+            (onClick)="deleteLink()" />
+        }
+      </div>
+      <div class="flex gap-2">
+        <p-button
+          [label]="'button.cancel' | translate"
+          icon="pi pi-times"
+          rounded
+          (onClick)="close()"
+          styleClass="p-button-text" />
+        <p-button
+          [label]="'button.save' | translate"
+          icon="pi pi-check"
+          rounded
+          (onClick)="saveLink()"
+          [disabled]="form.invalid" />
+      </div>
+    </div>
+  </ng-template>
+</p-dialog>

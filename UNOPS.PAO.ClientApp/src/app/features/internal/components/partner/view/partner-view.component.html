@@ -17,28 +17,25 @@
     </div>
   }
 
-  <form class="flex flex-col gap-8 w-full h-full" [formGroup]="formGroup" (ngSubmit)="handleOnSaveClick($event)">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-4">
-        <span class="record-page-entity-icon material-symbols-outlined">corporate_fare</span>
-        <div class="flex flex-col gap-2">
-          <div class="text-2xl font-semibold">{{ recordData()?.name || ('title.newPartner' | translate) }}</div>
-          <div class="text-sm text-gray-600">{{ 'title.partner' | translate }} ID: {{ formGroup.get("id")?.value }}</div>
+    <form class="flex flex-col gap-8 w-full h-full" [formGroup]="formGroup" (ngSubmit)="handleOnSaveClick($event)">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <span class="record-page-entity-icon material-symbols-outlined">corporate_fare</span>
+          <div class="flex flex-col gap-2">
+            <div class="text-2xl font-semibold">{{ recordData()?.name || ('title.newPartner' | translate) }}</div>
+            <div class="text-sm text-gray-600">{{ 'title.partner' | translate }} ID: {{ formGroup.get("id")?.value }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <p-button [label]="'button.viewContacts' | translate"
+                    icon="pi pi-users"
+                    (onClick)="_handleOnViewContacts()"
+                    [disabled]="!recordId" />
         </div>
       </div>
-      <div class="flex items-center gap-4">
-        <p-button
-          [label]="'button.viewContacts' | translate"
-          icon="pi pi-users"
-          (onClick)="_handleOnViewContacts()"
-          [disabled]="!recordId" />
-      </div>
-    </div>
 
-    <div class="flex flex-col md:flex-row gap-8">
-        <p-panel
-
-          class="md:w-1/2">
+      <div class="flex flex-col md:flex-row gap-8">
+        <p-panel class="md:w-1/2">
           <ng-template #header>
             <div class="flex gap-2 items-center w-full justify-between">
               <div class="font-semibold">{{'label.partner.summaryOfInteractions' | translate}}</div>
@@ -48,15 +45,14 @@
           </ng-template>
 
           @if (summaryOfInteractionsIsLoading()) {
-            <div class="w-full flex justify-center h-24 items-center">
-              <i class="pi pi-spin pi-spinner"></i>
-            </div>
+          <div class="w-full flex justify-center h-24 items-center">
+            <i class="pi pi-spin pi-spinner"></i>
+          </div>
           } @else {
-            <div  [innerHTML]="summaryOfInteractions() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
+          <div [innerHTML]="summaryOfInteractions() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
           }
         </p-panel>
-        <p-panel
-          class="md:w-1/2">
+        <p-panel class="md:w-1/2">
 
           <ng-template #header>
             <div class="flex gap-2 items-center w-full justify-between">
@@ -66,291 +62,299 @@
           </ng-template>
 
           @if (riskIsLoading()) {
-            <div class="w-full flex justify-center h-24 items-center">
-              <i class="pi pi-spin pi-spinner"></i>
-            </div>
+          <div class="w-full flex justify-center h-24 items-center">
+            <i class="pi pi-spin pi-spinner"></i>
+          </div>
           } @else {
-            <div [innerHTML]="riskProfile() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
+          <div [innerHTML]="riskProfile() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
           }
         </p-panel>
-    </div>
+      </div>
 
-    <div class="flex flex-col md:flex-row gap-8">
-      <p-panel class="md:w-1/2">
+      <div class="flex flex-col md:flex-row gap-8">
+        <p-panel class="md:w-1/2">
 
-        <ng-template #header>
-          <div class="flex gap-2 items-center w-full justify-between">
-            <div class="font-semibold">{{'label.partner.partnerNews' | translate}}</div>
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+          <ng-template #header>
+            <div class="flex gap-2 items-center w-full justify-between">
+              <div class="font-semibold">{{'label.partner.partnerNews' | translate}}</div>
+              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            </div>
+          </ng-template>
+          @if (partnerNewsIsLoading()) {
+          <div class="w-full flex justify-center h-24 items-center">
+            <i class="pi pi-spin pi-spinner"></i>
           </div>
-        </ng-template>
-        @if (partnerNewsIsLoading()) {
-        <div class="w-full flex justify-center h-24 items-center">
-          <i class="pi pi-spin pi-spinner"></i>
-        </div>
-        } @else {
+          } @else {
           <div [innerHTML]="partnerNews() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
         }
+      </p-panel>
+      <p-panel
+        class="md:w-1/2"
+        header="{{ 'title.links' | translate }}"
+        [toggleable]="true"
+      >
+        <app-link-list
+          [entityType]="entityTypePartner"
+          [entityId]="+recordId"
+          [title]="' '"
+        />
       </p-panel>
     </div>
 
 
-    <!-- Partner Information Panel -->
-    <p-panel
-      [header]="'title.partnerTitles.partnerInformation' | translate"
-      [toggleable]="true">
-      <div class="flex flex-col gap-8">
-        <!-- First Row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label [for]="'partner-name'">{{ "label.partner.name" | translate }}</label>
-            </div>
-            <input pInputText
-                   [id]="'partner-name'"
-                   class="w-full"
-                   formControlName="name"
-                   [placeholder]="'placeholder.enterName' | translate" />
-            @if(formGroup.get('name')?.invalid && formGroup.get('name')?.touched) {
+      <!-- Partner Information Panel -->
+      <p-panel [header]="'title.partnerTitles.partnerInformation' | translate"
+               [toggleable]="true">
+        <div class="flex flex-col gap-8">
+          <!-- First Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label [for]="'partner-name'">{{ "label.partner.name" | translate }}</label>
+              </div>
+              <input pInputText
+                     [id]="'partner-name'"
+                     class="w-full"
+                     formControlName="name"
+                     [placeholder]="'placeholder.enterName' | translate" />
+              @if(formGroup.get('name')?.invalid && formGroup.get('name')?.touched) {
               <small class="text-red-500">
                 @if(formGroup.get('name')?.errors?.['required']) {
-                  {{ 'validation.nameRequired' | translate }}
+                {{ 'validation.nameRequired' | translate }}
                 } @else if(formGroup.get('name')?.errors?.['minlength']) {
-                  {{ 'validation.nameMinLength' | translate }}
+                {{ 'validation.nameMinLength' | translate }}
                 }
               </small>
-            }
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label>{{ "label.partner.shortName" | translate }}</label>
+              }
             </div>
-            <input pInputText class="w-full" formControlName="shortName" />
-            @if(formGroup.get("shortName")?.invalid && formGroup.get("shortName")?.touched) {
+
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label>{{ "label.partner.shortName" | translate }}</label>
+              </div>
+              <input pInputText class="w-full" formControlName="shortName" />
+              @if(formGroup.get("shortName")?.invalid && formGroup.get("shortName")?.touched) {
               <p-message severity="error" variant="simple">Short Name is required</p-message>
-            }
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label>{{ "label.partner.status" | translate }}</label>
+              }
             </div>
-            <p-select formControlName="status"
-                      [options]="allPartnerStatusData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      [appendTo]="'body'"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select a Status" />
-            @if(formGroup.get("status")?.invalid && formGroup.get("status")?.touched) {
+
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label>{{ "label.partner.status" | translate }}</label>
+              </div>
+              <p-select formControlName="status"
+                        [options]="allPartnerStatusData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        [appendTo]="'body'"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select a Status" />
+              @if(formGroup.get("status")?.invalid && formGroup.get("status")?.touched) {
               <p-message severity="error" variant="simple">Status is required</p-message>
-            }
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label>{{ "label.partner.newEngagement" | translate }}</label>
+              }
             </div>
-            <p-select formControlName="newEngagement"
-                      [options]="allPartnerNewEngagementData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [appendTo]="'body'"
-                      [showClear]="true"
-                      placeholder="Select New Engagement" />
-            @if(formGroup.get("newEngagement")?.invalid && formGroup.get("newEngagement")?.touched) {
+
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label>{{ "label.partner.newEngagement" | translate }}</label>
+              </div>
+              <p-select formControlName="newEngagement"
+                        [options]="allPartnerNewEngagementData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [appendTo]="'body'"
+                        [showClear]="true"
+                        placeholder="Select New Engagement" />
+              @if(formGroup.get("newEngagement")?.invalid && formGroup.get("newEngagement")?.touched) {
               <p-message severity="error" variant="simple">New Engagement is required</p-message>
-            }
-          </div>
-        </div>
-
-        <!-- Second Row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="flex flex-col gap-2">
-            <label>{{ "label.partner.phone" | translate }}</label>
-            <input pInputText class="w-full" formControlName="phone" />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label>{{ "label.partner.website" | translate }}</label>
-            <input pInputText class="w-full" formControlName="website" />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label>{{ "label.partner.internalReportingLevel" | translate }}</label>
-            <p-select formControlName="internalReportingLevel"
-                      [options]="allPartnerReportingLevelData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select Internal Reporting Level" />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label>{{ "label.partner.externalReportingLevel" | translate }}</label>
-            <p-select formControlName="externalReportingLevel"
-                      [options]="allPartnerReportingLevelData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select External Reporting Level" />
-          </div>
-        </div>
-
-        <p-divider />
-
-        <!-- Third Row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label>{{ "label.partner.pooledFund" | translate }}</label>
+              }
             </div>
-            <p-select formControlName="pooledFund"
-                      [options]="allYesNoData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select Pooled Fund" />
-            @if(formGroup.get("pooledFund")?.invalid && formGroup.get("pooledFund")?.touched) {
+          </div>
+
+          <!-- Second Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="flex flex-col gap-2">
+              <label>{{ "label.partner.phone" | translate }}</label>
+              <input pInputText class="w-full" formControlName="phone" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label>{{ "label.partner.website" | translate }}</label>
+              <input pInputText class="w-full" formControlName="website" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label>{{ "label.partner.internalReportingLevel" | translate }}</label>
+              <p-select formControlName="internalReportingLevel"
+                        [options]="allPartnerReportingLevelData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select Internal Reporting Level" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label>{{ "label.partner.externalReportingLevel" | translate }}</label>
+              <p-select formControlName="externalReportingLevel"
+                        [options]="allPartnerReportingLevelData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select External Reporting Level" />
+            </div>
+          </div>
+
+          <p-divider />
+
+          <!-- Third Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label>{{ "label.partner.pooledFund" | translate }}</label>
+              </div>
+              <p-select formControlName="pooledFund"
+                        [options]="allYesNoData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select Pooled Fund" />
+              @if(formGroup.get("pooledFund")?.invalid && formGroup.get("pooledFund")?.touched) {
               <p-message severity="error" variant="simple">Pooled Fund is required</p-message>
-            }
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label>{{ "label.partner.ddRequired" | translate }}</label>
+              }
             </div>
-            <p-select formControlName="ddRequired"
-                      [options]="allYesNoData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select DD Required" />
-            @if(formGroup.get("ddRequired")?.invalid && formGroup.get("ddRequired")?.touched) {
+
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label>{{ "label.partner.ddRequired" | translate }}</label>
+              </div>
+              <p-select formControlName="ddRequired"
+                        [options]="allYesNoData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select DD Required" />
+              @if(formGroup.get("ddRequired")?.invalid && formGroup.get("ddRequired")?.touched) {
               <p-message severity="error" variant="simple">DD Required is required</p-message>
-            }
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label>{{ "label.partner.ddeacDone" | translate }}</label>
+              }
             </div>
-            <p-select formControlName="ddeacDone"
-                      [options]="allYesNoData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select DD/EAC Done" />
-            @if(formGroup.get("ddeacDone")?.invalid && formGroup.get("ddeacDone")?.touched) {
+
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label>{{ "label.partner.ddeacDone" | translate }}</label>
+              </div>
+              <p-select formControlName="ddeacDone"
+                        [options]="allYesNoData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select DD/EAC Done" />
+              @if(formGroup.get("ddeacDone")?.invalid && formGroup.get("ddeacDone")?.touched) {
               <p-message severity="error" variant="simple">DD/EAC Done is required</p-message>
-            }
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label>{{ "label.partner.eacReference" | translate }}</label>
-            <input pInputText class="w-full" formControlName="eacReference" />
-          </div>
-        </div>
-
-        <!-- Fourth Row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label>{{ "label.partner.levyPotentiallyApplies" | translate }}</label>
+              }
             </div>
-            <p-select formControlName="levyPotentiallyApplies"
-                      [options]="allPartnerLevyAppliesData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select Levy Potentially Applies" />
-            @if(formGroup.get("levyPotentiallyApplies")?.invalid && formGroup.get("levyPotentiallyApplies")?.touched) {
+
+            <div class="flex flex-col gap-2">
+              <label>{{ "label.partner.eacReference" | translate }}</label>
+              <input pInputText class="w-full" formControlName="eacReference" />
+            </div>
+          </div>
+
+          <!-- Fourth Row -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label>{{ "label.partner.levyPotentiallyApplies" | translate }}</label>
+              </div>
+              <p-select formControlName="levyPotentiallyApplies"
+                        [options]="allPartnerLevyAppliesData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select Levy Potentially Applies" />
+              @if(formGroup.get("levyPotentiallyApplies")?.invalid && formGroup.get("levyPotentiallyApplies")?.touched) {
               <p-message severity="error" variant="simple">Levy Potentially Applies is required</p-message>
-            }
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label>{{ "label.partner.reasonForLevyNotApplying" | translate }}</label>
-            <p-select formControlName="reasonForLevyNotApplying"
-                      [options]="allPartnerReasonForLevyNotData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select Reason For Levy Not Applying" />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <label>{{ "label.partner.levyTreatment" | translate }}</label>
-            <p-select formControlName="levyTreatment"
-                      [options]="allPartnerLevyTreatmentData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select Levy Treatment" />
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div>
-              <span class="text-red-500">*</span>
-              <label>{{ "label.partner.scope" | translate }}</label>
+              }
             </div>
-            <p-select formControlName="scope"
-                      [options]="allPartnerScopesData()"
-                      optionLabel="name"
-                      optionValue="id"
-                      class="w-full"
-                      [showClear]="true"
-                      placeholder="Select Scope" />
-            @if(formGroup.get("scope")?.invalid && formGroup.get("scope")?.touched) {
+
+            <div class="flex flex-col gap-2">
+              <label>{{ "label.partner.reasonForLevyNotApplying" | translate }}</label>
+              <p-select formControlName="reasonForLevyNotApplying"
+                        [options]="allPartnerReasonForLevyNotData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select Reason For Levy Not Applying" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <label>{{ "label.partner.levyTreatment" | translate }}</label>
+              <p-select formControlName="levyTreatment"
+                        [options]="allPartnerLevyTreatmentData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select Levy Treatment" />
+            </div>
+
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-red-500">*</span>
+                <label>{{ "label.partner.scope" | translate }}</label>
+              </div>
+              <p-select formControlName="scope"
+                        [options]="allPartnerScopesData()"
+                        optionLabel="name"
+                        optionValue="id"
+                        class="w-full"
+                        [showClear]="true"
+                        placeholder="Select Scope" />
+              @if(formGroup.get("scope")?.invalid && formGroup.get("scope")?.touched) {
               <p-message severity="error" variant="simple">Scope is required</p-message>
-            }
+              }
+            </div>
+          </div>
+
+          <!-- Checkboxes -->
+          <div class="flex gap-8">
+            <div class="flex items-center gap-2">
+              <p-checkbox [binary]="true"
+                          formControlName="globalKeyAccount"
+                          inputId="gka" />
+              <label for="gka">{{ "label.partner.globalKeyAccount" | translate }}</label>
+            </div>
+            <div class="flex items-center gap-2">
+              <p-checkbox [binary]="true"
+                          formControlName="unSecretariatEntity"
+                          inputId="unse" />
+              <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
+            </div>
           </div>
         </div>
+      </p-panel>
 
-        <!-- Checkboxes -->
-        <div class="flex gap-8">
-          <div class="flex items-center gap-2">
-            <p-checkbox [binary]="true"
-                        formControlName="globalKeyAccount"
-                        inputId="gka" />
-            <label for="gka">{{ "label.partner.globalKeyAccount" | translate }}</label>
-          </div>
-          <div class="flex items-center gap-2">
-            <p-checkbox [binary]="true"
-                        formControlName="unSecretariatEntity"
-                        inputId="unse" />
-            <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
-          </div>
-        </div>
-      </div>
-    </p-panel>
-
-    <div class="flex flex-col md:flex-row gap-8">
-      <p-panel
-
-        class="md:w-1/2"
-      [header]="'title.partnerTitles.address1' | translate"
-      [toggleable]="true">
-        <!-- Address 1 -->
+      <div class="flex flex-col md:flex-row gap-8">
+        <p-panel class="md:w-1/2"
+                 [header]="'title.partnerTitles.address1' | translate"
+                 [toggleable]="true">
+          <!-- Address 1 -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="flex flex-col gap-2">
               <label>{{ "label.partner.address1Street" | translate }}</label>
@@ -377,13 +381,11 @@
               <input pInputText class="w-full" formControlName="address1Country" />
             </div>
           </div>
-      </p-panel>
-      <p-panel
-
-        class="md:w-1/2"
-        [header]="'title.partnerTitles.address2' | translate"
-        [toggleable]="true">
-        <!-- Address 2 -->
+        </p-panel>
+        <p-panel class="md:w-1/2"
+                 [header]="'title.partnerTitles.address2' | translate"
+                 [toggleable]="true">
+          <!-- Address 2 -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="flex flex-col gap-2">
               <label>{{ "label.partner.address2Street" | translate }}</label>
@@ -410,27 +412,37 @@
               <input pInputText class="w-full" formControlName="address2Country" />
             </div>
           </div>
-    </p-panel>
-
-    </div>
-
-    @if(formGroup.dirty) {
-      <div class="flex justify-end gap-4 bg-white p-4 sticky bottom-0">
-        <p-button
-          [label]="'button.cancel' | translate"
-          severity="secondary"
-          icon="pi pi-times"
-          (onClick)="handleOnCancelClick($event)" />
-        <p-button
-          [label]="'button.save' | translate"
-          severity="primary"
-          icon="pi pi-save"
-          [loading]="partnerService.isLoading()"
-          (onClick)="handleOnSaveClick($event)" />
+        </p-panel>
       </div>
-    }
 
-  </form>
+      <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
+        <app-document #appDocument
+                      [entityId]="recordId"
+                      [entityName]="'partner'"
+                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+          <div ngProjectAs="document-toolbar">
+            <app-document-gdrive [entityId]="recordId"
+                                 [entityName]="'partner'"
+                                 [appDocumentRef]="appDocument"
+                                 [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+          </div>
+        </app-document>
+      </p-panel>
+
+      @if(formGroup.dirty) {
+      <div class="flex justify-end gap-4 bg-white p-4 sticky bottom-0">
+        <p-button [label]="'button.cancel' | translate"
+                  severity="secondary"
+                  icon="pi pi-times"
+                  (onClick)="handleOnCancelClick($event)" />
+        <p-button [label]="'button.save' | translate"
+                  severity="primary"
+                  icon="pi pi-save"
+                  [loading]="partnerService.isLoading()"
+                  (onClick)="handleOnSaveClick($event)" />
+      </div>
+      }
+    </form>
 </div>
 
 @defer (when showCommentDialog) {
@@ -450,6 +462,7 @@
 
     <ng-template pTemplate="footer">
       <p-button
+      class="mt-2"
         [label]="'button.close' | translate"
         severity="secondary"
         icon="pi pi-times"

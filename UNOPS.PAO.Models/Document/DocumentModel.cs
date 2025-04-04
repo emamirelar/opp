@@ -1,6 +1,5 @@
-using Microsoft.AspNetCore.Http;
-using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models.Audit;
+using UNOPS.PAO.Models.Document;
 
 namespace UNOPS.PAO.Models;
 public class DocumentModel: DocumentBaseModel, IModifiableEntityModel<int, int>
@@ -11,4 +10,6 @@ public class DocumentModel: DocumentBaseModel, IModifiableEntityModel<int, int>
     public int LastModifiedBy { get; set; }
     public DateTime? LastModifiedDate { get; set; }
     public string Link { get; set; }
+    public string GoogleId { get; set; }
+    public DocumentTypeModel DocumentType { get; set; }
 }

@@ -19,21 +19,22 @@ public class EntityRole
     {
         var entityRoles = new List<EntityRole>
         {
-            // Project
-            new EntityRole(RoleEntityNames.Project, BaseRole.ProjectManager, 1),
-            new EntityRole(RoleEntityNames.Project, BaseRole.DeputyProjectManager, 1),
-            new EntityRole(RoleEntityNames.Project, BaseRole.Contributor),
-            new EntityRole(RoleEntityNames.Project, BaseRole.CoOwner),
-            new EntityRole(RoleEntityNames.Project, BaseRole.Reviewer),
+            //commenting as we do not have roles yet
+            /*// Contact
+            new EntityRole(EntityNames.Contact, BaseRole.ProjectManager, 1),
+            new EntityRole(EntityNames.Contact, BaseRole.DeputyProjectManager, 1),
+            new EntityRole(EntityNames.Contact, BaseRole.Contributor),
+            new EntityRole(EntityNames.Contact, BaseRole.CoOwner),
+            new EntityRole(EntityNames.Contact, BaseRole.Reviewer),
 
-            // Funding Opportunity
-            new EntityRole(RoleEntityNames.FundingOpportunity, BaseRole.GrantAuthority, 1),
-            new EntityRole(RoleEntityNames.FundingOpportunity, BaseRole.GrantOfficial, 1),
-            new EntityRole(RoleEntityNames.FundingOpportunity, BaseRole.IP, 1),
-            new EntityRole(RoleEntityNames.FundingOpportunity, BaseRole.Applicant),
-            new EntityRole(RoleEntityNames.FundingOpportunity, BaseRole.Evaluator),
+            // Partner
+            new EntityRole(EntityNames.Partner, BaseRole.GrantAuthority, 1),
+            new EntityRole(EntityNames.Partner, BaseRole.GrantOfficial, 1),
+            new EntityRole(EntityNames.Partner, BaseRole.IP, 1),
+            new EntityRole(EntityNames.Partner, BaseRole.Applicant),
+            new EntityRole(EntityNames.Partner, BaseRole.Evaluator),
 
-            // Proposal
+            // Proposal*/
         };
 
         return entityRoles.Where(x => x.Entity == entity).ToList();

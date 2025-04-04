@@ -12,4 +12,6 @@ public class UNOPSDocument : Domain.Entities.Document
         this.LinkedFile = linkedFile;
     }
     public bool LinkedFile { get; set; }
+
+    public string GoogleId { get; set; }
 }

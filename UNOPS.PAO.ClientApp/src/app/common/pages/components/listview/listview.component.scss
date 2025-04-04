@@ -1,0 +1,33 @@
+:host {
+  @apply flex flex-col grow mt-2 mb-2;
+}
+
+.listview-container {
+  @apply flex flex-col grow gap-4;
+}
+
+:host ::ng-deep {
+  .p-datatable-wrapper {
+    @apply border border-gray-200 rounded-md;
+  }
+  
+  .p-datatable-header {
+    @apply bg-gray-50 border-b-0;
+  }
+  
+  .p-datatable-thead > tr > th {
+    @apply bg-gray-50 text-gray-700 font-medium p-3;
+  }
+  
+  .p-datatable-tbody > tr > td {
+    @apply p-3;
+  }
+  
+  .p-datatable-tbody > tr:hover {
+    @apply bg-gray-50;
+  }
+  
+  .p-paginator {
+    @apply bg-white border-t border-gray-200 p-2;
+  }
+}

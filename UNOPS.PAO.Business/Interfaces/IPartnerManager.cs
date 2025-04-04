@@ -12,7 +12,7 @@ public interface IPartnerManager
 {
     Task<PartnerModel> CreatePartnerAsync(PartnerRequest model);
 
-    IEnumerable<PartnerModel> GetPartners(int userId);
+    PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request);
 
     Task<PartnerModel?> GetPartner(int userId, int id);
 
@@ -23,4 +23,5 @@ public interface IPartnerManager
     Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model);
 
     Task DeletePartnerAsync(int userId, int id);
+    Task<PartnerModel?> GetPartnerAsync(int id);
 }
