@@ -3,12 +3,12 @@ import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from '../../common/layouts/components/layout/layout.component';
 import { HomeComponent } from '../../common/pages/components/home/home.component';
 import { authGuard } from '../../essentials/guards/auth.guard';
-import { ContactComponent } from './components/contact/contact.component';
-import { ContactItemComponent } from './components/contact/item/contact-item.component';
 import {InteractionListComponent} from './components/interaction/list/interaction-list.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
 import {PartnerViewComponent} from './components/partner/view/partner-view.component';
+import { ContactListComponent } from './components/contact/list/contact-list.component';
+import { ContactViewComponent } from './components/contact/view/contact-view.component';
 
 const internalRoutes: Routes = [
   {
@@ -23,14 +23,14 @@ const internalRoutes: Routes = [
       },
       {
         path: 'contacts',
-        component: ContactComponent,
+        component: ContactListComponent,
         canActivate: [authGuard],
         data: {Breadcrumb: 'Contacts'}
       },
       {
         path: 'contact/:recordId',
         data: { breadcrumb: 'Contact' },
-        component: ContactItemComponent,
+        component: ContactViewComponent,
         canActivate: [authGuard],
       },
       {

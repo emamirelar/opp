@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
+import { Contact } from '../models/contact.model';
 
 @Injectable({
   providedIn: 'root',
@@ -46,10 +47,10 @@ export class ContactService {
       }));
   }
 
-  createContact( requestJson: object ){
+  createContact( contact: Contact ): Observable<Contact> {
 
     this.isLoading.set( true );
-    return this.http.post(this.apiUrl, requestJson).pipe(tap(
+    return this.http.post<Contact>(this.apiUrl, contact).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -60,10 +61,10 @@ export class ContactService {
     }));
   }
 
-  updateContactById( requestJson: any ){
+  updateContactById( contact: Contact ): Observable<Contact> {
 
     this.isLoading.set( true );
-    return this.http.put(this.apiUrl, requestJson).pipe(tap(
+    return this.http.put(this.apiUrl, contact).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );

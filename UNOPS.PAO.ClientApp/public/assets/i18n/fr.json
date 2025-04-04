@@ -25,6 +25,7 @@
         "addLink": "Ajouter un lien"
     },
     "button": {
+        "back": "Retour",
         "cancel": "Annuler",
         "close": "Fermer",
         "darkMode": "Mode Sombre",
@@ -91,6 +92,31 @@
         "link": {
             "url": "URL",
             "name": "Nom"
+        },
+        "contact": {
+            "actions": "Actions",
+            "id": "ID",
+            "salutation": "Salutation",
+            "firstName": "Prénom",
+            "middleName": "Deuxième prénom",
+            "lastName": "Nom",
+            "suffix": "Suffixe",
+            "email": "Email",
+            "mobile": "Mobile",
+            "phone": "Téléphone",
+            "otherPhone": "Autre téléphone",
+            "assistant": "Assistant",
+            "assistantPhone": "Tél. assistant",
+            "assistantEmail": "Email assistant",
+            "status": "Statut",
+            "title": "Titre",
+            "pronouns": "Pronoms",
+            "department": "Département",
+            "birthDate": "Date de naissance",
+            "fax": "Fax",
+            "description": "Description",
+            "mailingAddress": "Adresse",
+            "partnerInfo": "Informations du partenaire"
         }
     },
     "message": {

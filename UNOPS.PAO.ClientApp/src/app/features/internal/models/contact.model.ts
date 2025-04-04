@@ -1,4 +1,7 @@
+import {Partner} from './partner.model';
+
 export interface Contact {
+  id?: string | null;
   salutation?: string | null;
   firstName?: string | null;
   middleName?: string | null;
@@ -14,7 +17,7 @@ export interface Contact {
   otherPhone?: string | null;
   fax?: string | null;
 
-  partner?: string | null;
+  partner?: Partner | null;
   department?: string | null;
   description?: string | null;
   status?: string | null;

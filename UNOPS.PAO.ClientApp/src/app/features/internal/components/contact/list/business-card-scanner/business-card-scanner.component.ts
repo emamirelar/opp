@@ -1,46 +1,50 @@
-import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Dialog } from 'primeng/dialog';
+
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { TranslateModule } from '@ngx-translate/core';
 import { FileUploadModule } from 'primeng/fileupload';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 import { from, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
-import { GeminiService } from '../../../services/gemini.service';
-import {Contact} from '../../../models/contact.model';
 import {ProgressSpinner} from 'primeng/progressspinner';
+import { Contact } from '../../../../models/contact.model';
+import { GeminiService } from '../../../../services/gemini.service';
 
 @Component({
   selector: 'app-business-card-scanner',
   templateUrl: './business-card-scanner.component.html',
   standalone: true,
-  imports: [CommonModule, Dialog, ButtonModule, MessageModule, TranslateModule, FileUploadModule, ProgressSpinner]
+  imports: [CommonModule, ButtonModule, MessageModule, TranslateModule, FileUploadModule, ProgressSpinner]
 })
-export class BusinessCardScannerComponent {
+export class BusinessCardScannerComponent implements OnInit, OnDestroy {
   @ViewChild('video') videoElement!: ElementRef;
   @ViewChild('canvas') canvasElement!: ElementRef;
   @Output() onScannedContact = new EventEmitter<Contact>();
 
   private geminiService = inject(GeminiService);
+  private dialogRef = inject(DynamicDialogRef);
 
-  visible = false;
   stream: MediaStream | null = null;
   capturedImage: string | null = null;
   scanning: boolean = false;
   error: string | null = null;
 
-  show() {
-    this.visible = true;
+  ngOnInit() {
     this.startCamera();
   }
 
+  ngOnDestroy() {
+    this.stopCamera();
+  }
+
   hide() {
-    this.visible = false;
     this.stopCamera();
     this.capturedImage = null;
     this.error = null;
+    this.dialogRef.close();
   }
 
   startCamera(): void {
@@ -104,8 +108,7 @@ export class BusinessCardScannerComponent {
     this.geminiService.scanFile(file, 'contact_action')
       .pipe(
         map(result => {
-          this.onScannedContact.emit(result);
-          this.hide();
+          this.dialogRef.close(result);
           return result;
         }),
         catchError(error => {
@@ -132,12 +135,10 @@ export class BusinessCardScannerComponent {
       this.scanning = true;
       this.error = null;
 
-
       this.geminiService.scanFile(file, 'contact_action')
         .pipe(
           map(result => {
-            this.onScannedContact.emit(result);
-            this.hide();
+            this.dialogRef.close(result);
             return result;
           }),
           catchError(error => {

@@ -6,22 +6,24 @@ import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { DialogService } from 'primeng/dynamicdialog';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { ContactService } from '../../services/contact.service';
-import { DialogModule } from 'primeng/dialog';
+import {DialogModule} from 'primeng/dialog';
+import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
+import {ContactEditDialogFooterComponent} from '../edit-dialog/footer/contact-edit-dialog-footer.component';
+import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
+import {ListviewComponent} from '../../../../../common/pages/components/listview/listview.component';
+import {ContactService} from '../../../services/contact.service';
+import {FeedbackDialogService} from '../../../../../common/reusables/services/feedback-dialog.service';
+import {ListViewColumn, ListViewConfig} from '../../../../../common/pages/components/listview/listview.model';
+import {Contact} from '../../../models/contact.model';
 
-import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
-import { ContactNewComponent } from './new/contact-new.component';
-import { BusinessCardScannerComponent } from './business-card-scanner/business-card-scanner.component';
-import { Contact } from '../../models/contact.model';
-import { ListviewComponent } from '../../../../common/pages/components/listview/listview.component';
-import { ListViewColumn, ListViewConfig } from '../../../../common/pages/components/listview/listview.model';
 
 @Component({
-  selector: 'app-contact',
-  templateUrl: './contact.component.html',
+  selector: 'app-contact-list',
+  templateUrl: './contact-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
@@ -30,22 +32,18 @@ import { ListViewColumn, ListViewConfig } from '../../../../common/pages/compone
     TableModule,
     DialogModule,
     ScrollPanelModule,
-    ContactNewComponent,
-    BusinessCardScannerComponent,
     ProgressSpinnerModule,
     TranslateModule,
     ListviewComponent,
-    NgIf
-  ]
+  ],
+  providers: [DialogService]
 })
-export class ContactComponent implements OnInit {
+export class ContactListComponent implements OnInit {
   router = inject(Router);
   route = inject(ActivatedRoute);
   contactService = inject(ContactService);
   feedbackDialogService = inject(FeedbackDialogService);
-
-  newContact = signal(false);
-  newContactData = signal<any>(null);
+  dialogService = inject(DialogService);
 
   // Define contact columns for the listview
   contactColumns: ListViewColumn[] = [
@@ -74,22 +72,19 @@ export class ContactComponent implements OnInit {
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
           const state = history.state;
-          if (state?.data) {
-            this.newContactData.set(state.data);
-          }
-
-          this.newContact.set(true);
+          const emptyContact: Contact = {};
+          this.openContactEditDialog(state?.data || emptyContact);
         }
       });
   }
 
-  handleOnOpenRecordDetails(record: any) {
+  handleOnOpenRecordDetails(record: Contact) {
     this.router.navigate(['contact', record.id]);
   }
 
-  handleOnRecordDelete(record: any) {
+  handleOnRecordDelete(record: Contact) {
     this.contactService.deleteContactById(record.id).subscribe({
-      next: (data: any) => {
+      next: () => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
         // Trigger a refresh for the listview
         window.dispatchEvent(new CustomEvent('refresh-listview'));
@@ -103,7 +98,7 @@ export class ContactComponent implements OnInit {
     });
   }
 
-  _handleOnRecordCreation(newRecordData: any) {
+  _handleOnRecordCreation(newRecordData: Contact) {
     if (newRecordData?.id) {
       // Refresh the list before navigating to show the new contact
       window.dispatchEvent(new CustomEvent('refresh-listview'));
@@ -112,23 +107,47 @@ export class ContactComponent implements OnInit {
     }
   }
 
-  closeNewContactDialog() {
-    this.newContact.set(false);
-    this.newContactData.set(null);
+  openContactEditDialog(contactData: Contact = {}) {
+    const ref = this.dialogService.open(ContactEditDialogComponent, {
+      header: contactData.id ? 'Edit Contact' : 'New Contact',
+      width: '40vw',
+      breakpoints: { '960px': '95vw' },
+      closable: true,
+      templates: {
+        footer: ContactEditDialogFooterComponent
+      },
+      data: {
+        mode: contactData.id ? 'edit' : 'new',
+        record: contactData,
+        requestingSaveSignal : signal<boolean>(false)
+      }
+    });
+
+    const refSub = ref.onClose.subscribe((result) => {
+      if (result) {
+        this._handleOnRecordCreation(result);
+      }
+      refSub.unsubscribe();
+    });
   }
 
-  onScannedContact(scannedContact: Contact) {
-    this.newContact.set(true);
-    this.newContactData.set(scannedContact);
-  }
-
-  // Handle row selection from listview
-  onRowSelected(contact: Contact) {
-    // You can implement custom behavior here if needed
-  }
-
-  // Handle row double-click from listview
-  onRowDoubleClicked(contact: Contact) {
+    onRowDoubleClicked(contact: Contact) {
     this.handleOnOpenRecordDetails(contact);
+  }
+
+  openBusinessCardScanner() {
+    const ref = this.dialogService.open(BusinessCardScannerComponent, {
+      header: 'Scan Business Card',
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true
+    });
+
+    const refSub = ref.onClose.subscribe((result) => {
+      if (result) {
+        this.openContactEditDialog(result);
+      }
+      refSub.unsubscribe();
+    });
   }
 }
