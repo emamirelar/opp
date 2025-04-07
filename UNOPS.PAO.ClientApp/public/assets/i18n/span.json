@@ -22,7 +22,12 @@
         "confirmation": "Confirmación",
         "links": "Enlaces",
         "editLink": "Editar Enlace",
-        "addLink": "Agregar Enlace"
+        "addLink": "Agregar Enlace",
+        "contactTitles": {
+            "contactInformation": "Información Personal",
+            "addresses": "Direcciones",
+            "systemInformation": "Información del Sistema"
+        }
     },
     "button": {
         "back": "Volver",
@@ -114,7 +119,14 @@
             "fax": "Fax",
             "description": "Descripción",
             "mailingAddress": "Dirección",
-            "partnerInfo": "Información del socio"
+            "partnerInfo": "Información del socio",
+            "mailingStreet": "Calle de envío",
+            "mailingStreet2": "Calle de envío 2",
+            "mailingCity": "Ciudad de envío",
+            "mailingStateProvince": "Estado/Provincia de envío",
+            "mailingPostalCode": "Código postal de envío",
+            "mailingCountry": "País de envío",
+            "contactViaAssistant": "Contactar a través del asistente"
         }
     },
     "message": {

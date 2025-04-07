@@ -6,7 +6,7 @@
       >
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
-            <span class="font-semibold">{{ 'title.contactTitles.contactInformation' | translate }}</span>
+            <span class="font-semibold">Personal Information</span>
             <p-button
               icon="pi pi-pencil"
               [rounded]="true"
@@ -17,11 +17,11 @@
           </div>
         </ng-template>
 
-        <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-6 pb-2">
           <!-- Name and Title -->
           <div class="flex gap-4">
-            <p-avatar label="T" class="flex-shrink-0" [shape]="'circle'" [size]="'xlarge'" />
-            <div class="flex flex-col">
+            <p-avatar label="T" class="flex-shrink-0 custom-avatar-size" [shape]="'circle'" [size]="'xlarge'" />
+            <div class="flex flex-col gap-1">
               <div class="text-lg">
                 {{recordData().salutation}} {{recordData().firstName}} {{recordData().middleName}} {{recordData().lastName}} {{recordData().suffix}}
               </div>
@@ -31,81 +31,16 @@
                   - {{recordData().department}}
                 }
               </div>
-              @if(recordData().pronouns){
-                <div class="text-sm text-gray-500">{{recordData().pronouns}}</div>
-              }
-              @if(recordData().birthDate){
-                <div class="text-sm text-gray-500">{{recordData().birthDate | date}}</div>
-              }
-            </div>
-          </div>
-
-
-          <!-- Contact Info -->
-          <div class="flex flex-col xl:flex-row gap-4">
-            <div class="flex flex-col gap-2">
-              @if(recordData().email){
-                <div>{{recordData().email}}</div>
-              }
-              @if(recordData().phone){
-                <div>{{recordData().phone}} (office)</div>
-              }
-              @if(recordData().mobile){
-                <div>{{recordData().mobile}} (mobile)</div>
-              }
-              @if(recordData().otherPhone){
-                <div>{{recordData().otherPhone}} (other)</div>
-              }
-              @if(recordData().fax){
-                <div>{{recordData().fax}} (fax)</div>
-              }
-            </div>
-
-          </div>
-
-          <!-- Partner Info -->
-          <div class="flex flex-col gap-2">
-            <div class="font-semibold">Partner :
-              <a [routerLink]="['/partner', recordData().partner?.id]" class="text-primary hover:underline">
+              <a [routerLink]="['/partner', recordData().partner?.id]" class="text-primary hover:underline font-semibold">
                 {{recordData().partner?.name}}
               </a>
             </div>
           </div>
 
-
-          <!-- Address -->
-          @if(recordData().mailingStreet || recordData().mailingCity || recordData().mailingCountry){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.contact.mailingAddress' | translate }}</div>
-              <div class="text-base">
-                @if(recordData().mailingStreet){
-                  <div>{{recordData().mailingStreet}}</div>
-                }
-                @if(recordData().mailingStreet2) {
-                  <div>{{recordData().mailingStreet2}}</div>
-                }
-                @if(recordData().mailingCity || recordData().mailingStateProvince || recordData().mailingPostalCode){
-                  <div>
-                    {{recordData().mailingCity}}
-                    @if(recordData().mailingStateProvince) {
-                      , {{recordData().mailingStateProvince}}
-                    }
-                    @if(recordData().mailingPostalCode) {
-                      {{recordData().mailingPostalCode}}
-                    }
-                  </div>
-                }
-                @if(recordData().mailingCountry) {
-                  <div>{{recordData().mailingCountry}}</div>
-                }
-              </div>
-            </div>
-          }
-
           <!-- Assistant Info -->
           @if(recordData().assistant || recordData().assistantPhone || recordData().assistantEmail){
             <div class="flex flex-col gap-2">
-              <div class="font-semibold">Assistant</div>
+              <div class="font-semibold">{{ 'label.contact.contactViaAssistant' | translate }}</div>
               @if(recordData().assistant){
                 <div>{{recordData().assistant}}</div>
               }
@@ -118,14 +53,74 @@
             </div>
           }
 
-          <!-- Additional Info -->
-          @if(recordData().description){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">Notes</div>
-              <div>{{recordData().description}}</div>
+          @if(showContactInfo()) {
+            <!-- Contact Info -->
+            <div class="flex flex-col xl:flex-row gap-4">
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">Personal Information</div>
+
+                @if(recordData().email){
+                  <div>{{recordData().email}}</div>
+                }
+                @if(recordData().phone){
+                  <div>{{recordData().phone}} (office)</div>
+                }
+                @if(recordData().mobile){
+                  <div>{{recordData().mobile}} (mobile)</div>
+                }
+              </div>
+            </div>
+
+            <!-- Address -->
+            @if(recordData().mailingStreet || recordData().mailingCity || recordData().mailingCountry){
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">{{ 'label.contact.mailingAddress' | translate }}</div>
+                <div class="text-base">
+                  @if(recordData().mailingStreet){
+                    <div>{{recordData().mailingStreet}}</div>
+                  }
+                  @if(recordData().mailingStreet2) {
+                    <div>{{recordData().mailingStreet2}}</div>
+                  }
+                  @if(recordData().mailingCity || recordData().mailingStateProvince || recordData().mailingPostalCode){
+                    <div>
+                      {{recordData().mailingCity}}
+                      @if(recordData().mailingStateProvince) {
+                        , {{recordData().mailingStateProvince}}
+                      }
+                      @if(recordData().mailingPostalCode) {
+                        {{recordData().mailingPostalCode}}
+                      }
+                    </div>
+                  }
+                  @if(recordData().mailingCountry) {
+                    <div>{{recordData().mailingCountry}}</div>
+                  }
+                </div>
+              </div>
+            }
+
+
+
+            <!-- Additional Info -->
+            @if(recordData().description){
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">Notes</div>
+                <div>{{recordData().description}}</div>
+              </div>
+            }
+          } @else {
+            <div class="flex justify-center -my-2">
+              <p-button 
+                label="{{ 'button.seeMore' | translate }}" 
+                icon="pi pi-chevron-down" 
+                [rounded]="true"
+                [size]="'small'"
+                [text]="true"
+                (onClick)="showContactInfo.set(true)"
+              />
             </div>
           }
-
 
         </div>
       </p-panel>

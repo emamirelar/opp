@@ -50,7 +50,14 @@ import { Subject } from 'rxjs';
   templateUrl: './contact-view.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DialogService]
+  providers: [DialogService],
+  styles: [`
+    :host ::ng-deep .custom-avatar-size {
+      width: 5rem !important;
+      height: 5rem !important;
+      font-size: 2.5rem !important;
+    }
+  `]
 })
 export class ContactViewComponent implements OnInit, OnDestroy {
   router = inject(Router);
@@ -63,6 +70,7 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   cdr = inject(ChangeDetectorRef);
 
   infoLoading = signal<boolean>(false);
+  showContactInfo = signal<boolean>(false);
 
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
@@ -172,17 +180,4 @@ export class ContactViewComponent implements OnInit, OnDestroy {
       },
     });
   }
-
-  onFileSelected(event: any) {
-    console.log('Files selected:', event);
-  }
-
-  onFileRemoved(event: any) {
-    console.log('File removed:', event);
-  }
-
-  onFilesCleared() {
-    console.log('All files cleared');
-  }
-  protected readonly EntityType = EntityType;
 }

@@ -28,7 +28,7 @@
     "updatePartnerLevel": "Update Partner Level",
     "scanBusinessCard": "Scan Business Card",
     "contactTitles": {
-      "contactInformation": "Contact Information",
+      "contactInformation": "Personal Information",
       "addresses": "Addresses",
       "systemInformation": "System Information"
     },
@@ -106,7 +106,8 @@
       "mailingCity": "Mailing City",
       "mailingStateProvince": "Mailing State/Province",
       "mailingPostalCode": "Mailing Postal Code",
-      "mailingCountry": "Mailing Country"
+      "mailingCountry": "Mailing Country",
+      "contactViaAssistant": "Contact via Assistant"
     },
     "partnerTree": {
       "id": "ID",
