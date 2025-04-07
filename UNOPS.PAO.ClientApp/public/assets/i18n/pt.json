@@ -24,7 +24,12 @@
         "scanBusinessCard": "Digitalizar Cartão de Visita",
         "links": "Links",
         "editLink": "Editar Link",
-        "addLink": "Adicionar Link"
+        "addLink": "Adicionar Link",
+        "contactTitles": {
+            "contactInformation": "Informações Pessoais",
+            "addresses": "Endereços",
+            "systemInformation": "Informações do Sistema"
+        }
     },
     "button": {
         "back": "Voltar",
@@ -116,7 +121,14 @@
             "fax": "Fax",
             "description": "Descrição",
             "mailingAddress": "Endereço",
-            "partnerInfo": "Informações do parceiro"
+            "partnerInfo": "Informações do parceiro",
+            "mailingStreet": "Rua de envio",
+            "mailingStreet2": "Rua de envio 2",
+            "mailingCity": "Cidade de envio",
+            "mailingStateProvince": "Estado/Província de envio",
+            "mailingPostalCode": "Código postal de envio",
+            "mailingCountry": "País de envio",
+            "contactViaAssistant": "Contatar através do assistente"
         }
     },
     "message": {

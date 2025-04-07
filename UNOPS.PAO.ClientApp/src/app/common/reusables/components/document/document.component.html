@@ -40,8 +40,8 @@
     }
   </p-table>
   @if (isLoading() == false && documents().length <= 0) {
-  <div class="no-data">
-    <h5>{{ 'message.noRecordsFound' | translate }}</h5>
+  <div class="no-data py-8">
+    <div>{{ 'message.noRecordsFound' | translate }}</div>
   </div>
   }
 </div>
