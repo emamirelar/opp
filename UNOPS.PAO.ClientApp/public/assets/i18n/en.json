@@ -37,14 +37,14 @@
     "partnerTitles": {
       "partnerInformation": "Partner Information",
       "addressInformation": "Address Information",
-      "address1": "Address 1",
-      "address2": "Address 2"
+      "address1": "Address 1"
     },
     "links": "Links",
     "editLink": "Edit Link",
     "addLink": "Add Link"
   },
   "button": {
+    "back": "Back",
     "cancel": "Cancel",
     "close": "Close",
     "darkMode": "Dark Mode",
@@ -67,7 +67,6 @@
     "viewContacts": "View Contacts",
     "new": "New",
     "uploadImage": "Upload Image",
-    "addLink": "Add Link",
     "seeMore": "See More"
   },
   "label": {
@@ -101,7 +100,7 @@
       "fax": "Fax",
       "description": "Description",
       "mailingAddress": "Address",
-
+      "partnerInfo": "Partner Information",
       "mailingStreet": "Mailing Street",
       "mailingStreet2": "Mailing Street 2",
       "mailingCity": "Mailing City",
@@ -137,15 +136,7 @@
       "address1StateProvince": "State/Province",
       "address1PostalCode": "Postal Code",
       "address1Country": "Country",
-      "address2Street": "Street",
-      "address2Street2": "Street2",
-      "address2City": "City",
-      "address2StateProvince": "State/Province",
-      "address2PostalCode": "Postal Code",
-      "address2Country": "Country",
       "shortName": "Short Name",
-      "internalReportingLevel": "Internal Reporting Level",
-      "externalReportingLevel": "External Reporting Level",
       "pooledFund": "Pooled Fund",
       "ddRequired": "DD Required",
       "ddeacDone": "DD/EAC Done",
@@ -155,7 +146,6 @@
       "levyPotentiallyApplies": "Levy Potentially Applies",
       "reasonForLevyNotApplying": "Reason For Levy Not Applying",
       "levyTreatment": "Levy Treatment",
-      "scope": "Scope",
       "partner": "Partner",
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",

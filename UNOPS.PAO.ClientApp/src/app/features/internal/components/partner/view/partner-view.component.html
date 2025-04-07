@@ -188,28 +188,6 @@
               <label>{{ "label.partner.website" | translate }}</label>
               <input pInputText class="w-full" formControlName="website" />
             </div>
-
-            <div class="flex flex-col gap-2">
-              <label>{{ "label.partner.internalReportingLevel" | translate }}</label>
-              <p-select formControlName="internalReportingLevel"
-                        [options]="allPartnerReportingLevelData()"
-                        optionLabel="name"
-                        optionValue="id"
-                        class="w-full"
-                        [showClear]="true"
-                        placeholder="Select Internal Reporting Level" />
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <label>{{ "label.partner.externalReportingLevel" | translate }}</label>
-              <p-select formControlName="externalReportingLevel"
-                        [options]="allPartnerReportingLevelData()"
-                        optionLabel="name"
-                        optionValue="id"
-                        class="w-full"
-                        [showClear]="true"
-                        placeholder="Select External Reporting Level" />
-            </div>
           </div>
 
           <p-divider />
@@ -313,23 +291,6 @@
                         [showClear]="true"
                         placeholder="Select Levy Treatment" />
             </div>
-
-            <div class="flex flex-col gap-2">
-              <div>
-                <span class="text-red-500">*</span>
-                <label>{{ "label.partner.scope" | translate }}</label>
-              </div>
-              <p-select formControlName="scope"
-                        [options]="allPartnerScopesData()"
-                        optionLabel="name"
-                        optionValue="id"
-                        class="w-full"
-                        [showClear]="true"
-                        placeholder="Select Scope" />
-              @if(formGroup.get("scope")?.invalid && formGroup.get("scope")?.touched) {
-              <p-message severity="error" variant="simple">Scope is required</p-message>
-              }
-            </div>
           </div>
 
           <!-- Checkboxes -->
@@ -379,37 +340,6 @@
             <div class="flex flex-col gap-2">
               <label>{{ "label.partner.address1Country" | translate }}</label>
               <input pInputText class="w-full" formControlName="address1Country" />
-            </div>
-          </div>
-        </p-panel>
-        <p-panel class="md:w-1/2"
-                 [header]="'title.partnerTitles.address2' | translate"
-                 [toggleable]="true">
-          <!-- Address 2 -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="flex flex-col gap-2">
-              <label>{{ "label.partner.address2Street" | translate }}</label>
-              <input pInputText class="w-full" formControlName="address2Street" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label>{{ "label.partner.address2Street2" | translate }}</label>
-              <input pInputText class="w-full" formControlName="address2Street2" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label>{{ "label.partner.address2City" | translate }}</label>
-              <input pInputText class="w-full" formControlName="address2City" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label>{{ "label.partner.address2StateProvince" | translate }}</label>
-              <input pInputText class="w-full" formControlName="address2StateProvince" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label>{{ "label.partner.address2PostalCode" | translate }}</label>
-              <input pInputText class="w-full" formControlName="address2PostalCode" />
-            </div>
-            <div class="flex flex-col gap-2">
-              <label>{{ "label.partner.address2Country" | translate }}</label>
-              <input pInputText class="w-full" formControlName="address2Country" />
             </div>
           </div>
         </p-panel>

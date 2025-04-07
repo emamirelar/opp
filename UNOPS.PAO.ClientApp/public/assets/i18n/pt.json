@@ -27,6 +27,7 @@
         "addLink": "Adicionar Link"
     },
     "button": {
+        "back": "Voltar",
         "cancel": "Cancelar",
         "close": "Fechar",
         "darkMode": "Modo Escuro",
@@ -91,6 +92,31 @@
         "link": {
           "url": "URL",
           "name": "Nome"
+        },
+        "contact": {
+            "actions": "Ações",
+            "id": "ID",
+            "salutation": "Saudação",
+            "firstName": "Nome",
+            "middleName": "Nome do meio",
+            "lastName": "Sobrenome",
+            "suffix": "Sufixo",
+            "email": "Email",
+            "mobile": "Celular",
+            "phone": "Telefone",
+            "otherPhone": "Outro telefone",
+            "assistant": "Assistente",
+            "assistantPhone": "Tel. assistente",
+            "assistantEmail": "Email assistente",
+            "status": "Status",
+            "title": "Título",
+            "pronouns": "Pronomes",
+            "department": "Departamento",
+            "birthDate": "Data de nascimento",
+            "fax": "Fax",
+            "description": "Descrição",
+            "mailingAddress": "Endereço",
+            "partnerInfo": "Informações do parceiro"
         }
     },
     "message": {

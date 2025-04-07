@@ -14,18 +14,10 @@ public class PartnerModel
     public string? Address1StateProvince { get; set; }
     public string? Address1PostalCode { get; set; }
     public string? Address1Country { get; set; }
-    public string? Address2Street { get; set; }
-    public string? Address2Street2 { get; set; }
-    public string? Address2City { get; set; }
-    public string? Address2StateProvince { get; set; }
-    public string? Address2PostalCode { get; set; }
-    public string? Address2Country { get; set; }
     public string ShortName { get; set; }
     //Level
     //Group
     //LiaisonOffice
-    public string? InternalReportingLevel { get; set; }
-    public string? ExternalReportingLevel { get; set; }
     public string PooledFund { get; set; }
     public string DDRequired { get; set; }
     public string DDEACDone { get; set; }
@@ -35,7 +27,6 @@ public class PartnerModel
     public string LevyPotentiallyApplies { get; set; }
     public string? ReasonForLevyNotApplying { get; set; }
     public string? LevyTreatment { get; set; }
-    public string Scope { get; set; }
     //public List<ContactModel>? Contacts { get; set; }
     public List<DocumentModel>? Documents { get; set; }
 }

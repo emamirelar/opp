@@ -98,12 +98,6 @@ export class PartnerViewComponent implements OnInit {
       shortName: new FormControl(null, {
         validators: [Validators.required]
       }),
-      internalReportingLevel: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      externalReportingLevel: new FormControl(null, {
-        validators: [Validators.required]
-      }),
       pooledFund: new FormControl(null, {
         validators: [Validators.required]
       }),
@@ -127,9 +121,6 @@ export class PartnerViewComponent implements OnInit {
       levyTreatment: new FormControl(null, {
         validators: [Validators.required]
       }),
-      scope: new FormControl(null, {
-        validators: [Validators.required]
-      }),
       address1Street: new FormControl(null, {
         validators: [Validators.required]
       }),
@@ -146,24 +137,6 @@ export class PartnerViewComponent implements OnInit {
         validators: [Validators.required]
       }),
       address1Country: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      address2Street: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      address2Street2: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      address2City: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      address2StateProvince: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      address2PostalCode: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      address2Country: new FormControl(null, {
         validators: [Validators.required]
       }),
       discriminator: new FormControl(null, {
@@ -209,7 +182,6 @@ export class PartnerViewComponent implements OnInit {
     //maxDate = new Date();
     allPartnerStatusData = this.cachedDataService.allPartnerStatus;
     allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
-    allPartnerReportingLevelData = this.cachedDataService.allPartnerReportingLevel;
     allYesNoData = this.cachedDataService.allYesNo;
     allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
     allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
