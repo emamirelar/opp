@@ -19,6 +19,9 @@ using Newtonsoft.Json;
 using UNOPS.PAO.Business.Repositories.Generic;
 using System.Data;
 using Humanizer;
+using Google.Apis.Services;
+using Google.Apis.Sheets.v4.Data;
+using Google.Apis.Sheets.v4;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -31,7 +34,9 @@ public class AiContextualService
     private readonly DataRepository<AiScreenMapping> _screenMappingRepository;
     private readonly string _connectionString;
 
-    public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context) 
+    private readonly GoogleCredential _credentials;
+
+    public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials)
     {
         _configuration = configuration;
         _screenMappingRepository = new DataRepository<AiScreenMapping>(context);
@@ -42,6 +47,7 @@ public class AiContextualService
         _predictionClient = PredictionServiceClient.Create(); // gRPC Client
         _context = context;
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
+        _credentials = credentials;
     }
 
     public async Task<string> CreateEmbeddingForText(string text)
@@ -313,6 +319,54 @@ public class AiContextualService
         // This is a placeholder implementation
         return result;
     }
+
+    public async Task<string> ReadFileData(string fileId)
+    {
+        var service = new SheetsService(new BaseClientService.Initializer
+        {
+            HttpClientInitializer = _credentials,
+            ApplicationName = "GoogleSheetsReader",
+        });
+
+        // Read values
+        var request = service.Spreadsheets.Values.Get(fileId, "Sheet1");
+        ValueRange response = await request.ExecuteAsync();
+        var data = string.Empty;
+
+        if (response.Values != null && response.Values.Count > 0)
+        {
+            // Convert response.Values to a stringified array
+            data = JsonConvert.SerializeObject(response.Values);
+        }
+
+        return data;
+    }
+   /* public async Task<List<object>> GetAllEntityDataAsync(string entityName)
+    {
+        var dbSetProperty = _context.GetType()
+            .GetProperties()
+            .FirstOrDefault(p =>
+                p.PropertyType.IsGenericType &&
+                p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>) &&
+                string.Equals(p.Name, entityName, StringComparison.OrdinalIgnoreCase));
+
+        if (dbSetProperty == null)
+            throw new Exception($"No DbSet found for entity name '{entityName}'");
+
+        var dbSet = dbSetProperty.GetValue(_context);
+        var toListAsyncMethod = typeof(EntityFrameworkQueryableExtensions)
+            .GetMethod("ToListAsync", new[] { typeof(IQueryable<>), typeof(CancellationToken) })
+            ?.MakeGenericMethod(dbSetProperty.PropertyType.GenericTypeArguments[0]);
+
+        if (toListAsyncMethod == null)
+            throw new Exception("Couldn't find ToListAsync method.");
+
+        var result = await (Task)toListAsyncMethod.Invoke(
+            null,
+            new object[] { dbSet, CancellationToken.None });
+
+        return ((IEnumerable<object>)((dynamic)result)).ToList();
+    }*/
 
 
 }

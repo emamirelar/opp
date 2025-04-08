@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace UNOPS.PAO.Business.Interfaces;
@@ -29,4 +27,9 @@ public interface IGeminiManager
     Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req);
     Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req);
     Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req);
+    Task<dynamic> GenerateEmbeddings(string? entityName);
+
+    Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req);
+
+    Task<string> BulkInsertRecordsAsync(BulkUploadRequest request);
 }

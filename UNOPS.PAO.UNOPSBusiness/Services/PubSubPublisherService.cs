@@ -1,4 +1,5 @@
 using Google.Cloud.PubSub.V1;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,10 +14,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         private readonly string _projectId;
         private readonly string _topicId;
 
-        public PubSubPublisher(string projectId, string topicId)
+        public PubSubPublisher(IConfiguration configuration)
         {
-            _projectId = projectId;
-            _topicId = topicId;
+            _projectId = configuration.GetValue<string>("PubSub:ProjectId");
+            _topicId = configuration.GetValue<string>("PubSub:TopicId");
         }
 
         public async Task PublishMessageAsync(List<MyPubSubMessage> messages)
@@ -35,12 +36,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     Data = Google.Protobuf.ByteString.CopyFrom(messageBytes)
                 };
 
+                // Publish the batch message
                 string messageId = await publisher.PublishAsync(pubsubMessage);
-                Console.WriteLine($"Published message with ID: {messageId}");
+                Console.WriteLine($"Published batch message with ID: {messageId}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error publishing message: {ex.Message}");
+                Console.WriteLine($"Error publishing batch message: {ex.Message}");
             }
         }
     }

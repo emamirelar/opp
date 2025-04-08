@@ -1,6 +1,6 @@
 
 import { Injectable, Injector, Type } from '@angular/core';
-import { ContactNewComponent  } from '../components/contact/new/contact-new.component';
+//import { ContactNewComponent  } from '../components/contact/new/contact-new.component';
 import { PartnerNewComponent } from '../components/partner/new/partner-new.component';
 import { PartnerTreeItemComponent } from '../components/partner-tree/item/partner-tree-item.component';
 import { InteractionModalComponent } from '../components/interaction/modal/interaction-modal.component';
@@ -10,7 +10,7 @@ import { InteractionModalComponent } from '../components/interaction/modal/inter
 })
 export class ComponentResolverService {
   private componentMap: { [key: string]: Type<any> } = {
-    'Contact': ContactNewComponent,
+   // 'Contact': ContactNewComponent,
     'Partner': PartnerNewComponent,
     'PartnerTree': PartnerTreeItemComponent,
     'Interaction': InteractionModalComponent,

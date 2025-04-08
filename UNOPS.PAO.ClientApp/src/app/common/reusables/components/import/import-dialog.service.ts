@@ -70,8 +70,8 @@ export class ImportDialogService {
   /**
    * Trigger import process
    */
-  triggerImport() {
-    this.importService.bulkUpload(this.data(), 'bulk_contact_action').subscribe(() => {
+  triggerImport(type: string) {
+    this.importService.bulkUpload(this.data(), type).subscribe(() => {
       this.feedbackDialogService.showSuccessToast({ detail: 'Import successful'} );
       this.closeDialog();
     });

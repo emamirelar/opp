@@ -191,11 +191,15 @@ public class Startup
                 .UseNpgsql(connectionString)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-        //Override / UNOPS DB context
+        // Override / UNOPS DB context
         services.AddDbContext<UNOPSAppDbContext>(options =>
             options
                 .UseNpgsql(connectionString)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+
+        // Register IDbContextFactory for UNOPSAppDbContext
+        services.AddDbContextFactory<UNOPSAppDbContext>(options =>
+            options.UseNpgsql(connectionString));
 
         services.AddDbContext<PAOIdentityDbContext>(options =>
             options

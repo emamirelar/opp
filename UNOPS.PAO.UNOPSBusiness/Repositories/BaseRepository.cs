@@ -44,7 +44,7 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         _dataDbContext = context;
         _dbSet = context.Set<TEntity>();
         _configuration = configuration;
-        _pubSubPublisher = new PubSubPublisher(configuration.GetSection("PubSub")["ProjectId"], configuration.GetSection("PubSub")["TopicId"]);
+        _pubSubPublisher = new PubSubPublisher(configuration);
     }
 
     public async Task AddAsync(TEntity entity)

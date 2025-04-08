@@ -129,4 +129,19 @@ public class GeminiManager : IGeminiManager
     {
         throw new NotImplementedException();
     }
+
+    public Task<dynamic> GenerateEmbeddings(string? entityName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<string> BulkInsertRecordsAsync(BulkUploadRequest request)
+    {
+        throw new NotImplementedException();
+    }
 }

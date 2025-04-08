@@ -3,6 +3,7 @@ using Grpc.Core;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Configuration;
 using System.Text;
@@ -12,6 +13,7 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using System.Text.Json;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSBusiness.Models;
+using System.Linq;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services
 {
@@ -21,17 +23,15 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         private readonly IConfiguration _configuration;
         private readonly string ProjectId;
         private readonly string SubscriptionId;
-        private readonly UNOPSAppDbContext _context;
-        private readonly AiContextualService _contextService;
+        private readonly IDbContextFactory<UNOPSAppDbContext> _dbContextFactory;
 
-        public PubSubPullService(ILogger<PubSubPullService> logger, IConfiguration configuration, UNOPSAppDbContext context)
+        public PubSubPullService(ILogger<PubSubPullService> logger, IConfiguration configuration, IDbContextFactory<UNOPSAppDbContext> dbContextFactory)
         {
             _logger = logger;
             _configuration = configuration;
             ProjectId = configuration.GetSection("PubSub")["ProjectId"];
             SubscriptionId = configuration.GetSection("PubSub")["SubscriptionId"];
-            _context = context;
-            _contextService = new AiContextualService(configuration, context);
+            _dbContextFactory = dbContextFactory;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -48,7 +48,6 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 {
                     if (ct.IsCancellationRequested)
                     {
-                      //  _logger.LogWarning("Cancellation requested. Stopping message processing.");
                         return SubscriberClient.Reply.Nack;
                     }
 
@@ -61,20 +60,17 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
                         if (messages != null)
                         {
-                            foreach(var message in messages)
+                            foreach (var msg in messages)
                             {
-                                await HandleMessage(message);
+                                // Use the factory to create a new DbContext instance
+                                using (var dbContext = _dbContextFactory.CreateDbContext())
+                                {
+                                    var contextService = new AiContextualService(_configuration, dbContext, null);
+                                    await contextService.GenerateEmbeddingAsync(msg.EntityName, msg.EntityId, msg.Content);
+                                }
                             }
                         }
 
-
-                        
-                       // _logger.LogInformation($"Received message: {messageText}");
-
-                        // Process the message (TODO: Add logic for embeddings)
-                      //  HandleMessage(messageText);
-
-                        // Acknowledge message so it is not received again
                         return SubscriberClient.Reply.Ack;
                     }
                     catch (Exception ex)
@@ -87,11 +83,6 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
             // Keep the service running until cancellation is requested
             await Task.Delay(Timeout.Infinite, stoppingToken);
-        }
-
-        private async Task HandleMessage(MyPubSubMessage message)
-        {
-            await _contextService.GenerateEmbeddingAsync(message.EntityName, message.EntityId, message.Content);
         }
     }
 }
