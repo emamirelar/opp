@@ -19,6 +19,7 @@ import {ContactService} from '../../../services/contact.service';
 import {FeedbackDialogService} from '../../../../../common/reusables/services/feedback-dialog.service';
 import {ListViewColumn, ListViewConfig} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
+import { ImportDialogService } from '../../../../../common/reusables/components/import/import-dialog.service';
 
 
 @Component({
@@ -44,6 +45,7 @@ export class ContactListComponent implements OnInit {
   contactService = inject(ContactService);
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
+  importDialogService = inject(ImportDialogService);
 
   // Define contact columns for the listview
   contactColumns: ListViewColumn[] = [
@@ -147,7 +149,18 @@ export class ContactListComponent implements OnInit {
       if (result) {
         this.openContactEditDialog(result);
       }
-      refSub.unsubscribe();
     });
+  }
+
+  openImportDialog() {
+    this.importDialogService.openImportDialog('Import Contacts')
+      .subscribe((result) => {
+        if (result) {
+          // Handle the imported data
+          this.feedbackDialogService.showSuccessToast({ detail: 'Contacts imported successfully!' });
+          // Refresh the list to show new contacts
+          window.dispatchEvent(new CustomEvent('refresh-listview'));
+        }
+      });
   }
 }
