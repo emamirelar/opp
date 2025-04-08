@@ -35,6 +35,8 @@ public class APIDictionary
     public const string SDG = APIPrefix + "values/sdg";
     public const string Country = APIPrefix + "values/country";
     public const string Partners = APIPrefix + "values/partners";
+    public const string OrganizationUnits = APIPrefix + "values/organization-units";
+    public const string PartnerCategories = APIPrefix + "values/partner-categories";
 
     // Workflow
     public const string Workflow = APIPrefix + "workflow";

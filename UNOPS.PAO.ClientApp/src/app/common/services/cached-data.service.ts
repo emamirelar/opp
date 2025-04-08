@@ -75,6 +75,12 @@ export class CachedDataService {
   private allPartnerLevelTypesData = signal([]);
   allPartnerLevelTypes = this.allPartnerLevelTypesData.asReadonly();
 
+  private allPartnerOfficesData = signal([]);
+  allPartnerOffices = this.allPartnerOfficesData.asReadonly();
+
+  private allPartnerCategoriesData = signal([]);
+  allPartnerCategories = this.allPartnerCategoriesData.asReadonly();
+
   constructor() { 
     this.loadSalutations();
     this.loadStatus();
@@ -88,6 +94,8 @@ export class CachedDataService {
     this.loadYesNo();
     this.loadPartners();
     this.loadPartnerLevelTypeData();
+    this.loadPartnerOffices();
+    this.loadPartnerCategories();
   }
 
   clearCachedData(){
@@ -115,6 +123,8 @@ export class CachedDataService {
     this.allPartnerLevyTreatmentData.set([]);
     this.allPartnerScopesData.set([]);
     this.allPartnersData.set([]);
+    this.allPartnerOfficesData.set([]);
+    this.allPartnerCategoriesData.set([]);
   }
 
   loadProjects(){
@@ -423,6 +433,36 @@ export class CachedDataService {
         },
         error: (err) => {
           this.isLoading.set( false );
+        }
+      });
+    }
+  }
+
+  loadPartnerOffices() {
+    if ((this.allPartnerOfficesData() == undefined) || (this.allPartnerOfficesData().length <= 0)) {
+      this.isLoading.set(true);
+      this.http.get('/api/values/organization-units').subscribe({
+        next: (data: any) => {
+          this.allPartnerOfficesData.set(data);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      });
+    }
+  }
+
+  loadPartnerCategories() {
+    if ((this.allPartnerCategoriesData() == undefined) || (this.allPartnerCategoriesData().length <= 0)) {
+      this.isLoading.set(true);
+      this.http.get('/api/values/partner-categories').subscribe({
+        next: (data: any) => {
+          this.allPartnerCategoriesData.set(data);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
         }
       });
     }

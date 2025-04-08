@@ -12,6 +12,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 
 public class PartnerManager : IPartnerManager
@@ -19,11 +20,15 @@ public class PartnerManager : IPartnerManager
     private IMapper mapper;
 
     private DataRepository<Partner> PartnerRepository;
+    private DataRepository<OrganizationUnit> OrganizationUnitRepository;
+    private DataRepository<PartnerCategory> PartnerCategoryRepository;
 
     public PartnerManager(IMapper mapper, AppDbContext context)
     {
         this.mapper = mapper;
         this.PartnerRepository = new DataRepository<Partner>(context);
+        this.OrganizationUnitRepository = new DataRepository<OrganizationUnit>(context);
+        this.PartnerCategoryRepository = new DataRepository<PartnerCategory>(context);
     }
 
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
@@ -38,7 +43,7 @@ public class PartnerManager : IPartnerManager
     public PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll()
+            .GetAll(["PartnerOffice", "PartnerCategory"])
             .AsQueryable();
 
         return query.Paginate(
@@ -54,6 +59,23 @@ public class PartnerManager : IPartnerManager
         if (item == null)
         {
             return default;
+        }
+
+        if (item.PartnerCategoryId.HasValue)
+        {
+            var partnerCategory = await PartnerCategoryRepository.GetByIdAsync(item.PartnerCategoryId.Value);
+            if (partnerCategory != null)
+            {
+                item.PartnerCategory = partnerCategory;
+            }
+        }
+        if (item.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationUnitRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                item.PartnerOffice = partnerOffice;
+            }
         }
 
         return mapper.Map<PartnerModel>(item);

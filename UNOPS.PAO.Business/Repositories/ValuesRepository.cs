@@ -21,4 +21,10 @@ public class ValuesRepository
 
     public IEnumerable<Partner> GetPartners()
         => context.Partners.Where(x => x.Status.Equals("Active"));
+
+    public IEnumerable<OrganizationUnit> GetOrganizationUnits()
+        => context.OrganizationUnits.Where(x => x.Status.Equals("Active"));
+
+    public IEnumerable<PartnerCategory> GetPartnerCategories()
+        => context.PartnerCategories.Where(x => x.Status.Equals("Active"));
 }

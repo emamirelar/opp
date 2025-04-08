@@ -37,6 +37,8 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<DocumentRelationship> DocumentRelationships { get; set; }
     public DbSet<DocumentType> DocumentTypes { get; set; }
     public DbSet<UNOPS.PAO.Domain.Entities.Link> Links { get; set; }
+    public DbSet<OrganizationUnit> OrganizationUnits { get; set; }
+    public DbSet<PartnerCategory> PartnerCategories { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -62,6 +64,18 @@ public class AppDbContext : AuditableDbContext<int, int>
             .WithOne()
             .HasForeignKey<UserProfile>(x => x.UserId)
             .IsRequired();
+
+        modelBuilder
+            .Entity<Partner>(p =>
+            {
+                p.HasOne(x => x.PartnerOffice)
+                    .WithMany()
+                    .HasForeignKey(x => x.PartnerOfficeId);
+
+                p.HasOne(x => x.PartnerCategory)
+                    .WithMany()
+                    .HasForeignKey(x => x.PartnerCategoryId);
+            });
 
         modelBuilder
             .Entity<Contact>();

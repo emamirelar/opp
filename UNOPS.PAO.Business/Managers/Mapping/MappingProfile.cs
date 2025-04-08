@@ -29,5 +29,9 @@ public class MappingProfile : Profile
         CreateMap<Link, LinkModel>();
         CreateMap<LinkRequest, Link>();
         CreateMap<UpdateLinkRequest, Link>();
+        CreateMap<OrganizationUnit, OrganizationUnitModel>();
+        CreateMap<OrganizationUnitModel, OrganizationUnit>();
+        CreateMap<PartnerCategory, PartnerCategoryModel>();
+        CreateMap<PartnerCategoryModel, PartnerCategory>();
     }
 }

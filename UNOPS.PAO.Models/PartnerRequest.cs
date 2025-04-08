@@ -6,6 +6,8 @@ using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using UNOPS.PAO.Domain.Entities;
+
 public class PartnerRequest : ExtensibleModel
 {
     public string Name { get; set; }
@@ -33,4 +35,6 @@ public class PartnerRequest : ExtensibleModel
     public string? ReasonForLevyNotApplying { get; set; }
     public string? LevyTreatment { get; set; }
     //public List<int>? ContactIds { get; set; }
+    public int? PartnerOfficeId { get; set; }
+    public int? PartnerCategoryId { get; set; }
 }

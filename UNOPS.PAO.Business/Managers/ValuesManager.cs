@@ -27,4 +27,10 @@ public class ValuesManager : IApplicationService
     public IEnumerable<PartnerModel> GetPartners()
          => repository.GetPartners().Select(mapper.Map<PartnerModel>);
 
+    public IEnumerable<OrganizationUnitModel> GetOrganizationUnits()
+        => repository.GetOrganizationUnits().Select(mapper.Map<OrganizationUnitModel>);
+
+    public IEnumerable<PartnerCategoryModel> GetPartnerCategories()
+        => repository.GetPartnerCategories().Select(mapper.Map<PartnerCategoryModel>);
+
 }

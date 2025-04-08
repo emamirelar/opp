@@ -1,0 +1,15 @@
+<p-blockui [blocked]="partnerService.isLoading()" />
+
+<div class="flex flex-col h-full gap-4">
+  @if( showValidationFailedError() === true ){
+  <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
+  }
+
+  <form [formGroup]="formGroup" class="flex flex-col gap-8">
+    <div class="grid grid-cols-9 gap-4">
+
+    </div>
+  </form>
+</div>
+
+
