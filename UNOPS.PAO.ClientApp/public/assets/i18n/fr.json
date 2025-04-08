@@ -22,13 +22,19 @@
         "confirmation": "Confirmation",
         "links": "Liens",
         "editLink": "Modifier le lien",
-        "addLink": "Ajouter un lien"
+        "addLink": "Ajouter un lien",
+        "contactTitles": {
+            "contactInformation": "Informations Personnelles",
+            "addresses": "Adresses",
+            "systemInformation": "Informations Système"
+        }
     },
     "button": {
         "back": "Retour",
         "cancel": "Annuler",
         "close": "Fermer",
-        "darkMode": "Mode Sombre",
+        "darkMode": "Mode sombre",
+        "import": "Importer",
         "language": "Langue",
         "lightMode": "Mode Clair",
         "logout": "Déconnexion",
@@ -116,7 +122,14 @@
             "fax": "Fax",
             "description": "Description",
             "mailingAddress": "Adresse",
-            "partnerInfo": "Informations du partenaire"
+            "partnerInfo": "Informations du partenaire",
+            "mailingStreet": "Rue d'envoi",
+            "mailingStreet2": "Rue d'envoi 2",
+            "mailingCity": "Ville d'envoi",
+            "mailingStateProvince": "État/Province d'envoi",
+            "mailingPostalCode": "Code postal d'envoi",
+            "mailingCountry": "Pays d'envoi",
+            "contactViaAssistant": "Contacter via l'assistant"
         }
     },
     "message": {

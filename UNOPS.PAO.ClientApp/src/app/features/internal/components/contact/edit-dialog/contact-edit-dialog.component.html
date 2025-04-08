@@ -6,8 +6,21 @@
     }
 
     <form [formGroup]="formGroup" class="flex flex-col gap-8">
-      <div class="grid grid-cols-3 gap-4">
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+      <div class="grid grid-cols-9 gap-4">
+
+
+
+        <div class="col-span-9 flex flex-col gap-2">
+          <label for="partner">{{ 'label.partner.partner' | translate }}*</label>
+          <p-select formControlName="partner" [options]="allPartners()" optionLabel="name"
+                    [appendTo]="'body'"
+                    fluid="true" id="partner" ariaLabel="Select Partner" />
+          @if( formGroup.get("partner")?.invalid && showValidationFailedError() ) {
+            <p-message severity="error" variant="simple">Partner must be entered.</p-message>
+          }
+        </div>
+
+        <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
           <div>{{ "label.contact.salutation" | translate }}</div>
           <p-select
             formControlName="salutation"
@@ -21,17 +34,17 @@
           />
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
           <label>{{ "label.contact.firstName" | translate }}</label>
           <input pInputText fluid="true" formControlName="firstName" />
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
           <label>{{ "label.contact.middleName" | translate }}</label>
           <input pInputText fluid="true" formControlName="middleName" />
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-2 flex flex-col gap-2">
           <label>{{ "label.contact.lastName" | translate }} *</label>
           <input pInputText fluid="true" formControlName="lastName" />
           @if( formGroup.get("lastName")?.invalid && showValidationFailedError() ) {
@@ -39,12 +52,12 @@
           }
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-1 flex flex-col gap-2">
           <label>{{ "label.contact.suffix" | translate }}</label>
           <input pInputText fluid="true" formControlName="suffix" />
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.email" | translate }} *</label>
           <input pInputText fluid="true" formControlName="email" />
           @if( formGroup.get("email")?.invalid && showValidationFailedError() ) {
@@ -52,124 +65,89 @@
           }
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.phone" | translate }}</label>
           <input pInputText fluid="true" formControlName="phone" />
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.mobile" | translate }}</label>
           <input pInputText fluid="true" formControlName="mobile" />
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label>{{ "label.contact.otherPhone" | translate }}</label>
-          <input pInputText fluid="true" formControlName="otherPhone" />
-        </div>
-
-        <p-divider class="col-span-full" />
-
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label>{{ "label.contact.assistant" | translate }}</label>
-          <input pInputText fluid="true" formControlName="assistant" />
-        </div>
-
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label>{{ "label.contact.assistantPhone" | translate }}</label>
-          <input pInputText fluid="true" formControlName="assistantPhone" />
-        </div>
-
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label>{{ "label.contact.assistantEmail" | translate }}</label>
-          <input pInputText fluid="true" formControlName="assistantEmail" />
-        </div>
-
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label>{{ "label.contact.status" | translate }} *</label>
-          <p-select formControlName="status"
-                    [options]="allStatusData()"
-                    optionLabel="name"
-                    optionValue="id"
-                    [appendTo]="'body'"
-                    [fluid]="true"
-                    [showClear]="true"
-                    placeholder="Select a Status" />
-          @if( formGroup.get("status")?.invalid && showValidationFailedError() ) {
-            <p-message severity="error" variant="simple">Status must be entered.</p-message>
-          }
-        </div>
-
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label for="partner">{{ 'label.partner.partner' | translate }}*</label>
-          <p-select formControlName="partner" [options]="allPartners()" optionLabel="name"
-                    [appendTo]="'body'"
-                    optionValue="id"
-                    fluid="true" id="partner" ariaLabel="Select Partner" />
-          @if( formGroup.get("partner")?.invalid && showValidationFailedError() ) {
-            <p-message severity="error" variant="simple">Partner must be entered.</p-message>
-          }
-        </div>
-        <p-divider class="col-span-full" />
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-6 flex flex-col gap-2">
           <label>{{ "label.contact.title" | translate }}</label>
           <input pInputText fluid="true" formControlName="title" />
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label>{{ "label.contact.pronouns" | translate }}</label>
-          <p-select
-            formControlName="pronouns"
-            [options]="allPronounsData()"
-            optionLabel="name"
-            optionValue="id"
-            [appendTo]="'body'"
-            [fluid]="true"
-            [showClear]="true"
-            placeholder="Select a Pronoun"
-          />
-        </div>
-
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.department" | translate }}</label>
           <input pInputText fluid="true" formControlName="department" />
         </div>
 
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label>{{ "label.contact.birthDate" | translate }}</label>
-          <p-datepicker formControlName="birthDate" [fluid]="true" [maxDate]="maxDate" />
-        </div>
-
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
-          <label>{{ "label.contact.fax" | translate }}</label>
-          <input pInputText fluid="true" formControlName="fax" />
-        </div>
-
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 flex flex-col gap-2">
           <label>{{ "label.contact.description" | translate }}</label>
           <input pInputText fluid="true" formControlName="description" />
         </div>
 
         <p-divider class="col-span-full" />
+
+        <div class="col-span-full text-2xl">
+          {{ "label.contact.assistant" | translate }}
+        </div>
+
+
+        <div class="col-span-full flex items-center gap-2">
+          <p-checkbox
+            [binary]="true"
+            [ngModel]="showAssistantFields()"
+            (ngModelChange)="showAssistantFields.set($event)"
+            [ngModelOptions]="{standalone: true}"
+            inputId="assistantToggle"
+          />
+          <label for="assistantToggle" class="font-medium">{{ "label.contact.contactViaAssistant" | translate }}</label>
+        </div>
+
+        @if(showAssistantFields()) {
+          <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+            <label>{{ "label.contact.assistant" | translate }}</label>
+            <input pInputText fluid="true" formControlName="assistant" />
+          </div>
+
+          <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+            <label>{{ "label.contact.assistantPhone" | translate }}</label>
+            <input pInputText fluid="true" formControlName="assistantPhone" />
+          </div>
+
+          <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+            <label>{{ "label.contact.assistantEmail" | translate }}</label>
+            <input pInputText fluid="true" formControlName="assistantEmail" />
+          </div>
+        }
+
+
+
+        <p-divider class="col-span-full" />
         <div class="text-2xl col-span-full">
           {{ "label.contact.mailingAddress" | translate }}
         </div>
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.mailingStreet" | translate }}</label>
           <input pInputText fluid="true" formControlName="mailingStreet" />
         </div>
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.mailingStreet2" | translate }}</label>
           <input pInputText fluid="true" formControlName="mailingStreet2" />
         </div>
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.mailingCity" | translate }}</label>
           <input pInputText fluid="true" formControlName="mailingCity" />
         </div>
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.mailingStateProvince" | translate }}</label>
           <input pInputText fluid="true" formControlName="mailingStateProvince" />
         </div>
-        <div class="col-span-3 sm:col-span-1 flex flex-col gap-2">
+        <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
           <label>{{ "label.contact.mailingCountry" | translate }}</label>
           <input pInputText fluid="true" formControlName="mailingCountry" />
         </div>

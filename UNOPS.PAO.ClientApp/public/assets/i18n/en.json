@@ -28,7 +28,7 @@
     "updatePartnerLevel": "Update Partner Level",
     "scanBusinessCard": "Scan Business Card",
     "contactTitles": {
-      "contactInformation": "Contact Information",
+      "contactInformation": "Personal Information",
       "addresses": "Addresses",
       "systemInformation": "System Information"
     },
@@ -48,6 +48,7 @@
     "cancel": "Cancel",
     "close": "Close",
     "darkMode": "Dark Mode",
+    "import": "Import",
     "language": "Language",
     "lightMode": "Light Mode",
     "logout": "Logout",
@@ -106,7 +107,8 @@
       "mailingCity": "Mailing City",
       "mailingStateProvince": "Mailing State/Province",
       "mailingPostalCode": "Mailing Postal Code",
-      "mailingCountry": "Mailing Country"
+      "mailingCountry": "Mailing Country",
+      "contactViaAssistant": "Contact via Assistant"
     },
     "partnerTree": {
       "id": "ID",
@@ -207,7 +209,8 @@
     "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
     "interactionDeleted": "Interaction successfully deleted",
     "errorDeletingInteraction": "Error while deleting interaction",
-    "dropUrlToAddLink": "Drop URL or file to add link"
+    "dropUrlToAddLink": "Drop URL or file to add link",
+    "dropGoogleSheetsLink": "Drop a Google Sheets link"
   },
   "label.interaction.contact": "Contact",
   "errors": {

@@ -22,6 +22,8 @@ import { DialogModule } from 'primeng/dialog';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Router } from '@angular/router';
 import { Contact } from '../../../models/contact.model';
+import { CheckboxModule } from 'primeng/checkbox';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -41,7 +43,9 @@ import { Contact } from '../../../models/contact.model';
     DividerModule,
     CardModule,
     ReactiveFormsModule,
-    DialogModule
+    DialogModule,
+    CheckboxModule,
+    FormsModule
   ],
   templateUrl: './contact-edit-dialog.component.html',
   standalone: true,
@@ -51,6 +55,8 @@ export class ContactEditDialogComponent implements OnInit {
   router = inject(Router);
   private fb = inject(FormBuilder);
 
+  showAssistantFields = signal<boolean>(false);
+
   public formGroup: FormGroup = this.fb.group({
     // Basic contact information
     salutation: [''],
@@ -59,21 +65,16 @@ export class ContactEditDialogComponent implements OnInit {
     lastName: ['', [Validators.required]],
     suffix: [''],
     title: [''],
-    pronouns: [''],
-    birthDate: [new Date()],
 
     // Contact details
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
     mobile: [''],
-    otherPhone: [''],
-    fax: [''],
 
     // Professional information
     partner: ['', [Validators.required]],
     department: [''],
     description: [''],
-    status: ['', [Validators.required]],
     contactNumber: [''],
 
     // Assistant information
@@ -131,10 +132,15 @@ export class ContactEditDialogComponent implements OnInit {
   ngOnInit() {
     this.record = this.dialogConfig.data?.record;
     this.formGroup.patchValue(this.record);
+
+    // Check if any assistant fields have values
+    const hasAssistantInfo = this.record?.assistant || 
+                           this.record?.assistantPhone || 
+                           this.record?.assistantEmail;
+    this.showAssistantFields.set(!!hasAssistantInfo);
   }
 
   handleSave() {
-    debugger
     if (!this.formGroup.invalid) {
       const payload = this._getRequestPayload();
 
@@ -176,6 +182,13 @@ export class ContactEditDialogComponent implements OnInit {
   _getRequestPayload() {
     const formValue = this.formGroup.value;
     const requestJsonObj: Record<string, any> = { ...formValue };
+
+    // Clear assistant fields if the section is not shown
+    if (!this.showAssistantFields()) {
+      requestJsonObj['assistant'] = null;
+      requestJsonObj['assistantPhone'] = null;
+      requestJsonObj['assistantEmail'] = null;
+    }
 
     // Handle partner specially
     if (formValue['partner'] && typeof formValue['partner'] === 'object' && 'id' in formValue['partner']) {

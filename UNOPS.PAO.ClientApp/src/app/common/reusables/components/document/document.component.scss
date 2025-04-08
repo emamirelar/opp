@@ -3,12 +3,12 @@
 }
 
 .table-container{
-  @apply grow h-[50vh] md:h-[40vh]; /* dummy height given so that grid can takk full scrolling height */
+  @apply grow; /* dummy height given so that grid can takk full scrolling height */
   border: 1px solid var(--p-unops-color-2blue-50);
 }
 
 .no-data{
-  @apply flex flex-col h-[90%] items-center justify-center;
+  @apply flex flex-col items-center justify-center ;
 }
 
 .dragDrop-container{

@@ -15,15 +15,11 @@ public class Contact : ModifiableDeletableEntity
     public string LastName { get; set; }
     public string? Suffix { get; set; }
     public string Title { get; set; }
-    public string? Pronouns { get; set; }
     public string? Department { get; set; }
-    public DateTime? Birthdate { get; set; }
-    public string? Fax { get; set; }
     public string? Description { get; set; }
     public string Email { get; set; }
     public string? Phone { get; set; }
     public string? Mobile { get; set; }
-    public string? OtherPhone { get; set; }
     public string? Assistant { get; set; }
     public string? AssistantPhone { get; set; }
     public string? AssistantEmail { get; set; }
