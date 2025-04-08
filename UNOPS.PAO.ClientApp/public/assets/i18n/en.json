@@ -48,6 +48,7 @@
     "cancel": "Cancel",
     "close": "Close",
     "darkMode": "Dark Mode",
+    "import": "Import",
     "language": "Language",
     "lightMode": "Light Mode",
     "logout": "Logout",
@@ -208,7 +209,8 @@
     "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
     "interactionDeleted": "Interaction successfully deleted",
     "errorDeletingInteraction": "Error while deleting interaction",
-    "dropUrlToAddLink": "Drop URL or file to add link"
+    "dropUrlToAddLink": "Drop URL or file to add link",
+    "dropGoogleSheetsLink": "Drop a Google Sheets link"
   },
   "label.interaction.contact": "Contact",
   "errors": {

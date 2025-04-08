@@ -46,8 +46,6 @@ import {EntityType} from '../../../../../common/models/link.model';
     InputTextModule,
     DropdownModule,
     DatePickerModule,
-    DocumentUploadComponent,
-    DriveDocumentUploadComponent,
     DocumentComponent,
     GDriveDocumentComponent,
     ButtonModule,
