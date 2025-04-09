@@ -49,15 +49,18 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 unique: true);
 
             migrationBuilder.Sql(@"CREATE OR REPLACE PROCEDURE public.""InsertEntityEmbedding""(entityName TEXT, entityId INT, embedding TEXT)
+                                LANGUAGE plpgsql
+                                AS $$
                                 BEGIN
                                 INSERT INTO public.""EntityEmbeddings"" (""EntityName"", ""EntityId"", ""FullEmbedding"") 
                                 VALUES (entityName, entityId, embedding::vector(768)) 
                                 ON CONFLICT (""EntityName"", ""EntityId"") 
                                 DO UPDATE SET ""FullEmbedding"" = EXCLUDED.""FullEmbedding""; 
-                                END;");
+                                END;
+                                $$;");
 
             migrationBuilder.Sql(@"CREATE OR REPLACE FUNCTION public.RetrieveSimilarityId(entityName TEXT, embedding TEXT)
-                    RETURNS INT LANGUAGE ''plpgsql'' AS $BODY$ DECLARE
+                    RETURNS INT LANGUAGE plpgsql AS $BODY$ DECLARE
                         entityId INT = 0;      -- Stores the best matching entity
                     BEGIN
                         -- Find the closest entity match using cosine similarity
