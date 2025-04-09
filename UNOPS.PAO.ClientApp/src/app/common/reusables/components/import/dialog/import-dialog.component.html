@@ -1,0 +1,56 @@
+<div class="flex flex-col h-full">
+  @if (errorMessage()) {
+    <p-message severity="error" [text]="errorMessage()"></p-message>
+  }
+
+    <div class="flex-1 overflow-hidden">
+      <p-table
+        [value]="importDialogService.data()"
+        [columns]="columns"
+        [loading]="importDialogService.isLoading()"
+        [selectionMode]="'multiple'"
+        [selection]="selectedRows()"
+        (selectionChange)="selectedRows.set($event)"
+        [scrollable]="true"
+        scrollHeight="100%"
+        styleClass="h-full"
+      >
+        <ng-template pTemplate="header" let-columns>
+          <tr>
+            <!-- <th style="width: 3rem"></th> -->
+            <th *ngFor="let col of columns" class="min-w-32">
+              {{ col.header }}
+            </th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-rowData let-columns="columns" let-rowIndex="rowIndex">
+          <tr [ngClass]="{'p-error': hasErrors(rowIndex)}">
+            <!-- <td>
+              <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
+            </td> -->
+            @for (col of columns; track col) {
+              <td [ngClass]="{'bg-red-50': !rowData[col.field] && col.required}" class="">
+                @if (rowData[col.field]) {
+                  {{ rowData[col.field] }}
+                } @else {
+                  <i class="text-red-100 pi pi-warning"></i>
+                }
+              </td>
+            }
+
+          </tr>
+          @if (hasErrors(rowIndex)) {
+            <tr>
+              <td colspan="100%" class="p-error text-sm">
+                <div *ngFor="let error of getRowErrors(rowIndex)">
+                  {{ error }}
+                </div>
+              </td>
+            </tr>
+          }
+        </ng-template>
+      </p-table>
+    </div>
+</div>
+

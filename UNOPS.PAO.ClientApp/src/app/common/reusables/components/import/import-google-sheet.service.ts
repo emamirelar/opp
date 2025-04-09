@@ -1,8 +1,10 @@
 import {EventEmitter, inject, Injectable, Output} from '@angular/core';
 import { ConfigurationService } from '../../../../essentials/services/configuration.service';
 import { ImportService } from './import.service';
-import {ImportDialogService} from './import-dialog.service';
+import {ImportDialogService} from './dialog/import-dialog.service';
 import {Contact} from '../../../../features/internal/models/contact.model';
+import { Observable, Subject } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 declare const google: any;
 declare const gapi: any;
@@ -14,18 +16,36 @@ export class ImportGoogleSheetService {
   private clientId;
   private scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/spreadsheets.readonly';
   private oauthToken?: string;
+  private tokenExpirationTime?: number;
   private pickerReady = false;
   private sheetsApiReady = false;
 
-  private data : any[] = [];
-  private importDialogService = inject(ImportDialogService);
+  private checkExistingToken(): void {
+    // Check for Google OAuth token in localStorage
+    const storedToken = localStorage.getItem('google_oauth_token');
+    const storedExpiration = localStorage.getItem('google_oauth_token_expiration');
 
+    if (storedToken && storedExpiration) {
+      const expirationTime = parseInt(storedExpiration, 10);
+      if (Date.now() < expirationTime) {
+        this.oauthToken = storedToken;
+        this.tokenExpirationTime = expirationTime;
+      } else {
+        // Clear expired token
+        localStorage.removeItem('google_oauth_token');
+        localStorage.removeItem('google_oauth_token_expiration');
+      }
+    }
+  }
 
-  constructor(
-    configService: ConfigurationService,
-    private importService: ImportService
-  ) {
+  private isTokenValid(): boolean {
+    if (!this.oauthToken || !this.tokenExpirationTime) return false;
+    return Date.now() < this.tokenExpirationTime;
+  }
+
+  constructor(configService: ConfigurationService) {
     this.clientId = configService.getConfig().googleClientId;
+    this.checkExistingToken();
     gapi.load('picker', { callback: this.onPickerApiLoad.bind(this) });
     gapi.load('client', { callback: this.initSheetsAPI.bind(this) });
   }
@@ -44,25 +64,44 @@ export class ImportGoogleSheetService {
     });
   }
 
-  private authenticate() {
-    google.accounts.oauth2
-      .initTokenClient({
-        client_id: this.clientId,
-        scope: this.scope,
-        callback: (response: any) => {
-          this.oauthToken = response.access_token;
-          this.openPicker();
-        },
-      })
-      .requestAccessToken();
+  private authenticate(): Observable<void> {
+    return new Observable<void>(observer => {
+      google.accounts.oauth2
+        .initTokenClient({
+          client_id: this.clientId,
+          scope: this.scope,
+          callback: (response: any) => {
+            this.oauthToken = response.access_token;
+            // Set expiration time to 55 minutes from now (Google tokens typically expire after 1 hour)
+            this.tokenExpirationTime = Date.now() + (55 * 60 * 1000);
+
+            // Store token and expiration in localStorage
+            if (this.oauthToken) {
+              localStorage.setItem('google_oauth_token', this.oauthToken);
+              localStorage.setItem('google_oauth_token_expiration', this.tokenExpirationTime.toString());
+            }
+            observer.next();
+            observer.complete();
+          },
+        })
+        .requestAccessToken();
+    });
   }
 
-  private createPicker() {
+  private createPicker(): Observable<string> {
+    const sheetIdSubject = new Subject<string>();
+    
     if (this.pickerReady && this.oauthToken) {
       const pickerBuilder = new google.picker.PickerBuilder();
       pickerBuilder.setOAuthToken(this.oauthToken);
       pickerBuilder.enableFeature(google.picker.Feature.SUPPORT_DRIVES);
-      pickerBuilder.setCallback(this.pickerCallback.bind(this));
+      pickerBuilder.setCallback((data: any) => {
+        if (data.action === google.picker.Action.PICKED) {
+          const selectedSheet = data[google.picker.Response.DOCUMENTS][0];
+          sheetIdSubject.next(selectedSheet.id);
+          sheetIdSubject.complete();
+        }
+      });
 
       // Only show Google Sheets
       const sheetsView = new google.picker.DocsView(google.picker.ViewId.SPREADSHEETS);
@@ -96,34 +135,25 @@ export class ImportGoogleSheetService {
         (elements[i] as HTMLElement).style.zIndex = '99999999999999';
       }
     }
+
+    return sheetIdSubject.asObservable();
   }
 
-  private pickerCallback(data: any) {
-    if (data.action === google.picker.Action.PICKED) {
-      const selectedSheet = data[google.picker.Response.DOCUMENTS][0];
-      this.loadSheetData(selectedSheet.id);
-    }
-  }
-
-  private loadSheetData(sheetId: string) {
-    this.importService.analyzeFile(sheetId, 'bulk_contact_action')
-      .subscribe({
-        next: (response: any) => {
-          const parsedRecords = JSON.parse(response.records);
-          this.importDialogService.setData(parsedRecords);
-        },
-        error: (error) => {
-          console.error('Error analyzing Google Sheet:', error);
-          // TODO : tooltip
-        }
+  public openPicker(): Observable<string> {
+    if (!this.oauthToken || !this.isTokenValid()) {
+      return new Observable<string>(subscriber => {
+        gapi.load('auth', () => {
+          this.authenticate().pipe(
+            switchMap(() => this.createPicker())
+          ).subscribe({
+            next: (sheetId) => subscriber.next(sheetId),
+            complete: () => subscriber.complete(),
+            error: (error) => subscriber.error(error)
+          });
+        });
       });
-  }
-
-  public openPicker() {
-    if (!this.oauthToken) {
-      gapi.load('auth', { callback: this.authenticate.bind(this) });
     } else {
-      this.createPicker();
+      return this.createPicker();
     }
   }
 }

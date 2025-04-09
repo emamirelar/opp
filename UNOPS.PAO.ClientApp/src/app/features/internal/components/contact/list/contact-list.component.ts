@@ -19,7 +19,7 @@ import {ContactService} from '../../../services/contact.service';
 import {FeedbackDialogService} from '../../../../../common/reusables/services/feedback-dialog.service';
 import {ListViewColumn, ListViewConfig} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
-import { ImportDialogService } from '../../../../../common/reusables/components/import/import-dialog.service';
+import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 
 
 @Component({
