@@ -10,6 +10,7 @@ import {
   getUrlPageByAiResponseCategory
 } from './ai-assistant.model';
 import { Router } from '@angular/router';
+import { ComponentResolverService } from '../../../../features/internal/services/component-resolver.service';
 
 
 @Injectable({
@@ -19,15 +20,22 @@ export class AiAssistantData {
   readonly chatHistory = signal<ChatMessage[]>([]);
   readonly currentSessionId = signal<string | null>(null);
   readonly isLoading = signal(false);
+  private viewContainerRef?: ViewContainerRef; // Store ViewContainerRef
+  currentModelMessage: any = {};
   textToSpeech = signal(false);
 
   constructor(
     private aiAssistantService: AiAssistantService,
-    private router: Router
+    private router: Router,
+    private componentResolverService: ComponentResolverService
   ) {
     this.loadOrCreateSession().subscribe({
       error: (error) => console.error('Failed to initialize session:', error)
     });
+  }
+
+  public setViewContainerRef(viewContainerRef: ViewContainerRef) {
+    this.viewContainerRef = viewContainerRef;
   }
 
   public sendMessage(message: string, files: ChatFile[] = []): Observable<void> {
@@ -174,7 +182,13 @@ export class AiAssistantData {
 
   private addSystemMessage(aiResponse: AiResponse ): void {
     if (aiResponse.intent === 'Action') {
-      this.handleActionResponse(aiResponse);
+      if (aiResponse.url) {
+        // Navigation
+        this.router.navigateByUrl(aiResponse.url);
+      } else {
+        var record = aiResponse.rawMessage ? JSON.parse(aiResponse.rawMessage) : {};
+        this.componentResolverService.loadComponent(aiResponse.entity, this.viewContainerRef, record);
+      }
     }
 
     this.addMessage({

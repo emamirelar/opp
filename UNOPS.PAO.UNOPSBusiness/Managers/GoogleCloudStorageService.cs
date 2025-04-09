@@ -38,7 +38,7 @@ public class GoogleCloudStorageService
     {
         _storageClient = StorageClient.Create();
         _configuration = configuration;
-        _bucketName = configuration.GetValue<string>("GoogleDriveSettings:GoogleCloudStorageBucketName");
+        _bucketName = configuration.GetValue<string>("AISettings:GoogleCloudStorageBucketName");
     }
 
     private async Task<string> UploadToGCS(Stream stream, string objectName, string contentType)

@@ -149,4 +149,57 @@ public class GeminiController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpGet(APIDictionary.GenerateEmbeddings)]
+    public async Task<ActionResult> GenerateAndStoreEmbeddings(string? entityName)
+    {
+        try
+        {
+            var result = await manager.GenerateEmbeddings(entityName);
+
+            return Ok(new { message = $"Embeddings generated and published'." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while generating embeddings.", details = ex.Message });
+        }
+    }
+
+    [HttpPost(APIDictionary.BulkUpload)]
+    public async Task<ActionResult> BulkUpload([FromBody] BulkUploadRequest req) {
+        try {
+            if (req == null || string.IsNullOrEmpty(req.Type))
+            {
+                return BadRequest("Invalid request.");
+            }
+
+            // Call the updated BulkInsertRecordsAsync method
+            string response = await manager.BulkInsertRecordsAsync(req);
+
+            return Ok(new { message = response });
+        } 
+        catch (Exception ex) {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost(APIDictionary.AnalyseFile)]
+    public async Task<ActionResult> AnalyseFile([FromBody]AnalyseFileRequest request)
+    {
+        try
+        {
+            if (request == null)
+            {
+                return BadRequest(new { message = "Invalid request." });
+            }
+
+            var response = await manager.ExtractDataAfterAnalysis(request);
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "An error occurred while processing the file.", details = ex.Message });
+        }
+    }
 }

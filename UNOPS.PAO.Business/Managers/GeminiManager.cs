@@ -19,13 +19,11 @@ using UNOPS.PAO.Models;
 public class GeminiManager : IGeminiManager
 {
     private readonly IMapper _mapper;
-    private readonly DataRepository<AiScreenMapping> _screenMappingRepository;
     private readonly DataRepository<AiPrompt> _promptRepository;
 
     public GeminiManager(IMapper mapper, AppDbContext context)
     {
         _mapper = mapper;
-        _screenMappingRepository = new DataRepository<AiScreenMapping>(context);
         _promptRepository = new DataRepository<AiPrompt>(context);
     }
 
@@ -40,16 +38,6 @@ public class GeminiManager : IGeminiManager
     public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
     {
         // Implement the logic to fetch result from Gemini
-        throw new NotImplementedException();
-    }
-
-    Task<IEnumerable<AiScreenMapping>> IGeminiManager.GetScreenMappingsByType(string type)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<string> GetDataBasedOnScreenMapping(string type, int recordId, AiScreenMapping[] mapping)
-    {
         throw new NotImplementedException();
     }
 
@@ -138,6 +126,21 @@ public class GeminiManager : IGeminiManager
     }
 
     public Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<dynamic> GenerateEmbeddings(string? entityName)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<string> BulkInsertRecordsAsync(BulkUploadRequest request)
     {
         throw new NotImplementedException();
     }

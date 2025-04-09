@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace UNOPS.PAO.Business.Interfaces;
@@ -12,8 +10,6 @@ public interface IGeminiManager
     AiPrompt MapModelToEntity(GeminiProcessDataRequest req);
     IEnumerable<AiPromptModel> GetPromptData(string type);
     Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData);
-    Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type);
-    Task<string> GetDataBasedOnScreenMapping(string type, int recordId, AiScreenMapping[] mapping);
     IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId);
     Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId);
     IEnumerable<AiChatSession> GetUserSessions(int userId);
@@ -31,4 +27,9 @@ public interface IGeminiManager
     Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req);
     Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req);
     Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req);
+    Task<dynamic> GenerateEmbeddings(string? entityName);
+
+    Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req);
+
+    Task<string> BulkInsertRecordsAsync(BulkUploadRequest request);
 }

@@ -159,6 +159,6 @@ public static class Extensions
 
     public static object GetPropertyValue(this object src, string propName)
     {
-        return src.GetType().GetProperty(propName).GetValue(src, null);
+        return src.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly).GetValue(src, null);
     }
 }

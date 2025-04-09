@@ -90,7 +90,6 @@ export class InteractionModalComponent {
   ngOnChanges(changes: SimpleChanges) {
     this.display = true;
     if (changes['record'] && this.record && Object.keys(this.record).length > 0) {
-      console.log()
       this.formGroup.patchValue(this.record!);
     }
   }
