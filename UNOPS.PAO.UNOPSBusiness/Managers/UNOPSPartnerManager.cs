@@ -24,6 +24,8 @@ public class UNOPSPartnerManager : IPartnerManager
 {
     private IMapper mapper;
     private BaseRepository<UNOPSPartner> PartnerRepository;
+    private BaseRepository<UNOPSOrganizationUnit> OrganizationUnitRepository;
+    private BaseRepository<UNOPSPartnerCategory> PartnerCategoryRepository;
 
     private CommonEntityRepository commonRepository;
 
@@ -108,6 +110,8 @@ public class UNOPSPartnerManager : IPartnerManager
     {
         this.mapper = mapper;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
+        OrganizationUnitRepository = new BaseRepository<UNOPSOrganizationUnit>(context, configuration);
+        PartnerCategoryRepository = new BaseRepository<UNOPSPartnerCategory>(context, configuration);
 
         commonRepository = new CommonEntityRepository(context);
     }
@@ -115,7 +119,7 @@ public class UNOPSPartnerManager : IPartnerManager
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
     {
         var entity = MapModelToEntity(model);
-        
+
         await PartnerRepository.AddAsync(entity);
 
         return mapper.Map<PartnerModel>(entity);
@@ -124,7 +128,8 @@ public class UNOPSPartnerManager : IPartnerManager
     public PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll()
+            .GetAll(["PartnerOffice", "PartnerCategory"])
+            .Where(x => !x.IsDeleted)
             .AsQueryable();
 
         return query.Paginate(
@@ -139,6 +144,23 @@ public class UNOPSPartnerManager : IPartnerManager
         if (item == null)
         {
             return default;
+        }
+
+        if(item.PartnerCategoryId.HasValue)
+        {
+            var partnerCategory = await PartnerCategoryRepository.GetByIdAsync(item.PartnerCategoryId.Value);
+            if (partnerCategory != null)
+            {
+                item.PartnerCategory = partnerCategory;
+            }
+        }
+        if (item.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationUnitRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                item.PartnerOffice = partnerOffice;
+            }
         }
 
         return MapEntityToModel(item, mapper);
@@ -223,7 +245,7 @@ public class UNOPSPartnerManager : IPartnerManager
     }
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents"];
+        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 

@@ -10,6 +10,9 @@ import { PartnerNewComponent } from './new/partner-new.component';
 import { Partner } from '../../models/partner.model';
 import { ListviewComponent } from '../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn } from '../../../../common/pages/components/listview/listview.model';
+import { PartnerEditDialogFooterComponent } from './edit-dialog/footer/partner-edit-dialog-footer.component';
+import { PartnerEditDialogComponent } from './edit-dialog/partner-edit-dialog.component';
+import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
   selector: 'app-partner',
@@ -22,7 +25,8 @@ import { ListViewColumn } from '../../../../common/pages/components/listview/lis
     PartnerNewComponent,
     TranslateModule,
     ListviewComponent,
-  ]
+  ],
+  providers: [DialogService]
 })
 export class PartnerComponent implements OnDestroy {
   private langChangeSubscription: Subscription = new Subscription;
@@ -30,6 +34,7 @@ export class PartnerComponent implements OnDestroy {
   activatedRoute = inject(ActivatedRoute);
   partnerService = inject(PartnerService);
   feedbackDialogService = inject(FeedbackDialogService);
+  dialogService = inject(DialogService);
 
   newPartnerData = signal<Partner|null>(null);
 
@@ -59,6 +64,17 @@ export class PartnerComponent implements OnDestroy {
       type: 'text'
     }
   ];
+
+  ngOnInit() {
+    this.activatedRoute.queryParams
+      .subscribe(params => {
+        if (params['openNewDialog'] === 'true') {
+          const state = history.state;
+          const emptyPartner: Partner = {};
+          this.openPartnerEditDialog(state?.data || emptyPartner);
+        }
+      });
+  }
 
   constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) {
     this.setNewPartnerFromAIAssistant();
@@ -108,5 +124,29 @@ export class PartnerComponent implements OnDestroy {
     if (newRecordData?.id) {
       this.router.navigate(['partner', newRecordData.id]);
     }
+  }
+
+  openPartnerEditDialog(partnerData: Partner = {}) {
+    const ref = this.dialogService.open(PartnerEditDialogComponent, {
+      header: partnerData.id ? 'Edit Partner' : 'New Partner',
+      width: '40vw',
+      breakpoints: { '960px': '95vw' },
+      closable: true,
+      templates: {
+        footer: PartnerEditDialogFooterComponent
+      },
+      data: {
+        mode: partnerData.id ? 'edit' : 'new',
+        record: partnerData,
+        requestingSaveSignal: signal<boolean>(false)
+      }
+    });
+
+    const refSub = ref.onClose.subscribe((result: any) => {
+      if (result) {
+        this._handleOnRecordCreation(result);
+      }
+      refSub.unsubscribe();
+    });
   }
 }

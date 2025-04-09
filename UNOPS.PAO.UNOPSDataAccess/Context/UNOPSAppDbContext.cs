@@ -60,5 +60,8 @@ public class UNOPSAppDbContext : AppDbContext
 
     public new DbSet<AiChatHistory> AiChatHistory { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
+    public DbSet<UNOPSOrganizationUnit> OrganizationUnits { get; set; }
+    public DbSet<UNOPSPartnerCategory> PartnerCategories { get; set; }
+
     public new DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
 }

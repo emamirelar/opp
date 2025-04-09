@@ -37,7 +37,8 @@
     "partnerTitles": {
       "partnerInformation": "Partner Information",
       "addressInformation": "Address Information",
-      "address1": "Address 1"
+      "address1": "Address 1",
+      "additionalInformation": "Additional Information"
     },
     "links": "Links",
     "editLink": "Edit Link",
@@ -151,7 +152,9 @@
       "partner": "Partner",
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",
-      "partnerNews": "Partner News"
+      "partnerNews": "Partner News",
+      "partnerOffice": "Partner Office",
+      "partnerCategory": "Partner Category"
     },
     "clarificationDeadline": "Clarification Deadline",
     "document": {
