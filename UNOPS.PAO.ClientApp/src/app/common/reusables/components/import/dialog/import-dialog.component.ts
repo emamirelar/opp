@@ -11,13 +11,13 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { MessageModule } from 'primeng/message';
 import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
-import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
+import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
 import {NgForOf, NgClass, JsonPipe} from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
 
 
 @Component({
-  selector: 'app-import',
+  selector: 'app-import-dialog',
   standalone: true,
   imports: [
     TranslateModule,
@@ -35,36 +35,15 @@ import { ImportDialogService } from './import-dialog.service';
     NgForOf,
     NgClass
   ],
-  templateUrl: './import.component.html',
+  templateUrl: './import-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ImportComponent {
+export class ImportDialogComponent {
   feedbackDialogService = inject(FeedbackDialogService);
-  private fb = inject(FormBuilder);
   importDialogService = inject(ImportDialogService);
 
-  // Form template for validation
-  contactFormTemplate = this.fb.group({
-    salutation: [''],
-    firstName: [''],
-    middleName: [''],
-    lastName: ['', Validators.required],
-    suffix: [''],
-    title: [''],
-    pronouns: [''],
-    email: ['', [Validators.required, Validators.email]],
-    phone: [''],
-    mobile: [''],
-    department: [''],
-    contactNumber: ['']
-  });
-
-  currentStep = signal<number>(1);
-  isLoading = signal<boolean>(false);
   errorMessage = signal<string>('');
 
-  // Sample data structure - replace with your actual data model
-  importData = signal<any[]>([]);
   selectedRows = signal<any[]>([]);
   validationErrors = signal<Map<number, string[]>>(new Map());
 
@@ -77,11 +56,25 @@ export class ImportComponent {
     { field: 'suffix', header: 'Suffix', required: false },
     { field: 'title', header: 'Title', required: false },
     { field: 'pronouns', header: 'Pronouns', required: false },
+    { field: 'birthDate', header: 'Birth Date', required: false },
     { field: 'email', header: 'Email', required: true },
     { field: 'phone', header: 'Phone', required: false },
     { field: 'mobile', header: 'Mobile', required: false },
+    { field: 'otherPhone', header: 'Other Phone', required: false },
+    { field: 'fax', header: 'Fax', required: false },
     { field: 'department', header: 'Department', required: false },
-    { field: 'contactNumber', header: 'Contact Number', required: false }
+    { field: 'description', header: 'Description', required: false },
+    { field: 'status', header: 'Status', required: false },
+    { field: 'contactNumber', header: 'Contact Number', required: false },
+    { field: 'assistant', header: 'Assistant', required: false },
+    { field: 'assistantPhone', header: 'Assistant Phone', required: false },
+    { field: 'assistantEmail', header: 'Assistant Email', required: false },
+    { field: 'mailingStreet', header: 'Mailing Street', required: false },
+    { field: 'mailingStreet2', header: 'Mailing Street 2', required: false },
+    { field: 'mailingCity', header: 'Mailing City', required: false },
+    { field: 'mailingStateProvince', header: 'Mailing State/Province', required: false },
+    { field: 'mailingPostalCode', header: 'Mailing Postal Code', required: false },
+    { field: 'mailingCountry', header: 'Mailing Country', required: false }
   ];
 
   getFieldHeader(fieldName: string): string {
