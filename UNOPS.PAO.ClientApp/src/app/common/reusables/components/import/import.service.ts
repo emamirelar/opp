@@ -92,11 +92,11 @@ export class ImportService {
       fileId
     };
 
-    // return this.http.post<ImportAnalysisResponse>(`${this.apiUrl}/analyse-file`, payload);
-    return of({
+    return this.http.post<ImportAnalysisResponse>(`${this.apiUrl}/analyse-file`, payload);
+    /*return of({
       type: 'string',
       records: EXAMPLE_CONTACTS,
-    });
+    });*/
   }
 
   /**
@@ -109,7 +109,6 @@ export class ImportService {
       type,
       records
     };
-    //return this.http.post(`${this.apiUrl}/bulk-upload`, payload);
-    return of({});
+    return this.http.post(`${this.apiUrl}/bulk-upload`, payload);
   }
 }

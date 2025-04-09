@@ -33,7 +33,7 @@ import {ImportGoogleSheetService} from '../import-google-sheet.service';
       <p-button
         [label]="'button.import' | translate"
         icon="pi pi-file-import"
-        (onClick)="importDialogService.triggerImport()">
+        (onClick)="importDialogService.triggerImport('contact')">
       </p-button>
     </div>
   `,

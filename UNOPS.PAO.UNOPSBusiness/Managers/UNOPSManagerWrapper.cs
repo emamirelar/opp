@@ -25,10 +25,10 @@ public class UNOPSManagerWrapper : ManagerWrapper
                                UserManager<PAOIdentityUser> userManager) : base(mapper, context, userManager)
     {
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
-        contactManager = new UNOPSContactManager(mapper, opsContext);
-        interactionManager = new UNOPSInteractionManager(mapper, opsContext);
-        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext);
-        partnerManager = new UNOPSPartnerManager(mapper,opsContext);
+        contactManager = new UNOPSContactManager(mapper, opsContext, configuration);
+        interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration);
+        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration);
+        partnerManager = new UNOPSPartnerManager(mapper,opsContext, configuration);
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
         linkManager = new LinkManager(mapper, opsContext);
     }

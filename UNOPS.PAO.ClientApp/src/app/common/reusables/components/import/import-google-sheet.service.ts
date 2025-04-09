@@ -108,8 +108,9 @@ export class ImportGoogleSheetService {
   private loadSheetData(sheetId: string) {
     this.importService.analyzeFile(sheetId, 'bulk_contact_action')
       .subscribe({
-        next: (response) => {
-          this.importDialogService.setData(response.records);
+        next: (response: any) => {
+          const parsedRecords = JSON.parse(response.records);
+          this.importDialogService.setData(parsedRecords);
         },
         error: (error) => {
           console.error('Error analyzing Google Sheet:', error);

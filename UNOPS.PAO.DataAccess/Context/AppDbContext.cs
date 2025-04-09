@@ -40,6 +40,8 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<OrganizationUnit> OrganizationUnits { get; set; }
     public DbSet<PartnerCategory> PartnerCategories { get; set; }
 
+    public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings
@@ -148,5 +150,17 @@ public class AppDbContext : AuditableDbContext<int, int>
             
         modelBuilder
             .Entity<UNOPSLink>();
+
+        modelBuilder.Entity<EntityEmbeddings>(entity =>
+        {
+            entity.HasIndex(e => e.EntityName);
+            entity.HasIndex(e => e.EntityId);
+            entity.Property(e => e.FullEmbedding)
+              .HasColumnType("vector(768)");
+            entity.Property(e => e.NameEmbedding)
+              .HasColumnType("vector(768)");
+            entity.HasIndex(e => new { e.EntityName, e.EntityId })
+                    .IsUnique(); // This ensures uniqueness at the database level
+        });
     }
 }

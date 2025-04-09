@@ -24,6 +24,7 @@ using UNOPS.PAO.UNOPSPresentation.ContextPermissionHandlers;
 using UNOPS.PAO.Presentation.ContextPermissionHandlers;
 using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.Server;
 
@@ -159,6 +160,7 @@ public class Startup
         ApplyMigrations(services);
         services.SeedAsync();
         ConfigureRegisters(services);
+        services.AddHostedService<PubSubPullService>(); // Register your background service
     }
 
     private void AddServices(ServiceRegistry services)
@@ -189,11 +191,15 @@ public class Startup
                 .UseNpgsql(connectionString)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
 
-        //Override / UNOPS DB context
+        // Override / UNOPS DB context
         services.AddDbContext<UNOPSAppDbContext>(options =>
             options
                 .UseNpgsql(connectionString)
                 .ReplaceService<IModelCacheKeyFactory, DbSchemaAwareModelCacheKeyFactory>());
+
+        // Register IDbContextFactory for UNOPSAppDbContext
+        services.AddDbContextFactory<UNOPSAppDbContext>(options =>
+            options.UseNpgsql(connectionString));
 
         services.AddDbContext<PAOIdentityDbContext>(options =>
             options

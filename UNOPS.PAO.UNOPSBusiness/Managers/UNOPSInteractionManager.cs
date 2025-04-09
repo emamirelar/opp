@@ -13,6 +13,7 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Utilities.Helpers;
+using Microsoft.Extensions.Configuration;
 
 public class UNOPSInteractionManager : IInteractionManager
 {
@@ -48,11 +49,11 @@ public class UNOPSInteractionManager : IInteractionManager
         return entity;
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
         this.mapper = mapper;
-        interactionRepository = new BaseRepository<UNOPSInteraction>(context);
-        contactRepository = new BaseRepository<UNOPSContact>(context);
+        interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration);
+        contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
         commonRepository = new CommonEntityRepository(context);
     }
 
