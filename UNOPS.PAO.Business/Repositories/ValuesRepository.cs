@@ -20,11 +20,11 @@ public class ValuesRepository
     public IEnumerable<Country> GetCountries() => context.Countries.Where(x => x.Status == EntityStatus.Active);
 
     public IEnumerable<Partner> GetPartners()
-        => context.Partners.Where(x => x.Status.Equals("Active"));
+        => context.Partners.Where(x => x.Status.Equals("Active") && !x.IsDeleted);
 
     public IEnumerable<OrganizationUnit> GetOrganizationUnits()
-        => context.OrganizationUnits.Where(x => x.Status.Equals("Active"));
+        => context.OrganizationUnits.Where(x => x.Status == EntityStatus.Active && !x.IsDeleted);
 
     public IEnumerable<PartnerCategory> GetPartnerCategories()
-        => context.PartnerCategories.Where(x => x.Status.Equals("Active"));
+        => context.PartnerCategories.Where(x => x.Status == EntityStatus.Active && !x.IsDeleted);
 }

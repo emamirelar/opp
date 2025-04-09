@@ -118,7 +118,7 @@ public class UNOPSPartnerManager : IPartnerManager
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
     {
         var entity = MapModelToEntity(model);
-        
+
         await PartnerRepository.AddAsync(entity);
 
         return mapper.Map<PartnerModel>(entity);
@@ -128,6 +128,7 @@ public class UNOPSPartnerManager : IPartnerManager
     {
         var query = PartnerRepository
             .GetAll(["PartnerOffice", "PartnerCategory"])
+            .Where(x => !x.IsDeleted)
             .AsQueryable();
 
         return query.Paginate(
@@ -243,7 +244,7 @@ public class UNOPSPartnerManager : IPartnerManager
     }
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents"];
+        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 

@@ -44,6 +44,7 @@ public class PartnerManager : IPartnerManager
     {
         var query = PartnerRepository
             .GetAll(["PartnerOffice", "PartnerCategory"])
+            .Where(x => !x.IsDeleted)
             .AsQueryable();
 
         return query.Paginate(
@@ -148,7 +149,7 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents"];
+        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 
