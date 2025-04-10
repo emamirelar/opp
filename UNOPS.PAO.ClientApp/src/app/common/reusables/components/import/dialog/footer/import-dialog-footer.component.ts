@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input
 import { ButtonModule } from 'primeng/button';
 import { TranslateModule } from '@ngx-translate/core';
 import { ImportDialogService } from '../import-dialog.service';
-import {ImportGoogleSheetService} from '../import-google-sheet.service';
+import {ImportGoogleSheetService} from '../../import-google-sheet.service';
 
 @Component({
   selector: 'app-import-footer',
@@ -14,7 +14,7 @@ import {ImportGoogleSheetService} from '../import-google-sheet.service';
         <p-button
           label="Select from Google Drive"
           icon="pi pi-google"
-          (onClick)="importGoogleSheetService.openPicker()">
+          (onClick)="importDialogService.openGoogleSheetPicker()">
         </p-button>
 
         @if (importDialogService.getFileUrl()()) {
@@ -42,5 +42,4 @@ import {ImportGoogleSheetService} from '../import-google-sheet.service';
 })
 export class ImportFooterComponent {
   importDialogService = inject(ImportDialogService);
-  importGoogleSheetService = inject(ImportGoogleSheetService);
 }

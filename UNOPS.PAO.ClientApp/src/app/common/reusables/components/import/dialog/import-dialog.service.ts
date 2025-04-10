@@ -1,11 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { ImportComponent } from './import.component';
-import { ImportFooterComponent } from './footer/import-footer.component';
+import { ImportDialogComponent } from './import-dialog.component';
+import { ImportFooterComponent } from './footer/import-dialog-footer.component';
 import { Observable, Subject } from 'rxjs';
 import { WritableSignal } from '@angular/core';
-import { ImportService } from './import.service';
-import { FeedbackDialogService } from '../../../pages/services/feedback-dialog.service';
+import { ImportService } from '../import.service';
+import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
+import { ImportGoogleSheetService } from '../import-google-sheet.service';
 
 @Injectable({
   providedIn: 'root'
@@ -15,19 +16,18 @@ export class ImportDialogService {
   private dialogRef: DynamicDialogRef | null = null;
   private _onClose = new Subject<any>();
 
-  private data = signal<Array<any>>([])
+  data = signal<Array<any>>([])
+
+  isLoading = signal(false);
 
 
   private _fileUrl = signal<string>('');
   importService = inject(ImportService);
   feedbackDialogService = inject(FeedbackDialogService);
-
-  getData() {
-    return this.data();
-  }
+  importGoogleSheetService = inject(ImportGoogleSheetService);
 
   openImportDialog(header: string = 'Import'): Observable<any> {
-    this.dialogRef = this.dialogService.open(ImportComponent, {
+    this.dialogRef = this.dialogService.open(ImportDialogComponent, {
       header,
       width: '90vw',
       height: '100vh',
@@ -71,9 +71,24 @@ export class ImportDialogService {
    * Trigger import process
    */
   triggerImport(type: string) {
+    this.isLoading.set(true)
     this.importService.bulkUpload(this.data(), type).subscribe(() => {
+      this.isLoading.set(false)
       this.feedbackDialogService.showSuccessToast({ detail: 'Import successful'} );
       this.closeDialog();
+      this.data.set([]);
+      this.isLoading.set(false);
+    });
+  }
+
+  openGoogleSheetPicker() {
+    this.isLoading.set(true);
+    this.importGoogleSheetService.openPicker().subscribe((sheetId) => {
+      this.importService.analyzeFile(sheetId, 'bulk_contact_action').subscribe((response: any) => {
+        const parsedRecords = JSON.parse(response.records);
+        this.setData(parsedRecords);
+        this.isLoading.set(false);
+      });
     });
   }
 

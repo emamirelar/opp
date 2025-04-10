@@ -56,7 +56,6 @@ import { Partner } from '../../../models/partner.model';
     LinkListComponent
   ],
   templateUrl: './partner-edit-dialog.component.html',
-  styleUrl: './partner-edit-dialog.component.scss',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
