@@ -19,12 +19,14 @@ using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
+using Microsoft.AspNetCore.Http;
 
 public class UNOPSContactManager : IContactManager
 {
     private IMapper mapper;
     private BaseRepository<UNOPSContact> contactRepository;
     private BaseRepository<UNOPSPartner> partnerRepository;
+    private GoogleCloudStorageService googleCloudStorageService;
 
     private CommonEntityRepository commonRepository;
 
@@ -61,6 +63,7 @@ public class UNOPSContactManager : IContactManager
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
         commonRepository = new CommonEntityRepository(context);
+        googleCloudStorageService = new GoogleCloudStorageService(configuration);
     }
 
     public async Task<ContactModel> CreateContactAsync(ContactRequest model)
@@ -174,5 +177,28 @@ public class UNOPSContactManager : IContactManager
         //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
 
         return result;
+    }
+
+    public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
+    {
+        // Verify contact exists first
+        var contact = await contactRepository.GetByIdAsync(contactId);
+        if (contact == null)
+        {
+            throw new BusinessException($"Contact {contactId} does not exist.");
+        }
+
+        // Upload file to Google Cloud Storage
+        string imageUrl = await googleCloudStorageService.UploadFileToGCS(file);
+        if (string.IsNullOrEmpty(imageUrl))
+        {
+            throw new BusinessException("Failed to upload the image to cloud storage");
+        }
+
+        // Update contact with new profile picture URL
+        contact.ProfilePictureUrl = imageUrl;
+        await contactRepository.UpdateAsync(contact);
+
+        return contact.ProfilePictureUrl;
     }
 }

@@ -52,8 +52,6 @@ import { Partner } from '../../../models/partner.model';
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
-    MarkdownPipe,
-    LinkListComponent
   ],
   templateUrl: './partner-edit-dialog.component.html',
   standalone: true,

@@ -27,6 +27,7 @@ import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.com
 import {ContactEditDialogFooterComponent} from '../edit-dialog/footer/contact-edit-dialog-footer.component';
 import { Contact } from '../../../models/contact.model';
 import { Subject } from 'rxjs';
+import { PictureComponent } from "../../../../../common/reusables/components/picture/picture.component";
 
 @Component({
   selector: 'app-contact-view',
@@ -45,8 +46,9 @@ import { Subject } from 'rxjs';
     DatePipe,
     Avatar,
     JsonPipe,
-    RouterLink
-  ],
+    RouterLink,
+    PictureComponent
+],
   templateUrl: './contact-view.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -113,7 +115,7 @@ export class ContactViewComponent implements OnInit, OnDestroy {
 
   handleEditClick() {
     const requestingSaveSignal = signal<boolean>(false);
-    
+
     const ref = this.dialogService.open(ContactEditDialogComponent, {
       header: 'Edit Contact',
       width: '90vw',
@@ -179,5 +181,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
         this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
       },
     });
+  }
+
+  getUploadProfilePictureUrl() {
+    return this.contactService.getUploadProfilePictureUrl(this.recordId);
   }
 }

@@ -45,7 +45,7 @@ export class CachedDataService {
   private allStatusData = signal([]);
   allStatus = this.allStatusData.asReadonly();
 
-  private allPartnersData = signal([]);
+  private allPartnersData = signal<any[]>([]);
   allPartners = this.allPartnersData.asReadonly();
 
   private allPartnerStatusData = signal([]);
@@ -423,16 +423,22 @@ export class CachedDataService {
   }
 
   loadPartners(){
-    if( ( this.allApplicationTypeData() == undefined ) || ( this.allApplicationTypeData().length <= 0 ) )
-    {
-      this.isLoading.set( true );
+    // Initialize with empty array
+    if (this.allPartnersData() === undefined || this.allPartnersData().length <= 0) {
+      // Default to empty array before API response
+      this.allPartnersData.set([]);
+      
+      this.isLoading.set(true);
       this.http.get('/api/values/partners').subscribe({
         next: (data: any) => {
-          this.allPartnersData.set( data );
-          this.isLoading.set( false );
+          // Ensure data is an array
+          this.allPartnersData.set(Array.isArray(data) ? data : []);
+          this.isLoading.set(false);
         },
         error: (err) => {
-          this.isLoading.set( false );
+          // Keep empty array on error
+          this.allPartnersData.set([]);
+          this.isLoading.set(false);
         }
       });
     }
