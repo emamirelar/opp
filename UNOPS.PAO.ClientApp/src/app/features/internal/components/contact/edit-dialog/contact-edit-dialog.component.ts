@@ -72,7 +72,7 @@ export class ContactEditDialogComponent implements OnInit {
     mobile: [''],
 
     // Professional information
-    partner: ['', [Validators.required]],
+    partnerId: ['', [Validators.required]],
     department: [''],
     description: [''],
     contactNumber: [''],

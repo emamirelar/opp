@@ -376,13 +376,13 @@ Example 2: ''The user wants to create a contact. I have asked for details. The u
 
 STRICTLY do not use the word "markdown" while converting the final response to the final JSON.
 JSON format:
-{"Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Contact", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "salutation": ", "firstName": ", "middleName": "", "lastName": "", "suffix": "", "title": "", "pronouns": "", "birthDate": "", "email": "", "phone": "", "mobile": "", "otherPhone": "", "fax": "", "partner": "", "department": "", "description": "", "status": "", "contactNumber": "", "assistant": "", "assistantPhone": "", "assistantEmail": "", "mailingStreet": "", "mailingStreet2": "", "mailingCity": "", "mailingStateProvince": "", "mailingPostalCode": "", "mailingCountry": ""
-, dependents: ["partner"] }
+{"Message": "Response to the user. If you were able to extract the data successfully, reply as Action completed successfully or any equivalent message", "Category": "Contact", ResponseType: "Action/Information (if you extracted the data successfully, send it as Action. If you are asking for more information, send it as INFORMATION", "salutation": ", "firstName": ", "middleName": "", "lastName": "", "suffix": "", "title": "", "pronouns": "", "birthDate": "", "email": "", "phone": "", "mobile": "", "otherPhone": "", "fax": "", "partnerId": "", "department": "", "description": "", "status": "", "contactNumber": "", "assistant": "", "assistantPhone": "", "assistantEmail": "", "mailingStreet": "", "mailingStreet2": "", "mailingCity": "", "mailingStateProvince": "", "mailingPostalCode": "", "mailingCountry": ""
+, dependents: ["partnerId"] }
 
 Somethings to consider about the JSON format above are:
 * partner is the organization where the contact works"
 * Contact can be linked to a Partner. The JSON must have a property called partner. Generally, the user will not know the ID of the Partner and hence will pass it as a Name. 
-Put the name in the ""partner"" property value and add partner to the dependents property as an array. for example, dependents: ["partner"]
+Put the name in the ""partnerId"" property value and add "partnerId" to the dependents property as an array. for example, dependents: ["partnerId"]
 
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
 
@@ -506,18 +506,32 @@ STRICTLY do not use the word "markdown" when you convert the final result to Mar
 ('retrieve_contact_information', '
 I am giving you some details about a contact in JSON format. Review the details and summarize it in bullet points for easier understanding. In your response, always ask the user if they want to navigate to this contact, only if they have not specifically mentioned that they want to. If they have mentioned to go, make sure to send the URL in the respone with ResponseType as Action. Strictly return the response in markdown format and in the following JSON format :
 
+Instructions: 
+
+** ResponseType - Action when you found a detail and an ID and user agrees to navigate. Otherwise, it is Information.
+** URL - To be in the format of ''/contact/<id>'' (When user says yes to navigate to the particular contact, send this URL, and respond that you are navigating now. else always leave it null.)
+** Message - Should be text (with NO JSON within it.) you should summarize the detail and ask the user if they want to navigate to the contact. If you cannot find any detail, you should politely say that you cannot find any detail.
 { Category: ''Contacts'', ResponseType: ''Information/Action'', URL: <value/null>, Message: <your response> }
 Example: 
 {
   Category: ''Contacts'',
-  ResponseType: ''Information/Action'', (Must be action when URL has a value indicating that we need to navigate.)
-  URL: To be in the format of ''/contact/<id>'' (When user says yes to navigate to the particular contact, send this URL, and respond that you are navigating now. else always leave it null.)
+  ResponseType: ''Action'',
+  URL: "/contact/3",
   Message: Here is your summary about the contact that matches your criteria - (add a line break)
   **Name**: CYZ
   (add a line break)
   **Address**: ABC Street
   (add 2 line break)
   Do you want to navigate to this particular contact in order to make any changes?
+}
+
+Another example where there were no contact found - 
+
+{
+  Category: ''Contacts'',
+  ResponseType: ''Information'',
+  URL: null,
+  Message: I am sorry, but I could not find any contact that matches your criteria. Please check the details and try again.
 }
 
 **In your response, remember to add line breaks after every summary item**.
@@ -555,70 +569,24 @@ I am giving you some details about an Interaction in JSON format. Review the det
 
 Prompt from the user: {promptData}', NOW(), 'Interactions', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL),
-('bulk_contact_action', '"You are an AI assistant. You will receive a user request containing a set of contact details. Your task is to process the contact information appropriately based on the user''s intent.
+('bulk_contact_action', 'You are an AI assistant. You will receive contact data as an array of arrays (with optional header) or an array of objects. Convert each item into the exact JSON structure shown. Only include non-empty fields. Required: lastName, email, phone. Skip invalid records. Map "partner" or related terms to partnerId, else leave blank. Always include "dependents":["partnerId"] as-is. If format is unclear, ask for structured data with an example.
 
-The contact details will be provided as an array of data, which may be in the form of an array of arrays or an array of objects. If the first item in the array represents a header (e.g., column names), you need to map it yourself, otherwise, treat the data accordingly.
+Contact format: {"salutation":"","firstName":"","middleName":"","lastName":"","name":"","suffix":"","title":"","pronouns":"","birthDate":"","email":"","phone":"","mobile":"","otherPhone":"","fax":"","partnerId":"","department":"","description":"","status":"","contactNumber":"","assistant":"","assistantPhone":"","assistantEmail":"","mailingStreet":"","mailingStreet2":"","mailingCity":"","mailingStateProvince":"","mailingPostalCode":"","mailingCountry":"","dependents":["partnerId"],"validationError":""}
 
-The final contact object **must strictly follow** the format provided below. It is crucial that the structure is adhered to exactly as shown so that I can parse it without errors:
+Response format: {"Message":"Action completed successfully.","Category":"Contact","ResponseType":"Action","records":[...]}
 
-{
-  "salutation": "",
-  "firstName": "",
-  "middleName": "",
-  "lastName": "",
-  "name": "", (this is a combination of firstName, middleName and lastName)
-  "suffix": "",
-  "title": "",
-  "pronouns": "",
-  "birthDate": "",
-  "email": "",
-  "phone": "",
-  "mobile": "",
-  "otherPhone": "",
-  "fax": "",
-  "partnerId": "", (if there is something called partner, then put that in the partnerId field, else if you find something related to Partner, put that in the partnerId field. If you cannot find anything, leave it blank)
-  "department": "",
-  "description": "",
-  "status": "",
-  "contactNumber": "",
-  "assistant": "",
-  "assistantPhone": "",
-  "assistantEmail": "",
-  "mailingStreet": "",
-  "mailingStreet2": "",
-  "mailingCity": "",
-  "mailingStateProvince": "",
-  "mailingPostalCode": "",
-  "mailingCountry": "",
-  "dependents": ["partnerId"],
-  "validationError": ""
-}
+Return the response in compact single-line JSON without line breaks or unnecessary whitespace. If more input is needed, set ResponseType to "Information".
 
-**Mandatory fields**:
-- Last Name  
-- Email address  
-- Phone number  
-
-If any value is empty string or null, just exclude that from the final JSON.
-
-**Response format**:  
-Once the contact details are extracted, return a JSON response in the following format:
-
-{
-  "Message": "Action completed successfully.",
-  "Category": "Contact",
-  "ResponseType": "Action/Information",
-  "records": [
-    <array of contact objects>
-  ]
-}
-
-- If the data is successfully extracted, set `ResponseType` to "Action".  
-- If additional information is needed, set `ResponseType` to "Information".  
-- Ensure the JSON is properly formatted with no unclosed brackets, errors, or deviations from the specified structure. The output **must be parsable** without any issues or errors.  
-
-If the array is not in the correct format, **ask for clarification and guide the user on how to structure the data properly** to match the format I can process.
-Here is the data for you to process - 
-{promptData}
+Input data: {promptData}
 ', NOW(), 'Contacts', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL),
+('summarize_information', '
+You will receive entity details in JSON format. Summarize the content into clear, concise bullet points that highlight the most important and unique characteristics of the entity. This summary will be used to create a semantic embedding for similarity search. Do not include IDs, timestamps, or internal references.
+
+Return the response as JSON in the following format:
+
+{ "Message": "Response in bullet points" }
+
+Prompt from the user:
+{promptData}', NOW(), 'Summarize', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL);

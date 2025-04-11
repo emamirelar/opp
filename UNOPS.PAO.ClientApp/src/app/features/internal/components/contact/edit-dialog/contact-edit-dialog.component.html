@@ -12,8 +12,9 @@
 
         <div class="col-span-9 flex flex-col gap-2">
           <label for="partner">{{ 'label.partner.partner' | translate }}*</label>
-          <p-select formControlName="partner" [options]="allPartners()" optionLabel="name"
+          <p-select formControlName="partnerId" [options]="allPartners()" optionLabel="name"
                     [appendTo]="'body'"
+                    optionValue="id"
                     fluid="true" id="partner" ariaLabel="Select Partner" />
           @if( formGroup.get("partner")?.invalid && showValidationFailedError() ) {
             <p-message severity="error" variant="simple">Partner must be entered.</p-message>
