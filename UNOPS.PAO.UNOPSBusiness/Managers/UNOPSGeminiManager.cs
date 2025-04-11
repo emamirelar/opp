@@ -40,6 +40,7 @@ using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using Z.EntityFramework.Plus;
 using System.Text.Json;
+using UNOPS.PAO.Utilities.Helpers;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -73,13 +74,6 @@ public class UNOPSGeminiManager : IGeminiManager
         _aiService = new AiContextualService(configuration, _context, _credentials);
     }
 
-    // Map AiPrompt entity to AiPromptModel
-    private static AiPromptModel MapEntityToAiPromptModel(AiPrompt entity, IMapper mapper)
-    {
-        var result = mapper.Map<AiPrompt, AiPromptModel>(entity);
-        return result;
-    }
-
     // Map AiPromptModel to AiPrompt entity
     private AiPrompt MapModelToEntity(AiPromptModel model)
     {
@@ -88,12 +82,9 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Get prompt data by type
-    public IEnumerable<AiPromptModel> GetPromptData(string type)
+    public async Task<IEnumerable<AiPromptModel>> GetPromptData(string type)
     {
-        return _promptRepository
-            .GetAll()
-            .Where(x => x.Type == type)
-            .Select(x => MapEntityToAiPromptModel(x, _mapper));
+        return await _aiService.GetPromptData(type);
     }
 
     // Fetch detailed response from Gemini
@@ -112,23 +103,7 @@ public class UNOPSGeminiManager : IGeminiManager
     
     // Get details from Gemini response
     public JObject GetDetailsFromGeminiResponse(string modelResponse) {
-        JObject json = JObject.Parse(modelResponse);
-        var candidates = json["candidates"];
-        var parts = candidates[0]?["content"]["parts"];
-        var textJson = parts[0]["text"].ToString(); ;
-        textJson = textJson.Replace("```json", "").Replace("```", "").Trim();
-        var entityResponse = new JObject();
-
-        try
-        {
-            entityResponse = JObject.Parse(textJson); // Try parsing as JSON
-        }
-        catch (JsonReaderException)
-        {
-            entityResponse = new JObject { { "Message", textJson } }; // Wrap in JSON
-        }
-
-        return entityResponse;
+        return _aiService.GetDetailsFromGeminiResponse(modelResponse);
     }
 
     // Chat with Gemini
@@ -139,12 +114,12 @@ public class UNOPSGeminiManager : IGeminiManager
         string message = req.Message;
         string extractedText = req.ExtractedText ?? "";
         string finalPrompt = (string.IsNullOrEmpty(extractedText) ? message : extractedText);
-        var promptData = GetPromptData(promptType).FirstOrDefault();
+        var promptData = (await GetPromptData(promptType)).FirstOrDefault();
 
         if (promptData == null)
         {
             promptType = "general_information";
-            promptData = GetPromptData(promptType).FirstOrDefault();
+            promptData = (await GetPromptData(promptType)).FirstOrDefault();
         }
 
         if (chatHistoryList.Count == 0)
@@ -159,7 +134,7 @@ public class UNOPSGeminiManager : IGeminiManager
             parts = new[] { new { text = finalPrompt } }
         });
 
-        string response = await CallGeminiApi(chatHistoryList, promptData);
+        string response = await _aiService.CallGeminiApi(chatHistoryList, promptData);
         var parsedResponse = GetDetailsFromGeminiResponse(response);
         var entity = parsedResponse["Entity"]?.ToString() ?? parsedResponse["Category"]?.ToString();
         var intent = parsedResponse["Intent"]?.ToString() ?? parsedResponse["ResponseType"]?.ToString();
@@ -211,27 +186,10 @@ public class UNOPSGeminiManager : IGeminiManager
         return finalResponse;
     }
 
-    // Common function to handle Gemini API calls
-    private async Task<string> CallGeminiApi(dynamic prompt, AiPromptModel promptData)
-    {
-        string accessToken = await GetAccessTokenAsync();
-        var requestBody = await GetRequestBody(prompt, promptData);
-        string url = await GetURL(promptData);
-        string jsonRequest = JsonConvert.SerializeObject(requestBody);
-        return await CallGeminiApiAsync(url, jsonRequest, accessToken);
-    }
-
     // Updated FetchResultFromGemini to use CallGeminiApi
     public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
     {
-        string promptTemplate = promptData.Prompt;
-        string finalPrompt = promptTemplate.Replace("{promptData}", relatedJsonData);
-        var promptList = new
-        {
-            role = "user",
-            parts = new[] { new { text = finalPrompt } }
-        };
-        return await CallGeminiApi(promptList, promptData);
+        return await _aiService.FetchResultFromGemini((AiPromptModel)promptData, relatedJsonData);
     }
 
     // Updated callGemini to use CallGeminiApi
@@ -242,43 +200,8 @@ public class UNOPSGeminiManager : IGeminiManager
             role = "user",
             parts = new[] { new { text = prompt } }
         };
-        return await CallGeminiApi(promptList, promptData);
+        return await _aiService.CallGeminiApi(promptList, promptData);
     }
-
-    // Get request body for Gemini API
-    public async Task<dynamic> GetRequestBody(dynamic prompt, AiPromptModel promptData)
-    {
-        dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
-        dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
-        dynamic toolsConfig = string.IsNullOrEmpty(promptData.ToolsConfig)
-                        ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
-        dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
-                        ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
-
-        if (prompt is string)
-        {
-            contentConfig.parts[0].text = prompt.ToString();
-        } else
-        {
-            contentConfig = prompt;
-        }
-
-            var requestBody = new
-            {
-                contents = contentConfig,
-                generationConfig = generationConfig,
-                tools = new[] { toolsConfig },
-                safetySettings = new[] { safetySettings }
-            };
-
-        return requestBody;
-    }
-
-    // Get URL for Gemini API
-    private async Task<string> GetURL(AiPromptModel promptData)
-    {
-        return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{promptData.Project}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
-    } 
 
     // Map GeminiProcessDataRequest to AiPrompt entity
     private AiPrompt MapModelToEntity(GeminiProcessDataRequest model)
@@ -290,44 +213,6 @@ public class UNOPSGeminiManager : IGeminiManager
     AiPrompt IGeminiManager.MapModelToEntity(GeminiProcessDataRequest req)
     {
         return MapModelToEntity(req);
-    }
-
-    // Get access token for Gemini API
-    private static async Task<string> GetAccessTokenAsync()
-    {
-        GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
-        credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
-        return await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
-    }
-
-    // Call Gemini API with the request
-    private static async Task<string> CallGeminiApiAsync(string url, string jsonRequest, string accessToken, int maxRetries = 5)
-    {
-        HttpResponseMessage response = new HttpResponseMessage();
-        for (int attempt = 0; attempt < maxRetries; attempt++)
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-                var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
-
-                response = await client.PostAsync(url, content);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    return await response.Content.ReadAsStringAsync();
-                }
-                else
-                {
-                    //retry the prompt after a delay incase of an error response
-                    TimeSpan waitTime = TimeSpan.FromSeconds(Math.Pow(2, attempt)) + TimeSpan.FromMilliseconds(new Random().Next(0, 1000));  //jitter up to 1 second.
-                    Console.WriteLine($"Rate limit exceeded. Retrying in {waitTime.TotalSeconds:F2} seconds (Attempt {attempt + 1}/{maxRetries})");
-                    await Task.Delay(waitTime);
-                }
-            }
-        }
-        //respond with the most recent error after max retries are reached
-        return await response.Content.ReadAsStringAsync();
     }
 
     // Get Google credentials from configuration
@@ -352,7 +237,7 @@ public class UNOPSGeminiManager : IGeminiManager
         AiPrompt promptModel = MapModelToEntity(req);
 
         // Call the GetPromptData method and get the first prompt
-        var promptData = GetPromptData(promptModel.Type).FirstOrDefault();
+        var promptData = (await GetPromptData(promptModel.Type)).FirstOrDefault();
 
         if (promptData == null)
         {
@@ -373,7 +258,7 @@ public class UNOPSGeminiManager : IGeminiManager
         string type = req?.Type;
 
         if (!string.IsNullOrEmpty(type)) {
-            var promptData = GetPromptData(type).FirstOrDefault();
+            var promptData = (await GetPromptData(type)).FirstOrDefault();
 
             if (promptData == null)
             {
@@ -590,7 +475,7 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req)
     {
-        var promptData = GetPromptData(req.Type).FirstOrDefault();
+        var promptData = (await GetPromptData(req.Type)).FirstOrDefault();
         if (promptData == null)
         {
             return null;
@@ -608,7 +493,7 @@ public class UNOPSGeminiManager : IGeminiManager
 
         // TODO
 
-        for (int i = 0; i < fileDataArray.Count; i += batchSize)
+        for (int i = 1; i < fileDataArray.Count; i += batchSize)
         {
             var batch = new JArray
             {
@@ -627,7 +512,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 role = "user",
                 parts = new[] { new { text = finalPrompt } }
             };
-            var response = await CallGeminiApi(promptList, promptData);
+            var response = await _aiService.CallGeminiApi(promptList, promptData);
             var parsedResponse = GetDetailsFromGeminiResponse(response);
             message = parsedResponse["Message"]?.ToString();
             var records = parsedResponse["records"];
@@ -801,97 +686,114 @@ public class UNOPSGeminiManager : IGeminiManager
         var type = request.Type;
         var camelCaseType = char.ToUpper(type[0]) + type.Substring(1).ToLower();
 
-        // Get the assembly where BulkUploadRequest is defined
         var assembly = typeof(UNOPSContact).Assembly;
-
-        // Resolve the model type dynamically
         var modelType = assembly.GetType($"UNOPS.PAO.UNOPSDomain.Entities.UNOPS{camelCaseType}", throwOnError: false, ignoreCase: true);
+
         if (modelType == null)
-        {
             throw new InvalidOperationException($"Unsupported type: {type}");
+
+        var recordsArray = request.Records.Select(record =>
+        {
+            if (record is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
+            {
+                var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonElement.GetRawText());
+                return JObject.FromObject(dictionary);
+            }
+            throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
+        }).ToList();
+
+        var convertedRecords = recordsArray.Select(r => r.ToObject(modelType)).Cast<object>().ToList();
+
+        // Create a typed array of the correct model type
+        var typedArray = Array.CreateInstance(modelType, convertedRecords.Count);
+
+        for (int i = 0; i < convertedRecords.Count; i++)
+        {
+            typedArray.SetValue(convertedRecords[i], i);
         }
 
-        var recordsArray = request.Records
-            .Select(record =>
-            {
-                if (record is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Object)
-                {
-                    // Convert JsonElement to a dictionary
-                    var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonElement.GetRawText());
-                    return JObject.FromObject(dictionary);
-                }
-                throw new InvalidOperationException("Unsupported record format. Expected JSON object.");
-            })
-            .ToList();
-
-        var convertedRecords = recordsArray
-            .Select(r => r.ToObject(modelType))
-            .Cast<object>() // Explicitly cast to object to match DbSet<T>.Add(T entity)
-            .ToList();
-
-        var tableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(request.Type);
-        tableName = tableName.Pluralize();
-
-        // Get the DbSet property for the specified table name
-        var dbSetProperty = _context.GetType()
-            .GetProperty(tableName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        var tableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(request.Type).Pluralize();
+        var dbSetProperty = _context.GetType().GetProperty(tableName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
         if (dbSetProperty == null)
-        {
             throw new InvalidOperationException($"Table '{tableName}' not found in the context.");
-        }
 
         var dbSet = dbSetProperty.GetValue(_context) as dynamic;
         if (dbSet == null)
-        {
             throw new InvalidOperationException($"Unable to retrieve DbSet for table '{tableName}'.");
-        }
 
+        // Add all at once using AddRange if available
+        var addRangeMethod = ((IEnumerable<MethodInfo>)dbSet.GetType().GetMethods())
+                                .FirstOrDefault(m => m.Name == "AddRange" && m.GetParameters().Length == 1);
+
+        addRangeMethod?.Invoke(dbSet, new[] { typedArray });
+
+        var successList = new List<object>();
         var errorMessages = new List<string>();
 
-        // Add all records to the DbSet using reflection
-        var addMethod = dbSet.GetType().GetMethod("Add");
-        foreach (var record in convertedRecords)
-        {
-            try
-            {
-                addMethod.Invoke(dbSet, new[] { record }); // Use reflection to invoke the Add method
-                
-            }
-            catch (Exception ex)
-            {
-                errorMessages.Add($"Error adding record: {JsonConvert.SerializeObject(record)} - {ex.Message}");
-            }
-        }
-
-        // Save all records in one operation
         try
         {
             await _context.SaveChangesAsync();
+
+            foreach (var record in convertedRecords)
+            {
+                try
+                {
+                    var idProperty = record.GetType()
+                                    .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                                    .FirstOrDefault();
+
+                    var idValue = record.GetType()
+                                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                .Where(p => p.Name == "Id" && p.PropertyType == typeof(int))
+                                .Select(p => (int?)p.GetValue(record))
+                                .FirstOrDefault(v => v.HasValue && v.Value != 0);
+
+                    if (idValue != null)
+                    {
+                        successList.Add(new { Id = idValue, Entity = record });
+                    }
+                    else
+                    {
+                        successList.Add(new { Id = "Unknown", Entity = record });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    errorMessages.Add($"Success record parsed but ID fetch failed: {ex.Message}");
+                }
+            }
         }
         catch (DbUpdateException dbEx)
         {
-            // Log detailed error information
             foreach (var entry in dbEx.Entries)
             {
-                Console.WriteLine($"Entity of type {entry.Entity.GetType().Name} in state {entry.State} caused the error.");
-                Console.WriteLine($"Entity data: {JsonConvert.SerializeObject(entry.Entity)}");
+                var entityJson = JsonConvert.SerializeObject(entry.Entity);
+                var errorMsg = dbEx.InnerException?.Message ?? dbEx.Message;
+                errorMessages.Add($"Error saving entity {entry.Entity.GetType().Name}: {entityJson} - {errorMsg}");
             }
 
-            if (dbEx.InnerException != null)
-            {
-                Console.WriteLine($"Inner Exception: {dbEx.InnerException.Message}");
-            }
-
-            throw new InvalidOperationException("An error occurred while saving changes to the database. See logs for details.", dbEx);
+            throw new InvalidOperationException("One or more records failed to save. See details in error messages.", dbEx);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"General Exception: {ex.Message}");
-            throw new InvalidOperationException("An unexpected error occurred while saving changes to the database.", ex);
+            throw new InvalidOperationException("Unexpected error during SaveChangesAsync: " + ex.Message, ex);
         }
 
-        // Return consolidated error messages
-        return errorMessages.Count > 0 ? string.Join("\n", errorMessages) : "All records processed successfully.";
+        var result = new
+        {
+            SuccessCount = successList.Count,
+            SuccessRecords = successList.Select(s => new { Id = ((dynamic)s).Id }),
+            ErrorCount = errorMessages.Count,
+            Errors = errorMessages
+        };
+
+        return JsonConvert.SerializeObject(result, Formatting.Indented);
+    }
+
+
+    IEnumerable<AiPromptModel> IGeminiManager.GetPromptData(string type)
+    {
+        throw new NotImplementedException();
     }
 }

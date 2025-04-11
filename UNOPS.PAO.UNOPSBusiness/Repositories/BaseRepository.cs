@@ -26,13 +26,15 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using Humanizer;
+using Newtonsoft.Json;
 
 public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity<int>
 {
     protected readonly UNOPSAppDbContext _dataDbContext;
     protected DbSet<TEntity> _dbSet;
     protected readonly IConfiguration _configuration;
-    protected readonly PubSubPublisher _pubSubPublisher;
+
+    protected readonly AiContextualService _aiService;
 
     private IQueryable<TEntity> ApplyIncludes(IQueryable<TEntity> set, string[] includes)
     {
@@ -44,7 +46,7 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         _dataDbContext = context;
         _dbSet = context.Set<TEntity>();
         _configuration = configuration;
-        _pubSubPublisher = new PubSubPublisher(configuration);
+        _aiService = new AiContextualService(configuration, context, null);
     }
 
     public async Task AddAsync(TEntity entity)
@@ -109,50 +111,9 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         return await query.ToListAsync();
     }
 
-    private static string ToConcatenatedString(object model)
-    {
-        if (model == null) return string.Empty;
-
-        var properties = (model).GetType().GetProperties();
-        string result = "";
-
-        foreach (var property in properties)
-        {
-            if (property.Name == "Id" && (int)property.GetValue(model, null) == 0)
-            {
-                continue;
-            }
-            var value = property.GetValue(model, null);
-            result += $"{property.Name}: {value}, ";
-        }
-
-        // Remove trailing comma and space
-        return result.TrimEnd(',', ' ');
-    }
-
     public async Task PublishMessageToPubSub(TEntity entity)
     {
-        string result = ToConcatenatedString(entity);
         var entityName = typeof(TEntity).Name.Replace("UNOPS", "").Pluralize();
-        var entityId = entity.Id;
-        var idProperty = (entity).GetType().GetProperties()
-                        .Where(property => (property.Name == "Id" && (int)property.GetValue(entity, null) != 0)).ToList()[0];
-        if (idProperty != null)
-        {
-            entityId = (int)idProperty.GetValue(entity, null);
-        }
-
-        // Creating the PubSub message
-        var message = new MyPubSubMessage
-        {
-            EntityName = entityName,
-            EntityId = entityId,
-            Content = result // Content as concatenated string of entity properties
-        };
-
-        // Publishing the message
-        await _pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
-        //await Task.Delay(1000); // Wait some time before publishing the next message
-
+        _aiService.PublishMessageToPubSub(entity, entityName, entity.Id);
     }
 }

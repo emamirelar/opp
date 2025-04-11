@@ -68,8 +68,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         INTO entityId
                         FROM public.""EntityEmbeddings""
                         WHERE ""EntityName"" = entityName
-                        AND ""FullEmbedding"" <-> embedding::vector(768) < 0.5
-                        ORDER BY (""FullEmbedding"" <-> embedding::vector(768))  -- <=> is the cosine distance operator in pgvector
+                        --AND ""FullEmbedding"" <-> embedding::vector(768) < 0.5
+                        ORDER BY (""FullEmbedding"" <=> embedding::vector(768))  -- <=> is the cosine distance operator in pgvector
                         LIMIT 1;
                         RETURN entityId;
                     END
