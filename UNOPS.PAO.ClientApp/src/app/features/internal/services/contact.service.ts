@@ -25,7 +25,7 @@ export class ContactService {
     this.isLoading.set(true);
     this.http.get(this.apiUrl).subscribe({
       next: (data: any) => {
-        this.contactData.set(data);
+        this.contactData.set(data.records);
         this.isLoading.set(false);
       },
       error: (err) => {
