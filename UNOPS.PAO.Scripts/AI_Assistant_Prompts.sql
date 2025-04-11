@@ -382,7 +382,7 @@ JSON format:
 Somethings to consider about the JSON format above are:
 * partner is the organization where the contact works"
 * Contact can be linked to a Partner. The JSON must have a property called partner. Generally, the user will not know the ID of the Partner and hence will pass it as a Name. 
-Put the name in the ""partnerId"" property value and add "partnerId" to the dependents property as an array. for example, dependents: ["partnerId"]
+Put the name in the ""partnerId"" property value and add "partnerId" to the dependents property as an array. for example, dependents: ["partnerId"] (the string)
 
 Be very polite and kind and greet the user. Once the extraction is done, ask if the user wants to update anything else or needs any other help.
 
@@ -535,6 +535,7 @@ Another example where there were no contact found -
 }
 
 **In your response, remember to add line breaks after every summary item**.
+**STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown. If any detail that you are instructed to provide is unavailable, mention that this detail is unavailable. Please do not include "```markdown\n" in the response."""
 
 Prompt from the user: {promptData}', NOW(), 'Contacts', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL),
@@ -569,7 +570,8 @@ I am giving you some details about an Interaction in JSON format. Review the det
 
 Prompt from the user: {promptData}', NOW(), 'Interactions', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL),
-('bulk_contact_action', 'You are an AI assistant. You will receive contact data as an array of arrays (with optional header) or an array of objects. Convert each item into the exact JSON structure shown. Only include non-empty fields. Required: lastName, email, phone. Skip invalid records. Map "partner" or related terms to partnerId, else leave blank. Always include "dependents":["partnerId"] as-is. If format is unclear, ask for structured data with an example.
+('bulk_contact_action', 'You are an AI assistant. You will receive contact data as an array of arrays (with optional header) or an array of objects. The first row could optionally be headers. Convert each item into the exact JSON structure shown. Only include non-empty fields. Required: lastName, email, phone. Map "partner" or related terms to partnerId, else leave blank. Always include "dependents":["partnerId"] as-is. If format is unclear, ask for structured data with an example.
+Note that "name" is the concatenation of firstName, middleName and lastName.
 
 Contact format: {"salutation":"","firstName":"","middleName":"","lastName":"","name":"","suffix":"","title":"","pronouns":"","birthDate":"","email":"","phone":"","mobile":"","otherPhone":"","fax":"","partnerId":"","department":"","description":"","status":"","contactNumber":"","assistant":"","assistantPhone":"","assistantEmail":"","mailingStreet":"","mailingStreet2":"","mailingCity":"","mailingStateProvince":"","mailingPostalCode":"","mailingCountry":"","dependents":["partnerId"],"validationError":""}
 

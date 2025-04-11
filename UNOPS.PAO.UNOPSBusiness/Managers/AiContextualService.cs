@@ -22,6 +22,13 @@ using Humanizer;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Sheets.v4;
+using UNOPS.PAO.Models;
+using AutoMapper;
+using System.Text;
+using System.Dynamic;
+using Newtonsoft.Json.Linq;
+using UNOPS.PAO.UNOPSBusiness.Models;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -33,8 +40,11 @@ public class AiContextualService
     public readonly UNOPSAppDbContext _context;
     private readonly DataRepository<AiScreenMapping> _screenMappingRepository;
     private readonly string _connectionString;
+    private readonly DataRepository<AiPrompt> _promptRepository;
 
     private readonly GoogleCredential _credentials;
+
+    protected readonly PubSubPublisher _pubSubPublisher;
 
     public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials)
     {
@@ -48,6 +58,8 @@ public class AiContextualService
         _context = context;
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
         _credentials = credentials;
+        _promptRepository = new DataRepository<AiPrompt>(context);
+        _pubSubPublisher = new PubSubPublisher(configuration);
     }
 
     public async Task<string> CreateEmbeddingForText(string text)
@@ -341,32 +353,170 @@ public class AiContextualService
 
         return data;
     }
-   /* public async Task<List<object>> GetAllEntityDataAsync(string entityName)
+
+    // Map AiPrompt entity to AiPromptModel
+    private static AiPromptModel MapEntityToAiPromptModel(AiPrompt entity, IMapper mapper)
     {
-        var dbSetProperty = _context.GetType()
-            .GetProperties()
-            .FirstOrDefault(p =>
-                p.PropertyType.IsGenericType &&
-                p.PropertyType.GetGenericTypeDefinition() == typeof(DbSet<>) &&
-                string.Equals(p.Name, entityName, StringComparison.OrdinalIgnoreCase));
+        var result = mapper.Map<AiPrompt, AiPromptModel>(entity);
+        return result;
+    }
 
-        if (dbSetProperty == null)
-            throw new Exception($"No DbSet found for entity name '{entityName}'");
+    // Get details from Gemini response
+    public JObject GetDetailsFromGeminiResponse(string modelResponse) {
+        JObject json = JObject.Parse(modelResponse);
+        var candidates = json["candidates"];
+        var parts = candidates[0]?["content"]["parts"];
+        var textJson = parts[0]["text"].ToString(); ;
+        textJson = textJson.Replace("```json", "").Replace("```", "").Trim();
+        var entityResponse = new JObject();
 
-        var dbSet = dbSetProperty.GetValue(_context);
-        var toListAsyncMethod = typeof(EntityFrameworkQueryableExtensions)
-            .GetMethod("ToListAsync", new[] { typeof(IQueryable<>), typeof(CancellationToken) })
-            ?.MakeGenericMethod(dbSetProperty.PropertyType.GenericTypeArguments[0]);
+        try
+        {
+            entityResponse = JObject.Parse(textJson); // Try parsing as JSON
+        }
+        catch (JsonReaderException)
+        {
+            entityResponse = new JObject { { "Message", textJson } }; // Wrap in JSON
+        }
 
-        if (toListAsyncMethod == null)
-            throw new Exception("Couldn't find ToListAsync method.");
+        return entityResponse;
+    }
 
-        var result = await (Task)toListAsyncMethod.Invoke(
-            null,
-            new object[] { dbSet, CancellationToken.None });
+    // Get prompt data by type
+    public async Task<IEnumerable<AiPromptModel>> GetPromptData(string type)
+    {
+        var prompts = await _promptRepository
+            .GetAll()
+            .Where(x => x.Type == type)
+            .ToListAsync();
 
-        return ((IEnumerable<object>)((dynamic)result)).ToList();
-    }*/
+        return prompts.Select(entity => new AiPromptModel
+        {
+            Type = entity.Type,
+            Prompt = entity.Prompt ?? string.Empty, // Ensure null safety
+            ContentConfig = entity.ContentConfig,
+            GenerationConfig = entity.GenerationConfig,
+            ToolsConfig = entity.ToolsConfig,
+            SafetySettings = entity.SafetySettings,
+            Location = entity.Location,
+            Project = entity.Project,
+            Model = entity.Model
+        }).ToList();
+    }
 
+    public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
+    {
+        string promptTemplate = promptData.Prompt;
+        string finalPrompt = promptTemplate.Replace("{promptData}", relatedJsonData);
+        var promptList = new
+        {
+            role = "user",
+            parts = new[] { new { text = finalPrompt } }
+        };
+        return await CallGeminiApi(promptList, promptData);
+    }
 
+    // Common function to handle Gemini API calls
+    public async Task<string> CallGeminiApi(dynamic prompt, AiPromptModel promptData)
+    {
+        string accessToken = await GetAccessTokenAsync();
+        var requestBody = await GetRequestBody(prompt, promptData);
+        string url = await GetURL(promptData);
+        string jsonRequest = JsonConvert.SerializeObject(requestBody);
+        return await CallGeminiApiAsync(url, jsonRequest, accessToken);
+    }
+
+    // Call Gemini API with the request
+    private static async Task<string> CallGeminiApiAsync(string url, string jsonRequest, string accessToken, int maxRetries = 5)
+    {
+        HttpResponseMessage response = new HttpResponseMessage();
+        for (int attempt = 0; attempt < maxRetries; attempt++)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+                var content = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+                response = await client.PostAsync(url, content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    //retry the prompt after a delay incase of an error response
+                    TimeSpan waitTime = TimeSpan.FromSeconds(Math.Pow(2, attempt)) + TimeSpan.FromMilliseconds(new Random().Next(0, 1000));  //jitter up to 1 second.
+                    Console.WriteLine($"Rate limit exceeded. Retrying in {waitTime.TotalSeconds:F2} seconds (Attempt {attempt + 1}/{maxRetries})");
+                    await Task.Delay(waitTime);
+                }
+            }
+        }
+        //respond with the most recent error after max retries are reached
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    // Get access token for Gemini API
+    private static async Task<string> GetAccessTokenAsync()
+    {
+        GoogleCredential credential = await GoogleCredential.GetApplicationDefaultAsync();
+        credential = credential.CreateScoped("https://www.googleapis.com/auth/cloud-platform");
+        return await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
+    }
+
+    // Get URL for Gemini API
+    private async Task<string> GetURL(AiPromptModel promptData)
+    {
+        return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{promptData.Project}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
+    } 
+
+    public async Task PublishMessageToPubSub(object entity, string entityName, int entityId)
+    {
+        string entityString = JsonConvert.SerializeObject(entity);
+        var promptData = (await GetPromptData("summarize_information")).FirstOrDefault();
+        string response = await FetchResultFromGemini((AiPromptModel)promptData, entityString);
+        var responseMessage = GetDetailsFromGeminiResponse(response)["Message"]?.ToString() ?? string.Empty;
+
+        // Creating the PubSub message
+        var message = new MyPubSubMessage
+        {
+            EntityName = entityName,
+            EntityId = entityId,
+            Content = responseMessage // Summarized message from Gemini
+        };
+
+        // Publishing the message
+        await _pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
+        //await Task.Delay(1000); // Wait some time before publishing the next message
+
+    }
+
+    // Get request body for Gemini API
+    public async Task<dynamic> GetRequestBody(dynamic prompt, AiPromptModel promptData)
+    {
+        dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
+        dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
+        dynamic toolsConfig = string.IsNullOrEmpty(promptData.ToolsConfig)
+                        ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
+        dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
+                        ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
+
+        if (prompt is string)
+        {
+            contentConfig.parts[0].text = prompt.ToString();
+        } else
+        {
+            contentConfig = prompt;
+        }
+
+            var requestBody = new
+            {
+                contents = contentConfig,
+                generationConfig = generationConfig,
+                tools = new[] { toolsConfig },
+                safetySettings = new[] { safetySettings }
+            };
+
+        return requestBody;
+    }
 }
