@@ -1,9 +1,7 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject} from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
-import {Dialog} from 'primeng/dialog';
-import {Calendar} from 'primeng/calendar';
 import {Button} from 'primeng/button';
 import {Textarea} from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
@@ -17,14 +15,16 @@ import { ConfirmDialog } from 'primeng/confirmdialog';
 import {Contact} from '../../../models/contact.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import {Partner} from '../../../models/partner.model';
+import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { CalendarModule } from 'primeng/calendar';
+import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
 
 @Component({
   selector: 'app-interaction-modal',
   templateUrl: './interaction-modal.component.html',
   imports: [
-    Dialog,
     ReactiveFormsModule,
-    Calendar,
+    CalendarModule,
     Button,
     Textarea,
     SelectModule,
@@ -40,14 +40,13 @@ import {Partner} from '../../../models/partner.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InteractionModalComponent {
-  @Input() record?: Interaction;
-  @Output() closeModal = new EventEmitter<void>();
-  @Output() deleted = new EventEmitter<void>();
-
+  private dialogRef = inject(DynamicDialogRef);
+  private dialogConfig = inject(DynamicDialogConfig);
+  
+  record?: Interaction;
   isSaving = signal(false);
 
   formGroup: FormGroup;
-  display = true;
 
   typeOptions = Object.values(InteractionType).map(type => ({
     label: INTERACTION_TYPE_TRANSLATION_KEYS[type],
@@ -73,9 +72,15 @@ export class InteractionModalComponent {
       contactId: ['', Validators.required]
     });
     this.contactService.getAllContacts();
+    
+    // Set up the footer template
+    this.dialogConfig.templates = {
+      footer: InteractionModalFooterComponent
+    };
   }
 
   ngOnInit() {
+    this.record = this.dialogConfig.data?.record;
     if (this.record) {
       this.formGroup.patchValue({
         id: this.record.id,
@@ -85,12 +90,12 @@ export class InteractionModalComponent {
         contactId: this.record.contactId
       });
     }
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    this.display = true;
-    if (changes['record'] && this.record && Object.keys(this.record).length > 0) {
-      this.formGroup.patchValue(this.record!);
+    
+    // Expose the handleSave function to be called from footer
+    if (this.dialogConfig.data) {
+      this.dialogConfig.data.handleSave = this.onSubmit.bind(this);
+      this.dialogConfig.data.handleDelete = this.deleteInteraction.bind(this);
+      this.dialogConfig.data.isSaving = this.isSaving;
     }
   }
 
@@ -125,26 +130,27 @@ export class InteractionModalComponent {
         this.interactionService.update(formValue).subscribe({
           next: () => {
             this.showSuccessMessage('message.interactionUpdated');
-            this.hide();
+            this.dialogRef.close('saved');
           },
-          error: (error) => this.showErrorMessage('message.errorUpdatingInteraction', error)
+          error: (error) => {
+            this.showErrorMessage('message.errorUpdatingInteraction', error);
+            this.isSaving.set(false);
+          }
         });
       } else {
         // Create new interaction
         this.interactionService.create(formValue).subscribe({
-          next: () => {
+          next: (data) => {
             this.showSuccessMessage('message.interactionCreated');
-            this.hide();
+            this.dialogRef.close(data);
           },
-          error: (error) => this.showErrorMessage('message.errorCreatingInteraction', error)
+          error: (error) => {
+            this.showErrorMessage('message.errorCreatingInteraction', error);
+            this.isSaving.set(false);
+          }
         });
       }
     }
-  }
-
-  hide(): void {
-    this.display = false;
-    this.closeModal.emit();
   }
 
   deleteInteraction(): void {
@@ -158,8 +164,7 @@ export class InteractionModalComponent {
           this.interactionService.delete(interactionId).subscribe({
             next: () => {
               this.showSuccessMessage('message.interactionDeleted');
-              this.hide();
-              this.deleted.emit();
+              this.dialogRef.close('deleted');
             },
             error: (error) => this.showErrorMessage('message.errorDeletingInteraction', error)
           });

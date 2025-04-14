@@ -115,13 +115,9 @@ export class ContactListComponent implements OnInit {
       width: '40vw',
       breakpoints: { '960px': '95vw' },
       closable: true,
-      templates: {
-        footer: ContactEditDialogFooterComponent
-      },
       data: {
         mode: contactData.id ? 'edit' : 'new',
         record: contactData,
-        requestingSaveSignal : signal<boolean>(false)
       }
     });
 

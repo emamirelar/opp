@@ -1,0 +1,98 @@
+<div class="flex flex-col h-full gap-4">
+  <!-- Search and filter section -->
+  <div class="flex flex-col md:flex-row gap-4 items-center">
+<!--      <p-iconfield class="w-full">-->
+<!--        <p-inputicon styleClass="pi pi-search" />-->
+<!--        <input-->
+<!--          type="text"-->
+<!--          pInputText-->
+<!--          class="w-full"-->
+<!--          placeholder="Search interactions..."-->
+<!--          [(ngModel)]="searchTextModel"-->
+<!--          (input)="onSearchTextChange($event)">-->
+<!--      </p-iconfield>-->
+
+      <p-dropdown
+        class="min-w-52"
+        [options]="typeFilterOptions"
+        [(ngModel)]="selectedTypeFilter"
+        placeholder="Filter by type"
+        [showClear]="true"
+        (onChange)="onFilterChange()">
+      </p-dropdown>
+
+      <!-- Date range filter -->
+      <p-datepicker
+        [(ngModel)]="dateRange"
+        selectionMode="range"
+        [readonlyInput]="true"
+        placeholder="Select date range"
+        [style]="{width: '220px'}"
+        [appendTo]="'body'"
+        (onSelect)="onFilterChange()"
+        [iconDisplay]="'input'" [showIcon]="true" inputId="icondisplay"
+        (onClear)="clearDateFilter()">
+      </p-datepicker>
+
+      <!-- Clear all filters button -->
+      <p-button
+        type="button"
+        icon="pi pi-filter-slash"
+        text rounded
+        pTooltip="Clear all filters"
+        tooltipPosition="top"
+        (click)="clearAllFilters()">
+      </p-button>
+  </div>
+
+  <!-- Grouped interactions with infinite scroll -->
+  <div class="flex-grow overflow-y-auto" #scrollContainer (scroll)="onScroll($event)">
+      @for (group of groupedInteractions; track group.month + group.year) {
+        <div class="border border-gray-200 mb-3">
+          <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg overflow-hidden">
+            <div class="flex items-center gap-2">
+              <span class="font-semibold">{{group.month}} {{group.year}}</span>
+            </div>
+            @if (group.month === getCurrentMonth() && group.year === getCurrentYear()) {
+              <div class="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs">
+                This Month
+              </div>
+            } @else if (isPreviousMonth(group.month, group.year)) {
+              <div class="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-xs">
+                Last Month
+              </div>
+            } @else if (isOlderMonth(group.month, group.year)) {
+              <div class="bg-gray-100 text-gray-800 px-2 py-1 rounded-md text-xs">
+                {{getMonthsAgo(group.month, group.year)}} Months Ago
+              </div>
+            }
+          </div>
+          <div class="py-2">
+            @for (interaction of group.interactions; track interaction.id) {
+              <div class="border-b border-gray-100 last:border-b-0">
+                <app-contact-view-interactions-item
+                  [interaction]="interaction"
+                  (itemClick)="openInteractionModal($event)">
+                </app-contact-view-interactions-item>
+              </div>
+            } @empty {
+              <div class="text-center py-4">No interactions found</div>
+            }
+          </div>
+        </div>
+      } @empty {
+        @if (!isLoading()) {
+          <div class="flex flex-col items-center justify-center h-64">
+            <i class="pi pi-inbox text-5xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500 text-xl">No interactions found</p>
+            <p class="text-gray-400">Try adjusting your search or filters</p>
+          </div>
+        }
+      }
+      @if (isLoading()) {
+        <div class="flex justify-center py-4 h-full items-center">
+          <p-progressSpinner strokeWidth="4" [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
+        </div>
+      }
+  </div>
+</div>

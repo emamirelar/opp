@@ -20,10 +20,3 @@
     </ng-template>
   </app-listview>
 </div>
-
-<app-interaction-modal
-  *ngIf="displayModal()"
-  [record]="selectedInteraction()"
-  (closeModal)="onModalClose()"
-  (deleted)="onInteractionDeleted()"
-></app-interaction-modal>

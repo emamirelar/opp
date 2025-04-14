@@ -2,12 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Specifications.InteractionSpecifications;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
+
     [Route("/")]
     [ApiController]
     [Authorize]
@@ -42,9 +45,16 @@ namespace UNOPS.PAO.Presentation.Controllers
 
         [HttpGet(APIDictionary.Interaction)]
         // TODO add permissions
-        public ActionResult GetAll([FromQuery] PaginationRequest parameters)
+        public ActionResult GetAll([FromQuery] InteractionFilterRequest request)
         {
-            return Ok(manager.GetInteractions(currentUserId, parameters));
+            var specification = new InteractionCompositeSpecification(
+                contactId: request.ContactId,
+                type: request.Type,
+                fromDate: request.FromDate,
+                toDate: request.ToDate,
+                searchText: request.SearchText);
+            
+            return Ok(manager.GetInteractionsWithSpecification(currentUserId, specification, request));
         }
 
         [HttpGet(APIDictionary.Interaction + "/{id}")]
