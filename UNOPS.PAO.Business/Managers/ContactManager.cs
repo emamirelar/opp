@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.Domain.Infrastructure;
+
 namespace UNOPS.PAO.Business.Managers;
 
 using System;
@@ -159,5 +162,10 @@ public class ContactManager : IContactManager
         //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
 
         return result;
+    }
+
+    public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
+    {
+        return null;
     }
 }

@@ -42,7 +42,8 @@
     },
     "links": "Links",
     "editLink": "Edit Link",
-    "addLink": "Add Link"
+    "addLink": "Add Link",
+    "editPicture": "Edit Picture"
   },
   "button": {
     "back": "Back",
@@ -69,7 +70,8 @@
     "viewContacts": "View Contacts",
     "new": "New",
     "uploadImage": "Upload Image",
-    "seeMore": "See More"
+    "seeMore": "See More",
+    "chooseImage": "Choose Image"
   },
   "label": {
     "actions": "Actions",
@@ -201,6 +203,11 @@
     "link": {
       "url": "URL",
       "name": "Name"
+    },
+    "pictureEditor": {
+      "dropImageHere": "Drop an image here or use the button below",
+      "croppedImage": "Cropped image",
+      "uploadProgress": "Progress: {{progress}}%"
     }
   },
   "message": {
@@ -213,7 +220,9 @@
     "interactionDeleted": "Interaction successfully deleted",
     "errorDeletingInteraction": "Error while deleting interaction",
     "dropUrlToAddLink": "Drop URL or file to add link",
-    "dropGoogleSheetsLink": "Drop a Google Sheets link"
+    "dropGoogleSheetsLink": "Drop a Google Sheets link",
+    "failedToLoadImage": "Failed to load image",
+    "failedToUploadImage": "Failed to upload image"
   },
   "label.interaction.contact": "Contact",
   "errors": {

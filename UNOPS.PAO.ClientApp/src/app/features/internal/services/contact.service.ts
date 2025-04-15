@@ -21,6 +21,10 @@ export class ContactService {
     return this.apiUrl
   }
 
+  getUploadProfilePictureUrl(id: string) {
+    return `${this.apiUrl}/${id}/profile-picture`;
+  }
+
   getAllContacts() {
     this.isLoading.set(true);
     this.http.get(this.apiUrl).subscribe({

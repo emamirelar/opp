@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace UNOPS.PAO.Presentation.Controllers;
 
 using System.Threading.Tasks;
@@ -112,5 +114,30 @@ public class ContactController : ControllerBase
             CanCreate = canCreateResult.Succeeded,
             CanDelete = canDeleteResult.Succeeded
         });
+    }
+
+    [HttpPost(APIDictionary.Contact + "/{id}/profile-picture")]
+    public async Task<IActionResult> UploadProfilePicture(int id, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("No file was uploaded");
+        }
+
+        // Check file size (1MB max)
+        if (file.Length > 1024 * 1024)
+        {
+            return BadRequest("File size exceeds maximum limit of 1MB");
+        }
+
+        // Validate file type
+        var validImageTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+        if (!validImageTypes.Contains(file.ContentType))
+        {
+            return BadRequest("Invalid file type. Only JPEG, PNG, and WEBP files are allowed.");
+        }
+
+        var result = await manager.UpdateContactProfilePictureAsync(id, file);
+        return Ok(new { imageUrl = result });
     }
 }

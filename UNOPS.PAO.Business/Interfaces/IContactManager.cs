@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace UNOPS.PAO.Business.Interfaces;
 
 using System;
@@ -26,4 +28,6 @@ public interface IContactManager
 
     IEnumerable<ContactModel> GetPartnerContacts(int partnerId);
     Task<ContactModel?> GetContactAsync(int id);
+    
+    Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file);
 }

@@ -12,6 +12,7 @@ import { ParentEntityType } from '../../../overrides/interfaces/types';
 import { DocumentLinkModel } from '../../../overrides/interfaces/types';
 import { DocumentComponent } from '../../../../../common/reusables/components/document/document.component';
 import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
+import { PictureComponent } from "../../../../../common/reusables/components/picture/picture.component";
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -39,7 +40,6 @@ import { EntityType } from '../../../../../common/models/link.model';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
-import { Avatar } from 'primeng/avatar';
 
 @Component({
   selector: 'app-partner-view',
@@ -64,7 +64,7 @@ import { Avatar } from 'primeng/avatar';
     PartnerContactsComponent,
     MarkdownPipe,
     LinkListComponent,
-    Avatar
+    PictureComponent
   ],
   templateUrl: './partner-view.component.html',
   styleUrl: './partner-view.component.scss',
@@ -364,5 +364,9 @@ export class PartnerViewComponent implements OnInit {
         this._loadRecordDetails();
       }
     });
+  }
+
+  getUploadLogoUrl() {
+    return this.partnerService.getUploadLogoUrl(this.recordId);
   }
 }

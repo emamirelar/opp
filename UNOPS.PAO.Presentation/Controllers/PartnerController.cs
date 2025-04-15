@@ -1,3 +1,5 @@
+using UNOPS.PAO.Domain.Infrastructure;
+
 namespace UNOPS.PAO.Presentation.Controllers;
 
 using System.Threading.Tasks;
@@ -8,6 +10,7 @@ using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
+using Microsoft.AspNetCore.Http;
 
 [Route("/")]
 [ApiController]
@@ -105,5 +108,41 @@ public class PartnerController : ControllerBase
             CanCreate = canCreateResult.Succeeded,
             CanDelete = canDeleteResult.Succeeded
         });
+    }
+
+    [HttpPost(APIDictionary.Partner + "/{id}/logo")]
+    public async Task<IActionResult> UploadLogo(int id, IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("No file was uploaded");
+        }
+
+        // Check file size (1MB max)
+        if (file.Length > 1024 * 1024)
+        {
+            return BadRequest("File size exceeds maximum limit of 1MB");
+        }
+
+        // Validate file type
+        var validImageTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+        if (!validImageTypes.Contains(file.ContentType))
+        {
+            return BadRequest("Invalid file type. Only JPEG, PNG, and WEBP files are allowed.");
+        }
+
+        try 
+        {
+            var result = await manager.UpdatePartnerLogoAsync(id, file);
+            return Ok(new { imageUrl = result });
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch
+        {
+            return StatusCode(500, "An error occurred while processing your request");
+        }
     }
 }
