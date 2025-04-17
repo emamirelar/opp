@@ -149,6 +149,10 @@
       >
       </p-panel>
 
+      <app-contact-view-interactions
+        [contactId]="recordId"
+      />
+
       <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
         <app-document #appDocument
                       [entityId]="recordId"

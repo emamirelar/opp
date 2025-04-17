@@ -1,0 +1,26 @@
+<div class="flex items-start p-3 cursor-pointer hover:bg-gray-50 rounded-lg" (click)="onClick()">
+  <div class="flex-shrink-0 mr-3">
+    <span [ngClass]="[getTypeStyle(interaction.type).bgColor, getTypeStyle(interaction.type).textColor]"
+          class="p-2 rounded-lg flex items-center justify-center">
+      <i [class]="getTypeStyle(interaction.type).icon"></i>
+    </span>
+  </div>
+  <div class="flex-grow">
+    <div class="flex items-center gap-1 text-primary hover:underline">
+      <span>{{interaction.description}}</span>
+    </div>
+    <div class="flex items-center gap-1 text-sm mt-1">
+      <span class="text-primary hover:underline">{{getSenderName(interaction)}}</span>
+      @if (interaction.type === 'Email') {
+        <span>sent an email to</span>
+      }
+      <span class="text-primary hover:underline">{{getRecipientName(interaction)}}</span>
+      @if (hasMultipleRecipients(interaction)) {
+        <span>and {{getRemainingRecipientsCount(interaction)}} others</span>
+      }
+    </div>
+  </div>
+  <div class="flex-shrink-0 text-xs flex items-center whitespace-nowrap">
+    {{interaction.date | date:'H:mm'}} | {{formatDate(interaction.date)}}
+  </div>
+</div>

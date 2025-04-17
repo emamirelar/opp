@@ -1,11 +1,9 @@
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
-using System;
-using System.Collections.Generic;
+
 using System.Threading.Tasks;
 using AutoMapper;
 using UNOPS.PAO.Business.Interfaces;
-using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
@@ -14,13 +12,14 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.Extensions.Configuration;
+using UNOPS.PAO.Domain.Specifications;
+using UNOPS.PAO.Domain.Entities;
 
 public class UNOPSInteractionManager : IInteractionManager
 {
     private readonly IMapper mapper;
     private readonly BaseRepository<UNOPSInteraction> interactionRepository;
     private readonly BaseRepository<UNOPSContact> contactRepository;
-    private readonly CommonEntityRepository commonRepository;
 
     private static InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
@@ -54,7 +53,6 @@ public class UNOPSInteractionManager : IInteractionManager
         this.mapper = mapper;
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
-        commonRepository = new CommonEntityRepository(context);
     }
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
@@ -146,5 +144,32 @@ public class UNOPSInteractionManager : IInteractionManager
         {
             await interactionRepository.Delete(entity);
         }
+    }
+    
+    public PaginationResponse<InteractionModel> GetContactInteractionsAsync(int contactId, PaginationRequest request)
+    {
+        var query = interactionRepository
+            .GetAll()
+            .Where(x => x.ContactId == contactId)
+            .OrderByDescending(x => x.Date)
+            .AsQueryable();
+
+        return query.Paginate(
+            x => mapper.Map<InteractionModel>(x),
+            request
+        );
+    }
+
+    public PaginationResponse<InteractionModel> GetInteractionsWithSpecification(int userId, ISpecification<Interaction> specification, PaginationRequest pagination)
+    {
+        // Apply the specification to the query
+        var query = interactionRepository.GetAll().AsQueryable();
+        var filteredQuery = query.ApplySpecification(specification);
+        
+        // Apply pagination
+        return filteredQuery.Paginate(
+            x => mapper.Map<InteractionModel>(x),
+            pagination
+        );
     }
 } 

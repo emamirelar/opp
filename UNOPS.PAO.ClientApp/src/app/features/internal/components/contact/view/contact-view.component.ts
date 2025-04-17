@@ -26,29 +26,26 @@ import {FeedbackDialogService} from '../../../../../common/pages/services/feedba
 import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
 import {ContactEditDialogFooterComponent} from '../edit-dialog/footer/contact-edit-dialog-footer.component';
 import { Contact } from '../../../models/contact.model';
-import { Subject } from 'rxjs';
-import { PictureComponent } from "../../../../../common/reusables/components/picture/picture.component";
+import {ContactViewInteractionsComponent} from './interactions/contact-view-interactions.component';
+import {PictureComponent} from '../../../../../common/reusables/components/picture/picture.component';
 
 @Component({
   selector: 'app-contact-view',
   imports: [
     TranslateModule,
     PanelModule,
-    DocumentUploadComponent,
-    DriveDocumentUploadComponent,
     DocumentComponent,
     GDriveDocumentComponent,
     ButtonModule,
     DividerModule,
-    BlockUI,
     MessageModule,
     LinkListComponent,
     DatePipe,
     Avatar,
-    JsonPipe,
     RouterLink,
+    ContactViewInteractionsComponent,
     PictureComponent
-],
+  ],
   templateUrl: './contact-view.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,12 +61,9 @@ import { PictureComponent } from "../../../../../common/reusables/components/pic
 export class ContactViewComponent implements OnInit, OnDestroy {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
-  recordPermissions = signal<any>({});
   documentService = inject(DocumentService);
-  cachedDataService = inject(CachedDataService);
   contactService = inject(ContactService);
   languageService = inject(LanguageService);
-  cdr = inject(ChangeDetectorRef);
 
   infoLoading = signal<boolean>(false);
   showContactInfo = signal<boolean>(false);

@@ -6,25 +6,27 @@ import {Button, ButtonDirective} from 'primeng/button';
 import { Router, ActivatedRoute} from '@angular/router';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
 import { INTERACTION_TYPE_TRANSLATION_KEYS, InteractionType } from '../../../models/interaction-type.enum';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
+import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
   selector: 'app-interaction-list',
   standalone: true,
   imports: [
-    InteractionModalComponent,
     Button,
     NgIf,
     TranslateModule,
     ListviewComponent,
   ],
+  providers: [
+    DialogService
+  ],
   templateUrl: './interaction-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InteractionListComponent {
-  displayModal = signal(false);
   selectedInteraction: WritableSignal<Interaction | undefined> = signal(undefined);
 
   @ViewChild("listviewComponent")
@@ -57,6 +59,9 @@ export class InteractionListComponent {
     }
   ];
 
+  private dialogService = inject(DialogService);
+  private translateService = inject(TranslateService);
+
   constructor(
     private interactionService: InteractionService,
     private router: Router,
@@ -72,7 +77,7 @@ export class InteractionListComponent {
         const state = history.state;
         if (state?.data) {
           this.selectedInteraction.set(state.data);
-          this.displayModal.set(true);
+          this.openInteractionModal(state.data);
         }
       }
     });
@@ -94,8 +99,7 @@ export class InteractionListComponent {
   }
 
   openNewInteractionModal(): void {
-    this.selectedInteraction.set(undefined);
-    this.displayModal.set(true);
+    this.openInteractionModal();
   }
 
   openEditInteractionModal(item: any): void {
@@ -103,20 +107,31 @@ export class InteractionListComponent {
       next: (response) => {
         if (response.body) {
           this.selectedInteraction.set(response.body);
-          this.displayModal.set(true);
-          this.listviewComponent?.refreshData()
+          this.openInteractionModal(response.body);
         }
       },
       error: (error) => console.error('Error fetching interaction details', error)
     });
   }
 
-  onModalClose(): void {
-    this.displayModal.set(false);
-    this.router.navigate(['/interactions'], { replaceUrl: true });
-  }
+  private openInteractionModal(record?: Interaction): void {
+    const dialogRef = this.dialogService.open(InteractionModalComponent, {
+      header: this.translateService.instant(record?.id ? 'title.editInteraction' : 'title.newInteraction'),
+      width: '50rem',
+      breakpoints: { '1199px': '95vw' },
+      data: {
+        record: record
+      }
+    });
 
-  onInteractionDeleted() {
-    this.listviewComponent?.refreshData()
+    dialogRef.onClose.subscribe(result => {
+      if (result) {
+        // Handle results: saved or deleted
+        this.listviewComponent?.refreshData();
+      }
+      
+      // Navigate back to interactions list without the id param
+      this.router.navigate(['/interactions'], { replaceUrl: true });
+    });
   }
 }

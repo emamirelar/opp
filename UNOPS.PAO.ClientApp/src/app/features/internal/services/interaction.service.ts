@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { Interaction } from '../models/interaction.model';
 import { PaginationResponse } from '../../../common/models/pagination-response.model';
 import {PaginationParams, toHttpParams} from '../../../common/models/pagination-params.model';
+import { InteractionFilterParams } from '../models/interaction-filter-params.model';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +15,7 @@ export class InteractionService {
 
   constructor(private http: HttpClient) {}
 
-  getAll(queryParams: PaginationParams): Observable<HttpResponse<PaginationResponse<Interaction>>> {
+  getAll(queryParams: InteractionFilterParams): Observable<HttpResponse<PaginationResponse<Interaction>>> {
     return this.http.get<PaginationResponse<Interaction>>(`${this.apiUrl}`, {
       params: toHttpParams(queryParams),
       observe: 'response'

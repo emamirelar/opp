@@ -2,6 +2,7 @@ namespace UNOPS.PAO.Business.Repositories.Generic;
 
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Query;
+using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
 
 public interface IGenericDataRepository<TEntity>
@@ -21,6 +22,12 @@ public interface IGenericDataRepository<TEntity>
     Task<PaginationResponse<TResponseModel>> GetAllWithPagination<TEntityFilter, TResponseModel>(
         TEntityFilter? filter, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include,
         Expression<Func<TEntity, bool>>? selector = null) where TEntityFilter : PaginationRequest;
+        
+    Task<PaginationResponse<TResponseModel>> GetBySpecification<TResponseModel>(
+        ISpecification<TEntity> specification);
+    
+    Task<TEntity?> GetSingleBySpecification(ISpecification<TEntity> specification);
+    
     Task<TEntity?> GetById(int id, Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null);
     Task<TResponseModel> Add<TResponseModel>(TEntity entity);
     Task<IEnumerable<TEntity>> GetAll();

@@ -24,6 +24,7 @@ import { Router } from '@angular/router';
 import { Contact } from '../../../models/contact.model';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
+import { ContactEditDialogFooterComponent } from './footer/contact-edit-dialog-footer.component';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -121,17 +122,20 @@ export class ContactEditDialogComponent implements OnInit {
   @Output() closeModal = new EventEmitter<void>();
   display = true;
 
+  requestingSaveSignal = signal<boolean>(false);
+
   constructor() {
-    effect(() => {
-      if (this.dialogConfig.data?.requestingSaveSignal?.()) {
-        this.handleSave();
-      }
-    });
+    this.dialogConfig.templates = {
+      footer: ContactEditDialogFooterComponent
+    };
   }
 
   ngOnInit() {
     this.record = this.dialogConfig.data?.record;
     this.formGroup.patchValue(this.record);
+
+    // Exposer la fonction handleSave
+    this.dialogConfig.data.handleSave = this.handleSave.bind(this);
 
     // Check if any assistant fields have values
     const hasAssistantInfo = this.record?.assistant || 
@@ -145,7 +149,7 @@ export class ContactEditDialogComponent implements OnInit {
       const payload = this._getRequestPayload();
 
       // Reset requesting save signal immediately
-      this.dialogConfig.data.requestingSaveSignal.set(false);
+      this.requestingSaveSignal.set(false);
 
       if (this.record && this.record['id']) {
         // Update existing contact
@@ -174,7 +178,7 @@ export class ContactEditDialogComponent implements OnInit {
         });
       }
     } else {
-      this.dialogConfig.data.requestingSaveSignal.set(false);
+      this.requestingSaveSignal.set(false);
       this.showValidationFailedError.set(true);
     }
   }

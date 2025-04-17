@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Helpers;
 using Z.EntityFramework.Plus;
@@ -169,5 +170,29 @@ public class GenericDataRepository<TEntity> : IGenericDataRepository<TEntity> wh
     {
         await _dataDbContext.SingleUpdateAsync<TEntity>(entity.Id);
         await _dataDbContext.SaveChangesAsync();
+    }
+
+    public async Task<PaginationResponse<TResponseModel>> GetBySpecification<TResponseModel>(
+        ISpecification<TEntity> specification)
+    {
+        var query = _dbSet.AsQueryable();
+        var evaluatedQuery = query.ApplySpecification(specification);
+        
+        int totalCount = await evaluatedQuery.CountAsync();
+        var items = await evaluatedQuery.ToListAsync();
+        
+        return new PaginationResponse<TResponseModel>
+        {
+            TotalCount = totalCount,
+            Records = items.Select(item => _mapper.Map<TResponseModel>(item)).ToList()
+        };
+    }
+
+    public async Task<TEntity?> GetSingleBySpecification(ISpecification<TEntity> specification)
+    {
+        var query = _dbSet.AsQueryable();
+        var evaluatedQuery = query.ApplySpecification(specification);
+        
+        return await evaluatedQuery.FirstOrDefaultAsync();
     }
 }
