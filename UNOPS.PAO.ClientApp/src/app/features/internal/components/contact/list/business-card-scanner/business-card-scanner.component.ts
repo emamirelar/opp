@@ -31,6 +31,7 @@ export class BusinessCardScannerComponent implements OnInit, OnDestroy {
   capturedImage: string | null = null;
   scanning: boolean = false;
   error: string | null = null;
+  isFrontCamera: boolean = false;
 
   ngOnInit() {
     this.startCamera();
@@ -48,7 +49,13 @@ export class BusinessCardScannerComponent implements OnInit, OnDestroy {
   }
 
   startCamera(): void {
-    from(navigator.mediaDevices.getUserMedia({ video: true }))
+    const facingMode = this.isFrontCamera ? 'user' : 'environment';
+    
+    from(navigator.mediaDevices.getUserMedia({ 
+      video: { 
+        facingMode: facingMode 
+      } 
+    }))
       .pipe(
         tap(stream => {
           this.stream = stream;
@@ -61,6 +68,12 @@ export class BusinessCardScannerComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe();
+  }
+
+  toggleCamera(): void {
+    this.isFrontCamera = !this.isFrontCamera;
+    this.stopCamera();
+    this.startCamera();
   }
 
   stopCamera(): void {

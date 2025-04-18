@@ -172,6 +172,9 @@
         "cancel": "Annuler",
         "capture": "Capturer"
     },
+    "action": {
+        "search": "Rechercher"
+    },
     "placeholder": {
         "enterUrl": "Entrez l'URL",
         "enterName": "Entrez le nom"

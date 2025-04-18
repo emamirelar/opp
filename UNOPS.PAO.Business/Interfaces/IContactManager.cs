@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
 
 public interface IContactManager
@@ -15,6 +16,8 @@ public interface IContactManager
     Task<ContactModel> CreateContactAsync(ContactRequest model);
 
     PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request);
+    
+    PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination);
 
     Task<ContactModel?> GetContact(int userId, int id);
 

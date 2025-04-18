@@ -9,12 +9,15 @@ using System.Text;
 using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Domain.Specifications;
 
 public interface IPartnerManager
 {
     Task<PartnerModel> CreatePartnerAsync(PartnerRequest model);
 
     PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request);
+    
+    PaginationResponse<PartnerModel> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination);
 
     Task<PartnerModel?> GetPartner(int userId, int id);
 

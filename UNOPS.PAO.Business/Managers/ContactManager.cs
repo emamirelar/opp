@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Domain.Specifications;
 
 namespace UNOPS.PAO.Business.Managers;
 
@@ -47,6 +48,19 @@ public class ContactManager : IContactManager
         return query.Paginate(
             x => mapper.Map<ContactModel>(x),
             request
+        );
+    }
+
+    public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
+    {
+        // Apply the specification to the query
+        var query = ContactRepository.GetAll().AsQueryable();
+        var filteredQuery = query.ApplySpecification(specification);
+        
+        // Apply pagination
+        return filteredQuery.Paginate(
+            x => mapper.Map<ContactModel>(x),
+            pagination
         );
     }
 

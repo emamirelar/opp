@@ -40,6 +40,7 @@ import { EntityType } from '../../../../../common/models/link.model';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
+import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
 
 @Component({
   selector: 'app-partner-view',
@@ -64,7 +65,8 @@ import { DialogService } from 'primeng/dynamicdialog';
     PartnerContactsComponent,
     MarkdownPipe,
     LinkListComponent,
-    PictureComponent
+    PictureComponent,
+    PartnerViewContactsComponent
   ],
   templateUrl: './partner-view.component.html',
   styleUrl: './partner-view.component.scss',
