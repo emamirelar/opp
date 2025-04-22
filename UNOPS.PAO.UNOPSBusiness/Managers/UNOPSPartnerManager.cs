@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
 using System;
@@ -28,6 +30,9 @@ public class UNOPSPartnerManager : IPartnerManager
     private BaseRepository<UNOPSPartnerCategory> PartnerCategoryRepository;
 
     private CommonEntityRepository commonRepository;
+
+
+    private GoogleCloudStorageService GoogleCloudStorageService;
 
     //private string[] includes = ["Currency", "Documents"];
 
@@ -112,6 +117,8 @@ public class UNOPSPartnerManager : IPartnerManager
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
         OrganizationUnitRepository = new BaseRepository<UNOPSOrganizationUnit>(context, configuration);
         PartnerCategoryRepository = new BaseRepository<UNOPSPartnerCategory>(context, configuration);
+        
+        GoogleCloudStorageService = new GoogleCloudStorageService(configuration);
 
         commonRepository = new CommonEntityRepository(context);
     }
@@ -259,5 +266,28 @@ public class UNOPSPartnerManager : IPartnerManager
         //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
 
         return result;
+    }
+    
+    
+    public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(partnerId);
+
+        if (entity == null)
+        {
+            throw new BusinessException($"Partner {partnerId} does not exist.");
+        }
+
+        // Upload file to Google Cloud Storage
+        string imageUrl = await GoogleCloudStorageService.UploadFileToGCS(file);
+        if (string.IsNullOrEmpty(imageUrl))
+        {
+            throw new BusinessException("Failed to upload the image to cloud storage");
+        }
+
+        entity.LogoUrl = imageUrl;
+        await PartnerRepository.UpdateAsync(entity);
+
+        return entity.LogoUrl;
     }
 }

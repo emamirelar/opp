@@ -31,6 +31,7 @@ public class Partner : ModifiableDeletableEntity
     public string LevyPotentiallyApplies { get; set; }
     public string? ReasonForLevyNotApplying { get; set; }
     public string? LevyTreatment { get; set; }
+    public string? LogoUrl { get; set; }
     public List<Document>? Documents { get; set; }
     public OrganizationUnit? PartnerOffice { get; set; }
     public int? PartnerOfficeId { get; set; }

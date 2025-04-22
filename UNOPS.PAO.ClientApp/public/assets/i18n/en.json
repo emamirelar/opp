@@ -43,6 +43,7 @@
     "links": "Links",
     "editLink": "Edit Link",
     "addLink": "Add Link",
+    "editPicture": "Edit Picture",
     "uploadContent": "Upload Content",
     "takePhoto": "Take Photo",
     "uploadImage": "Upload Image",
@@ -77,8 +78,9 @@
     "viewContacts": "View Contacts",
     "new": "New",
     "uploadImage": "Upload Image",
-    "uploadAudio": "Upload Audio",
     "seeMore": "See More",
+    "chooseImage": "Choose Image",
+    "uploadAudio": "Upload Audio",
     "preFillOptions": "AI Transcribe",
     "preFill": "AI Transcribe",
     "preFillFrom": "Transcribe Data",
@@ -217,6 +219,11 @@
       "url": "URL",
       "name": "Name"
     },
+    "pictureEditor": {
+      "dropImageHere": "Drop an image here or use the button below",
+      "croppedImage": "Cropped image",
+      "uploadProgress": "Progress: {{progress}}%"
+    },
     "scanBusinessCard": "Scan Business Card"
   },
   "message": {
@@ -230,6 +237,8 @@
     "errorDeletingInteraction": "Error while deleting interaction",
     "dropUrlToAddLink": "Drop URL or file to add link",
     "dropGoogleSheetsLink": "Drop a Google Sheets link",
+    "failedToLoadImage": "Failed to load image",
+    "failedToUploadImage": "Failed to upload image",
     "uploadImageInfo": "Please upload an image in JPG, PNG, or GIF format (max 1MB)",
     "preFillSuccess": "Data successfully transcribed",
     "errorPreFilling": "Error transcribing data from file",

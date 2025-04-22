@@ -43,9 +43,8 @@ export class ContactEditDialogFooterComponent {
   }
 
   onSave(): void {
-    const requestingSaveSignal = this.config.data?.requestingSaveSignal;
-    if (requestingSaveSignal) {
-      requestingSaveSignal.set(true);
+    if (this.config.data?.handleSave) {
+      this.config.data.handleSave();
     }
   }
 }

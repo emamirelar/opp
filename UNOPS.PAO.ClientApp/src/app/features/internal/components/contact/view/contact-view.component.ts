@@ -26,26 +26,25 @@ import {FeedbackDialogService} from '../../../../../common/pages/services/feedba
 import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
 import {ContactEditDialogFooterComponent} from '../edit-dialog/footer/contact-edit-dialog-footer.component';
 import { Contact } from '../../../models/contact.model';
-import { Subject } from 'rxjs';
+import {ContactViewInteractionsComponent} from './interactions/contact-view-interactions.component';
+import {PictureComponent} from '../../../../../common/reusables/components/picture/picture.component';
 
 @Component({
   selector: 'app-contact-view',
   imports: [
     TranslateModule,
     PanelModule,
-    DocumentUploadComponent,
-    DriveDocumentUploadComponent,
     DocumentComponent,
     GDriveDocumentComponent,
     ButtonModule,
     DividerModule,
-    BlockUI,
     MessageModule,
     LinkListComponent,
     DatePipe,
     Avatar,
-    JsonPipe,
-    RouterLink
+    RouterLink,
+    ContactViewInteractionsComponent,
+    PictureComponent
   ],
   templateUrl: './contact-view.component.html',
   standalone: true,
@@ -62,12 +61,9 @@ import { Subject } from 'rxjs';
 export class ContactViewComponent implements OnInit, OnDestroy {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
-  recordPermissions = signal<any>({});
   documentService = inject(DocumentService);
-  cachedDataService = inject(CachedDataService);
   contactService = inject(ContactService);
   languageService = inject(LanguageService);
-  cdr = inject(ChangeDetectorRef);
 
   infoLoading = signal<boolean>(false);
   showContactInfo = signal<boolean>(false);
@@ -113,7 +109,7 @@ export class ContactViewComponent implements OnInit, OnDestroy {
 
   handleEditClick() {
     const requestingSaveSignal = signal<boolean>(false);
-    
+
     const ref = this.dialogService.open(ContactEditDialogComponent, {
       header: 'Edit Contact',
       width: '90vw',
@@ -179,5 +175,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
         this.feedbackDialogService.showErrorDialog({ detail: 'Unable to upload file!' });
       },
     });
+  }
+
+  getUploadProfilePictureUrl() {
+    return this.contactService.getUploadProfilePictureUrl(this.recordId);
   }
 }

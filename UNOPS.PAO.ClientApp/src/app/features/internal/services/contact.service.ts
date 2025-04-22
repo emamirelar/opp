@@ -21,53 +21,15 @@ export class ContactService {
     return this.apiUrl
   }
 
+  getUploadProfilePictureUrl(id: string) {
+    return `${this.apiUrl}/${id}/profile-picture`;
+  }
+
   getAllContacts() {
     this.isLoading.set(true);
     this.http.get(this.apiUrl).subscribe({
       next: (data: any) => {
-        console.log('Contact data loaded:', data);
-        console.log('Contact data type:', typeof data);
-
-        // Handle pagination response
-        if (data && typeof data === 'object') {
-          if (data.items && Array.isArray(data.items)) {
-            console.log('Paginated response detected, items count:', data.items.length);
-            if (data.items.length > 0) {
-              console.log('Sample item:', data.items[0]);
-              console.log('Keys:', Object.keys(data.items[0]));
-            }
-            this.contactData.set(data.items);
-          } 
-          // Handle array response
-          else if (Array.isArray(data)) {
-            console.log('Array response detected, length:', data.length);
-            if (data.length > 0) {
-              console.log('Sample item:', data[0]);
-              console.log('Keys:', Object.keys(data[0]));
-            }
-            this.contactData.set(data);
-          }
-          // Special case for some API responses that return an object with numeric keys
-          else if (Object.keys(data).every(key => !isNaN(Number(key)))) {
-            const arrayData = Object.values(data);
-            console.log('Converting object with numeric keys to array, length:', arrayData.length);
-            this.contactData.set(arrayData);
-          }
-          // Try to extract the items from a wrapped response
-          else if ('data' in data) {
-            console.log('Found data property in response');
-            const responseData = Array.isArray(data.data) ? data.data : [data.data];
-            this.contactData.set(responseData);
-          }
-          else {
-            console.log('Unknown data format, storing empty array');
-            this.contactData.set([]);
-          }
-        } else {
-          console.log('No valid data returned, storing empty array');
-          this.contactData.set([]);
-        }
-        
+        this.contactData.set(data.records);
         this.isLoading.set(false);
       },
       error: (err) => {

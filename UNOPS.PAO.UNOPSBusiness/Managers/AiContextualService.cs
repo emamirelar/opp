@@ -254,7 +254,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             var tablePropetiesAsList = tableProperties?.ToList();
             string aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
 
-            if (!selectColumns.Any(col => col.Contains(tableWithSchema)) && (tableRecord?.ClrType != null && tablePropetiesAsList.Count != 2 && foreignKeys.Count != 2))
+            if (!selectColumns.Any(col => col.Contains(tableWithSchema)) && (tableRecord?.ClrType != null && !(tablePropetiesAsList.Count == 2 && foreignKeys.Count == 2)))
             {
                 foreach (var property in tableProperties)
                 {

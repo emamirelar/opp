@@ -4,7 +4,7 @@ import { providePrimeNG } from 'primeng/config';
 import Material from "@primeng/themes/material";
 import { definePreset } from "@primeng/themes";
 
-const UnopsPreset = definePreset(Material, 
+const UnopsPreset = definePreset(Material,
 
   {
     primitive: {
@@ -14,7 +14,10 @@ const UnopsPreset = definePreset(Material,
             sm: "4px",
             md: "6px",
             lg: "8px",
-            xl: "12px"
+            xl: "12px",
+            "2xl": "14px",
+            "3xl": "16px",
+            "4xl": "20px"
         },
 
         fonts: {
@@ -35,7 +38,7 @@ const UnopsPreset = definePreset(Material,
             900: "#001a27",
             950: "#00121b"
         },
-    
+
         unops_color_ocean: {
             50: "#d3f0f7",
             100: "#b8e7f3",
@@ -49,7 +52,7 @@ const UnopsPreset = definePreset(Material,
             900: "#143138",
             950: "#0d2529"
         },
-    
+
         unops_color_teal: {
             50: "#bfeae5",
             100: "#99ddd5",
@@ -63,7 +66,7 @@ const UnopsPreset = definePreset(Material,
             900: "#00121e",
             950: "#000d15"
         },
-    
+
         unops_color_orange: {
             50: "#f9d6c3",
             100: "#f6be9f",
@@ -77,7 +80,7 @@ const UnopsPreset = definePreset(Material,
             900: "#3a1704",
             950: "#2a1003"
         },
-    
+
         unops_color_red: {
             50: "#f6cac6",
             100: "#f0a9a4",
@@ -91,7 +94,7 @@ const UnopsPreset = definePreset(Material,
             900: "#370a07",
             950: "#280705"
         },
-    
+
         unops_color_green: {
             50: "#d2e7cd",
             100: "#b7d9af",
@@ -105,13 +108,13 @@ const UnopsPreset = definePreset(Material,
             900: "#13280e",
             950: "#0c1c09"
         },
-    
+
         unops_color_gray: {
             50: "#e5e6e6",
             100: "#d5d6d7",
             200: "#c6c7c8",
             300: "#b6b8b9",
-            400: "#a7a8aa", 
+            400: "#a7a8aa",
             500: "#97999b", /* UNOPS Gray */
             600: "#6a6b6d",
             700: "#535455",
@@ -119,7 +122,7 @@ const UnopsPreset = definePreset(Material,
             900: "#262627",
             950: "#19191a"
         },
-    
+
         unops_color_lemon: {
             50: "#fdfad0",
             100: "#fcf7b4",
@@ -133,7 +136,7 @@ const UnopsPreset = definePreset(Material,
             900: "#3e3b11",
             950: "#2d2a0c"
         },
-    
+
         unops_color_lime: {
             50: "#f0f5bf",
             100: "#e7ef99",
@@ -147,7 +150,7 @@ const UnopsPreset = definePreset(Material,
             900: "#313600",
             950: "#262800"
         },
-    
+
         unops_color_babygreen: {
             50: "#e5f2cf",
             100: "#d5e9b1",
@@ -161,7 +164,7 @@ const UnopsPreset = definePreset(Material,
             900: "#26320f",
             950: "#1b250a"
         },
-    
+
         unops_color_blue: {
             50: "#bfe4f4",
             100: "#99d3ed",
@@ -175,7 +178,7 @@ const UnopsPreset = definePreset(Material,
             900: "#002534",
             950: "#001a26"
         },
-    
+
         unops_color_cherry: {
             50: "#e6c7d9",
             100: "#d6a5c2",
@@ -189,7 +192,7 @@ const UnopsPreset = definePreset(Material,
             900: "#26081a",
             950: "#1b0613"
         },
-    
+
         unops_color_midnight: {
             50: "#bfd2dd",
             100: "#99b6c8",
@@ -203,7 +206,7 @@ const UnopsPreset = definePreset(Material,
             900: "#00121e",
             950: "#000c14"
         },
-    
+
         unops_color_deepsea: {
             50: "#c3c7cb",
             100: "#9ea5ac",
@@ -217,7 +220,7 @@ const UnopsPreset = definePreset(Material,
             900: "#03080c",
             950: "#020509"
         },
-    
+
         unops_color_olive: {
             50: "#d1e0d5",
             100: "#b5cdbc",
@@ -231,7 +234,7 @@ const UnopsPreset = definePreset(Material,
             900: "#112116",
             950: "#0c1910"
         },
-    
+
         unops_color_yellow: {
             50: "#fff0c5",
             100: "#ffe7a1",
@@ -259,7 +262,7 @@ const UnopsPreset = definePreset(Material,
             900: "#474949",
             950: "#363636"
         },
-    
+
         unops_color_n_cold: {
             0: "#ffffff",
             50: "#F5F8FB",
@@ -314,7 +317,7 @@ const UnopsPreset = definePreset(Material,
                 paddingX: "0.825rem",
                 paddingY: "0.825rem"
             },
-            borderRadius: "{border.radius.sm}",
+            borderRadius: "{border.radius.md}",
             focusRing: {
                 width: "2px",
                 style: "solid",
@@ -464,6 +467,7 @@ const UnopsPreset = definePreset(Material,
                         color: "{text.color}"
                     },
                     modal: {
+                        borderRadius: "{border.radius.4xl}",
                         background: "{surface.0}",
                         borderColor: "{surface.0}",
                         color: "{text.color}"

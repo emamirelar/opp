@@ -23,6 +23,7 @@
         "links": "Liens",
         "editLink": "Modifier le lien",
         "addLink": "Ajouter un lien",
+        "editPicture": "Modifier l'image",
         "contactTitles": {
             "contactInformation": "Informations Personnelles",
             "addresses": "Adresses",
@@ -45,7 +46,8 @@
         "delete": "Supprimer",
         "uploadImage": "Télécharger l'image",
         "addLink": "Ajouter un lien",
-        "seeMore": "Voir plus"
+        "seeMore": "Voir plus",
+        "chooseImage": "Choisir une image"
     },
     "label": {
         "actions": "Actions",
@@ -130,6 +132,11 @@
             "mailingPostalCode": "Code postal d'envoi",
             "mailingCountry": "Pays d'envoi",
             "contactViaAssistant": "Contacter via l'assistant"
+        },
+        "pictureEditor": {
+            "dropImageHere": "Déposez une image ici ou utilisez le bouton ci-dessous",
+            "croppedImage": "Image recadrée",
+            "uploadProgress": "Progression : {{progress}}%"
         }
     },
     "message": {
@@ -140,7 +147,9 @@
         "deleteInteractionConfirmation": "Êtes-vous sûr de vouloir supprimer cette interaction ?",
         "interactionDeleted": "L'interaction a été supprimée avec succès",
         "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction",
-        "dropUrlToAddLink": "Déposez une URL ou un fichier pour ajouter un lien"
+        "dropUrlToAddLink": "Déposez une URL ou un fichier pour ajouter un lien",
+        "failedToLoadImage": "Échec du chargement de l'image",
+        "failedToUploadImage": "Échec de l'envoi de l'image"
     },
     "errors": {
         "failedToLoad": "Échec du chargement"

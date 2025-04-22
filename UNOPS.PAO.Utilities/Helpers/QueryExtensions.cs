@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Interfaces;
+using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Helpers;
 
@@ -125,4 +126,64 @@ public static class QueryExtensions
 
         return (IQueryable<TEntity>)filterMethod.Invoke(null, new object[] { entity, filter });
     }
+
+    public static IQueryable<TEntity> ApplySpecification<TEntity>(this IQueryable<TEntity> query, 
+        ISpecification<TEntity> specification) where TEntity : class
+    {
+        return SpecificationEvaluator.GetQuery(query, specification);
+    }
+
+    public static PaginationResponse<TSource> PaginateWithSpecification<TSource, TEntity>(
+        this IQueryable<TEntity> query,
+        Func<TEntity, TSource> transform,
+        SpecificationPaginationRequest<TEntity> request) where TEntity : class
+    {
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        var filteredQuery = query.ApplySpecification(request.Specification);
+        
+        if (request.OrderBy != null)
+        {
+            filteredQuery = filteredQuery.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+        }
+        
+        return new PaginationResponse<TSource>
+        {
+            TotalCount = filteredQuery.Count(),
+            Records = filteredQuery
+                .Skip(excludedRows)
+                .Take(request.PageSize)
+                .Select(transform)
+                .ToList()
+        };
+    }
+
+    public static async Task<PaginationResponse<TSource>> PaginateWithSpecificationAsync<TSource, TEntity>(
+        this IQueryable<TEntity> query,
+        Func<TEntity, TSource> transform,
+        SpecificationPaginationRequest<TEntity> request) where TEntity : class
+    {
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        var filteredQuery = query.ApplySpecification(request.Specification);
+        
+        if (request.OrderBy != null)
+        {
+            filteredQuery = filteredQuery.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+        }
+        
+        var records = await filteredQuery
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToListAsync();
+        
+        return new PaginationResponse<TSource>
+        {
+            TotalCount = await filteredQuery.CountAsync(),
+            Records = records.Select(transform).ToList()
+        };
+    }
+
 }

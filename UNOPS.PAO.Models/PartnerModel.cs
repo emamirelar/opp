@@ -35,4 +35,5 @@ public class PartnerModel
     public int? PartnerOfficeId { get; set; }
     public PartnerCategory? PartnerCategory { get; set; }
     public int? PartnerCategoryId { get; set; }
+    public string? LogoUrl { get; set; }
 }

@@ -326,6 +326,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("text");
 
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("Salutation")
                         .HasColumnType("text");
 
@@ -993,6 +996,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("LevyTreatment")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoUrl")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")

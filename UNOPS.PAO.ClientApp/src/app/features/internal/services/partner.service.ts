@@ -94,4 +94,8 @@ export class PartnerService {
         }
       }));
   }
+
+  getUploadLogoUrl(recordId: string) {
+    return `/api/partner/${recordId}/logo`;
+  }
 }

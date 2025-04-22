@@ -14,6 +14,8 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
+using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.DataAccess.Services;
 
 public class PartnerManager : IPartnerManager
 {
@@ -163,5 +165,10 @@ public class PartnerManager : IPartnerManager
         //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
 
         return result;
+    }
+
+    public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)
+    {
+        return null;
     }
 }

@@ -30,6 +30,7 @@ public class Contact : ModifiableDeletableEntity
     public string? MailingStateProvince { get; set; }
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
+    public string? ProfilePictureUrl { get; set; }
     [JsonIgnore]  // Prevents circular reference in serialization
     public virtual ICollection<Interaction>? Interactions { get; set; }
     

@@ -10,29 +10,31 @@ export interface Contact {
   title?: string | null;
   pronouns?: string | null;
   birthDate?: Date | null;
-
+  
   email?: string | null;
   phone?: string | null;
   mobile?: string | null;
   otherPhone?: string | null;
   fax?: string | null;
-
+  
   partner?: Partner | null;
   department?: string | null;
   description?: string | null;
   status?: string | null;
   contactNumber?: string | null;
-
+  
   assistant?: string | null;
   assistantPhone?: string | null;
   assistantEmail?: string | null;
-
+  
   mailingStreet?: string | null;
   mailingStreet2?: string | null;
   mailingCity?: string | null;
   mailingStateProvince?: string | null;
   mailingPostalCode?: string | null;
   mailingCountry?: string | null;
+  
+  profilePictureUrl?: string|null;
 
   discriminator?: string | null;
   createdBy?: string | null;

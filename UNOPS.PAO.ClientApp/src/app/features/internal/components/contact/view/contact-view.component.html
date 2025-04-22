@@ -20,7 +20,13 @@
         <div class="flex flex-col gap-6 pb-2">
           <!-- Name and Title -->
           <div class="flex gap-4">
-            <p-avatar label="T" class="flex-shrink-0 custom-avatar-size" [shape]="'circle'" [size]="'xlarge'" />
+            <app-picture
+              [imageUrl]="recordData().profilePictureUrl!"
+              [uploadUrl]="getUploadProfilePictureUrl()"
+              [altText]="'Profile picture'"
+              [size]="'medium'"
+              (imageChanged)="_loadRecordDetails()"
+            />
             <div class="flex flex-col gap-1">
               <div class="text-lg">
                 {{recordData().salutation}} {{recordData().firstName}} {{recordData().middleName}} {{recordData().lastName}} {{recordData().suffix}}
@@ -111,9 +117,9 @@
             }
           } @else {
             <div class="flex justify-center -my-2">
-              <p-button 
-                label="{{ 'button.seeMore' | translate }}" 
-                icon="pi pi-chevron-down" 
+              <p-button
+                label="{{ 'button.seeMore' | translate }}"
+                icon="pi pi-chevron-down"
                 [rounded]="true"
                 [size]="'small'"
                 [text]="true"
@@ -142,6 +148,10 @@
         header="Summary"
       >
       </p-panel>
+
+      <app-contact-view-interactions
+        [contactId]="recordId"
+      />
 
       <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
         <app-document #appDocument

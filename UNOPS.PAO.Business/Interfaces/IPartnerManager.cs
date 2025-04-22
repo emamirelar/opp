@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace UNOPS.PAO.Business.Interfaces;
 
 using System;
@@ -24,4 +26,5 @@ public interface IPartnerManager
 
     Task DeletePartnerAsync(int userId, int id);
     Task<PartnerModel?> GetPartnerAsync(int id);
+    Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file);
 }
