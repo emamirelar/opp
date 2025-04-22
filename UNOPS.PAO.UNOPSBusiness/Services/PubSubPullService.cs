@@ -22,6 +22,8 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Humanizer;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using System.Reflection;
+using System.Linq.Expressions;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services
 {
@@ -119,41 +121,92 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             
             if (entityType != null)
             {
-                var dbSetProperty = dbContext.GetType()
-                    .GetProperty(msg.EntityName);
-                    
-                if (dbSetProperty != null)
+                try
                 {
-                    var dbSet = dbSetProperty.GetValue(dbContext) as IQueryable<object>;
-                    if (dbSet != null)
+                    // Use specific binding flags to avoid ambiguous matches
+                    var dbSetProperty = dbContext.GetType()
+                        .GetProperty(msg.EntityName, 
+                            BindingFlags.Public | 
+                            BindingFlags.Instance | 
+                            BindingFlags.DeclaredOnly);
+                    
+                    if (dbSetProperty == null)
                     {
-                        var entities = await dbSet.ToListAsync();
-                        var entity = entities.Where(e => 
-                        {
-                            var idProperty = e.GetType().GetProperty("Id");
-                            return idProperty != null && (int)idProperty.GetValue(e) == msg.EntityId.Value;
-                        }).FirstOrDefault();
+                        // Try getting the property by type if name fails
+                        var entityClrType = entityType.ClrType;
+                        var dbSetType = typeof(DbSet<>).MakeGenericType(entityClrType);
                         
-                        if (entity != null)
+                        dbSetProperty = dbContext.GetType()
+                            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+                            .FirstOrDefault(p => 
+                                p.PropertyType == dbSetType && 
+                                p.Name.Equals(msg.EntityName, StringComparison.OrdinalIgnoreCase));
+                    }
+                        
+                    if (dbSetProperty != null)
+                    {
+                        var dbSet = dbSetProperty.GetValue(dbContext) as IQueryable<object>;
+                        if (dbSet != null)
                         {
-                            // Serialize the entity to JSON
-                            var content = JsonConvert.SerializeObject(entity, Formatting.Indented);
-                            
-                            // Get the prompt data for summarization
-                            var promptData = (await contextService.GetPromptData("summarize_information")).FirstOrDefault();
-                            if (promptData != null)
+                            var entities = await dbSet.ToListAsync();
+                            var entity = entities.Where(e => 
                             {
-                                // Summarize the content using Gemini
-                                string response = await contextService.FetchResultFromGemini((AiPromptModel)promptData, content);
-                                var responseMessage = contextService.GetDetailsFromGeminiResponse(response)["Message"]?.ToString() ?? string.Empty;
+                                try 
+                                {
+                                    // Try to get the ID property with more specific binding flags
+                                    var idProperty = e.GetType().GetProperty("Id", 
+                                        BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                                    
+                                    if (idProperty == null)
+                                    {
+                                        // Try to find any property named "Id" using case-insensitive search
+                                        idProperty = e.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                            .FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && 
+                                                            p.PropertyType == typeof(int));
+                                    }
+                                    
+                                    return idProperty != null && (int)idProperty.GetValue(e) == msg.EntityId.Value;
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError($"Error getting ID property: {ex.Message}");
+                                    return false;
+                                }
+                            }).FirstOrDefault();
+                            
+                            if (entity != null)
+                            {
+                                // Serialize the entity to JSON
+                                var content = JsonConvert.SerializeObject(entity, Formatting.Indented);
                                 
-                                // Generate embedding with the summarized content
-                                await contextService.GenerateEmbeddingAsync(msg.EntityName, msg.EntityId.Value, responseMessage);
-                                // Add a delay of 1 second after each embedding generation
-                                await Task.Delay(1000); // 1 second delay
+                                // Get the prompt data for summarization
+                                var promptData = (await contextService.GetPromptData("summarize_information")).FirstOrDefault();
+                                if (promptData != null)
+                                {
+                                    // Summarize the content using Gemini
+                                    string response = await contextService.FetchResultFromGemini((AiPromptModel)promptData, content);
+                                    var responseMessage = contextService.GetDetailsFromGeminiResponse(response)["Message"]?.ToString() ?? string.Empty;
+                                    
+                                    // Generate embedding with the summarized content
+                                    await contextService.GenerateEmbeddingAsync(msg.EntityName, msg.EntityId.Value, responseMessage);
+                                    // Add a delay of 1 second after each embedding generation
+                                    await Task.Delay(1000); // 1 second delay
+                                }
                             }
                         }
                     }
+                    else
+                    {
+                        _logger.LogWarning($"DbSet property not found for entity {msg.EntityName}");
+                    }
+                }
+                catch (AmbiguousMatchException ex)
+                {
+                    _logger.LogError($"Ambiguous property match for {msg.EntityName}: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error processing entity {msg.EntityName}: {ex.Message}");
                 }
             }
         }

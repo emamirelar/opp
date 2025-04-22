@@ -11,6 +11,7 @@ import { PartnerEditDialogComponent } from '../components/partner/edit-dialog/pa
 import { PartnerEditDialogFooterComponent } from '../components/partner/edit-dialog/footer/partner-edit-dialog-footer.component';
 import { ImportDialogComponent } from '../../../common/reusables/components/import/dialog/import-dialog.component';
 import { ImportFooterComponent } from '../../../common/reusables/components/import/dialog/footer/import-dialog-footer.component';
+import { InteractionModalFooterComponent } from '../components/interaction/modal/footer/interaction-modal-footer.component';
 
 @Injectable({
   providedIn: 'root',
@@ -28,11 +29,11 @@ export class ComponentResolverService {
         component: PartnerEditDialogComponent,
         footer: PartnerEditDialogFooterComponent,
      },
-     /*'bulk_contact_action': {
-        header: 'Import Contact',
-        component: ImportDialogComponent,
-        footer: ImportFooterComponent,
-     }*/
+     'Interaction': {
+        header: 'Interaction',
+        component: InteractionModalComponent,
+        footer: InteractionModalFooterComponent,
+     },
      /*'PartnerTree': PartnerTreeItemComponent,
      'Interaction': InteractionModalComponent,*/
    };

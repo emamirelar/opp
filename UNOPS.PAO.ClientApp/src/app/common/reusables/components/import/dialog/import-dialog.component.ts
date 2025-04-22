@@ -26,6 +26,7 @@ import { Contact } from '../../../../../features/internal/models/contact.model';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 import { PartnerEditDialogComponent } from '../../../../../features/internal/components/partner/edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../../../../../features/internal/components/partner/edit-dialog/footer/partner-edit-dialog-footer.component';
+import { ImportService } from '../import.service';
 
 // Custom interface for import columns that extends ListViewColumn
 interface ImportColumn extends ListViewColumn {
@@ -65,6 +66,7 @@ export class ImportDialogComponent implements OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
   importDialogService = inject(ImportDialogService);
   componentResolverService = inject(ComponentResolverService);
+  importService = inject(ImportService);
   // Make Math available to the template
   Math = Math;
 

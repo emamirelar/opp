@@ -125,10 +125,16 @@ export class ImportDialogService {
    */
   cancelImport(): void {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to cancel this import? All data will be discarded.',
-      header: 'Cancel Import',
+      message: 'Are you sure you want to cancel this operation? All data will be discarded.',
+      header: 'Cancel Operation',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
+        // Check if there's an active file analysis to cancel
+        if (this.importService.getActiveJobId()) {
+          this.cancelFileAnalysis();
+          return;
+        }
+        
         // If from notification, mark as read
         if (this.notificationId) {
           this.markNotificationAsRead();
@@ -136,7 +142,42 @@ export class ImportDialogService {
         this.closeDialog('canceled');
         this.data.set([]);
         this.feedbackDialogService.showInfoToast({ 
-          detail: 'Import canceled'
+          detail: 'Operation canceled'
+        });
+      }
+    });
+  }
+
+  /**
+   * Cancel an active file analysis that's being processed asynchronously
+   */
+  cancelFileAnalysis(): void {
+    this.isLoading.set(true);
+    this.loadingOverlayService.show('Cancelling file analysis...');
+    
+    this.importService.cancelAnalysis().subscribe({
+      next: (response) => {
+        this.isLoading.set(false);
+        this.loadingOverlayService.hide();
+        
+        // If from notification, mark as read
+        if (this.notificationId) {
+          this.markNotificationAsRead();
+        }
+        
+        this.closeDialog('canceled');
+        this.data.set([]);
+        this.selectedRows.set([]);
+        
+        this.feedbackDialogService.showInfoToast({ 
+          detail: 'File analysis canceled successfully'
+        });
+      },
+      error: (error) => {
+        this.isLoading.set(false);
+        this.loadingOverlayService.hide();
+        this.feedbackDialogService.showErrorToast({ 
+          detail: 'Error cancelling file analysis: ' + (error.message || 'Unknown error')
         });
       }
     });
@@ -368,12 +409,19 @@ export class ImportDialogService {
     // Open the picker
     this.importGoogleSheetService.openPicker().subscribe({
       next: (sheetId) => {
+        // Check if the picker was canceled
+        if (sheetId === 'CANCELED') {
+          this.isLoading.set(false);
+          this.loadingOverlayService.hide();
+          return;
+        }
+        
         // When a file is selected, show loading indicator and message
         this.isLoading.set(true);
-        this.loadingOverlayService.show('Processing spreadsheet, please wait...');
+        this.loadingOverlayService.show(`Pre-processing ${type} spreadsheet, please wait...`);
         
         this.feedbackDialogService.showInfoToast({ 
-          detail: 'Processing spreadsheet, please wait...',
+          detail: `Pre-processing ${type} spreadsheet, please wait...`,
           life: 3000
         });
         
@@ -381,10 +429,17 @@ export class ImportDialogService {
         this.importService.analyzeFile(sheetId,`bulk_${type}_action`).subscribe({
           next: (response: any) => {
             if (response.intent === 'Processing') {
+              // If this is an asynchronous operation
+              const jobId = this.importService.getActiveJobId();
+              const jobInfo = jobId ? ` (Job ID: ${jobId})` : '';
+              
               this.isLoading.set(false);
               this.loadingOverlayService.hide();
               this.data.set([]);
-              this.feedbackDialogService.showInfoToast({ detail: response.message });
+              this.feedbackDialogService.showInfoToast({ 
+                detail: `Pre-processing ${type} spreadsheet${jobInfo}. ${response.message}`,
+                life: 5000
+              });
               return;
             } else if (response.intent === 'Success') {
               // Parse the records from the response

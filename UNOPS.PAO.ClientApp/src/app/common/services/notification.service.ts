@@ -12,6 +12,11 @@ export interface Notification {
   status?: 'Pending' | 'Progress' | 'Done';
 }
 
+export interface UpdateNotificationRequest {
+  message: string;
+  status: 'Pending' | 'Progress' | 'Done';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -34,5 +39,24 @@ export class NotificationService {
 
   markAsRead(notificationId: number, userId: string): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${notificationId}/read?userId=${userId}`, {});
+  }
+
+  /**
+   * Update an existing notification message and status
+   * @param notificationId ID of the notification to update
+   * @param message New message for the notification
+   * @param status New status for the notification
+   * @returns Observable of the API response
+   */
+  updateNotification(
+    notificationId: number, 
+    message: string, 
+    status: 'Pending' | 'Progress' | 'Done'
+  ): Observable<any> {
+    const payload: UpdateNotificationRequest = {
+      message,
+      status
+    };
+    return this.http.put(`${this.apiUrl}/${notificationId}/update`, payload);
   }
 } 

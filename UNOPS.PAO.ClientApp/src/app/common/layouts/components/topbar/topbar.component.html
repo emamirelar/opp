@@ -44,7 +44,7 @@
             <div *ngFor="let notification of notifications" 
                  class="notification-item" 
                  [ngClass]="{'notification-progress': notification.status === 'Progress'}"
-                 (click)="handleNotificationClick(notification)">
+                 (click)="notification.category !== 'file_analysis' ? handleNotificationClick(notification) : null">
               <div class="notification-content">
                 <!-- Progress status indicator -->
                 <div *ngIf="notification.status === 'Progress'" class="notification-progress-indicator">
@@ -60,6 +60,16 @@
                 <p *ngIf="!notification.message || !notification.message.includes('[')">
                   {{notification.message}}
                 </p>
+                
+                <!-- Cancel button for file analysis operations in progress -->
+                <div *ngIf="notification.category === 'file_analysis' && notification.status === 'Progress'" 
+                     class="notification-actions">
+                  <p-button icon="pi pi-times" 
+                            label="Cancel" 
+                            severity="secondary" 
+                            size="small"
+                            (onClick)="cancelFileAnalysis(notification, $event)"></p-button>
+                </div>
               </div>
             </div>
             <div *ngIf="notifications.length === 0" class="no-notifications">

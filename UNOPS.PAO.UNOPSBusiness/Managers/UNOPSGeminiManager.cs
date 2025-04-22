@@ -485,45 +485,6 @@ public class UNOPSGeminiManager : IGeminiManager
         }
     }
 
-    private static string ToConcatenatedString(object model)
-    {
-        if (model == null) return string.Empty;
-
-        var properties = model.GetType().GetProperties();
-        string result = "";
-
-        foreach (var property in properties)
-        {
-            var value = property.GetValue(model, null);
-
-            if (value is System.Collections.IEnumerable enumerable && !(value is string))
-            {
-                // Handle collections by concatenating their elements
-                foreach (var item in enumerable)
-                {
-                    result += ToConcatenatedString(item) + ", ";
-                }
-            }
-            else if (value != null && !value.GetType().IsValueType && value.GetType() != typeof(string))
-            {
-                // Handle nested objects by recursively concatenating their properties
-                var nestedProperties = value.GetType().GetProperties();
-                foreach (var nestedProperty in nestedProperties)
-                {
-                    var nestedValue = nestedProperty.GetValue(value, null);
-                    result += $"{property.Name}.{nestedProperty.Name}: {nestedValue}, ";
-                }
-            }
-            else
-            {
-                result += $"{property.Name}: {value}, ";
-            }
-        }
-
-        // Remove trailing comma and space
-        return result.TrimEnd(',', ' ');
-    }
-
     public async Task<dynamic> GenerateEmbeddings(string entityName)
     {
         var tableNames = _context.GetType()
@@ -649,14 +610,6 @@ public class UNOPSGeminiManager : IGeminiManager
 
         var convertedRecords = recordsArray.Select(r => r.ToObject(modelType)).Cast<object>().ToList();
 
-        // Create a typed array of the correct model type
-        var typedArray = Array.CreateInstance(modelType, convertedRecords.Count);
-
-        for (int i = 0; i < convertedRecords.Count; i++)
-        {
-            typedArray.SetValue(convertedRecords[i], i);
-        }
-
         var tableName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(request.Type).Pluralize();
         var dbSetProperty = _context.GetType().GetProperty(tableName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
@@ -667,11 +620,96 @@ public class UNOPSGeminiManager : IGeminiManager
         if (dbSet == null)
             throw new InvalidOperationException($"Unable to retrieve DbSet for table '{tableName}'.");
 
-        // Add all at once using AddRange if available
-        var addRangeMethod = ((IEnumerable<MethodInfo>)dbSet.GetType().GetMethods())
+        var recordsToAdd = new List<object>();
+        var recordsToUpdate = new List<object>();
+
+        // Separate records into updates vs. inserts based on ID
+        foreach (var record in convertedRecords)
+        {
+            var idProperty = record.GetType()
+                            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                            .FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+
+            if (idProperty != null)
+            {
+                var idValue = idProperty.GetValue(record);
+                if (idValue != null && idValue is int id && id > 0)
+                {
+                    // This is an existing record, so it should be updated
+                    recordsToUpdate.Add(record);
+                }
+                else
+                {
+                    // No valid ID, so it's a new record
+                    recordsToAdd.Add(record);
+                }
+            }
+            else
+            {
+                // No ID property, so it's a new record
+                recordsToAdd.Add(record);
+            }
+        }
+
+        // Process updates
+        foreach (var record in recordsToUpdate)
+        {
+            var idProperty = record.GetType()
+                           .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                           .FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+                           
+            var id = (int)idProperty.GetValue(record);
+            
+            // Find the entity by id
+            var findMethod = dbSet.GetType().GetMethod("Find", new[] { typeof(object[]) });
+            var existingEntity = findMethod?.Invoke(dbSet, new object[] { new object[] { id } });
+            
+            if (existingEntity != null)
+            {
+                // Update the entity properties
+                foreach (var prop in record.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (prop.Name != "Id" && prop.CanWrite && !(prop.PropertyType.IsGenericType && typeof(IEnumerable<>).IsAssignableFrom(prop.PropertyType.GetGenericTypeDefinition())))
+                    {
+                        try
+                        {
+                            var value = prop.GetValue(record);
+                            prop.SetValue(existingEntity, value);
+                        }
+                        catch 
+                        {
+                            // Skip properties that cannot be set
+                        }
+                    }
+                }
+                
+                var entryMethod = _context.GetType().GetMethod("Entry", new[] { typeof(object) });
+                var entry = entryMethod?.Invoke(_context, new object[] { existingEntity });
+                
+                if (entry != null)
+                {
+                    var stateProperty = entry.GetType().GetProperty("State");
+                    // Set to EntityState.Modified
+                    stateProperty?.SetValue(entry, 2); // 2 is EntityState.Modified
+                }
+            }
+        }
+
+        // Add new records if any
+        if (recordsToAdd.Count > 0)
+        {
+            var typedArray = Array.CreateInstance(modelType, recordsToAdd.Count);
+            for (int i = 0; i < recordsToAdd.Count; i++)
+            {
+                typedArray.SetValue(recordsToAdd[i], i);
+            }
+
+            // Add all at once using AddRange if available
+            var addRangeMethod = ((IEnumerable<MethodInfo>)dbSet.GetType().GetMethods())
                                 .FirstOrDefault(m => m.Name == "AddRange" && m.GetParameters().Length == 1);
 
-        addRangeMethod?.Invoke(dbSet, new[] { typedArray });
+            addRangeMethod?.Invoke(dbSet, new[] { typedArray });
+        }
 
         var successList = new List<object>();
         var errorMessages = new List<string>();
@@ -681,17 +719,18 @@ public class UNOPSGeminiManager : IGeminiManager
         {
             await _context.SaveChangesAsync();
 
-            foreach (var record in convertedRecords)
+            // Collect all updated and added records for the response
+            var processedRecords = new List<object>();
+            processedRecords.AddRange(recordsToAdd);
+            processedRecords.AddRange(recordsToUpdate);
+
+            foreach (var record in processedRecords)
             {
                 try
                 {
-                    var idProperty = record.GetType()
-                                    .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                                    .FirstOrDefault();
-
                     var idValue = record.GetType()
                                 .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                .Where(p => p.Name == "Id" && p.PropertyType == typeof(int))
+                                .Where(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && p.PropertyType == typeof(int))
                                 .Select(p => (int?)p.GetValue(record))
                                 .FirstOrDefault(v => v.HasValue && v.Value != 0);
 
@@ -732,13 +771,37 @@ public class UNOPSGeminiManager : IGeminiManager
             }
         }
 
+        // If successful, publish messages to PubSub for entity processing
+        if (isSuccess && successList.Count > 0)
+        {
+            try
+            {
+                // Use the AiContextualService to publish entity processing messages
+                // Create a list of dynamic objects that have an Id property for the helper method
+                var entities = successList.Select(s => {
+                    dynamic entity = new JObject();
+                    entity.Id = ((dynamic)s).Id;
+                    return entity;
+                }).ToList<dynamic>();
+                
+                await _aiService.PublishEntityProcessingMessages(tableName, entities);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the operation
+                Console.WriteLine($"Error publishing entity processing messages to PubSub: {ex.Message}");
+            }
+        }
+
         var result = new
         {
             IsSuccess = isSuccess,
             SuccessCount = successList.Count,
             SuccessRecords = successList.Select(s => new { Id = ((dynamic)s).Id }),
             ErrorCount = errorMessages.Count,
-            Errors = errorMessages
+            Errors = errorMessages,
+            UpdatedCount = recordsToUpdate.Count,
+            InsertedCount = recordsToAdd.Count
         };
 
         return JsonConvert.SerializeObject(result, Formatting.Indented);

@@ -100,6 +100,10 @@ export class ImportGoogleSheetService {
           const selectedSheet = data[google.picker.Response.DOCUMENTS][0];
           sheetIdSubject.next(selectedSheet.id);
           sheetIdSubject.complete();
+        } else if (data.action === google.picker.Action.CANCEL) {
+          // Handle cancel action by emitting a special value
+          sheetIdSubject.next('CANCELED');
+          sheetIdSubject.complete();
         }
       });
 

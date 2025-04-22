@@ -1,11 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Observable, map, of} from 'rxjs';
+import {Observable, map, of, catchError} from 'rxjs';
 import { Contact } from '../../../../features/internal/models/contact.model';
 
 export interface AnalyzeFileRequest {
   type: string;
   fileId: string;
+}
+
+export interface CancelAnalysisRequest {
+  jobId: string;
 }
 
 export interface BulkUploadRequest {
@@ -16,6 +20,7 @@ export interface BulkUploadRequest {
 export interface ImportAnalysisResponse {
     type: string;
     records: any[];
+    jobId?: string; // PubSub job ID for async operations
 }
 
 export const EXAMPLE_CONTACTS: Contact[] = [
@@ -78,8 +83,24 @@ export const EXAMPLE_CONTACTS: Contact[] = [
 })
 export class ImportService {
   private readonly apiUrl = '/api/import';
+  private processingFile = false;
+  private activeJobId: string | null = null;
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Get the active job ID if one exists
+   */
+  getActiveJobId(): string | null {
+    return this.activeJobId;
+  }
+
+  /**
+   * Check if a file is currently being processed
+   */
+  isProcessingFile(): boolean {
+    return this.processingFile;
+  }
 
   /**
    * Analyze a Google Sheet file by its ID
@@ -87,16 +108,61 @@ export class ImportService {
    * @param type The type of data being imported (e.g., 'bulk_contact_action')
    */
   analyzeFile(fileId: string, type: string): Observable<ImportAnalysisResponse> {
+    this.processingFile = true;
     const payload: AnalyzeFileRequest = {
       type,
       fileId
     };
 
-    return this.http.post<ImportAnalysisResponse>(`${this.apiUrl}/analyse-file`, payload);
+    return this.http.post<ImportAnalysisResponse>(`${this.apiUrl}/analyse-file`, payload)
+      .pipe(
+        map(response => {
+          this.processingFile = false;
+          
+          // Store the job ID if this is an async operation
+          if (response && response.jobId) {
+            this.activeJobId = response.jobId;
+          }
+          
+          return response;
+        }),
+        catchError(error => {
+          this.processingFile = false;
+          this.activeJobId = null;
+          throw error;
+        })
+      );
     /*return of({
       type: 'string',
       records: EXAMPLE_CONTACTS,
     });*/
+  }
+
+  /**
+   * Cancel an in-progress file analysis
+   * @returns Observable indicating success/failure of cancellation request
+   */
+  cancelAnalysis(): Observable<any> {
+    if (!this.activeJobId) {
+      return of({ success: false, message: 'No active analysis job to cancel' });
+    }
+
+    const jobId = this.activeJobId;
+    const payload: CancelAnalysisRequest = {
+      jobId
+    };
+    
+    // Reset state first
+    this.processingFile = false;
+    this.activeJobId = null;
+    
+    return this.http.post(`${this.apiUrl}/cancel-analysis`, payload)
+      .pipe(
+        catchError(error => {
+          console.error('Error cancelling analysis:', error);
+          throw error;
+        })
+      );
   }
 
   /**
@@ -116,6 +182,9 @@ export class ImportService {
       }
       if (!record.deletedBy) {
         delete record.deletedBy;
+      }
+      if (!record.id) {
+        delete record.id;
       }
       return record;
     });

@@ -19,8 +19,25 @@
     </div>
   }
 
-  <!-- Loading overlay -->
-  @if (importDialogService.isLoading()) {
+  <!-- File Analysis In Progress -->
+  @if (importService.isProcessingFile()) {
+    <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center bg-white z-10">
+      <p-progressSpinner [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
+      <span class="mt-3 text-lg font-medium">Processing {{ currentImportType() | titlecase }} File</span>
+      <p class="text-gray-600 mt-2 text-center max-w-lg">
+        Your file is being analyzed. This may take a while for large files.
+        <br>You'll be able to review and import data once processing is complete.
+      </p>
+      <p class="text-sm text-gray-500 mt-4">
+        @if (importService.getActiveJobId()) {
+          Job ID: {{ importService.getActiveJobId() }}
+        }
+      </p>
+    </div>
+  }
+
+  <!-- Loading overlay during other operations -->
+  @if (importDialogService.isLoading() && !importService.isProcessingFile()) {
     <div class="absolute top-12 left-0 w-full h-[calc(100%-48px)] flex flex-col items-center justify-center bg-white bg-opacity-80 z-5">
       <p-progressSpinner></p-progressSpinner>
       <span class="mt-3 text-lg font-medium">Processing data, please wait...</span>

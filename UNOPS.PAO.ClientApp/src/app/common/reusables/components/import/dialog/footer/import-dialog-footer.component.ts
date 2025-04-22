@@ -5,6 +5,7 @@ import { ImportDialogService } from '../import-dialog.service';
 import { ImportGoogleSheetService } from '../../import-google-sheet.service';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ImportService } from '../../import.service';
 
 @Component({
   selector: 'app-import-footer',
@@ -16,8 +17,13 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         @if (importDialogService.getFileUrl()()) {
           <div class="font-medium">Selected File: {{ importDialogService.getFileUrl()() }}</div>
         }
+        @if (importService.isProcessingFile()) {
+          <div class="text-orange-500 font-medium">
+            <i class="pi pi-exclamation-circle mr-1"></i>
+            File analysis in progress - please wait
+          </div>
+        }
       </div>
-
 
       <p-button
         [label]="'button.cancel' | translate"
@@ -29,7 +35,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
       <p-button
         [label]="'button.import' | translate"
         icon="pi pi-file-import"
-        (onClick)="importDialogService.triggerImport('contact')">
+        [disabled]="importService.isProcessingFile() || importDialogService.isLoading()"
+        (onClick)="importDialogService.triggerImport(importDialogService.getImportType())">
       </p-button>
     </div>
   `,
@@ -38,4 +45,5 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 })
 export class ImportFooterComponent {
   importDialogService = inject(ImportDialogService);
+  importService = inject(ImportService);
 }

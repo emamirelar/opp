@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, inject } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
@@ -16,8 +16,11 @@ import { ComponentResolverService } from '../../../../features/internal/services
 import { interval, Subscription } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService } from '../../../../essentials/services/auth.service';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { ImportDialogService } from '../../../reusables/components/import/dialog/import-dialog.service';
+import { ImportService } from '../../../reusables/components/import/import.service';
+import { Router } from '@angular/router';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-topbar',
@@ -30,13 +33,14 @@ import { ImportDialogService } from '../../../reusables/components/import/dialog
     ButtonModule,
     OverlayPanelModule,
     ToastModule,
-    ProgressBarModule
+    ProgressBarModule,
+    ConfirmDialogModule
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [MessageService]
+  providers: [MessageService, ConfirmationService]
 })
 export class TopbarComponent implements OnInit, OnDestroy {
   items!: MenuItem[];
@@ -45,6 +49,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   private notificationSubscription?: Subscription;
   private userId: string = '';
   private previousNotifications: Notification[] = [];
+  private importService = inject(ImportService);
+  private importDialogService = inject(ImportDialogService);
+  private confirmationService = inject(ConfirmationService);
 
   constructor(
     public layoutService: LayoutService,
@@ -53,7 +60,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef,
-    private importDialogService: ImportDialogService
+    private router: Router
   ) { }
 
   ngOnInit() {
@@ -295,6 +302,70 @@ export class TopbarComponent implements OnInit, OnDestroy {
     // Replace the progress bar with HTML span with special styling
     return message.replace(progressBarRegex, (match) => {
       return `<span class="progress-bar">${match}</span>`;
+    });
+  }
+
+  /**
+   * Cancel a file analysis operation in progress
+   * @param notification The notification for the file analysis operation
+   * @param event The click event to stop propagation
+   */
+  cancelFileAnalysis(notification: Notification, event: Event): void {
+    // Stop event propagation to prevent opening the notification
+    event.stopPropagation();
+    
+    // Extract jobId from the notification message if available
+    let jobId = null;
+    if (notification.message) {
+      const match = notification.message.match(/Job ID: ([a-zA-Z0-9-]+)/);
+      if (match && match[1]) {
+        jobId = match[1];
+      }
+    }
+    
+    // Show confirmation dialog
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to cancel this file analysis operation?',
+      header: 'Cancel File Analysis',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        // Call the cancel API
+        this.importService.cancelAnalysis().subscribe({
+          next: () => {
+            // Update notification status
+            this.notificationService.updateNotification(
+              notification.id,
+              'File analysis was cancelled by user',
+              'Done'
+            ).subscribe({
+              next: () => {
+                // Mark as read after updating
+                this.markNotificationAsRead(notification.id);
+                
+                // Show success message
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Cancelled',
+                  detail: 'File analysis operation has been cancelled',
+                  life: 3000
+                });
+              },
+              error: (err: any) => {
+                console.error('Error updating notification:', err);
+              }
+            });
+          },
+          error: (err: any) => {
+            console.error('Error cancelling file analysis:', err);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to cancel file analysis: ' + (err.message || 'Unknown error'),
+              life: 5000
+            });
+          }
+        });
+      }
     });
   }
 }

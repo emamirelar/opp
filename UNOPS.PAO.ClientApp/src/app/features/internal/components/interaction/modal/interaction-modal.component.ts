@@ -18,6 +18,8 @@ import {Partner} from '../../../models/partner.model';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
+import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-interaction-modal',
@@ -184,36 +186,5 @@ export class InteractionModalComponent {
         contactId: data.contactId || this.formGroup.get('contactId')?.value
       });
     }
-  }
-
-  // Helper to get proper display name for a contact
-  getContactDisplayName(contact: any): string {
-    if (!contact) return '';
-    
-    // Log the contact object to see what properties are available
-    console.log('Contact for display:', contact);
-    
-    const firstName = contact.firstName || contact.FirstName || '';
-    const lastName = contact.lastName || contact.LastName || '';
-    
-    if (firstName || lastName) {
-      return `${firstName} ${lastName}`.trim();
-    }
-    
-    // Fallback to email if name components aren't available
-    if (contact.email || contact.Email) {
-      return contact.email || contact.Email;
-    }
-    
-    // Last resort - return the ID or something to identify the contact
-    return `Contact #${contact.id || contact.Id || 'Unknown'}`;
-  }
-
-  // Helper to extract the ID from a contact object
-  getContactId(contact: any): string | number {
-    if (!contact) return '';
-    
-    // Support both camelCase and PascalCase property naming
-    return contact.id || contact.Id || '';
   }
 }

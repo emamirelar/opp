@@ -686,6 +686,28 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 }
             }
 
+            if (isAsync)
+            {
+                // Create a single notification for the entire batch
+                var notification = new Notification
+                {
+                    UserId = userId,
+                    Message = "Batch processed successfully",
+                    Category = promptData.Type,
+                    ResponseType = "Success",
+                    RecordData = JsonConvert.SerializeObject(finalResponse),
+                    IsRead = false,
+                    Status = NotificationStatus.Done,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _context.Notifications.AddAsync(notification);
+                await _context.SaveChangesAsync();
+            }
+
+            // Publish entity processing messages to PubSub after the bulk import is completed
+            await PublishEntityProcessingMessages(entityName, finalResponse);
+
             return finalResponse;
         }
 
@@ -742,6 +764,66 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             }
 
             return responseObject;
+        }
+        
+        // Helper method to publish entity processing messages to PubSub
+        public async Task PublishEntityProcessingMessages(string entityName, List<dynamic> processedEntities)
+        {
+            try
+            {
+                // Create a list to hold batches of messages (max 50 per batch)
+                var messages = new List<MyPubSubMessage>();
+                
+                foreach (dynamic entity in processedEntities)
+                {
+                    // Extract the ID from the entity
+                    if (entity["id"] != null || entity["Id"] != null)
+                    {
+                        int entityId;
+                        var idValue = entity["id"] ?? entity["Id"];
+                        
+                        // Handle different ID formats
+                        if (idValue is int id)
+                        {
+                            entityId = id;
+                        }
+                        else if (int.TryParse(idValue?.ToString(), out int parsedId))
+                        {
+                            entityId = parsedId;
+                        }
+                        else
+                        {
+                            // Skip if we can't get a valid ID
+                            continue;
+                        }
+                        
+                        messages.Add(new MyPubSubMessage
+                        {
+                            MessageType = "EntityProcessing",
+                            EntityName = entityName,
+                            EntityId = entityId
+                        });
+                        
+                        // Publish in batches of 50 to avoid overwhelming the service
+                        if (messages.Count >= 50)
+                        {
+                            await _pubSubPublisher.PublishMessageAsync(messages);
+                            messages.Clear();
+                        }
+                    }
+                }
+                
+                // Publish any remaining messages
+                if (messages.Count > 0)
+                {
+                    await _pubSubPublisher.PublishMessageAsync(messages);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the operation
+                Console.WriteLine($"Error publishing entity processing messages to PubSub: {ex.Message}");
+            }
         }
     }
 }
