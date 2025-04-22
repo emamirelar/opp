@@ -1,10 +1,16 @@
-import { Component, ContentChild, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, computed, inject, effect } from '@angular/core';
+import { Component, ContentChild, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, computed, inject, effect, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { TranslateModule } from '@ngx-translate/core';
 import { ListViewColumn, ListViewConfig } from './listview.model';
 import { ListviewDataLoaderService } from './listview-data-loader.service';
+import { FormsModule } from '@angular/forms';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { Subject, debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
+import {IconField} from 'primeng/iconfield';
+import {InputIcon} from 'primeng/inputicon';
 
 @Component({
   selector: 'app-listview',
@@ -16,12 +22,19 @@ import { ListviewDataLoaderService } from './listview-data-loader.service';
     DatePipe,
     DecimalPipe,
     CurrencyPipe,
-    TableModule
+    TableModule,
+    FormsModule,
+    InputTextModule,
+    ButtonModule,
+    IconField,
+    InputIcon
   ],
   providers: [ListviewDataLoaderService]
 })
-export class ListviewComponent<T = any> {
+export class ListviewComponent<T = any> implements OnDestroy {
   private dataLoader = inject(ListviewDataLoaderService);
+  private searchSubject = new Subject<string>();
+  private searchSubscription: Subscription = Subscription.EMPTY;
 
   // Listen for refresh events
   @HostListener('window:refresh-listview')
@@ -47,9 +60,18 @@ export class ListviewComponent<T = any> {
     selectionMode: 'single',
     enablePagination: true,
     enableSorting: true,
+    enableSearch: false,
     scrollable: true,
     scrollHeight: 'flex'
   };
+  @Input() set searchDebounceTime(value: number) {
+    this._searchDebounceTime = value;
+    this.setupSearchDebounce();
+  }
+  get searchDebounceTime(): number {
+    return this._searchDebounceTime;
+  }
+  private _searchDebounceTime = 500; // Default debounce time in ms
   @Input() idField = 'id';
 
   // Events
@@ -57,11 +79,13 @@ export class ListviewComponent<T = any> {
   @Output() rowDblClick = new EventEmitter<T>();
   @Output() pageChange = new EventEmitter<{first: number, rows: number}>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
+  @Output() searchChange = new EventEmitter<string>();
 
   // State
   selectedRecord: T | null = null;
   first = 0;
   rows: number;
+  searchText = '';
 
   // Computed properties from data loader
   isLoading = computed(() => this.dataLoader.isLoading());
@@ -72,6 +96,49 @@ export class ListviewComponent<T = any> {
 
   constructor() {
     this.rows = this.config.pageSize || 50;
+    this.setupSearchDebounce();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Setup search debounce
+   */
+  private setupSearchDebounce(): void {
+    // Clean up existing subscription if it exists
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
+
+    // Create new subscription with current debounce time
+    this.searchSubscription = this.searchSubject.pipe(
+      debounceTime(this.searchDebounceTime),
+      distinctUntilChanged()
+    ).subscribe(searchValue => {
+      this.executeSearch(searchValue);
+    });
+  }
+
+  /**
+   * Handle search input from the user
+   */
+  onSearchInput(value: string): void {
+    this.searchSubject.next(value);
+  }
+
+  /**
+   * Execute the search with the given value
+   */
+  private executeSearch(value: string): void {
+    this.searchChange.emit(value);
+    this.dataLoader.setSearchText(value);
+    this.first = 0; // Reset to first page
+    this.dataLoader.setPagination(0, this.rows);
+    this.loadData();
   }
 
   /**
@@ -110,6 +177,23 @@ export class ListviewComponent<T = any> {
 
     this.dataLoader.setSorting(event.field, order);
     this.loadData();
+  }
+
+  /**
+   * Handle search event (for backward compatibility with enter key)
+   */
+  onSearch(): void {
+    const trimmedValue = this.searchText.trim();
+    this.searchText = trimmedValue; // Update the input with trimmed value
+    this.executeSearch(trimmedValue);
+  }
+
+  /**
+   * Clear search text
+   */
+  clearSearch(): void {
+    this.searchText = '';
+    this.executeSearch('');
   }
 
   /**

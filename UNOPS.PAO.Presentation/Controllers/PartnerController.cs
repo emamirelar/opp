@@ -11,6 +11,7 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 
 [Route("/")]
 [ApiController]
@@ -48,9 +49,25 @@ public class PartnerController : ControllerBase
     [HttpGet(APIDictionary.Partner)]
     // Internal call: get Partners created by logged-in user
     // TODO add permissions
-    public ActionResult GetAll([FromQuery] PaginationRequest parameters)
+    public ActionResult GetAll([FromQuery] PartnerFilterRequest request)
     {
-        return Ok(manager.GetPartners(currentUserId, parameters));
+        var specification = new PartnerCompositeSpecification(
+            id: request.Id,
+            name: request.Name,
+            status: request.Status,
+            newEngagement: request.NewEngagement,
+            phone: request.Phone,
+            website: request.Website,
+            shortName: request.ShortName,
+            partnerOfficeId: request.PartnerOfficeId,
+            partnerCategoryId: request.PartnerCategoryId,
+            addressCity: request.AddressCity,
+            addressStateProvince: request.AddressStateProvince,
+            addressPostalCode: request.AddressPostalCode,
+            addressCountry: request.AddressCountry,
+            searchText: request.SearchText);
+        
+        return Ok(manager.GetPartnersWithSpecification(currentUserId, specification, request));
     }
 
     [HttpGet(APIDictionary.Partner + "/{id}")]

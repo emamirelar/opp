@@ -182,5 +182,8 @@
     "validation": {
         "required": "Este campo é obrigatório",
         "maxLength": "O comprimento máximo é de {{max}} caracteres"
+    },
+    "action": {
+        "search": "Pesquisar"
     }
 }

@@ -17,12 +17,20 @@ export class ContactService {
 
   constructor() { }
 
+  getAll(params: any): Observable<any> {
+    this.isLoading.set(true);
+    return this.http.get<any>(this.apiUrl, { observe: 'response', params })
+      .pipe(
+        tap(() => this.isLoading.set(false))
+      );
+  }
+
   getUrl(){
     return this.apiUrl
   }
 
-  getUploadProfilePictureUrl(id: string) {
-    return `${this.apiUrl}/${id}/profile-picture`;
+  getUploadProfilePictureUrl(contactId: string): string {
+    return `${this.apiUrl}/${contactId}/profile-picture`;
   }
 
   getAllContacts() {
@@ -39,17 +47,12 @@ export class ContactService {
     });
   }
 
-  getContactById(recordId: string) {
+  getContactById(id: string): Observable<Contact> {
     this.isLoading.set(true);
-    return this.http.get(`${this.apiUrl}/${recordId}`).pipe(tap(
-      {
-        next: (event) => {
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-        }
-      }));
+    return this.http.get<Contact>(`${this.apiUrl}/${id}`)
+      .pipe(
+        tap(() => this.isLoading.set(false))
+      );
   }
 
   createContact( contact: Contact ): Observable<Contact> {

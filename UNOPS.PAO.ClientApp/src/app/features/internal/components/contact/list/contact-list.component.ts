@@ -65,6 +65,7 @@ export class ContactListComponent implements OnInit {
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
+    enableSearch: true,
     scrollable: true,
     scrollHeight: 'flex'
   };
@@ -136,7 +137,7 @@ export class ContactListComponent implements OnInit {
   openBusinessCardScanner() {
     const ref = this.dialogService.open(BusinessCardScannerComponent, {
       header: 'Scan Business Card',
-      width: '90vw',
+      width: '95vw',
       style: { maxWidth: '800px' },
       closable: true
     });

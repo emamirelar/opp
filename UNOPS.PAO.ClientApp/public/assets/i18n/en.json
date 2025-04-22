@@ -269,6 +269,9 @@
     "cancel": "Cancel",
     "capture": "Capture"
   },
+  "action": {
+    "search": "Search"
+  },
   "placeholder": {
     "enterUrl": "Enter URL",
     "enterName": "Enter name"
