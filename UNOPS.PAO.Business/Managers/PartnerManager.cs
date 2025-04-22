@@ -16,6 +16,8 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Domain.Specifications;
 
 public class PartnerManager : IPartnerManager
 {
@@ -52,6 +54,19 @@ public class PartnerManager : IPartnerManager
         return query.Paginate(
             x => mapper.Map<PartnerModel>(x),
             request
+        );
+    }
+    
+    public PaginationResponse<PartnerModel> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination)
+    {
+        // Apply the specification to the query
+        var query = PartnerRepository.GetAll().AsQueryable();
+        var filteredQuery = query.ApplySpecification(specification);
+        
+        // Apply pagination
+        return filteredQuery.Paginate(
+            x => mapper.Map<PartnerModel>(x),
+            pagination
         );
     }
 

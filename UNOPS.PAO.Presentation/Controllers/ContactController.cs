@@ -10,6 +10,7 @@ using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
+using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 
 [Route("/")]
 [ApiController]
@@ -47,9 +48,27 @@ public class ContactController : ControllerBase
     [HttpGet(APIDictionary.Contact)]
     // Internal call: get contacts created by logged-in user
     // TODO add permissions
-    public ActionResult GetAll([FromQuery] PaginationRequest parameters)
+    public ActionResult GetAll([FromQuery] ContactFilterRequest request)
     {
-        return Ok(manager.GetContacts(currentUserId, parameters));
+        var specification = new ContactCompositeSpecification(
+            id: request.Id,
+            partnerId: request.PartnerId,
+            status: request.Status,
+            salutation: request.Salutation,
+            title: request.Title,
+            department: request.Department,
+            phone: request.Phone,
+            mobile: request.Mobile,
+            assistant: request.Assistant,
+            assistantEmail: request.AssistantEmail,
+            assistantPhone: request.AssistantPhone,
+            mailingCity: request.MailingCity,
+            mailingStateProvince: request.MailingStateProvince,
+            mailingPostalCode: request.MailingPostalCode,
+            mailingCountry: request.MailingCountry,
+            searchText: request.SearchText);
+        
+        return Ok(manager.GetContactsWithSpecification(currentUserId, specification, request));
     }
 
     [HttpGet(APIDictionary.Contact + "/{id}")]

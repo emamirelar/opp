@@ -6,7 +6,31 @@
   @apply flex flex-col grow gap-4;
 }
 
+.search-container {
+  @apply flex mb-2;
+}
+
+/* Specific styles for the search input container */
+:host ::ng-deep .search-input-container {
+  display: inline-block;
+  width: 250px; /* Set fixed width */
+}
+
 :host ::ng-deep {
+  /* Fix for search input size when clear button appears */
+  p-iconfield {
+    width: 250px; /* Set your desired width */
+  }
+  
+  p-iconfield input {
+    width: 100%;
+    transition: none; /* Prevent any size transitions */
+  }
+  
+  p-iconfield .p-inputtext, p-iconfield .p-inputtext-wrapper {
+    width: 100%;
+  }
+  
   .p-datatable-wrapper {
     @apply border border-gray-200 rounded-md;
   }

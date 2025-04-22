@@ -141,7 +141,7 @@
         "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace"
     },
     "errors": {
-      "failedToLoad": "Falha ao carregar"
+        "failedToLoad": "Error al cargar"
     },
     "aiAssistant": {
         "openButton": "Abrir Asistente de IA",
@@ -178,5 +178,8 @@
     "validation": {
         "required": "Este campo es obligatorio",
         "maxLength": "La longitud máxima es de {{max}} caracteres"
+    },
+    "action": {
+        "search": "Buscar"
     }
 }

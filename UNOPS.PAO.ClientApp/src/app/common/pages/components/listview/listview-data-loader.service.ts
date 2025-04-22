@@ -26,6 +26,7 @@ export class ListviewDataLoaderService {
   private pageSize = 50;
   private sortField = '';
   private sortOrder: 'asc' | 'desc' = 'asc';
+  private searchText = '';
   
   /**
    * Set the API endpoint URL
@@ -56,6 +57,13 @@ export class ListviewDataLoaderService {
   setSorting(field: string, order: 'asc' | 'desc'): void {
     this.sortField = field;
     this.sortOrder = order;
+  }
+  
+  /**
+   * Set search text
+   */
+  setSearchText(text: string): void {
+    this.searchText = text;
   }
   
   /**
@@ -118,6 +126,10 @@ export class ListviewDataLoaderService {
     if (this.sortField) {
       params = params.set('orderBy', this.sortField)
                     .set('ascending', this.sortOrder === 'asc');
+    }
+    
+    if (this.searchText) {
+      params = params.set('searchText', this.searchText.trim());
     }
     
     return this.http.get(this.url, { params });
