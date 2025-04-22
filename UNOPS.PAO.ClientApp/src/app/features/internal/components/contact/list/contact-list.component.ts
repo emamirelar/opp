@@ -153,14 +153,7 @@ export class ContactListComponent implements OnInit {
   }
 
   openImportDialog() {
-    this.importDialogService.openImportDialog('Import Contacts')
-      .subscribe((result) => {
-        if (result) {
-          // Handle the imported data
-          this.feedbackDialogService.showSuccessToast({ detail: 'Contacts imported successfully!' });
-          // Refresh the list to show new contacts
-          window.dispatchEvent(new CustomEvent('refresh-listview'));
-        }
-      });
+    // Use the Google Sheet picker directly which will show loading indicators
+    this.importDialogService.openGoogleSheetPicker('contact');
   }
 }

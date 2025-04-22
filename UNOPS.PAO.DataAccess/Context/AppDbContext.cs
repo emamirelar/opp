@@ -42,6 +42,8 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
 
+    public DbSet<Notification> Notifications { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings

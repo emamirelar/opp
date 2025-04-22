@@ -32,6 +32,7 @@ import {EntityType} from '../../../../../common/models/link.model';
 import { BlockUI } from 'primeng/blockui';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Partner } from '../../../models/partner.model';
+import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -53,7 +54,8 @@ import { Partner } from '../../../models/partner.model';
     CheckboxModule,
     ReactiveFormsModule,
     MarkdownPipe,
-    LinkListComponent
+    LinkListComponent,
+    AiTranscribeComponent
   ],
   templateUrl: './partner-edit-dialog.component.html',
   standalone: true,
@@ -251,5 +253,24 @@ export class PartnerEditDialogComponent implements OnInit {
     requestJsonObj['id'] = this.recordId;
 
     return requestJsonObj;
+  }
+
+  // Handler for AI transcription completion
+  onTranscriptionCompleted(data: any): void {
+    if (data) {
+      this.formGroup.patchValue({
+        name: data.name || this.formGroup.get('name')?.value,
+        shortName: data.shortName || this.formGroup.get('shortName')?.value,
+        phone: data.phone || this.formGroup.get('phone')?.value,
+        address1Street: data.address1Street || this.formGroup.get('address1Street')?.value,
+        address1Street2: data.address1Street2 || this.formGroup.get('address1Street2')?.value,
+        address1City: data.address1City || this.formGroup.get('address1City')?.value,
+        address1StateProvince: data.address1StateProvince || this.formGroup.get('address1StateProvince')?.value,
+        address1PostalCode: data.address1PostalCode || this.formGroup.get('address1PostalCode')?.value,
+        address1Country: data.address1Country || this.formGroup.get('address1Country')?.value
+      });
+
+      this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.preFillSuccess') });
+    }
   }
 }

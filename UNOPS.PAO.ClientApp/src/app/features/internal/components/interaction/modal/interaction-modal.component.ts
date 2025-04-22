@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, OnInit} from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
@@ -15,8 +15,8 @@ import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import {Contact} from '../../../models/contact.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import {Partner} from '../../../models/partner.model';
+import { HttpClientModule } from '@angular/common/http';
+import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 
 @Component({
   selector: 'app-interaction-modal',
@@ -30,7 +30,9 @@ import {Partner} from '../../../models/partner.model';
     SelectModule,
     TranslateModule,
     CommonModule,
-    ConfirmDialog
+    ConfirmDialog,
+    HttpClientModule,
+    AiTranscribeComponent
   ],
   providers: [
     ConfirmationService,
@@ -39,7 +41,7 @@ import {Partner} from '../../../models/partner.model';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InteractionModalComponent {
+export class InteractionModalComponent implements OnInit {
   @Input() record?: Interaction;
   @Output() closeModal = new EventEmitter<void>();
   @Output() deleted = new EventEmitter<void>();
@@ -54,8 +56,6 @@ export class InteractionModalComponent {
     value: type,
     translateKey: INTERACTION_TYPE_TRANSLATION_KEYS[type]
   }));
-
-  contacts: Contact[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -72,7 +72,23 @@ export class InteractionModalComponent {
       data: [''],
       contactId: ['', Validators.required]
     });
+    // Ensure contacts are loaded when component is created
     this.contactService.getAllContacts();
+  }
+
+  // Safe getter for contacts to ensure an array is always returned
+  get safeContacts(): any[] {
+    const contacts = this.contactService.allContacts();
+    console.log('Contacts in safeContacts getter:', contacts);
+    
+    // If no contacts, return empty array
+    if (!contacts || contacts.length === 0) {
+      console.log('No contacts data available');
+      return [];
+    }
+    
+    // Make sure we return clean contact objects for the dropdown
+    return Array.isArray(contacts) ? contacts : [];
   }
 
   ngOnInit() {
@@ -166,5 +182,48 @@ export class InteractionModalComponent {
         }
       }
     });
+  }
+
+  // Handler for transcription completion
+  onTranscriptionCompleted(data: any): void {
+    if (data) {
+      this.formGroup.patchValue({
+        type: data.type || this.formGroup.get('type')?.value,
+        date: data.date ? new Date(data.date) : this.formGroup.get('date')?.value,
+        data: data.data || this.formGroup.get('data')?.value,
+        contactId: data.contactId || this.formGroup.get('contactId')?.value
+      });
+    }
+  }
+
+  // Helper to get proper display name for a contact
+  getContactDisplayName(contact: any): string {
+    if (!contact) return '';
+    
+    // Log the contact object to see what properties are available
+    console.log('Contact for display:', contact);
+    
+    const firstName = contact.firstName || contact.FirstName || '';
+    const lastName = contact.lastName || contact.LastName || '';
+    
+    if (firstName || lastName) {
+      return `${firstName} ${lastName}`.trim();
+    }
+    
+    // Fallback to email if name components aren't available
+    if (contact.email || contact.Email) {
+      return contact.email || contact.Email;
+    }
+    
+    // Last resort - return the ID or something to identify the contact
+    return `Contact #${contact.id || contact.Id || 'Unknown'}`;
+  }
+
+  // Helper to extract the ID from a contact object
+  getContactId(contact: any): string | number {
+    if (!contact) return '';
+    
+    // Support both camelCase and PascalCase property naming
+    return contact.id || contact.Id || '';
   }
 }

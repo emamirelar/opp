@@ -46,15 +46,27 @@
       <p-select
         id="contact"
         formControlName="contactId"
-        [options]="contactService.allContacts()"
-        optionLabel="firstName"
+        [options]="safeContacts"
+        [virtualScroll]="true"
+        [virtualScrollItemSize]="38"
+        [dataKey]="'id'"
         optionValue="id"
+        [optionLabel]="getContactDisplayName"
         [filter]="true"
-        filterBy="name"
-        [appendTo]="'body'"
+        filterBy="firstName,lastName,email"
         [showClear]="true"
+        [appendTo]="'body'"
         placeholder="{{ 'label.interaction.selectContact' | translate }}"
         class="w-full">
+        <ng-template pTemplate="selectedItem" let-contact>
+          <span *ngIf="contact">{{ getContactDisplayName(contact) }}</span>
+        </ng-template>
+        <ng-template pTemplate="item" let-contact>
+          <div>
+            <div>{{ getContactDisplayName(contact) }}</div>
+            <small *ngIf="contact.email" class="text-gray-500">{{ contact.email || contact.Email }}</small>
+          </div>
+        </ng-template>
       </p-select>
     </div>
 

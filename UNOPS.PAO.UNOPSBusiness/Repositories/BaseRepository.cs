@@ -114,6 +114,13 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     public async Task PublishMessageToPubSub(TEntity entity)
     {
         var entityName = typeof(TEntity).Name.Replace("UNOPS", "").Pluralize();
-        _aiService.PublishMessageToPubSub(entity, entityName, entity.Id);
+        
+        var message = new MyPubSubMessage
+        {
+            EntityName = entityName,
+            EntityId = entity.Id
+        };
+
+        await _aiService.PublishMessageToPubSub(message);
     }
 }

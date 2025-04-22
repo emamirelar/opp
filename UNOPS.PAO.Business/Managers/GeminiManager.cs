@@ -135,7 +135,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req)
+    public Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId)
     {
         throw new NotImplementedException();
     }

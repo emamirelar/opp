@@ -1,6 +1,7 @@
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using System.Text.Json;
 
 public class MappingProfile : Profile
 {
@@ -15,5 +16,11 @@ public class MappingProfile : Profile
         CreateMap<Link, LinkModel>();
         CreateMap<LinkRequest, Link>();
         CreateMap<UpdateLinkRequest, Link>();
+        CreateMap<Notification, NotificationModel>()
+            .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Message))
+            .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))
+            .ForMember(dest => dest.ResponseType, opt => opt.MapFrom(src => src.ResponseType))
+            .ForMember(dest => dest.Records, opt => opt.MapFrom(src => 
+                JsonSerializer.Deserialize<List<object>>(src.RecordData, new JsonSerializerOptions()) ?? new List<object>()));
     }
 }

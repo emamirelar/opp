@@ -105,9 +105,24 @@ export class ImportService {
    * @param type The type of data being uploaded (e.g., 'bulk_contact_action')
    */
   bulkUpload(records: any[], type: string): Observable<any> {
+    // Process records to ensure createdBy is not null (convert null to a valid number in backend)
+    const processedRecords = records.map(record => {
+      // Only modify the record if createdBy is null
+      if (!record.createdBy) {
+        delete record.createdBy;
+      }
+      if (!record.lastModifiedBy) {
+        delete record.lastModifiedBy;
+      }
+      if (!record.deletedBy) {
+        delete record.deletedBy;
+      }
+      return record;
+    });
+
     const payload: BulkUploadRequest = {
       type,
-      records
+      records: processedRecords
     };
     return this.http.post(`${this.apiUrl}/bulk-upload`, payload);
   }

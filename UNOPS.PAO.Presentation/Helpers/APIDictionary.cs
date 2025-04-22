@@ -71,4 +71,7 @@ public class APIDictionary
     public const string BulkUpload = APIPrefix + "import/bulk-upload";
 
     public const string Link = APIPrefix + "links";
+
+    public const string Notifications = "api/notifications";
+    public const string NotificationRead = "api/notifications/{notificationId}/read";
 }

@@ -308,14 +308,9 @@ public class UNOPSGeminiManager : IGeminiManager
             parts = new[] { new { text = x.RawMessage } }
         }).ToList();
 
-       // var dataResult = await _aiService.GetAllEntityDataAsync("Contacts");
-
         // Entity detection and intent classification to be done
         var entityResponse = await EntityDetectionThroughGemini(session, formattedChatHistory, req, fileUrl, fileType);
-        //var entityResponse = GetDetailsFromGeminiResponse(entityDetectionResponse);
         var forward = entityResponse.Forward.ToString();
-       // await _aiService.GenerateEmbeddingAsync("Contact", 1, "Name: Anusha Swaminathan, Country: Denmark, Address: Else Alfelts Vej 52N, 1.tv, PartnerName: UNOPS Partner A, Status: Active");
-        //await _aiService.GenerateEmbeddingAsync("Contact", 2, "Name: Raghavendar Murali, Country: Denmark, Address: Else Alfelts Vej 52N, 1.tv, PartnerName: UNOPS Partner X, Status: Active");
         if (forward == string.Empty || forward == "No") {
             return entityResponse;
         }
@@ -344,7 +339,7 @@ public class UNOPSGeminiManager : IGeminiManager
         }).ToList();
 
         var detailedResponse = await FetchDetailedResponseFromGemini(session, formattedChatHistory, req, promptType, fileUrl, fileType);
-        var updatedMessage = await GetDependentDropdownValues(detailedResponse?.Dependents, JsonConvert.DeserializeObject(detailedResponse.RawMessage));
+        var updatedMessage = await _aiService.GetDependentDropdownValues(detailedResponse?.Dependents, JsonConvert.DeserializeObject(detailedResponse.RawMessage));
         var updatedDetailedResponse = new
         {
             detailedResponse.Entity,
@@ -367,55 +362,6 @@ public class UNOPSGeminiManager : IGeminiManager
         
         return updatedDetailedResponse;
 
-    }
-
-    private async Task<dynamic> GetDependentDropdownValues(dynamic dependents, dynamic responseObject)
-    {
-        if (!string.IsNullOrWhiteSpace(dependents))
-        {
-            var dependentsList = JsonConvert.DeserializeObject<List<string>>(dependents);
-
-            if (dependentsList.Count > 0)
-            {
-                //var detailedRawMessage = JsonConvert.DeserializeObject(detailedResponse.RawMessage);
-                foreach (var dependent in dependentsList)
-                {
-                    var text = responseObject[dependent];
-                    if (text != null)
-                    { 
-                        dynamic entityId;
-                        int id;
-                        if (text != null)
-                        {
-                            if (text?.Value != null)
-                            {
-                                text = text.Value;
-                            }
-                            if (int.TryParse(text, out id))
-                            {
-                                continue;
-                            }
-                        }
-                        var embeddingString = await _aiService.CreateEmbeddingForText(text);
-                        string entityName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(dependent.Replace("Id", ""));
-                        entityName = entityName.Pluralize();
-                        entityId = await _aiService.RetrieveEntityId(entityName, embeddingString);
-
-                        if (entityId == null || entityId is DBNull)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            responseObject[dependent] = entityId;
-                        }
-                    }
-                }
-            }
-
-        }
-
-        return responseObject;
     }
 
     public IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId) 
@@ -473,7 +419,7 @@ public class UNOPSGeminiManager : IGeminiManager
         return await _sessionService.UpdateAiAssistantAccessibility(req);
     }
 
-    public async Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req)
+    public async Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId)
     {
         var promptData = (await GetPromptData(req.Type)).FirstOrDefault();
         if (promptData == null)
@@ -483,61 +429,60 @@ public class UNOPSGeminiManager : IGeminiManager
 
         var fileData = await _aiService.ReadFileData(req.FileId);
         var fileDataArray = JArray.Parse(fileData);
-        var headerRow = fileDataArray[0];
-        // Define batch size
-        int batchSize = 25;
-        string entity = "";
-        string intent = "";
-        string message = "";
-        var finalResponse = new List<dynamic>();
 
-        // TODO
-
-        for (int i = 1; i < fileDataArray.Count; i += batchSize)
+        // Check if we should process asynchronously
+        if (fileDataArray.Count > 100)
         {
+            var message = new MyPubSubMessage
+            {
+                MessageType = "BulkImport",
+                EntityName = req.Type,
+                PromptType = promptData.Type,
+                BatchData = JsonConvert.SerializeObject(fileDataArray.ToObject<List<object>>()), // Convert to JSON string
+                UserId = currentUserId
+            };
+
+            var pubSubPublisher = new PubSubPublisher(_configuration);
+
+            await pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
+
+            return new
+            {
+                Message = "Bulk import processing started. You will be notified when complete.",
+                Entity = req.Type,
+                Intent = "Processing"
+            };
+        }
+        else
+        {
+            var headerRow = fileDataArray[0];
+            var finalResponse = new List<dynamic>();
+            // Process synchronously
             var batch = new JArray
             {
                 headerRow
             };
-            for (int j = i; j < i + batchSize && j < fileDataArray.Count; j++)
+            for (int i = 1; i < fileDataArray.Count; i++)
             {
-                batch.Add(fileDataArray[j]);
+                batch.Add(fileDataArray[i]);
             }
-            // Convert the batch to a string
-            string batchJson = batch.ToString(Newtonsoft.Json.Formatting.None);
 
-            var finalPrompt = promptData.Prompt.Replace("{promptData}", batchJson);
-            var promptList = new
+            finalResponse = await _aiService.ProcessBulkImport(
+                JsonConvert.SerializeObject(batch),
+                promptData,
+                currentUserId,
+                req.Type,
+                false
+            );
+
+            return new
             {
-                role = "user",
-                parts = new[] { new { text = finalPrompt } }
+                Message = "Processing completed successfully",
+                Entity = req.Type,
+                Intent = "Success",
+                Records = JsonConvert.SerializeObject(finalResponse)
             };
-            var response = await _aiService.CallGeminiApi(promptList, promptData);
-            var parsedResponse = GetDetailsFromGeminiResponse(response);
-            message = parsedResponse["Message"]?.ToString();
-            var records = parsedResponse["records"];
-            entity = parsedResponse["Category"]?.ToString();
-            intent = parsedResponse["ResponseType"]?.ToString();
-            if (records != null)
-            {
-                foreach (var record in records)
-                {
-                    var dependents = record["dependents"]?.ToString();
-                    dynamic updatedResponse = await GetDependentDropdownValues(dependents, record);
-                    finalResponse.Add(updatedResponse);
-                }
-            }
         }
-
-        var finalResponseString = JsonConvert.SerializeObject(finalResponse);
-
-        return new
-        {
-            Message = message,
-            Entity = entity,
-            Intent = intent,
-            Records = finalResponseString
-        };
     }
 
     private static string ToConcatenatedString(object model)
@@ -730,6 +675,7 @@ public class UNOPSGeminiManager : IGeminiManager
 
         var successList = new List<object>();
         var errorMessages = new List<string>();
+        var isSuccess = true;
 
         try
         {
@@ -766,22 +712,29 @@ public class UNOPSGeminiManager : IGeminiManager
         }
         catch (DbUpdateException dbEx)
         {
+            isSuccess = false;
             foreach (var entry in dbEx.Entries)
             {
                 var entityJson = JsonConvert.SerializeObject(entry.Entity);
                 var errorMsg = dbEx.InnerException?.Message ?? dbEx.Message;
                 errorMessages.Add($"Error saving entity {entry.Entity.GetType().Name}: {entityJson} - {errorMsg}");
             }
-
-            throw new InvalidOperationException("One or more records failed to save. See details in error messages.", dbEx);
         }
         catch (Exception ex)
         {
-            throw new InvalidOperationException("Unexpected error during SaveChangesAsync: " + ex.Message, ex);
+            isSuccess = false;
+            errorMessages.Add($"Unexpected error during SaveChangesAsync: {ex.Message}");
+            
+            // Add inner exception details if available
+            if (ex.InnerException != null)
+            {
+                errorMessages.Add($"Inner exception: {ex.InnerException.Message}");
+            }
         }
 
         var result = new
         {
+            IsSuccess = isSuccess,
             SuccessCount = successList.Count,
             SuccessRecords = successList.Select(s => new { Id = ((dynamic)s).Id }),
             ErrorCount = errorMessages.Count,

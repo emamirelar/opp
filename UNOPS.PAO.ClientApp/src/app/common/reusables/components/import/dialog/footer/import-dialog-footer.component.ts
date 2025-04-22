@@ -2,21 +2,17 @@ import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input
 import { ButtonModule } from 'primeng/button';
 import { TranslateModule } from '@ngx-translate/core';
 import { ImportDialogService } from '../import-dialog.service';
-import {ImportGoogleSheetService} from '../../import-google-sheet.service';
+import { ImportGoogleSheetService } from '../../import-google-sheet.service';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @Component({
   selector: 'app-import-footer',
   standalone: true,
-  imports: [ButtonModule, TranslateModule],
+  imports: [ButtonModule, TranslateModule, ConfirmDialogModule],
   template: `
     <div class="flex justify-content-end gap-4 w-full">
       <div class="flex gap-4 mr-auto items-center">
-        <p-button
-          label="Select from Google Drive"
-          icon="pi pi-google"
-          (onClick)="importDialogService.openGoogleSheetPicker()">
-        </p-button>
-
         @if (importDialogService.getFileUrl()()) {
           <div class="font-medium">Selected File: {{ importDialogService.getFileUrl()() }}</div>
         }
@@ -26,7 +22,7 @@ import {ImportGoogleSheetService} from '../../import-google-sheet.service';
       <p-button
         [label]="'button.cancel' | translate"
         icon="pi pi-times"
-        (onClick)="importDialogService.closeDialog()"
+        (onClick)="importDialogService.cancelImport()"
         [text]="true">
       </p-button>
 

@@ -13,6 +13,7 @@ import { ListViewColumn } from '../../../../common/pages/components/listview/lis
 import { PartnerEditDialogFooterComponent } from './edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerEditDialogComponent } from './edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ImportDialogService } from '../../../../common/reusables/components/import/dialog/import-dialog.service';
 
 @Component({
   selector: 'app-partner',
@@ -35,6 +36,7 @@ export class PartnerComponent implements OnDestroy {
   partnerService = inject(PartnerService);
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
+  importDialogService = inject(ImportDialogService);
 
   newPartnerData = signal<Partner|null>(null);
 
@@ -148,5 +150,10 @@ export class PartnerComponent implements OnDestroy {
       }
       refSub.unsubscribe();
     });
+  }
+
+  openImportDialog() {
+    // Use the Google Sheet picker directly which will show loading indicators
+    this.importDialogService.openGoogleSheetPicker('partner');
   }
 }

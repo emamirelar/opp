@@ -29,7 +29,7 @@ public interface IGeminiManager
     Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req);
     Task<dynamic> GenerateEmbeddings(string? entityName);
 
-    Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req);
+    Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId);
 
     Task<string> BulkInsertRecordsAsync(BulkUploadRequest request);
 }

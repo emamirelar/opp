@@ -27,6 +27,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { MessageService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmationService } from 'primeng/api';
 import { FeedbackDialogService } from './common/pages/services/feedback-dialog.service';
 import { authInterceptor } from './essentials/interceptors/auth.interceptor';
 import { serverErrorInterceptor } from './essentials/interceptors/server-error.interceptor';
@@ -93,6 +94,7 @@ export const appConfig: ApplicationConfig = {
     AuthService,
     DialogService,
     MessageService,
+    ConfirmationService,
     providePrimeNG({
       theme: {
         preset: UnopsPreset,

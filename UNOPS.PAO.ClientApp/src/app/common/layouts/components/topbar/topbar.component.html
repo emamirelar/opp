@@ -27,8 +27,50 @@
 			class="layout-topbar-action p-button-text">
 			<img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
 		</button>
+      <button type="button"
+			aria-label="Notifications"
+			class="layout-topbar-action p-button-text"
+      pButton
+      (click)="notificationPanel.toggle($event)">
+			<i class="pi pi-bell"></i>
+        <span *ngIf="unreadCount > 0" class="notification-badge">{{unreadCount}}</span>
+		</button>
+      <p-overlayPanel #notificationPanel [style]="{width: '400px'}">
+        <div class="notification-panel">
+          <div class="notification-header">
+            <h3>Notifications</h3>
+          </div>
+          <div class="notification-list">
+            <div *ngFor="let notification of notifications" 
+                 class="notification-item" 
+                 [ngClass]="{'notification-progress': notification.status === 'Progress'}"
+                 (click)="handleNotificationClick(notification)">
+              <div class="notification-content">
+                <!-- Progress status indicator -->
+                <div *ngIf="notification.status === 'Progress'" class="notification-progress-indicator">
+                  <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
+                </div>
+                
+                <!-- For messages with progress bars embedded in the text -->
+                <p *ngIf="notification.message && notification.message.includes('[')">
+                  <span [innerHTML]="formatProgressMessage(notification.message)"></span>
+                </p>
+                
+                <!-- Regular message -->
+                <p *ngIf="!notification.message || !notification.message.includes('[')">
+                  {{notification.message}}
+                </p>
+              </div>
+            </div>
+            <div *ngIf="notifications.length === 0" class="no-notifications">
+              No notifications
+            </div>
+          </div>
+        </div>
+      </p-overlayPanel>
       <app-profile-menubar></app-profile-menubar>
 		</div>
 	</div>
 
+	<p-toast position="bottom-right"></p-toast>
 </div>
