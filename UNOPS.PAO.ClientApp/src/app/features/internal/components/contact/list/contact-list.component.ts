@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, OnDestroy} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { NgIf } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
@@ -7,12 +7,13 @@ import { ButtonModule } from 'primeng/button';
 import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmDialog } from 'primeng/confirmdialog';
 
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import {DialogModule} from 'primeng/dialog';
 import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
-import {ContactEditDialogFooterComponent} from '../edit-dialog/footer/contact-edit-dialog-footer.component';
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
 import {ListviewComponent} from '../../../../../common/pages/components/listview/listview.component';
 import {ContactService} from '../../../services/contact.service';
@@ -20,7 +21,6 @@ import {FeedbackDialogService} from '../../../../../common/reusables/services/fe
 import {ListViewColumn, ListViewConfig} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
-
 
 @Component({
   selector: 'app-contact-list',
@@ -36,8 +36,9 @@ import { ImportDialogService } from '../../../../../common/reusables/components/
     ProgressSpinnerModule,
     TranslateModule,
     ListviewComponent,
+    ConfirmDialog
   ],
-  providers: [DialogService]
+  providers: [DialogService, ConfirmationService]
 })
 export class ContactListComponent implements OnInit {
   router = inject(Router);
@@ -66,9 +67,14 @@ export class ContactListComponent implements OnInit {
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
     enableSearch: true,
+    enableExport: true,
+    entityName: 'Contact',
     scrollable: true,
     scrollHeight: 'flex'
   };
+
+  // Track current search term
+  currentSearchText = '';
 
   ngOnInit() {
     this.route.queryParams
@@ -130,7 +136,7 @@ export class ContactListComponent implements OnInit {
     });
   }
 
-    onRowDoubleClicked(contact: Contact) {
+  onRowDoubleClicked(contact: Contact) {
     this.handleOnOpenRecordDetails(contact);
   }
 
@@ -152,5 +158,13 @@ export class ContactListComponent implements OnInit {
   openImportDialog() {
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('contact');
+  }
+
+  /**
+   * Store the current search text when search is performed
+   * @param searchText Current search text
+   */
+  onSearchChange(searchText: string) {
+    this.currentSearchText = searchText;
   }
 }

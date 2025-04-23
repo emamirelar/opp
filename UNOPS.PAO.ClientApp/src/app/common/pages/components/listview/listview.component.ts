@@ -9,8 +9,11 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { Subject, debounceTime, distinctUntilChanged, Subscription } from 'rxjs';
-import {IconField} from 'primeng/iconfield';
-import {InputIcon} from 'primeng/inputicon';
+import { IconField } from 'primeng/iconfield';
+import { InputIcon } from 'primeng/inputicon';
+import { ListviewExportService } from './listview-export.service';
+import { ConfirmDialog } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-listview',
@@ -27,14 +30,16 @@ import {InputIcon} from 'primeng/inputicon';
     InputTextModule,
     ButtonModule,
     IconField,
-    InputIcon
+    InputIcon,
+    ConfirmDialog
   ],
-  providers: [ListviewDataLoaderService]
+  providers: [ListviewDataLoaderService, ConfirmationService]
 })
 export class ListviewComponent<T = any> implements OnDestroy {
   private dataLoader = inject(ListviewDataLoaderService);
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription = Subscription.EMPTY;
+  private exportService = inject(ListviewExportService);
 
   // Listen for refresh events
   @HostListener('window:refresh-listview')
@@ -49,9 +54,11 @@ export class ListviewComponent<T = any> implements OnDestroy {
   @Input() set dataUrl(value: string) {
     if (value) {
       this.dataLoader.setUrl(value);
+      this._dataUrl = value;
       this.loadData();
     }
   }
+  private _dataUrl: string = '';
 
   @Input() columns: ListViewColumn[] = [];
   @Input() config: ListViewConfig = {
@@ -61,6 +68,7 @@ export class ListviewComponent<T = any> implements OnDestroy {
     enablePagination: true,
     enableSorting: true,
     enableSearch: false,
+    enableExport: false,
     scrollable: true,
     scrollHeight: 'flex'
   };
@@ -80,12 +88,15 @@ export class ListviewComponent<T = any> implements OnDestroy {
   @Output() pageChange = new EventEmitter<{first: number, rows: number}>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
   @Output() searchChange = new EventEmitter<string>();
+  @Output() exportClick = new EventEmitter<void>();
 
   // State
   selectedRecord: T | null = null;
   first = 0;
   rows: number;
   searchText = '';
+  currentSortField: string | undefined;
+  currentSortOrder: 'asc' | 'desc' | undefined;
 
   // Computed properties from data loader
   isLoading = computed(() => this.dataLoader.isLoading());
@@ -173,6 +184,8 @@ export class ListviewComponent<T = any> implements OnDestroy {
    */
   onSortChange(event: any): void {
     const order = event.order === 1 ? 'asc' : 'desc';
+    this.currentSortField = event.field;
+    this.currentSortOrder = order;
     this.sortChange.emit({ field: event.field, order });
 
     this.dataLoader.setSorting(event.field, order);
@@ -194,6 +207,50 @@ export class ListviewComponent<T = any> implements OnDestroy {
   clearSearch(): void {
     this.searchText = '';
     this.executeSearch('');
+  }
+
+  /**
+   * Export data to Google Sheets
+   */
+  exportData(): void {
+    if (this.config.enableExport && this._dataUrl) {
+      // If user has explicitly implemented their own handler, use that
+      if (this.exportClick.observed) {
+        this.exportClick.emit();
+        return;
+      }
+
+      // Otherwise use our built-in export functionality
+      const entityName = this.config.entityName || 'Record';
+      
+      // Use the customTransform function from config if provided
+      const customTransform = this.config.exportOptions?.customTransform || 
+        // Otherwise create a transform that excludes fields if specified
+        (this.config.exportOptions?.excludeFields ? 
+          (data: any[]) => {
+            return data.map(item => {
+              const result: Record<string, any> = {};
+              const excludeFields = this.config.exportOptions?.excludeFields || [];
+              
+              Object.entries(item).forEach(([key, value]) => {
+                if (!excludeFields.includes(key)) {
+                  result[key] = value;
+                }
+              });
+              
+              return result;
+            });
+          } : undefined);
+      
+      this.exportService.exportToGoogleSheet(
+        entityName,
+        this._dataUrl,
+        this.searchText,
+        this.currentSortField || this.config.defaultSortField,
+        this.currentSortOrder || this.config.defaultSortOrder,
+        customTransform
+      ).subscribe();
+    }
   }
 
   /**

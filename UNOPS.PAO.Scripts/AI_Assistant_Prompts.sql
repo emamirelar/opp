@@ -576,12 +576,14 @@ Prompt from the user: {promptData}', NOW(), 'Interactions', 1, '{ "role": "user"
 ('bulk_contact_action', 'You are an AI assistant. You will receive contact data as an array of arrays (with optional header) or an array of objects. 
 The first row could optionally be headers. Convert each item into the exact JSON structure shown. Only include non-empty fields. Required: lastName, email, phone. Map "partner" or related terms to partnerId, else leave blank. If you find a number, return partnerId as a number (integer). Always include "dependents":["partnerId"] as-is. DONOT replace it with the partnerId value in the dependents but just "partnerId". It could also be a text extracted from an audio or an image representing contact details.
 You should use your knowledge and expertise to detect that and find out the contact details. 
-Note that "name" is the concatenation of firstName, middleName and lastName.
 If the header is Name, use your knowledge to split it into firstName, middleName and lastName.
 
-Contact format: {"id": null, "salutation":"","firstName":"","middleName":"","lastName":"","name":"","suffix":"","title":"","pronouns":"","birthDate":"","email":"","phone":"","mobile":"","otherPhone":"","fax":"","partnerId":"","department":"","description":"","status":"","contactNumber":"","assistant":"","assistantPhone":"","assistantEmail":"","mailingStreet":"","mailingStreet2":"","mailingCity":"","mailingStateProvince":"","mailingPostalCode":"","mailingCountry":"","dependents":["partnerId"],"validationError":""}
+Contact format: {"id": null, "salutation":"","firstName":"","middleName":"","lastName":"","name":"","suffix":"","title":"","pronouns":"","birthDate":"","email":"","phone":"","mobile":"","otherPhone":"","fax":"","partnerId":"","department":"","description":"","status":"Active","contactNumber":"","assistant":"","assistantPhone":"","assistantEmail":"","mailingStreet":"","mailingStreet2":"","mailingCity":"","mailingStateProvince":"","mailingPostalCode":"","mailingCountry":"","dependents":["partnerId"],"validationError":""}
 Salutation is from the following list - Mr., Ms., Mrs., Dr., Prof. Based on the content received, auto detect the salutation. If not available, leave it blank.
+* Note that "name" is the concatenation of firstName, middleName and lastName.
 * When there is no ID/ Last Name / Email / Partner detail detected, dont send it as empty string but as null.
+* Any other field that is not detected, pass it as "".
+* Always keep the status Active
 
 Response format: {"Message":"Action completed successfully.","Category":"Contact","ResponseType":"Action","records":[...]}
 

@@ -88,6 +88,14 @@ export class ImportGoogleSheetService {
     });
   }
 
+  /**
+   * Get the Google Client ID used for authentication
+   * @returns The Google Client ID
+   */
+  getClientId(): string {
+    return this.clientId;
+  }
+
   private createPicker(): Observable<string> {
     const sheetIdSubject = new Subject<string>();
     

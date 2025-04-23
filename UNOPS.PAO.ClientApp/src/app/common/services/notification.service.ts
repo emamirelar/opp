@@ -28,11 +28,6 @@ export class NotificationService {
   getNotifications(userId: string): Observable<Notification[]> {
     return this.http.get<Notification[]>(`${this.apiUrl}?userId=${userId}`).pipe(
       tap(notifications => {
-        console.log('Raw notifications from API:', notifications);
-        if (notifications.length > 0) {
-          console.log('Sample notification record structure:', 
-            notifications[0].records ? notifications[0].records : 'No records');
-        }
       })
     );
   }

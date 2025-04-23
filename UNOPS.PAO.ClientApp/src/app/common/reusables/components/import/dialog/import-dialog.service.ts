@@ -62,7 +62,6 @@ export class ImportDialogService {
     if (this.notificationId && this.userId) {
       this.notificationService.markAsRead(this.notificationId, this.userId).subscribe({
         next: () => {
-          console.log(`Notification ${this.notificationId} marked as read`);
           this.clearNotificationInfo();
         },
         error: (error) => {
@@ -211,13 +210,10 @@ export class ImportDialogService {
    * Normalize record data from notifications to ensure it's in the correct format
    */
   private normalizeRecordData(inputData: any): any[] {
-    console.log('Normalizing record data:', inputData);
-    
     // Special case: if inputData is an object with numeric keys (looks like an array but is an object)
     if (typeof inputData === 'object' && inputData !== null && !Array.isArray(inputData)) {
       const keys = Object.keys(inputData);
       if (keys.length > 0 && keys.every(key => !isNaN(Number(key)))) {
-        console.log('Converting array-like object to array');
         return Object.values(inputData);
       }
     }
@@ -273,7 +269,6 @@ export class ImportDialogService {
 
   // Set the selected rows
   setSelectedRows(rows: any[]): void {
-    console.log('Setting selected rows:', rows.length);
     this.selectedRows.set(rows);
   }
 
@@ -446,7 +441,6 @@ export class ImportDialogService {
               let parsedRecords;
               try {
                 parsedRecords = JSON.parse(response.records);
-                console.log('Parsed records count:', parsedRecords.length);
               } catch (error) {
                 console.error('Error parsing records:', error);
                 this.isLoading.set(false);
@@ -458,7 +452,6 @@ export class ImportDialogService {
               }
               
               // Normal flow for opening a new dialog
-              console.log('Opening new dialog with data');
               this.setData(parsedRecords);
               
               // Only open the dialog if we have data
@@ -500,7 +493,6 @@ export class ImportDialogService {
   }
 
   setData(data: any[]) {
-    console.log('Setting data in ImportDialogService:', data);
     if (!data || data.length === 0) {
       console.warn('Empty or null data provided to ImportDialogService.setData()');
       this.data.set([]);
@@ -509,15 +501,12 @@ export class ImportDialogService {
 
     // Normalize the data to ensure it's in the right format
     const normalizedData = this.normalizeRecordData(data);
-    console.log('Normalized data:', normalizedData);
 
     // Check if first item has the expected structure for entity import
     if (normalizedData.length > 0) {
-      console.log('First data item after normalization:', normalizedData[0]);
       // Output sample of expected fields to help debug
       const sampleKeys = ['firstName', 'lastName', 'email', 'partnerId'];
       const hasExpectedFields = sampleKeys.some(key => normalizedData[0] && normalizedData[0][key] !== undefined);
-      console.log('Has expected fields:', hasExpectedFields);
     }
 
     this.data.set(normalizedData);
@@ -562,7 +551,6 @@ export class ImportDialogService {
     
     this.isLoading.set(true);
     this.loadingOverlayService.show(`Importing ${dataWithDefaults.length} records...`);
-    console.log(`Importing ${dataWithDefaults.length} selected rows`);
       // Original behavior for smaller datasets
       this.importService.bulkUpload(dataWithDefaults, type).subscribe({
         next: (response: any) => {

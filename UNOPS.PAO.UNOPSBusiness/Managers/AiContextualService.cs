@@ -131,16 +131,19 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return content;
         }
 
-        public async Task<dynamic> RetrieveEntityId(string entityName, string vectorEmbedding)
+        public async Task<dynamic> RetrieveEntityId(string entityName, string? vectorEmbedding, string? searchText=null, int? limit=5, string? where="1=1")
         {
-            var sql = "SELECT public.RetrieveSimilarityId(@entityName, @embedding)";
+            var sql = "SELECT entityId from public.retrieve_similarity_results(@entityName, @searchText, @embedding, @limit, @where)";
 
             entityName = entityName.Pluralize();
 
             var parameters = new[] 
             {
                 new NpgsqlParameter("@entityName", NpgsqlTypes.NpgsqlDbType.Text) { Value = entityName },
-                new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) { Value = vectorEmbedding }
+                new NpgsqlParameter("@searchText", NpgsqlTypes.NpgsqlDbType.Text) { Value = searchText },
+                new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)vectorEmbedding ?? DBNull.Value },
+                new NpgsqlParameter("@limit", NpgsqlTypes.NpgsqlDbType.Integer) { Value = limit },
+                new NpgsqlParameter("@where", NpgsqlTypes.NpgsqlDbType.Text) { Value = where }
             };
 
             // Execute the stored procedure using ExecuteSqlRaw
@@ -745,10 +748,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                     continue;
                                 }
                             }
-                            var embeddingString = await CreateEmbeddingForText(text);
+                           // var embeddingString = await CreateEmbeddingForText(text);
                             string entityName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(dependent.Replace("Id", ""));
                             entityName = entityName.Pluralize();
-                            entityId = await RetrieveEntityId(entityName, embeddingString);
+                            entityId = await RetrieveEntityId(entityName, null, text, 1);
 
                             if (entityId == null || entityId is DBNull)
                             {

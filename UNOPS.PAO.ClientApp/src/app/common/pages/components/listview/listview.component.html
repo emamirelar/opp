@@ -1,23 +1,33 @@
+<p-confirmDialog></p-confirmDialog>
+
 <div class="listview-container">
-  <!-- Search bar -->
+  <!-- Search and Export bar -->
+  <div class="flex justify-end mb-3 gap-2 items-center">
+    @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
+      <p-button
+        [label]="config.exportOptions?.buttonLabel ?? 'Export'"
+        icon="pi pi-file-export"
+        severity="secondary"
+        (onClick)="exportData()"
+        [disabled]="isLoading()"
+      ></p-button>
+    }
 
-
-  @if (config.enableSearch) {
-    <div class="flex justify-end">
+    @if (config.enableSearch) {
       <p-iconfield iconPosition="left" class="search-input-container">
         <p-inputicon class="pi pi-search" />
-      <input pInputText type="text" placeholder="Search"
-      [placeholder]="'action.search' | translate"
-      [(ngModel)]="searchText"
-      (input)="onSearchInput(searchText)"
-      (keyup.enter)="onSearch()"
-      />
+        <input pInputText type="text" placeholder="Search"
+          [placeholder]="'action.search' | translate"
+          [(ngModel)]="searchText"
+          (input)="onSearchInput(searchText)"
+          (keyup.enter)="onSearch()"
+        />
         @if (searchText.length > 0) {
           <p-inputicon class="pi pi-times" (click)="clearSearch()" />
         }
       </p-iconfield>
-    </div>
-  }
+    }
+  </div>
 
   <!-- Main table with data -->
   <p-table

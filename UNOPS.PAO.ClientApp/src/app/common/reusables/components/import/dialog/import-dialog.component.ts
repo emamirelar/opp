@@ -155,10 +155,8 @@ export class ImportDialogComponent implements OnInit {
     // Setup effect to update paginated data when data changes
     effect(() => {
       const allData = this.importDialogService.data();
-      console.log('Data changed in ImportDialogComponent effect:', allData);
       
       if (allData && allData.length > 0) {
-        console.log(`Setting totalRecords to ${allData.length}`);
         this.totalRecords.set(allData.length);
         // When data changes, ensure we start back at page 1
         this.first.set(0);
@@ -200,7 +198,6 @@ export class ImportDialogComponent implements OnInit {
     
     // Log initial state
     const initialData = this.importDialogService.data();
-    console.log('Processing data in ImportDialogComponent:', initialData);
     
     if (initialData && initialData.length > 0) {
       // Add a unique non-conflicting ID to each row for selection purposes
@@ -210,17 +207,17 @@ export class ImportDialogComponent implements OnInit {
       
       // Update the data in the service with the processed data
       this.importDialogService.setData(processedData);
-      
-      console.log(`Setting totalRecords to ${processedData.length}`);
       this.totalRecords.set(processedData.length);
       this.updatePaginatedData();
       
       // Check for missing required fields
       this.checkMissingRequiredFields();
       
+      // Auto-select all valid rows (exclude rows with errors or missing required fields)
+      this.selectValidRows();
+      
       // If no data was displayed, try forcing detection
       if (this.paginatedData().length === 0) {
-        console.log('Forcing update of paginated data');
         setTimeout(() => {
           this.updatePaginatedData();
         }, 0);
@@ -237,8 +234,6 @@ export class ImportDialogComponent implements OnInit {
     const firstIndex = this.first();
     const rowsPerPage = this.rows();
     
-    console.log(`Updating paginated data: data.length=${allData?.length}, firstIndex=${firstIndex}, rowsPerPage=${rowsPerPage}`);
-    
     if (!allData || allData.length === 0) {
       console.warn('No data available for pagination');
       this.paginatedData.set([]);
@@ -249,7 +244,6 @@ export class ImportDialogComponent implements OnInit {
 
     // Update total records if it doesn't match the data length
     if (this.totalRecords() !== allData.length) {
-      console.log(`Fixing totalRecords: ${this.totalRecords()} → ${allData.length}`);
       this.totalRecords.set(allData.length);
     }
     
@@ -260,7 +254,6 @@ export class ImportDialogComponent implements OnInit {
       this.first.set(newFirstIndex);
       
       const newPaginatedResult = allData.slice(newFirstIndex, newFirstIndex + rowsPerPage);
-      console.log(`Paginating data (reset): ${newFirstIndex} to ${Math.min(newFirstIndex + rowsPerPage, allData.length)}, result length: ${newPaginatedResult.length}`);
       this.paginatedData.set(newPaginatedResult);
       return;
     }
@@ -268,14 +261,11 @@ export class ImportDialogComponent implements OnInit {
     // Normal pagination
     const endIndex = Math.min(firstIndex + rowsPerPage, allData.length);
     const paginatedResult = allData.slice(firstIndex, endIndex);
-    console.log(`Paginating data: ${firstIndex} to ${endIndex}, result length: ${paginatedResult.length}, total: ${allData.length}`);
     
     this.paginatedData.set(paginatedResult);
   }
 
   onPageChange(event: any): void {
-    console.log('Page change event:', event);
-    
     // Verify the event has expected properties
     if (!event || typeof event.first !== 'number' || typeof event.rows !== 'number') {
       console.error('Invalid page change event:', event);
@@ -285,7 +275,6 @@ export class ImportDialogComponent implements OnInit {
     // Verify that we're not exceeding data bounds
     const dataLength = this.importDialogService.data().length;
     if (event.first >= dataLength) {
-      console.warn(`Invalid page: first index (${event.first}) exceeds data length (${dataLength})`);
       event.first = 0;
     }
     
@@ -297,15 +286,8 @@ export class ImportDialogComponent implements OnInit {
     this.rows.set(event.rows);
     this.rowsModel = event.rows;
     
-    console.log(`Page changed to: first=${this.first()}, rows=${this.rows()}`);
-    
     // Update paginated data (which now preserves selection)
     this.updatePaginatedData();
-    
-    // Log the results after update
-    setTimeout(() => {
-      console.log(`After page change: ${this.paginatedData().length} items in current page, ${currentSelection.length} selected overall`);
-    }, 0);
   }
 
   onRowsPerPageChange(event: any): void {
@@ -362,14 +344,11 @@ export class ImportDialogComponent implements OnInit {
         life: 3000
       });
     }
-    
-    console.log(`Selected all rows: ${newSelection.length} total rows, including ${missingRequiredRows.length} with missing fields`);
   }
 
   // Get the currently selected rows (used for import)
   getSelectedRowsForImport(): any[] {
     const selectedData = this.selectedRows();
-    console.log('Returning selected rows for import:', selectedData.length);
     return selectedData;
   }
 
@@ -394,8 +373,6 @@ export class ImportDialogComponent implements OnInit {
     
     // Update the service
     this.importDialogService.setSelectedRows(this.selectedRows());
-    
-    console.log(`Toggle select all: ${this.selectedRows().length} rows now selected`);
   }
 
   // Method to check if we have a mixed selection (not all rows selected)
@@ -409,7 +386,6 @@ export class ImportDialogComponent implements OnInit {
 
   // Update selected rows when selection changes
   onSelectionChange(event: any[]): void {
-    console.log('Selection changed:', event.length, 'rows selected on current page');
     
     // Get the existing selection that might include rows from other pages
     const currentSelection = this.selectedRows();
@@ -446,8 +422,6 @@ export class ImportDialogComponent implements OnInit {
     
     // Update the service with the selected rows for import
     this.importDialogService.setSelectedRows(uniqueSelection);
-    
-    console.log(`Selection updated: ${uniqueSelection.length} rows selected in total`);
     
     // Check if we should still show the warning banner
     // This ensures the banner updates properly when rows are manually selected
@@ -612,13 +586,11 @@ export class ImportDialogComponent implements OnInit {
     
     // Update banner visibility based on whether any rows have missing fields
     this.showMissingRequiredBanner.set(rowsWithMissing.length > 0);
-    console.log(`Missing required fields check: ${rowsWithMissing.length} rows with missing fields`);
   }
 
   // Force refresh of the data view
   refreshData(): void {
     const currentData = this.importDialogService.data();
-    console.log('Refreshing data view with', currentData?.length || 0, 'records');
     
     if (currentData && currentData.length > 0) {
       // Reset to first page
@@ -643,5 +615,32 @@ export class ImportDialogComponent implements OnInit {
       this.rowsWithMissingRequired.set([]);
       this.showMissingRequiredBanner.set(false);
     }
+  }
+
+  // Select only valid rows (exclude rows with errors or missing required fields)
+  selectValidRows(): void {
+    const allData = this.importDialogService.data();
+    
+    if (!allData || allData.length === 0) {
+      console.warn('No data to select from');
+      return;
+    }
+    
+    // Get rows with missing required fields
+    const missingRequiredRows = this.rowsWithMissingRequired();
+    
+    // Get rows with validation errors
+    const validationErrorRows = Array.from(this.validationErrors().keys());
+    
+    // Filter out rows with either missing required fields or validation errors
+    const validRows = allData.filter((_, index) => {
+      return !missingRequiredRows.includes(index) && !validationErrorRows.includes(index);
+    });
+    
+    // Update the local selection state
+    this.selectedRows.set(validRows);
+    
+    // Update the service with the selected rows
+    this.importDialogService.setSelectedRows(validRows);
   }
 }

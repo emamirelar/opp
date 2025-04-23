@@ -326,7 +326,7 @@ public class UNOPSGeminiManager : IGeminiManager
         if (forward == "Yes" && promptType.StartsWith("retrieve"))
         {
             var embeddingString = await _aiService.CreateEmbeddingForText(shortSummary);
-            var entityId = await _aiService.RetrieveEntityId(entityResponse.Entity.ToString(), embeddingString);
+            var entityId = await _aiService.RetrieveEntityId(entityResponse.Entity.ToString(), embeddingString, shortSummary);
             content = await _aiService.RetrieveContent(promptType, entityId);
             req.Message = "Summary of the conversation with the user: " + summary + ". Content: " + content;
         } else {

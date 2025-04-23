@@ -93,7 +93,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (notifications: Notification[]) => {
-          console.log('Polling - New notifications:', notifications);
           this.handleNewNotifications(notifications);
           this.notifications = notifications;
           this.unreadCount = notifications.length;
@@ -106,15 +105,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   private handleNewNotifications(newNotifications: Notification[]) {
-    console.log('Previous notifications:', this.previousNotifications);
-    console.log('New notifications:', newNotifications);
-    
     // Find new notifications that weren't in the previous list
     const newItems = newNotifications.filter(newNotif => 
       !this.previousNotifications.some(prevNotif => prevNotif.id === newNotif.id)
     );
-
-    console.log('New items to show:', newItems);
 
     if (newItems.length > 0) {
       // Prepare messages for different notification types
@@ -210,7 +204,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
   loadNotifications() {
     this.notificationService.getNotifications(this.userId).subscribe({
       next: (notifications: Notification[]) => {
-        console.log('Initial load - Notifications:', notifications);
         this.notifications = notifications;
         this.unreadCount = notifications.length;
         // Initialize previousNotifications with the initial set
@@ -227,9 +220,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
     if (notification.category && notification.records && notification.records.length > 0) {
       // Check if this is a bulk import notification
       if (notification.category.startsWith('bulk_') && notification.responseType !== 'Error') {
-        // Add debug logging
-        console.log('Opening import dialog with notification data:', notification.records);
-        
         try {
           // Clear previous data
           this.importDialogService.data.set([]);
@@ -239,7 +229,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
           
           // Verify data was set properly
           const currentData = this.importDialogService.data();
-          console.log(`Data after setting: ${currentData.length} records available`);
           
           if (currentData.length === 0) {
             // Show error message if no data was processed
