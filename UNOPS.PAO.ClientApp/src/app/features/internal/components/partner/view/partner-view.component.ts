@@ -41,6 +41,7 @@ import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
+import {PartnerTabsComponent} from '../tabs/partner-tabs.component';
 
 @Component({
   selector: 'app-partner-view',
@@ -66,7 +67,8 @@ import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.c
     MarkdownPipe,
     LinkListComponent,
     PictureComponent,
-    PartnerViewContactsComponent
+    PartnerViewContactsComponent,
+    PartnerTabsComponent
   ],
   templateUrl: './partner-view.component.html',
   styleUrl: './partner-view.component.scss',
