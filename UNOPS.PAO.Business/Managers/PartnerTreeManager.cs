@@ -53,15 +53,19 @@ public class PartnerTreeManager : IPartnerTreeManager
             .ToList();
 
         var lookup = allTrees.ToLookup(x => x.Data.Parent);
-        return BuildHierarchy(lookup, string.Empty);
+        return BuildHierarchy(lookup, string.Empty, new HashSet<string>());
     }
 
-    private IEnumerable<PartnerTreeModel> BuildHierarchy(ILookup<string, PartnerTreeModel> lookup, string parentCode)
+    private IEnumerable<PartnerTreeModel> BuildHierarchy(ILookup<string, PartnerTreeModel> lookup, string parentCode, HashSet<string> visitedCodes)
     {
         foreach (var item in lookup[parentCode])
         {
-            item.Children = BuildHierarchy(lookup, item.Data.Code).ToList();
-            yield return item;
+            if (!visitedCodes.Contains(item.Data.Code))
+            {
+                visitedCodes.Add(item.Data.Code);
+                item.Children = BuildHierarchy(lookup, item.Data.Code, visitedCodes).ToList();
+                yield return item;
+            }
         }
     }
 

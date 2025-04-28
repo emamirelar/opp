@@ -9,7 +9,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 export interface ColumnDefinition {
   label: string,
   id: string,
-  editable?: boolean,
+  editable?: boolean | ((node: any) => boolean),
 }
 
 @Component({

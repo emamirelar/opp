@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, effect, ChangeDetectorRef, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, effect, ChangeDetectorRef, signal, ViewChild } from '@angular/core';
 import { TreeTableModule } from 'primeng/treetable';
 import { TreeNode } from "primeng/api";
 import { ButtonModule } from 'primeng/button';
@@ -12,46 +12,74 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { CachedDataService } from '../../../../common/services/cached-data.service';
-import {PartnerTreeItemComponent} from './item/partner-tree-item.component';
 import { Router } from '@angular/router';
+import { PartnerTree } from '../../models/partner-tree.model';
+import { DialogService } from 'primeng/dynamicdialog';
+import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
 
 @Component({
   selector: 'app-partner-tree',
-  imports: [DialogModule, PartnerTreeItemComponent, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule],
+  imports: [DialogModule, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule, TooltipModule],
   templateUrl: './partner-tree.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './partner-tree.component.scss'
 })
 export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit {
-  override data: TreeNode[] = [];
-  cols: ColumnDefinition[] = [];
+  @ViewChild('partnerTreeTable') partnerTreeTable: any;
+  
+  // State management
+  expandedNodes: Map<string, boolean> = new Map();
+  override data: TreeNode<PartnerTree>[] = [];
   updatedRecords: any[] = [];
   parentOptions: any[] = [];
   override service = inject(PartnerTreeService);
   cachedDataService = inject(CachedDataService);
   originalData: any[] = [];
   override isDataLoading = this.service.isLoading();
+  
+  // Dialog state
   parentUpdated: boolean = false;
   updatePartnerLevel: boolean = false;
   createPartnerLevel: boolean = false;
   changeRecord: any = null;
-  allStatusData = this.cachedDataService.allStatus;
+  
+  // Data options
+  partnerGroupOptions: any[] = [];
+  partnerTree: TreeNode<PartnerTree>[] = [];
+  selectedNode: TreeNode<PartnerTree> | null = null;
+  loading = false;
+  private dialogService = inject(DialogService);
 
   constructor(public override router: Router) {
     super();
   }
 
-  override getColumns(): ColumnDefinition[] {
-    return [
-      { id: 'action', label: 'label.partnerTree.actions', editable: false },
-      { id: "name", label: "label.partnerTree.name", editable: true },
-      { id: "description", label: "label.partnerTree.description", editable: true },
-      { id: "type", label: "label.partnerTree.type", editable: false },
-      { id: "parent", label: "label.partnerTree.parent", editable: true },
-      { id: "status", label: "label.partnerTree.status", editable: false },
-      { id: 'action', label: 'label.partnerTree.actions', editable: false },
-    ];
+  override ngOnInit() {
+    this.setNewPartnerFromAIAssistant();
+    this.activatedRoute.paramMap.subscribe({
+      next: (paramMap) => {
+        this.loadPartnerTreeData();
+      }
+    });
+
+    this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
+      this.cdr.detectChanges();
+    });
+
+    this.loadPartnerTree();
+    
+    // Initialize expandedNodes map
+    this.expandedNodes = new Map();
+  }
+
+  // Get filtered partner group options based on parent
+  getFilteredPartnerGroupOptions(rowData: any): any[] {
+    if (rowData && rowData.code) {
+      return this.service.getChildrenByParentCode(rowData.code);
+    }
+    return [];
   }
 
   handleOnRecordUpdation(event: any) {
@@ -64,20 +92,37 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     if (event.data === 'action') {
       return;
     }
-    var columns = this.getColumns();
-    var originalData = this.parentOptions.find(option => option.id === event.field?.id);
-    let valueChanged = false;
-    if (originalData) {
-       for (let index = 0; index < columns.length; index++) {
-          if (columns[index].id !== 'action' && originalData[columns[index].id] !== event.field[columns[index].id]) {
-            valueChanged = true;
-            break;
-          }
-       }
-    } else {
-        valueChanged = true;
+
+    // Validate required fields
+    if (event.field) {
+      if (event.field.name === '' && event.column.field === 'name') {
+        this.feedbackDialogService.showErrorToast({ detail: 'Name is required' });
+        return;
+      }
+
+      if (this.isPartnerCategoryEditable(event.field) && event.field.partnerCategory === '' && event.column.field === 'partnerCategory') {
+        this.feedbackDialogService.showErrorToast({ detail: 'Partner Category is required' });
+        return;
+      }
+
+      if (event.field.partnerGroup === '' && event.column.field === 'partnerGroup') {
+        this.feedbackDialogService.showErrorToast({ detail: 'Partner Group is required' });
+        return;
+      }
+
+      if (event.field.code === '' && event.column.field === 'code') {
+        this.feedbackDialogService.showErrorToast({ detail: 'Code is required' });
+        return;
+      }
     }
-    //event.field.status = (event.field.status === 'Active') ? '1' : '0';
+
+    // Handle object-to-string conversions for dropdown selections
+    this.convertObjectSelectionsToValues(event.field);
+
+    // Check if the record actually changed
+    var originalData = this.parentOptions.find(option => option.id === event.field?.id);
+    let valueChanged = this.hasRecordChanged(originalData, event.field);
+    
     if (valueChanged) {
       this.updatedRecords.push(event.field);
       if (event.data === 'parent') {
@@ -86,6 +131,37 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     } else {
       this.updatedRecords = this.updatedRecords.filter(record => record.id !== event.field.id);
     }
+  }
+
+  // Convert object selections to string values
+  private convertObjectSelectionsToValues(field: any) {
+    if (!field) return;
+    
+    // Handle partnerCategory selection, converting object to code if needed
+    if (field.partnerCategory && typeof field.partnerCategory === 'object') {
+      field.partnerCategoryName = field.partnerCategory.name;
+      field.partnerCategory = field.partnerCategory.code;
+    }
+
+    // Handle partnerGroup selection, converting object to code if needed
+    if (field.partnerGroup && typeof field.partnerGroup === 'object') {
+      field.partnerGroupName = field.partnerGroup.name;
+      field.partnerGroup = field.partnerGroup.code;
+    }
+  }
+
+  // Check if a record has changed compared to original
+  private hasRecordChanged(originalData: any, currentData: any): boolean {
+    if (!originalData) return true;
+    
+    const columnIds = ['name', 'description', 'type', 'partnerCategory', 'partnerGroup', 'code'];
+    for (const columnId of columnIds) {
+      if (originalData[columnId] !== currentData[columnId]) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   isRecordUpdated(node: any): boolean {
@@ -104,54 +180,84 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     });
   }
 
-  override ngOnInit() {
-    this.setNewPartnerFromAIAssistant();
-    this.activatedRoute.paramMap.subscribe({
-      next: (paramMap) => {
-        // Initialize columns
-        this.cols = this.getColumns();
-        this.loadPartnerTreeData();
+  loadPartnerTree() {
+    this.loading = true;
+    this.service.getAllPartnerTree().subscribe({
+      next: (data) => {
+        this.partnerTree = data;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading partner tree:', error);
+        this.loading = false;
       }
     });
+  }
 
-    this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
-      this.cdr.detectChanges();
-    });
+  onNodeSelect(event: { node: TreeNode<PartnerTree> }) {
+    this.selectedNode = event.node;
   }
 
   loadPartnerTreeData() {
-      // Make server call to get all partner tree data
-      this.service.getAllPartnerTree().subscribe({
-        next: (data: any) => {
-          this.updatedRecords = [];
-          this.data = data;
-          this.cdr.detectChanges(); // Trigger change detection
-          this.originalData = this.service.originalData;
-          this.parentOptions = this.service.parentOptions;
-          this.parentUpdated = false;
-          this.changeRecord = null;
-        },
-        error: (err: any) => {
-          console.error('Error loading partner tree data:', err);
-        }
-      });
+    // Make server call to get all partner tree data
+    this.service.getAllPartnerTree().subscribe({
+      next: (data: any) => {
+        this.updatedRecords = [];
+        this.data = data;
+        
+        // Restore expanded state after loading data
+        this.restoreExpansionState();
+        this.cdr.detectChanges(); // Trigger change detection
+        this.originalData = this.service.originalData;
+        this.parentOptions = this.service.parentOptions;
+        // Initialize partnerGroupOptions
+        this.partnerGroupOptions = this.service.partnerGroupOptions || [];
+        this.parentUpdated = false;
+        this.changeRecord = null;
+      },
+      error: (err: any) => {
+        console.error('Error loading partner tree data:', err);
+      }
+    });
+  }
 
+  // Check if Partner Category is editable for a node
+  isPartnerCategoryEditable(rowData: any): boolean {
+    if (!rowData) return false;
+    return rowData.partnerCategoryEditable === true;
+  }
+
+  // Check if Partner Group is editable for a node
+  isPartnerGroupEditable(rowData: any): boolean {
+    if (!rowData) return false;
+    return rowData.partnerGroupEditable === true;
   }
 
   onCreateNewPartnerLevel() {
-    this.createPartnerLevel = true;
     let level = 'Level_1';
     this.changeRecord = {
       type: level,
-      parent: null,
+      parent: '',
       id: null,
       status: 'Active'
     };
+    
+    const ref = this.dialogService.open(PartnerTreeItemComponent, {
+      header: 'New Partner Level',
+      width: '50rem',
+      data: {
+        record: this.changeRecord
+      }
+    });
 
+    ref.onClose.subscribe((result: PartnerTree) => {
+      if (result) {
+        this.handleOnRecordUpdation(result);
+      }
+    });
   }
 
   onAddPartnerLevel(rowData: any) {
-    this.createPartnerLevel = true;
     let level = rowData.type.split('_')[0] + '_' + (parseInt(rowData.type.split('_')[1]) + 1);
     this.changeRecord = {
       type: level,
@@ -159,17 +265,64 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       id: null,
       status: 'Active'
     };
+
+    const ref = this.dialogService.open(PartnerTreeItemComponent, {
+      header: 'New Partner Level',
+      width: '50rem',
+      data: {
+        record: this.changeRecord
+      }
+    });
+
+    ref.onClose.subscribe((result: PartnerTree) => {
+      if (result) {
+        this.handleOnRecordUpdation(result);
+      }
+    });
   }
 
   handleOnRevertClick() {
+    // Save the current expansion state before reloading
+    this.saveExpansionState();
     this.loadPartnerTreeData();
   }
 
   handleOnSaveClick() {
-    this.updatedRecords.forEach(record => {
-      record.status = (record.status === 'Active') ? '1' : '0';
+    // Validate required fields
+    const invalidRecords = this.updatedRecords.filter(record =>
+      !record.name || record.name.trim() === '' ||
+      !record.code || record.code.trim() === '');
+
+    if (invalidRecords.length > 0) {
+      this.feedbackDialogService.showErrorToast({ detail: 'Name, and Code are required for all records' });
+      return;
+    }
+
+    // Save the current expansion state before making the API call
+    this.saveExpansionState();
+
+    // Process records before saving
+    const recordsToSave = this.updatedRecords.map(record => {
+      // Create a copy to avoid modifying the original
+      const processedRecord = {...record};
+
+      // Ensure partnerCategory is stored as a code value
+      if (processedRecord.partnerCategory && typeof processedRecord.partnerCategory === 'object') {
+        processedRecord.partnerCategory = processedRecord.partnerCategory.code;
+      }
+
+      // Ensure partnerGroup is stored as a code value
+      if (processedRecord.partnerGroup && typeof processedRecord.partnerGroup === 'object') {
+        processedRecord.partnerGroup = processedRecord.partnerGroup.code;
+      }
+
+      // Convert status
+      processedRecord.status = (processedRecord.status === 'Active') ? '1' : '0';
+
+      return processedRecord;
     });
-    this.service.updatePartnerTreeLevel(this.updatedRecords).subscribe({
+
+    this.service.updatePartnerTreeLevel(recordsToSave).subscribe({
       next: (data: any) => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Updated successfully!' });
         this.loadPartnerTreeData();
@@ -177,11 +330,84 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     });
   }
 
-  handleOnDeleteClick() {
-    this.service.deletePartnerLevel(this.updatedRecords).subscribe({
-      next: (data: any) => {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
-        this.loadPartnerTreeData();
+  hasInvalidRecords(): boolean {
+    return this.updatedRecords.some(record =>
+      !record.name || record.name.trim() === '' ||
+      (record.partnerCategoryEditable && !record.partnerCategory) ||
+      (record.partnerGroupEditable && !record.partnerGroup) ||
+      !record.code || record.code.trim() === '');
+  }
+
+  openPartnerDialog(rowData: any) {
+    const ref = this.dialogService.open(PartnerTreeItemComponent, {
+      header: 'View Partner Level',
+      width: '50rem',
+      data: {
+        record: rowData
+      }
+    });
+
+    ref.onClose.subscribe((result: PartnerTree) => {
+      if (result) {
+        this.handleOnRecordUpdation(result);
+      }
+    });
+  }
+
+  // Track expanded nodes
+  onNodeExpand(event: any) {
+    if (event.node && event.node.data && event.node.data.id) {
+      this.expandedNodes.set(String(event.node.data.id), true);
+    }
+  }
+
+  // Track collapsed nodes
+  onNodeCollapse(event: any) {
+    if (event.node && event.node.data && event.node.data.id) {
+      this.expandedNodes.delete(String(event.node.data.id));
+    }
+  }
+
+  // Save expansion state of all currently expanded nodes
+  saveExpansionState() {
+    this.expandedNodes.clear();
+    this.captureExpandedNodes(this.data);
+  }
+
+  // Recursive function to capture all expanded nodes
+  private captureExpandedNodes(nodes: TreeNode<PartnerTree>[]) {
+    if (!nodes) return;
+    
+    nodes.forEach(node => {
+      if (node.expanded) {
+        if (node.data && node.data.id) {
+          this.expandedNodes.set(String(node.data.id), true);
+        }
+      }
+      
+      if (node.children && node.children.length > 0) {
+        this.captureExpandedNodes(node.children);
+      }
+    });
+  }
+
+  // Restore expansion state
+  restoreExpansionState() {
+    this.expandedNodes.size > 0 && this.applyExpansionState(this.data);
+    this.cdr.detectChanges();
+  }
+
+  // Recursive function to restore expanded nodes
+  private applyExpansionState(nodes: TreeNode<PartnerTree>[]) {
+    if (!nodes) return;
+    
+    nodes.forEach(node => {
+      if (node.data && node.data.id && this.expandedNodes.has(String(node.data.id))) {
+        node.expanded = true;
+      }
+      
+      if (node.children && node.children.length > 0) {
+        this.applyExpansionState(node.children);
       }
     });
   }
