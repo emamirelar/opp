@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.Domain.Specifications;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -142,6 +143,19 @@ public class UNOPSPartnerManager : IPartnerManager
         return query.Paginate(
             x => MapEntityToModel(x, mapper),
             request
+        );
+    }
+
+    public PaginationResponse<PartnerModel> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination)
+    {
+        // Apply the specification to the query
+        var query = PartnerRepository.GetAll().AsQueryable();
+        var filteredQuery = query.ApplySpecification(specification);
+        
+        // Apply pagination
+        return filteredQuery.Paginate(
+            x => mapper.Map<PartnerModel>(x),
+            pagination
         );
     }
 

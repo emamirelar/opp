@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { tap } from 'rxjs';
+import { PartnerTree } from '../models/partner-tree.model';
 
 @Injectable({
   providedIn: 'root',
@@ -9,22 +10,25 @@ import { tap } from 'rxjs';
 export class PartnerTreeService {
   http = inject(HttpClient);
 
-  private partnerTreeData = signal(<TreeNode[]>[]);
+  private partnerTreeData = signal<TreeNode<PartnerTree>[]>([]);
   allPartnerTreeData = this.partnerTreeData.asReadonly();
   isLoading = signal(false);
-  parentOptions: any[] = [];
-  levelOneOptions: any[] = [];
-  levelTwoOptions: any[] = [];
-  levelThreeOptions: any[] = [];
-  originalData: any[] = [];
+  parentOptions: PartnerTree[] = [];
+  levelOneOptions: PartnerTree[] = [];
+  levelTwoOptions: PartnerTree[] = [];
+  levelThreeOptions: PartnerTree[] = [];
+  originalData: PartnerTree[] = [];
+  partnerGroupOptions: PartnerTree[] = [];
 
   constructor() { }
 
-  flattenTree(tree: TreeNode[]): any[] {
-    const result: any[] = [];
-    const traverse = (nodes: TreeNode[]) => {
+  flattenTree(tree: TreeNode<PartnerTree>[]): PartnerTree[] {
+    const result: PartnerTree[] = [];
+    const traverse = (nodes: TreeNode<PartnerTree>[]) => {
       for (const node of nodes) {
-        result.push(node.data);
+        if (node.data) {
+          result.push(node.data);
+        }
         if (node.children) {
           traverse(node.children);
         }
@@ -34,15 +38,26 @@ export class PartnerTreeService {
     return result;
   }
 
+  getChildrenByParentCode(parentCode: string): PartnerTree[] {
+    if (!parentCode) {
+      return [];
+    }
+    return this.parentOptions.filter(option => 
+      option.parent === parentCode || option.code === parentCode
+    );
+  }
+
   getAllPartnerTree() {
     this.isLoading.set(true);
-    return this.http.get<TreeNode[]>(`/api/partner-tree`).pipe(
+    return this.http.get<TreeNode<PartnerTree>[]>(`/api/partner-tree`).pipe(
       tap({
         next: (data) => {
           this.partnerTreeData.set(data);
           const originalData = JSON.parse(JSON.stringify(data));
-          const flatData: any[] = this.flattenTree(originalData);
+          const flatData: PartnerTree[] = this.flattenTree(originalData);
           this.parentOptions = flatData;
+          
+          this.partnerGroupOptions = this.parentOptions;
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -55,7 +70,7 @@ export class PartnerTreeService {
 
   getPartnerTreeDataById(id: string) {
     this.isLoading.set(true);
-    return this.http.get(`/api/partner-tree/${id}`).pipe(tap(
+    return this.http.get<PartnerTree>(`/api/partner-tree/${id}`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -66,38 +81,36 @@ export class PartnerTreeService {
       }));
   }
 
-  createPartnerTreeLevel( requestJson: object ){
-
-    this.isLoading.set( true );
-    return this.http.post('/api/partner-tree', requestJson).pipe(tap(
-    {
-      next: (event) => {
-        this.isLoading.set( false );
-      },
-      error: (err) => {
-        this.isLoading.set( false );
-      }
-    }));
+  createPartnerTreeLevel(requestJson: PartnerTree) {
+    this.isLoading.set(true);
+    return this.http.post<PartnerTree>('/api/partner-tree', requestJson).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
   }
 
-  updatePartnerTreeLevel( requestJson: any[] ){
-
-    this.isLoading.set( true );
-    return this.http.put('/api/partner-tree', requestJson).pipe(tap(
-    {
-      next: (event) => {
-        this.isLoading.set( false );
-      },
-      error: (err) => {
-        this.isLoading.set( false );
-      },
-      complete: () => {
-        this.isLoading.set( false );
-      }
-    })); 
+  updatePartnerTreeLevel(requestJson: PartnerTree[]) {
+    this.isLoading.set(true);
+    return this.http.put<PartnerTree[]>('/api/partner-tree', requestJson).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        },
+        complete: () => {
+          this.isLoading.set(false);
+        }
+      })); 
   }
 
-  deletePartnerLevel(id: any) {
+  deletePartnerLevel(id: string) {
     this.isLoading.set(true);
     return this.http.delete(`/api/partner-tree/${id}`).pipe(tap(
       {

@@ -55,6 +55,22 @@
             "lastModifiedBy": "Última Modificación Por",
             "lastModifiedDate": "Fecha de Última Modificación"
         },
+        "partnerTree": {
+            "id": "ID",
+            "name": "Nombre",
+            "type": "Nivel",
+            "description": "Descripción",
+            "parent": "Padre",
+            "code": "Código",
+            "status": "Estado",
+            "createdBy": "Creado Por",
+            "createdDate": "Fecha de Creación",
+            "lastModifiedBy": "Última Modificación Por",
+            "lastModifiedDate": "Fecha de Última Modificación",
+            "actions": "Acciones",
+            "partnerCategory": "Categoría de Socio",
+            "partnerGroup": "Grupo de Socio"
+        },
         "clarificationDeadline": "Fecha Límite de Aclaración",
         "document": {
             "dragDropMessage": "Arrastra y suelta archivos aquí para subir.",
@@ -141,7 +157,7 @@
         "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace"
     },
     "errors": {
-      "failedToLoad": "Falha ao carregar"
+        "failedToLoad": "Error al cargar"
     },
     "aiAssistant": {
         "openButton": "Abrir Asistente de IA",
@@ -178,5 +194,8 @@
     "validation": {
         "required": "Este campo es obligatorio",
         "maxLength": "La longitud máxima es de {{max}} caracteres"
+    },
+    "action": {
+        "search": "Buscar"
     }
 }

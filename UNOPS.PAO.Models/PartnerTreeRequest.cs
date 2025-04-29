@@ -14,4 +14,6 @@ public class PartnerTreeRequest : ExtensibleModel
     public string Code { get; set; }
     public string Type { get; set; }
     public string? Parent { get; set; }
+    public string? PartnerCategoryCode { get; set; }
+    public string? PartnerGroupCode { get; set; }
 }

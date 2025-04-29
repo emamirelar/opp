@@ -1,3 +1,5 @@
+using UNOPS.PAO.Domain.Specifications;
+
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
 using System;
@@ -84,6 +86,19 @@ public class UNOPSContactManager : IContactManager
         return query.Paginate(
             x => MapEntityToModel(x, mapper),
             request
+        );
+    }
+
+    public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
+    {
+        // Apply the specification to the query
+        var query = contactRepository.GetAll().AsQueryable();
+        var filteredQuery = query.ApplySpecification(specification);
+        
+        // Apply pagination
+        return filteredQuery.Paginate(
+            x => mapper.Map<ContactModel>(x),
+            pagination
         );
     }
 

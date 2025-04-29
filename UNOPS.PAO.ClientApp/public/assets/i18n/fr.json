@@ -57,6 +57,22 @@
             "lastModifiedBy": "Dernière Modification Par",
             "lastModifiedDate": "Date de Dernière Modification"
         },
+        "partnerTree": {
+            "id": "ID",
+            "name": "Nom",
+            "type": "Niveau",
+            "description": "Description",
+            "parent": "Parent",
+            "code": "Code",
+            "status": "Statut",
+            "createdBy": "Créé Par",
+            "createdDate": "Date de Création",
+            "lastModifiedBy": "Dernière Modification Par",
+            "lastModifiedDate": "Date de Dernière Modification",
+            "actions": "Actions",
+            "partnerCategory": "Catégorie de Partenaire",
+            "partnerGroup": "Groupe de Partenaire"
+        },
         "clarificationDeadline": "Date Limite de Clarification",
         "document": {
             "dragDropMessage": "Glissez-déposez des fichiers ici pour téléverser.",
@@ -171,6 +187,9 @@
     "common": {
         "cancel": "Annuler",
         "capture": "Capturer"
+    },
+    "action": {
+        "search": "Rechercher"
     },
     "placeholder": {
         "enterUrl": "Entrez l'URL",

@@ -7,8 +7,10 @@ import {InteractionListComponent} from './components/interaction/list/interactio
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
 import {PartnerViewComponent} from './components/partner/view/partner-view.component';
+import {PartnerDataComponent} from './components/partner/data/partner-data.component';
 import { ContactListComponent } from './components/contact/list/contact-list.component';
 import { ContactViewComponent } from './components/contact/view/contact-view.component';
+import { PartnerTabsComponent } from './components/partner/tabs/partner-tabs.component';
 
 const internalRoutes: Routes = [
   {
@@ -55,9 +57,21 @@ const internalRoutes: Routes = [
       },
       {
         path: 'partner/:recordId',
-        data: { breadcrumb: 'Details' },
-        component: PartnerViewComponent,
+        component: PartnerTabsComponent,
         canActivate: [authGuard],
+        data: { breadcrumb: 'Partner' },
+        children: [
+          { 
+            path: '', 
+            component: PartnerViewComponent,
+            data: { breadcrumb: 'Details' }
+          },
+          {
+            path: 'data',
+            component: PartnerDataComponent,
+            data: { breadcrumb: 'Data' }
+          }
+        ]
       }
     ],
   },

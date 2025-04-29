@@ -9,6 +9,9 @@
       <div class="absolute inset-0 flex items-center justify-center">
         <div class="w-4/5 h-3/5 border-2 border-white/50 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"></div>
       </div>
+      <div class="absolute top-2 right-2 md:hidden">
+        <p-button icon="pi pi-sort-alt" styleClass="p-button-rounded p-button-text p-button-sm" (onClick)="toggleCamera()"></p-button>
+      </div>
     </div>
 
     <div class="w-full aspect-video rounded-lg overflow-hidden shadow-sm" *ngIf="capturedImage">

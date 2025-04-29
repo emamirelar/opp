@@ -15,6 +15,7 @@ export interface ListViewConfig {
   selectionMode?: 'single' | 'multiple';
   enablePagination?: boolean;
   enableSorting?: boolean;
+  enableSearch?: boolean;
   defaultSortField?: string;
   defaultSortOrder?: 'asc' | 'desc';
   scrollable?: boolean;

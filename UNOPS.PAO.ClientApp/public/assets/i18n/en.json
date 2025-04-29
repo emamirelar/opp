@@ -116,7 +116,7 @@
     "partnerTree": {
       "id": "ID",
       "name": "Name",
-      "type": "Type",
+      "type": "Level",
       "description": "Description",
       "parent": "Parent",
       "code": "Code",
@@ -125,7 +125,9 @@
       "createdDate": "Created Date",
       "lastModifiedBy": "Last Modified By",
       "lastModifiedDate": "Last Modified Date",
-      "actions": ""
+      "actions": "",
+      "partnerCategory": "Partner Category",
+      "partnerGroup": "Partner Group"
     },
     "partner": {
       "actions": "Actions",
@@ -246,6 +248,9 @@
   "common": {
     "cancel": "Cancel",
     "capture": "Capture"
+  },
+  "action": {
+    "search": "Search"
   },
   "placeholder": {
     "enterUrl": "Enter URL",

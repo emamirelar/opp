@@ -1,0 +1,21 @@
+namespace UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
+
+using UNOPS.PAO.Domain.Entities;
+
+/// <summary>
+/// Specification that filters partners by status
+/// </summary>
+public class PartnerByStatusSpecification : BaseSpecification<Partner>
+{
+    /// <summary>
+    /// Creates a specification that filters partners by status
+    /// </summary>
+    /// <param name="status">The status to filter by</param>
+    public PartnerByStatusSpecification(string status)
+        : base(p => p.Status == status)
+    {
+        // Include related entities
+        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.PartnerCategory);
+    }
+} 

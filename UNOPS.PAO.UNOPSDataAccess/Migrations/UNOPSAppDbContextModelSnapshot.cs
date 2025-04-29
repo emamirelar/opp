@@ -1290,6 +1290,12 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Parent")
                         .HasColumnType("text");
 
+                    b.Property<string>("PartnerCategoryCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PartnerGroupCode")
+                        .HasColumnType("text");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
