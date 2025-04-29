@@ -9,6 +9,7 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
+using System.Collections.Generic;
 
 [Route("/")]
 [ApiController]
@@ -70,12 +71,19 @@ public class PartnerTreeController : ControllerBase
     // Internal call: update Partner Tree
     public async Task<IActionResult> Update([FromBody] PartnerTreeDataModel[] req)
     {
+        List<PartnerTreeModel> updatedTrees = new List<PartnerTreeModel>();
+        
         foreach (var item in req)
         {
-            await manager.UpdatePartnerTreeAsync(currentUserId, item);
+            var updatedTree = await manager.UpdatePartnerTreeAsync(currentUserId, item);
+            if (updatedTree != null)
+            {
+                updatedTrees.Add(updatedTree);
+            }
         }
 
-        return NoContent();
+        // Return the updated trees with proper editability flags
+        return Ok(updatedTrees);
     }
 
     [HttpDelete(APIDictionary.PartnerTree + "/{id}")]

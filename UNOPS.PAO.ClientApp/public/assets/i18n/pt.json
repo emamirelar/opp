@@ -57,6 +57,22 @@
             "lastModifiedBy": "Última Modificação Por",
             "lastModifiedDate": "Data da Última Modificação"
         },
+        "partnerTree": {
+            "id": "ID",
+            "name": "Nome",
+            "type": "Nível",
+            "description": "Descrição",
+            "parent": "Pai",
+            "code": "Código",
+            "status": "Status",
+            "createdBy": "Criado Por",
+            "createdDate": "Data de Criação",
+            "lastModifiedBy": "Última Modificação Por",
+            "lastModifiedDate": "Data da Última Modificação",
+            "actions": "Ações",
+            "partnerCategory": "Categoria de Parceiro",
+            "partnerGroup": "Grupo de Parceiro"
+        },
         "clarificationDeadline": "Prazo para Esclarecimento",
         "document": {
             "dragDropMessage": "Arraste e solte arquivos aqui para enviar.",

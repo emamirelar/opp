@@ -7,44 +7,111 @@
   <div class="table-container">
     <p-treetable
       [loading]="service.isLoading()"
-      #treetable
+      #partnerTreeTable
       (onEditComplete)="onEditComplete($event)"
+      (onNodeExpand)="onNodeExpand($event)"
+      (onNodeCollapse)="onNodeCollapse($event)"
       [value]="data"
-      [columns]="cols"
       showGridlines
       [tableStyle]="{ 'min-width': '50rem' }"
     >
-      <ng-template #header let-columns>
+      <ng-template pTemplate="header">
         <tr>
-          <th *ngFor="let col of columns">
-            {{ col.label  | translate }}
-          </th>
+          <th>{{ 'label.partnerTree.actions' | translate }}</th>
+          <th>{{ 'label.partnerTree.name' | translate }}</th>
+          <th>{{ 'label.partnerTree.description' | translate }}</th>
+          <th class="w-20">{{ 'label.partnerTree.type' | translate }}</th>
+          <th>{{ 'label.partnerTree.partnerCategory' | translate }}</th>
+          <th>{{ 'label.partnerTree.partnerGroup' | translate }}</th>
+          <th class="w-20">{{ 'label.partnerTree.actions' | translate }}</th>
         </tr>
       </ng-template>
-      <ng-template #body let-rowNode let-rowData="rowData" let-columns="columns">
+      <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
         <tr [ttRow]="rowNode" [pEditableRow]="rowData" [class.!bg-lime-50]="isRecordUpdated(rowNode)">
-          <td *ngFor="let col of columns; let i = index; let last = last" [ttEditableColumn]="col.id" [ttEditableColumnField]="rowData">
-            <p-treeTableToggler [rowNode]="rowNode" *ngIf="i === 0" class="mr-2" />
-            <p-button icon="pi pi-plus" *ngIf="i === 0 && rowData['type'] !== 'Level_3'" rounded="true" outlined severity="primary"  class="mr-2" (onClick)="onAddPartnerLevel(rowData)"/>
-            <span *ngIf="col.editable === false || (col.id === 'parent' && rowData[col.id] === ''); else editableBlock">{{rowData[col.id]}} </span>
-            <ng-template #editableBlock>
-              <p-treeTableCellEditor>
-                <ng-template pTemplate="input">
-                  <ng-container *ngIf="col.id === 'parent'; else textInput">
-                    {{rowData[col.id]}}
-                  </ng-container>
-                  <ng-template #textInput>
-                    <textarea rows="5" cols="30" pTextarea fluid="true" [(ngModel)]="rowData[col.id]" [ngStyle]="{'width': i == 0 ? '90%': '100%'}"></textarea>
+          <!-- Action Column (first) -->
+          <td [ttEditableColumn]="'action'" [ttEditableColumnField]="rowData">
+            <p-treeTableToggler [rowNode]="rowNode" class="mr-2" />
+            <p-button icon="pi pi-plus" *ngIf="rowData['type'] !== 'Level_3'" rounded="true" outlined severity="primary" class="mr-2" (onClick)="onAddPartnerLevel(rowData)"/>
+            <span class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" [pTooltip]="rowData['action']" tooltipPosition="top">
+              {{ rowData['action'] }}
+            </span>
+          </td>
+          
+          <!-- Name Column -->
+          <td [ttEditableColumn]="'name'" [ttEditableColumnField]="rowData">
+            <p-treeTableCellEditor>
+              <ng-template pTemplate="input">
+                <div class="flex flex-col">
+                  <textarea rows="5" cols="30" pTextarea fluid="true" [(ngModel)]="rowData['name']" [ngStyle]="{'width': '100%'}" [ngClass]="{'ng-invalid ng-dirty': !rowData['name']}" required></textarea>
+                  <small *ngIf="!rowData['name']" class="p-error">{{ "validation.required" | translate }}</small>
+                </div>
+              </ng-template>
+              <ng-template pTemplate="output" class="p-cell-editor-output">
+                <span class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" [pTooltip]="rowData['name']" tooltipPosition="top">{{rowData['name']}}</span>
+              </ng-template>
+            </p-treeTableCellEditor>
+          </td>
+          
+          <!-- Description Column -->
+          <td [ttEditableColumn]="'description'" [ttEditableColumnField]="rowData">
+            <p-treeTableCellEditor>
+              <ng-template pTemplate="input">
+                <textarea rows="5" cols="30" pTextarea fluid="true" [(ngModel)]="rowData['description']" [ngStyle]="{'width': '100%'}"></textarea>
+              </ng-template>
+              <ng-template pTemplate="output" class="p-cell-editor-output">
+                <span class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" [pTooltip]="rowData['description']" tooltipPosition="top">{{rowData['description']}}</span>
+              </ng-template>
+            </p-treeTableCellEditor>
+          </td>
+          
+          <!-- Type Column -->
+          <td [ttEditableColumn]="'type'" [ttEditableColumnField]="rowData" class="w-20">
+            <span class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px] text-center" [pTooltip]="rowData['type']" tooltipPosition="top">
+              {{ rowData['type']?.split('_')[1] }}
+            </span>
+          </td>
+          
+          <!-- Partner Category Column -->
+          <td [ttEditableColumn]="rowData.partnerCategoryEditable ? 'partnerCategory' : null" [ttEditableColumnField]="rowData">
+            <p-treeTableCellEditor>
+              <ng-template pTemplate="input">
+                <p-select *ngIf="rowData.partnerCategoryEditable" [options]="parentOptions" [(ngModel)]="rowData['partnerCategory']" optionLabel="name" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Category" class="w-full" [appendTo]="'body'" [ngClass]="{'ng-invalid ng-dirty': !rowData['partnerCategory']}" required>
+                  <ng-template let-item pTemplate="item">
+                    <div>{{ item.name }}</div>
                   </ng-template>
-                </ng-template>
-                <ng-template pTemplate="output" class="p-cell-editor-output">
-                  {{rowData[col.id]}}
-                </ng-template>
-              </p-treeTableCellEditor>
-            </ng-template>
-            <ng-container *ngIf="last">
-              <p-button icon="pi pi-eye" rounded="true" severity="success" class="mr-2" outlined (onClick)="updatePartnerLevel = true; changeRecord = rowData;"/>
-            </ng-container>
+                </p-select>
+                <span *ngIf="!rowData.partnerCategoryEditable" class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">{{rowData['partnerCategory']}}</span>
+              </ng-template>
+              <ng-template pTemplate="output" class="p-cell-editor-output">
+                <span *ngIf="rowData.partnerCategoryEditable" class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" [pTooltip]="rowData['partnerCategoryName']" tooltipPosition="top">{{rowData['partnerCategoryName'] || rowData['partnerCategory']}}</span>
+                <span *ngIf="!rowData.partnerCategoryEditable" class="text-gray-400">-</span>
+              </ng-template>
+            </p-treeTableCellEditor>
+          </td>
+          
+          <!-- Partner Group Column -->
+          <td [ttEditableColumn]="rowData.partnerGroupEditable ? 'partnerGroup' : null" [ttEditableColumnField]="rowData">
+            <p-treeTableCellEditor>
+              <ng-template pTemplate="input">
+                <p-select *ngIf="rowData.partnerGroupEditable" [options]="getFilteredPartnerGroupOptions(rowData)" [(ngModel)]="rowData['partnerGroup']" optionLabel="name" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Group" class="w-full" [appendTo]="'body'" [ngClass]="{'ng-invalid ng-dirty': !rowData['partnerGroup']}" required>
+                  <ng-template let-item pTemplate="item">
+                    <div>{{ item.name }}</div>
+                  </ng-template>
+                </p-select>
+                <span *ngIf="!rowData.partnerGroupEditable" class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">{{rowData['partnerGroup']}}</span>
+              </ng-template>
+              <ng-template pTemplate="output" class="p-cell-editor-output">
+                <span *ngIf="rowData.partnerGroupEditable" class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" [pTooltip]="rowData['partnerGroupName']" tooltipPosition="top">{{rowData['partnerGroupName'] || rowData['partnerGroup']}}</span>
+                <span *ngIf="!rowData.partnerGroupEditable" class="text-gray-400">-</span>
+              </ng-template>
+            </p-treeTableCellEditor>
+          </td>
+          
+          <!-- Action Column (last) -->
+          <td [ttEditableColumn]="'action'" [ttEditableColumnField]="rowData" class="w-20">
+            <div class="flex justify-center w-full">
+              <p-button icon="pi pi-eye" rounded="true" severity="success" outlined (onClick)="openPartnerDialog(rowData)"/>
+            </div>
           </td>
         </tr>
       </ng-template>
@@ -64,21 +131,7 @@
   @if (updatedRecords.length > 0) {
     <div class="flex justify-end gap-2 sticky bottom-0 bg-white py-4 -mt-2">
       <p-button icon="pi pi-refresh" label="Revert Changes" outlined="" severity="warn" (onClick)="handleOnRevertClick()"/>
-      <p-button icon="pi pi-check" label="Save Updates" severity="success" (onClick)="handleOnSaveClick()"/>
+      <p-button icon="pi pi-check" label="Save Updates" severity="success" (onClick)="handleOnSaveClick()" [disabled]="hasInvalidRecords()"/>
     </div>
   }
 </div>
-
-<app-partner-tree-item
-  *ngIf="createPartnerLevel"
-  [record]="changeRecord"
-  (onRecordUpdateSuccess)="handleOnRecordUpdation($event)"
-  (closeModal)="createPartnerLevel = false; changeRecord = null;"
-></app-partner-tree-item>
-
-<app-partner-tree-item
-  *ngIf="updatePartnerLevel"
-  [record]="changeRecord"
-  (onRecordUpdateSuccess)="handleOnRecordUpdation($event)"
-  (closeModal)="updatePartnerLevel = false; changeRecord = null;"
-></app-partner-tree-item>
