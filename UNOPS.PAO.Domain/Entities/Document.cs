@@ -9,4 +9,5 @@ public class Document : ModifiableDeletableEntity
     public ICollection<DocumentRelationship> DocumentRelationships { get; set; }
     public int? DocumentTypeId { get; set; }
     public DocumentType? DocumentType { get; set; }
+    public int? InteractionId { get; set; }
 }

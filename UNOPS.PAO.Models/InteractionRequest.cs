@@ -21,4 +21,17 @@ public class InteractionRequest : ExtensibleModel
     public byte[]? Data { get; private set; }
     
     public int ContactId { get; set; }
+    [JsonIgnore]
+    public virtual List<string>? EmailAddresses { get; set; } = new List<string>();
+    [JsonIgnore]
+    public virtual List<string>? PhoneNumbers { get; set; } = new List<string>();
+    [JsonIgnore]
+    public virtual List<int>? ContactIds { get; set; } = new List<int>();
+    [JsonIgnore]
+    public virtual List<int>? PartnerIds { get; set; } = new List<int>();
+    [JsonIgnore]
+    public virtual List<int>? UserIds { get; set; } = new List<int>();
+    public string? Location { get; set; }
+    public string Subject { get; set; }
+    public int? OrgUnitId { get; set; }
 } 

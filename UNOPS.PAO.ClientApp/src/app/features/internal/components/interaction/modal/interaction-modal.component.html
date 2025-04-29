@@ -4,16 +4,14 @@
   <div class="flex flex-col md:flex-row gap-4">
     <div class="flex flex-col gap-2 w-full">
       <label for="type">{{ 'label.interaction.type' | translate }}</label>
-      <p-select
-        id="type"
-        [options]="typeOptions"
-        [appendTo]="'body'"
-        formControlName="type"
-        [placeholder]="'label.interaction.selectType' | translate"
-        optionLabel="translateKey"
-        optionValue="value"
-        class="w-full"
-      >
+      <p-select id="type"
+                [options]="typeOptions"
+                [appendTo]="'body'"
+                formControlName="type"
+                [placeholder]="'label.interaction.selectType' | translate"
+                optionLabel="translateKey"
+                optionValue="value"
+                class="w-full">
         <ng-template pTemplate="selectedItem" let-item>
           {{ item.translateKey | translate }}
         </ng-template>
@@ -36,18 +34,37 @@
 
   <div class="flex flex-col gap-2">
     <label for="contact">{{ 'label.interaction.contact' | translate }}</label>
-    <p-select
-      id="contact"
-      formControlName="contactId"
-      [options]="contactService.allContacts()"
-      optionLabel="firstName"
-      optionValue="id"
-      [filter]="true"
-      filterBy="name"
-      [appendTo]="'body'"
-      [showClear]="true"
-      placeholder="{{ 'label.interaction.selectContact' | translate }}"
-      class="w-full">
+    <p-select id="contact"
+              formControlName="contactId"
+              [options]="contactService.allContacts()"
+              optionLabel="firstName"
+              optionValue="id"
+              [filter]="true"
+              filterBy="name"
+              [appendTo]="'body'"
+              [showClear]="true"
+              placeholder="{{ 'label.interaction.selectContact' | translate }}"
+              class="w-full">
     </p-select>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="contact">{{ 'label.interaction.contact' | translate }}</label>
+    <p-multiselect id="contactIds"
+                   formControlName="contactIds"
+                   [options]="contactService.allContacts()"
+                   optionLabel="firstName"
+                   optionValue="id"
+                   display="chip"
+                   fluid="true"
+                   [maxSelectedLabels]="100000"
+                   placeholder="{{ 'label.interaction.selectContacts' | translate }}"
+                   class="w-full">
+      <ng-template let-contact #item>
+        <div class="flex items-center gap-2">
+          <span>{{ contact.FirstName }}</span>
+        </div>
+      </ng-template>
+    </p-multiselect>
   </div>
 </form>

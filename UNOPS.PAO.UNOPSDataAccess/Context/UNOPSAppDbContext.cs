@@ -64,4 +64,7 @@ public class UNOPSAppDbContext : AppDbContext
     public DbSet<UNOPSPartnerCategory> PartnerCategories { get; set; }
 
     public new DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
+    public new DbSet<InteractionContact> InteractionContacts { get; set; }
+    public new DbSet<InteractionUser> InteractionUsers { get; set; }
+    public new DbSet<InteractionPartner> InteractionPartners { get; set; }
 }

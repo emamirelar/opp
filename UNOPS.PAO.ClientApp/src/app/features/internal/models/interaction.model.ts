@@ -6,6 +6,7 @@ export interface Interaction {
   date: string;
   data?: string;
   contactId: number;
+  contactIds: number[];
   contactName?: string;
   description?: string;
   status: string;

@@ -5,6 +5,7 @@ import { InteractionService } from '../../../services/interaction.service';
 import {Button} from 'primeng/button';
 import {Textarea} from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { InteractionType, INTERACTION_TYPE_TRANSLATION_KEYS } from '../../../models/interaction-type.enum';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ContactService } from '../../../services/contact.service';
@@ -28,6 +29,7 @@ import { InteractionModalFooterComponent } from './footer/interaction-modal-foot
     Button,
     Textarea,
     SelectModule,
+    MultiSelectModule,
     TranslateModule,
     CommonModule,
     ConfirmDialog
@@ -69,7 +71,8 @@ export class InteractionModalComponent {
       type: ['', Validators.required],
       date: [new Date(), Validators.required],
       data: [''],
-      contactId: ['', Validators.required]
+      contactId: ['', Validators.required],
+      contactIds: [[]]
     });
     this.contactService.getAllContacts();
     
@@ -87,7 +90,8 @@ export class InteractionModalComponent {
         type: this.record.type,
         date: new Date(this.record.date),
         data: this.record.data,
-        contactId: this.record.contactId
+        contactId: this.record.contactId,
+        contactIds: this.record.contactIds
       });
     }
     
