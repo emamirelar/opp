@@ -105,7 +105,7 @@
                 "email": "Email",
                 "chat": "Chat",
                 "phone": "Téléphone",
-                "video_meeting": "Rendez-vous vidéo",
+                "virtual_meeting": "Rendez-vous virtuelle",
                 "in_person_meeting": "Rendez-vous en personne"
             },
             "selectType": "Sélectionnez un type",

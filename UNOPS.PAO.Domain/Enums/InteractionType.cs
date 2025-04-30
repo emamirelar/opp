@@ -4,8 +4,9 @@ namespace UNOPS.PAO.Domain.Enums
     {
         Email,
         Chat,
-        Phone,
-        VideoMeeting,
-        InPersonMeeting
+        Call,
+        VirtualMeeting,
+        InPersonMeeting,
+        Other
     }
 }

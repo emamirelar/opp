@@ -5,6 +5,7 @@ using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace UNOPS.PAO.DataAccess.Context;
 
@@ -41,6 +42,9 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<PartnerCategory> PartnerCategories { get; set; }
 
     public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
+    public DbSet<InteractionContact> InteractionContacts { get; set; }
+    public DbSet<InteractionUser> InteractionUsers { get; set; }
+    public DbSet<InteractionPartner> InteractionPartners { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -93,6 +97,53 @@ public class AppDbContext : AuditableDbContext<int, int>
             .HasOne(i => i.Contact)
             .WithMany(c => c.Interactions)
             .HasForeignKey(i => i.ContactId);
+
+        modelBuilder.Entity<Interaction>(entity =>
+        {
+            entity.Property(e => e.EmailAddresses)
+                  .HasConversion(
+                      v => string.Join(',', v),
+                      v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                            new ValueComparer<List<string>>(
+                                (c1, c2) => c1.SequenceEqual(c2),
+                                  c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                                  c => c.ToList()))
+                  .HasColumnType("text");
+
+        entity.Property(e => e.PhoneNumbers)
+                  .HasConversion(
+                      v => string.Join(',', v),
+                      v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                            new ValueComparer<List<string>>(
+                              (c1, c2) => c1.SequenceEqual(c2),
+                              c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                              c => c.ToList()))
+                  .HasColumnType("text");
+
+            entity.HasMany(i => i.InteractionContacts)
+                .WithOne(ic => ic.Interaction)
+                .HasForeignKey(ic => ic.InteractionId);
+
+            entity.HasMany(i => i.InteractionUsers)
+                .WithOne(iu => iu.Interaction)
+                .HasForeignKey(iu => iu.InteractionId);
+
+            entity.HasMany(i => i.InteractionPartners)
+                .WithOne(ip => ip.Interaction)
+                .HasForeignKey(ip => ip.InteractionId);
+        });
+
+        modelBuilder
+            .Entity<InteractionContact>()
+            .HasKey(ic => new { ic.InteractionId, ic.ContactId });
+
+        modelBuilder
+            .Entity<InteractionPartner>()
+            .HasKey(ip => new { ip.InteractionId, ip.PartnerId });
+
+        modelBuilder
+            .Entity<InteractionUser>()
+            .HasKey(iu => new { iu.InteractionId, iu.UserId });
 
         modelBuilder
             .Entity<PartnerTree>();

@@ -104,7 +104,7 @@
             "email": "Email",
             "chat": "Chat",
             "phone": "Telefone",
-            "video_meeting": "Reunião por vídeo",
+            "virtual_meeting": "Reunião Virtual",
             "in_person_meeting": "Reunião presencial"
           },
           "selectType": "Selecione um tipo",

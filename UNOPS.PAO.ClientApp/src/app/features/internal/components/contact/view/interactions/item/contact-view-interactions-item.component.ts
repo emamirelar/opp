@@ -44,7 +44,7 @@ export class ContactViewInteractionsItemComponent {
           bgColor: 'bg-cyan-50',
           textColor: 'text-cyan-800'
         };
-      case InteractionType.VideoMeeting.toLowerCase():
+      case InteractionType.VirtualMeeting.toLowerCase():
         return {
           icon: 'pi pi-video',
           bgColor: 'bg-blue-50',

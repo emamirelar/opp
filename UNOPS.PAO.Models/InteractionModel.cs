@@ -1,6 +1,7 @@
 using UNOPS.PAO.Domain.Enums;
 using System.Text.Json.Serialization;
 using System.Text;
+using UNOPS.PAO.Domain.Entities;
 
 namespace UNOPS.PAO.Models;
 
@@ -25,4 +26,39 @@ public class InteractionModel
     public string? ContactName { get; set; }
     public string? Description { get; set; }
     public string Status { get; set; }
-} 
+    public virtual List<string>? EmailAddresses { get; set; } = new List<string>();
+    public virtual List<string>? PhoneNumbers { get; set; } = new List<string>();
+    public List<int>? ContactIds { get; set; } = new List<int>();
+    [JsonIgnore]
+    public virtual ICollection<InteractionContactModel>? InteractionContacts { get; set; }
+    public List<int>? PartnerIds { get; set; } = new List<int>();
+    [JsonIgnore]
+    public virtual ICollection<InteractionPartnerModel>? InteractionPartners { get; set; }
+    public List<int>? UserIds { get; set; } = new List<int>();
+    [JsonIgnore]
+    public virtual ICollection<InteractionUserModel>? InteractionUsers { get; set; }
+    public string? Location { get; set; }
+    public string Subject { get; set; }
+    [JsonIgnore]
+    public virtual OrganizationUnitModel? OrgUnit { get; set; }
+    public int? OrgUnitId { get; set; }
+    public List<DocumentModel>? Documents { get; set; }
+}
+
+public class InteractionContactModel
+{
+    public int InteractionId { get; set; }
+    public int ContactId { get; set; }
+}
+
+public class InteractionPartnerModel
+{
+    public int InteractionId { get; set; }
+    public int PartnerId { get; set; }
+}
+
+public class InteractionUserModel
+{
+    public int InteractionId { get; set; }
+    public int UserId { get; set; }
+}
