@@ -25,13 +25,24 @@
 
 /* Advanced search styles */
 :host ::ng-deep {
+  /* Common height for all input elements */
+  .h-input {
+    height: 40px !important;
+  }
+
   /* Make dropdown more visible */
   p-dropdown {
-    min-width: 200px !important;
-    
     .p-dropdown {
-      width: 100%;
-      min-width: 200px;
+      height: 40px;
+      
+      .p-dropdown-label {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+      }
+      
+      .p-dropdown-trigger {
+        width: 3rem;
+      }
     }
   }
   
@@ -41,6 +52,35 @@
     
     &.flex-grow-1 {
       width: 100% !important;
+    }
+
+    .p-inputtext {
+      height: 40px;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+  }
+  
+  /* Button styling */
+  .p-button {
+    &.h-input {
+      .p-button-label {
+        line-height: 24px;
+      }
+    }
+
+    &.p-button-add-filter {
+      min-width: 130px;
+      padding: 0 1rem;
+      
+      .p-button-icon {
+        font-size: 0.9rem;
+        margin-right: 0.5rem;
+      }
+      
+      .p-button-label {
+        font-weight: 500;
+      }
     }
   }
   
