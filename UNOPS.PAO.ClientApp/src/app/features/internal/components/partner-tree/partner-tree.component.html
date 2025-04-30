@@ -27,7 +27,8 @@
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
-        <tr [ttRow]="rowNode" [pEditableRow]="rowData" [class.!bg-lime-50]="isRecordUpdated(rowNode)">
+        <tr [ttRow]="rowNode" [pEditableRow]="rowData" 
+            [class.!bg-lime-50]="isRecordUpdated(rowNode)">
           <!-- Action Column (first) -->
           <td [ttEditableColumn]="'action'" [ttEditableColumnField]="rowData">
             <p-treeTableToggler [rowNode]="rowNode" class="mr-2" />
@@ -84,7 +85,6 @@
               </ng-template>
               <ng-template pTemplate="output" class="p-cell-editor-output">
                 <span *ngIf="rowData.partnerCategoryEditable" class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" [pTooltip]="rowData['partnerCategoryName']" tooltipPosition="top">{{rowData['partnerCategoryName'] || rowData['partnerCategory']}}</span>
-                <span *ngIf="!rowData.partnerCategoryEditable" class="text-gray-400">-</span>
               </ng-template>
             </p-treeTableCellEditor>
           </td>
@@ -102,7 +102,6 @@
               </ng-template>
               <ng-template pTemplate="output" class="p-cell-editor-output">
                 <span *ngIf="rowData.partnerGroupEditable" class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]" [pTooltip]="rowData['partnerGroupName']" tooltipPosition="top">{{rowData['partnerGroupName'] || rowData['partnerGroup']}}</span>
-                <span *ngIf="!rowData.partnerGroupEditable" class="text-gray-400">-</span>
               </ng-template>
             </p-treeTableCellEditor>
           </td>
