@@ -86,7 +86,8 @@
     "preFillFrom": "Transcribe Data",
     "takePhoto": "Take Photo",
     "capture": "Capture",
-    "remove": "Remove"
+    "remove": "Remove",
+    "updateImportData": "Update Import Data"
   },
   "label": {
     "actions": "Actions",
