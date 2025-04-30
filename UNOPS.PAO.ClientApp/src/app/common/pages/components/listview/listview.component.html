@@ -35,7 +35,7 @@
               severity="secondary"
               (onClick)="exportData()"
               [disabled]="isLoading()"
-              size="small"
+              styleClass="p-button-text p-button-export"
             ></p-button>
           }
         </div>
@@ -70,35 +70,41 @@
             [(ngModel)]="selectedSearchField" 
             optionLabel="label"
             placeholder="Select field"
-            [style]="{'min-width': '200px'}"
+            styleClass="h-input"
+            [style]="{'width': '200px'}"
             (onChange)="onSearchFieldSelect($event.value)"
           ></p-dropdown>
           
-          <p-dropdown
-            *ngIf="selectedSearchField"
-            [options]="operators"
-            [(ngModel)]="selectedOperator"
-            placeholder="Operator"
-            [style]="{'width': '100px'}"
-          ></p-dropdown>
-          
-          <p-iconfield iconPosition="left" class="search-input-container flex-grow-1">
-            <p-inputicon class="pi pi-search" />
-            <input pInputText type="text"
-              [placeholder]="selectedSearchField ? 'Enter ' + selectedSearchField.label + '...' : 'Select a field first'"
-              [(ngModel)]="advancedSearchText"
-              [disabled]="!selectedSearchField"
-              (keyup.enter)="onAdvancedSearchEnter()"
-            />
-          </p-iconfield>
-          
-          <p-button 
-            icon="pi pi-plus"
-            label="Add Filter"
-            (onClick)="onSearch()"
-            [disabled]="!selectedSearchField || !advancedSearchText || advancedSearchText.trim().length === 0"
-            pTooltip="Add search filter"
-          ></p-button>
+          @if (selectedSearchField) {
+            <div class="flex gap-2 flex-grow-1">
+              <p-dropdown
+                [options]="operators"
+                [(ngModel)]="selectedOperator"
+                placeholder="Operator"
+                styleClass="h-input"
+                [style]="{'width': '120px'}"
+              ></p-dropdown>
+              
+              <p-iconfield iconPosition="left" class="search-input-container flex-grow-1">
+                <p-inputicon class="pi pi-search" />
+                <input pInputText type="text"
+                  [placeholder]="'Enter ' + selectedSearchField.label + '...'"
+                  [(ngModel)]="advancedSearchText"
+                  (keyup.enter)="onAdvancedSearchEnter()"
+                  class="h-input"
+                />
+              </p-iconfield>
+              
+              <p-button 
+                icon="pi pi-plus"
+                label="Add Filter"
+                (onClick)="onSearch()"
+                [disabled]="!advancedSearchText || advancedSearchText.trim().length === 0"
+                pTooltip="Add search filter"
+                styleClass="h-input p-button-add-filter"
+              ></p-button>
+            </div>
+          }
         </div>
       </div>
     }
@@ -114,7 +120,7 @@
           severity="secondary"
           (onClick)="exportData()"
           [disabled]="isLoading()"
-          size="small"
+          styleClass="p-button-text p-button-export"
         ></p-button>
       </div>
     }
