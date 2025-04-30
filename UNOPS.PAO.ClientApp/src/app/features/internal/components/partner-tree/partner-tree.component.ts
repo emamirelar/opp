@@ -245,6 +245,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
       header: 'New Partner Level',
       width: '50rem',
+      closable: true,
       data: {
         record: this.changeRecord
       }
@@ -269,6 +270,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
       header: 'New Partner Level',
       width: '50rem',
+      closable: true,
       data: {
         record: this.changeRecord
       }
@@ -333,8 +335,6 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   hasInvalidRecords(): boolean {
     return this.updatedRecords.some(record =>
       !record.name || record.name.trim() === '' ||
-      (record.partnerCategoryEditable && !record.partnerCategory) ||
-      (record.partnerGroupEditable && !record.partnerGroup) ||
       !record.code || record.code.trim() === '');
   }
 
@@ -342,6 +342,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
       header: 'View Partner Level',
       width: '50rem',
+      closable: true,
       data: {
         record: rowData
       }

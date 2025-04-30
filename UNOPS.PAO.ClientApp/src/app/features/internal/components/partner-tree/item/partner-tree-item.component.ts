@@ -51,6 +51,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
   isFormInvalid = signal<boolean>(false);
+  parent?: PartnerTree;
 
   partnerTreeService = inject(PartnerTreeService);
   feedbackDialogService = inject(FeedbackDialogService);
@@ -79,8 +80,8 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   cachedDataService = inject(CachedDataService);
   allTypeData = this.cachedDataService.allPartnerLevelTypes;
   allStatusData = this.cachedDataService.allStatus;
-  parentOptions: any[] = [];
-  filteredPartnerGroupOptions: any[] = [];
+  parentOptions: PartnerTree[] = [];
+  filteredPartnerGroupOptions: PartnerTree[] = [];
 
   constructor() {
     this.record = this.dialogConfig.data?.record;
@@ -103,6 +104,10 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   ngOnInit() {
     if (this.record) {
       this.formGroup.patchValue(this.record);
+      const parentCode = this.record?.parent;
+      if (parentCode) {
+        this.parent = this.parentOptions.find(p => p.code === parentCode);
+      }
     }
     this.updateFormValidity();
     
@@ -140,6 +145,11 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   handleActivate() {
     if (this.formGroup.valid) {
       const formValue = this.formGroup.value;
+      // Find parent object from parentOptions using the parent code
+      if (formValue.parent) {
+        this.parent = this.parentOptions.find(p => p.code === formValue.parent);
+      }
+      
       const payload: PartnerTree = {
         id: formValue.id || undefined,
         name: formValue.name || undefined,
@@ -167,6 +177,11 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   handleSave() {
     if (this.formGroup.valid) {
       const formValue = this.formGroup.value;
+      // Find parent object from parentOptions using the parent code
+      if (formValue.parent) {
+        this.parent = this.parentOptions.find(p => p.code === formValue.parent);
+      }
+      
       const payload: PartnerTree = {
         id: formValue.id || undefined,
         name: formValue.name || undefined,
@@ -223,4 +238,16 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   private updateFormValidity() {
     this.isFormInvalid.set(this.formGroup.invalid);
   }
+
+  canEditPartnerCategory() {
+    return this.formGroup.get('type')?.value === 'Level_1' || (this.formGroup.get('type')?.value === 'Level_2' && !this.parent?.partnerCategoryEditable);
+  }
+
+  canEditPartnerGroup() {
+    if (!this.parent) return false;
+
+    return this.parent?.partnerGroupEditable || this.parent?.partnerCategoryEditable;
+  }
+
+
 }
