@@ -26,30 +26,22 @@ public class InteractionModel
     public string? ContactName { get; set; }
     public string? Description { get; set; }
     public string Status { get; set; }
-    [JsonIgnore]
     public virtual List<string>? EmailAddresses { get; set; } = new List<string>();
-    [JsonIgnore]
     public virtual List<string>? PhoneNumbers { get; set; } = new List<string>();
-    public List<int>? ContactIds { get; set; }
+    public List<int>? ContactIds { get; set; } = new List<int>();
     [JsonIgnore]
     public virtual ICollection<InteractionContactModel>? InteractionContacts { get; set; }
-    public List<int>? PartnerIds { get; set; }
-    // Many-to-many with Partners
+    public List<int>? PartnerIds { get; set; } = new List<int>();
     [JsonIgnore]
     public virtual ICollection<InteractionPartnerModel>? InteractionPartners { get; set; }
-    public List<int>? UserIds { get; set; }
-    // Many-to-many with Users
+    public List<int>? UserIds { get; set; } = new List<int>();
     [JsonIgnore]
     public virtual ICollection<InteractionUserModel>? InteractionUsers { get; set; }
     public string? Location { get; set; }
-
     public string Subject { get; set; }
-
     [JsonIgnore]
     public virtual OrganizationUnitModel? OrgUnit { get; set; }
-
     public int? OrgUnitId { get; set; }
-
     public List<DocumentModel>? Documents { get; set; }
 }
 

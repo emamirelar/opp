@@ -134,6 +134,18 @@ public class AppDbContext : AuditableDbContext<int, int>
         });
 
         modelBuilder
+            .Entity<InteractionContact>()
+            .HasKey(ic => new { ic.InteractionId, ic.ContactId });
+
+        modelBuilder
+            .Entity<InteractionPartner>()
+            .HasKey(ip => new { ip.InteractionId, ip.PartnerId });
+
+        modelBuilder
+            .Entity<InteractionUser>()
+            .HasKey(iu => new { iu.InteractionId, iu.UserId });
+
+        modelBuilder
             .Entity<PartnerTree>();
 
         modelBuilder

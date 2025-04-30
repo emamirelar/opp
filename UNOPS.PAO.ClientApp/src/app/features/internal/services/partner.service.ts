@@ -19,7 +19,7 @@ export class PartnerService {
     this.isLoading.set(true);
     this.http.get(`/api/partner`).subscribe({
       next: (data: any) => {
-        this.partnerData.set(data);
+        this.partnerData.set(data.records);
         this.isLoading.set(false);
       },
       error: (err) => {

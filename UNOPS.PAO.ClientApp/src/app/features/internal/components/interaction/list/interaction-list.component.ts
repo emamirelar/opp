@@ -39,12 +39,12 @@ export class InteractionListComponent {
       sortable: true,
       type: 'text'
     },
-    {
+    /*{
       field: 'contactName',
       label: 'label.interaction.contactName',
       sortable: false,
       type: 'text'
-    },
+    },*/
     {
       field: 'date',
       label: 'label.interaction.date',
@@ -52,8 +52,14 @@ export class InteractionListComponent {
       type: 'date'
     },
     {
+      field: 'subject',
+      label: 'label.interaction.subject',
+      sortable: false,
+      type: 'text'
+    },
+    {
       field: 'data',
-      label: 'label.interaction.notes',
+      label: 'label.interaction.description',
       sortable: false,
       type: 'text'
     }

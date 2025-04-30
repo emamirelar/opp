@@ -134,7 +134,42 @@ public class InteractionManager : IInteractionManager
             .Include(i => i.InteractionContacts).ThenInclude(ic => ic.Contact)
             .Include(i => i.InteractionPartners).ThenInclude(ip => ip.Partner)
             .Include(i => i.InteractionUsers).ThenInclude(iu => iu.User)
+            .Where(x => !x.IsDeleted)
             .AsQueryable();
+
+        if (!string.IsNullOrEmpty(request.OrderBy))
+        {
+            switch (request.OrderBy.ToLower())
+            {
+                case "type":
+                    query = request.Ascending ?? true
+                        ? query.OrderBy(x => x.Type)
+                        : query.OrderByDescending(x => x.Type);
+                    break;
+                case "contactid":
+                    query = request.Ascending ?? true
+                        ? query.OrderBy(x => x.Contact.Name)
+                        : query.OrderByDescending(x => x.Contact.Name);
+                    break;
+                case "date":
+                    query = request.Ascending ?? true
+                        ? query.OrderBy(x => x.Date)
+                        : query.OrderByDescending(x => x.Date);
+                    break;
+                case "data":
+                    query = request.Ascending ?? true
+                        ? query.OrderBy(x => x.Data)
+                        : query.OrderByDescending(x => x.Data);
+                    break;
+                default:
+                    query = query.OrderByDescending(x => x.Date);
+                    break;
+            }
+        }
+        else
+        {
+            query = query.OrderByDescending(x => x.Date);
+        }
 
         return query.Paginate(
             x => mapper.Map<InteractionModel>(x),
@@ -246,8 +281,6 @@ public class InteractionManager : IInteractionManager
         var entity = await interactionRepository.GetByIdAsync(model.Id,
             includes: new[]
             {
-                nameof(Interaction.EmailAddresses),
-                nameof(Interaction.PhoneNumbers),
                 nameof(Interaction.InteractionContacts),
                 nameof(Interaction.InteractionPartners),
                 nameof(Interaction.InteractionUsers)

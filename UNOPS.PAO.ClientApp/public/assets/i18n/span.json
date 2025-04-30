@@ -102,7 +102,7 @@
             "email": "Correo electrónico",
             "chat": "Chat",
             "phone": "Teléfono",
-            "video_meeting": "Reunión por video",
+            "virtual_meeting": "Reunión virtual",
             "in_person_meeting": "Reunión presencial"
           },
           "selectType": "Seleccione un tipo",

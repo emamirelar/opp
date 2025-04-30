@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace UNOPS.PAO.Domain.Entities
 {
-    public class InteractionPartner : ModifiableDeletableEntity
+    public class InteractionPartner
     {
         public int InteractionId { get; set; }
         public int PartnerId { get; set; }

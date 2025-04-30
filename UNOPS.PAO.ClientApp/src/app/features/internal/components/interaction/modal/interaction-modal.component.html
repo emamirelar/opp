@@ -1,34 +1,106 @@
 <p-confirmDialog></p-confirmDialog>
 
 <form [formGroup]="formGroup" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
-  <div class="flex flex-col md:flex-row gap-4">
-    <div class="flex flex-col gap-2 w-full">
-      <label for="type">{{ 'label.interaction.type' | translate }}</label>
-      <p-select id="type"
-                [options]="typeOptions"
-                [appendTo]="'body'"
-                formControlName="type"
-                [placeholder]="'label.interaction.selectType' | translate"
-                optionLabel="translateKey"
-                optionValue="value"
-                class="w-full">
-        <ng-template pTemplate="selectedItem" let-item>
-          {{ item.translateKey | translate }}
-        </ng-template>
-        <ng-template pTemplate="item" let-item>
-          {{ item.translateKey | translate }}
-        </ng-template>
-      </p-select>
-    </div>
-
-    <div class="flex flex-col gap-2">
-      <label for="date">{{ 'label.interaction.date' | translate }}</label>
-      <p-calendar id="date" formControlName="date" [showTime]="true" class="w-full"></p-calendar>
-    </div>
+  @if( showValidationFailedError() === true ){
+  <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
+  }
+  <div class="flex flex-col gap-2">
+    <label for="type">{{ 'label.interaction.type' | translate }}</label>
+    <p-select id="type"
+              [options]="typeOptions"
+              [appendTo]="'body'"
+              formControlName="type"
+              [placeholder]="'label.interaction.selectType' | translate"
+              optionLabel="translateKey"
+              optionValue="value"
+              class="w-full">
+      <ng-template pTemplate="selectedItem" let-item>
+        {{ item.translateKey | translate }}
+      </ng-template>
+      <ng-template pTemplate="item" let-item>
+        {{ item.translateKey | translate }}
+      </ng-template>
+    </p-select>
   </div>
 
   <div class="flex flex-col gap-2">
-    <label for="data">{{ 'label.interaction.notes' | translate }}</label>
+    <label for="emails" class="block">{{ 'label.interaction.emailAddresses' | translate }}</label>
+    <p-autocomplete id="emails"
+                    formControlName="emailAddresses"
+                    multiple
+                    fluid
+                    [typeahead]="false" />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="phones" class="block">{{ 'label.interaction.phoneNumbers' | translate }}</label>
+    <p-autocomplete id="phones"
+                    formControlName="phoneNumbers"
+                    multiple
+                    fluid
+                    [typeahead]="false" />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="contacts">{{ 'label.interaction.relatedTo' | translate }}</label>
+    <p-multiselect id="contacts"
+                   formControlName="contactIds"
+                   [options]="contactService.allContacts()"
+                   optionLabel="firstName"
+                   optionValue="id"
+                   display="chip"
+                   fluid="true"
+                   [maxSelectedLabels]="100000"
+                   placeholder="{{ 'label.interaction.selectContacts' | translate }}"
+                   ariaLabel="contacts">
+      <ng-template let-contact #item>
+        <div class="flex items-center gap-2">
+          <span>{{ contact.firstName }} {{ contact.lastName }}</span>
+        </div>
+      </ng-template>
+    </p-multiselect>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="partners">{{ 'label.interaction.partners' | translate }}</label>
+    <p-multiselect id="partners"
+                   formControlName="partnerIds"
+                   [options]="partnerService.allPartners()"
+                   optionLabel="name"
+                   optionValue="id"
+                   display="chip"
+                   fluid="true"
+                   [maxSelectedLabels]="100000"
+                   placeholder="{{ 'label.interaction.selectPartners' | translate }}"
+                   ariaLabel="partners">
+      <ng-template let-partner #item>
+        <div class="flex items-center gap-2">
+          <span>{{ partner.name }}</span>
+        </div>
+      </ng-template>
+    </p-multiselect>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="location">{{ 'label.interaction.location' | translate }}</label>
+    <input pInputText fluid="true" formControlName="location" id="location" />
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="date">{{ 'label.interaction.date' | translate }}</label>
+    <p-calendar id="date" formControlName="date" [showTime]="true" class="w-full"></p-calendar>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="subject">{{ 'label.interaction.subject' | translate }} *</label>
+    <input pInputText fluid="true" formControlName="subject" id="subject" />
+    @if( formGroup.get("subject")?.invalid && showValidationFailedError() ) {
+    <p-message severity="error" variant="simple">Subject must be entered.</p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="data">{{ 'label.interaction.description' | translate }}</label>
     <textarea id="data" pTextarea formControlName="data" class="w-full" rows="6" [autoResize]="true"></textarea>
   </div>
 
@@ -46,25 +118,5 @@
               placeholder="{{ 'label.interaction.selectContact' | translate }}"
               class="w-full">
     </p-select>
-  </div>
-
-  <div class="flex flex-col gap-2">
-    <label for="contact">{{ 'label.interaction.contact' | translate }}</label>
-    <p-multiselect id="contactIds"
-                   formControlName="contactIds"
-                   [options]="contactService.allContacts()"
-                   optionLabel="firstName"
-                   optionValue="id"
-                   display="chip"
-                   fluid="true"
-                   [maxSelectedLabels]="100000"
-                   placeholder="{{ 'label.interaction.selectContacts' | translate }}"
-                   class="w-full">
-      <ng-template let-contact #item>
-        <div class="flex items-center gap-2">
-          <span>{{ contact.FirstName }}</span>
-        </div>
-      </ng-template>
-    </p-multiselect>
   </div>
 </form>
