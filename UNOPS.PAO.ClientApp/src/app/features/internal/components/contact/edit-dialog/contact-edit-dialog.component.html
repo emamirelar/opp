@@ -6,6 +6,13 @@
     }
 
     <form [formGroup]="formGroup" class="flex flex-col gap-8">
+      <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
+        <app-ai-transcribe 
+          transcribeType="contact_action" 
+          (transcriptionCompleted)="onTranscriptionCompleted($event)">
+        </app-ai-transcribe>
+      </div>
+      
       <div class="grid grid-cols-9 gap-4">
 
 

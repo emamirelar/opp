@@ -46,6 +46,8 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<InteractionUser> InteractionUsers { get; set; }
     public DbSet<InteractionPartner> InteractionPartners { get; set; }
 
+    public DbSet<Notification> Notifications { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.ConfigureWarnings(warnings => warnings

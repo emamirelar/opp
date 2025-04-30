@@ -26,6 +26,8 @@ import { InteractionModalFooterComponent } from './footer/interaction-modal-foot
 import { NgIf } from '@angular/common';
 import { ChipModule, Chip } from 'primeng/chip';
 import { AutoCompleteModule } from 'primeng/autocomplete';
+import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-interaction-modal',
@@ -46,7 +48,9 @@ import { AutoCompleteModule } from 'primeng/autocomplete';
     ConfirmDialog,
     NgIf,
     ChipModule,
-    AutoCompleteModule
+    AutoCompleteModule,
+    HttpClientModule,
+    AiTranscribeComponent
   ],
   providers: [
     ConfirmationService,
@@ -230,6 +234,18 @@ export class InteractionModalComponent {
         summary: 'Invalid Email',
         detail: `"${email}" is not valid`,
         life: 3000
+      });
+    }
+  }
+
+  // Handler for transcription completion
+  onTranscriptionCompleted(data: any): void {
+    if (data) {
+      this.formGroup.patchValue({
+        type: data.type || this.formGroup.get('type')?.value,
+        date: data.date ? new Date(data.date) : this.formGroup.get('date')?.value,
+        data: data.data || this.formGroup.get('data')?.value,
+        contactId: data.contactId || this.formGroup.get('contactId')?.value
       });
     }
   }

@@ -32,6 +32,7 @@ import {EntityType} from '../../../../../common/models/link.model';
 import { BlockUI } from 'primeng/blockui';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Partner } from '../../../models/partner.model';
+import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -52,6 +53,9 @@ import { Partner } from '../../../models/partner.model';
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
+    MarkdownPipe,
+    LinkListComponent,
+    AiTranscribeComponent
   ],
   templateUrl: './partner-edit-dialog.component.html',
   standalone: true,
@@ -156,9 +160,13 @@ export class PartnerEditDialogComponent implements OnInit {
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
-
+        debugger;
         if (this.recordId != '') {
           this._loadRecordDetails();
+        } else {
+          this.record = this.dialogConfig.data?.record;
+          this.recordData.set(this.dialogConfig.data.record);
+          this.formGroup.patchValue(this.dialogConfig.data.record);
         }
       }
     });
@@ -171,6 +179,26 @@ export class PartnerEditDialogComponent implements OnInit {
 
       // Reset requesting save signal immediately
       this.dialogConfig.data.requestingSaveSignal.set(false);
+
+      // Check if this is an import edit
+      const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+                          this.dialogConfig.data?.record?.isImportEdit ||
+                          this.dialogConfig.data?.record?.skipServerSave;
+      
+      if (isImportEdit) {
+        console.log('This is an import edit, skipping server save');
+        // Create a copy of the payload with the _updated flag
+        const updatedRecord = { 
+          ...payload, 
+          _updated: true,
+          isImportEdit: true,
+          skipServerSave: true
+        };
+        
+        // For import edits, just return the updated record without saving to server
+        this.dialogRef.close(updatedRecord);
+        return;
+      }
 
       if (this.recordId) {
         // Update existing partner
@@ -224,6 +252,18 @@ export class PartnerEditDialogComponent implements OnInit {
   }
 
   handleOnCancelClick(event: MouseEvent) {
+    // Check if this is an import edit
+    const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+                        this.dialogConfig.data?.record?.isImportEdit ||
+                        this.dialogConfig.data?.record?.skipServerSave;
+    
+    if (isImportEdit) {
+      // Just close the dialog for import edits
+      this.dialogRef.close();
+      return;
+    }
+    
+    // Standard behavior - navigate to partners page
     this.router.navigate(['partners']);
   }
 
@@ -249,5 +289,24 @@ export class PartnerEditDialogComponent implements OnInit {
     requestJsonObj['id'] = this.recordId;
 
     return requestJsonObj;
+  }
+
+  // Handler for AI transcription completion
+  onTranscriptionCompleted(data: any): void {
+    if (data) {
+      this.formGroup.patchValue({
+        name: data.name || this.formGroup.get('name')?.value,
+        shortName: data.shortName || this.formGroup.get('shortName')?.value,
+        phone: data.phone || this.formGroup.get('phone')?.value,
+        address1Street: data.address1Street || this.formGroup.get('address1Street')?.value,
+        address1Street2: data.address1Street2 || this.formGroup.get('address1Street2')?.value,
+        address1City: data.address1City || this.formGroup.get('address1City')?.value,
+        address1StateProvince: data.address1StateProvince || this.formGroup.get('address1StateProvince')?.value,
+        address1PostalCode: data.address1PostalCode || this.formGroup.get('address1PostalCode')?.value,
+        address1Country: data.address1Country || this.formGroup.get('address1Country')?.value
+      });
+
+      this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.preFillSuccess') });
+    }
   }
 }

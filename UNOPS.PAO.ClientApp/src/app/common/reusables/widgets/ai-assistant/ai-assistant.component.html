@@ -163,7 +163,7 @@
       <textarea
         pTextarea
         [ngModel]="message()"
-        (ngModelChange)="message.set($event)"
+        (ngModelChange)="updateMessage($event)"
         placeholder="{{ 'aiAssistant.typeMessage' | translate }}"
         [rows]="1"
         [autoResize]="true"

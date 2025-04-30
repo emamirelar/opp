@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit,  signal } from '@angular/core';
-import { DynamicDialogConfig,  } from 'primeng/dynamicdialog';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, computed, Type } from '@angular/core';
+import { DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
@@ -12,9 +12,22 @@ import { MessageModule } from 'primeng/message';
 import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
 import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
-import {NgForOf, NgClass, JsonPipe} from '@angular/common';
+import { NgForOf, NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
+import { PaginatorModule } from 'primeng/paginator';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { DropdownModule } from 'primeng/dropdown';
+import { TooltipModule } from 'primeng/tooltip';
+import { CheckboxModule, CheckboxChangeEvent } from 'primeng/checkbox';
+import { ComponentResolverService } from '../../../../../features/internal/services/component-resolver.service';
+import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
+import { ImportService } from '../import.service';
 
+// Custom interface for import columns that extends ListViewColumn
+interface ImportColumn extends ListViewColumn {
+  header: string; // Used instead of label for display in the import table
+  required?: boolean; // Whether this field is required for import
+}
 
 @Component({
   selector: 'app-import-dialog',
@@ -33,49 +46,261 @@ import { ImportDialogService } from './import-dialog.service';
     BlockUIModule,
     StepperModule,
     NgForOf,
-    NgClass
+    NgClass,
+    PaginatorModule,
+    ProgressSpinnerModule,
+    DropdownModule,
+    TooltipModule,
+    CheckboxModule,
+    TitleCasePipe
   ],
   templateUrl: './import-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ImportDialogComponent {
+export class ImportDialogComponent implements OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
   importDialogService = inject(ImportDialogService);
+  componentResolverService = inject(ComponentResolverService);
+  importService = inject(ImportService);
+  // Make Math available to the template
+  Math = Math;
+
+  // Current import type being displayed
+  currentImportType = computed(() => this.importDialogService.getImportType());
 
   errorMessage = signal<string>('');
-
   selectedRows = signal<any[]>([]);
   validationErrors = signal<Map<number, string[]>>(new Map());
+  rowsWithMissingRequired = signal<number[]>([]);
+  showMissingRequiredBanner = signal<boolean>(false);
 
-  // Table columns configuration derived from form controls
-  columns = [
-    { field: 'salutation', header: 'Salutation', required: false },
-    { field: 'firstName', header: 'First Name', required: false },
-    { field: 'middleName', header: 'Middle Name', required: false },
-    { field: 'lastName', header: 'Last Name', required: true },
-    { field: 'suffix', header: 'Suffix', required: false },
-    { field: 'title', header: 'Title', required: false },
-    { field: 'pronouns', header: 'Pronouns', required: false },
-    { field: 'birthDate', header: 'Birth Date', required: false },
-    { field: 'email', header: 'Email', required: true },
-    { field: 'phone', header: 'Phone', required: false },
-    { field: 'mobile', header: 'Mobile', required: false },
-    { field: 'otherPhone', header: 'Other Phone', required: false },
-    { field: 'fax', header: 'Fax', required: false },
-    { field: 'department', header: 'Department', required: false },
-    { field: 'description', header: 'Description', required: false },
-    { field: 'status', header: 'Status', required: false },
-    { field: 'contactNumber', header: 'Contact Number', required: false },
-    { field: 'assistant', header: 'Assistant', required: false },
-    { field: 'assistantPhone', header: 'Assistant Phone', required: false },
-    { field: 'assistantEmail', header: 'Assistant Email', required: false },
-    { field: 'mailingStreet', header: 'Mailing Street', required: false },
-    { field: 'mailingStreet2', header: 'Mailing Street 2', required: false },
-    { field: 'mailingCity', header: 'Mailing City', required: false },
-    { field: 'mailingStateProvince', header: 'Mailing State/Province', required: false },
-    { field: 'mailingPostalCode', header: 'Mailing Postal Code', required: false },
-    { field: 'mailingCountry', header: 'Mailing Country', required: false }
+  // Pagination properties
+  first = signal(0);
+  rows = signal(10);
+  rowsModel = 10; // For dropdown binding
+  totalRecords = signal(0);
+  paginatedData = signal<any[]>([]);
+
+  // Table columns configuration
+  columns: ImportColumn[] = [];
+
+  // Contact-specific columns
+  contactColumns: ImportColumn[] = [
+    { field: 'salutation', header: 'Salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
+    { field: 'firstName', header: 'First Name', required: false, label: 'First Name', type: 'text', sortable: false },
+    { field: 'middleName', header: 'Middle Name', required: false, label: 'Middle Name', type: 'text', sortable: false },
+    { field: 'lastName', header: 'Last Name', required: true, label: 'Last Name', type: 'text', sortable: false },
+    { field: 'suffix', header: 'Suffix', required: false, label: 'Suffix', type: 'text', sortable: false },
+    { field: 'title', header: 'Title', required: false, label: 'Title', type: 'text', sortable: false },
+    { field: 'pronouns', header: 'Pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
+    { field: 'birthDate', header: 'Birth Date', required: false, label: 'Birth Date', type: 'text', sortable: false },
+    { field: 'partnerId', header: 'Partner ID', required: true, label: 'Partner ID', type: 'text', sortable: false },
+    { field: 'email', header: 'Email', required: true, label: 'Email', type: 'text', sortable: false },
+    { field: 'phone', header: 'Phone', required: false, label: 'Phone', type: 'text', sortable: false },
+    { field: 'mobile', header: 'Mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
+    { field: 'otherPhone', header: 'Other Phone', required: false, label: 'Other Phone', type: 'text', sortable: false },
+    { field: 'fax', header: 'Fax', required: false, label: 'Fax', type: 'text', sortable: false },
+    { field: 'department', header: 'Department', required: false, label: 'Department', type: 'text', sortable: false },
+    { field: 'description', header: 'Description', required: false, label: 'Description', type: 'text', sortable: false },
+    { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
+    { field: 'contactNumber', header: 'Contact Number', required: false, label: 'Contact Number', type: 'text', sortable: false },
+    { field: 'assistant', header: 'Assistant', required: false, label: 'Assistant', type: 'text', sortable: false },
+    { field: 'assistantPhone', header: 'Assistant Phone', required: false, label: 'Assistant Phone', type: 'text', sortable: false },
+    { field: 'assistantEmail', header: 'Assistant Email', required: false, label: 'Assistant Email', type: 'text', sortable: false },
+    { field: 'mailingStreet', header: 'Mailing Street', required: false, label: 'Mailing Street', type: 'text', sortable: false },
+    { field: 'mailingStreet2', header: 'Mailing Street 2', required: false, label: 'Mailing Street 2', type: 'text', sortable: false },
+    { field: 'mailingCity', header: 'Mailing City', required: false, label: 'Mailing City', type: 'text', sortable: false },
+    { field: 'mailingStateProvince', header: 'Mailing State/Province', required: false, label: 'Mailing State/Province', type: 'text', sortable: false },
+    { field: 'mailingPostalCode', header: 'Mailing Postal Code', required: false, label: 'Mailing Postal Code', type: 'text', sortable: false },
+    { field: 'mailingCountry', header: 'Mailing Country', required: false, label: 'Mailing Country', type: 'text', sortable: false },
   ];
+
+  // Partner-specific columns
+  partnerColumns: ImportColumn[] = [
+    { field: 'name', header: 'Name', required: true, label: 'Name', type: 'text', sortable: false },
+    { field: 'shortName', header: 'Short Name', required: true, label: 'Short Name', type: 'text', sortable: false },
+    { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
+    { field: 'newEngagement', header: 'New Engagement', required: true, label: 'New Engagement', type: 'text', sortable: false },
+    { field: 'phone', header: 'Phone', required: false, label: 'Phone', type: 'text', sortable: false },
+    { field: 'website', header: 'Website', required: false, label: 'Website', type: 'text', sortable: false },
+    { field: 'pooledFund', header: 'Pooled Fund', required: true, label: 'Pooled Fund', type: 'text', sortable: false },
+    { field: 'ddRequired', header: 'DD Required', required: true, label: 'DD Required', type: 'text', sortable: false },
+    { field: 'ddeacDone', header: 'DDEAC Done', required: true, label: 'DDEAC Done', type: 'text', sortable: false },
+    { field: 'eacReference', header: 'EAC Reference', required: false, label: 'EAC Reference', type: 'text', sortable: false },
+    { field: 'globalKeyAccount', header: 'Global Key Account', required: false, label: 'Global Key Account', type: 'text', sortable: false },
+    { field: 'unSecretariatEntity', header: 'UN Secretariat Entity', required: false, label: 'UN Secretariat Entity', type: 'text', sortable: false },
+    { field: 'levyPotentiallyApplies', header: 'Levy Potentially Applies', required: true, label: 'Levy Potentially Applies', type: 'text', sortable: false },
+    { field: 'reasonForLevyNotApplying', header: 'Reason For Levy Not Applying', required: false, label: 'Reason For Levy Not Applying', type: 'text', sortable: false },
+    { field: 'levyTreatment', header: 'Levy Treatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
+    { field: 'address1Street', header: 'Street', required: false, label: 'Street', type: 'text', sortable: false },
+    { field: 'address1Street2', header: 'Street 2', required: false, label: 'Street 2', type: 'text', sortable: false },
+    { field: 'address1City', header: 'City', required: false, label: 'City', type: 'text', sortable: false },
+    { field: 'address1StateProvince', header: 'State/Province', required: false, label: 'State/Province', type: 'text', sortable: false },
+    { field: 'address1PostalCode', header: 'Postal Code', required: false, label: 'Postal Code', type: 'text', sortable: false },
+    { field: 'address1Country', header: 'Country', required: false, label: 'Country', type: 'text', sortable: false },
+  ];
+
+  // Create data effect in the constructor to ensure injection context
+  constructor() {
+    // Setup effect to update paginated data when data changes
+    effect(() => {
+      // Update columns again if the import type changes
+      this.updateColumnsForEntityType();
+      
+      const allData = this.importDialogService.data();
+      
+      if (allData && allData.length > 0) {
+        this.totalRecords.set(allData.length);
+        // When data changes, ensure we start back at page 1
+        this.first.set(0);
+        this.updatePaginatedData();
+        
+        // Check for missing required fields
+        this.checkMissingRequiredFields();
+        
+        // Reset loading state if it's still active
+        setTimeout(() => {
+          if (this.importDialogService.isLoading()) {
+            this.importDialogService.isLoading.set(false);
+          }
+        }, 100);
+      } else {
+        this.totalRecords.set(0);
+        this.paginatedData.set([]);
+        this.selectedRows.set([]);
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    // Set the table columns based on the current import type
+    this.updateColumnsForEntityType();
+    
+    // Immediately check data on init
+    this.checkAndProcessData();
+  }
+
+  // Update the table columns based on the current import type
+  private updateColumnsForEntityType(): void {
+    const entityType = this.importDialogService.getImportType().toLowerCase();
+    
+    if (entityType === 'partner') {
+      this.columns = this.partnerColumns;
+    } else {
+      // Default to contact columns
+      this.columns = this.contactColumns;
+    }
+  }
+  
+  // Check and process data - can be called multiple times if needed
+  checkAndProcessData(): void {
+    // Use the explicitly set import type from the service
+    const entityType = this.importDialogService.getImportType();
+    console.log('Using explicitly set import type:', entityType);
+    
+    // Update columns for the current entity type
+    this.updateColumnsForEntityType();
+    
+    // Process the data
+    const initialData = this.importDialogService.data();
+    
+    if (initialData && initialData.length > 0) {
+      // Add a unique non-conflicting ID to each row for selection purposes
+      const processedData = initialData.map((item, index) => {
+        return { ...item, _importRowId: `import-${index}` };
+      });
+      
+      // Update the data in the service with the processed data
+      this.importDialogService.data.set(processedData);
+      this.totalRecords.set(processedData.length);
+      this.updatePaginatedData();
+      
+      // Check for missing required fields
+      this.checkMissingRequiredFields();
+      
+      // Auto-select all valid rows (exclude rows with errors or missing required fields)
+      this.selectValidRows();
+      
+      // If no data was displayed, try forcing detection
+      if (this.paginatedData().length === 0) {
+        setTimeout(() => {
+          this.updatePaginatedData();
+        }, 0);
+      }
+    } else {
+      console.warn('No data available for processing');
+      this.totalRecords.set(0);
+      this.paginatedData.set([]);
+    }
+  }
+
+  updatePaginatedData(): void {
+    const allData = this.importDialogService.data();
+    const firstIndex = this.first();
+    const rowsPerPage = this.rows();
+    
+    if (!allData || allData.length === 0) {
+      console.warn('No data available for pagination');
+      this.paginatedData.set([]);
+      this.totalRecords.set(0);
+      this.selectedRows.set([]);
+      return;
+    }
+
+    // Update total records if it doesn't match the data length
+    if (this.totalRecords() !== allData.length) {
+      this.totalRecords.set(allData.length);
+    }
+    
+    // Ensure firstIndex doesn't exceed the bounds of the data
+    if (firstIndex >= allData.length) {
+      const newFirstIndex = 0;
+      console.warn(`First index ${firstIndex} exceeds data length ${allData.length}, resetting to ${newFirstIndex}`);
+      this.first.set(newFirstIndex);
+      
+      const newPaginatedResult = allData.slice(newFirstIndex, newFirstIndex + rowsPerPage);
+      this.paginatedData.set(newPaginatedResult);
+      return;
+    }
+    
+    // Normal pagination
+    const endIndex = Math.min(firstIndex + rowsPerPage, allData.length);
+    const paginatedResult = allData.slice(firstIndex, endIndex);
+    
+    this.paginatedData.set(paginatedResult);
+  }
+
+  onPageChange(event: any): void {
+    // Verify the event has expected properties
+    if (!event || typeof event.first !== 'number' || typeof event.rows !== 'number') {
+      console.error('Invalid page change event:', event);
+      return;
+    }
+    
+    // Verify that we're not exceeding data bounds
+    const dataLength = this.importDialogService.data().length;
+    if (event.first >= dataLength) {
+      event.first = 0;
+    }
+    
+    // Store current selection before changing page
+    const currentSelection = this.selectedRows();
+    
+    // Update pagination values
+    this.first.set(event.first);
+    this.rows.set(event.rows);
+    this.rowsModel = event.rows;
+    
+    // Update paginated data (which now preserves selection)
+    this.updatePaginatedData();
+  }
+
+  onRowsPerPageChange(event: any): void {
+    // Reset to first page when changing rows per page
+    this.first.set(0);
+    this.rows.set(event.value);
+    this.updatePaginatedData();
+  }
 
   getFieldHeader(fieldName: string): string {
     const column = this.columns.find(col => col.field === fieldName);
@@ -83,10 +308,401 @@ export class ImportDialogComponent {
   }
 
   hasErrors(rowIndex: number): boolean {
-    return this.validationErrors().has(rowIndex);
+    // Adjust the row index to account for pagination
+    const actualRowIndex = this.first() + rowIndex;
+    return this.validationErrors().has(actualRowIndex);
   }
 
   getRowErrors(rowIndex: number): string[] {
-    return this.validationErrors().get(rowIndex) || [];
+    // Adjust the row index to account for pagination
+    const actualRowIndex = this.first() + rowIndex;
+    return this.validationErrors().get(actualRowIndex) || [];
+  }
+
+  hasMissingRequiredRows(): boolean {
+    return this.rowsWithMissingRequired().length > 0;
+  }
+
+  // Select all rows in the current dataset (including rows with missing required fields)
+  selectAllRows(): void {
+    const allData = this.importDialogService.data();
+    
+    if (!allData || allData.length === 0) {
+      console.warn('No data to select from');
+      return;
+    }
+    
+    // Select ALL rows, including those with missing required fields
+    const newSelection = [...allData];
+    
+    // Update the local selection state
+    this.selectedRows.set(newSelection);
+    
+    // Update the service with the selected rows
+    this.importDialogService.setSelectedRows(newSelection);
+    
+    // Check if any rows with missing fields are being selected and show a warning
+    const missingRequiredRows = this.rowsWithMissingRequired();
+    if (missingRequiredRows.length > 0) {
+      this.feedbackDialogService.showWarningToast({
+        detail: `You've selected ${missingRequiredRows.length} rows with missing required fields`,
+        life: 3000
+      });
+    }
+  }
+
+  // Get the currently selected rows (used for import)
+  getSelectedRowsForImport(): any[] {
+    const selectedData = this.selectedRows();
+    return selectedData;
+  }
+
+  // Check if all records are selected (including those with missing required fields)
+  areAllRowsSelected(): boolean {
+    const allData = this.importDialogService.data();
+    const selectedRows = this.selectedRows();
+    
+    // Check if all records (including those with missing fields) are selected
+    return selectedRows.length === allData.length;
+  }
+  
+  toggleSelectAll(event: CheckboxChangeEvent): void {
+    // We don't need to call stopPropagation as CheckboxChangeEvent is not a DOM event
+    if (this.areAllRowsSelected()) {
+      // Clear all selections
+      this.selectedRows.set([]);
+    } else {
+      // Select all rows, including those with missing required fields
+      this.selectAllRows();
+    }
+    
+    // Update the service
+    this.importDialogService.setSelectedRows(this.selectedRows());
+  }
+
+  // Method to check if we have a mixed selection (not all rows selected)
+  hasMixedSelection(): boolean {
+    const selectedRows = this.selectedRows();
+    const allData = this.importDialogService.data();
+    
+    // If we have some rows selected but not all rows, it's a mixed state
+    return selectedRows.length > 0 && selectedRows.length < allData.length;
+  }
+
+  // Update selected rows when selection changes
+  onSelectionChange(event: any[]): void {
+    
+    // Get the existing selection that might include rows from other pages
+    const currentSelection = this.selectedRows();
+    const paginatedRows = this.paginatedData();
+    const allData = this.importDialogService.data();
+    
+    // Store the current page range
+    const startIndex = this.first();
+    const endIndex = Math.min(startIndex + this.rows(), allData.length);
+    
+    // Create a Set of IDs of rows on the current page for quick lookup
+    const currentPageRowIds = new Set(paginatedRows.map(row => row._importRowId));
+    
+    // Keep selections from other pages (not on the current page)
+    const selectionsFromOtherPages = currentSelection.filter(row => 
+      !currentPageRowIds.has(row._importRowId)
+    );
+    
+    // Create a new selection by combining:
+    // 1. Rows selected from other pages (not visible on current page)
+    // 2. Rows selected on the current page from the event
+    const newSelection = [
+      ...selectionsFromOtherPages,
+      ...event
+    ];
+    
+    // Avoid duplicates by creating a unique set based on _importRowId
+    const uniqueSelection = [...new Map(newSelection.map(item => 
+      [item._importRowId, item]
+    )).values()];
+    
+    // Update the selection state
+    this.selectedRows.set(uniqueSelection);
+    
+    // Update the service with the selected rows for import
+    this.importDialogService.setSelectedRows(uniqueSelection);
+    
+    // Check if we should still show the warning banner
+    // This ensures the banner updates properly when rows are manually selected
+    if (this.rowsWithMissingRequired().length > 0) {
+      // Check if any rows with missing fields are now selected
+      const missingRequiredRows = this.rowsWithMissingRequired();
+      
+      const selectedRowsWithMissingFields = uniqueSelection.filter(selectedRow => {
+        const rowIndex = allData.findIndex(item => item._importRowId === selectedRow._importRowId);
+        return missingRequiredRows.includes(rowIndex);
+      });
+      
+      // If there are selected rows with missing fields, show a warning toast
+      if (selectedRowsWithMissingFields.length > 0) {
+        this.feedbackDialogService.showWarningToast({
+          detail: `You've selected ${selectedRowsWithMissingFields.length} rows with missing required fields`,
+          life: 3000
+        });
+      }
+    }
+  }
+
+  // Implement the edit row functionality
+  editRow(row: any, event: Event): void {
+    // Prevent the event from propagating (to avoid row selection change)
+    event.stopPropagation();
+    
+    // Make a copy of the row data to avoid reference issues
+    const rowCopy = { ...row };
+    
+    // Flag to indicate this is an import edit
+    rowCopy.isImportEdit = true;
+    // Flag to tell the component not to save to the server
+    rowCopy.skipServerSave = true;
+    
+    console.log('Row data being passed to edit dialog:', rowCopy);
+    
+    // Get the entity type
+    const entityType = this.importDialogService.getImportType().toLowerCase();
+    console.log('Current import type:', entityType);
+    
+    // Store a reference to the current row in a temporary map for later access
+    // We'll use the importRowId to identify this row when it's updated
+    const importRowId = row._importRowId;
+    
+    // Create a custom save handler for the dialog
+    const importSaveHandler = signal<boolean>(false);
+    
+    // First letter should be capitalized for the component name lookup
+    const componentName = entityType.charAt(0).toUpperCase() + entityType.slice(1);
+    console.log('Using component resolver with name:', componentName);
+    
+    try {
+      // Create a modified special version of the record for dialog compatibility
+      const dialogRecord = { ...rowCopy };
+      
+      // Special handling for each entity type to ensure form is populated correctly
+      if (entityType === 'partner') {
+        // For partner, explicitly set certain fields that the form expects
+        dialogRecord.partnerOfficeId = dialogRecord.partnerOfficeId || null;
+        dialogRecord.partnerCategoryId = dialogRecord.partnerCategoryId || null;
+        dialogRecord.website = dialogRecord.website || '';
+        dialogRecord.eacReference = dialogRecord.eacReference || '';
+        
+        // Make sure id is present and formatted appropriately
+        if (dialogRecord.id !== undefined && dialogRecord.id !== null) {
+          // Ensure id is a string since the component expects a string recordId
+          dialogRecord.recordId = String(dialogRecord.id); 
+        }
+      }
+      
+      // Log the prepared record
+      console.log('Prepared dialog record:', dialogRecord);
+      
+      // Use the resolver method with additional parameters to identify this as a custom dialog
+      // Define our custom behavior through the dialogRecord object
+      dialogRecord._importSaveHandler = importSaveHandler;
+      dialogRecord._customOpen = true;
+      
+      // Open the dialog directly
+      const componentData = this.componentResolverService['componentMap'][componentName];
+      if (!componentData) {
+        throw new Error(`Component not found for ${componentName}`);
+      }
+      
+      // Open the dialog with our custom configuration
+      const dialogRef = this.componentResolverService.dialogService.open(componentData.component, {
+        header: `Edit ${componentName}`,
+        width: '40vw',
+        breakpoints: { '960px': '95vw' },
+        closable: true,
+        templates: {
+          footer: componentData.footer
+        },
+        data: {
+          mode: 'edit',
+          record: dialogRecord,
+          requestingSaveSignal: signal<boolean>(false)
+        }
+      });
+      
+      // Handle dialog close event to update the row in the table
+      dialogRef.onClose.subscribe(result => {
+        console.log('Dialog closed with result:', result);
+        
+        if (result && (result._updated || typeof result === 'object')) {
+          console.log('Row was updated in the edit dialog');
+          
+          // Find the row in the data array
+          const allData = this.importDialogService.data();
+          const rowIndex = allData.findIndex(item => item._importRowId === importRowId);
+          
+          if (rowIndex !== -1) {
+            // Create a new array with the updated row
+            const updatedData = [...allData];
+            
+            // If result is directly the updated record
+            if (result._updated) {
+              // Keep the importRowId from the original row
+              result._importRowId = importRowId;
+              updatedData[rowIndex] = result;
+            } 
+            // If we just need to apply changes from dialog form
+            else if (typeof result === 'object') {
+              // Copy all properties from the result to the original row
+              const updatedRow = { ...allData[rowIndex], ...result };
+              updatedData[rowIndex] = updatedRow;
+            }
+            
+            // Update the data in the service
+            this.importDialogService.data.set(updatedData);
+            
+            // Update paginated data and trigger change detection
+            this.updatePaginatedData();
+            
+            // Check for missing required fields
+            this.checkRowForMissingFields(updatedData[rowIndex]);
+          }
+        }
+        
+        // Always trigger a refresh-listview event for compatibility
+        window.dispatchEvent(new CustomEvent('refresh-listview'));
+      });
+      
+      console.log('Dialog opened through component resolver');
+    } catch (error) {
+      console.error('Error opening edit dialog:', error);
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'Error opening edit dialog' 
+      });
+    }
+  }
+  
+  // Helper method to check if a row has missing required fields
+  checkRowForMissingFields(row: any): void {
+    // Find the row index in the data array
+    const allData = this.importDialogService.data();
+    const importRowId = row._importRowId;
+    const rowIndex = allData.findIndex(item => item._importRowId === importRowId);
+    
+    if (rowIndex === -1) {
+      console.warn('Row not found in data array');
+      return;
+    }
+    
+    // Check for missing required fields
+    const missingFields = this.columns
+      .filter(col => {
+        return col.required && !row[col.field];
+      })
+      .map(col => col.field);
+    
+    if (missingFields.length > 0) {
+      // Still has missing required fields
+      const currentMissingRows = this.rowsWithMissingRequired();
+      if (!currentMissingRows.includes(rowIndex)) {
+        // Add this row to the missing required rows
+        this.rowsWithMissingRequired.set([...currentMissingRows, rowIndex]);
+      }
+      
+      if (missingFields.length > 0) {
+        // Show a warning about still missing fields
+        this.feedbackDialogService.showWarningToast({
+          detail: `Row updated but still missing required fields: ${missingFields.join(', ')}`,
+          life: 5000
+        });
+      }
+    } else {
+      // No missing required fields for this row
+      const currentMissingRows = this.rowsWithMissingRequired();
+      if (currentMissingRows.includes(rowIndex)) {
+        // Remove this row from the missing required rows
+        this.rowsWithMissingRequired.set(currentMissingRows.filter(index => index !== rowIndex));
+      }
+    }
+    
+    // Update banner visibility
+    const newMissingRows = this.rowsWithMissingRequired();
+    this.showMissingRequiredBanner.set(newMissingRows.length > 0);
+  }
+
+  // Check for missing required fields in all rows
+  checkMissingRequiredFields(): void {
+    const allData = this.importDialogService.data();
+    const rowsWithMissing: number[] = [];
+    
+    allData.forEach((row, index) => {
+      const missingFields = this.columns
+        .filter(col => col.required && !row[col.field])
+        .map(col => col.field);
+        
+      if (missingFields.length > 0) {
+        rowsWithMissing.push(index);
+      }
+    });
+    
+    // Update the list of rows with missing required fields
+    this.rowsWithMissingRequired.set(rowsWithMissing);
+    
+    // Update banner visibility based on whether any rows have missing fields
+    this.showMissingRequiredBanner.set(rowsWithMissing.length > 0);
+  }
+
+  // Force refresh of the data view
+  refreshData(): void {
+    const currentData = this.importDialogService.data();
+    
+    if (currentData && currentData.length > 0) {
+      // Reset to first page
+      this.first.set(0);
+      
+      // Clear and rebuild existing data
+      this.checkAndProcessData();
+      
+      // Clear selections and reselect valid rows
+      this.selectedRows.set([]);
+      
+      // Update paginated data with the latest data
+      this.updatePaginatedData();
+      
+      // Check for missing required fields and deselect problematic rows
+      this.checkMissingRequiredFields();
+    } else {
+      // Reset everything if no data
+      this.totalRecords.set(0);
+      this.paginatedData.set([]);
+      this.selectedRows.set([]);
+      this.rowsWithMissingRequired.set([]);
+      this.showMissingRequiredBanner.set(false);
+    }
+  }
+
+  // Select only valid rows (exclude rows with errors or missing required fields)
+  selectValidRows(): void {
+    const allData = this.importDialogService.data();
+    
+    if (!allData || allData.length === 0) {
+      console.warn('No data to select from');
+      return;
+    }
+    
+    // Get rows with missing required fields
+    const missingRequiredRows = this.rowsWithMissingRequired();
+    
+    // Get rows with validation errors
+    const validationErrorRows = Array.from(this.validationErrors().keys());
+    
+    // Filter out rows with either missing required fields or validation errors
+    const validRows = allData.filter((_, index) => {
+      return !missingRequiredRows.includes(index) && !validationErrorRows.includes(index);
+    });
+    
+    // Update the local selection state
+    this.selectedRows.set(validRows);
+    
+    // Update the service with the selected rows
+    this.importDialogService.setSelectedRows(validRows);
   }
 }

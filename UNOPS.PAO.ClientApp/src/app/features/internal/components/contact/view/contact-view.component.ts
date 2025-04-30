@@ -10,7 +10,7 @@ import { DocumentComponent } from '../../../../../common/reusables/components/do
 import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { LanguageService } from '../../../../../common/services/language.service';
-import { Subscription } from 'rxjs/internal/Subscription';
+import { Subscription } from 'rxjs';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { BlockUI } from 'primeng/blockui';
@@ -21,8 +21,8 @@ import { EntityType } from '../../../../../common/models/link.model';
 import { LinkListComponent } from '../../../../../common/reusables/components/link/list/link-list.component';
 import {DatePipe, JsonPipe} from '@angular/common';
 import { DialogService } from 'primeng/dynamicdialog';
-import {Avatar} from 'primeng/avatar';
-import {FeedbackDialogService} from '../../../../../common/pages/services/feedback-dialog.service';
+import {AvatarModule} from 'primeng/avatar';
+import {FeedbackDialogService} from '../../../../../common/reusables/services/feedback-dialog.service';
 import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
 import {ContactEditDialogFooterComponent} from '../edit-dialog/footer/contact-edit-dialog-footer.component';
 import { Contact } from '../../../models/contact.model';
@@ -41,7 +41,7 @@ import {PictureComponent} from '../../../../../common/reusables/components/pictu
     MessageModule,
     LinkListComponent,
     DatePipe,
-    Avatar,
+    AvatarModule,
     RouterLink,
     ContactViewInteractionsComponent,
     PictureComponent

@@ -88,6 +88,14 @@ export class ImportGoogleSheetService {
     });
   }
 
+  /**
+   * Get the Google Client ID used for authentication
+   * @returns The Google Client ID
+   */
+  getClientId(): string {
+    return this.clientId;
+  }
+
   private createPicker(): Observable<string> {
     const sheetIdSubject = new Subject<string>();
     
@@ -99,6 +107,10 @@ export class ImportGoogleSheetService {
         if (data.action === google.picker.Action.PICKED) {
           const selectedSheet = data[google.picker.Response.DOCUMENTS][0];
           sheetIdSubject.next(selectedSheet.id);
+          sheetIdSubject.complete();
+        } else if (data.action === google.picker.Action.CANCEL) {
+          // Handle cancel action by emitting a special value
+          sheetIdSubject.next('CANCELED');
           sheetIdSubject.complete();
         }
       });

@@ -44,4 +44,9 @@ export interface Contact {
   isDeleted?: boolean | null;
   deletedBy?: string | null;
   deletedDate?: Date | null;
+  
+  // Import-specific properties
+  isImportEdit?: boolean;
+  _updated?: boolean;
+  _importRowId?: string;
 }

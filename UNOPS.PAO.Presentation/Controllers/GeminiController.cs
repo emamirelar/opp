@@ -193,7 +193,7 @@ public class GeminiController : ControllerBase
                 return BadRequest(new { message = "Invalid request." });
             }
 
-            var response = await manager.ExtractDataAfterAnalysis(request);
+            var response = await manager.ExtractDataAfterAnalysis(request, currentUserId);
 
             return Ok(response);
         }

@@ -12,6 +12,7 @@ using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
+using System;
 
 [Route("/")]
 [ApiController]
@@ -49,25 +50,35 @@ public class PartnerController : ControllerBase
     [HttpGet(APIDictionary.Partner)]
     // Internal call: get Partners created by logged-in user
     // TODO add permissions
-    public ActionResult GetAll([FromQuery] PartnerFilterRequest request)
+    public ActionResult<PaginationResponse<PartnerModel>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
     {
-        var specification = new PartnerCompositeSpecification(
-            id: request.Id,
-            name: request.Name,
-            status: request.Status,
-            newEngagement: request.NewEngagement,
-            phone: request.Phone,
-            website: request.Website,
-            shortName: request.ShortName,
-            partnerOfficeId: request.PartnerOfficeId,
-            partnerCategoryId: request.PartnerCategoryId,
-            addressCity: request.AddressCity,
-            addressStateProvince: request.AddressStateProvince,
-            addressPostalCode: request.AddressPostalCode,
-            addressCountry: request.AddressCountry,
-            searchText: request.SearchText);
-        
-        return Ok(manager.GetPartnersWithSpecification(currentUserId, specification, request));
+        if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
+        {
+            try
+            {
+                var newRequest = AdvancedSearchHelper.MapAdvancedSearchCriteria<PartnerFilterRequest>(searchCriteria);
+                // Copy over any properties that weren't in the search criteria but were in the original request
+                foreach (var prop in typeof(PartnerFilterRequest).GetProperties())
+                {
+                    if (prop.GetValue(newRequest) == null)
+                    {
+                        prop.SetValue(newRequest, prop.GetValue(request));
+                    }
+                }
+                request = newRequest;
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message, searchCriteria });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = "Failed to process advanced search criteria", details = ex.Message, searchCriteria });
+            }
+        }
+
+        var specification = new PartnerCompositeSpecification(request);
+        return manager.GetPartnersWithSpecification(currentUserId, specification, request);
     }
 
     [HttpGet(APIDictionary.Partner + "/{id}")]

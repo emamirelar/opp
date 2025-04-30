@@ -1,120 +1,220 @@
+<p-confirmDialog></p-confirmDialog>
+
 <div class="listview-container">
+  
   <!-- Search bar -->
-
-
   @if (config.enableSearch) {
-    <div class="flex justify-end">
-      <p-iconfield iconPosition="left" class="search-input-container">
-        <p-inputicon class="pi pi-search" />
-      <input pInputText type="text" placeholder="Search"
-      [placeholder]="'action.search' | translate"
-      [(ngModel)]="searchText"
-      (input)="onSearchInput(searchText)"
-      (keyup.enter)="onSearch()"
-      />
-        @if (searchText.length > 0) {
-          <p-inputicon class="pi pi-times" (click)="clearSearch()" />
+    <!-- Simple Search Input -->
+    @if (!config.searchConfig?.useAdvancedSearch) {
+      <div class="w-full">
+        <p-iconfield iconPosition="left" class="w-full">
+          <p-inputicon class="pi pi-search" />
+          <input pInputText type="text"
+            [placeholder]="searchPlaceholder()"
+            [(ngModel)]="searchText"
+            (input)="onSearchInput(searchText)"
+            (keyup.enter)="onSearch()"
+            class="w-full"
+          />
+          @if (searchText.length > 0) {
+            <p-inputicon class="pi pi-times" (click)="clearSearch()" />
+          }
+        </p-iconfield>
+      </div>
+    }
+    
+    <!-- Advanced Search with Chips -->
+    @if (config.searchConfig?.useAdvancedSearch) {
+      <div class="w-full bg-gray-50 rounded-lg p-3">
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-md font-medium text-gray-700">Advanced Search</div>
+          @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
+            <p-button
+              [label]="config.exportOptions?.buttonLabel ?? 'Export'"
+              icon="pi pi-file-export"
+              severity="secondary"
+              (onClick)="exportData()"
+              [disabled]="isLoading()"
+              size="small"
+            ></p-button>
+          }
+        </div>
+        
+        <!-- Search chips display -->
+        @if (searchCriteria.length > 0) {
+          <div class="flex flex-wrap gap-1 mb-2">
+            @for (criterion of searchCriteria; track criterion.field; let i = $index) {
+              @if (i > 0) {
+                <span class="flex items-center px-2 text-gray-600">{{ criterion.operator || 'AND' }}</span>
+              }
+              <p-chip>
+                <span class="font-semibold">{{ criterion.label }}:</span> {{ criterion.value }}
+                <span class="p-chip-remove-icon pi pi-times-circle" (click)="removeSearchCriterion(i)"></span>
+              </p-chip>
+            }
+            <p-button
+              icon="pi pi-times"
+              class="p-button-text p-button-rounded p-button-sm" 
+              severity="secondary"
+              (onClick)="clearSearch()"
+              [disabled]="isLoading()"
+              pTooltip="Clear all filters"
+            ></p-button>
+          </div>
         }
-      </p-iconfield>
-    </div>
+        
+        <!-- Search input and field dropdown -->
+        <div class="flex gap-2 flex-wrap md:flex-nowrap">
+          <p-dropdown 
+            [options]="searchableFields()" 
+            [(ngModel)]="selectedSearchField" 
+            optionLabel="label"
+            placeholder="Select field"
+            [style]="{'min-width': '200px'}"
+            (onChange)="onSearchFieldSelect($event.value)"
+          ></p-dropdown>
+          
+          <p-dropdown
+            *ngIf="selectedSearchField"
+            [options]="operators"
+            [(ngModel)]="selectedOperator"
+            placeholder="Operator"
+            [style]="{'width': '100px'}"
+          ></p-dropdown>
+          
+          <p-iconfield iconPosition="left" class="search-input-container flex-grow-1">
+            <p-inputicon class="pi pi-search" />
+            <input pInputText type="text"
+              [placeholder]="selectedSearchField ? 'Enter ' + selectedSearchField.label + '...' : 'Select a field first'"
+              [(ngModel)]="advancedSearchText"
+              [disabled]="!selectedSearchField"
+              (keyup.enter)="onAdvancedSearchEnter()"
+            />
+          </p-iconfield>
+          
+          <p-button 
+            icon="pi pi-plus"
+            label="Add Filter"
+            (onClick)="onSearch()"
+            [disabled]="!selectedSearchField || !advancedSearchText || advancedSearchText.trim().length === 0"
+            pTooltip="Add search filter"
+          ></p-button>
+        </div>
+      </div>
+    }
   }
 
   <!-- Main table with data -->
-  <p-table
-    [value]="currentPageData()"
-    [columns]="columns"
-    [scrollable]="config.scrollable"
-    [scrollHeight]="scrollHeightValue"
-    [selectionMode]="config.selectionMode"
-    [(selection)]="selectedRecord"
-    [loading]="isLoading()"
-    [first]="first"
-    [lazy]="true"
-    [paginator]="config.enablePagination && currentPageData().length > 0"
-    [rows]="rows"
-    [totalRecords]="totalRecordsCount()"
-    [rowsPerPageOptions]="config.pageSizeOptions"
-    [showCurrentPageReport]="true"
-    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-    (onPage)="onPageChange($event)"
-    (onSort)="onSortChange($event)"
-    (onRowSelect)="onRowSelect($event)"
-    styleClass="p-datatable-sm"
-  >
-    <!-- Column header template -->
-    <ng-template pTemplate="header" let-columns>
-      <tr>
-        @for (column of columns; track column) {
-          @if (column.sortable && config.enableSorting) {
-            <th [pSortableColumn]="column.field" [ngStyle]="{'width': column.width || 'auto'}">
-              {{ column.label | translate }}
-              <p-sortIcon [field]="column.field"></p-sortIcon>
-            </th>
-          } @else {
-            <th [ngStyle]="{'width': column.width || 'auto'}">{{ column.label | translate }}</th>
+  <div class="mt-3 flex flex-col flex-grow">
+    @if (config.enableExport && (config.exportOptions?.showButton ?? true) && !config.searchConfig?.useAdvancedSearch) {
+      <div class="flex justify-end mb-2">
+        <p-button
+          [label]="config.exportOptions?.buttonLabel ?? 'Export'"
+          icon="pi pi-file-export"
+          severity="secondary"
+          (onClick)="exportData()"
+          [disabled]="isLoading()"
+          size="small"
+        ></p-button>
+      </div>
+    }
+    
+    <p-table
+      [value]="currentPageData()"
+      [columns]="columns"
+      [scrollable]="config.scrollable"
+      [scrollHeight]="scrollHeightValue"
+      [selectionMode]="config.selectionMode"
+      [(selection)]="selectedRecord"
+      [loading]="isLoading()"
+      [first]="first"
+      [lazy]="true"
+      [paginator]="config.enablePagination && currentPageData().length > 0"
+      [rows]="rows"
+      [totalRecords]="totalRecordsCount()"
+      [rowsPerPageOptions]="config.pageSizeOptions"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+      (onPage)="onPageChange($event)"
+      (onSort)="onSortChange($event)"
+      (onRowSelect)="onRowSelect($event)"
+      styleClass="p-datatable-sm"
+    >
+      <!-- Column header template -->
+      <ng-template pTemplate="header" let-columns>
+        <tr>
+          @for (column of columns; track column) {
+            @if (column.sortable && config.enableSorting) {
+              <th [pSortableColumn]="column.field" [ngStyle]="{'width': column.width || 'auto'}">
+                {{ column.label | translate }}
+                <p-sortIcon [field]="column.field"></p-sortIcon>
+              </th>
+            } @else {
+              <th [ngStyle]="{'width': column.width || 'auto'}">{{ column.label | translate }}</th>
+            }
           }
-        }
-        <!-- Add actions column header if actions template exists -->
-        @if (hasActionsTemplate()) {
-          <th class="w-12">{{ 'label.actions' | translate }}</th>
-        }
-      </tr>
-    </ng-template>
+          <!-- Add actions column header if actions template exists -->
+          @if (hasActionsTemplate()) {
+            <th class="w-12">{{ 'label.actions' | translate }}</th>
+          }
+        </tr>
+      </ng-template>
 
-    <!-- Rows template -->
-    <ng-template pTemplate="body" let-rowData let-columns="columns">
-      <tr [pSelectableRow]="rowData" (dblclick)="onRowDblClick(rowData)">
-        @for (column of columns; track column) {
-          <td class="cursor-pointer">
-            @switch (column.type) {
-              @case ('date') {
-                {{ rowData[column.field] | date: (column.format || 'medium') }}
+      <!-- Rows template -->
+      <ng-template pTemplate="body" let-rowData let-columns="columns">
+        <tr [pSelectableRow]="rowData" (dblclick)="onRowDblClick(rowData)">
+          @for (column of columns; track column) {
+            <td class="cursor-pointer">
+              @switch (column.type) {
+                @case ('date') {
+                  {{ rowData[column.field] | date: (column.format || 'medium') }}
+                }
+                @case ('number') {
+                  {{ rowData[column.field] | number: (column.format || '1.2-2') }}
+                }
+                @case ('currency') {
+                  {{ rowData[column.field] | currency: (column.format || 'USD') }}
+                }
+                @case ('translate') {
+                  {{ rowData[column.field] | translate }}
+                }
+                @default {
+                  {{ rowData[column.field] }}
+                }
               }
-              @case ('number') {
-                {{ rowData[column.field] | number: (column.format || '1.2-2') }}
-              }
-              @case ('currency') {
-                {{ rowData[column.field] | currency: (column.format || 'USD') }}
-              }
-              @case ('translate') {
-                {{ rowData[column.field] | translate }}
-              }
-              @default {
-                {{ rowData[column.field] }}
-              }
+            </td>
+          }
+          <!-- Add actions column if actions template exists -->
+          @if (hasActionsTemplate()) {
+            <td>
+              <ng-container
+                [ngTemplateOutlet]="actionsTemplate!"
+                [ngTemplateOutletContext]="{ $implicit: rowData }"
+              ></ng-container>
+            </td>
+          }
+        </tr>
+      </ng-template>
+
+      <!-- Empty state template -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="hasActionsTemplate() ? columns.length + 1 : columns.length" class="text-center p-4">
+            @if (isLoading()) {
+              <div class="flex justify-center items-center p-4">
+                <i class="pi pi-spin pi-spinner text-2xl"></i>
+              </div>
+            } @else if (hasError()) {
+              <div class="text-red-500">
+                <i class="pi pi-exclamation-circle mr-2"></i>
+                {{ 'error.dataLoad' | translate }}
+              </div>
+            } @else {
+              <div>{{ 'message.noRecordsFound' | translate }}</div>
             }
           </td>
-        }
-        <!-- Add actions column if actions template exists -->
-        @if (hasActionsTemplate()) {
-          <td>
-            <ng-container
-              [ngTemplateOutlet]="actionsTemplate!"
-              [ngTemplateOutletContext]="{ $implicit: rowData }"
-            ></ng-container>
-          </td>
-        }
-      </tr>
-    </ng-template>
-
-    <!-- Empty state template -->
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td [attr.colspan]="hasActionsTemplate() ? columns.length + 1 : columns.length" class="text-center p-4">
-          @if (isLoading()) {
-            <div class="flex justify-center items-center p-4">
-              <i class="pi pi-spin pi-spinner text-2xl"></i>
-            </div>
-          } @else if (hasError()) {
-            <div class="text-red-500">
-              <i class="pi pi-exclamation-circle mr-2"></i>
-              {{ 'error.dataLoad' | translate }}
-            </div>
-          } @else {
-            <div>{{ 'message.noRecordsFound' | translate }}</div>
-          }
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
 </div>
