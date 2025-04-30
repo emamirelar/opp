@@ -16,6 +16,14 @@ public class MappingProfile : Profile
         CreateMap<Link, LinkModel>();
         CreateMap<LinkRequest, Link>();
         CreateMap<UpdateLinkRequest, Link>();
+        CreateMap<InteractionContact, InteractionContactModel>();
+        CreateMap<InteractionContactModel, InteractionContact>();
+        CreateMap<InteractionPartner, InteractionPartnerModel>();
+        CreateMap<InteractionPartnerModel, InteractionPartner>();
+        CreateMap<InteractionUser, InteractionUserModel>();
+        CreateMap<InteractionUserModel, InteractionUser>();
+        CreateMap<OrganizationUnit, OrganizationUnitModel>();
+        CreateMap<OrganizationUnitModel, OrganizationUnit>();
         CreateMap<Notification, NotificationModel>()
             .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Message))
             .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))

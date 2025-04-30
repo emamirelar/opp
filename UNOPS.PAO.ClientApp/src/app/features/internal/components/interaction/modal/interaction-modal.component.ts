@@ -1,16 +1,21 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject} from '@angular/core';
-import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
-import {Button} from 'primeng/button';
+import { Button } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 import {Textarea} from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { InteractionType, INTERACTION_TYPE_TRANSLATION_KEYS } from '../../../models/interaction-type.enum';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ContactService } from '../../../services/contact.service';
+import { PartnerService } from '../../../services/partner.service';
+//import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
 import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
+import { MessageModule } from 'primeng/message';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import {Contact} from '../../../models/contact.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -18,21 +23,32 @@ import {Partner} from '../../../models/partner.model';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
+import { NgIf } from '@angular/common';
+import { ChipModule, Chip } from 'primeng/chip';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-interaction-modal',
   templateUrl: './interaction-modal.component.html',
+  styleUrl: './interaction-modal.component.scss',
   imports: [
     ReactiveFormsModule,
+    FormsModule,
     CalendarModule,
     Button,
+    InputTextModule,
     Textarea,
     SelectModule,
+    MultiSelectModule,
     TranslateModule,
     CommonModule,
+    MessageModule,
     ConfirmDialog,
+    NgIf,
+    ChipModule,
+    AutoCompleteModule,
     HttpClientModule,
     AiTranscribeComponent
   ],
@@ -46,6 +62,9 @@ import { HttpClientModule } from '@angular/common/http';
 export class InteractionModalComponent {
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
+
+  onChange: any = () => { };
+  onTouched: any = () => { };
   
   record?: Interaction;
   isSaving = signal(false);
@@ -58,10 +77,17 @@ export class InteractionModalComponent {
     translateKey: INTERACTION_TYPE_TRANSLATION_KEYS[type]
   }));
 
+  contacts: Contact[] = [];
+  partners: Partner[] = [];
+  emailOptions: string[] = [];
+  invalidEmails: string[] = [];
+  showValidationFailedError = signal<boolean>(false);
+
   constructor(
     private fb: FormBuilder,
     private interactionService: InteractionService,
     protected contactService: ContactService,
+    protected partnerService: PartnerService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private translateService: TranslateService,
@@ -71,10 +97,18 @@ export class InteractionModalComponent {
       type: ['', Validators.required],
       date: [new Date(), Validators.required],
       data: [''],
-      contactId: ['', Validators.required]
+      contactId: ['', Validators.required],
+      contactIds: [[]],
+      partnerIds: [[]],
+      emailAddresses: [[]],
+      phoneNumbers: [[]],
+      location: [''],
+      subject: ['', Validators.required],
+      orgUnitId: [null]
     });
-    // Ensure contacts are loaded when component is created
+    this.partnerService.getAllPartners();
     this.contactService.getAllContacts();
+    //this.userService.getAllContacts();
     
     // Set up the footer template
     this.dialogConfig.templates = {
@@ -90,8 +124,16 @@ export class InteractionModalComponent {
         type: this.record.type,
         date: new Date(this.record.date),
         data: this.record.data,
-        contactId: this.record.contactId
+        contactId: this.record.contactId,
+        contactIds: this.record.contactIds,
+        partnerIds: this.record.partnerIds,
+        emailAddresses: this.record.emailAddresses,
+        phoneNumbers: this.record.phoneNumbers,
+        location: this.record.location,
+        subject: this.record.subject,
+        orgUnitId: this.record.orgUnitId
       });
+      this.emailOptions = this.record.emailAddresses || [];
     }
     
     // Expose the handleSave function to be called from footer
@@ -154,6 +196,10 @@ export class InteractionModalComponent {
         });
       }
     }
+    else {
+      this.isSaving.set(false);
+      this.showValidationFailedError.set(true);
+    }
   }
 
   deleteInteraction(): void {
@@ -174,6 +220,22 @@ export class InteractionModalComponent {
         }
       }
     });
+  }
+
+  isValidEmail(email: any): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  validateEmail(email: any) {
+    if (!this.isValidEmail(email)) {
+      this.invalidEmails = [...this.invalidEmails, email];
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Invalid Email',
+        detail: `"${email}" is not valid`,
+        life: 3000
+      });
+    }
   }
 
   // Handler for transcription completion

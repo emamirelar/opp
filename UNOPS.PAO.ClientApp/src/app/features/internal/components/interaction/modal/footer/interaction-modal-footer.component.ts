@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-interaction-modal-footer',
@@ -33,7 +34,8 @@ import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
   standalone: true,
   imports: [
     TranslateModule,
-    ButtonModule
+    ButtonModule,
+    NgIf
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

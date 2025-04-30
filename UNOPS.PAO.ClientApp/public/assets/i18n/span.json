@@ -55,6 +55,22 @@
             "lastModifiedBy": "Última Modificación Por",
             "lastModifiedDate": "Fecha de Última Modificación"
         },
+        "partnerTree": {
+            "id": "ID",
+            "name": "Nombre",
+            "type": "Nivel",
+            "description": "Descripción",
+            "parent": "Padre",
+            "code": "Código",
+            "status": "Estado",
+            "createdBy": "Creado Por",
+            "createdDate": "Fecha de Creación",
+            "lastModifiedBy": "Última Modificación Por",
+            "lastModifiedDate": "Fecha de Última Modificación",
+            "actions": "Acciones",
+            "partnerCategory": "Categoría de Socio",
+            "partnerGroup": "Grupo de Socio"
+        },
         "clarificationDeadline": "Fecha Límite de Aclaración",
         "document": {
             "dragDropMessage": "Arrastra y suelta archivos aquí para subir.",
@@ -86,7 +102,7 @@
             "email": "Correo electrónico",
             "chat": "Chat",
             "phone": "Teléfono",
-            "video_meeting": "Reunión por video",
+            "virtual_meeting": "Reunión virtual",
             "in_person_meeting": "Reunión presencial"
           },
           "selectType": "Seleccione un tipo",

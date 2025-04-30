@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250429165603_InteractionFieldsUpdated")]
+    partial class InteractionFieldsUpdated
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -794,28 +797,100 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.InteractionContact", b =>
                 {
-                    b.Property<int>("InteractionId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ContactId")
                         .HasColumnType("integer");
 
-                    b.HasKey("InteractionId", "ContactId");
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("InteractionId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("ContactId");
+
+                    b.HasIndex("InteractionId");
 
                     b.ToTable("InteractionContacts", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.InteractionPartner", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("InteractionId")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("PartnerId")
                         .HasColumnType("integer");
 
-                    b.HasKey("InteractionId", "PartnerId");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InteractionId");
 
                     b.HasIndex("PartnerId");
 
@@ -824,13 +899,49 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.InteractionUser", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DeletedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("InteractionId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastModifiedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
 
-                    b.HasKey("InteractionId", "UserId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("InteractionId");
 
                     b.HasIndex("UserId");
 
@@ -896,47 +1007,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasDiscriminator().HasValue("Link");
 
                     b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("RecordData")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ResponseType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Notifications", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OrganizationUnit", b =>
@@ -1221,12 +1291,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Parent")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PartnerCategoryCode")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PartnerGroupCode")
                         .HasColumnType("text");
 
                     b.Property<int>("Status")

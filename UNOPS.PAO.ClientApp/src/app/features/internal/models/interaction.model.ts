@@ -9,4 +9,12 @@ export interface Interaction {
   contactName?: string;
   description?: string;
   status: string;
+  contactIds: number[];
+  partnerIds: number[];
+  //userIds: number[];
+  emailAddresses: string[];
+  phoneNumbers: string[];
+  location: string;
+  subject: string;
+  orgUnitId: number;
 }

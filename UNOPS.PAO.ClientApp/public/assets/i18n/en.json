@@ -132,7 +132,7 @@
     "partnerTree": {
       "id": "ID",
       "name": "Name",
-      "type": "Type",
+      "type": "Level",
       "description": "Description",
       "parent": "Parent",
       "code": "Code",
@@ -141,7 +141,9 @@
       "createdDate": "Created Date",
       "lastModifiedBy": "Last Modified By",
       "lastModifiedDate": "Last Modified Date",
-      "actions": ""
+      "actions": "",
+      "partnerCategory": "Partner Category",
+      "partnerGroup": "Partner Group"
     },
     "partner": {
       "actions": "Actions",
@@ -209,12 +211,22 @@
         "email": "Email",
         "chat": "Chat",
         "phone": "Phone",
-        "video_meeting": "Video Meeting",
+        "virtual_meeting": "Virtual Meeting",
         "in_person_meeting": "In-person Meeting"
       },
       "selectType": "Select a type",
       "selectContact": "Select a contact",
-      "contact": "Contact"
+      "selectContacts": "Select Contacts",
+      "contact": "Contact",
+      "contacts": "Contacts",
+      "selectPartners": "Select Partners",
+      "partners": "Partners",
+      "subject": "Subject",
+      "emailAddresses": "Email Addresses",
+      "phoneNumbers": "Phone Numbers",
+      "location": "Location",
+      "relatedTo": "Related To",
+      "description": "Description"
     },
     "link": {
       "url": "URL",
