@@ -29,4 +29,6 @@ export interface Partner {
   isDeleted?: boolean | null;
   deletedBy?: string | null;
   deletedDate?: Date | null;
+  _updated?: boolean;
+  _importRowId?: string;
 }

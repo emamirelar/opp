@@ -5,6 +5,7 @@ import { ExportGoogleSheetService } from '../../../reusables/components/export/e
 import { FeedbackDialogService } from '../../../reusables/services/feedback-dialog.service';
 import { switchMap, tap, catchError, map } from 'rxjs/operators';
 import { ConfirmationService } from 'primeng/api';
+import { SearchParams } from './listview.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,7 +20,7 @@ export class ListviewExportService {
    * Exports data to a Google Sheet by fetching all data from the backend without pagination
    * @param entityName Name of the entity being exported (e.g., "Contact", "Partner")
    * @param apiUrl The API endpoint URL to fetch data from
-   * @param searchText Optional search text for filtering
+   * @param searchTextOrParams Optional search text or search parameters for filtering
    * @param sortField Optional field to sort by
    * @param sortOrder Optional sort direction
    * @param transformFn Optional function to transform the data for export
@@ -28,7 +29,7 @@ export class ListviewExportService {
   exportToGoogleSheet<T extends object>(
     entityName: string,
     apiUrl: string,
-    searchText?: string,
+    searchTextOrParams?: string | SearchParams,
     sortField?: string,
     sortOrder?: 'asc' | 'desc',
     transformFn?: (data: any[]) => Record<string, any>[]
@@ -45,8 +46,22 @@ export class ListviewExportService {
       export: true
     };
     
-    if (searchText) {
-      queryParams.searchText = searchText;
+    // Handle different search parameter types
+    if (typeof searchTextOrParams === 'string') {
+      // Handle simple string search (backward compatibility)
+      if (searchTextOrParams) {
+        queryParams.searchText = searchTextOrParams;
+      }
+    } else if (searchTextOrParams) {
+      // Handle advanced search with SearchParams object
+      if (searchTextOrParams.generalSearch) {
+        queryParams.searchText = searchTextOrParams.generalSearch;
+      }
+      
+      if (searchTextOrParams.fieldSearches && searchTextOrParams.fieldSearches.length > 0) {
+        queryParams.advancedSearch = 'true';
+        queryParams.searchCriteria = JSON.stringify(searchTextOrParams.fieldSearches);
+      }
     }
     
     if (sortField) {

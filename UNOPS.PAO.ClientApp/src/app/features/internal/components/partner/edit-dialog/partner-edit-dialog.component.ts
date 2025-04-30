@@ -160,9 +160,13 @@ export class PartnerEditDialogComponent implements OnInit {
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
-
+        debugger;
         if (this.recordId != '') {
           this._loadRecordDetails();
+        } else {
+          this.record = this.dialogConfig.data?.record;
+          this.recordData.set(this.dialogConfig.data.record);
+          this.formGroup.patchValue(this.dialogConfig.data.record);
         }
       }
     });
@@ -175,6 +179,26 @@ export class PartnerEditDialogComponent implements OnInit {
 
       // Reset requesting save signal immediately
       this.dialogConfig.data.requestingSaveSignal.set(false);
+
+      // Check if this is an import edit
+      const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+                          this.dialogConfig.data?.record?.isImportEdit ||
+                          this.dialogConfig.data?.record?.skipServerSave;
+      
+      if (isImportEdit) {
+        console.log('This is an import edit, skipping server save');
+        // Create a copy of the payload with the _updated flag
+        const updatedRecord = { 
+          ...payload, 
+          _updated: true,
+          isImportEdit: true,
+          skipServerSave: true
+        };
+        
+        // For import edits, just return the updated record without saving to server
+        this.dialogRef.close(updatedRecord);
+        return;
+      }
 
       if (this.recordId) {
         // Update existing partner
@@ -228,6 +252,18 @@ export class PartnerEditDialogComponent implements OnInit {
   }
 
   handleOnCancelClick(event: MouseEvent) {
+    // Check if this is an import edit
+    const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+                        this.dialogConfig.data?.record?.isImportEdit ||
+                        this.dialogConfig.data?.record?.skipServerSave;
+    
+    if (isImportEdit) {
+      // Just close the dialog for import edits
+      this.dialogRef.close();
+      return;
+    }
+    
+    // Standard behavior - navigate to partners page
     this.router.navigate(['partners']);
   }
 

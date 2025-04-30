@@ -1,4 +1,4 @@
-import {Component, ViewChild, ElementRef, Input, ViewContainerRef, inject, effect, OnInit} from '@angular/core';
+import {Component, ViewChild, ElementRef, Input, ViewContainerRef, inject, effect, OnInit, NgZone, ChangeDetectorRef} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -45,6 +45,8 @@ export class AiAssistantComponent implements OnInit {
   isDragging = signal(false);
   loading = signal(false);
   layoutService = inject(LayoutService);
+  private cdr = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   isRecording = signal(false);
@@ -65,9 +67,23 @@ export class AiAssistantComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Initialize with default empty value to avoid undefined
+    this.message.set('');
+    
     if (this.viewContainerRef) {
       this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
     }
+    
+    // Ensure change detection runs
+    this.cdr.detectChanges();
+  }
+
+  // Safe method to update message that won't trigger ExpressionChangedAfterItHasBeenCheckedError
+  updateMessage(value: string): void {
+    this.ngZone.run(() => {
+      this.message.set(value);
+      this.cdr.detectChanges();
+    });
   }
 
   onFileSelect(event: any): void {
@@ -155,8 +171,12 @@ export class AiAssistantComponent implements OnInit {
     const currentFiles = this.selectedFiles();
 
     if (currentMessage.trim() || currentFiles.length > 0) {
-      this.message.set('');
-      this.loading.set(true);
+      // Clear message before the operation
+      this.ngZone.run(() => {
+        this.message.set('');
+        this.loading.set(true);
+        this.cdr.detectChanges();
+      });
 
       // Convert files to ChatFile format
       const chatFiles = currentFiles.map(f => ({
@@ -167,13 +187,18 @@ export class AiAssistantComponent implements OnInit {
 
       this.aiAssistantData.sendMessage(currentMessage, chatFiles).subscribe({
         next: () => {
-          this.message.set('');
-          this.selectedFiles.set([]);
-          this.loading.set(false);
+          this.ngZone.run(() => {
+            this.selectedFiles.set([]);
+            this.loading.set(false);
+            this.cdr.detectChanges();
+          });
         },
         error: (error) => {
           console.error('Failed to send message:', error);
-          this.loading.set(false);
+          this.ngZone.run(() => {
+            this.loading.set(false);
+            this.cdr.detectChanges();
+          });
         }
       });
     }

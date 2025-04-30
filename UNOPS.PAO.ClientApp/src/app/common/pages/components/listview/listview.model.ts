@@ -22,6 +22,28 @@ export interface ListViewConfig {
   defaultSortOrder?: 'asc' | 'desc';
   scrollable?: boolean;
   scrollHeight?: string;
+  searchConfig?: {
+    /**
+     * Searchable fields to display in the advanced search dropdown
+     * If not provided, a general search is performed
+     */
+    searchableFields?: Array<{
+      field: string;
+      label: string;
+      placeholder?: string;
+    }>;
+    
+    /**
+     * Whether to use advanced search with chips
+     * Default is false (uses simple search)
+     */
+    useAdvancedSearch?: boolean;
+    
+    /**
+     * Placeholder for the search input
+     */
+    placeholder?: string;
+  };
   exportOptions?: {
     /**
      * Whether to show the export button (defaults to true if enableExport is true)
@@ -50,4 +72,16 @@ export interface ListViewConfig {
 export interface ListViewData<T> {
   records: T[];
   totalCount: number;
+}
+
+export interface SearchCriteria {
+  field: string;
+  value: string;
+  label: string;
+  operator?: 'AND' | 'OR';  // Optional operator field defaulting to AND if not specified
+}
+
+export interface SearchParams {
+  generalSearch?: string;
+  fieldSearches?: SearchCriteria[];
 }

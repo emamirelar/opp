@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {Observable, map, of, catchError} from 'rxjs';
 import { Contact } from '../../../../features/internal/models/contact.model';
+import { Partner } from '../../../../features/internal/models/partner.model';
 
 export interface AnalyzeFileRequest {
   type: string;
@@ -75,6 +76,42 @@ export const EXAMPLE_CONTACTS: Contact[] = [
       mailingCity: 'London',
       mailingCountry: 'United Kingdom',
       status: 'Active'
+    }
+  ];
+
+export const EXAMPLE_PARTNERS: Partner[] = [
+    {
+      id: '001',
+      name: 'Acme Corporation',
+      shortName: 'Acme',
+      status: 'Active',
+      newEngagement: 'Yes',
+      phone: '+1234567890',
+      website: 'www.acmecorp.com',
+      address1City: 'Business City',
+      address1Country: 'USA'
+    },
+    {
+      id: '002',
+      name: 'Global Solutions Inc.',
+      shortName: 'GSI',
+      status: 'Active',
+      newEngagement: 'No',
+      phone: '+4412345678',
+      website: 'www.globalsolutions.com',
+      address1City: 'Geneva',
+      address1Country: 'Switzerland'
+    },
+    {
+      id: '003',
+      name: 'Tech Innovations Ltd.',
+      shortName: 'TIL',
+      status: 'Active',
+      newEngagement: 'Yes',
+      phone: '+6598765432',
+      website: 'www.techinnovations.com',
+      address1City: 'Singapore',
+      address1Country: 'Singapore'
     }
   ];
 

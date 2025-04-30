@@ -397,6 +397,9 @@ export class ImportDialogService {
   }
 
   openGoogleSheetPicker(type: string) {
+    // Set the import type before doing anything else
+    this.setImportType(type);
+    
     // Show loading state while opening the picker
     this.isLoading.set(true);
     this.loadingOverlayService.show('Opening Google Drive, please wait...');
@@ -451,8 +454,8 @@ export class ImportDialogService {
                 return;
               }
               
-              // Normal flow for opening a new dialog
-              this.setData(parsedRecords);
+              // Set the data (without auto-detection, using the explicit type)
+              this.data.set(parsedRecords);
               
               // Only open the dialog if we have data
               if (this.data() && this.data().length > 0) {
@@ -474,9 +477,26 @@ export class ImportDialogService {
           error: (error) => {
             this.isLoading.set(false);
             this.loadingOverlayService.hide();
-            console.error('Error analyzing file:', error);
+            console.error('Error opening Google Drive picker:', error);
+            
+            // Extract the detailed error message if available
+            let errorMessage = 'Error opening Google Drive: Unknown error';
+            
+            if (error.error) {
+              if (error.error.details) {
+                errorMessage = `Error: ${error.error.details}`;
+              } else if (error.error.message) {
+                errorMessage = `Error: ${error.error.message}`;
+              } else if (typeof error.error === 'string') {
+                errorMessage = `Error: ${error.error}`;
+              }
+            } else if (error.message) {
+              errorMessage = `Error: ${error.message}`;
+            }
+            
             this.feedbackDialogService.showErrorToast({ 
-              detail: 'Error processing file: ' + (error.message || 'Unknown error') 
+              detail: errorMessage,
+              life: 7000 // Show longer since it's a detailed message
             });
           }
         });
@@ -485,8 +505,25 @@ export class ImportDialogService {
         this.isLoading.set(false);
         this.loadingOverlayService.hide();
         console.error('Error opening Google Drive picker:', error);
+        
+        // Extract the detailed error message if available
+        let errorMessage = 'Error opening Google Drive: Unknown error';
+        
+        if (error.error) {
+          if (error.error.details) {
+            errorMessage = `Error: ${error.error.details}`;
+          } else if (error.error.message) {
+            errorMessage = `Error: ${error.error.message}`;
+          } else if (typeof error.error === 'string') {
+            errorMessage = `Error: ${error.error}`;
+          }
+        } else if (error.message) {
+          errorMessage = `Error: ${error.message}`;
+        }
+        
         this.feedbackDialogService.showErrorToast({ 
-          detail: 'Error opening Google Drive: ' + (error.message || 'Unknown error') 
+          detail: errorMessage,
+          life: 7000 // Show longer since it's a detailed message
         });
       }
     });
@@ -501,14 +538,8 @@ export class ImportDialogService {
 
     // Normalize the data to ensure it's in the right format
     const normalizedData = this.normalizeRecordData(data);
-
-    // Check if first item has the expected structure for entity import
-    if (normalizedData.length > 0) {
-      // Output sample of expected fields to help debug
-      const sampleKeys = ['firstName', 'lastName', 'email', 'partnerId'];
-      const hasExpectedFields = sampleKeys.some(key => normalizedData[0] && normalizedData[0][key] !== undefined);
-    }
-
+    
+    // Set the normalized data
     this.data.set(normalizedData);
   }
 
@@ -534,8 +565,7 @@ export class ImportDialogService {
    * Trigger import process
    */
   triggerImport(type: string) {
-    // Set the current import type
-    this.setImportType(type);
+    // Ensure we use the explicitly set import type
     
     // Get the selected rows for import
     const selectedData = this.getSelectedRowsForImport();
@@ -551,41 +581,59 @@ export class ImportDialogService {
     
     this.isLoading.set(true);
     this.loadingOverlayService.show(`Importing ${dataWithDefaults.length} records...`);
-      // Original behavior for smaller datasets
-      this.importService.bulkUpload(dataWithDefaults, type).subscribe({
-        next: (response: any) => {
-          var parsedResponse = JSON.parse(response.message);
-          if (parsedResponse.IsSuccess == false) {
-            this.isLoading.set(false);
-            this.loadingOverlayService.hide();
-            this.feedbackDialogService.showErrorToast({ 
-              detail: 'Import failed with one or more errors. Ensure the basic mandatory fields are filled in'
-            });
-            return;
-          }
-          this.isLoading.set(false);
-          this.loadingOverlayService.hide();
-          this.feedbackDialogService.showSuccessToast({ detail: 'Import successful' });
-          
-          // Mark notification as read if this was from a notification
-          if (this.notificationId) {
-            this.markNotificationAsRead();
-          }
-          
-          // Trigger refresh of the list view if importing entities
-          window.dispatchEvent(new CustomEvent('refresh-listview'));
-          
-          this.closeDialog();
-          this.data.set([]);
-          this.selectedRows.set([]);
-        },
-        error: (error) => {
+    
+    // Execute the import with the specified type
+    this.importService.bulkUpload(dataWithDefaults, type).subscribe({
+      next: (response: any) => {
+        var parsedResponse = JSON.parse(response.message);
+        if (parsedResponse.IsSuccess == false) {
           this.isLoading.set(false);
           this.loadingOverlayService.hide();
           this.feedbackDialogService.showErrorToast({ 
-            detail: 'Import failed: ' + (error.message || 'Unknown error') 
+            detail: 'Import failed with one or more errors. Ensure the basic mandatory fields are filled in'
           });
+          return;
         }
-      });
+        this.isLoading.set(false);
+        this.loadingOverlayService.hide();
+        this.feedbackDialogService.showSuccessToast({ detail: 'Import successful' });
+        
+        // Mark notification as read if this was from a notification
+        if (this.notificationId) {
+          this.markNotificationAsRead();
+        }
+        
+        // Trigger refresh of the list view if importing entities
+        window.dispatchEvent(new CustomEvent('refresh-listview'));
+        
+        this.closeDialog();
+        this.data.set([]);
+        this.selectedRows.set([]);
+      },
+      error: (error) => {
+        this.isLoading.set(false);
+        this.loadingOverlayService.hide();
+        
+        // Extract the detailed error message if available
+        let errorMessage = 'Import failed: Unknown error';
+        
+        if (error.error) {
+          if (error.error.details) {
+            errorMessage = `Import failed: ${error.error.details}`;
+          } else if (error.error.message) {
+            errorMessage = `Import failed: ${error.error.message}`;
+          } else if (typeof error.error === 'string') {
+            errorMessage = `Import failed: ${error.error}`;
+          }
+        } else if (error.message) {
+          errorMessage = `Import failed: ${error.message}`;
+        }
+        
+        this.feedbackDialogService.showErrorToast({ 
+          detail: errorMessage,
+          life: 7000 // Show longer since it's a detailed message
+        });
+      }
+    });
   }
 }

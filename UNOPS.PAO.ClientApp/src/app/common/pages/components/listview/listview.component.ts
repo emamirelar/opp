@@ -3,7 +3,7 @@ import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/comm
 import { Router } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { TranslateModule } from '@ngx-translate/core';
-import { ListViewColumn, ListViewConfig } from './listview.model';
+import { ListViewColumn, ListViewConfig, SearchCriteria, SearchParams } from './listview.model';
 import { ListviewDataLoaderService } from './listview-data-loader.service';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -14,6 +14,9 @@ import { InputIcon } from 'primeng/inputicon';
 import { ListviewExportService } from './listview-export.service';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
+import { DropdownModule } from 'primeng/dropdown';
+import { ChipModule } from 'primeng/chip';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 @Component({
   selector: 'app-listview',
@@ -31,7 +34,10 @@ import { ConfirmationService } from 'primeng/api';
     ButtonModule,
     IconField,
     InputIcon,
-    ConfirmDialog
+    ConfirmDialog,
+    DropdownModule,
+    ChipModule,
+    OverlayPanelModule
   ],
   providers: [ListviewDataLoaderService, ConfirmationService]
 })
@@ -61,7 +67,32 @@ export class ListviewComponent<T = any> implements OnDestroy {
   private _dataUrl: string = '';
 
   @Input() columns: ListViewColumn[] = [];
-  @Input() config: ListViewConfig = {
+  
+  @Input() 
+  set config(value: ListViewConfig) {
+    console.log('Listview config set:', value);
+    console.log('Advanced search enabled:', !!value.searchConfig?.useAdvancedSearch);
+    console.log('Searchable fields:', value.searchConfig?.searchableFields);
+    
+    this._config = value;
+    
+    // Force a refresh of the signals to ensure they pick up the new config
+    setTimeout(() => {
+      console.log('Forcing signal refresh, isAdvancedSearch:', this.isAdvancedSearch());
+    }, 0);
+    
+    // Initialize advanced search if enabled
+    if (value.searchConfig?.useAdvancedSearch) {
+      console.log('Setting advanced search enabled in data loader');
+      this.dataLoader.setAdvancedSearchEnabled(true);
+    }
+  }
+  
+  get config(): ListViewConfig {
+    return this._config;
+  }
+  
+  private _config: ListViewConfig = {
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     selectionMode: 'single',
@@ -87,7 +118,7 @@ export class ListviewComponent<T = any> implements OnDestroy {
   @Output() rowDblClick = new EventEmitter<T>();
   @Output() pageChange = new EventEmitter<{first: number, rows: number}>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
-  @Output() searchChange = new EventEmitter<string>();
+  @Output() searchChange = new EventEmitter<SearchParams>();
   @Output() exportClick = new EventEmitter<void>();
 
   // State
@@ -97,6 +128,30 @@ export class ListviewComponent<T = any> implements OnDestroy {
   searchText = '';
   currentSortField: string | undefined;
   currentSortOrder: 'asc' | 'desc' | undefined;
+  
+  // Advanced search state
+  searchCriteria: SearchCriteria[] = [];
+  selectedSearchField: any = null;
+  advancedSearchText = '';
+  selectedOperator: 'AND' | 'OR' = 'AND';
+  operators = [
+    { label: 'AND', value: 'AND' },
+    { label: 'OR', value: 'OR' }
+  ];
+  
+  // Computed properties
+  isAdvancedSearch = computed(() => {
+    console.log('Computing isAdvancedSearch, config:', this.config);
+    console.log('searchConfig exists:', !!this.config.searchConfig);
+    console.log('useAdvancedSearch value:', this.config.searchConfig?.useAdvancedSearch);
+    
+    return !!this.config.searchConfig?.useAdvancedSearch;
+  });
+  searchableFields = computed(() => this.config.searchConfig?.searchableFields || []);
+  searchPlaceholder = computed(() => 
+    this.config.searchConfig?.placeholder || 
+    (this.config.searchConfig?.useAdvancedSearch ? 'Search by field...' : 'Search...')
+  );
 
   // Computed properties from data loader
   isLoading = computed(() => this.dataLoader.isLoading());
@@ -108,6 +163,11 @@ export class ListviewComponent<T = any> implements OnDestroy {
   constructor() {
     this.rows = this.config.pageSize || 50;
     this.setupSearchDebounce();
+    
+    // Add debugging for initialization
+    console.log('ListviewComponent constructor');
+    console.log('Initial config:', this.config);
+    console.log('Is advanced search?', this.isAdvancedSearch());
   }
 
   ngOnDestroy(): void {
@@ -138,15 +198,94 @@ export class ListviewComponent<T = any> implements OnDestroy {
    * Handle search input from the user
    */
   onSearchInput(value: string): void {
-    this.searchSubject.next(value);
+    // Only use debounce for simple search mode
+    if (!this.config.searchConfig?.useAdvancedSearch) {
+      this.searchSubject.next(value);
+    }
+  }
+  
+  /**
+   * Handle field selection for advanced search
+   */
+  onSearchFieldSelect(field: any): void {
+    this.selectedSearchField = field;
+  }
+  
+  /**
+   * Add a new search criterion when user presses enter in advanced search
+   */
+  onAdvancedSearchEnter(): void {
+    if (this.selectedSearchField && this.advancedSearchText) {
+      this.addSearchCriterion();
+    }
+  }
+  
+  /**
+   * Add the current search criterion
+   */
+  addSearchCriterion(): void {
+    const criterion: SearchCriteria = {
+      field: this.selectedSearchField.field,
+      value: this.advancedSearchText.trim(),
+      label: this.selectedSearchField.label,
+      operator: this.selectedOperator
+    };
+    
+    // Add to local list
+    this.searchCriteria = [...this.searchCriteria, criterion];
+    
+    // Add to data loader
+    this.dataLoader.addSearchCriterion(criterion);
+    
+    // Clear the input fields
+    this.advancedSearchText = '';
+    this.selectedSearchField = null;
+    this.selectedOperator = 'AND'; // Reset operator to default
+    
+    // Execute search with the updated criteria
+    this.executeAdvancedSearch();
+  }
+  
+  /**
+   * Remove a search criterion
+   */
+  removeSearchCriterion(index: number): void {
+    if (index >= 0 && index < this.searchCriteria.length) {
+      const criterion = this.searchCriteria[index];
+      
+      // Remove from data loader
+      this.dataLoader.removeSearchCriterion(criterion.field);
+      
+      // Remove from local list
+      this.searchCriteria = this.searchCriteria.filter((_, i) => i !== index);
+      
+      // Execute search with the updated criteria
+      this.executeAdvancedSearch();
+    }
+  }
+  
+  /**
+   * Execute advanced search with current criteria
+   */
+  executeAdvancedSearch(): void {
+    this.first = 0; // Reset to first page
+    this.dataLoader.setPagination(0, this.rows);
+    
+    const searchParams = this.dataLoader.getSearchParams();
+    this.searchChange.emit(searchParams);
+    
+    this.loadData();
   }
 
   /**
-   * Execute the search with the given value
+   * Execute the search with the given value (simple search)
    */
   private executeSearch(value: string): void {
-    this.searchChange.emit(value);
     this.dataLoader.setSearchText(value);
+    
+    const searchParams = this.dataLoader.getSearchParams();
+    this.searchChange.emit(searchParams);
+    
     this.first = 0; // Reset to first page
     this.dataLoader.setPagination(0, this.rows);
     this.loadData();
@@ -196,17 +335,35 @@ export class ListviewComponent<T = any> implements OnDestroy {
    * Handle search event (for backward compatibility with enter key)
    */
   onSearch(): void {
-    const trimmedValue = this.searchText.trim();
-    this.searchText = trimmedValue; // Update the input with trimmed value
-    this.executeSearch(trimmedValue);
+    if (this.config.searchConfig?.useAdvancedSearch) {
+      if (this.selectedSearchField && this.advancedSearchText) {
+        this.addSearchCriterion();
+      }
+    } else {
+      const trimmedValue = this.searchText.trim();
+      this.searchText = trimmedValue; // Update the input with trimmed value
+      this.executeSearch(trimmedValue);
+    }
   }
 
   /**
-   * Clear search text
+   * Clear all search criteria
    */
   clearSearch(): void {
-    this.searchText = '';
-    this.executeSearch('');
+    if (this.config.searchConfig?.useAdvancedSearch) {
+      this.searchCriteria = [];
+      this.dataLoader.clearSearchCriteria();
+      this.advancedSearchText = '';
+      this.selectedSearchField = null;
+    } else {
+      this.searchText = '';
+      this.dataLoader.setSearchText('');
+    }
+    
+    const searchParams = this.dataLoader.getSearchParams();
+    this.searchChange.emit(searchParams);
+    
+    this.loadData();
   }
 
   /**
@@ -242,10 +399,13 @@ export class ListviewComponent<T = any> implements OnDestroy {
             });
           } : undefined);
       
+      // Get the search parameters
+      const searchParams = this.dataLoader.getSearchParams();
+      
       this.exportService.exportToGoogleSheet(
         entityName,
         this._dataUrl,
-        this.searchText,
+        searchParams,  // Pass the full search parameters object
         this.currentSortField || this.config.defaultSortField,
         this.currentSortOrder || this.config.defaultSortOrder,
         customTransform
@@ -254,18 +414,19 @@ export class ListviewComponent<T = any> implements OnDestroy {
   }
 
   /**
-   * Helper to determine if scrolling should be enabled
+   * Get the value for the scrollHeight property
    */
   get scrollHeightValue(): string | undefined {
     if (!this.config.scrollable) return undefined;
-    if (!this.currentPageData()?.length) return undefined;
-    return this.config.scrollHeight || 'flex';
+    return this.config.scrollHeight === 'flex' 
+      ? 'calc(100vh - 16rem)' // Default flexible height
+      : this.config.scrollHeight;
   }
 
   /**
-   * Load data with current parameters
+   * Load data from the server
    */
   private loadData(): void {
-    this.dataLoader.loadData<T>();
+    this.dataLoader.loadData();
   }
 }

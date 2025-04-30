@@ -18,7 +18,7 @@ import {BusinessCardScannerComponent} from './business-card-scanner/business-car
 import {ListviewComponent} from '../../../../../common/pages/components/listview/listview.component';
 import {ContactService} from '../../../services/contact.service';
 import {FeedbackDialogService} from '../../../../../common/reusables/services/feedback-dialog.service';
-import {ListViewColumn, ListViewConfig} from '../../../../../common/pages/components/listview/listview.model';
+import {ListViewColumn, ListViewConfig, SearchParams} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 
@@ -77,6 +77,28 @@ export class ContactListComponent implements OnInit {
   currentSearchText = '';
 
   ngOnInit() {
+    // Set advanced search configuration
+    this.listviewConfig = {
+      ...this.listviewConfig,
+      searchConfig: {
+        useAdvancedSearch: true,
+        placeholder: 'Search contacts...',
+        searchableFields: [
+          { field: 'firstName', label: 'First Name' },
+          { field: 'lastName', label: 'Last Name' },
+          { field: 'email', label: 'Email' },
+          { field: 'mobile', label: 'Mobile' },
+          { field: 'phone', label: 'Phone' },
+          { field: 'title', label: 'Title' },
+          { field: 'mailingCity', label: 'City' },
+          { field: 'mailingCountry', label: 'Country' },
+          { field: 'partner.name', label: 'Partner' }
+        ]
+      }
+    };
+    
+    console.log('Contact list config:', this.listviewConfig);
+    
     this.route.queryParams
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
@@ -162,9 +184,9 @@ export class ContactListComponent implements OnInit {
 
   /**
    * Store the current search text when search is performed
-   * @param searchText Current search text
+   * @param searchParams Current search parameters
    */
-  onSearchChange(searchText: string) {
-    this.currentSearchText = searchText;
+  onSearchChange(searchParams: SearchParams) {
+    this.currentSearchText = searchParams.generalSearch || '';
   }
 }

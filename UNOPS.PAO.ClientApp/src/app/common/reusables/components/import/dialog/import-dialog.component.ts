@@ -20,12 +20,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, CheckboxChangeEvent } from 'primeng/checkbox';
 import { ComponentResolverService } from '../../../../../features/internal/services/component-resolver.service';
-import { ContactEditDialogComponent } from '../../../../../features/internal/components/contact/edit-dialog/contact-edit-dialog.component';
-import { ContactEditDialogFooterComponent } from '../../../../../features/internal/components/contact/edit-dialog/footer/contact-edit-dialog-footer.component';
-import { Contact } from '../../../../../features/internal/models/contact.model';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
-import { PartnerEditDialogComponent } from '../../../../../features/internal/components/partner/edit-dialog/partner-edit-dialog.component';
-import { PartnerEditDialogFooterComponent } from '../../../../../features/internal/components/partner/edit-dialog/footer/partner-edit-dialog-footer.component';
 import { ImportService } from '../import.service';
 
 // Custom interface for import columns that extends ListViewColumn
@@ -145,15 +140,13 @@ export class ImportDialogComponent implements OnInit {
     { field: 'address1Country', header: 'Country', required: false, label: 'Country', type: 'text', sortable: false },
   ];
 
-  ngOnInit(): void {
-    // Set the table columns based on the current import type
-    this.updateColumnsForEntityType();
-    
-    // Immediately check data on init
-    this.checkAndProcessData();
-    
+  // Create data effect in the constructor to ensure injection context
+  constructor() {
     // Setup effect to update paginated data when data changes
     effect(() => {
+      // Update columns again if the import type changes
+      this.updateColumnsForEntityType();
+      
       const allData = this.importDialogService.data();
       
       if (allData && allData.length > 0) {
@@ -179,6 +172,14 @@ export class ImportDialogComponent implements OnInit {
     });
   }
 
+  ngOnInit(): void {
+    // Set the table columns based on the current import type
+    this.updateColumnsForEntityType();
+    
+    // Immediately check data on init
+    this.checkAndProcessData();
+  }
+
   // Update the table columns based on the current import type
   private updateColumnsForEntityType(): void {
     const entityType = this.importDialogService.getImportType().toLowerCase();
@@ -193,10 +194,14 @@ export class ImportDialogComponent implements OnInit {
   
   // Check and process data - can be called multiple times if needed
   checkAndProcessData(): void {
+    // Use the explicitly set import type from the service
+    const entityType = this.importDialogService.getImportType();
+    console.log('Using explicitly set import type:', entityType);
+    
     // Update columns for the current entity type
     this.updateColumnsForEntityType();
     
-    // Log initial state
+    // Process the data
     const initialData = this.importDialogService.data();
     
     if (initialData && initialData.length > 0) {
@@ -206,7 +211,7 @@ export class ImportDialogComponent implements OnInit {
       });
       
       // Update the data in the service with the processed data
-      this.importDialogService.setData(processedData);
+      this.importDialogService.data.set(processedData);
       this.totalRecords.set(processedData.length);
       this.updatePaginatedData();
       
@@ -454,116 +459,173 @@ export class ImportDialogComponent implements OnInit {
     
     // Flag to indicate this is an import edit
     rowCopy.isImportEdit = true;
+    // Flag to tell the component not to save to the server
+    rowCopy.skipServerSave = true;
     
-    // Determine which edit dialog to use based on the entity type
-    let dialogComponent: any;
-    let dialogFooterComponent: any;
-    let dialogHeader: string;
+    console.log('Row data being passed to edit dialog:', rowCopy);
     
+    // Get the entity type
     const entityType = this.importDialogService.getImportType().toLowerCase();
+    console.log('Current import type:', entityType);
     
-    switch (entityType) {
-      case 'partner':
-        // Use the partner edit dialog
-        dialogComponent = PartnerEditDialogComponent;
-        dialogFooterComponent = PartnerEditDialogFooterComponent;
-        dialogHeader = 'Edit Partner Import Data';
-        break;
+    // Store a reference to the current row in a temporary map for later access
+    // We'll use the importRowId to identify this row when it's updated
+    const importRowId = row._importRowId;
+    
+    // Create a custom save handler for the dialog
+    const importSaveHandler = signal<boolean>(false);
+    
+    // First letter should be capitalized for the component name lookup
+    const componentName = entityType.charAt(0).toUpperCase() + entityType.slice(1);
+    console.log('Using component resolver with name:', componentName);
+    
+    try {
+      // Create a modified special version of the record for dialog compatibility
+      const dialogRecord = { ...rowCopy };
       
-      case 'contact':
-      default:
-        // Use the contact edit dialog as default
-        dialogComponent = ContactEditDialogComponent;
-        dialogFooterComponent = ContactEditDialogFooterComponent;
-        dialogHeader = 'Edit Contact Import Data';
-        break;
-    }
-    
-    // Open the appropriate edit dialog
-    const dialogRef = this.componentResolverService.dialogService.open(
-      dialogComponent, 
-      {
-        header: dialogHeader,
+      // Special handling for each entity type to ensure form is populated correctly
+      if (entityType === 'partner') {
+        // For partner, explicitly set certain fields that the form expects
+        dialogRecord.partnerOfficeId = dialogRecord.partnerOfficeId || null;
+        dialogRecord.partnerCategoryId = dialogRecord.partnerCategoryId || null;
+        dialogRecord.website = dialogRecord.website || '';
+        dialogRecord.eacReference = dialogRecord.eacReference || '';
+        
+        // Make sure id is present and formatted appropriately
+        if (dialogRecord.id !== undefined && dialogRecord.id !== null) {
+          // Ensure id is a string since the component expects a string recordId
+          dialogRecord.recordId = String(dialogRecord.id); 
+        }
+      }
+      
+      // Log the prepared record
+      console.log('Prepared dialog record:', dialogRecord);
+      
+      // Use the resolver method with additional parameters to identify this as a custom dialog
+      // Define our custom behavior through the dialogRecord object
+      dialogRecord._importSaveHandler = importSaveHandler;
+      dialogRecord._customOpen = true;
+      
+      // Open the dialog directly
+      const componentData = this.componentResolverService['componentMap'][componentName];
+      if (!componentData) {
+        throw new Error(`Component not found for ${componentName}`);
+      }
+      
+      // Open the dialog with our custom configuration
+      const dialogRef = this.componentResolverService.dialogService.open(componentData.component, {
+        header: `Edit ${componentName}`,
         width: '40vw',
         breakpoints: { '960px': '95vw' },
         closable: true,
         templates: {
-          footer: dialogFooterComponent
+          footer: componentData.footer
         },
         data: {
           mode: 'edit',
-          record: rowCopy,
+          record: dialogRecord,
           requestingSaveSignal: signal<boolean>(false)
         }
-      }
-    );
-    
-    // Subscribe to dialog close events to update the row data
-    dialogRef.onClose.subscribe((result: any) => {
-      if (result && result._updated) {
-        // Update the row data in the table with the edited data
-        delete result._updated; // Remove the temporary flag
-        delete result.isImportEdit; // Remove the import edit flag
+      });
+      
+      // Handle dialog close event to update the row in the table
+      dialogRef.onClose.subscribe(result => {
+        console.log('Dialog closed with result:', result);
         
-        // Update the original row data while preserving _importRowId
-        const importRowId = row._importRowId;
-        Object.assign(row, result);
-        row._importRowId = importRowId;
-        
-        // Also update the data in the service
-        const allData = this.importDialogService.data();
-        const rowIndex = allData.findIndex(item => item._importRowId === importRowId);
-        
-        // Update the data array
-        const updatedData = allData.map(item => {
-          if (item._importRowId === importRowId) {
-            return { ...result, _importRowId: importRowId };
-          }
-          return item;
-        });
-        
-        // Update data in service
-        this.importDialogService.setData(updatedData);
-        
-        // Check if the updated row still has missing required fields
-        const missingFields = this.columns
-          .filter(col => {
-            return col.required && !result[col.field];
-          })
-          .map(col => col.field);
-        
-        if (missingFields.length > 0) {
-          // Still has missing required fields, update the rowsWithMissingRequired
-          const currentMissingRows = this.rowsWithMissingRequired();
-          if (!currentMissingRows.includes(rowIndex)) {
-            // Add this row to the missing required rows
-            this.rowsWithMissingRequired.set([...currentMissingRows, rowIndex]);
-          }
+        if (result && (result._updated || typeof result === 'object')) {
+          console.log('Row was updated in the edit dialog');
           
-          // Show a warning about still missing fields
-          this.feedbackDialogService.showWarningToast({
-            detail: `Row updated but still missing required fields: ${missingFields.join(', ')}`,
-            life: 5000
-          });
-        } else {
-          // No missing required fields for this row, remove from rowsWithMissingRequired if it was there
-          const currentMissingRows = this.rowsWithMissingRequired();
-          if (currentMissingRows.includes(rowIndex)) {
-            // Remove this row from the missing required rows
-            this.rowsWithMissingRequired.set(currentMissingRows.filter(index => index !== rowIndex));
-          }
+          // Find the row in the data array
+          const allData = this.importDialogService.data();
+          const rowIndex = allData.findIndex(item => item._importRowId === importRowId);
           
-          // Show success message
-          this.feedbackDialogService.showSuccessToast({ 
-            detail: 'Row updated successfully' 
-          });
+          if (rowIndex !== -1) {
+            // Create a new array with the updated row
+            const updatedData = [...allData];
+            
+            // If result is directly the updated record
+            if (result._updated) {
+              // Keep the importRowId from the original row
+              result._importRowId = importRowId;
+              updatedData[rowIndex] = result;
+            } 
+            // If we just need to apply changes from dialog form
+            else if (typeof result === 'object') {
+              // Copy all properties from the result to the original row
+              const updatedRow = { ...allData[rowIndex], ...result };
+              updatedData[rowIndex] = updatedRow;
+            }
+            
+            // Update the data in the service
+            this.importDialogService.data.set(updatedData);
+            
+            // Update paginated data and trigger change detection
+            this.updatePaginatedData();
+            
+            // Check for missing required fields
+            this.checkRowForMissingFields(updatedData[rowIndex]);
+          }
         }
         
-        // Update banner visibility
-        const newMissingRows = this.rowsWithMissingRequired();
-        this.showMissingRequiredBanner.set(newMissingRows.length > 0);
+        // Always trigger a refresh-listview event for compatibility
+        window.dispatchEvent(new CustomEvent('refresh-listview'));
+      });
+      
+      console.log('Dialog opened through component resolver');
+    } catch (error) {
+      console.error('Error opening edit dialog:', error);
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'Error opening edit dialog' 
+      });
+    }
+  }
+  
+  // Helper method to check if a row has missing required fields
+  checkRowForMissingFields(row: any): void {
+    // Find the row index in the data array
+    const allData = this.importDialogService.data();
+    const importRowId = row._importRowId;
+    const rowIndex = allData.findIndex(item => item._importRowId === importRowId);
+    
+    if (rowIndex === -1) {
+      console.warn('Row not found in data array');
+      return;
+    }
+    
+    // Check for missing required fields
+    const missingFields = this.columns
+      .filter(col => {
+        return col.required && !row[col.field];
+      })
+      .map(col => col.field);
+    
+    if (missingFields.length > 0) {
+      // Still has missing required fields
+      const currentMissingRows = this.rowsWithMissingRequired();
+      if (!currentMissingRows.includes(rowIndex)) {
+        // Add this row to the missing required rows
+        this.rowsWithMissingRequired.set([...currentMissingRows, rowIndex]);
       }
-    });
+      
+      if (missingFields.length > 0) {
+        // Show a warning about still missing fields
+        this.feedbackDialogService.showWarningToast({
+          detail: `Row updated but still missing required fields: ${missingFields.join(', ')}`,
+          life: 5000
+        });
+      }
+    } else {
+      // No missing required fields for this row
+      const currentMissingRows = this.rowsWithMissingRequired();
+      if (currentMissingRows.includes(rowIndex)) {
+        // Remove this row from the missing required rows
+        this.rowsWithMissingRequired.set(currentMissingRows.filter(index => index !== rowIndex));
+      }
+    }
+    
+    // Update banner visibility
+    const newMissingRows = this.rowsWithMissingRequired();
+    this.showMissingRequiredBanner.set(newMissingRows.length > 0);
   }
 
   // Check for missing required fields in all rows

@@ -1,6 +1,7 @@
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Domain.Specifications.Interfaces;
 
-public class PartnerFilterRequest : PaginationRequest
+public class PartnerFilterRequest : PaginationRequest, IPartnerSearchFilter
 {
     public int? Id { get; set; }
     public string? Name { get; set; }
@@ -10,10 +11,16 @@ public class PartnerFilterRequest : PaginationRequest
     public string? Website { get; set; }
     public string? ShortName { get; set; }
     public int? PartnerOfficeId { get; set; }
+    public string? PartnerOfficeName { get; set; }
     public int? PartnerCategoryId { get; set; }
+    public string? PartnerCategoryName { get; set; }
     public string? AddressCity { get; set; }
     public string? AddressStateProvince { get; set; }
     public string? AddressPostalCode { get; set; }
     public string? AddressCountry { get; set; }
     public string? SearchText { get; set; }
+    
+    // Advanced search properties
+    public bool AdvancedSearch { get; set; }
+    public string? SearchCriteria { get; set; }
 } 

@@ -43,6 +43,8 @@ export class ComponentResolverService {
   resolveComponent(record: any, componentName: string, isNew: boolean = true): void {
     var componentData = this.componentMap[componentName];
 
+    debugger;
+
     if (componentData) {
       this.dialogService.open(componentData.component, {
         header: (componentName.startsWith('bulk') ? componentData.header : (isNew ? ' New' + componentName : 'Edit ' + componentName)),

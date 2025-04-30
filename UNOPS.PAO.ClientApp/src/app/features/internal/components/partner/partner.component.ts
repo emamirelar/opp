@@ -9,7 +9,7 @@ import { FeedbackDialogService } from '../../../../common/pages/services/feedbac
 import { PartnerNewComponent } from './new/partner-new.component';
 import { Partner } from '../../models/partner.model';
 import { ListviewComponent } from '../../../../common/pages/components/listview/listview.component';
-import { ListViewColumn } from '../../../../common/pages/components/listview/listview.model';
+import { ListViewColumn, ListViewConfig, SearchParams } from '../../../../common/pages/components/listview/listview.model';
 import { PartnerEditDialogFooterComponent } from './edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerEditDialogComponent } from './edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -40,6 +40,20 @@ export class PartnerComponent implements OnDestroy {
 
   newPartnerData = signal<Partner|null>(null);
 
+  // Listview configuration
+  listviewConfig: ListViewConfig = {
+    pageSize: 20,
+    pageSizeOptions: [20, 50, 100],
+    selectionMode: 'single',
+    enablePagination: true,
+    enableSorting: true,
+    enableSearch: true,
+    enableExport: true,
+    scrollable: true,
+    scrollHeight: 'flex',
+    entityName: 'Partner'
+  };
+
   columns: ListViewColumn[] = [
     {
       field: 'id',
@@ -68,6 +82,26 @@ export class PartnerComponent implements OnDestroy {
   ];
 
   ngOnInit() {
+    // Set advanced search configuration
+    this.listviewConfig = {
+      ...this.listviewConfig,
+      searchConfig: {
+        useAdvancedSearch: true,
+        placeholder: 'Search partners...',
+        searchableFields: [
+          { field: 'name', label: 'Name' },
+          { field: 'shortName', label: 'Short Name' },
+          { field: 'status', label: 'Status' },
+          { field: 'website', label: 'Website' },
+          { field: 'street', label: 'Street' },
+          { field: 'city', label: 'City' },
+          { field: 'country', label: 'Country' }
+        ]
+      }
+    };
+    
+    console.log('Partner list config:', this.listviewConfig);
+    
     this.activatedRoute.queryParams
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
@@ -155,5 +189,9 @@ export class PartnerComponent implements OnDestroy {
   openImportDialog() {
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('partner');
+  }
+
+  onSearchChange(searchParams: SearchParams) {
+    // Handle search parameters if needed
   }
 }
