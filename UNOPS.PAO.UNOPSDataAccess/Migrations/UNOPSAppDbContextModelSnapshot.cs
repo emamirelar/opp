@@ -898,6 +898,47 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecordData")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ResponseType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Notifications", "public");
+                });
+
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OrganizationUnit", b =>
                 {
                     b.Property<int>("Id")

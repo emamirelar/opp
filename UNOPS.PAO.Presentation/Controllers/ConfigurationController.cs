@@ -23,6 +23,7 @@ public class ConfigurationController : ControllerBase
         return new ConfigurationResponse()
         {
             GoogleClientId = googleSettings.GetSection("clientId").Value
+            , GoogleApiKey = googleSettings.GetSection("apiKey").Value
         };
     }
 }

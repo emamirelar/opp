@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { Contact } from '../../../../models/contact.model';
 
 @Component({
   selector: 'app-contact-edit-dialog-footer',
@@ -15,7 +16,7 @@ import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
       </p-button>
       <p-button
         icon="pi pi-check"
-        label="{{'button.save' | translate}}"
+        [label]="isImportEdit ? 'Update Import Data' : ('button.save' | translate)"
         (click)="onSave()">
       </p-button>
     </div>
@@ -30,6 +31,12 @@ import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 export class ContactEditDialogFooterComponent {
   private dialogRef = inject(DynamicDialogRef);
   private config = inject(DynamicDialogConfig);
+
+  // Check if this is an edit for import data
+  get isImportEdit(): boolean {
+    const record = this.config.data?.record as Contact | undefined;
+    return !!record?.isImportEdit;
+  }
 
   onCancel(): void {
     this.dialogRef.close();

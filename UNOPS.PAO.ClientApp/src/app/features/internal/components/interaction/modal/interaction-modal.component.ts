@@ -29,6 +29,8 @@ import { InteractionModalFooterComponent } from './footer/interaction-modal-foot
 import { NgIf } from '@angular/common';
 import { ChipModule, Chip } from 'primeng/chip';
 import { AutoCompleteModule } from 'primeng/autocomplete';
+import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
+import { HttpClientModule } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PanelModule } from 'primeng/panel';
 
@@ -54,7 +56,9 @@ import { PanelModule } from 'primeng/panel';
     NgIf,
     ChipModule,
     AutoCompleteModule,
-    PanelModule
+    HttpClientModule,
+      AiTranscribeComponent,
+      PanelModule
   ],
   providers: [
     ConfirmationService,
@@ -504,5 +508,17 @@ export class InteractionModalComponent {
 
   get acceptedMiMIETypesForgDrive() {
     return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
+  }
+
+  // Handler for transcription completion
+  onTranscriptionCompleted(data: any): void {
+    if (data) {
+      this.formGroup.patchValue({
+        type: data.type || this.formGroup.get('type')?.value,
+        date: data.date ? new Date(data.date) : this.formGroup.get('date')?.value,
+        data: data.data || this.formGroup.get('data')?.value,
+        contactId: data.contactId || this.formGroup.get('contactId')?.value
+      });
+    }
   }
 }

@@ -25,6 +25,7 @@ import { Contact } from '../../../models/contact.model';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
 import { ContactEditDialogFooterComponent } from './footer/contact-edit-dialog-footer.component';
+import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -46,7 +47,8 @@ import { ContactEditDialogFooterComponent } from './footer/contact-edit-dialog-f
     ReactiveFormsModule,
     DialogModule,
     CheckboxModule,
-    FormsModule
+    FormsModule,
+    AiTranscribeComponent
   ],
   templateUrl: './contact-edit-dialog.component.html',
   standalone: true,
@@ -93,7 +95,7 @@ export class ContactEditDialogComponent implements OnInit {
 
     // System fields
     discriminator: [''],
-    createdBy: [''],
+    createdBy: [null],
     createdDate: [new Date()],
     lastModifiedBy: [''],
     lastModifiedDate: [new Date()],
@@ -149,7 +151,18 @@ export class ContactEditDialogComponent implements OnInit {
       const payload = this._getRequestPayload();
 
       // Reset requesting save signal immediately
-      this.requestingSaveSignal.set(false);
+      this.dialogConfig.data.requestingSaveSignal.set(false);
+
+      // Check if this is an import edit (we're only updating local data, not saving to server)
+      if (this.record && this.record.isImportEdit) {
+        // Just update the record with the form values and mark it as updated
+        Object.assign(this.record, payload);
+        this.record._updated = true;
+        
+        // Close the dialog with the updated record
+        this.dialogRef.close(this.record);
+        return;
+      }
 
       if (this.record && this.record['id']) {
         // Update existing contact
@@ -201,5 +214,35 @@ export class ContactEditDialogComponent implements OnInit {
     }
 
     return requestJsonObj;
+  }
+
+  toggleAssistantFields() {
+    this.showAssistantFields.update(value => !value);
+  }
+
+  // Handle AI Transcribe completion
+  onTranscriptionCompleted(data: any): void {
+    if (data) {
+      // Pre-fill the contact form with AI-extracted data
+      this.formGroup.patchValue({
+        salutation: data.salutation || this.formGroup.get('salutation')?.value,
+        firstName: data.firstName || this.formGroup.get('firstName')?.value,
+        middleName: data.middleName || this.formGroup.get('middleName')?.value,
+        lastName: data.lastName || this.formGroup.get('lastName')?.value,
+        suffix: data.suffix || this.formGroup.get('suffix')?.value,
+        title: data.title || this.formGroup.get('title')?.value,
+        email: data.email || this.formGroup.get('email')?.value,
+        phone: data.phone || this.formGroup.get('phone')?.value,
+        mobile: data.mobile || this.formGroup.get('mobile')?.value,
+        department: data.department || this.formGroup.get('department')?.value,
+        mailingStreet: data.mailingStreet || this.formGroup.get('mailingStreet')?.value,
+        mailingCity: data.mailingCity || this.formGroup.get('mailingCity')?.value,
+        mailingStateProvince: data.mailingStateProvince || this.formGroup.get('mailingStateProvince')?.value,
+        mailingPostalCode: data.mailingPostalCode || this.formGroup.get('mailingPostalCode')?.value,
+        mailingCountry: data.mailingCountry || this.formGroup.get('mailingCountry')?.value
+      });
+      
+      this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
+    }
   }
 }

@@ -8,11 +8,21 @@ import { Subscription, filter } from 'rxjs';
 import { LayoutService } from '../../services/layout.service';
 import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { LanguageService } from '../../../services/language.service';
-import {AiAssistantComponent} from '../../../reusables/widgets/ai-assistant/ai-assistant.component';
+import { AiAssistantComponent } from '../../../reusables/widgets/ai-assistant/ai-assistant.component';
+import { LoadingOverlayComponent, LoadingOverlayService } from '../../../reusables/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-layout',
-  imports: [TopbarComponent, SidebarComponent, RouterModule, FooterComponent, BreadcrumbComponent, AiAssistantComponent, NgClass],
+  imports: [
+    TopbarComponent, 
+    SidebarComponent, 
+    RouterModule, 
+    FooterComponent, 
+    BreadcrumbComponent, 
+    AiAssistantComponent, 
+    NgClass,
+    LoadingOverlayComponent
+  ],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
   standalone: true,
@@ -26,6 +36,7 @@ export class LayoutComponent implements OnInit, OnDestroy{
 
   @ViewChild(SidebarComponent) sideBar!: SidebarComponent;
   @ViewChild(TopbarComponent) topBar!: TopbarComponent;
+  @ViewChild(LoadingOverlayComponent) loadingOverlay!: LoadingOverlayComponent;
 
   constructor(
       public layoutService: LayoutService,
@@ -33,7 +44,8 @@ export class LayoutComponent implements OnInit, OnDestroy{
       public router: Router,
       private activatedRoute: ActivatedRoute,
       private languageService: LanguageService,
-      private cdr: ChangeDetectorRef
+      private cdr: ChangeDetectorRef,
+      private loadingOverlayService: LoadingOverlayService
   ) {
       this.overlayMenuOpenSubscription = this.layoutService.overlayOpen$.subscribe(() => {
           if (!this.menuOutsideClickListener) {
@@ -58,7 +70,14 @@ export class LayoutComponent implements OnInit, OnDestroy{
   ngOnInit(): void {
     this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
         this.cdr.detectChanges();
-      });
+    });
+  }
+
+  ngAfterViewInit(): void {
+    // Register the loading overlay component with the service
+    if (this.loadingOverlay) {
+      this.loadingOverlayService.registerComponent(this.loadingOverlay);
+    }
   }
 
   updateBreadcrumbs(route: any) {

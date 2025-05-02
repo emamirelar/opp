@@ -9,6 +9,9 @@ import { ContactEditDialogFooterComponent } from '../components/contact/edit-dia
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerEditDialogComponent } from '../components/partner/edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../components/partner/edit-dialog/footer/partner-edit-dialog-footer.component';
+import { ImportDialogComponent } from '../../../common/reusables/components/import/dialog/import-dialog.component';
+import { ImportFooterComponent } from '../../../common/reusables/components/import/dialog/footer/import-dialog-footer.component';
+import { InteractionModalFooterComponent } from '../components/interaction/modal/footer/interaction-modal-footer.component';
 
 @Injectable({
   providedIn: 'root',
@@ -17,12 +20,19 @@ export class ComponentResolverService {
   dialogService = inject(DialogService);
   private componentMap: { [key: string]: any } = {
      'Contact': {
+        header: 'Contact',
         component: ContactEditDialogComponent,
         footer: ContactEditDialogFooterComponent,
      },
      'Partner': {
+        header: 'Partner',
         component: PartnerEditDialogComponent,
         footer: PartnerEditDialogFooterComponent,
+     },
+     'Interaction': {
+        header: 'Interaction',
+        component: InteractionModalComponent,
+        footer: InteractionModalFooterComponent,
      },
      /*'PartnerTree': PartnerTreeItemComponent,
      'Interaction': InteractionModalComponent,*/
@@ -33,9 +43,11 @@ export class ComponentResolverService {
   resolveComponent(record: any, componentName: string, isNew: boolean = true): void {
     var componentData = this.componentMap[componentName];
 
+    debugger;
+
     if (componentData) {
       this.dialogService.open(componentData.component, {
-        header: isNew ? ' New' + componentName : 'Edit ' + componentName,
+        header: (componentName.startsWith('bulk') ? componentData.header : (isNew ? ' New' + componentName : 'Edit ' + componentName)),
         width: '40vw',
         breakpoints: { '960px': '95vw' },
         closable: true,

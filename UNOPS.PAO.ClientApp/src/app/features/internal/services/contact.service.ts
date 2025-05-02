@@ -1,7 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { Contact } from '../models/contact.model';
+
+export interface ContactsParams {
+  page: number;
+  pageSize: number;
+  searchText?: string;
+  sortField?: string;
+  sortOrder?: 'asc' | 'desc';
+}
 
 @Injectable({
   providedIn: 'root',
@@ -10,7 +18,7 @@ export class ContactService {
   http = inject(HttpClient);
 
   public readonly apiUrl = `/api/contact`;
-  private contactData = signal([]);
+  private contactData = signal<any[]>([]);
   allContacts = this.contactData.asReadonly();
 
   isLoading = signal(false);
@@ -41,9 +49,42 @@ export class ContactService {
         this.isLoading.set(false);
       },
       error: (err) => {
+        console.error('Error loading contacts:', err);
         this.isLoading.set(false);
       },
     });
+  }
+
+  /**
+   * Get contacts with pagination and search
+   * @param params Parameters for filtering and pagination
+   * @returns Observable with paginated contact data
+   */
+  getContacts(params: ContactsParams): Observable<{ data: Contact[], total: number }> {
+    this.isLoading.set(true);
+    
+    const queryParams: any = {
+      page: params.page,
+      pageSize: params.pageSize
+    };
+    
+    if (params.searchText) {
+      queryParams.searchText = params.searchText;
+    }
+    
+    if (params.sortField) {
+      queryParams.sortField = params.sortField;
+      queryParams.sortOrder = params.sortOrder || 'asc';
+    }
+    
+    return this.http.get<any>(`${this.apiUrl}`, { params: queryParams })
+      .pipe(
+        map((response: any) => ({
+          data: response.records || [],
+          total: response.totalCount || 0
+        })),
+        tap(() => this.isLoading.set(false))
+      );
   }
 
   getContactById(id: string): Observable<Contact> {

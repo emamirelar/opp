@@ -114,6 +114,31 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     public async Task PublishMessageToPubSub(TEntity entity)
     {
         var entityName = typeof(TEntity).Name.Replace("UNOPS", "").Pluralize();
-        _aiService.PublishMessageToPubSub(entity, entityName, entity.Id);
+        
+        // Get all potential ID properties with case-insensitive match
+        var idProperties = entity.GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase)
+            .Where(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && p.PropertyType == typeof(int))
+            .ToList();
+        
+        // Try to find a non-zero ID value
+        int entityId = idProperties
+            .Select(p => (int)p.GetValue(entity))
+            .FirstOrDefault(value => value != 0);
+        
+        // Skip publishing if the ID is 0 or invalid
+        if (entityId <= 0)
+        {
+            return;
+        }
+        
+        var message = new MyPubSubMessage
+        {
+            EntityName = entityName,
+            EntityId = entityId,
+            MessageType = "EntityProcessing"
+        };
+
+        await _aiService.PublishMessageToPubSub(message);
     }
 }

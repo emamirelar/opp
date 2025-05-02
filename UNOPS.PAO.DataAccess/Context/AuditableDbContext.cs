@@ -43,6 +43,7 @@ public class AuditableDbContext<TId, TUserId> : DbContext, IDbContextSchema
             if (entry is { Entity: IModifiableEntity<TId, TUserId> created, State: EntityState.Added })
             {
                 created.SetCreateAuditData(_currentUserId);
+                created.SetUpdateAuditData(_currentUserId);
             }
             
             if (entry is { Entity: IModifiableEntity<TId, TUserId> modifiable, State: EntityState.Modified})
