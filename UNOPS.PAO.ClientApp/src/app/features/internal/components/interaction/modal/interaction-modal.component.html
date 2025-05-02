@@ -45,37 +45,62 @@
     <label for="contacts">{{ 'label.interaction.relatedTo' | translate }}</label>
     <p-multiselect id="contacts"
                    formControlName="contactIds"
-                   [options]="contactService.allContacts()"
-                   optionLabel="firstName"
+                   [options]="allContacts()"
+                   optionLabel="name"
                    optionValue="id"
                    display="chip"
-                   fluid="true"
+                   multiple
+                   fluid
                    [maxSelectedLabels]="100000"
                    placeholder="{{ 'label.interaction.selectContacts' | translate }}"
                    ariaLabel="contacts">
       <ng-template let-contact #item>
         <div class="flex items-center gap-2">
-          <span>{{ contact.firstName }} {{ contact.lastName }}</span>
+          <span>{{ contact.name }}</span>
         </div>
       </ng-template>
     </p-multiselect>
   </div>
 
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-2 partners-display">
     <label for="partners">{{ 'label.interaction.partners' | translate }}</label>
-    <p-multiselect id="partners"
+    <!--<p-multiselect id="partners"
                    formControlName="partnerIds"
-                   [options]="partnerService.allPartners()"
+                   [options]="allPartners()"
+                   optionLabel="name"
+                   optionValue="id"
+                   display="chip"
+                   [disabled]="true"
+                   [style]="{ 'pointer-events': 'none' }"
+                   styleClass="fully-disabled-multiselect">
+      <ng-template let-partner pTemplate="item">
+        <div class="flex items-center gap-2">
+          <span>{{ partner.name }}</span>
+        </div>
+      </ng-template>
+    </p-multiselect>-->
+    <div class="chips-container">
+      <span *ngFor="let partner of getSelectedPartners()" class="partner-chip">
+        {{ partner.name }}
+      </span>
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <label for="users">{{ 'label.interaction.users' | translate }}</label>
+    <p-multiselect id="users"
+                   formControlName="userIds"
+                   [options]="allUsers()"
                    optionLabel="name"
                    optionValue="id"
                    display="chip"
                    fluid="true"
                    [maxSelectedLabels]="100000"
-                   placeholder="{{ 'label.interaction.selectPartners' | translate }}"
-                   ariaLabel="partners">
-      <ng-template let-partner #item>
+                   placeholder="{{ 'label.interaction.selectUsers' | translate }}"
+                   ariaLabel="users">
+      <ng-template let-user #item>
         <div class="flex items-center gap-2">
-          <span>{{ partner.name }}</span>
+          <span>{{ user.name }}</span>
         </div>
       </ng-template>
     </p-multiselect>
@@ -105,10 +130,42 @@
   </div>
 
   <div class="flex flex-col gap-2">
+    <label for="orgUnit">{{ 'label.interaction.orgUnit' | translate }}</label>
+    <p-select id="orgUnit"
+              formControlName="orgUnitId"
+              [options]="allOrgUnits()"
+              optionLabel="name"
+              optionValue="id"
+              [filter]="true"
+              filterBy="name"
+              [appendTo]="'body'"
+              [showClear]="true"
+              placeholder="{{ 'label.interaction.selectOrgUnit' | translate }}"
+              class="w-full">
+    </p-select>
+  </div>
+
+  @if( recordId ) {
+    <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
+      <app-document #appDocument
+                    [entityId]="recordId"
+                    [entityName]="'interaction'"
+                    [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+        <div ngProjectAs="document-toolbar">
+          <app-document-gdrive [entityId]="recordId"
+                               [entityName]="'interaction'"
+                               [appDocumentRef]="appDocument"
+                               [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+        </div>
+      </app-document>
+    </p-panel>
+  }
+
+  <div class="flex flex-col gap-2">
     <label for="contact">{{ 'label.interaction.contact' | translate }}</label>
     <p-select id="contact"
               formControlName="contactId"
-              [options]="contactService.allContacts()"
+              [options]="allContacts()"
               optionLabel="firstName"
               optionValue="id"
               [filter]="true"

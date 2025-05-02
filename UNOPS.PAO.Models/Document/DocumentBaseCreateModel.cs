@@ -15,6 +15,7 @@ public class DocumentBaseCreateModel : DocumentBaseModel
             {
                 EntityNames.Contact => DocumentParentEntityType.Contact,
                 EntityNames.Partner => DocumentParentEntityType.Partner,
+                EntityNames.Interaction => DocumentParentEntityType.Interaction,
                 _ => DocumentParentEntityType.Drive
             };
         }

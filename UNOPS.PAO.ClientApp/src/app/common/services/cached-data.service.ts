@@ -81,6 +81,12 @@ export class CachedDataService {
   private allPartnerCategoriesData = signal([]);
   allPartnerCategories = this.allPartnerCategoriesData.asReadonly();
 
+  private allContactsData = signal<any[]>([]);
+  allContacts = this.allContactsData.asReadonly();
+
+  private allUsersData = signal<any[]>([]);
+  allUsers = this.allUsersData.asReadonly();
+
   constructor() { 
     this.loadSalutations();
     this.loadStatus();
@@ -96,6 +102,8 @@ export class CachedDataService {
     this.loadPartnerLevelTypeData();
     this.loadPartnerOffices();
     this.loadPartnerCategories();
+    this.loadContacts();
+    this.loadUsers();
   }
 
   clearCachedData(){
@@ -468,6 +476,50 @@ export class CachedDataService {
           this.isLoading.set(false);
         },
         error: (err) => {
+          this.isLoading.set(false);
+        }
+      });
+    }
+  }
+
+  loadContacts() {
+    // Initialize with empty array
+    if (this.allContactsData() === undefined || this.allContactsData().length <= 0) {
+      // Default to empty array before API response
+      this.allContactsData.set([]);
+
+      this.isLoading.set(true);
+      this.http.get('/api/values/contacts').subscribe({
+        next: (data: any) => {
+          // Ensure data is an array
+          this.allContactsData.set(Array.isArray(data) ? data : []);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          // Keep empty array on error
+          this.allContactsData.set([]);
+          this.isLoading.set(false);
+        }
+      });
+    }
+  }
+
+  loadUsers() {
+    // Initialize with empty array
+    if (this.allUsersData() === undefined || this.allUsersData().length <= 0) {
+      // Default to empty array before API response
+      this.allUsersData.set([]);
+
+      this.isLoading.set(true);
+      this.http.get('/api/values/users').subscribe({
+        next: (data: any) => {
+          // Ensure data is an array
+          this.allUsersData.set(Array.isArray(data) ? data : []);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          // Keep empty array on error
+          this.allUsersData.set([]);
           this.isLoading.set(false);
         }
       });

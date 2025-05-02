@@ -27,4 +27,10 @@ public class ValuesRepository
 
     public IEnumerable<PartnerCategory> GetPartnerCategories()
         => context.PartnerCategories.Where(x => x.Status == EntityStatus.Active && !x.IsDeleted);
+
+    public IEnumerable<Contact> GetContacts()
+        => context.Contacts.Where(x => !x.IsDeleted);
+
+    public IEnumerable<GrantUser> GetUsers()
+        => context.GrantUsers;
 }

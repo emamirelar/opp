@@ -11,7 +11,7 @@ export interface Interaction {
   status: string;
   contactIds: number[];
   partnerIds: number[];
-  //userIds: number[];
+  userIds: number[];
   emailAddresses: string[];
   phoneNumbers: string[];
   location: string;

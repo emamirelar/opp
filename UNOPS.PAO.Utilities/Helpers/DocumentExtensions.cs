@@ -8,7 +8,8 @@ public static class DocumentExtensions
     private static readonly Dictionary<DocumentParentEntityType, Type> EntityTypeMap = new()
     {
         { DocumentParentEntityType.Contact, typeof(Contact) },
-        { DocumentParentEntityType.Partner, typeof(Partner) }
+        { DocumentParentEntityType.Partner, typeof(Partner) },
+        { DocumentParentEntityType.Interaction, typeof(Interaction) }
     };
 
     public static string GetEntityTypeName(this DocumentParentEntityType parentEntityType)
