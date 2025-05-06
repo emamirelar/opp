@@ -76,4 +76,7 @@ public class APIDictionary
 
     public const string Notifications = "api/notifications";
     public const string NotificationRead = "api/notifications/{notificationId}/read";
+
+    // User Data
+    public const string CurrentUserData = APIPrefix + "current-user-data";
 }

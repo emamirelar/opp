@@ -37,5 +37,6 @@ public class MappingProfile : Profile
         CreateMap<Contact, ContactValueModel>();
         CreateMap<GrantUser, UserValueModel>();
         CreateMap<UserProfile, UserProfileValueModel>();
+        CreateMap<GrantUser, PAOUserModel>();
     }
 }

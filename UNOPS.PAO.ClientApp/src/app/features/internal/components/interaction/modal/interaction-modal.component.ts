@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
@@ -98,6 +98,7 @@ export class InteractionModalComponent {
   allPartners = this.cachedDataService.allPartners;
   allUsers = this.cachedDataService.allUsers;
   allOrgUnits = this.cachedDataService.allPartnerOffices;
+  currentUser = this.cachedDataService.currentUser;
 
   constructor(
     private fb: FormBuilder,
@@ -121,6 +122,7 @@ export class InteractionModalComponent {
       phoneNumbers: [[]],
       location: [''],
       subject: ['', Validators.required],
+      createdBy: [null],
       orgUnitId: [null],
       previousContactIds: [[]],
       previousEmails: [[]],
@@ -133,9 +135,14 @@ export class InteractionModalComponent {
     this.setupPhoneNumberChangeListener();
     this.setupUserIdsChangeListener();
 
-    //this.partnerService.getAllPartners();
-    //this.contactService.getAllContacts();
-    //this.userService.getAllContacts();
+    effect(() => {
+      const userId = this.currentUser()?.id;
+      const currentFormUserId = this.formGroup.get('createdBy')?.value;
+
+      if (userId && !currentFormUserId) { // Only set if not already set
+        this.formGroup.patchValue({ createdBy: userId });
+      }
+    });
     
     // Set up the footer template
     this.dialogConfig.templates = {
@@ -145,6 +152,7 @@ export class InteractionModalComponent {
 
   ngOnInit() {
     this.record = this.dialogConfig.data?.record;
+
     if (this.record) {
       this.recordId = this.record.id + '';
       this.formGroup.patchValue({
@@ -160,6 +168,7 @@ export class InteractionModalComponent {
         phoneNumbers: this.record.phoneNumbers,
         location: this.record.location,
         subject: this.record.subject,
+        createdBy: this.record.createdBy,
         orgUnitId: this.record.orgUnitId,
         previousContactIds: this.record.contactIds,
         previousEmails: this.record.emailAddresses,
@@ -167,7 +176,7 @@ export class InteractionModalComponent {
         previousUserIds: this.record.userIds
       });
     }
-    
+        
     // Expose the handleSave function to be called from footer
     if (this.dialogConfig.data) {
       this.dialogConfig.data.handleSave = this.onSubmit.bind(this);
@@ -346,8 +355,6 @@ export class InteractionModalComponent {
         this.formGroup.get('previousContactIds')?.setValue(newContactIds);
         if (JSON.stringify(currentEmails) !== JSON.stringify(updatedEmails)) {
           this.formGroup.get('emailAddresses')?.setValue(updatedEmails);
-          //this.formGroup.get('emailAddresses')?.setValue(updatedEmails, { emitEvent: false });
-          //this.formGroup.get('previousEmails')?.setValue(updatedEmails);
         }
       });
   }
@@ -381,8 +388,6 @@ export class InteractionModalComponent {
         this.formGroup.get('previousUserIds')?.setValue(newUserIds);
         if (JSON.stringify(currentEmails) !== JSON.stringify(updatedEmails)) {
           this.formGroup.get('emailAddresses')?.setValue(updatedEmails);
-          //this.formGroup.get('emailAddresses')?.setValue(updatedEmails, { emitEvent: false });
-          //this.formGroup.get('previousEmails')?.setValue(updatedEmails);
         }
       });
   }
@@ -446,7 +451,6 @@ export class InteractionModalComponent {
         );
 
         // Step 2: Remove user IDs for newly removed emails (if valid)
-        //const removedEmails = previousEmails.filter(email => !newEmails.includes(email));
         const userIdsToRemove = this.getUserIdsForEmails(removedEmails);
 
         const updatedUserIds = [
@@ -520,5 +524,9 @@ export class InteractionModalComponent {
         contactId: data.contactId || this.formGroup.get('contactId')?.value
       });
     }
+  }
+
+  get showPhoneNumbers() {
+    return this.formGroup.get('type')?.value != 'Email';
   }
 }

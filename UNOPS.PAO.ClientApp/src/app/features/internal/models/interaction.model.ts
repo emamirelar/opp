@@ -17,4 +17,5 @@ export interface Interaction {
   location: string;
   subject: string;
   orgUnitId: number;
+  createdBy: number;
 }

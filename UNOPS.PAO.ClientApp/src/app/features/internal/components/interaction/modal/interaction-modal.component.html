@@ -2,9 +2,8 @@
 
 <form [formGroup]="formGroup" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
   <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
-    <app-ai-transcribe 
-      transcribeType="interaction_action" 
-      (transcriptionCompleted)="onTranscriptionCompleted($event)">
+    <app-ai-transcribe transcribeType="interaction_action"
+                       (transcriptionCompleted)="onTranscriptionCompleted($event)">
     </app-ai-transcribe>
   </div>
   @if( showValidationFailedError() === true ){
@@ -38,6 +37,7 @@
                     [typeahead]="false" />
   </div>
 
+  @if( showPhoneNumbers ){
   <div class="flex flex-col gap-2">
     <label for="phones" class="block">{{ 'label.interaction.phoneNumbers' | translate }}</label>
     <p-autocomplete id="phones"
@@ -46,6 +46,7 @@
                     fluid
                     [typeahead]="false" />
   </div>
+  }
 
   <div class="flex flex-col gap-2">
     <label for="contacts">{{ 'label.interaction.relatedTo' | translate }}</label>
@@ -136,6 +137,22 @@
   </div>
 
   <div class="flex flex-col gap-2">
+    <label for="orgUnit">{{ 'label.interaction.createdBy' | translate }}</label>
+    <p-select id="createdBy"
+              formControlName="createdBy"
+              [options]="allUsers()"
+              optionLabel="name"
+              optionValue="id"
+              [filter]="true"
+              filterBy="name"
+              [appendTo]="'body'"
+              [showClear]="true"
+              placeholder="{{ 'label.interaction.selectCreatedBy' | translate }}"
+              class="w-full">
+    </p-select>
+  </div>
+
+  <div class="flex flex-col gap-2">
     <label for="orgUnit">{{ 'label.interaction.orgUnit' | translate }}</label>
     <p-select id="orgUnit"
               formControlName="orgUnitId"
@@ -152,19 +169,19 @@
   </div>
 
   @if( recordId ) {
-    <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
-      <app-document #appDocument
-                    [entityId]="recordId"
-                    [entityName]="'interaction'"
-                    [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
-        <div ngProjectAs="document-toolbar">
-          <app-document-gdrive [entityId]="recordId"
-                               [entityName]="'interaction'"
-                               [appDocumentRef]="appDocument"
-                               [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
-        </div>
-      </app-document>
-    </p-panel>
+  <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
+    <app-document #appDocument
+                  [entityId]="recordId"
+                  [entityName]="'interaction'"
+                  [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+      <div ngProjectAs="document-toolbar">
+        <app-document-gdrive [entityId]="recordId"
+                             [entityName]="'interaction'"
+                             [appDocumentRef]="appDocument"
+                             [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+      </div>
+    </app-document>
+  </p-panel>
   }
 
   <div class="flex flex-col gap-2">

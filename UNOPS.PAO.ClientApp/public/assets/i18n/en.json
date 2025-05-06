@@ -230,7 +230,9 @@
       "relatedTo": "Related To",
       "description": "Description",
       "orgUnit": "Organization Unit",
-      "selectOrgUnit": "Select Organization Unit"
+      "selectOrgUnit": "Select Organization Unit",
+      "createdBy": "Created By",
+      "selectCreatedBy": "Select Created By"
     },
     "link": {
       "url": "URL",

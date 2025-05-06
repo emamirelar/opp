@@ -87,6 +87,9 @@ export class CachedDataService {
   private allUsersData = signal<any[]>([]);
   allUsers = this.allUsersData.asReadonly();
 
+  private currentUserData = signal<any>({});
+  currentUser = this.currentUserData.asReadonly();
+
   constructor() { 
     this.loadSalutations();
     this.loadStatus();
@@ -104,6 +107,7 @@ export class CachedDataService {
     this.loadPartnerCategories();
     this.loadContacts();
     this.loadUsers();
+    this.loadCurrentUserData();
   }
 
   clearCachedData(){
@@ -520,6 +524,27 @@ export class CachedDataService {
         error: (err) => {
           // Keep empty array on error
           this.allUsersData.set([]);
+          this.isLoading.set(false);
+        }
+      });
+    }
+  }
+
+  loadCurrentUserData() {
+    // Initialize with empty array
+    if (this.currentUserData()?.id === undefined) {
+      // Default to empty array before API response
+      //this.currentUserData.set([]);
+
+      this.isLoading.set(true);
+      this.http.get('/api/current-user-data').subscribe({
+        next: (data: any) => {
+          this.currentUserData.set(data);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          // Keep empty array on error
+          //this.allUsersData.set(new Object);
           this.isLoading.set(false);
         }
       });
