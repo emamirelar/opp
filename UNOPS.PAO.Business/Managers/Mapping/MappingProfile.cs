@@ -33,5 +33,10 @@ public class MappingProfile : Profile
         CreateMap<OrganizationUnitModel, OrganizationUnit>();
         CreateMap<PartnerCategory, PartnerCategoryModel>();
         CreateMap<PartnerCategoryModel, PartnerCategory>();
+        CreateMap<Partner, PartnerValueModel>();
+        CreateMap<Contact, ContactValueModel>();
+        CreateMap<GrantUser, UserValueModel>();
+        CreateMap<UserProfile, UserProfileValueModel>();
+        CreateMap<GrantUser, PAOUserModel>();
     }
 }

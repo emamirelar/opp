@@ -221,12 +221,18 @@
       "contacts": "Contacts",
       "selectPartners": "Select Partners",
       "partners": "Partners",
+      "users": "Users",
+      "selectUsers": "Select Users",
       "subject": "Subject",
       "emailAddresses": "Email Addresses",
       "phoneNumbers": "Phone Numbers",
       "location": "Location",
       "relatedTo": "Related To",
-      "description": "Description"
+      "description": "Description",
+      "orgUnit": "Organization Unit",
+      "selectOrgUnit": "Select Organization Unit",
+      "createdBy": "Created By",
+      "selectCreatedBy": "Select Created By"
     },
     "link": {
       "url": "URL",

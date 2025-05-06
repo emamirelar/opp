@@ -22,4 +22,5 @@ public interface IManagerWrapper
     UserManager<PAOIdentityUser> UserManager { get; }
 
     ILinkManager LinkManager { get; }
+    IUserDataManager UserDataManager { get; }
 }

@@ -37,6 +37,8 @@ public class APIDictionary
     public const string Partners = APIPrefix + "values/partners";
     public const string OrganizationUnits = APIPrefix + "values/organization-units";
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
+    public const string Contacts = APIPrefix + "values/contacts";
+    public const string Users = APIPrefix + "values/users";
 
     // Workflow
     public const string Workflow = APIPrefix + "workflow";
@@ -74,4 +76,7 @@ public class APIDictionary
 
     public const string Notifications = "api/notifications";
     public const string NotificationRead = "api/notifications/{notificationId}/read";
+
+    // User Data
+    public const string CurrentUserData = APIPrefix + "current-user-data";
 }

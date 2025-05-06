@@ -1,4 +1,5 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect } from '@angular/core';
+import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
@@ -8,6 +9,8 @@ import {Textarea} from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InteractionType, INTERACTION_TYPE_TRANSLATION_KEYS } from '../../../models/interaction-type.enum';
+import { DocumentComponent } from '../../../../../common/reusables/components/document/document.component';
+import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ContactService } from '../../../services/contact.service';
 import { PartnerService } from '../../../services/partner.service';
@@ -28,6 +31,8 @@ import { ChipModule, Chip } from 'primeng/chip';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { HttpClientModule } from '@angular/common/http';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { PanelModule } from 'primeng/panel';
 
 @Component({
   selector: 'app-interaction-modal',
@@ -42,6 +47,8 @@ import { HttpClientModule } from '@angular/common/http';
     Textarea,
     SelectModule,
     MultiSelectModule,
+    DocumentComponent,
+    GDriveDocumentComponent,
     TranslateModule,
     CommonModule,
     MessageModule,
@@ -50,7 +57,8 @@ import { HttpClientModule } from '@angular/common/http';
     ChipModule,
     AutoCompleteModule,
     HttpClientModule,
-    AiTranscribeComponent
+      AiTranscribeComponent,
+      PanelModule
   ],
   providers: [
     ConfirmationService,
@@ -68,6 +76,7 @@ export class InteractionModalComponent {
   
   record?: Interaction;
   isSaving = signal(false);
+  recordId: string = '';
 
   formGroup: FormGroup;
 
@@ -77,11 +86,19 @@ export class InteractionModalComponent {
     translateKey: INTERACTION_TYPE_TRANSLATION_KEYS[type]
   }));
 
-  contacts: Contact[] = [];
-  partners: Partner[] = [];
-  emailOptions: string[] = [];
+  cachedDataService = inject(CachedDataService);
+
+  //contacts: Contact[] = [];
+  //partners: Partner[] = [];
   invalidEmails: string[] = [];
+  invalidPhones: string[] = [];
   showValidationFailedError = signal<boolean>(false);
+
+  allContacts = this.cachedDataService.allContacts;
+  allPartners = this.cachedDataService.allPartners;
+  allUsers = this.cachedDataService.allUsers;
+  allOrgUnits = this.cachedDataService.allPartnerOffices;
+  currentUser = this.cachedDataService.currentUser;
 
   constructor(
     private fb: FormBuilder,
@@ -100,15 +117,32 @@ export class InteractionModalComponent {
       contactId: ['', Validators.required],
       contactIds: [[]],
       partnerIds: [[]],
+      userIds: [[]],
       emailAddresses: [[]],
       phoneNumbers: [[]],
       location: [''],
       subject: ['', Validators.required],
-      orgUnitId: [null]
+      createdBy: [null],
+      orgUnitId: [null],
+      previousContactIds: [[]],
+      previousEmails: [[]],
+      previousPhones: [[]],
+      previousUserIds: [[]]
     });
-    this.partnerService.getAllPartners();
-    this.contactService.getAllContacts();
-    //this.userService.getAllContacts();
+
+    this.setupContactIdsChangeListener();
+    this.setupEmailChangeListener();
+    this.setupPhoneNumberChangeListener();
+    this.setupUserIdsChangeListener();
+
+    effect(() => {
+      const userId = this.currentUser()?.id;
+      const currentFormUserId = this.formGroup.get('createdBy')?.value;
+
+      if (userId && !currentFormUserId) { // Only set if not already set
+        this.formGroup.patchValue({ createdBy: userId });
+      }
+    });
     
     // Set up the footer template
     this.dialogConfig.templates = {
@@ -118,7 +152,9 @@ export class InteractionModalComponent {
 
   ngOnInit() {
     this.record = this.dialogConfig.data?.record;
+
     if (this.record) {
+      this.recordId = this.record.id + '';
       this.formGroup.patchValue({
         id: this.record.id,
         type: this.record.type,
@@ -127,15 +163,20 @@ export class InteractionModalComponent {
         contactId: this.record.contactId,
         contactIds: this.record.contactIds,
         partnerIds: this.record.partnerIds,
+        userIds: this.record.userIds,
         emailAddresses: this.record.emailAddresses,
         phoneNumbers: this.record.phoneNumbers,
         location: this.record.location,
         subject: this.record.subject,
-        orgUnitId: this.record.orgUnitId
+        createdBy: this.record.createdBy,
+        orgUnitId: this.record.orgUnitId,
+        previousContactIds: this.record.contactIds,
+        previousEmails: this.record.emailAddresses,
+        previousPhones: this.record.phoneNumbers,
+        previousUserIds: this.record.userIds
       });
-      this.emailOptions = this.record.emailAddresses || [];
     }
-    
+        
     // Expose the handleSave function to be called from footer
     if (this.dialogConfig.data) {
       this.dialogConfig.data.handleSave = this.onSubmit.bind(this);
@@ -238,6 +279,241 @@ export class InteractionModalComponent {
     }
   }
 
+  isValidPhone(phone: string): boolean {
+    // Basic international phone validation pattern
+    const phonePattern = /^\+?[\d\s\-\(\)]{8,}$/;
+    return phonePattern.test(phone);
+  }
+
+  validatePhone(phone: string) {
+    if (!this.isValidPhone(phone)) {
+      this.invalidPhones = [...(this.invalidPhones || []), phone];
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Invalid Phone Number',
+        detail: `"${phone}" is not a valid phone number`,
+        life: 3000
+      });
+    }
+  }
+
+  // Helper: Get emails for contact IDs (only valid matches)
+  private getEmailsForContactIds(contactIds: number[]): string[] {
+    return contactIds
+      .map(id => this.allContacts().find(c => c.id === id)?.email)
+      .filter((email): email is string => email !== undefined);
+  }
+
+  // Helper: Get contact IDs for emails (only valid matches)
+  private getContactIdsForEmails(emails: string[]): number[] {
+    return emails
+      .map(email => this.allContacts().find(c => c.email === email)?.id)
+      .filter((id): id is number => id !== undefined);
+  }
+
+  // Helper: Get emails for user IDs (only valid matches)
+  private getEmailsForUserIds(userIds: number[]): string[] {
+    return userIds
+      .map(id => this.allUsers().find(c => c.id === id)?.email)
+      .filter((email): email is string => email !== undefined);
+  }
+
+  // Helper: Get user IDs for emails (only valid matches)
+  private getUserIdsForEmails(emails: string[]): number[] {
+    return emails
+      .map(email => this.allUsers().find(c => c.email === email)?.id)
+      .filter((id): id is number => id !== undefined);
+  }
+
+  // Sync when contactIds change (add/remove ONLY matched emails)
+  private setupContactIdsChangeListener() {
+    this.formGroup.get('contactIds')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+      )
+      .subscribe((newContactIds: number[]) => {
+        this.updatePartnerIdsBasedOnContacts();
+        const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
+        const validEmailsForNewContactIds = this.getEmailsForContactIds(newContactIds);
+
+        // Step 1: Add new emails for newly added contact IDs (if valid)
+        const emailsToAdd = validEmailsForNewContactIds.filter(
+          email => !currentEmails.includes(email)
+        );
+
+        // Step 2: Remove emails for newly removed contact IDs (if valid)
+        const previousContactIds = this.formGroup.get('previousContactIds')?.value as number[];
+        const removedContactIds = previousContactIds.filter(id => !newContactIds.includes(id));
+        const emailsToRemove = this.getEmailsForContactIds(removedContactIds);
+
+        const updatedEmails = [
+          ...currentEmails.filter(email => !emailsToRemove.includes(email)),
+          ...emailsToAdd
+        ];
+
+        this.formGroup.get('previousContactIds')?.setValue(newContactIds);
+        if (JSON.stringify(currentEmails) !== JSON.stringify(updatedEmails)) {
+          this.formGroup.get('emailAddresses')?.setValue(updatedEmails);
+        }
+      });
+  }
+
+  // Sync when userIds change (add/remove ONLY matched emails)
+  private setupUserIdsChangeListener() {
+    this.formGroup.get('userIds')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+      )
+      .subscribe((newUserIds: number[]) => {
+        const currentEmails = this.formGroup.get('emailAddresses')?.value as string[];
+        const validEmailsForNewUserIds = this.getEmailsForUserIds(newUserIds);
+
+        // Step 1: Add new emails for newly added user IDs (if valid)
+        const emailsToAdd = validEmailsForNewUserIds.filter(
+          email => !currentEmails.includes(email)
+        );
+
+        // Step 2: Remove emails for newly removed user IDs (if valid)
+        const previousUserIds = this.formGroup.get('previousUserIds')?.value as number[];
+        const removedUserIds = previousUserIds.filter(id => !newUserIds.includes(id));
+        const emailsToRemove = this.getEmailsForUserIds(removedUserIds);
+
+        const updatedEmails = [
+          ...currentEmails.filter(email => !emailsToRemove.includes(email)),
+          ...emailsToAdd
+        ];
+
+        this.formGroup.get('previousUserIds')?.setValue(newUserIds);
+        if (JSON.stringify(currentEmails) !== JSON.stringify(updatedEmails)) {
+          this.formGroup.get('emailAddresses')?.setValue(updatedEmails);
+        }
+      });
+  }
+
+  // Sync when emailAddresses change (add/remove ONLY matched contact IDs)
+  private setupEmailChangeListener() {
+    this.formGroup.get('emailAddresses')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+      )
+      .subscribe((newEmails: string[]) => {
+
+        const previousEmails = this.formGroup.get('previousEmails')?.value as string[] || [];
+        const addedEmails = newEmails.filter(email => !previousEmails.includes(email));
+
+        // Validate all added emails
+        const invalidAddedEmails = addedEmails.filter(email => !this.isValidEmail(email));
+
+        if (invalidAddedEmails.length > 0) {
+          // Handle invalid emails
+          invalidAddedEmails.forEach(email => this.validateEmail(email));
+          
+          // Revert to previous valid state
+          this.formGroup.get('emailAddresses')?.setValue(previousEmails, { emitEvent: false });
+
+          return; // Abort the sync operation
+        }
+
+        const removedEmails = previousEmails.filter(email => !newEmails.includes(email));
+        this.formGroup.get('previousEmails')?.setValue(newEmails);
+
+        const currentContactIds = this.formGroup.get('contactIds')?.value as number[];
+        const validContactIdsForNewEmails = this.getContactIdsForEmails(newEmails);
+
+        // Step 1: Add new contact IDs for newly added emails (if valid)
+        const contactIdsToAdd = validContactIdsForNewEmails.filter(
+          id => !currentContactIds.includes(id)
+        );
+
+        // Step 2: Remove contact IDs for newly removed emails (if valid)
+        const contactIdsToRemove = this.getContactIdsForEmails(removedEmails);
+
+        const updatedContactIds = [
+          ...currentContactIds.filter(id => !contactIdsToRemove.includes(id)),
+          ...contactIdsToAdd
+        ];
+
+        if (JSON.stringify(currentContactIds) !== JSON.stringify(updatedContactIds)) {
+          this.formGroup.get('previousContactIds')?.setValue(updatedContactIds);
+          this.formGroup.get('contactIds')?.setValue(updatedContactIds);
+          this.updatePartnerIdsBasedOnContacts();
+        }
+
+        const currentUserIds = this.formGroup.get('userIds')?.value as number[];
+        const validUserIdsForNewEmails = this.getUserIdsForEmails(newEmails);
+
+        // Step 1: Add new user IDs for newly added emails (if valid)
+        const userIdsToAdd = validUserIdsForNewEmails.filter(
+          id => !currentUserIds.includes(id)
+        );
+
+        // Step 2: Remove user IDs for newly removed emails (if valid)
+        const userIdsToRemove = this.getUserIdsForEmails(removedEmails);
+
+        const updatedUserIds = [
+          ...currentUserIds.filter(id => !userIdsToRemove.includes(id)),
+          ...userIdsToAdd
+        ];
+
+        if (JSON.stringify(currentUserIds) !== JSON.stringify(updatedUserIds)) {
+          this.formGroup.get('previousUserIds')?.setValue(updatedUserIds);
+          this.formGroup.get('userIds')?.setValue(updatedUserIds);
+        }
+      });
+  }
+
+  private setupPhoneNumberChangeListener() {
+    this.formGroup.get('phoneNumbers')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+      )
+      .subscribe((newPhones: string[]) => {
+
+        const previousPhones = this.formGroup.get('previousPhones')?.value as string[] || [];
+        const addedPhones = newPhones.filter(phone => !previousPhones.includes(phone));
+
+        // Validate all added phones
+        const invalidAddedPhones = addedPhones.filter(phone => !this.isValidPhone(phone));
+
+        if (invalidAddedPhones.length > 0) {
+          // Handle invalid phones
+          this.invalidPhones.forEach(phone => this.validatePhone(phone));
+
+          // Revert to previous valid state
+          this.formGroup.get('phoneNumbers')?.setValue(previousPhones, { emitEvent: false });
+
+          return;
+        }
+        this.formGroup.get('previousPhones')?.setValue(newPhones);
+      });
+  }
+
+  private updatePartnerIdsBasedOnContacts() {
+    const selectedContactIds = this.formGroup.get('contactIds')?.value as number[];
+
+    // Get unique partnerIds from the selected contacts
+    const relatedPartnerIds = this.allContacts()
+      .filter(contact => selectedContactIds.includes(contact.id))
+      .map(contact => contact.partnerId)
+      .filter((partnerId, index, self) => self.indexOf(partnerId) === index); // Remove duplicates
+
+    // Update partnerIds without triggering valueChanges
+    this.formGroup.get('partnerIds')?.setValue(relatedPartnerIds, { emitEvent: false });
+  }
+
+  getSelectedPartners() {
+    const selectedIds = this.formGroup.get('partnerIds')?.value || [];
+    return this.allPartners().filter(p => selectedIds.includes(p.id));
+  }
+
+  get acceptedMiMIETypesForgDrive() {
+    return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
+  }
+
   // Handler for transcription completion
   onTranscriptionCompleted(data: any): void {
     if (data) {
@@ -248,5 +524,9 @@ export class InteractionModalComponent {
         contactId: data.contactId || this.formGroup.get('contactId')?.value
       });
     }
+  }
+
+  get showPhoneNumbers() {
+    return this.formGroup.get('type')?.value != 'Email';
   }
 }
