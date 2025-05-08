@@ -90,8 +90,109 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                         {
                             var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
                             var nullCheck = Expression.NotEqual(propertyAccess, Expression.Constant(null));
-                            var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
-                            comparisonExpr = Expression.AndAlso(nullCheck, containsCall);
+
+                            // Handle different string operators
+                            switch (op.ToLower())
+                            {
+                                case "like":
+                                    var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
+                                    comparisonExpr = Expression.AndAlso(nullCheck, containsCall);
+                                    break;
+                                case "not like":
+                                    var notContainsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
+                                    comparisonExpr = Expression.AndAlso(nullCheck, Expression.Not(notContainsCall));
+                                    break;
+                                case "is":
+                                    comparisonExpr = Expression.Equal(propertyAccess, Expression.Constant(value));
+                                    break;
+                                case "is not":
+                                    comparisonExpr = Expression.NotEqual(propertyAccess, Expression.Constant(value));
+                                    break;
+                                default:
+                                    comparisonExpr = Expression.Equal(propertyAccess, Expression.Constant(value));
+                                    break;
+                            }
+                        }
+                        else if (propertyAccess.Type == typeof(DateTime) || propertyAccess.Type == typeof(DateTime?))
+                        {
+                            var dateValue = DateTime.Parse(value);
+                            var constant = Expression.Constant(dateValue, propertyAccess.Type);
+
+                            // Handle different date operators
+                            switch (op.ToLower())
+                            {
+                                case ">":
+                                    comparisonExpr = Expression.GreaterThan(propertyAccess, constant);
+                                    break;
+                                case ">=":
+                                    comparisonExpr = Expression.GreaterThanOrEqual(propertyAccess, constant);
+                                    break;
+                                case "<":
+                                    comparisonExpr = Expression.LessThan(propertyAccess, constant);
+                                    break;
+                                case "<=":
+                                    comparisonExpr = Expression.LessThanOrEqual(propertyAccess, constant);
+                                    break;
+                                case "is":
+                                    comparisonExpr = Expression.Equal(propertyAccess, constant);
+                                    break;
+                                case "is not":
+                                    comparisonExpr = Expression.NotEqual(propertyAccess, constant);
+                                    break;
+                                default:
+                                    comparisonExpr = Expression.Equal(propertyAccess, constant);
+                                    break;
+                            }
+                        }
+                        else if (propertyAccess.Type == typeof(int) || propertyAccess.Type == typeof(int?) ||
+                                 propertyAccess.Type == typeof(decimal) || propertyAccess.Type == typeof(decimal?) ||
+                                 propertyAccess.Type == typeof(double) || propertyAccess.Type == typeof(double?))
+                        {
+                            var numericValue = Convert.ChangeType(value, Nullable.GetUnderlyingType(propertyAccess.Type) ?? propertyAccess.Type);
+                            var constant = Expression.Constant(numericValue, propertyAccess.Type);
+
+                            // Handle different numeric operators
+                            switch (op.ToLower())
+                            {
+                                case ">":
+                                    comparisonExpr = Expression.GreaterThan(propertyAccess, constant);
+                                    break;
+                                case ">=":
+                                    comparisonExpr = Expression.GreaterThanOrEqual(propertyAccess, constant);
+                                    break;
+                                case "<":
+                                    comparisonExpr = Expression.LessThan(propertyAccess, constant);
+                                    break;
+                                case "<=":
+                                    comparisonExpr = Expression.LessThanOrEqual(propertyAccess, constant);
+                                    break;
+                                case "is":
+                                    comparisonExpr = Expression.Equal(propertyAccess, constant);
+                                    break;
+                                case "is not":
+                                    comparisonExpr = Expression.NotEqual(propertyAccess, constant);
+                                    break;
+                                default:
+                                    comparisonExpr = Expression.Equal(propertyAccess, constant);
+                                    break;
+                            }
+                        }
+                        else if (propertyAccess.Type == typeof(bool) || propertyAccess.Type == typeof(bool?))
+                        {
+                            var boolValue = bool.Parse(value);
+                            var constant = Expression.Constant(boolValue, propertyAccess.Type);
+                            
+                            // Handle boolean operators
+                            switch (op.ToLower())
+                            {
+                                case "is not":
+                                    comparisonExpr = Expression.NotEqual(propertyAccess, constant);
+                                    break;
+                                case "is":
+                                default:
+                                    comparisonExpr = Expression.Equal(propertyAccess, constant);
+                                    break;
+                            }
                         }
                         else
                         {
@@ -191,9 +292,59 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             return x => true;
         }
 
-        // Combine all expressions with AND (advanced search is already properly combined internally)
-        var combinedExpression = expressions.Aggregate(Expression.AndAlso);
-        return Expression.Lambda<Func<TEntity, bool>>(combinedExpression, parameter);
+        // Combine expressions based on their type and relationship
+        Expression finalExpression;
+        
+        // If we only have one expression, use it directly
+        if (expressions.Count == 1)
+        {
+            finalExpression = expressions[0];
+        }
+        else
+        {
+            // Group expressions by their relationship (AND/OR)
+            var andExpressions = expressions.Where(e => !IsOrExpression(e)).ToList();
+            var orExpressions = expressions.Where(e => IsOrExpression(e)).ToList();
+
+            // Combine AND expressions
+            Expression andCombined = null;
+            if (andExpressions.Any())
+            {
+                andCombined = andExpressions.Aggregate(Expression.AndAlso);
+            }
+
+            // Combine OR expressions
+            Expression orCombined = null;
+            if (orExpressions.Any())
+            {
+                orCombined = orExpressions.Aggregate(Expression.OrElse);
+            }
+
+            // Combine AND and OR parts
+            if (andCombined != null && orCombined != null)
+            {
+                // If we have both AND and OR expressions, combine them with OR
+                finalExpression = Expression.OrElse(andCombined, orCombined);
+            }
+            else
+            {
+                // Use whichever combination we have
+                finalExpression = andCombined ?? orCombined;
+            }
+        }
+
+        return Expression.Lambda<Func<TEntity, bool>>(finalExpression, parameter);
+    }
+
+    private static bool IsOrExpression(Expression expression)
+    {
+        // Check if the expression is marked as an OR expression
+        // This could be enhanced based on your specific needs
+        if (expression is BinaryExpression binaryExpression)
+        {
+            return binaryExpression.NodeType == ExpressionType.OrElse;
+        }
+        return false;
     }
 
     private static Expression<Func<TEntity, bool>> CreateSearchTextExpression(ParameterExpression parameter, string searchText)

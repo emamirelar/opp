@@ -1,16 +1,14 @@
 <div class="layout-topbar">
 	<div class="layout-topbar-logo-container">
-		<button (click)="layoutService.onMenuToggle()"
-			aria-label="Menu"
-			class="layout-menu-button layout-topbar-action">
+		<button pButton pRipple type="button" class="p-link layout-menu-button" (click)="layoutService.onMenuToggle()">
 			<i class="pi pi-bars"></i>
 		</button>
 		<a class="layout-topbar-logo"
 			routerLink="/">
 			<img src="images/Circle.png"
-				class="items-center brand-logo hidden sm:flex"
+				class="brand-logo"
 				alt="UNOPS Grant+ Logo">
-			<span class="text-sm sm:text-2xl">Partners and Opportunities</span>
+			<span>Partners and Opportunities</span>
 		</a>
 	</div>
 
@@ -78,9 +76,20 @@
           </div>
         </div>
       </p-overlayPanel>
-      <app-profile-menubar></app-profile-menubar>
+      <div class="layout-topbar-menu">
+        <div class="flex align-items-center gap-2">
+          <p-avatar 
+            [label]="getInitials()" 
+            styleClass="cursor-pointer" 
+            (click)="menu.toggle($event)">
+          </p-avatar>
+          <p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
+        </div>
+      </div>
 		</div>
 	</div>
 
 	<p-toast position="bottom-right"></p-toast>
 </div>
+
+<app-profile-dialog #profileDialog></app-profile-dialog>

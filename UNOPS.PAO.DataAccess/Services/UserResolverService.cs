@@ -20,6 +20,11 @@ public class UserResolverService<TUserId>
         _userEmail = userEmail;
     }
 
+    public string? GetUserEmail()
+    {
+        return _userEmail ?? _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+    }
+
     public string? GetUserName()
     {
         return _userEmail ?? _httpContextAccessor.HttpContext?.User?.Identity?.Name;

@@ -18,6 +18,15 @@ namespace UNOPS.PAO.UNOPSBusiness.Mapping
             CreateMap<AiChatHistory, AiChatHistoryModel>().ReverseMap();
             CreateMap<AiChatSession, AiChatSessionModel>().ReverseMap();
             CreateMap<EntityEmbeddings, EntityEmbeddingsModel>().ReverseMap();
+
+            // OrganizationHierarchy mappings
+            CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>().ReverseMap();
+            
+            CreateMap<OrganizationHierarchy, OrganizationHierarchyTreeModel>()
+                .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
+            
+            CreateMap<OrganizationHierarchy, OrganizationHierarchyDataModel>()
+                .ForMember(dest => dest.Children, opt => opt.MapFrom(src => src.Children));
         }
     }
 }

@@ -57,6 +57,8 @@ public class APIDictionary
     public const string Partner = APIPrefix + "partner";
     public const string PartnerContacts = Partner + "/{partnerId}/contacts";
 
+    public const string OrganizationHierarchy = APIPrefix + "organization-hierarchy";
+
     public const string GeminiProcessDataSummary = APIPrefix + "process-data";
     public const string AiAssistantCreateSession = APIPrefix + "ai-assistant/create-session";
     public const string AiAssistantGetSession = APIPrefix + "ai-assistant/get-session";
@@ -74,4 +76,6 @@ public class APIDictionary
 
     public const string Notifications = "api/notifications";
     public const string NotificationRead = "api/notifications/{notificationId}/read";
+
+    public const string UserInfo = APIPrefix + "user-info";
 }

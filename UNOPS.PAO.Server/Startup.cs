@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.GoogleServices;
@@ -155,6 +156,12 @@ public class Startup
 
         services.AddScoped<IAuthorizationHandlerWrapper, UNOPSAuthorizationHandlerWrapper>();
 
+        // Register UserInfo service
+        services.AddScoped<IUserInfoService, UserInfoService>();
+
+        // Register OrganizationHierarchy manager
+        services.AddScoped<IOrganizationHierarchyManager, OrganizationHierarchyManager>();
+
         AddServices(services);
         services.AddScoped<IGoogleDriveDocumentManager, GoogleDriveDocumentManager>();
         ApplyMigrations(services);
@@ -167,7 +174,7 @@ public class Startup
     {
         var serviceTypes = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(s => s.GetLoadableTypes())
-            .Where(t => t.GetInterfaces().Any(i => i == typeof(IApplicationService)))
+            .Where(i => i.GetInterfaces().Any(i => i == typeof(IApplicationService)))
             .ToList();
 
         foreach (var type in serviceTypes)

@@ -4,6 +4,7 @@ using AutoMapper;
 using UNOPS.PAO.Business.Repositories;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Interfaces;
 
@@ -25,10 +26,10 @@ public class ValuesManager : IApplicationService
     public IEnumerable<CountryModel> GetCountries() => repository.GetCountries().Select(mapper.Map<CountryModel>);
 
     public IEnumerable<PartnerModel> GetPartners()
-         => repository.GetPartners().Select(mapper.Map<PartnerModel>);
+        => repository.GetPartners().Select(mapper.Map<PartnerModel>);
 
-    public IEnumerable<OrganizationUnitModel> GetOrganizationUnits()
-        => repository.GetOrganizationUnits().Select(mapper.Map<OrganizationUnitModel>);
+    public IEnumerable<OrganizationHierarchyModel> GetOrganizationUnits()
+        => repository.GetOrganizationsByType(OrganizationUnitType.OrgUnit).Select(mapper.Map<OrganizationHierarchyModel>);
 
     public IEnumerable<PartnerCategoryModel> GetPartnerCategories()
         => repository.GetPartnerCategories().Select(mapper.Map<PartnerCategoryModel>);

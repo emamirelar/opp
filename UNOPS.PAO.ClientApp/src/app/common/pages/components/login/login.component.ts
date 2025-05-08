@@ -10,6 +10,7 @@ import { SociaAuth } from './socialAuth/socialAuth.component';
 import { AuthService } from '../../../../essentials/services/auth.service';
 import { SignUpComponent } from './sign-up/sign-up.component';
 import { NgIf } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -40,14 +41,16 @@ export class LoginComponent {
   private dialogService = inject(DialogService);
   private ref: DynamicDialogRef | undefined;
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService
+  ) {}
 
   handleOnPasswordIconClick(event: MouseEvent) {
     this.hidePassword.set(!this.hidePassword());
     event.stopPropagation();
   }
 
-  handleOnLogin(loginForm: NgForm): void {
+  async handleOnLogin(loginForm: NgForm): Promise<void> {
     let loginFormValues = loginForm?.form.value;
     if (
       loginFormValues.userEmail?.trim() == '' ||
@@ -56,14 +59,12 @@ export class LoginComponent {
       return;
     }
 
-    this.authService
-      .logIn(loginFormValues.userEmail, loginFormValues.password)
-      .subscribe({
-        next: (res) => {
-          window.location.href = '/';
-        },
-        error: (err) => {},
-      });
+    try {
+      await firstValueFrom(this.authService.logIn(loginFormValues.userEmail, loginFormValues.password));
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Login error:', err);
+    }
   }
 
   onOpenSignUpDialog() {

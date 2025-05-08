@@ -14,18 +14,18 @@
             [(ngModel)]="searchText"
             (input)="onSearchInput(searchText)"
             (keyup.enter)="onSearch()"
-            class="w-full"
+            class="w-full h-10"
           />
           @if (searchText.length > 0) {
-            <p-inputicon class="pi pi-times" (click)="clearSearch()" />
+            <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
           }
         </p-iconfield>
       </div>
     }
     
-    <!-- Advanced Search with Chips -->
+    <!-- Advanced Search -->
     @if (config.searchConfig?.useAdvancedSearch) {
-      <div class="w-full bg-gray-50 rounded-lg p-3">
+      <div class="w-full bg-gray-50 rounded-lg p-3 shadow-sm">
         <div class="flex justify-between items-center mb-2">
           <div class="text-md font-medium text-gray-700">Advanced Search</div>
           @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
@@ -35,77 +35,16 @@
               severity="secondary"
               (onClick)="exportData()"
               [disabled]="isLoading()"
-              styleClass="p-button-text p-button-export"
+              class="text-gray-700 hover:bg-gray-100"
             ></p-button>
           }
         </div>
         
-        <!-- Search chips display -->
-        @if (searchCriteria.length > 0) {
-          <div class="flex flex-wrap gap-1 mb-2">
-            @for (criterion of searchCriteria; track criterion.field; let i = $index) {
-              @if (i > 0) {
-                <span class="flex items-center px-2 text-gray-600">{{ criterion.operator || 'AND' }}</span>
-              }
-              <p-chip>
-                <span class="font-semibold">{{ criterion.label }}:</span> {{ criterion.value }}
-                <span class="p-chip-remove-icon pi pi-times-circle" (click)="removeSearchCriterion(i)"></span>
-              </p-chip>
-            }
-            <p-button
-              icon="pi pi-times"
-              class="p-button-text p-button-rounded p-button-sm" 
-              severity="secondary"
-              (onClick)="clearSearch()"
-              [disabled]="isLoading()"
-              pTooltip="Clear all filters"
-            ></p-button>
-          </div>
-        }
-        
-        <!-- Search input and field dropdown -->
-        <div class="flex gap-2 flex-wrap md:flex-nowrap">
-          <p-dropdown 
-            [options]="searchableFields()" 
-            [(ngModel)]="selectedSearchField" 
-            optionLabel="label"
-            placeholder="Select field"
-            styleClass="h-input"
-            [style]="{'width': '200px'}"
-            (onChange)="onSearchFieldSelect($event.value)"
-          ></p-dropdown>
-          
-          @if (selectedSearchField) {
-            <div class="flex gap-2 flex-grow-1">
-              <p-dropdown
-                [options]="operators"
-                [(ngModel)]="selectedOperator"
-                placeholder="Operator"
-                styleClass="h-input"
-                [style]="{'width': '120px'}"
-              ></p-dropdown>
-              
-              <p-iconfield iconPosition="left" class="search-input-container flex-grow-1">
-                <p-inputicon class="pi pi-search" />
-                <input pInputText type="text"
-                  [placeholder]="'Enter ' + selectedSearchField.label + '...'"
-                  [(ngModel)]="advancedSearchText"
-                  (keyup.enter)="onAdvancedSearchEnter()"
-                  class="h-input"
-                />
-              </p-iconfield>
-              
-              <p-button 
-                icon="pi pi-plus"
-                label="Add Filter"
-                (onClick)="onSearch()"
-                [disabled]="!advancedSearchText || advancedSearchText.trim().length === 0"
-                pTooltip="Add search filter"
-                styleClass="h-input p-button-add-filter"
-              ></p-button>
-            </div>
-          }
-        </div>
+        <app-advanced-search
+          [searchableFields]="searchableFields"
+          (searchChange)="onAdvancedSearchChange($event)"
+          [advancedSearchEnabled]="isAdvancedSearch()">
+        </app-advanced-search>
       </div>
     }
   }
@@ -120,7 +59,7 @@
           severity="secondary"
           (onClick)="exportData()"
           [disabled]="isLoading()"
-          styleClass="p-button-text p-button-export"
+          class="text-gray-700 hover:bg-gray-100"
         ></p-button>
       </div>
     }

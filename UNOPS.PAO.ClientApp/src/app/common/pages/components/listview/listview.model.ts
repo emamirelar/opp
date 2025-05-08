@@ -1,3 +1,5 @@
+import { SearchField } from '../../../services/search-parser.service';
+
 export interface ListViewColumn {
   label: string;
   field: string;
@@ -27,11 +29,7 @@ export interface ListViewConfig {
      * Searchable fields to display in the advanced search dropdown
      * If not provided, a general search is performed
      */
-    searchableFields?: Array<{
-      field: string;
-      label: string;
-      placeholder?: string;
-    }>;
+    searchableFields?: SearchField[];
     
     /**
      * Whether to use advanced search with chips
@@ -78,7 +76,8 @@ export interface SearchCriteria {
   field: string;
   value: string;
   label: string;
-  operator?: 'AND' | 'OR';  // Optional operator field defaulting to AND if not specified
+  operator: string;  // The comparison operator (is, like, >, etc.)
+  logicalOperator?: 'AND' | 'OR';  // The logical operator connecting this criterion with the next one
 }
 
 export interface SearchParams {
