@@ -34,6 +34,14 @@
     },
     "confirmation": "Confirmation",
     "partners": "Partners",
+    "partnerships": "Partnerships",
+    "partnershipAgreements": "Partnership Agreements",
+    "leads": "Leads",
+    "initiatives": "Initiatives",
+    "admin": "Administration",
+    "aiPromptsAdmin": "AI Prompts Admin",
+    "manageOffice": "Manage my Office",
+    "translationWorkbench": "Translation Workbench",
     "partnerTitles": {
       "partnerInformation": "Partner Information",
       "addressInformation": "Address Information",
@@ -250,7 +258,7 @@
     "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
     "noRecordsFound": "No records found.",
     "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
-    "welcomeTitle": "Welcome to Partners and Opportunities",
+    "welcomeTitle": "Welcome to Opportunity+",
     "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
     "interactionDeleted": "Interaction successfully deleted",
     "errorDeletingInteraction": "Error while deleting interaction",
@@ -263,7 +271,9 @@
     "errorPreFilling": "Error transcribing data from file",
     "noDataExtracted": "No content could be transcribed from the uploaded media",
     "cameraError": "Could not access camera",
-    "selectFileToUpload": "Select a file to transcribe into interaction data"
+    "selectFileToUpload": "Select a file to transcribe into interaction data",
+    "comingSoon": "Coming Soon",
+    "stayTuned": "This feature is currently in development. Stay tuned for updates!"
   },
   "label.interaction.contact": "Contact",
   "errors": {

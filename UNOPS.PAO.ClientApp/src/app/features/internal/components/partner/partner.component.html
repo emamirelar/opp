@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-8">
-  <div class="flex flex-wrap items-center">
+  <div class="flex flex-wrap items-center gap-4">
     <div>
       <p class="text-2xl font-semibold"> {{ 'title.partners' | translate }} </p>
     </div>
@@ -23,15 +23,10 @@
     [dataUrl]="'/api/partner'"
     [columns]="columns"
     [config]="listviewConfig"
+    (rowSelect)="handleOnOpenRecordDetails($event)"
     (rowDblClick)="handleOnOpenRecordDetails($event)"
     (searchChange)="onSearchChange($event)"
   >
-    <ng-template #actionsTemplate let-partner>
-      <div class="flex gap-2">
-        <p-button [outlined]="true" icon="pi pi-file-edit" (click)="handleOnOpenRecordDetails(partner)" title="Open Record Details" rounded />
-        <p-button severity="danger" [outlined]="true" icon="pi pi-trash" (click)="handleOnRecordDelete(partner)" title="Delete Record" rounded />
-      </div>
-    </ng-template>
   </app-listview>
 </div>
 

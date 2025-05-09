@@ -3,14 +3,16 @@ import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from '../../common/layouts/components/layout/layout.component';
 import { HomeComponent } from '../../common/pages/components/home/home.component';
 import { authGuard } from '../../essentials/guards/auth.guard';
-import {InteractionListComponent} from './components/interaction/list/interaction-list.component';
+import { InteractionListComponent } from './components/interaction/list/interaction-list.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
-import {PartnerViewComponent} from './components/partner/view/partner-view.component';
-import {PartnerDataComponent} from './components/partner/data/partner-data.component';
+import { PartnerViewComponent } from './components/partner/view/partner-view.component';
+import { PartnerDataComponent } from './components/partner/data/partner-data.component';
 import { ContactListComponent } from './components/contact/list/contact-list.component';
 import { ContactViewComponent } from './components/contact/view/contact-view.component';
 import { PartnerTabsComponent } from './components/partner/tabs/partner-tabs.component';
+import { ComingSoonComponent } from '../../common/pages/components/coming-soon/coming-soon.component';
+import { adminGuard } from '../../essentials/guards/admin.guard';
 
 const internalRoutes: Routes = [
   {
@@ -24,54 +26,157 @@ const internalRoutes: Routes = [
         data: { breadcrumb: 'Home', icon: 'pi pi-home' },
       },
       {
-        path: 'contacts',
-        component: ContactListComponent,
+        path: 'partnerships',
         canActivate: [authGuard],
-        data: {Breadcrumb: 'Contacts'}
+        data: { breadcrumb: 'Partnerships' },
+        children: [
+          {
+            path: 'contacts',
+            component: ContactListComponent,
+            canActivate: [authGuard],
+            data: { breadcrumb: 'Contacts' }
+          },
+          {
+            path: 'contacts/:recordId',
+            data: { breadcrumb: 'Contact' },
+            component: ContactViewComponent,
+            canActivate: [authGuard],
+          },
+          {
+            path: 'interactions',
+            canActivate: [authGuard],
+            data: { breadcrumb: 'Interactions' },
+            children: [
+              { path: '', component: InteractionListComponent },
+              { path: ':id', component: InteractionListComponent, data: { breadcrumb: 'Edit' } }
+            ]
+          },
+          {
+            path: 'partner-tree',
+            data: { breadcrumb: 'Partner Tree' },
+            component: PartnerTreeComponent,
+            canActivate: [authGuard]
+          },
+          {
+            path: 'partners',
+            component: PartnerComponent,
+            canActivate: [authGuard],
+            data: { breadcrumb: 'Partners' }
+          },
+          {
+            path: 'partners/:recordId',
+            component: PartnerTabsComponent,
+            canActivate: [authGuard],
+            data: { breadcrumb: 'Partner' },
+            children: [
+              { 
+                path: '', 
+                component: PartnerViewComponent,
+                data: { breadcrumb: 'Details' }
+              },
+              {
+                path: 'data',
+                component: PartnerDataComponent,
+                data: { breadcrumb: 'Data' }
+              }
+            ]
+          },
+          {
+            path: 'partnership-agreements',
+            component: ComingSoonComponent,
+            canActivate: [authGuard],
+            data: { 
+              breadcrumb: 'Partnership Agreements',
+              featureName: 'Partnership Agreements'
+            }
+          }
+        ]
+      },
+      {
+        path: 'leads',
+        component: ComingSoonComponent,
+        canActivate: [authGuard],
+        data: { 
+          breadcrumb: 'Leads',
+          featureName: 'Leads'
+        }
+      },
+      {
+        path: 'initiatives',
+        component: ComingSoonComponent,
+        canActivate: [authGuard],
+        data: { 
+          breadcrumb: 'Initiatives',
+          featureName: 'Initiatives'
+        }
+      },
+      // Admin routes
+      {
+        path: 'admin',
+        canActivate: [authGuard, adminGuard],
+        data: { breadcrumb: 'Admin' },
+        children: [
+          {
+            path: 'partner-tree',
+            redirectTo: '/partnerships/partner-tree',
+            pathMatch: 'full'
+          },
+          {
+            path: 'ai-prompts',
+            component: ComingSoonComponent,
+            data: { 
+              breadcrumb: 'AI Prompts Admin',
+              featureName: 'AI Prompts Admin'
+            }
+          },
+          {
+            path: 'office-management',
+            component: ComingSoonComponent,
+            data: { 
+              breadcrumb: 'Manage my Office',
+              featureName: 'Manage my Office'
+            }
+          },
+          {
+            path: 'translations',
+            component: ComingSoonComponent,
+            data: { 
+              breadcrumb: 'Translation Workbench',
+              featureName: 'Translation Workbench'
+            }
+          }
+        ]
+      },
+      // Legacy routes for backward compatibility - redirect to new structure
+      {
+        path: 'contacts',
+        redirectTo: 'partnerships/contacts',
+        pathMatch: 'full'
       },
       {
         path: 'contact/:recordId',
-        data: { breadcrumb: 'Contact' },
-        component: ContactViewComponent,
-        canActivate: [authGuard],
+        redirectTo: 'partnerships/contacts/:recordId',
+        pathMatch: 'prefix'
       },
       {
         path: 'interactions',
-        canActivate: [authGuard],
-        children: [
-          { path: '', component: InteractionListComponent},
-          { path: ':id', component: InteractionListComponent, data: { breadcrumb: 'Edit' } }
-        ]
+        redirectTo: 'partnerships/interactions',
+        pathMatch: 'full'
       },
       {
         path: 'partner-tree',
-        data: { breadcrumb: 'Partner Tree' },
-        component: PartnerTreeComponent,
-        canActivate: [authGuard]
+        redirectTo: 'partnerships/partner-tree',
+        pathMatch: 'full'
       },
       {
         path: 'partners',
-        component: PartnerComponent,
-        canActivate: [authGuard],
-        data: { Breadcrumb: 'Partners' }
+        redirectTo: 'partnerships/partners',
+        pathMatch: 'full'
       },
       {
         path: 'partner/:recordId',
-        component: PartnerTabsComponent,
-        canActivate: [authGuard],
-        data: { breadcrumb: 'Partner' },
-        children: [
-          { 
-            path: '', 
-            component: PartnerViewComponent,
-            data: { breadcrumb: 'Details' }
-          },
-          {
-            path: 'data',
-            component: PartnerDataComponent,
-            data: { breadcrumb: 'Data' }
-          }
-        ]
+        redirectTo: 'partnerships/partners/:recordId',
+        pathMatch: 'prefix'
       }
     ],
   },

@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, computed, inject, effect, OnDestroy } from '@angular/core';
+import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, ViewChild, AfterViewInit, computed, inject, effect, OnDestroy, signal, Signal } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { TableModule } from 'primeng/table';
@@ -17,11 +17,14 @@ import { ConfirmationService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { ChipModule } from 'primeng/chip';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { ListviewAdvencedSearchComponent } from './advenced-search/listview-advenced-search.component';
+import { ListviewTableComponent } from './table/listview-table.component';
+import { ListviewCardComponent } from './card/listview-card.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-listview',
   templateUrl: './listview.component.html',
-  styleUrl: './listview.component.scss',
   imports: [
     CommonModule,
     TranslateModule,
@@ -37,15 +40,22 @@ import { OverlayPanelModule } from 'primeng/overlaypanel';
     ConfirmDialog,
     DropdownModule,
     ChipModule,
-    OverlayPanelModule
+    OverlayPanelModule,
+    ListviewAdvencedSearchComponent,
+    ListviewTableComponent,
+    ListviewCardComponent,
+    TooltipModule
   ],
   providers: [ListviewDataLoaderService, ConfirmationService]
 })
-export class ListviewComponent<T = any> implements OnDestroy {
+export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   private dataLoader = inject(ListviewDataLoaderService);
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription = Subscription.EMPTY;
   private exportService = inject(ListviewExportService);
+  private elRef = inject(ElementRef);
+  private resizeObserver: ResizeObserver | null = null;
+  private userSelectedViewMode: 'table' | 'card' | null = null;
 
   // Listen for refresh events
   @HostListener('window:refresh-listview')
@@ -86,6 +96,11 @@ export class ListviewComponent<T = any> implements OnDestroy {
       console.log('Setting advanced search enabled in data loader');
       this.dataLoader.setAdvancedSearchEnabled(true);
     }
+
+    // Set initial view mode from config
+    if (value.defaultViewMode) {
+      this.viewMode = value.defaultViewMode;
+    }
   }
   
   get config(): ListViewConfig {
@@ -101,7 +116,9 @@ export class ListviewComponent<T = any> implements OnDestroy {
     enableSearch: false,
     enableExport: false,
     scrollable: true,
-    scrollHeight: 'flex'
+    scrollHeight: 'flex',
+    autoSwitchToCardView: true,
+    autoSwitchMinWidth: 768
   };
   @Input() set searchDebounceTime(value: number) {
     this._searchDebounceTime = value;
@@ -113,6 +130,12 @@ export class ListviewComponent<T = any> implements OnDestroy {
   private _searchDebounceTime = 500; // Default debounce time in ms
   @Input() idField = 'id';
 
+  // View mode (table or card)
+  @Input() set defaultViewMode(value: 'table' | 'card') {
+    this.viewMode = value;
+  }
+  viewMode: 'table' | 'card' = 'table';
+
   // Events
   @Output() rowSelect = new EventEmitter<T>();
   @Output() rowDblClick = new EventEmitter<T>();
@@ -120,6 +143,7 @@ export class ListviewComponent<T = any> implements OnDestroy {
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
   @Output() searchChange = new EventEmitter<SearchParams>();
   @Output() exportClick = new EventEmitter<void>();
+  @Output() viewModeChange = new EventEmitter<'table' | 'card'>();
 
   // State
   selectedRecord: T | null = null;
@@ -128,16 +152,10 @@ export class ListviewComponent<T = any> implements OnDestroy {
   searchText = '';
   currentSortField: string | undefined;
   currentSortOrder: 'asc' | 'desc' | undefined;
+  isAutoSwitchedToCardView = false;
   
   // Advanced search state
   searchCriteria: SearchCriteria[] = [];
-  selectedSearchField: any = null;
-  advancedSearchText = '';
-  selectedOperator: 'AND' | 'OR' = 'AND';
-  operators = [
-    { label: 'AND', value: 'AND' },
-    { label: 'OR', value: 'OR' }
-  ];
   
   // Computed properties
   isAdvancedSearch = computed(() => {
@@ -147,7 +165,7 @@ export class ListviewComponent<T = any> implements OnDestroy {
     
     return !!this.config.searchConfig?.useAdvancedSearch;
   });
-  searchableFields = computed(() => this.config.searchConfig?.searchableFields || []);
+  
   searchPlaceholder = computed(() => 
     this.config.searchConfig?.placeholder || 
     (this.config.searchConfig?.useAdvancedSearch ? 'Search by field...' : 'Search...')
@@ -160,6 +178,9 @@ export class ListviewComponent<T = any> implements OnDestroy {
   totalRecordsCount = computed(() => this.dataLoader.totalRecordsCount());
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
 
+  // Add signal for current component width
+  private componentWidth = signal<number>(0);
+
   constructor() {
     this.rows = this.config.pageSize || 50;
     this.setupSearchDebounce();
@@ -170,9 +191,70 @@ export class ListviewComponent<T = any> implements OnDestroy {
     console.log('Is advanced search?', this.isAdvancedSearch());
   }
 
+  ngAfterViewInit(): void {
+    // Setup resize observer to detect component width changes
+    this.setupResizeObserver();
+    
+    // Check initial component width
+    this.checkComponentWidth();
+  }
+
   ngOnDestroy(): void {
     if (this.searchSubscription) {
       this.searchSubscription.unsubscribe();
+    }
+
+    // Clean up resize observer
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
+  }
+
+  /**
+   * Setup resize observer to detect width changes and auto-switch view mode
+   */
+  private setupResizeObserver(): void {
+    if (!window.ResizeObserver) {
+      console.warn('ResizeObserver API not supported in this browser');
+      return;
+    }
+
+    this.resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        this.handleResize(width);
+      }
+    });
+
+    // Start observing the component's element
+    this.resizeObserver.observe(this.elRef.nativeElement);
+  }
+
+  /**
+   * Handle resize events and auto-switch view mode if necessary
+   */
+  private handleResize(width: number): void {
+    const autoSwitchEnabled = this.config.autoSwitchToCardView !== false;
+    const minWidth = this.config.autoSwitchMinWidth || 768;
+
+    if (autoSwitchEnabled) {
+      if (width < minWidth) {
+        // Auto-switch to card view when width is below threshold
+        if (this.viewMode !== 'card') {
+          this.isAutoSwitchedToCardView = true;
+          this.setViewMode('card', false);
+        }
+      } else if (this.isAutoSwitchedToCardView && !this.userSelectedViewMode) {
+        // Switch back to table view when width increases,
+        // but only if the user didn't manually select card view
+        this.isAutoSwitchedToCardView = false;
+        this.setViewMode('table', false);
+      } else if (this.isAutoSwitchedToCardView && this.userSelectedViewMode === 'table') {
+        // If user previously selected table view, respect that when width increases
+        this.isAutoSwitchedToCardView = false;
+        this.setViewMode('table', false);
+      }
     }
   }
 
@@ -195,6 +277,21 @@ export class ListviewComponent<T = any> implements OnDestroy {
   }
 
   /**
+   * Set the view mode and emit change event
+   * @param mode View mode to set ('table' or 'card')
+   * @param userSelected Whether this change was triggered by the user
+   */
+  setViewMode(mode: 'table' | 'card', userSelected: boolean = true): void {
+    this.viewMode = mode;
+    this.viewModeChange.emit(mode);
+    
+    // Track user selection to handle auto-switching properly
+    if (userSelected) {
+      this.userSelectedViewMode = mode;
+    }
+  }
+
+  /**
    * Handle search input from the user
    */
   onSearchInput(value: string): void {
@@ -205,42 +302,14 @@ export class ListviewComponent<T = any> implements OnDestroy {
   }
   
   /**
-   * Handle field selection for advanced search
+   * Handle advanced search criterion from child component
    */
-  onSearchFieldSelect(field: any): void {
-    this.selectedSearchField = field;
-  }
-  
-  /**
-   * Add a new search criterion when user presses enter in advanced search
-   */
-  onAdvancedSearchEnter(): void {
-    if (this.selectedSearchField && this.advancedSearchText) {
-      this.addSearchCriterion();
-    }
-  }
-  
-  /**
-   * Add the current search criterion
-   */
-  addSearchCriterion(): void {
-    const criterion: SearchCriteria = {
-      field: this.selectedSearchField.field,
-      value: this.advancedSearchText.trim(),
-      label: this.selectedSearchField.label,
-      operator: this.selectedOperator
-    };
-    
+  onAdvancedSearch(criterion: SearchCriteria): void {
     // Add to local list
     this.searchCriteria = [...this.searchCriteria, criterion];
     
     // Add to data loader
     this.dataLoader.addSearchCriterion(criterion);
-    
-    // Clear the input fields
-    this.advancedSearchText = '';
-    this.selectedSearchField = null;
-    this.selectedOperator = 'AND'; // Reset operator to default
     
     // Execute search with the updated criteria
     this.executeAdvancedSearch();
@@ -249,7 +318,7 @@ export class ListviewComponent<T = any> implements OnDestroy {
   /**
    * Remove a search criterion
    */
-  removeSearchCriterion(index: number): void {
+  onRemoveSearchCriterion(index: number): void {
     if (index >= 0 && index < this.searchCriteria.length) {
       const criterion = this.searchCriteria[index];
       
@@ -295,7 +364,7 @@ export class ListviewComponent<T = any> implements OnDestroy {
    * Handle row selection
    */
   onRowSelect(event: any): void {
-    this.rowSelect.emit(event.data);
+    this.rowSelect.emit(event);
   }
 
   /**
@@ -335,11 +404,7 @@ export class ListviewComponent<T = any> implements OnDestroy {
    * Handle search event (for backward compatibility with enter key)
    */
   onSearch(): void {
-    if (this.config.searchConfig?.useAdvancedSearch) {
-      if (this.selectedSearchField && this.advancedSearchText) {
-        this.addSearchCriterion();
-      }
-    } else {
+    if (!this.config.searchConfig?.useAdvancedSearch) {
       const trimmedValue = this.searchText.trim();
       this.searchText = trimmedValue; // Update the input with trimmed value
       this.executeSearch(trimmedValue);
@@ -353,8 +418,6 @@ export class ListviewComponent<T = any> implements OnDestroy {
     if (this.config.searchConfig?.useAdvancedSearch) {
       this.searchCriteria = [];
       this.dataLoader.clearSearchCriteria();
-      this.advancedSearchText = '';
-      this.selectedSearchField = null;
     } else {
       this.searchText = '';
       this.dataLoader.setSearchText('');
@@ -424,9 +487,31 @@ export class ListviewComponent<T = any> implements OnDestroy {
   }
 
   /**
+   * Check component width and adjust view mode if necessary
+   */
+  private checkComponentWidth(): void {
+    setTimeout(() => {
+      const width = this.elRef.nativeElement.offsetWidth;
+      this.componentWidth.set(width);
+      this.handleResize(width);
+    }, 0);
+  }
+
+  /**
    * Load data from the server
    */
   private loadData(): void {
     this.dataLoader.loadData();
+    
+    // Check component width after data loaded (since content may affect size)
+    setTimeout(() => this.checkComponentWidth(), 100);
+  }
+
+  /**
+   * Used to manually check width (e.g. when container is resized)
+   */
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.checkComponentWidth();
   }
 }

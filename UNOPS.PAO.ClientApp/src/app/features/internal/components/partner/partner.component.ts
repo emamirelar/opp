@@ -18,7 +18,6 @@ import { ImportDialogService } from '../../../../common/reusables/components/imp
 @Component({
   selector: 'app-partner',
   templateUrl: './partner.component.html',
-  styleUrl: './partner.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
@@ -55,12 +54,6 @@ export class PartnerComponent implements OnDestroy {
   };
 
   columns: ListViewColumn[] = [
-    {
-      field: 'id',
-      label: 'label.partner.id',
-      sortable: false,
-      type: 'text'
-    },
     {
       field: 'name',
       label: 'label.partner.name',

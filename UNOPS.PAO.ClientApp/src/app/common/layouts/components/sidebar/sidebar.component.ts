@@ -31,24 +31,69 @@ export class SidebarComponent implements OnInit, OnDestroy {
       routerLink: ['/'],
     },
     {
-      label: 'title.contacts',
-      icon: 'contacts',
-      routerLink: ['/contacts']
+      label: 'title.partnerships',
+      icon: 'handshake',
+      items: [
+        {
+          label: 'title.partners',
+          icon: 'corporate_fare',
+          routerLink: ['/partnerships/partners']
+        },
+        {
+          label: 'title.contacts',
+          icon: 'contacts',
+          routerLink: ['/partnerships/contacts']
+        },
+        {
+          label: 'title.interactions',
+          icon: 'link',
+          routerLink: ['/partnerships/interactions']
+        },
+        {
+          label: 'title.partnershipAgreements',
+          icon: 'description',
+          routerLink: ['/partnerships/partnership-agreements']
+        }
+      ]
     },
     {
-      label: 'title.interactions',
-      icon: 'link',
-      routerLink: ['/interactions']
+      label: 'title.leads',
+      icon: 'trending_up',
+      routerLink: ['/leads']
     },
     {
-      label: 'title.partnerTree',
-      icon: 'account_tree',
-      routerLink: ['/partner-tree']
-    },
+      label: 'title.initiatives',
+      icon: 'lightbulb',
+      routerLink: ['/initiatives']
+    }
+  ];
+
+  adminMenuItems: MenuItem[] = [
     {
-      label: 'title.partners',
-      icon: 'corporate_fare',
-      routerLink: ['/partners']
+      label: 'title.admin',
+      icon: 'admin_panel_settings',
+      items: [
+        {
+          label: 'title.partnerTree',
+          icon: 'account_tree',
+          routerLink: ['/admin/partner-tree']
+        },
+        {
+          label: 'title.aiPromptsAdmin',
+          icon: 'psychology',
+          routerLink: ['/admin/ai-prompts']
+        },
+        {
+          label: 'title.manageOffice',
+          icon: 'business',
+          routerLink: ['/admin/office-management']
+        },
+        {
+          label: 'title.translationWorkbench',
+          icon: 'translate',
+          routerLink: ['/admin/translations']
+        }
+      ]
     }
   ];
 
@@ -60,11 +105,21 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   ];
 
+  get combinedMenuItems(): MenuItem[] {
+    return [...this.menuItems, ...this.adminMenuItems];
+  }
+
   isInternalUser = signal<boolean>(false);
+  isAdmin = signal<boolean>(false);
 
   ngOnInit() {
     this.authService.isInternal().subscribe((isInternal) => {
       this.isInternalUser.set(isInternal);
+    });
+
+    this.authService.isAdmin().subscribe((isAdmin: boolean) => {
+      this.isAdmin.set(isAdmin);
+      this.cdr.detectChanges();
     });
 
     this.langChangeSubscription = this.languageService.translationService.onLangChange.subscribe(() => {
