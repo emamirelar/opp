@@ -50,7 +50,6 @@ export class ContactListComponent implements OnInit {
 
   // Define contact columns for the listview
   contactColumns: ListViewColumn[] = [
-    { field: 'id', label: 'label.contact.id', type: 'text', sortable: false, width: '10%' },
     { field: 'salutation', label: 'label.contact.salutation', type: 'text', sortable: true, width: '10%' },
     { field: 'firstName', label: 'label.contact.firstName', type: 'text', sortable: true, width: '15%' },
     { field: 'lastName', label: 'label.contact.lastName', type: 'text', sortable: true, width: '15%' },
@@ -158,7 +157,7 @@ export class ContactListComponent implements OnInit {
     });
   }
 
-  onRowDoubleClicked(contact: Contact) {
+  onRowClick(contact: Contact) {
     this.handleOnOpenRecordDetails(contact);
   }
 

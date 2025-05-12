@@ -132,7 +132,6 @@ export class InteractionListComponent {
 
     dialogRef.onClose.subscribe(result => {
       if (result) {
-        // Handle results: saved or deleted
         this.listviewComponent?.refreshData();
       }
       

@@ -154,7 +154,8 @@
         "deleteInteractionConfirmation": "¿Está seguro de que desea eliminar esta interacción?",
         "interactionDeleted": "Interacción eliminada con éxito",
         "errorDeletingInteraction": "Error al eliminar la interacción",
-        "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace"
+        "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace",
+        "comingSoon": "Próximamente"
     },
     "errors": {
         "failedToLoad": "Error al cargar"

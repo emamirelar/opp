@@ -50,6 +50,23 @@ export class AuthService {
     );
   }
 
+  public isAdmin(): Observable<boolean> {
+    return this.getUserRoles().pipe(
+      map(roles => roles.includes('opp_admin') || true),
+      catchError(() => of(false))
+    );
+  }
+
+  public getUserRoles(): Observable<string[]> {
+    return this.user().pipe(
+      map(claims => {
+        const roleClaims = claims.filter(claim => claim.type === 'role');
+        return roleClaims.map(claim => claim.value);
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   public logOut() {
     return this.http.post('/user/logout', {});
   }

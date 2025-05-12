@@ -1,7 +1,11 @@
 <div class="layout-sidebar">
     @if (isInternalUser()) {
-        <app-menu [model]="menuItems"></app-menu>
+        @if (isAdmin()) {
+            <app-menu [model]="combinedMenuItems"></app-menu>
+        } @else {
+            <app-menu [model]="menuItems"></app-menu>
+        }
     } @else {
         <app-menu [model]="externalMenuItems"></app-menu>
     }
-  </div>
+</div>

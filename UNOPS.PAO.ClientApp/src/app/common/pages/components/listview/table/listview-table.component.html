@@ -1,0 +1,94 @@
+<p-table
+  [value]="data"
+  [columns]="columns"
+  [scrollable]="config.scrollable"
+  [selectionMode]="config.selectionMode"
+  [loading]="loading"
+  [first]="first"
+  [lazy]="true"
+  [paginator]="config.enablePagination && data.length > 0"
+  [rows]="rows"
+  [totalRecords]="totalRecords"
+  [rowsPerPageOptions]="config.pageSizeOptions"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+  (onPage)="onPageChange($event)"
+  (onSort)="onSortChange($event)"
+  styleClass="p-datatable-sm"
+>
+  <!-- Column header template -->
+  <ng-template pTemplate="header" let-columns>
+    <tr>
+      @for (column of columns; track column) {
+        @if (column.sortable && config.enableSorting) {
+          <th [pSortableColumn]="column.field" [ngStyle]="{'width': column.width || 'auto'}">
+            {{ column.label | translate }}
+            <p-sortIcon [field]="column.field"></p-sortIcon>
+          </th>
+        } @else {
+          <th [ngStyle]="{'width': column.width || 'auto'}">{{ column.label | translate }}</th>
+        }
+      }
+      <!-- Add actions column header if actions template exists -->
+      @if (hasActionsTemplate()) {
+        <th class="w-12">{{ 'label.actions' | translate }}</th>
+      }
+    </tr>
+  </ng-template>
+
+  <!-- Rows template -->
+  <ng-template pTemplate="body" let-rowData let-columns="columns">
+    <tr [pSelectableRow]="rowData" (dblclick)="onRowDblClick(rowData)" (click)="onRowSelect(rowData)">
+      @for (column of columns; track column) {
+        <td class="cursor-pointer">
+          @switch (column.type) {
+            @case ('date') {
+              {{ rowData[column.field] | date: (column.format || 'medium') }}
+            }
+            @case ('number') {
+              {{ rowData[column.field] | number: (column.format || '1.2-2') }}
+            }
+            @case ('currency') {
+              {{ rowData[column.field] | currency: (column.format || 'USD') }}
+            }
+            @case ('translate') {
+              {{ rowData[column.field] | translate }}
+            }
+            @default {
+              {{ rowData[column.field] }}
+            }
+          }
+        </td>
+      }
+      <!-- Add actions column if actions template exists -->
+      @if (hasActionsTemplate()) {
+        <td>
+          <ng-container
+            [ngTemplateOutlet]="actionsTemplate!"
+            [ngTemplateOutletContext]="{ $implicit: rowData }"
+          ></ng-container>
+        </td>
+      }
+    </tr>
+  </ng-template>
+
+  <!-- Empty state template -->
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td [attr.colspan]="hasActionsTemplate() ? columns.length + 1 : columns.length" class="text-center p-4">
+        @if (loading) {
+          <div class="flex justify-center items-center p-4">
+            <i class="pi pi-spin pi-spinner text-2xl"></i>
+          </div>
+        } @else if (error) {
+          <div class="text-red-500">
+            <i class="pi pi-exclamation-circle mr-2"></i>
+            {{ 'error.dataLoad' | translate }}
+          </div>
+        } @else {
+          <div>{{ 'message.noRecordsFound' | translate }}</div>
+        }
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

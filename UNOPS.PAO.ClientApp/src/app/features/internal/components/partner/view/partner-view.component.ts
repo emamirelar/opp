@@ -71,7 +71,6 @@ import {PartnerTabsComponent} from '../tabs/partner-tabs.component';
     PartnerTabsComponent
   ],
   templateUrl: './partner-view.component.html',
-  styleUrl: './partner-view.component.scss',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [DialogService],
@@ -101,17 +100,7 @@ export class PartnerViewComponent implements OnInit {
   private langChangeSubscription: Subscription = new Subscription();
   onRecordCreationSuccess = output();
 
-  //allSalutationsData = this.cachedDataService.allSalutations;
-  //allPronounsData = this.cachedDataService.allPronouns;
   showValidationFailedError = signal<boolean>(false);
-  //maxDate = new Date();
-  /*allPartnerStatusData = this.cachedDataService.allPartnerStatus;
-  allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
-  allYesNoData = this.cachedDataService.allYesNo;
-  allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
-  allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
-  allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
-  allPartnerScopesData = this.cachedDataService.allPartnerScope;*/
   recordId: string = '';
   recordData = signal<any>({});
   showCommentDialog = false;
@@ -153,15 +142,6 @@ export class PartnerViewComponent implements OnInit {
       },
     });
   }
-
-  /*_loadPermissions() {
-    //fetch permissions for record details
-    this.partnerService.getRecordDetailPermissionsById(this.recordId).subscribe({
-      next: (data: any) => {
-        this.recordPermissions.set(data);
-      },
-    });
-  }*/
 
   _loadRecordDetails() {
     //fetch record details
@@ -214,59 +194,6 @@ export class PartnerViewComponent implements OnInit {
       }
     });
   }
-
-    /*handleOnCancelClick(event: MouseEvent) {
-      this.router.navigate(['partners']);
-    }
-
-    handleOnSaveClick(event: MouseEvent) {
-      this._validate()
-
-      this.partnerService.updatePartnerById(this._getRequestPayload()).subscribe({
-        next: (data: any) => {
-          this._loadRecordDetails();
-          this.feedbackDialogService.showSuccessToast({ detail: 'Changes saved successfully!' });
-        }
-      });
-    }*/
-
-    /*_validate(){
-      let result = true;
-
-      if( this.formGroup.invalid )
-      {
-        this.showValidationFailedError.set( false );
-
-        if( this.formGroup.get("firstName")?.invalid )
-        {
-          this.formGroup.get("firstName")?.markAsDirty();
-        }
-        result = false;
-      }
-
-      return result;
-    }
-
-    _getRequestPayload() {
-      let valueObj = this.formGroup.value,
-      requestJsonObj: any = {};
-
-      for (let key in valueObj) {
-        if (valueObj.hasOwnProperty(key)) {
-          let indexValue = (valueObj as any)[key];
-
-          switch (key) {
-            default:
-              requestJsonObj[key] = indexValue;
-              break;
-          }
-        }
-      }
-
-      requestJsonObj['id'] = this.recordId;
-
-      return requestJsonObj;
-    }*/
 
   _handleOnViewContacts() {
     this.showCommentDialog = true;

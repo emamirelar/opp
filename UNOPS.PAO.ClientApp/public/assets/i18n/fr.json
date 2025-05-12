@@ -28,7 +28,11 @@
             "contactInformation": "Informations Personnelles",
             "addresses": "Adresses",
             "systemInformation": "Informations Système"
-        }
+        },
+        "admin": "Administration",
+        "aiPromptsAdmin": "Admin des prompts IA",
+        "manageOffice": "Gérer mon bureau",
+        "translationWorkbench": "Atelier de traduction"
     },
     "button": {
         "back": "Retour",
@@ -165,7 +169,8 @@
         "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction",
         "dropUrlToAddLink": "Déposez une URL ou un fichier pour ajouter un lien",
         "failedToLoadImage": "Échec du chargement de l'image",
-        "failedToUploadImage": "Échec de l'envoi de l'image"
+        "failedToUploadImage": "Échec de l'envoi de l'image",
+        "comingSoon": "Bientôt Disponible"
     },
     "errors": {
         "failedToLoad": "Échec du chargement"
