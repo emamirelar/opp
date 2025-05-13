@@ -9,6 +9,7 @@ import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { ToastModule } from 'primeng/toast';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { TooltipModule } from 'primeng/tooltip';
 import { NotificationService, Notification } from '../../../services/notification.service';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
@@ -34,6 +35,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
     OverlayPanelModule,
     ToastModule,
     ProgressBarModule,
+    TooltipModule,
     ConfirmDialogModule
   ],
   templateUrl: './topbar.component.html',
@@ -46,6 +48,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   items!: MenuItem[];
   notifications: Notification[] = [];
   unreadCount: number = 0;
+  isDevelopment: boolean = false;
   private notificationSubscription?: Subscription;
   private userId: string = '';
   private previousNotifications: Notification[] = [];
@@ -61,7 +64,22 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private cdr: ChangeDetectorRef,
     private router: Router
-  ) { }
+  ) {
+    // Check if we're in development mode
+    this.isDevelopment = this.checkIfDevelopment();
+  }
+
+  private checkIfDevelopment(): boolean {
+    // Method 1: Check for localhost in URL
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1';
+                        
+    // Method 2: Check for dev cookie
+    const hasDevCookie = document.cookie.split(';')
+      .some(c => c.trim().startsWith('dev-user-email='));
+      
+    return isLocalhost || hasDevCookie;
+  }
 
   ngOnInit() {
     this.authService.user().subscribe({
@@ -344,5 +362,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
         });
       }
     });
+  }
+
+  navigateToDevLogin() {
+    window.open('https://localhost:7123/dev-login', '_blank');
+  }
+  
+  navigateToDebug() {
+    window.open('https://localhost:7123/api/dev/debug', '_blank');
   }
 }
