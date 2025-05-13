@@ -73,7 +73,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error getting user claims:', error);
+        // Error getting user claims
       }
     });
   }
@@ -99,7 +99,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         error: (error: any) => {
-          console.error('Error loading notifications:', error);
+          // Error loading notifications
         }
       });
   }
@@ -211,7 +211,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (error: any) => {
-        console.error('Error loading notifications:', error);
+        // Error loading notifications
       }
     });
   }
@@ -249,13 +249,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
             notification.category === 'bulk_contact_action' ? 'Import Contact' : 'Import'
           );
         } catch (error) {
-          console.error('Error processing notification data:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Processing Error',
-            detail: 'An error occurred while processing notification data',
-            life: 5000
-          });
+          // Error processing notification data
         }
       } else {
         // Use component resolver for other types of notifications
@@ -277,7 +271,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error marking notification as read:', error);
+        // Error marking notification as read
       }
     });
   }
@@ -340,18 +334,12 @@ export class TopbarComponent implements OnInit, OnDestroy {
                 });
               },
               error: (err: any) => {
-                console.error('Error updating notification:', err);
+                // Error updating notification
               }
             });
           },
           error: (err: any) => {
-            console.error('Error cancelling file analysis:', err);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to cancel file analysis: ' + (err.message || 'Unknown error'),
-              life: 5000
-            });
+            // Error cancelling file analysis
           }
         });
       }

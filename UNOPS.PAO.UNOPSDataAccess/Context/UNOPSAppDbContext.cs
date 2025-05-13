@@ -7,6 +7,7 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSDomain.Entities.Common;
 using Microsoft.Extensions.Hosting;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Authorization;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Context;
 
@@ -22,6 +23,9 @@ public class UNOPSAppDbContext : AppDbContext
         optionsBuilder.ConfigureWarnings(warnings => warnings
             .Ignore(RelationalEventId.PendingModelChangesWarning));
     }
+
+    // Entity permission for RBAC
+    public DbSet<EntityPermission> EntityPermissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

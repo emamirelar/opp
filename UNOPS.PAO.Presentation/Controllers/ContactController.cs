@@ -17,7 +17,7 @@ using System.Diagnostics;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class ContactController : ControllerBase
 {
     private IContactManager manager;

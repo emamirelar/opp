@@ -13,7 +13,7 @@ namespace UNOPS.PAO.Presentation.Controllers
 
     [Route("/")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "IAP")]
     public class InteractionController : ControllerBase
     {
         private IInteractionManager manager;

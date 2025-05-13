@@ -9,7 +9,7 @@ namespace UNOPS.PAO.Presentation.Controllers;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class UserDataController : ControllerBase
 {
     private IUserDataManager manager;

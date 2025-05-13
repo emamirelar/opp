@@ -1,4 +1,3 @@
-
 import { Injectable, Injector, Type, inject, signal,  } from '@angular/core';
 //import { ContactNewComponent  } from '../components/contact/new/contact-new.component';
 import { PartnerNewComponent } from '../components/partner/new/partner-new.component';
@@ -42,8 +41,6 @@ export class ComponentResolverService {
 
   resolveComponent(record: any, componentName: string, isNew: boolean = true): void {
     var componentData = this.componentMap[componentName];
-
-    debugger;
 
     if (componentData) {
       this.dialogService.open(componentData.component, {
