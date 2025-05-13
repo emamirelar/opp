@@ -50,10 +50,10 @@ export class ContactListComponent implements OnInit {
 
   // Define contact columns for the listview
   contactColumns: ListViewColumn[] = [
-    { field: 'salutation', label: 'label.contact.salutation', type: 'text', sortable: true, width: '10%' },
+    { field: 'profilePictureUrl', label: '', type: 'avatar', sortable: false, width: '5%' },
     { field: 'firstName', label: 'label.contact.firstName', type: 'text', sortable: true, width: '15%' },
     { field: 'lastName', label: 'label.contact.lastName', type: 'text', sortable: true, width: '15%' },
-    { field: 'email', label: 'label.contact.email', type: 'text', sortable: true, width: '25%' },
+    { field: 'email', label: 'label.contact.email', type: 'email', sortable: true, width: '25%' },
     { field: 'mobile', label: 'label.contact.mobile', type: 'text', sortable: true, width: '15%' }
   ];
 

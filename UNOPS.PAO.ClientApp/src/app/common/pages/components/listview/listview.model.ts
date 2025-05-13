@@ -1,11 +1,30 @@
 export interface ListViewColumn {
   label: string;
   field: string;
-  type: string;
+  /**
+   * Type of column data. This affects how the data is formatted and displayed.
+   * Supported types:
+   * - 'text': Display as plain text (default)
+   * - 'date': Format as date using the DatePipe
+   * - 'number': Format as number using the DecimalPipe
+   * - 'currency': Format as currency using the CurrencyPipe
+   * - 'translate': Use the translation pipe to translate the value
+   * - 'avatar': Display an image URL as an avatar using p-avatar component
+   * - 'email': Display as clickable email with mailto link
+   */
+  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon';
   sortable: boolean;
   width?: string;
-  format?: string;
+  /**
+   * Format string for the column:
+   * - For 'date': Date format string (e.g., 'MM/dd/yyyy')
+   * - For 'number': Decimal format (e.g., '1.2-2')
+   * - For 'currency': Currency code (e.g., 'USD')
+   * - For 'email': Not used
+   */
+  format?: 'date' | 'number' | 'currency' | 'email';
   template?: string;
+  conditionFn?: (rowData: any) => boolean;
 }
 
 export interface ListViewConfig {
