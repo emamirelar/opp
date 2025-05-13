@@ -13,12 +13,15 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Helpers;
-using Z.EntityFramework.Plus;
+using UNOPS.PAO.Business.Repositories;
 
 public class InteractionManager : IInteractionManager
 {
     private readonly IMapper mapper;
     private readonly DataRepository<Interaction> interactionRepository;
+    //private readonly DataRepository<InteractionContact> interactionContactRepository;
+    //private readonly DataRepository<InteractionPartner> interactionPartnerRepository;
+    //private readonly DataRepository<InteractionUser> interactionUserRepository;
     private readonly AppDbContext context;
 
     public InteractionManager(IMapper mapper, AppDbContext context)
@@ -30,103 +33,111 @@ public class InteractionManager : IInteractionManager
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
     {
+        await using var transaction = await context.Database.BeginTransactionAsync();
         var entity = mapper.Map<Interaction>(model);
-        entity.Name = model.ContactId + " - " + model.Date;
+        try
+        {
+            entity.Name = model.ContactId + " - " + model.Date;
 
-        if (model.EmailAddresses != null) entity.EmailAddresses.AddRange(model.EmailAddresses);
-        if (model.PhoneNumbers != null) entity.PhoneNumbers.AddRange(model.PhoneNumbers);
-
-        await interactionRepository.AddAsync(entity);
-        await context.SaveChangesAsync();
+            await interactionRepository.AddAsync(entity);
+            await context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         await ProcessJunctionTables(entity, model);
-
         return mapper.Map<InteractionModel>(entity);
     }
 
     private async Task ProcessJunctionTables(Interaction interaction, InteractionRequest model)
     {
-        // Process InteractionContacts
-        if (model.ContactIds?.Any() == true)
+
+        await using var jtTransaction = await context.Database.BeginTransactionAsync();
+        try
         {
-            var existingContacts = await context.InteractionContacts
-               .Where(ic => ic.InteractionId == interaction.Id)
-               .ToListAsync();
-
-            // Remove contacts not in the new list
-            foreach (var contact in existingContacts.Where(ec => !model.ContactIds.Contains(ec.ContactId)))
+            // Process InteractionContacts
+            if (model.ContactIds?.Any() == true)
             {
-                context.InteractionContacts.Remove(contact);
-            }
+                var existingContacts = await context.InteractionContacts
+                   .Where(ic => ic.InteractionId == interaction.Id)
+                   .ToListAsync();
 
-            // Add new contacts
-            foreach (var contactId in model.ContactIds.Except(existingContacts.Select(ec => ec.ContactId)))
-            {
-                await context.InteractionContacts.AddAsync(new InteractionContact
+                // Remove contacts not in the new list
+                foreach (var contact in existingContacts.Where(ec => !model.ContactIds.Contains(ec.ContactId)))
                 {
-                    InteractionId = interaction.Id,
-                    ContactId = contactId
-                });
-            }
-        }
+                    context.InteractionContacts.Remove(contact);
+                }
 
-        // Process InteractionPartners
-        if (model.PartnerIds?.Any() == true)
+                // Add new contacts
+                foreach (var contactId in model.ContactIds.Except(existingContacts.Select(ec => ec.ContactId)))
+                {
+                    await context.InteractionContacts.AddAsync(new InteractionContact
+                    {
+                        InteractionId = interaction.Id,
+                        ContactId = contactId
+                    });
+                }
+            }
+
+            // Process InteractionPartners
+            if (model.PartnerIds?.Any() == true)
+            {
+                var existingPartners = await context.InteractionPartners
+                    .Where(ip => ip.InteractionId == interaction.Id)
+                    .ToListAsync();
+
+                foreach (var partner in existingPartners.Where(ep => !model.PartnerIds.Contains(ep.PartnerId)))
+                {
+                    context.InteractionPartners.Remove(partner);
+                }
+
+                foreach (var partnerId in model.PartnerIds.Except(existingPartners.Select(ep => ep.PartnerId)))
+                {
+                    await context.InteractionPartners.AddAsync(new InteractionPartner
+                    {
+                        InteractionId = interaction.Id,
+                        PartnerId = partnerId
+                    });
+                }
+            }
+
+            // Process InteractionUsers
+            if (model.UserIds?.Any() == true)
+            {
+                var existingUsers = await context.InteractionUsers
+                    .Where(iu => iu.InteractionId == interaction.Id)
+                    .ToListAsync();
+
+                foreach (var user in existingUsers.Where(eu => !model.UserIds.Contains(eu.UserId)))
+                {
+                    context.InteractionUsers.Remove(user);
+                }
+
+                foreach (var userId in model.UserIds.Except(existingUsers.Select(eu => eu.UserId)))
+                {
+                    await context.InteractionUsers.AddAsync(new InteractionUser
+                    {
+                        InteractionId = interaction.Id,
+                        UserId = userId
+                    });
+                }
+            }
+            await context.SaveChangesAsync();
+            await jtTransaction.CommitAsync();
+        }
+        catch
         {
-            var existingPartners = await context.InteractionPartners
-                .Where(ip => ip.InteractionId == interaction.Id)
-                .ToListAsync();
-
-            foreach (var partner in existingPartners.Where(ep => !model.PartnerIds.Contains(ep.PartnerId)))
-            {
-                context.InteractionPartners.Remove(partner);
-            }
-
-            foreach (var partnerId in model.PartnerIds.Except(existingPartners.Select(ep => ep.PartnerId)))
-            {
-                await context.InteractionPartners.AddAsync(new InteractionPartner
-                {
-                    InteractionId = interaction.Id,
-                    PartnerId = partnerId
-                });
-            }
+            await jtTransaction.RollbackAsync();
+            throw;
         }
-
-        // Process InteractionUsers
-        if (model.UserIds?.Any() == true)
-        {
-            var existingUsers = await context.InteractionUsers
-                .Where(iu => iu.InteractionId == interaction.Id)
-                .ToListAsync();
-
-            foreach (var user in existingUsers.Where(eu => !model.UserIds.Contains(eu.UserId)))
-            {
-                context.InteractionUsers.Remove(user);
-            }
-
-            foreach (var userId in model.UserIds.Except(existingUsers.Select(eu => eu.UserId)))
-            {
-                await context.InteractionUsers.AddAsync(new InteractionUser
-                {
-                    InteractionId = interaction.Id,
-                    UserId = userId
-                });
-            }
-        }
-
-        await context.SaveChangesAsync();
     }
 
     public PaginationResponse<InteractionModel> GetInteractions(int userId, PaginationRequest request)
     {
-        /*var query = interactionRepository
-            .GetAll()
-            .AsQueryable();
-
-        return query.Paginate(
-            x => mapper.Map<InteractionModel>(x),
-            request
-        );*/
         var query = interactionRepository
             .GetAll()
             .Include(i => i.Contact)
@@ -199,14 +210,6 @@ public class InteractionManager : IInteractionManager
 
     public async Task<InteractionModel?> GetInteraction(int userId, int id)
     {
-        /*var item = await interactionRepository.GetByIdAsync(id);
-
-        if (item == null)
-        {
-            return default;
-        }
-
-        return mapper.Map<InteractionModel>(item);*/
         var item = await interactionRepository.GetByIdAsync(id,
             includes: new[]
             {
@@ -266,18 +269,6 @@ public class InteractionManager : IInteractionManager
 
     public async Task<InteractionModel?> UpdateInteractionAsync(int userId, UpdateInteractionRequest model)
     {
-        /*var entity = await interactionRepository.GetByIdAsync(model.Id);
-
-        if (entity == null)
-        {
-            return default;
-        }
-
-        mapper.Map<UpdateInteractionRequest, Interaction>(model, entity);
-
-        await interactionRepository.UpdateAsync(entity);
-
-        return mapper.Map<InteractionModel>(entity);*/
         var entity = await interactionRepository.GetByIdAsync(model.Id,
             includes: new[]
             {

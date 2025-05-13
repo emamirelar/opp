@@ -69,4 +69,16 @@ public class ValuesController : ControllerBase
     {
         return Ok(manager.GetPartnerCategories());
     }
+
+    [HttpGet(APIDictionary.Contacts)]
+    public ActionResult GetContacts()
+    {
+        return Ok(manager.GetContacts());
+    }
+
+    [HttpGet(APIDictionary.Users)]
+    public ActionResult GetUsers()
+    {
+        return Ok(manager.GetUsers());
+    }
 }

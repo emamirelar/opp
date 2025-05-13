@@ -25,8 +25,8 @@ public class ValuesManager : IApplicationService
     public IEnumerable<EligibleEntityModel> GetEligibleEntities() => repository.GetEligibleEntities().Select(mapper.Map<EligibleEntityModel>);
     public IEnumerable<CountryModel> GetCountries() => repository.GetCountries().Select(mapper.Map<CountryModel>);
 
-    public IEnumerable<PartnerModel> GetPartners()
-        => repository.GetPartners().Select(mapper.Map<PartnerModel>);
+    public IEnumerable<PartnerValueModel> GetPartners()
+         => repository.GetPartners().Select(mapper.Map<PartnerValueModel>);
 
     public IEnumerable<OrganizationHierarchyModel> GetOrganizationUnits()
         => repository.GetOrganizationsByType(OrganizationUnitType.OrgUnit).Select(mapper.Map<OrganizationHierarchyModel>);
@@ -34,4 +34,9 @@ public class ValuesManager : IApplicationService
     public IEnumerable<PartnerCategoryModel> GetPartnerCategories()
         => repository.GetPartnerCategories().Select(mapper.Map<PartnerCategoryModel>);
 
+    public IEnumerable<ContactValueModel> GetContacts()
+         => repository.GetContacts().Select(mapper.Map<ContactValueModel>);
+
+    public IEnumerable<UserValueModel> GetUsers()
+         => repository.GetUsers().Select(mapper.Map<UserValueModel>);
 }

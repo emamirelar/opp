@@ -2,6 +2,7 @@
 
 using System;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Context;
@@ -23,8 +24,10 @@ public class ManagerWrapper : IManagerWrapper
 
     private IGeminiManager geminiManager;
     private ILinkManager linkManager;
+    private IUserDataManager userDataManager;
     public ManagerWrapper(IMapper mapper, AppDbContext context,
-                          UserManager<PAOIdentityUser> userManager)
+                          UserManager<PAOIdentityUser> userManager, 
+                          IHttpContextAccessor httpContextAccessor)
     {
         this.UserManager = userManager;
         workflowManager = new WorkflowManager(context);
@@ -41,6 +44,7 @@ public class ManagerWrapper : IManagerWrapper
         geminiManager = new GeminiManager(mapper, context);
 
         linkManager = new LinkManager(mapper, context);
+        userDataManager = new UserDataManager(mapper, context, httpContextAccessor);
     }
 
     public virtual ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -60,4 +64,5 @@ public class ManagerWrapper : IManagerWrapper
     public virtual IDocumentTypeManager DocumentTypeManager => documentTypeManager;
 
     public virtual ILinkManager LinkManager => linkManager;
+    public virtual IUserDataManager UserDataManager => userDataManager;
 }

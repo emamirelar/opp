@@ -1,0 +1,94 @@
+<div class="flex flex-col gap-4">
+  <!-- Loading skeleton -->
+  @if (loading) {
+    <div class="grid">
+      @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track i) {
+        <div [class]="columnClass()">
+          <p-card styleClass="h-full">
+            <div class="mb-2">
+              <p-skeleton width="85%" height="1.5rem"></p-skeleton>
+            </div>
+            <div class="mb-2">
+              <p-skeleton width="65%" height="1rem"></p-skeleton>
+            </div>
+            <div class="mb-2">
+              <p-skeleton width="75%" height="1rem"></p-skeleton>
+            </div>
+          </p-card>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error message -->
+  @if (error && !loading) {
+    <div class="p-4 bg-surface-50 rounded-lg shadow-sm mb-4">
+      <div class="flex items-center justify-center p-5">
+        <i class="pi pi-exclamation-triangle text-3xl text-yellow-500 mr-3"></i>
+        <span class="text-xl">Error loading data. Please try again later.</span>
+      </div>
+    </div>
+  }
+
+  <!-- No data message -->
+  @if (!loading && !error && (!data || data.length === 0)) {
+    <div class="p-4 bg-surface-50 rounded-lg shadow-sm mb-4">
+      <div class="flex items-center justify-center p-5">
+        <i class="pi pi-info-circle text-3xl text-primary mr-3"></i>
+        <span class="text-xl">No data available</span>
+      </div>
+    </div>
+  }
+
+  <!-- Card grid -->
+  @if (!loading && !error && data && data.length > 0) {
+      <div class="grid">
+        @for (item of data; track getFieldValue(item, 'id')) {
+          <div [class]="columnClass() + ' flex flex-col gap-4'">
+            <div
+              class="bg-surface-50 p-4 rounded-lg cursor-pointer" 
+              (click)="onCardSelect(item)"
+              (dblclick)="onCardDblClick(item)">
+              
+              <!-- Card title -->
+              @if (titleColumn()) {
+                <div class="font-semibold text-lg mb-2 ">
+                    {{ formatValue(item, titleColumn()) }}
+                  </div>
+              }
+              
+              <!-- Card content -->
+              <div>
+                @for (column of contentColumns(); track column.field) {
+                  <div class="mb-2">
+                    <span class="font-medium text-color-secondary">{{ column.label | translate }}: </span>
+                    <span>{{ formatValue(item, column) }}</span>
+                  </div>
+                }
+              </div>
+              
+              <!-- Actions template -->
+              @if (hasActionsTemplate()) {
+                <ng-container 
+                    [ngTemplateOutlet]="actionsTemplate || null"
+                    [ngTemplateOutletContext]="{ $implicit: item }">
+                  </ng-container>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    
+    <!-- Pagination -->
+    @if (config.enablePagination) {
+      <div class="flex justify-center w-full">
+        <p-paginator
+          [rows]="rows"
+          [totalRecords]="totalRecords"
+          [first]="first"
+          (onPageChange)="onPageChange($event)"
+        ></p-paginator>
+      </div>
+    }
+  }
+</div>

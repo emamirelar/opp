@@ -1,0 +1,9 @@
+<div class="flex flex-col items-center justify-center min-h-[calc(100vh-400px)] p-4">
+  <div class="text-center">
+    <h1 class="text-3xl font-bold mb-2">{{ 'message.comingSoon' | translate }}</h1>
+    <p class="text-xl mb-4" *ngIf="featureName">{{ featureName }}</p>
+    <div class="bg-surface-100 p-4 rounded-md text-surface-800 mt-4">
+      <p>{{ 'message.stayTuned' | translate }}</p>
+    </div>
+  </div>
+</div>

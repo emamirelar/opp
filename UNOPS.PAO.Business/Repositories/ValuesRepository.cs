@@ -101,6 +101,12 @@ public class ValuesRepository
     public IEnumerable<PartnerCategory> GetPartnerCategories()
         => context.PartnerCategories.Where(x => x.Status == EntityStatus.Active && !x.IsDeleted);
 
+    public IEnumerable<Contact> GetContacts()
+        => context.Contacts.Where(x => !x.IsDeleted);
+
+    public IEnumerable<GrantUser> GetUsers()
+        => context.GrantUsers;
+
     // Get organization hierarchy optimized for PrimeNG organization chart
     public async Task<IEnumerable<OrganizationHierarchyPrimeModel>> GetOrganizationHierarchyPrime()
     {
@@ -160,5 +166,5 @@ public class ValuesRepository
         }
 
         return result;
-    }
+    }   
 }

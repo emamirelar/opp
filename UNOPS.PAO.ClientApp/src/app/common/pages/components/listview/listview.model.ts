@@ -24,6 +24,49 @@ export interface ListViewConfig {
   defaultSortOrder?: 'asc' | 'desc';
   scrollable?: boolean;
   scrollHeight?: string;
+  /**
+   * Default view mode between 'table' and 'card'
+   * @default 'table'
+   */
+  defaultViewMode?: 'table' | 'card';
+  /**
+   * Whether to show the view mode toggle buttons
+   * @default true
+   */
+  showViewModeToggle?: boolean;
+  /**
+   * Whether to automatically switch to card view when component width is small
+   * @default true
+   */
+  autoSwitchToCardView?: boolean;
+  /**
+   * Minimum width (in pixels) below which to automatically switch to card view
+   * @default 768
+   */
+  autoSwitchMinWidth?: number;
+  /**
+   * Configuration for card view display
+   */
+  cardConfig?: {
+    /**
+     * Field to use as the card title (defaults to first column)
+     */
+    titleField?: string;
+    /**
+     * Fields to display in card content (defaults to first 4 columns after title)
+     */
+    contentFields?: string[];
+    /**
+     * Number of cards per row on different screen sizes
+     */
+    cardsPerRow?: {
+      xs?: number; // Extra small screens
+      sm?: number; // Small screens
+      md?: number; // Medium screens
+      lg?: number; // Large screens
+      xl?: number; // Extra large screens
+    };
+  };
   searchConfig?: {
     /**
      * Searchable fields to display in the advanced search dropdown
