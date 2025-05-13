@@ -17,8 +17,17 @@ public class OrganizationHierarchyController : ControllerBase
     }
 
     [HttpGet(APIDictionary.OrganizationHierarchy)]
-    public async Task<ActionResult<IEnumerable<OrganizationHierarchyTreeModel>>> GetOrganizationHierarchy()
+    public async Task<ActionResult<IEnumerable<OrganizationHierarchyPrimeModel>>> GetOrganizationHierarchy()
     {
+        // Use the new optimized format that works directly with PrimeNG
+        var hierarchy = await _organizationHierarchyManager.GetOrganizationHierarchyPrime();
+        return Ok(hierarchy);
+    }
+    
+    [HttpGet(APIDictionary.OrganizationHierarchy + "/legacy")]
+    public async Task<ActionResult<IEnumerable<OrganizationHierarchyTreeModel>>> GetOrganizationHierarchyLegacy()
+    {
+        // Keep the old format available at a different endpoint
         var hierarchy = await _organizationHierarchyManager.GetOrganizationHierarchy();
         return Ok(hierarchy);
     }

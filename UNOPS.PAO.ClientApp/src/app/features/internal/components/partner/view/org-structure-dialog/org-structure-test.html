@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Chart Test</title>
+    <style>
+        .org-node {
+            border: 2px solid #333;
+            padding: 10px;
+            margin: 5px;
+            background-color: white;
+            border-radius: 5px;
+            display: block;
+            min-width: 200px;
+            min-height: 80px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .node-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: black;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .node-code {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .node-type {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .debug-info {
+            margin-top: 5px;
+            font-size: 10px;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 5px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Organization Chart Test</h1>
+    <p>This is a simple test file to verify that the organization node styling works correctly.</p>
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
+        <!-- Test Node 1 -->
+        <div class="org-node" style="border-color: blue;">
+            <span class="node-name">OPS - United Nations Office for Project Services</span>
+            <span class="node-code">Code: OPS</span>
+            <span class="node-type">Type: Organization</span>
+            <span class="debug-info">ID: 2 | Has Description: Yes</span>
+        </div>
+        
+        <!-- Test Node 2 -->
+        <div class="org-node" style="border-color: green;">
+            <span class="node-name">Business Group 1</span>
+            <span class="node-code">Code: BG1</span>
+            <span class="node-type">Type: Business Group</span>
+            <span class="debug-info">ID: 3 | Has Description: Yes</span>
+        </div>
+        
+        <!-- Test Node 3 -->
+        <div class="org-node" style="border-color: orange;">
+            <span class="node-name">Country Office XYZ</span>
+            <span class="node-code">Code: CO-XYZ</span>
+            <span class="node-type">Type: Country Office</span>
+            <span class="debug-info">ID: 4 | Has Description: No</span>
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px;">
+        <p>If you can see all the text in the boxes above, basic styling is working correctly.</p>
+        <p>Try to identify what might be different between this test file and the actual component rendering.</p>
+    </div>
+</body>
+</html> 

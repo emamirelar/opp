@@ -100,4 +100,65 @@ public class ValuesRepository
 
     public IEnumerable<PartnerCategory> GetPartnerCategories()
         => context.PartnerCategories.Where(x => x.Status == EntityStatus.Active && !x.IsDeleted);
+
+    // Get organization hierarchy optimized for PrimeNG organization chart
+    public async Task<IEnumerable<OrganizationHierarchyPrimeModel>> GetOrganizationHierarchyPrime()
+    {
+        var allUnits = await context.OrganizationHierarchies
+            .Where(x => !x.IsDeleted && x.Status == EntityStatus.Active)
+            .OrderBy(x => x.Name)
+            .ToListAsync();
+
+        var rootUnits = allUnits.Where(x => x.ParentId == null).ToList();
+        var result = new List<OrganizationHierarchyPrimeModel>();
+
+        foreach (var root in rootUnits)
+        {
+            var primeModel = new OrganizationHierarchyPrimeModel
+            {
+                Expanded = true,
+                Type = "person",
+                Data = new OrganizationHierarchyPrimeDataModel
+                {
+                    Id = root.Id,
+                    Code = root.Code ?? "N/A",
+                    Name = root.Name ?? "Unnamed",
+                    Type = root.Type,
+                    Description = root.Description ?? "No description available",
+                    ParentId = root.ParentId
+                },
+                Children = BuildPrimeChildren(root.Id, allUnits)
+            };
+            result.Add(primeModel);
+        }
+
+        return result;
+    }
+    
+    private List<OrganizationHierarchyPrimeModel> BuildPrimeChildren(int parentId, List<OrganizationHierarchy> allUnits)
+    {
+        var children = allUnits.Where(x => x.ParentId == parentId).ToList();
+        var result = new List<OrganizationHierarchyPrimeModel>();
+
+        foreach (var child in children)
+        {
+            result.Add(new OrganizationHierarchyPrimeModel
+            {
+                Expanded = false, // Children start collapsed
+                Type = "person",
+                Data = new OrganizationHierarchyPrimeDataModel
+                {
+                    Id = child.Id,
+                    Code = child.Code ?? "N/A",
+                    Name = child.Name ?? "Unnamed",
+                    Type = child.Type,
+                    Description = child.Description ?? "No description available",
+                    ParentId = child.ParentId
+                },
+                Children = BuildPrimeChildren(child.Id, allUnits)
+            });
+        }
+
+        return result;
+    }
 }

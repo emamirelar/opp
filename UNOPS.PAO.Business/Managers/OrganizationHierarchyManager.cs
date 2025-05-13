@@ -23,6 +23,11 @@ public class OrganizationHierarchyManager : IOrganizationHierarchyManager
         return await _valuesRepository.GetOrganizationHierarchy();
     }
 
+    public async Task<IEnumerable<OrganizationHierarchyPrimeModel>> GetOrganizationHierarchyPrime()
+    {
+        return await _valuesRepository.GetOrganizationHierarchyPrime();
+    }
+
     public async Task<OrganizationHierarchyModel> GetOrganizationHierarchyById(int id)
     {
         var entity = await _valuesRepository.GetOrganizationHierarchyById(id);

@@ -43,7 +43,6 @@ import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.c
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
 import {PartnerTabsComponent} from '../tabs/partner-tabs.component';
-import { OrgStructureDialogComponent } from './org-structure-dialog/org-structure-dialog.component';
 
 @Component({
   selector: 'app-partner-view',
@@ -72,7 +71,6 @@ import { OrgStructureDialogComponent } from './org-structure-dialog/org-structur
     PartnerViewContactsComponent,
     PartnerTabsComponent,
     TooltipModule,
-    OrgStructureDialogComponent
   ],
   templateUrl: './partner-view.component.html',
   styleUrl: './partner-view.component.scss',
@@ -421,11 +419,27 @@ export class PartnerViewComponent implements OnInit {
     return this.partnerService.getUploadLogoUrl(this.recordId);
   }
 
-  selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
+  /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
+    console.log('Opening org structure dialog for type:', type);
+    
     const ref = this.dialogService.open(OrgStructureDialogComponent, {
       header: 'Select Organizational Structure',
-      width: '90vw',
-      style: { maxWidth: '1200px' },
+      width: '95vw',
+      height: '95vh',
+      style: { 
+        maxWidth: '1400px', 
+        maxHeight: '900px',
+        backgroundColor: 'white',
+        padding: '0' 
+      },
+      contentStyle: {
+        padding: '0',
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      },
+      baseZIndex: 10000,
+      dismissableMask: true,
+      closeOnEscape: true,
       closable: true,
       data: {
         type: type,
@@ -450,5 +464,5 @@ export class PartnerViewComponent implements OnInit {
         }
       }
     });
-  }
+  }*/
 }
