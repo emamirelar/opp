@@ -10,7 +10,7 @@ using UNOPS.PAO.Presentation.Security;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class ProfileController : ControllerBase
 {
     private ProfileManager profileManager;

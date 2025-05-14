@@ -9,6 +9,7 @@ import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { ToastModule } from 'primeng/toast';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { TooltipModule } from 'primeng/tooltip';
 import { NotificationService, Notification } from '../../../services/notification.service';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
@@ -34,6 +35,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
     OverlayPanelModule,
     ToastModule,
     ProgressBarModule,
+    TooltipModule,
     ConfirmDialogModule
   ],
   templateUrl: './topbar.component.html',
@@ -46,6 +48,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   items!: MenuItem[];
   notifications: Notification[] = [];
   unreadCount: number = 0;
+  isDevelopment: boolean = false;
   private notificationSubscription?: Subscription;
   private userId: string = '';
   private previousNotifications: Notification[] = [];
@@ -61,7 +64,22 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private cdr: ChangeDetectorRef,
     private router: Router
-  ) { }
+  ) {
+    // Check if we're in development mode
+    this.isDevelopment = this.checkIfDevelopment();
+  }
+
+  private checkIfDevelopment(): boolean {
+    // Method 1: Check for localhost in URL
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1';
+                        
+    // Method 2: Check for dev cookie
+    const hasDevCookie = document.cookie.split(';')
+      .some(c => c.trim().startsWith('dev-user-email='));
+      
+    return isLocalhost || hasDevCookie;
+  }
 
   ngOnInit() {
     this.authService.user().subscribe({
@@ -73,7 +91,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         }
       },
       error: (error) => {
-        console.error('Error getting user claims:', error);
+        // Error getting user claims
       }
     });
   }
@@ -99,7 +117,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         error: (error: any) => {
-          console.error('Error loading notifications:', error);
+          // Error loading notifications
         }
       });
   }
@@ -211,7 +229,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (error: any) => {
-        console.error('Error loading notifications:', error);
+        // Error loading notifications
       }
     });
   }
@@ -249,13 +267,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
             notification.category === 'bulk_contact_action' ? 'Import Contact' : 'Import'
           );
         } catch (error) {
-          console.error('Error processing notification data:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Processing Error',
-            detail: 'An error occurred while processing notification data',
-            life: 5000
-          });
+          // Error processing notification data
         }
       } else {
         // Use component resolver for other types of notifications
@@ -277,7 +289,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error marking notification as read:', error);
+        // Error marking notification as read
       }
     });
   }
@@ -340,21 +352,23 @@ export class TopbarComponent implements OnInit, OnDestroy {
                 });
               },
               error: (err: any) => {
-                console.error('Error updating notification:', err);
+                // Error updating notification
               }
             });
           },
           error: (err: any) => {
-            console.error('Error cancelling file analysis:', err);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to cancel file analysis: ' + (err.message || 'Unknown error'),
-              life: 5000
-            });
+            // Error cancelling file analysis
           }
         });
       }
     });
+  }
+
+  navigateToDevLogin() {
+    window.open('https://localhost:7123/dev-login', '_blank');
+  }
+  
+  navigateToDebug() {
+    window.open('https://localhost:7123/api/dev/debug', '_blank');
   }
 }

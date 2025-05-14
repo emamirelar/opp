@@ -50,7 +50,7 @@ public class WorkflowController : ControllerBase
         }
     }
 
-    [Authorize]
+    [Authorize(AuthenticationSchemes = "IAP")]
     [HttpPost(APIDictionary.Workflow)]
     public async Task<WorkflowStateModel?> DoWorkflowAction([FromBody] WorkflowActionModel model)
     {

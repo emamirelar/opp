@@ -7,7 +7,7 @@ using UNOPS.PAO.UNOPSPresentation.Helpers;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 
 public class CommonEntitiesController : ControllerBase
 {

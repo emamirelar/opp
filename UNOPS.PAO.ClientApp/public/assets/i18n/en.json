@@ -95,7 +95,8 @@
     "takePhoto": "Take Photo",
     "capture": "Capture",
     "remove": "Remove",
-    "updateImportData": "Update Import Data"
+    "updateImportData": "Update Import Data",
+    "backToHome": "Back to Home"
   },
   "label": {
     "actions": "Actions",
@@ -273,7 +274,9 @@
     "cameraError": "Could not access camera",
     "selectFileToUpload": "Select a file to transcribe into interaction data",
     "comingSoon": "Coming Soon",
-    "stayTuned": "This feature is currently in development. Stay tuned for updates!"
+    "stayTuned": "This feature is currently in development. Stay tuned for updates!",
+    "accessDenied": "Access Denied",
+    "noAccessPermissions": "You do not have permission to access this page"
   },
   "label.interaction.contact": "Contact",
   "errors": {

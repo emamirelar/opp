@@ -20,7 +20,7 @@ using Newtonsoft.Json;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class GeminiController : ControllerBase
 {
     private readonly IGeminiManager manager;

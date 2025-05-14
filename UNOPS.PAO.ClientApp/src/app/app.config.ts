@@ -10,6 +10,7 @@ import {
   withComponentInputBinding,
   withHashLocation,
   withInMemoryScrolling,
+  Router,
 } from '@angular/router';
 
 import {
@@ -33,6 +34,8 @@ import { authInterceptor } from './essentials/interceptors/auth.interceptor';
 import { serverErrorInterceptor } from './essentials/interceptors/server-error.interceptor';
 import { AuthService } from './essentials/services/auth.service';
 import { ConfigurationService } from './essentials/services/configuration.service';
+import { HasPermissionDirective } from './essentials/directives/has-permission.directive';
+import { PermissionService } from './essentials/services/permission.service';
 
 /******* PrimeNG specifc imports *********/
 import { providePrimeNG } from 'primeng/config';
@@ -40,6 +43,7 @@ import { providePrimeNG } from 'primeng/config';
 //  import Aura from '@primeng/themes/aura';
 import UnopsPreset from './common/themes/unops.preset';
 import { routes } from './app.routes';
+import { firstValueFrom } from 'rxjs';
 /********************************/
 const httpLoaderFactory: (http: HttpClient) => TranslateHttpLoader = (
   http: HttpClient,
@@ -59,6 +63,24 @@ const socialAuthConfigFactory = (configService: ConfigurationService) => {
   };
 };
 
+/**
+ * Role-Based Access Control (RBAC) Implementation
+ * 
+ * The application uses a centralized permission configuration in permissions.json 
+ * that is shared between frontend and backend.
+ * 
+ * The roles in the system are:
+ * - Administrator: Can access all sections and features (admin@unops.org)
+ * - Internal: UNOPS staff with access to Partnerships and Initiatives (anushas@unops.org)
+ * - Partner: External partners with access to Partnerships (devuser@partner.com)
+ * - External: External users with access only to Leads (devuser@example.com)
+ * 
+ * Access control is implemented at both levels:
+ * 1. Both frontend and backend check the same permission configuration
+ * 2. Backend enforces permissions at the API level
+ * 3. Frontend adapts UI based on permissions
+ */
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(
@@ -67,8 +89,19 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
       withComponentInputBinding()
     ),
+    // Config loading initializer only - removed IAP check to prevent repeated calls
     provideAppInitializer(async () => {
       await inject(ConfigurationService).loadConfig();
+      console.log('[DEBUG-INIT] Config loaded');
+      
+      // Also load permissions during initialization
+      try {
+        const permissionService = inject(PermissionService);
+        await firstValueFrom(permissionService.loadConfig());
+        console.log('[DEBUG-INIT] Permissions loaded');
+      } catch (error) {
+        console.error('[DEBUG-INIT] Error loading permissions', error);
+      }
     }),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient(
@@ -92,9 +125,11 @@ export const appConfig: ApplicationConfig = {
     ]),
     provideAnimationsAsync(),
     AuthService,
+    PermissionService,
     DialogService,
     MessageService,
     ConfirmationService,
+    HasPermissionDirective,
     providePrimeNG({
       theme: {
         preset: UnopsPreset,

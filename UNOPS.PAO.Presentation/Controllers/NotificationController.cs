@@ -9,7 +9,7 @@ using UNOPS.PAO.Presentation.Helpers;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class NotificationController : ControllerBase
 {
     private readonly NotificationManager notificationManager;
