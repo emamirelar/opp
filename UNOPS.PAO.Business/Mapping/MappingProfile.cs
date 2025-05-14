@@ -22,8 +22,14 @@ public class MappingProfile : Profile
         CreateMap<InteractionPartnerModel, InteractionPartner>();
         CreateMap<InteractionUser, InteractionUserModel>();
         CreateMap<InteractionUserModel, InteractionUser>();
-        CreateMap<OrganizationUnit, OrganizationUnitModel>();
-        CreateMap<OrganizationUnitModel, OrganizationUnit>();
+
+        // OrganizationHierarchy mappings
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>().ReverseMap();
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyTreeModel>()
+            .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyDataModel>()
+            .ForMember(dest => dest.Children, opt => opt.MapFrom(src => src.Children));
+
         CreateMap<Notification, NotificationModel>()
             .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Message))
             .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))

@@ -25,9 +25,11 @@ using UNOPS.PAO.Utilities.Helpers;
 
 public class UNOPSPartnerManager : IPartnerManager
 {
-    private IMapper mapper;
+    private readonly IMapper _mapper;
+    private readonly UNOPSAppDbContext _context;
+    private readonly IConfiguration _configuration;
     private BaseRepository<UNOPSPartner> PartnerRepository;
-    private BaseRepository<UNOPSOrganizationUnit> OrganizationUnitRepository;
+    private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
     private BaseRepository<UNOPSPartnerCategory> PartnerCategoryRepository;
 
     private CommonEntityRepository commonRepository;
@@ -80,7 +82,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
     private UNOPSPartner MapModelToEntity(PartnerRequest model, UNOPSPartner entity)
     {
-        mapper.Map(model, entity);
+        _mapper.Map(model, entity);
         // Update Eligible Entities
         /*if (entity.EligibleEntities != null)
         {
@@ -114,9 +116,11 @@ public class UNOPSPartnerManager : IPartnerManager
 
     public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
-        this.mapper = mapper;
+        _mapper = mapper;
+        _context = context;
+        _configuration = configuration;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
-        OrganizationUnitRepository = new BaseRepository<UNOPSOrganizationUnit>(context, configuration);
+        OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
         PartnerCategoryRepository = new BaseRepository<UNOPSPartnerCategory>(context, configuration);
         
         GoogleCloudStorageService = new GoogleCloudStorageService(configuration);
@@ -130,7 +134,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.AddAsync(entity);
 
-        return mapper.Map<PartnerModel>(entity);
+        return _mapper.Map<PartnerModel>(entity);
     }
 
     public PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request)
@@ -141,7 +145,7 @@ public class UNOPSPartnerManager : IPartnerManager
             .AsQueryable();
 
         return query.Paginate(
-            x => MapEntityToModel(x, mapper),
+            x => MapEntityToModel(x, _mapper),
             request
         );
     }
@@ -154,7 +158,7 @@ public class UNOPSPartnerManager : IPartnerManager
         
         // Apply pagination
         return filteredQuery.Paginate(
-            x => mapper.Map<PartnerModel>(x),
+            x => _mapper.Map<PartnerModel>(x),
             pagination
         );
     }
@@ -177,14 +181,14 @@ public class UNOPSPartnerManager : IPartnerManager
         }
         if (item.PartnerOfficeId.HasValue)
         {
-            var partnerOffice = await OrganizationUnitRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
             if (partnerOffice != null)
             {
                 item.PartnerOffice = partnerOffice;
             }
         }
 
-        return MapEntityToModel(item, mapper);
+        return MapEntityToModel(item, _mapper);
     }
 
     /*public async Task<string?> GetPartnerStage(int id)
@@ -203,7 +207,7 @@ public class UNOPSPartnerManager : IPartnerManager
     {
         return PartnerRepository
             .GetAll()
-            .Select(x => MapEntityToExternalModel(x, mapper));
+            .Select(x => MapEntityToExternalModel(x, _mapper));
     }
 
     public async Task<ExternalPartnerModel?> GetPostedPartner(int id)
@@ -215,7 +219,7 @@ public class UNOPSPartnerManager : IPartnerManager
             throw new BusinessException($"Partner {id} does not exist.");
         }
 
-        return MapEntityToExternalModel(item, mapper);
+        return MapEntityToExternalModel(item, _mapper);
     }*/
 
     public async Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model)
@@ -231,7 +235,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.UpdateAsync(entity);
 
-        return MapEntityToModel(entity, mapper);
+        return MapEntityToModel(entity, _mapper);
     }
 
     /*public async Task<PartnerModel?> UpdateStage(int userId, int id, string newStage)
@@ -252,7 +256,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.UpdateAsync(entity);
 
-        return mapper.Map<PartnerModel>(entity);
+        return _mapper.Map<PartnerModel>(entity);
     }*/
 
     public async Task DeletePartnerAsync(int userId, int id)
@@ -275,9 +279,18 @@ public class UNOPSPartnerManager : IPartnerManager
             return default;
         }
 
-        var result = mapper.Map<PartnerModel>(item);
+        var result = _mapper.Map<PartnerModel>(item);
 
         //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
+
+        if (item.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                result.PartnerOffice = _mapper.Map<OrganizationHierarchyModel>(partnerOffice);
+            }
+        }
 
         return result;
     }

@@ -47,6 +47,13 @@ public class UNOPSAppDbContext : AppDbContext
 
         modelBuilder
             .Entity<UNOPSLink>();
+
+        modelBuilder
+            .Entity<OrganizationHierarchy>()
+            .HasOne(e => e.Parent)
+            .WithMany(e => e.Children)
+            .HasForeignKey(e => e.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     public DbSet<Project> Projects { get; set; }
@@ -64,7 +71,7 @@ public class UNOPSAppDbContext : AppDbContext
 
     public new DbSet<AiChatHistory> AiChatHistory { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
-    public DbSet<UNOPSOrganizationUnit> OrganizationUnits { get; set; }
+    public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
     public DbSet<UNOPSPartnerCategory> PartnerCategories { get; set; }
 
     public new DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
