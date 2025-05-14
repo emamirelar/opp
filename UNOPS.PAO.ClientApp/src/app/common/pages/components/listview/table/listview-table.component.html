@@ -38,7 +38,7 @@
 
   <!-- Rows template -->
   <ng-template pTemplate="body" let-rowData let-columns="columns">
-    <tr [pSelectableRow]="rowData" (dblclick)="onRowDblClick(rowData)" (click)="onRowSelect(rowData)">
+    <tr [pSelectableRow]="rowData" (dblclick)="onRowDblClick(rowData)" >
       @for (column of columns; track column) {
         <td class="cursor-pointer">
           @switch (column.type) {
@@ -53,6 +53,15 @@
             }
             @case ('translate') {
               {{ rowData[column.field] | translate }}
+            }
+            @case ('avatar') {
+              <p-avatar [image]="getAvatarUrl(rowData, column.field)" shape="circle" [style]="{'margin': '0 auto', 'display': 'block'}" imageAlt="Avatar"></p-avatar>
+            }
+            @case ('email') {
+              <a href="mailto:{{ rowData[column.field] }}" (click)="$event.stopPropagation()" class="text-primary hover:underline">{{ rowData[column.field] }}</a>
+            }
+            @case ('conditionalIcon') {
+              <i [ngClass]="(column.conditionFn ? column.conditionFn(rowData) : rowData[column.field]) ? 'pi pi-verified text-green-500' : 'pi pi-times-circle text-red-300'"></i>
             }
             @default {
               {{ rowData[column.field] }}
