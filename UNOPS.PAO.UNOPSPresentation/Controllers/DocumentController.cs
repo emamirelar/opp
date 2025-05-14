@@ -16,7 +16,7 @@ using UNOPS.PAO.UNOPSPresentation.Helpers;
 namespace UNOPS.PAO.UNOPSPresentation.Controllers;
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class DocumentController : ControllerBase
 {
     private UNOPSDocumentManager manager;

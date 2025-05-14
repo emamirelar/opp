@@ -10,7 +10,7 @@ using UNOPS.PAO.Presentation.Helpers;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class ProfileController : ControllerBase
 {
     private UserResolverService<int> userResolverService;

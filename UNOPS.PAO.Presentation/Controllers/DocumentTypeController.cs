@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
@@ -10,7 +9,7 @@ using UNOPS.PAO.Presentation.Helpers;
 namespace UNOPS.PAO.Presentation.Controllers;
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class DocumentTypeController : ControllerBase
 {
     private IDocumentTypeManager manager;

@@ -13,7 +13,7 @@ using System.Collections.Generic;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class PartnerTreeController : ControllerBase
 {
     private readonly IPartnerTreeManager manager;

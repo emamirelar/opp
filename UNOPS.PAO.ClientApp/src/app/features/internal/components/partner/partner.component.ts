@@ -104,22 +104,30 @@ export class PartnerComponent implements OnDestroy, OnInit {
 
   columns: ListViewColumn[] = [
     {
+      field: 'logoUrl',
+      label: '',
+      sortable: false,
+      type: 'avatar'
+    },
+    {
       field: 'name',
       label: 'label.partner.name',
-      sortable: true,
+      sortable: false,
       type: 'text'
     },
     {
       field: 'status',
       label: 'label.partner.status',
       sortable: false,
-      type: 'text'
+      type: 'conditionalIcon',
+      conditionFn: (rowData: any) => rowData.status === 'Active'
     },
     {
       field: 'newEngagement',
       label: 'label.partner.newEngagement',
       sortable: false,
-      type: 'text'
+      type: 'conditionalIcon',
+      conditionFn: (rowData: any) => rowData.newEngagement === 'Allowed'
     }
   ];
 

@@ -5,7 +5,7 @@ import { map, tap } from 'rxjs/operators';
 
 /**
  * Guard to check if the current user has admin permissions
- * Redirects to home if not an admin user
+ * Redirects to access-denied if not an admin user
  */
 export const adminGuard = () => {
   const authService = inject(AuthService);
@@ -14,7 +14,7 @@ export const adminGuard = () => {
   return authService.isAdmin().pipe(
     tap(isAdmin => {
       if (!isAdmin) {
-        router.navigate(['/']);
+        router.navigate(['/access-denied']);
       }
     })
   );

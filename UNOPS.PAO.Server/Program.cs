@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using UNOPS.PAO.UNOPSDataAccess.Seed;
 
 namespace UNOPS.PAO.Server;
 
@@ -76,6 +77,10 @@ public class Program
     public static void Main(string[] args)
     {
         var app = CreateHostBuilder(args).Build();
+        
+        // Seed entity permissions on startup
+        app.SeedEntityPermissionsOnStartupAsync().GetAwaiter().GetResult();
+        
         app.Run();
     }
 }

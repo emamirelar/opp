@@ -16,7 +16,27 @@
 		<div class="flex items-center">
       <!--				<app-theme-toggler></app-theme-toggler>-->
 
+      <!-- Dev Login link - only visible in development mode -->
+      <button *ngIf="isDevelopment" 
+			type="button"
+			aria-label="Dev Login"
+			class="layout-topbar-action p-button-text mr-1"
+            (click)="navigateToDevLogin()"
+            pTooltip="Dev Login" tooltipPosition="bottom">
+			<i class="pi pi-user-edit"></i>
+            <span class="dev-login-badge">DEV</span>
+      </button>
 
+      <!-- Debug link - only visible in development mode -->
+      <button *ngIf="isDevelopment" 
+			type="button"
+			aria-label="Debug"
+			class="layout-topbar-action p-button-text mr-1"
+            (click)="navigateToDebug()"
+            pTooltip="Debug Info" tooltipPosition="bottom">
+			<i class="pi pi-cog"></i>
+            <span class="debug-badge">DEBUG</span>
+      </button>
 
       <app-language-selector></app-language-selector>
 	  <button (click)="layoutService.onAIAssistantToggle()"

@@ -1421,6 +1421,37 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("WorkflowLogs", "public");
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Authorization.EntityPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FilterExpression")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PropertyName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RoleName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EntityPermissions", "public");
+                });
+
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Budget", b =>
                 {
                     b.Property<int>("Id")

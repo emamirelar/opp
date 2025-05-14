@@ -63,6 +63,19 @@ public class PAOAuthorizationService : IAuthorizationService
 
     Task<AuthorizationResult> IAuthorizationService.AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName)
     {
-        throw new NotImplementedException();
+        if (user == null)
+        {
+            return Task.FromResult(AuthorizationResult.Failed());
+        }
+
+        var policy = serviceProvider.GetRequiredService<IAuthorizationPolicyProvider>()
+            .GetPolicyAsync(policyName).GetAwaiter().GetResult();
+
+        if (policy == null)
+        {
+            return Task.FromResult(AuthorizationResult.Failed());
+        }
+
+        return AuthorizeAsync(user, resource, policy.Requirements);
     }
 }

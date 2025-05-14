@@ -566,21 +566,20 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     console.log('Initialized searchable fields from columns:', this.searchableFields);
   }
 
-  private getFieldType(column: ListViewColumn): 'string' | 'number' | 'date' | 'boolean' {
+  private getFieldType(column: ListViewColumn): 'string' | 'number' | 'date' {
     switch (column.type) {
       case 'number':
       case 'currency':
         return 'number';
       case 'date':
         return 'date';
-      case 'boolean':
-        return 'boolean';
+      // Handle boolean data as string since 'boolean' is not a valid column type
       default:
         return 'string';
     }
   }
 
-  private getOperatorsForType(type: 'string' | 'number' | 'date' | 'boolean'): string[] {
+  private getOperatorsForType(type: 'string' | 'number' | 'date'): string[] {
     switch (type) {
       case 'string':
         return ['is', 'is not', 'like', 'not like'];
@@ -588,9 +587,8 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
         return ['is', 'is not', '>', '<', '>=', '<='];
       case 'date':
         return ['is', 'is not', '>', '<', '>=', '<='];
-      case 'boolean':
-        return ['is', 'is not'];
       default:
+        // Boolean values and any other types use basic operators
         return ['is', 'is not'];
     }
   }

@@ -31,4 +31,5 @@ export interface Partner {
   deletedDate?: Date | null;
   _updated?: boolean;
   _importRowId?: string;
+  logoUrl?: string | null;
 }

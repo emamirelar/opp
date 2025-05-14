@@ -16,7 +16,7 @@ using System;
 
 [Route("/")]
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class PartnerController : ControllerBase
 {
     private IPartnerManager manager;
