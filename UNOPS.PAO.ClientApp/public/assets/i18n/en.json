@@ -203,6 +203,9 @@
     "no": "No",
     "postedDate": "Posted Date",
     "sdgs": "SDGs",
+    "search": {
+      "results": "Search Results for"
+    },
     "selectEligibleEntities": "Select Eligible Entities",
     "selectFromDrive": "Select from Drive",
     "selectionMethodology": "Selection Methodology",
@@ -319,5 +322,14 @@
   "validation": {
     "required": "This field is required",
     "maxLength": "Maximum length is {{max}} characters"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "recentSearches": "Recent Searches",
+    "results": "Results",
+    "showAllResults": "Show All Results",
+    "seeAllResults": "See all results",
+    "contact": "Contact",
+    "partner": "Partner"
   }
 }

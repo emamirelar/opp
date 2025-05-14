@@ -15,6 +15,7 @@
         "who": "Qui",
         "why": "Pourquoi",
         "contacts": "Contacts",
+        "partners": "Partners",
         "interactions": "Interactions",
         "newInteraction": "Nouvelle Interaction",
         "editInteraction": "Éditer une Interaction",
@@ -96,6 +97,9 @@
         "selectEligibleEntities": "Sélectionner des Entités Éligibles",
         "selectFromDrive": "Sélectionner depuis Drive",
         "selectionMethodology": "Méthodologie de Sélection",
+        "search": {
+            "results": "Résultats de recherche pour"
+        },
         "stage": "Étape",
         "status": "Statut",
         "yes": "Oui",
@@ -213,5 +217,16 @@
     "validation": {
         "required": "Ce champ est obligatoire",
         "maxLength": "La longueur maximale est de {{max}} caractères"
+    },
+    "search": {
+        "placeholder": "Rechercher...",
+        "recentSearches": "Recherches récentes",
+        "results": "Résultats",
+        "showAllResults": "Afficher tous les résultats",
+        "seeAllResults": "Voir tous les résultats",
+        "contact": "Contact",
+        "partner": "Partenaire",
+        "typeContact": "Contact",
+        "typePartner": "Partenaire"
     }
 }

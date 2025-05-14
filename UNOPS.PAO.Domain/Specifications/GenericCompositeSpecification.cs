@@ -88,10 +88,22 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                         Expression comparisonExpr;
                         if (propertyAccess.Type == typeof(string))
                         {
-                            var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
                             var nullCheck = Expression.NotEqual(propertyAccess, Expression.Constant(null));
-                            var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
-                            comparisonExpr = Expression.AndAlso(nullCheck, containsCall);
+                            
+                            // Use EF.Functions.Like instead of Contains
+                            var efType = typeof(EF);
+                            var functionsProperty = efType.GetProperty("Functions");
+                            var functionsExpression = Expression.Property(null, functionsProperty);
+                            var likeMethod = functionsProperty.PropertyType.GetMethod("Like", new[] { typeof(string), typeof(string) });
+                            var pattern = $"%{value}%";
+                            var likeCall = Expression.Call(
+                                functionsExpression, 
+                                likeMethod, 
+                                propertyAccess, 
+                                Expression.Constant(pattern)
+                            );
+                            
+                            comparisonExpr = Expression.AndAlso(nullCheck, likeCall);
                         }
                         else
                         {
@@ -206,8 +218,8 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                 return null;
             }
 
-            var lowerSearchText = searchText.ToLower().Trim();
-            Debug.WriteLine($"Creating search text expression for: {lowerSearchText}");
+            var searchTermValue = searchText.Trim();
+            Debug.WriteLine($"Creating search text expression for: {searchTermValue}");
 
             var searchableProperties = GetSearchableProperties(typeof(TEntity));
             Debug.WriteLine($"Found {searchableProperties.Count} searchable properties: {string.Join(", ", searchableProperties)}");
@@ -235,14 +247,23 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                     var nullChecks = BuildNullChecks(parameter, propertyPath);
                     Debug.WriteLine($"Built {nullChecks.Count} null checks for {propertyPath}");
 
-                    // Create string comparison
-                    var toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-                    var toLowerCall = Expression.Call(propertyAccess, toLowerMethod);
-                    var containsCall = CreateStringContainsExpression(toLowerCall, lowerSearchText);
+                    // Use EF.Functions.Like for string comparison
+                    var efType = typeof(EF);
+                    var functionsProperty = efType.GetProperty("Functions");
+                    var functionsExpression = Expression.Property(null, functionsProperty);
+                    var likeMethod = functionsProperty.PropertyType.GetMethod("Like", new[] { typeof(string), typeof(string) });
+                    var pattern = $"%{searchTermValue}%";
+                    
+                    var likeCall = Expression.Call(
+                        functionsExpression,
+                        likeMethod,
+                        propertyAccess,
+                        Expression.Constant(pattern)
+                    );
 
-                    // Combine null checks with contains
+                    // Combine null checks with LIKE
                     var finalExpression = nullChecks.Aggregate(
-                        (Expression)containsCall,
+                        (Expression)likeCall,
                         (current, nullCheck) => Expression.AndAlso(nullCheck, current)
                     );
 
@@ -263,16 +284,8 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             }
 
             // Combine all property expressions with OR
-            var combinedExpression = propertyExpressions.Aggregate((current, next) =>
-            {
-                var param = Expression.Parameter(typeof(TEntity), "x");
-                var combined = Expression.OrElse(
-                    Expression.Invoke(current, param),
-                    Expression.Invoke(next, param)
-                );
-                return Expression.Lambda<Func<TEntity, bool>>(combined, param);
-            });
-
+            var combinedExpression = CombineOrExpressions(propertyExpressions, parameter);
+            
             Debug.WriteLine("Successfully created combined search expression");
             return combinedExpression;
         }
@@ -280,6 +293,53 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         {
             Debug.WriteLine($"Error in CreateSearchTextExpression: {ex.Message}");
             return null;
+        }
+    }
+
+    // Add a new method to combine expressions with OR without using Expression.Invoke
+    private static Expression<Func<TEntity, bool>> CombineOrExpressions(List<Expression<Func<TEntity, bool>>> expressions, ParameterExpression parameter)
+    {
+        if (expressions.Count == 0)
+            return x => false;
+            
+        if (expressions.Count == 1)
+            return expressions[0];
+            
+        // Start with the first expression's body
+        var firstExpr = expressions[0];
+        var body = firstExpr.Body;
+            
+        // Replace parameter references in other expressions and combine with OR
+        var parameterReplacer = new ParameterReplacer(parameter);
+            
+        for (int i = 1; i < expressions.Count; i++)
+        {
+            var expr = expressions[i];
+            var replacedBody = parameterReplacer.Replace(expr.Body);
+            body = Expression.OrElse(body, replacedBody);
+        }
+            
+        return Expression.Lambda<Func<TEntity, bool>>(body, parameter);
+    }
+    
+    // Add a parameter replacer class to help with expression combining
+    private class ParameterReplacer : ExpressionVisitor
+    {
+        private readonly ParameterExpression _parameter;
+        
+        public ParameterReplacer(ParameterExpression parameter)
+        {
+            _parameter = parameter;
+        }
+        
+        public Expression Replace(Expression node)
+        {
+            return Visit(node);
+        }
+        
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return _parameter;
         }
     }
 
@@ -440,12 +500,22 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             if (propertyAccess.Type == typeof(string))
             {
                 var nullCheck = Expression.NotEqual(propertyAccess, Expression.Constant(null));
-                var containsCall = Expression.Call(
+                
+                // Use EF.Functions.Like instead of Contains
+                var efType = typeof(EF);
+                var functionsProperty = efType.GetProperty("Functions");
+                var functionsExpression = Expression.Property(null, functionsProperty);
+                var likeMethod = functionsProperty.PropertyType.GetMethod("Like", new[] { typeof(string), typeof(string) });
+                var pattern = $"%{value}%";
+                
+                var likeCall = Expression.Call(
+                    functionsExpression,
+                    likeMethod,
                     propertyAccess,
-                    typeof(string).GetMethod("Contains", new[] { typeof(string) }),
-                    Expression.Constant(value.ToString())
+                    Expression.Constant(pattern)
                 );
-                comparison = Expression.AndAlso(nullCheck, containsCall);
+                
+                comparison = Expression.AndAlso(nullCheck, likeCall);
             }
             else
             {
@@ -581,20 +651,19 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                 Debug.WriteLine("String expression is null");
                 return null;
             }
-
-            // Get string.Contains method
-            var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-            if (containsMethod == null)
-            {
-                Debug.WriteLine("Could not find Contains method");
-                return null;
-            }
-
-            // Create the contains call
+            
+            // Use EF.Functions.Like for string comparison
+            var efType = typeof(EF);
+            var functionsProperty = efType.GetProperty("Functions");
+            var functionsExpression = Expression.Property(null, functionsProperty);
+            var likeMethod = functionsProperty.PropertyType.GetMethod("Like", new[] { typeof(string), typeof(string) });
+            var pattern = $"%{value}%";
+            
             return Expression.Call(
+                functionsExpression,
+                likeMethod,
                 stringExpression,
-                containsMethod,
-                Expression.Constant(value)
+                Expression.Constant(pattern)
             );
         }
         catch (Exception ex)

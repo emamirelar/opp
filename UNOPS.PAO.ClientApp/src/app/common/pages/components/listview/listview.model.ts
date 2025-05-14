@@ -31,7 +31,6 @@ export interface ListViewConfig {
   pageSize?: number;
   pageSizeOptions?: number[];
   enableSelection?: boolean;
-  selectionMode?: 'single' | 'multiple';
   enablePagination?: boolean;
   enableSorting?: boolean;
   enableSearch?: boolean;

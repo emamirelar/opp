@@ -13,6 +13,7 @@ import { ContactViewComponent } from './components/contact/view/contact-view.com
 import { PartnerTabsComponent } from './components/partner/tabs/partner-tabs.component';
 import { ComingSoonComponent } from '../../common/pages/components/coming-soon/coming-soon.component';
 import { adminGuard } from '../../essentials/guards/admin.guard';
+import { SearchResultComponent } from './components/search-result/search-result.component';
 
 const internalRoutes: Routes = [
   {
@@ -24,6 +25,12 @@ const internalRoutes: Routes = [
         component: HomeComponent,
         canActivate: [authGuard],
         data: { breadcrumb: 'Home', icon: 'pi pi-home' },
+      },
+      {
+        path: 'search',
+        component: SearchResultComponent,
+        canActivate: [authGuard],
+        data: { breadcrumb: 'Search' }
       },
       {
         path: 'partnerships',

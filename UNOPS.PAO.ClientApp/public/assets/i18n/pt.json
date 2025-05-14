@@ -92,6 +92,9 @@
         "selectEligibleEntities": "Selecionar Entidades Elegíveis",
         "selectFromDrive": "Selecionar do Drive",
         "selectionMethodology": "Metodologia de Seleção",
+        "search": {
+            "results": "Resultados da pesquisa para"
+        },
         "stage": "Etapa",
         "status": "Status",
         "yes": "Sim",
@@ -202,5 +205,14 @@
     },
     "action": {
         "search": "Pesquisar"
+    },
+    "search": {
+        "placeholder": "Pesquisar...",
+        "recentSearches": "Pesquisas recentes",
+        "results": "Resultados",
+        "showAllResults": "Mostrar todos os resultados",
+        "seeAllResults": "Ver todos os resultados",
+        "contact": "Contato",
+        "partner": "Parceiro"
     }
 }

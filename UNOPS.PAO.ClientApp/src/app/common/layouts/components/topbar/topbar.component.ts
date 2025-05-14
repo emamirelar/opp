@@ -21,20 +21,24 @@ import { ImportDialogService } from '../../../reusables/components/import/dialog
 import { ImportService } from '../../../reusables/components/import/import.service';
 import { Router } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import {GlobalSearchBarComponent} from './global-search-bar/global-search-bar.component';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-topbar',
   imports: [
     CommonModule,
     HttpClientModule,
-    LanguageSelectorComponent, 
-    ProfileMenubarComponent, 
-    StyleClassModule, 
+    LanguageSelectorComponent,
+    ProfileMenubarComponent,
+    StyleClassModule,
     ButtonModule,
     OverlayPanelModule,
     ToastModule,
     ProgressBarModule,
-    ConfirmDialogModule
+    TooltipModule,
+    ConfirmDialogModule,
+    GlobalSearchBarComponent
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -106,17 +110,17 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   private handleNewNotifications(newNotifications: Notification[]) {
     // Find new notifications that weren't in the previous list
-    const newItems = newNotifications.filter(newNotif => 
+    const newItems = newNotifications.filter(newNotif =>
       !this.previousNotifications.some(prevNotif => prevNotif.id === newNotif.id)
     );
 
     if (newItems.length > 0) {
       // Prepare messages for different notification types
       let message = '';
-      
+
       if (newItems.length === 1) {
         const notification = newItems[0];
-        
+
         // Enhanced message for bulk import notifications
         if (notification.category === 'bulk_contact_action' || notification.category.startsWith('bulk_')) {
           // Check if we have records to count
@@ -132,7 +136,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
       } else {
         message = `You have ${newItems.length} new notifications`;
       }
-      
+
       // Show toast for new notifications
       this.messageService.add({
         severity: 'info',
@@ -141,27 +145,27 @@ export class TopbarComponent implements OnInit, OnDestroy {
         life: 5000,
         sticky: false
       });
-      
+
       // Only update previousNotifications when we find new ones
       this.previousNotifications = [...newNotifications];
     }
   }
-  
+
   // Helper method to count records in a notification
   private getRecordCount(notification: Notification): number {
     if (!notification.records || !notification.records.length) {
       return 0;
     }
-    
+
     // If records is an array with actual data
     if (notification.records.length > 1) {
       return notification.records.length;
     }
-    
+
     // If records contains a single item that might be a JSON string
     if (notification.records.length === 1) {
       const firstItem = notification.records[0];
-      
+
       // If it's a string that might be JSON
       if (typeof firstItem === 'string') {
         try {
@@ -173,7 +177,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
           // Not a valid JSON string
         }
       }
-      
+
       // If it has a 'records' property that might contain the actual records
       if (typeof firstItem === 'object' && firstItem !== null && 'records' in firstItem) {
         const nestedRecords = firstItem.records;
@@ -191,7 +195,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         }
       }
     }
-    
+
     return 1; // Default to 1 if we can't determine the count
   }
 
@@ -223,13 +227,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
         try {
           // Clear previous data
           this.importDialogService.data.set([]);
-          
+
           // Set new data - we capture the result to check if it worked
           this.importDialogService.setData(notification.records);
-          
+
           // Verify data was set properly
           const currentData = this.importDialogService.data();
-          
+
           if (currentData.length === 0) {
             // Show error message if no data was processed
             this.messageService.add({
@@ -240,10 +244,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
             });
             return;
           }
-          
+
           // Store notification ID in the service for later use when import is completed or canceled
           this.importDialogService.setNotificationInfo(notification.id, this.userId, notification.message);
-          
+
           // Then open the dialog with the correct header
           this.importDialogService.openImportDialog(
             notification.category === 'bulk_contact_action' ? 'Import Contact' : 'Import'
@@ -260,13 +264,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
       } else {
         // Use component resolver for other types of notifications
         this.componentResolverService.loadComponent(notification.category, null, notification.records);
-        
+
         // Mark non-import notification as read
         this.markNotificationAsRead(notification.id);
       }
     }
   }
-  
+
   // Separate method to mark notification as read
   markNotificationAsRead(notificationId: number): void {
     this.notificationService.markAsRead(notificationId, this.userId).subscribe({
@@ -284,10 +288,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   formatProgressMessage(message: string): string {
     if (!message) return '';
-    
+
     // Find progress bar pattern like [■■■■□□□□□□□□□□□□□□□□]
     const progressBarRegex = /\[(■+□*)\]/g;
-    
+
     // Replace the progress bar with HTML span with special styling
     return message.replace(progressBarRegex, (match) => {
       return `<span class="progress-bar">${match}</span>`;
@@ -302,7 +306,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   cancelFileAnalysis(notification: Notification, event: Event): void {
     // Stop event propagation to prevent opening the notification
     event.stopPropagation();
-    
+
     // Extract jobId from the notification message if available
     let jobId = null;
     if (notification.message) {
@@ -311,7 +315,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         jobId = match[1];
       }
     }
-    
+
     // Show confirmation dialog
     this.confirmationService.confirm({
       message: 'Are you sure you want to cancel this file analysis operation?',
@@ -330,7 +334,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
               next: () => {
                 // Mark as read after updating
                 this.markNotificationAsRead(notification.id);
-                
+
                 // Show success message
                 this.messageService.add({
                   severity: 'success',

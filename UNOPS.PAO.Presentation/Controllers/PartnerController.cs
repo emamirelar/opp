@@ -80,6 +80,31 @@ public class PartnerController : ControllerBase
         var specification = new PartnerCompositeSpecification(request);
         return manager.GetPartnersWithSpecification(currentUserId, specification, request);
     }
+    
+    [HttpGet(APIDictionary.Partner + "/classic-search" )]
+    // Internal call: get Partners created by logged-in user
+    // TODO add permissions
+    public ActionResult GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
+    {
+        var specification = new PartnerCompositeClassicSearchSpecification(
+            id: request.Id,
+            name: request.Name,
+            status: request.Status,
+            newEngagement: request.NewEngagement,
+            phone: request.Phone,
+            website: request.Website,
+            shortName: request.ShortName,
+            partnerOfficeId: request.PartnerOfficeId,
+            partnerCategoryId: request.PartnerCategoryId,
+            addressCity: request.AddressCity,
+            addressStateProvince: request.AddressStateProvince,
+            addressPostalCode: request.AddressPostalCode,
+            addressCountry: request.AddressCountry,
+            searchText: request.SearchText);
+
+        return Ok(manager.GetPartnersWithSpecification(currentUserId, specification, request));
+    }
+
 
     [HttpGet(APIDictionary.Partner + "/{id}")]
     // Internal call: Partner details

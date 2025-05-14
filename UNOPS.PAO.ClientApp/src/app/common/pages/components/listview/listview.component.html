@@ -83,8 +83,7 @@
         [rows]="rows"
         (pageChange)="onPageChange($event)"
         (sortChange)="onSortChange($event)"
-        (rowSelect)="onRowSelect($event)"
-        (rowDblClick)="onRowDblClick($event)"
+        (rowClick)="onRowClick($event)"
       >
         @if (actionsTemplate) {
           <ng-template #tableActionsTemplate let-rowData>
@@ -110,8 +109,7 @@
         [rows]="rows"
         (pageChange)="onPageChange($event)"
         (sortChange)="onSortChange($event)"
-        (rowSelect)="onRowSelect($event)"
-        (rowDblClick)="onRowDblClick($event)"
+        (rowClick)="onRowClick($event)"
       >
         @if (actionsTemplate) {
           <ng-template #cardActionsTemplate let-rowData>

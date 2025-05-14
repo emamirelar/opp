@@ -60,7 +60,6 @@ export class ContactListComponent implements OnInit {
   // Configure listview behavior
   listviewConfig: ListViewConfig = {
     enableSelection: true,
-    selectionMode: 'single',
     enablePagination: true,
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],

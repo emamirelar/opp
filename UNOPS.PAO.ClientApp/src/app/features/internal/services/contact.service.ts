@@ -37,6 +37,10 @@ export class ContactService {
     return this.apiUrl
   }
 
+  getClassicSearchUrl(): string {
+    return `${this.apiUrl}/classic-search`;
+  }
+
   getUploadProfilePictureUrl(contactId: string): string {
     return `${this.apiUrl}/${contactId}/profile-picture`;
   }
@@ -62,21 +66,21 @@ export class ContactService {
    */
   getContacts(params: ContactsParams): Observable<{ data: Contact[], total: number }> {
     this.isLoading.set(true);
-    
+
     const queryParams: any = {
       page: params.page,
       pageSize: params.pageSize
     };
-    
+
     if (params.searchText) {
       queryParams.searchText = params.searchText;
     }
-    
+
     if (params.sortField) {
       queryParams.sortField = params.sortField;
       queryParams.sortOrder = params.sortOrder || 'asc';
     }
-    
+
     return this.http.get<any>(`${this.apiUrl}`, { params: queryParams })
       .pipe(
         map((response: any) => ({

@@ -90,6 +90,9 @@
         "selectEligibleEntities": "Seleccionar Entidades Elegibles",
         "selectFromDrive": "Seleccionar desde Drive",
         "selectionMethodology": "Metodología de Selección",
+        "search": {
+            "results": "Resultados de búsqueda para"
+        },
         "stage": "Etapa",
         "status": "Estado",
         "yes": "Sí",
@@ -198,5 +201,14 @@
     },
     "action": {
         "search": "Buscar"
+    },
+    "search": {
+        "placeholder": "Buscar...",
+        "recentSearches": "Búsquedas recientes",
+        "results": "Resultados",
+        "showAllResults": "Mostrar todos los resultados",
+        "seeAllResults": "Ver todos los resultados",
+        "contact": "Contacto",
+        "partner": "Socio"
     }
 }

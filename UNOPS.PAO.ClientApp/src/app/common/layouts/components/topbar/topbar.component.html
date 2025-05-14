@@ -1,4 +1,4 @@
-<div class="layout-topbar">
+<div class="layout-topbar flex justify-between gap-4">
 	<div class="layout-topbar-logo-container">
 		<button (click)="layoutService.onMenuToggle()"
 			aria-label="Menu"
@@ -8,14 +8,15 @@
 		<a class="layout-topbar-logo"
 			routerLink="/">
 			<img src="images/Circle.png"
-				class="items-center brand-logo hidden sm:flex"
+				class="items-center brand-logo hidden lg:flex"
 				alt="UNOPS Grant+ Logo">
-			<span class="text-sm sm:text-2xl">Opportunity+</span>
+			<span class="text-sm lg:text-2xl">Opportunity+</span>
 		</a>
 	</div>
 
-	<div class="layout-topbar-actions">
-		<div class="flex items-center">
+  <app-global-search-bar></app-global-search-bar>
+
+		<div class="flex items-center justify-end">
       <!--				<app-theme-toggler></app-theme-toggler>-->
 
 
@@ -79,8 +80,8 @@
         </div>
       </p-overlayPanel>
       <app-profile-menubar></app-profile-menubar>
-		</div>
 	</div>
 
-	<p-toast position="bottom-right"></p-toast>
+
 </div>
+<p-toast position="bottom-right"></p-toast>
