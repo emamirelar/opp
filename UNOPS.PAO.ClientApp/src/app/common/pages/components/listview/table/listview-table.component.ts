@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { TableModule } from 'primeng/table';
 import { DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
+import { AvatarModule } from 'primeng/avatar';
 
 import { ListViewColumn, ListViewConfig } from '../listview.model';
 
@@ -15,7 +16,8 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
     TableModule,
     DatePipe,
     DecimalPipe,
-    CurrencyPipe
+    CurrencyPipe,
+    AvatarModule
   ],
   templateUrl: './listview-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,5 +82,12 @@ export class ListviewTableComponent<T = any> {
   onSortChange(event: any): void {
     const order = event.order === 1 ? 'asc' : 'desc';
     this.sortChange.emit({ field: event.field, order });
+  }
+  
+  /**
+   * Safely get the avatar image URL from the row data
+   */
+  getAvatarUrl(rowData: any, field: string): string {
+    return rowData && rowData[field] ? String(rowData[field]) : '';
   }
 }

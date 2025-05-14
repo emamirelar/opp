@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, Output, TemplateRef, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, Output, TemplateRef, computed, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
@@ -6,6 +6,7 @@ import { PaginatorModule } from 'primeng/paginator';
 import { DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
+import { AvatarModule } from 'primeng/avatar';
 
 import { ListViewColumn, ListViewConfig } from '../listview.model';
 
@@ -21,7 +22,8 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
     DecimalPipe,
     CurrencyPipe,
     ButtonModule,
-    SkeletonModule
+    SkeletonModule,
+    AvatarModule
   ],
   templateUrl: './listview-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,7 +59,12 @@ export class ListviewCardComponent<T = any> {
       return this.columns.find(col => col.field === titleField) || this.columns[0];
     }
     // Default to first column if no title field specified
-    return this.columns[0];
+    return this.columns.find(col => col.type === 'text') || this.columns[0];
+  });
+
+  // Computed property to get avatar column
+  avatarColumn = computed(() => {
+    return this.columns.find(col => col.type === 'avatar');
   });
   
   // Computed property to get content columns
@@ -72,7 +79,7 @@ export class ListviewCardComponent<T = any> {
     
     // Default to all columns except the title column, up to 4
     const otherColumns = this.columns.filter(col => col !== titleCol);
-    return otherColumns.slice(0, 4);
+    return otherColumns.slice(0, 6);
   });
   
   // Get column sizes based on config or defaults
@@ -150,6 +157,12 @@ export class ListviewCardComponent<T = any> {
           return new CurrencyPipe('en-US').transform(value, 'USD', 'symbol', column.format || '1.2-2') || '';
         }
         return String(value);
+      case 'avatar':
+        // Pour le type avatar, on retourne simplement l'URL pour l'utiliser avec p-avatar
+        return String(value);
+      case 'email':
+        // Pour le type email, on retourne simplement l'adresse
+        return String(value);
       default:
         return String(value);
     }
@@ -160,5 +173,13 @@ export class ListviewCardComponent<T = any> {
    */
   getFieldValue(item: T, field: string): any {
     return item[field as keyof T];
+  }
+  
+  /**
+   * Safely get the avatar image URL from the item
+   */
+  getAvatarUrl(item: T, field: string): string {
+    const value = this.getFieldValue(item, field);
+    return value ? String(value) : '';
   }
 }
