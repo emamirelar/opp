@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
@@ -26,7 +26,6 @@ import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
 import { InputTextModule } from 'primeng/inputtext';
 import { AvatarModule } from 'primeng/avatar';
-import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
 
 interface UserInfo {
   userId: number;
@@ -53,8 +52,7 @@ interface UserInfo {
     MenuModule,
     RippleModule,
     InputTextModule,
-    AvatarModule,
-    ProfileDialogComponent
+    AvatarModule
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -75,7 +73,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
   private confirmationService = inject(ConfirmationService);
   private notificationInterval: any;
   private http = inject(HttpClient);
-  @ViewChild('profileDialog') profileDialog!: ProfileDialogComponent;
   
   menuActive: boolean = false;
   userInfo: UserInfo | null = null;
@@ -124,11 +121,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
     this.profileMenuItems = [
       {
-        label: 'Profile',
-        icon: 'pi pi-user',
-        command: () => this.showProfile()
-      },
-      {
         label: 'Logout',
         icon: 'pi pi-sign-out',
         command: () => this.logout()
@@ -145,40 +137,64 @@ export class TopbarComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error loading user info:', err);
         
-        // When API fails, try to get user info from auth claims
+        // Try to find the user using their email
         this.authService.user().subscribe({
           next: (claims) => {
-            const nameClaim = claims.find(c => c.type === 'name');
             const emailClaim = claims.find(c => c.type === 'email' || 
-                                           c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
-            const userIdClaim = claims.find(c => c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier');
+                                         c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
             
-            if (nameClaim || emailClaim) {
-              // Create a simple userInfo object from claims
-              this.userInfo = {
-                userId: userIdClaim ? parseInt(userIdClaim.value, 10) : 0,
-                name: nameClaim?.value || emailClaim?.value?.split('@')[0] || '?',
-                userEmail: emailClaim?.value || '',
-                orgUnit: '',
-                supervisorId: 0
-              };
-              
-              // If we have a userId from claims, we can still load notifications
-              if (userIdClaim) {
-                this.loadNotifications();
-              }
-              
-              this.cdr.markForCheck();
+            if (emailClaim?.value) {
+              // Call the user info endpoint with email parameter
+              this.http.get<UserInfo>(`/api/user-info?email=${encodeURIComponent(emailClaim.value)}`).subscribe({
+                next: (userData) => {
+                  this.userInfo = userData;
+                  this.loadNotifications();
+                },
+                error: (userLookupErr) => {
+                  console.error('Error looking up user by email:', userLookupErr);
+                  this.createFallbackUserInfo(claims);
+                }
+              });
+            } else {
+              // No email claim found, use fallback
+              this.createFallbackUserInfo(claims);
+            }
+          },
+          error: () => {
+            // Error getting claims, use fallback
+            if (err.status === 401) {
+              setTimeout(() => this.loadUserInfo(), 1000);
             }
           }
         });
-        
-        // If still unauthorized after 1 second, retry
-        if (err.status === 401) {
-          setTimeout(() => this.loadUserInfo(), 1000);
-        }
       }
     });
+  }
+  
+  /**
+   * Create a fallback user info object from claims when API methods fail
+   */
+  private createFallbackUserInfo(claims: any[]) {
+    const nameClaim = claims.find(c => c.type === 'name');
+    const emailClaim = claims.find(c => c.type === 'email' || 
+                                 c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
+    const userIdClaim = claims.find(c => c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier');
+    
+    // Create a simple userInfo object from claims
+    this.userInfo = {
+      userId: userIdClaim ? parseInt(userIdClaim.value, 10) : 0,
+      name: nameClaim?.value || emailClaim?.value?.split('@')[0] || 'User',
+      userEmail: emailClaim?.value || '',
+      orgUnit: '',
+      supervisorId: 0
+    };
+    
+    // If we have a userId from claims, we can still load notifications
+    if (userIdClaim) {
+      this.loadNotifications();
+    }
+    
+    this.cdr.markForCheck();
   }
 
   ngOnDestroy() {
@@ -407,53 +423,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
         });
       }
     });
-  }
-
-  getInitials(): string {
-    // If we have userInfo with name, use it
-    if (this.userInfo?.name) {
-      return this.userInfo.name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .toUpperCase();
-    }
-    
-    // If we have userInfo with email but no name, use first part of email
-    if (this.userInfo?.userEmail) {
-      const emailStart = this.userInfo.userEmail.split('@')[0];
-      return emailStart.charAt(0).toUpperCase();
-    }
-    
-    // Last resort: Try to get directly from user claims if not available in userInfo
-    this.authService.user().subscribe({
-      next: (claims) => {
-        const nameClaim = claims.find(c => c.type === 'name');
-        const emailClaim = claims.find(c => c.type === 'email' || 
-                                          c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
-        
-        if (nameClaim && nameClaim.value) {
-          // Create a simple userInfo object from claims
-          this.userInfo = {
-            userId: 0,
-            name: nameClaim.value,
-            userEmail: emailClaim?.value || '',
-            orgUnit: '',
-            supervisorId: 0
-          };
-          this.cdr.markForCheck();
-        }
-      }
-    });
-    
-    // Default if nothing else is available
-    return '?';
-  }
-
-  showProfile() {
-    if (this.userInfo) {
-      this.profileDialog.show(this.userInfo);
-    }
   }
 
   logout() {

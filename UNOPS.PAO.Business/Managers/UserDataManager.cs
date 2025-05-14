@@ -27,6 +27,15 @@ public class UserDataManager : IUserDataManager
             return Task.FromResult<PAOUserModel?>(null);
         return Task.FromResult(mapper.Map<PAOUserModel>(user));
     }
+
+    public Task<PAOUserModel?> GetUserByEmailAsync(string email)
+    {
+        var user = context.GrantUsers.FirstOrDefault(u => u.Email == email);
+        if (user == null)
+            return Task.FromResult<PAOUserModel?>(null);
+        return Task.FromResult(mapper.Map<PAOUserModel>(user));
+    }
+
     public Task<PAOUserModel?> GetCurrentUserAsync()
     {
         var user = httpContextAccessor?.HttpContext?.User;
@@ -39,6 +48,12 @@ public class UserDataManager : IUserDataManager
         var userId = httpContextAccessor?.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if(userId == null)
         {
+            // Try to find the user by email if NameIdentifier is not available
+            var email = httpContextAccessor?.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value;
+            if (email != null)
+            {
+                return GetUserByEmailAsync(email);
+            }
             return Task.FromResult<PAOUserModel?>(null);
         }
         return GetUserByIdAsync(int.Parse(userId));

@@ -31,4 +31,28 @@ public class UserDataController : ControllerBase
         }
         return Ok(userData);
     }
+    
+    [HttpGet(APIDictionary.UserInfo)]
+    public async Task<IActionResult> GetUserByEmail([FromQuery] string email)
+    {
+        if (string.IsNullOrEmpty(email))
+        {
+            // If no email is provided, try to get the current user's email from claims
+            var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                return BadRequest("Email is required");
+            }
+            email = userEmail;
+        }
+        
+        var userData = await manager.GetUserByEmailAsync(email);
+        if (userData == null)
+        {
+            // User not found in database
+            return NotFound();
+        }
+        
+        return Ok(userData);
+    }
 }

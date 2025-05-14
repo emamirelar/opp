@@ -98,11 +98,11 @@
       </p-overlayPanel>
       <div class="layout-topbar-menu">
         <div class="flex align-items-center gap-2">
-          <p-avatar 
-            [label]="getInitials()" 
-            styleClass="cursor-pointer" 
-            (click)="menu.toggle($event)">
-          </p-avatar>
+          <button type="button"
+                class="p-button-text layout-topbar-action cursor-pointer"
+                (click)="menu.toggle($event)">
+            <i class="pi pi-user"></i>
+          </button>
           <p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
         </div>
       </div>
@@ -111,5 +111,3 @@
 
 	<p-toast position="bottom-right"></p-toast>
 </div>
-
-<app-profile-dialog #profileDialog></app-profile-dialog>

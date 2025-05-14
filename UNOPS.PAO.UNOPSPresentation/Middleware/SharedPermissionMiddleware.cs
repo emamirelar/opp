@@ -29,7 +29,13 @@ namespace UNOPS.PAO.UNOPSPresentation.Middleware
             "/user/register",
             "/user/claims",
             "/health",
-            "/swagger"
+            "/swagger",
+            "/api/values",
+            "/api/process-data",
+            "/api/links",
+            "/api/ai-assistant",
+            "/api/document",
+            "/api/current-user-data"
         };
 
         public SharedPermissionMiddleware(RequestDelegate next, ILogger<SharedPermissionMiddleware> logger)

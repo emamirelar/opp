@@ -8,16 +8,24 @@ using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Utilities.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using UNOPS.PAO.DataAccess.Services;
 
 [Route("/")]
 [ApiController]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class ValuesController : ControllerBase
 {
     private ValuesManager manager;
+    private UserResolverService<int> userResolverService;
+    private IAuthorizationService authorizationService;
+    private int currentUserId => userResolverService.GetCurrentUserId();
 
-    public ValuesController(ValuesManager manager)
+    public ValuesController(ValuesManager manager, UserResolverService<int> userResolverService, IAuthorizationService authorizationService)
     {
         this.manager = manager;
+        this.userResolverService = userResolverService;
+        this.authorizationService = authorizationService;
     }
 
     [HttpGet(APIDictionary.Currency)]
@@ -38,7 +46,6 @@ public class ValuesController : ControllerBase
         return Ok(manager.GetCountries());
     }
 
-
     [HttpGet(APIDictionary.ApplicationType)]
     public ActionResult GetApplicationTypes()
     {
@@ -47,7 +54,6 @@ public class ValuesController : ControllerBase
             .Select(x => new { value = x, attr = x.GetCustomAttributes(typeof(EnumDisplayNameAttribute), true).Cast<EnumDisplayNameAttribute>().SingleOrDefault() })
             .Where(x => x.attr != null)
             .Select(x => new { Id = x.value.Name, DisplayName = x.attr?.Value});
-
 
         return Ok(types);
     }
