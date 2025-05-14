@@ -2,45 +2,51 @@ namespace UNOPS.PAO.Presentation.Controllers;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 
 [Route("/")]
-[ApiController]
-[Authorize(AuthenticationSchemes = "IAP")]
-public class NotificationController : ControllerBase
+public class NotificationController : BaseController
 {
-    private readonly NotificationManager notificationManager;
-    private readonly UserResolverService<int> userResolverService;
+    private readonly NotificationManager _notificationManager;
 
-    public NotificationController(NotificationManager notificationManager, UserResolverService<int> userResolverService)
+    public NotificationController(
+        NotificationManager notificationManager, 
+        UserResolverService<int> userResolverService,
+        ILogger<NotificationController> logger,
+        IAuthorizationService authorizationService)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.notificationManager = notificationManager;
-        this.userResolverService = userResolverService;
+        _notificationManager = notificationManager;
     }
 
     [HttpGet(APIDictionary.Notifications)]
     public async Task<ActionResult<List<NotificationModel>>> GetNotifications()
     {
-        var userId = userResolverService.GetCurrentUserId();
-        var notifications = await notificationManager.GetNotifications(userId);
-        return Ok(notifications);
+        return await HandleOperationAsync(async () =>
+        {
+            return await _notificationManager.GetNotifications(CurrentUserId);
+        });
     }
 
     [HttpPut(APIDictionary.NotificationRead)]
-    public async Task<IActionResult> MarkAsRead(int notificationId)
+    public async Task<ActionResult> MarkAsRead(int notificationId)
     {
-        var userId = userResolverService.GetCurrentUserId();
-        await notificationManager.MarkAsRead(notificationId, userId);
-        return Ok();
+        return await HandleOperationAsync(async () =>
+        {
+            await _notificationManager.MarkAsRead(notificationId, CurrentUserId);
+        });
     }
 
     [HttpPut("api/notifications/{notificationId}/update")]
-    public async Task<IActionResult> UpdateNotification(int notificationId, [FromBody] UpdateNotificationRequest request)
+    public async Task<ActionResult> UpdateNotification(int notificationId, [FromBody] UpdateNotificationRequest request)
     {
-        await notificationManager.UpdateNotification(notificationId, request.Message, request.Status);
-        return Ok();
+        return await HandleOperationAsync(async () =>
+        {
+            await _notificationManager.UpdateNotification(notificationId, request.Message, request.Status);
+        });
     }
 } 

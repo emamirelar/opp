@@ -14,180 +14,191 @@ using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 using System.Text.Json.Nodes;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Domain.Infrastructure;
 
 [Route("/")]
-[ApiController]
-[Authorize(AuthenticationSchemes = "IAP")]
-public class ContactController : ControllerBase
+public class ContactController : BaseController
 {
-    private IContactManager manager;
-    private IAuthorizationService authorizationService;
+    private readonly IContactManager _manager;
 
-    private UserResolverService<int> userResolverService;
-
-    private int currentUserId => userResolverService.GetCurrentUserId();
-
-    public ContactController(IManagerWrapper manager, UserResolverService<int> userResolverService, IAuthorizationService authorizationService)
+    public ContactController(
+        IManagerWrapper manager, 
+        UserResolverService<int> userResolverService, 
+        IAuthorizationService authorizationService,
+        ILogger<ContactController> logger)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.manager = manager.ContactManager;
-        this.userResolverService = userResolverService;
-        this.authorizationService = authorizationService;
+        _manager = manager.ContactManager;
     }
 
     [HttpPost(APIDictionary.Contact)]
     // Internal call: Create a Contact
-    public async Task<IActionResult> Create([FromBody] ContactRequest req)
+    public async Task<ActionResult> Create([FromBody] ContactRequest req)
     {
-        var result = await manager.CreateContactAsync(req);
-
-        if (result == null)
+        return await HandleOperationAsync(async () => 
         {
-            return BadRequest();
-        }
-
-        return CreatedAtAction(nameof(Create), result.Id, result);
+            var result = await _manager.CreateContactAsync(req);
+            if (result == null)
+            {
+                throw new BusinessException("Failed to create contact");
+            }
+            return result;
+        }, 201);
     }
 
     [HttpGet(APIDictionary.Contact)]
     // Internal call: get contacts created by logged-in user
-    // TODO add permissions
     public ActionResult<PaginationResponse<ContactModel>> GetAll([FromQuery] ContactFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
     {
-        if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
+        try
         {
-            Debug.WriteLine($"SEARCH CRITERIA RAW: {searchCriteria}");
-            
-            // Log all the parameters that came in 
-            Debug.WriteLine("Query Parameters:");
-            foreach (var param in HttpContext.Request.Query)
+            if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
             {
-                Debug.WriteLine($"  {param.Key}: {param.Value}");
-            }
-            
-            try
-            {
-                Debug.WriteLine($"Advanced search requested with criteria: {searchCriteria}");
-                var newRequest = AdvancedSearchHelper.MapAdvancedSearchCriteria<ContactFilterRequest>(searchCriteria);
+                Debug.WriteLine($"SEARCH CRITERIA RAW: {searchCriteria}");
                 
-                // Copy over any properties that weren't in the search criteria but were in the original request
-                foreach (var prop in typeof(ContactFilterRequest).GetProperties())
+                // Log all the parameters that came in 
+                Debug.WriteLine("Query Parameters:");
+                foreach (var param in HttpContext.Request.Query)
                 {
-                    if (prop.GetValue(newRequest) == null)
+                    Debug.WriteLine($"  {param.Key}: {param.Value}");
+                }
+                
+                try
+                {
+                    Debug.WriteLine($"Advanced search requested with criteria: {searchCriteria}");
+                    var newRequest = AdvancedSearchHelper.MapAdvancedSearchCriteria<ContactFilterRequest>(searchCriteria);
+                    
+                    // Copy over any properties that weren't in the search criteria but were in the original request
+                    foreach (var prop in typeof(ContactFilterRequest).GetProperties())
                     {
-                        prop.SetValue(newRequest, prop.GetValue(request));
+                        if (prop.GetValue(newRequest) == null)
+                        {
+                            prop.SetValue(newRequest, prop.GetValue(request));
+                        }
                     }
+                    
+                    // Debug the processed request
+                    Debug.WriteLine($"Processed advanced search request:");
+                    foreach (var prop in typeof(ContactFilterRequest).GetProperties())
+                    {
+                        Debug.WriteLine($"  {prop.Name}: {prop.GetValue(newRequest)}");
+                    }
+                    
+                    request = newRequest;
                 }
-                
-                // Debug the processed request
-                Debug.WriteLine($"Processed advanced search request:");
-                foreach (var prop in typeof(ContactFilterRequest).GetProperties())
+                catch (ArgumentException ex)
                 {
-                    Debug.WriteLine($"  {prop.Name}: {prop.GetValue(newRequest)}");
+                    return BadRequest(new { error = ex.Message, searchCriteria });
                 }
-                
-                request = newRequest;
+                catch (Exception ex)
+                {
+                    return BadRequest(new { error = "Failed to process advanced search criteria", details = ex.Message, searchCriteria });
+                }
             }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { error = ex.Message, searchCriteria });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = "Failed to process advanced search criteria", details = ex.Message, searchCriteria });
-            }
-        }
 
-        Debug.WriteLine($"Creating specification with AdvancedSearch={request.AdvancedSearch}, SearchCriteria={(request.SearchCriteria ?? "null")}");
-        var specification = new ContactCompositeSpecification(request);
-        return manager.GetContactsWithSpecification(currentUserId, specification, request);
+            Debug.WriteLine($"Creating specification with AdvancedSearch={request.AdvancedSearch}, SearchCriteria={(request.SearchCriteria ?? "null")}");
+            var specification = new ContactCompositeSpecification(request);
+            return _manager.GetContactsWithSpecification(CurrentUserId, specification, request);
+        }
+        catch (BusinessException ex)
+        {
+            _logger.LogWarning(ex, "Business exception occurred: {Message}", ex.Message);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized access: {Message}", ex.Message);
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while processing the request");
+            return StatusCode(500, new { error = "An error occurred while processing your request" });
+        }
     }
 
     [HttpGet(APIDictionary.Contact + "/{id}")]
     // Internal call: Contact details
-    // TODO add permissions
-
     public async Task<ActionResult> Get(int id)
     {
-        var x = await manager.GetContact(currentUserId, id);
-
-        if (x == null)
+        return await HandleOperationAsync(async () => 
         {
-            return NotFound();
-        }
-
-        return Ok(x);
+            var contact = await _manager.GetContact(CurrentUserId, id);
+            if (contact == null)
+            {
+                throw new BusinessException($"Contact with ID {id} not found");
+            }
+            return contact;
+        });
     }
 
     [HttpPut(APIDictionary.Contact)]
     // Internal call: update Contact
-    public async Task<IActionResult> Update([FromBody] UpdateContactRequest req)
+    public async Task<ActionResult> Update([FromBody] UpdateContactRequest req)
     {
-        await manager.UpdateContactAsync(currentUserId, req);
-
-        return NoContent();
+        return await HandleOperationAsync(async () => 
+        {
+            await _manager.UpdateContactAsync(CurrentUserId, req);
+        });
     }
 
     [HttpDelete(APIDictionary.Contact + "/{id}")]
     // Internal call: delete Contact
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
-        await manager.DeleteContactAsync(currentUserId, id);
-        return NoContent();
+        return await HandleOperationAsync(async () => 
+        {
+            await _manager.DeleteContactAsync(CurrentUserId, id);
+        });
     }
 
     [HttpGet(APIDictionary.PartnerContacts)]
     // Internal call: List contacts for an specific partner
     public ActionResult PartnerContacts(int partnerId)
     {
-        return Ok(manager.GetPartnerContacts(partnerId));
+        return Ok(_manager.GetPartnerContacts(partnerId));
     }
 
     [HttpGet(APIDictionary.Contact + "/{id}/permissions")]
-    public async Task<IActionResult> PermissionsGet(int id)
+    public async Task<ActionResult> PermissionsGet(int id)
     {
-        var Contact = await manager.GetContact(currentUserId, id);
-
-        if (Contact == null)
+        return await HandleOperationAsync(async () => 
         {
-            return NotFound();
-        }
-
-        var canReadResult = await authorizationService.AuthorizeAsync(User, Contact, Operations.Read);
-        var canUpdateResult = await authorizationService.AuthorizeAsync(User, Contact, Operations.Update);
-        var canCreateResult = await authorizationService.AuthorizeAsync(User, Contact, Operations.Create);
-        var canDeleteResult = await authorizationService.AuthorizeAsync(User, Contact, Operations.Delete);
-
-        return Ok(new
-        {
-            CanRead = canReadResult.Succeeded,
-            CanUpdate = canUpdateResult.Succeeded,
-            CanCreate = canCreateResult.Succeeded,
-            CanDelete = canDeleteResult.Succeeded
+            var contact = await _manager.GetContact(CurrentUserId, id);
+            if (contact == null)
+            {
+                throw new BusinessException($"Contact with ID {id} not found");
+            }
+            return await GetEntityPermissionsAsync(contact);
         });
     }
 
     [HttpPost(APIDictionary.Contact + "/{id}/profile-picture")]
-    public async Task<IActionResult> UploadProfilePicture(int id, IFormFile file)
+    public async Task<ActionResult> UploadProfilePicture(int id, IFormFile file)
     {
-        if (file == null || file.Length == 0)
+        return await HandleOperationAsync(async () => 
         {
-            return BadRequest("No file was uploaded");
-        }
+            if (file == null || file.Length == 0)
+            {
+                throw new BusinessException("No file was uploaded");
+            }
 
-        // Check file size (1MB max)
-        if (file.Length > 1024 * 1024)
-        {
-            return BadRequest("File size exceeds maximum limit of 1MB");
-        }
+            // Check file size (1MB max)
+            if (file.Length > 1024 * 1024)
+            {
+                throw new BusinessException("File size exceeds maximum limit of 1MB");
+            }
 
-        // Validate file type
-        var validImageTypes = new[] { "image/jpeg", "image/png", "image/webp" };
-        if (!validImageTypes.Contains(file.ContentType))
-        {
-            return BadRequest("Invalid file type. Only JPEG, PNG, and WEBP files are allowed.");
-        }
+            // Validate file type
+            var validImageTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+            if (!validImageTypes.Contains(file.ContentType))
+            {
+                throw new BusinessException("Invalid file type. Only JPEG, PNG, and WEBP files are allowed.");
+            }
 
-        var result = await manager.UpdateContactProfilePictureAsync(id, file);
-        return Ok(new { imageUrl = result });
+            var result = await _manager.UpdateContactProfilePictureAsync(id, file);
+            return new { imageUrl = result };
+        });
     }
 }

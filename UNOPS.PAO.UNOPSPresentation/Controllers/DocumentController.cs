@@ -3,11 +3,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.DataAccess.Services;
 //using UNOPS.PAO.ContextPermissions.Handlers;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Presentation.Controllers;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -15,113 +19,143 @@ using UNOPS.PAO.UNOPSPresentation.Helpers;
 
 namespace UNOPS.PAO.UNOPSPresentation.Controllers;
 [Route("/")]
-[ApiController]
-[Authorize(AuthenticationSchemes = "IAP")]
-public class DocumentController : ControllerBase
+public class DocumentController : BaseController
 {
-    private UNOPSDocumentManager manager;
-    private IManagerWrapper managerWrapper;
-    private IAuthorizationService authorizationService;
+    private readonly UNOPSDocumentManager _manager;
+    private readonly IManagerWrapper _managerWrapper;
 
-
-    public DocumentController(IMapper mapper, IGoogleDriveDocumentManager driveManager, IConfiguration configuration, UNOPSAppDbContext context, UserManager<PAOIdentityUser> userManager, IManagerWrapper managerWrapper, IAuthorizationService authorizationService)
+    public DocumentController(
+        IMapper mapper, 
+        IGoogleDriveDocumentManager driveManager, 
+        IConfiguration configuration, 
+        UNOPSAppDbContext context, 
+        UserManager<PAOIdentityUser> userManager, 
+        IManagerWrapper managerWrapper, 
+        IAuthorizationService authorizationService,
+        ILogger<DocumentController> logger,
+        UserResolverService<int> userResolverService)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.manager = new UNOPSDocumentManager(driveManager, configuration, mapper, context, userManager);
-        this.managerWrapper = managerWrapper;
-        this.authorizationService = authorizationService;
+        _manager = new UNOPSDocumentManager(driveManager, configuration, mapper, context, userManager);
+        _managerWrapper = managerWrapper;
     }
 
     [HttpPost(APIDictionary.DocumentUpload)]
-    public async Task<IActionResult> Create([FromForm] DocumentUploadModel model)
+    public async Task<ActionResult> Create([FromForm] DocumentUploadModel model)
     {
-        /*var isInternalUser = await this.IsInternalUser();
-        var canCreateResult = await HasPermission(model.ParentEntityType.ToString(), model.ParentEntityId, this.GetRequirement(isInternalUser, model.ParentEntityType.ToString(), "Create"));
-
-        if (!canCreateResult)
+        return await HandleOperationAsync(async () =>
         {
-            return Forbid();
-        }*/
+            /*var isInternalUser = await this.IsInternalUser();
+            var canCreateResult = await HasPermission(model.ParentEntityType.ToString(), model.ParentEntityId, this.GetRequirement(isInternalUser, model.ParentEntityType.ToString(), "Create"));
 
-        var result = await manager.CreateDocumentAsync(model);
+            if (!canCreateResult)
+            {
+                throw new UnauthorizedAccessException("You don't have permission to create this document");
+            }*/
 
-        if (result == null)
-        {
-            return BadRequest();
-        }
+            var result = await _manager.CreateDocumentAsync(model);
 
-        return CreatedAtAction(nameof(Create), result.Id, result);
+            if (result == null)
+            {
+                throw new BusinessException("Failed to create document");
+            }
+
+            return result;
+        }, 201);
     }
 
     [HttpPost(APIDictionary.DocumentLink)]
-    public async Task<IActionResult> Link([FromBody] DocumentLinkModel model)
+    public async Task<ActionResult> Link([FromBody] DocumentLinkModel model)
     {
-        /*var isInternalUser = await this.IsInternalUser();
-        var canLinkResult = await HasPermission(model.ParentEntityType.ToString(), model.ParentEntityId, this.GetRequirement(isInternalUser, model.ParentEntityType.ToString(), "Link"));
-
-        if (!canLinkResult)
+        return await HandleOperationAsync(async () =>
         {
-            return Forbid();
-        }*/
+            /*var isInternalUser = await this.IsInternalUser();
+            var canLinkResult = await HasPermission(model.ParentEntityType.ToString(), model.ParentEntityId, this.GetRequirement(isInternalUser, model.ParentEntityType.ToString(), "Link"));
 
-        var result = await manager.LinkDocumentAsync(model);
+            if (!canLinkResult)
+            {
+                throw new UnauthorizedAccessException("You don't have permission to link this document");
+            }*/
 
-        if (result == null)
-        {
-            return BadRequest();
-        }
+            var result = await _manager.LinkDocumentAsync(model);
 
-        return CreatedAtAction(nameof(Create), result.Id, result);
+            if (result == null)
+            {
+                throw new BusinessException("Failed to link document");
+            }
+
+            return result;
+        }, 201);
     }
 
     [HttpDelete(APIDictionary.Document + "/{id}")]
-    public async Task<IActionResult> Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
-
-        var parentEntity = await manager.GetDocumentParentEntityByIdAsync(id);
-
-        if (parentEntity != null)
+        return await HandleOperationAsync(async () =>
         {
-            /*var isInternalUser = await this.IsInternalUser();
-            var canDeleteResult = await this.HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, this.GetRequirement(isInternalUser, parentEntity.Value.EntityType, "Delete"));
+            var parentEntity = await _manager.GetDocumentParentEntityByIdAsync(id);
 
-            if (!canDeleteResult)
+            if (parentEntity != null)
             {
-                return Forbid();
-            }*/
-        }
+                /*var isInternalUser = await this.IsInternalUser();
+                var canDeleteResult = await HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, GetRequirement(isInternalUser, parentEntity.Value.EntityType, "Delete"));
 
-        await manager.DeleteDocumentAsync(id);
-        return NoContent();
+                if (!canDeleteResult)
+                {
+                    throw new UnauthorizedAccessException("You don't have permission to delete this document");
+                }*/
+            }
+
+            await _manager.DeleteDocumentAsync(id);
+        });
     }
-
 
     [HttpGet(APIDictionary.Document + "/Download/{id}")]
     public async Task<ActionResult> Download(int id)
     {
-        var document = await manager.GetDocumentByIdAsync(id);
-        var userToImpersonate = await manager.GetCreatorEmailAsync(id);
-
-        if (document == null)
+        // File downloads must handle responses differently than normal API operations
+        try
         {
-            return NotFound();
-        }
+            var document = await _manager.GetDocumentByIdAsync(id);
+            var userToImpersonate = await _manager.GetCreatorEmailAsync(id);
 
-        var parentEntity = await manager.GetDocumentParentEntityByIdAsync(id);
-
-        if (parentEntity != null)
-        {
-            /*var isInternalUser = await this.IsInternalUser();
-            var canDownloadResult = await this.HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, this.GetRequirement(isInternalUser, parentEntity.Value.EntityType, "Download"));
-
-            if (!canDownloadResult)
+            if (document == null)
             {
-                return Forbid();
-            }*/
+                return NotFound();
+            }
+
+            var parentEntity = await _manager.GetDocumentParentEntityByIdAsync(id);
+
+            if (parentEntity != null)
+            {
+                /*var isInternalUser = await this.IsInternalUser();
+                var canDownloadResult = await HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, GetRequirement(isInternalUser, parentEntity.Value.EntityType, "Download"));
+
+                if (!canDownloadResult)
+                {
+                    return Forbid();
+                }*/
+            }
+
+            var contents = await _manager.GetFileContentAsync(document.GoogleId, userToImpersonate);
+
+            return File(contents, document.Type ?? string.Empty, document.Name);
         }
-
-        var contents = await manager.GetFileContentAsync(document.GoogleId, userToImpersonate);
-
-        return File(contents, document.Type ?? string.Empty, document.Name);
+        catch (BusinessException ex)
+        {
+            _logger.LogWarning(ex, "Business exception occurred: {Message}", ex.Message);
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Unauthorized access: {Message}", ex.Message);
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while processing the request");
+            return StatusCode(500, new { error = "An error occurred while processing your request" });
+        }
     }
 
     private async Task<bool> HasPermission(string documentParentEntityType, int documentParentEntityId, IAuthorizationRequirement? authorizationRequirement)
@@ -130,15 +164,15 @@ public class DocumentController : ControllerBase
         {
             if (documentParentEntityType == nameof(DocumentParentEntityType.Contact))
             {
-                var contact = await managerWrapper.ContactManager.GetContactAsync(documentParentEntityId);
-                var canResult = await authorizationService.AuthorizeAsync(User, contact, authorizationRequirement);
+                var contact = await _managerWrapper.ContactManager.GetContactAsync(documentParentEntityId);
+                var canResult = await _authorizationService.AuthorizeAsync(User, contact, authorizationRequirement);
 
                 return canResult.Succeeded;
             }
             else if (documentParentEntityType == nameof(DocumentParentEntityType.Partner))
             {
-                var partner = await managerWrapper.PartnerManager.GetPartnerAsync(documentParentEntityId);
-                var canResult = await authorizationService.AuthorizeAsync(User, partner, authorizationRequirement);
+                var partner = await _managerWrapper.PartnerManager.GetPartnerAsync(documentParentEntityId);
+                var canResult = await _authorizationService.AuthorizeAsync(User, partner, authorizationRequirement);
 
                 return canResult.Succeeded;
             }
@@ -185,7 +219,7 @@ public class DocumentController : ControllerBase
             return false;
         }
 
-        var user = await managerWrapper.UserManager.FindByNameAsync(HttpContext.User.Identity?.Name ?? string.Empty);
+        var user = await _managerWrapper.UserManager.FindByNameAsync(HttpContext.User.Identity?.Name ?? string.Empty);
 
         if (user == null)
         {
