@@ -21,6 +21,8 @@ import { ListviewAdvencedSearchComponent } from './advenced-search/listview-adve
 import { ListviewTableComponent } from './table/listview-table.component';
 import { ListviewCardComponent } from './card/listview-card.component';
 import { TooltipModule } from 'primeng/tooltip';
+import { SearchField, SearchCriterion } from '../../../services/search-parser.service';
+import { AdvancedSearchComponent } from '../../../components/advanced-search/advanced-search.component';
 
 @Component({
   selector: 'app-listview',
@@ -44,9 +46,11 @@ import { TooltipModule } from 'primeng/tooltip';
     ListviewAdvencedSearchComponent,
     ListviewTableComponent,
     ListviewCardComponent,
-    TooltipModule
+    TooltipModule,
+    AdvancedSearchComponent
   ],
-  providers: [ListviewDataLoaderService, ConfirmationService]
+  providers: [ListviewDataLoaderService, ConfirmationService],
+  standalone: true
 })
 export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   private dataLoader = inject(ListviewDataLoaderService);
@@ -89,6 +93,9 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     // Force a refresh of the signals to ensure they pick up the new config
     setTimeout(() => {
       console.log('Forcing signal refresh, isAdvancedSearch:', this.isAdvancedSearch());
+      
+      // Re-initialize searchable fields when config changes
+      this.initializeSearchableFields();
     }, 0);
     
     // Initialize advanced search if enabled
@@ -156,6 +163,13 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   
   // Advanced search state
   searchCriteria: SearchCriteria[] = [];
+  selectedSearchField: any = null;
+  advancedSearchText = '';
+  selectedOperator: 'AND' | 'OR' = 'AND';
+  operators = [
+    { label: 'AND', value: 'AND' },
+    { label: 'OR', value: 'OR' }
+  ];
   
   // Computed properties
   isAdvancedSearch = computed(() => {
@@ -165,6 +179,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     
     return !!this.config.searchConfig?.useAdvancedSearch;
   });
+  searchableFields: SearchField[] = [];
   
   searchPlaceholder = computed(() => 
     this.config.searchConfig?.placeholder || 
@@ -513,5 +528,88 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   @HostListener('window:resize')
   onWindowResize(): void {
     this.checkComponentWidth();
+  }
+
+  private initializeSearchableFields(): void {
+    console.log('Initializing searchable fields...');
+    console.log('Current config:', this._config);
+    console.log('Current columns:', this.columns);
+    
+    // First try to get searchable fields from config
+    if (this._config.searchConfig?.searchableFields) {
+      this.searchableFields = this._config.searchConfig.searchableFields.map(field => {
+        const column = this.columns.find(c => c.field === field.field);
+        const result = {
+          field: field.field,
+          label: field.label,
+          type: column ? this.getFieldType(column) : 'string',
+          operators: column ? this.getOperatorsForType(this.getFieldType(column)) : ['is', 'is not', 'like', 'not like']
+        };
+        console.log(`Mapped field ${field.field}:`, result);
+        return result;
+      });
+      console.log('Initialized searchable fields from config:', this.searchableFields);
+      return;
+    }
+
+    // Fallback to using columns if no searchable fields in config
+    this.searchableFields = this.columns.map(column => {
+      const result = {
+        field: column.field,
+        label: column.label,
+        type: this.getFieldType(column),
+        operators: this.getOperatorsForType(this.getFieldType(column))
+      };
+      console.log(`Mapped column ${column.field}:`, result);
+      return result;
+    });
+    console.log('Initialized searchable fields from columns:', this.searchableFields);
+  }
+
+  private getFieldType(column: ListViewColumn): 'string' | 'number' | 'date' {
+    switch (column.type) {
+      case 'number':
+      case 'currency':
+        return 'number';
+      case 'date':
+        return 'date';
+      // Handle boolean data as string since 'boolean' is not a valid column type
+      default:
+        return 'string';
+    }
+  }
+
+  private getOperatorsForType(type: 'string' | 'number' | 'date'): string[] {
+    switch (type) {
+      case 'string':
+        return ['is', 'is not', 'like', 'not like'];
+      case 'number':
+        return ['is', 'is not', '>', '<', '>=', '<='];
+      case 'date':
+        return ['is', 'is not', '>', '<', '>=', '<='];
+      default:
+        // Boolean values and any other types use basic operators
+        return ['is', 'is not'];
+    }
+  }
+
+  onAdvancedSearchChange(event: { criteria: SearchCriterion[] }): void {
+    // Convert criteria to search parameters
+    const searchParams = event.criteria.map(criterion => {
+      const field = this.searchableFields.find(f => f.field === criterion.field);
+      return {
+        field: criterion.field,
+        label: field?.label || criterion.field,
+        value: criterion.value,
+        operator: criterion.operator,
+        logicalOperator: criterion.logicalOperator
+      };
+    });
+
+    // Update the search criteria
+    this.searchCriteria = searchParams;
+    
+    // Trigger search
+    this.onSearch();
   }
 }

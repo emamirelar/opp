@@ -128,6 +128,7 @@ public class GeminiController : BaseController
 
     [HttpPost(APIDictionary.GeminiProcessDataSummary)]
     // Internal call: Process Data Related Summary
+    [Authorize(AuthenticationSchemes = "IAP")]
     public async Task<ActionResult> ProcessDataRelatedSummaryDetails([FromBody] GeminiProcessDataRequest req)
     {
         return await HandleOperationAsync(async () => 

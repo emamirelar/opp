@@ -11,6 +11,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
@@ -24,20 +25,30 @@ public class PartnerManager : IPartnerManager
     private IMapper mapper;
 
     private DataRepository<Partner> PartnerRepository;
-    private DataRepository<OrganizationUnit> OrganizationUnitRepository;
+    private DataRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
     private DataRepository<PartnerCategory> PartnerCategoryRepository;
 
     public PartnerManager(IMapper mapper, AppDbContext context)
     {
         this.mapper = mapper;
         this.PartnerRepository = new DataRepository<Partner>(context);
-        this.OrganizationUnitRepository = new DataRepository<OrganizationUnit>(context);
+        this.OrganizationHierarchyRepository = new DataRepository<OrganizationHierarchy>(context);
         this.PartnerCategoryRepository = new DataRepository<PartnerCategory>(context);
     }
 
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
     {
         var entity = mapper.Map<Partner>(model);
+
+        // Verify that the selected PartnerOffice is of type OrgUnit
+        if (entity.PartnerOfficeId.HasValue)
+        {
+            var office = await OrganizationHierarchyRepository.GetByIdAsync(entity.PartnerOfficeId.Value);
+            if (office == null || office.Type != OrganizationUnitType.OrgUnit)
+            {
+                throw new BusinessException("Partner Office must be of type OrgUnit");
+            }
+        }
 
         await PartnerRepository.AddAsync(entity);
 
@@ -48,7 +59,7 @@ public class PartnerManager : IPartnerManager
     {
         var query = PartnerRepository
             .GetAll(["PartnerOffice", "PartnerCategory"])
-            .Where(x => !x.IsDeleted)
+            .Where(x => !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
             .AsQueryable();
 
         return query.Paginate(
@@ -61,7 +72,8 @@ public class PartnerManager : IPartnerManager
     {
         // Apply the specification to the query
         var query = PartnerRepository.GetAll().AsQueryable();
-        var filteredQuery = query.ApplySpecification(specification);
+        var filteredQuery = query.ApplySpecification(specification)
+            .Where(x => x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit);
         
         // Apply pagination
         return filteredQuery.Paginate(
@@ -89,7 +101,10 @@ public class PartnerManager : IPartnerManager
         }
         if (item.PartnerOfficeId.HasValue)
         {
-            var partnerOffice = await OrganizationUnitRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            var partnerOffice = await OrganizationHierarchyRepository
+                .GetAll()
+                .Where(x => x.Id == item.PartnerOfficeId.Value && x.Type == OrganizationUnitType.OrgUnit)
+                .FirstOrDefaultAsync();
             if (partnerOffice != null)
             {
                 item.PartnerOffice = partnerOffice;
@@ -127,8 +142,20 @@ public class PartnerManager : IPartnerManager
             return default;
         }
 
-        mapper.Map<UpdatePartnerRequest, Partner>(model, entity);
+        // Verify that the selected PartnerOffice is of type OrgUnit
+        if (model.PartnerOfficeId.HasValue)
+        {
+            var office = await OrganizationHierarchyRepository
+                .GetAll()
+                .Where(x => x.Id == model.PartnerOfficeId.Value && x.Type == OrganizationUnitType.OrgUnit)
+                .FirstOrDefaultAsync();
+            if (office == null)
+            {
+                throw new BusinessException("Partner Office must be of type OrgUnit");
+            }
+        }
 
+        mapper.Map<UpdatePartnerRequest, Partner>(model, entity);
         await PartnerRepository.UpdateAsync(entity);
 
         return mapper.Map<PartnerModel>(entity);
@@ -168,7 +195,10 @@ public class PartnerManager : IPartnerManager
     {
         string[] includes = ["Documents", "PartnerOffice", "PartnerCategory"];
 
-        var item = await PartnerRepository.GetByIdAsync(id, includes);
+        var item = await PartnerRepository
+            .GetAll(includes)
+            .Where(x => x.Id == id && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
+            .FirstOrDefaultAsync();
 
         if (item == null)
         {
@@ -176,9 +206,6 @@ public class PartnerManager : IPartnerManager
         }
 
         var result = mapper.Map<PartnerModel>(item);
-
-        //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
-
         return result;
     }
 

@@ -4,5 +4,6 @@ public enum NotificationStatus
 {
     Pending,
     Progress,
-    Done
+    Done,
+    Error
 } 

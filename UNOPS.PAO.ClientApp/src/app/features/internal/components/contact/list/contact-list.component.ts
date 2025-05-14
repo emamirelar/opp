@@ -21,6 +21,7 @@ import {FeedbackDialogService} from '../../../../../common/reusables/services/fe
 import {ListViewColumn, ListViewConfig, SearchParams} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
+import { SearchField } from '../../../../../common/services/search-parser.service';
 
 @Component({
   selector: 'app-contact-list',
@@ -69,33 +70,73 @@ export class ContactListComponent implements OnInit {
     enableExport: true,
     entityName: 'Contact',
     scrollable: true,
-    scrollHeight: 'flex'
+    scrollHeight: 'flex',
+    searchConfig: {
+      useAdvancedSearch: true,
+      placeholder: 'Search contacts...',
+      searchableFields: [
+        { 
+          field: 'firstName', 
+          label: 'First Name', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'lastName', 
+          label: 'Last Name', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'email', 
+          label: 'Email', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'mobile', 
+          label: 'Mobile', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'phone', 
+          label: 'Phone', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'title', 
+          label: 'Title', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'mailingCity', 
+          label: 'City', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'mailingCountry', 
+          label: 'Country', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'partner.name', 
+          label: 'Partner', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        }
+      ] as SearchField[]
+    }
   };
 
   // Track current search term
   currentSearchText = '';
 
   ngOnInit() {
-    // Set advanced search configuration
-    this.listviewConfig = {
-      ...this.listviewConfig,
-      searchConfig: {
-        useAdvancedSearch: true,
-        placeholder: 'Search contacts...',
-        searchableFields: [
-          { field: 'firstName', label: 'First Name' },
-          { field: 'lastName', label: 'Last Name' },
-          { field: 'email', label: 'Email' },
-          { field: 'mobile', label: 'Mobile' },
-          { field: 'phone', label: 'Phone' },
-          { field: 'title', label: 'Title' },
-          { field: 'mailingCity', label: 'City' },
-          { field: 'mailingCountry', label: 'Country' },
-          { field: 'partner.name', label: 'Partner' }
-        ]
-      }
-    };
-    
     console.log('Contact list config:', this.listviewConfig);
     
     this.route.queryParams

@@ -7,6 +7,7 @@ import {
 } from '@abacritt/angularx-social-login';
 
 import { AuthService } from '../../../../../essentials/services/auth.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-social-auth',
@@ -17,17 +18,17 @@ import { AuthService } from '../../../../../essentials/services/auth.service';
 export class SociaAuth implements OnInit {
   constructor(
     private socialAuthService: SocialAuthService,
-    private authService: AuthService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.socialAuthService.authState.subscribe((user) => {
-      this.authService.googleSignIn(user).subscribe({
-        next: (res) => {
-          window.location.href = '/';
-        },
-        error: (err) => {},
-      });
+    this.socialAuthService.authState.subscribe(async (user) => {
+      try {
+        await firstValueFrom(this.authService.googleSignIn(user));
+        window.location.href = '/';
+      } catch (err) {
+        console.error('Google sign-in error:', err);
+      }
     });
   }
 }

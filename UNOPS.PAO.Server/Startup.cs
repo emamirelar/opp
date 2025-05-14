@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.GoogleServices;
@@ -312,6 +313,12 @@ public class Startup
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
         services.AddScoped<IAuthorizationService, PAOAuthorizationService>();
         services.AddScoped<IAuthorizationHandlerWrapper, UNOPSAuthorizationHandlerWrapper>();
+
+        // Register UserInfo service
+        services.AddScoped<IUserInfoService, UserInfoService>();
+
+        // Register OrganizationHierarchy manager
+        services.AddScoped<IOrganizationHierarchyManager, OrganizationHierarchyManager>();
 
         // Add data seeding services
         services.AddDataSeeding();

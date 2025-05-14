@@ -12,11 +12,18 @@ using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Utilities.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using UNOPS.PAO.DataAccess.Services;
 
 [Route("/")]
-public class ValuesController : BaseController
+[ApiController]
+[Authorize(AuthenticationSchemes = "IAP")]
+public class ValuesController : ControllerBase
 {
     private readonly ValuesManager _manager;
+    private UserResolverService<int> userResolverService;
+    private IAuthorizationService authorizationService;
+    private int currentUserId => userResolverService.GetCurrentUserId();
 
     public ValuesController(
         ValuesManager manager,

@@ -31,7 +31,7 @@ public class PartnerModel
     public string? LevyTreatment { get; set; }
     //public List<ContactModel>? Contacts { get; set; }
     public List<DocumentModel>? Documents { get; set; }
-    public OrganizationUnit? PartnerOffice { get; set; }
+    public OrganizationHierarchyModel? PartnerOffice { get; set; }
     public int? PartnerOfficeId { get; set; }
     public PartnerCategory? PartnerCategory { get; set; }
     public int? PartnerCategoryId { get; set; }

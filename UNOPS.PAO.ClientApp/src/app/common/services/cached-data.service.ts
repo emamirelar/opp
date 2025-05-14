@@ -1,13 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
+import { tap, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CachedDataService {
-
   http = inject( HttpClient );
-
   isLoading = signal(false);
 
   //Projects
