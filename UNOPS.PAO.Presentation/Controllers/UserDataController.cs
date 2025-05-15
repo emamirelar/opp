@@ -51,7 +51,7 @@ public class UserDataController : BaseController
             email = userEmail;
         }
         
-        var userData = await manager.GetUserByEmailAsync(email);
+        var userData = await _manager.GetUserByEmailAsync(email);
         if (userData == null)
         {
             // User not found in database

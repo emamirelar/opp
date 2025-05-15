@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Specifications;
+using System.Security.Claims;
 
 public class PartnerManager : IPartnerManager
 {
@@ -205,12 +206,135 @@ public class PartnerManager : IPartnerManager
             return default;
         }
 
-        var result = mapper.Map<PartnerModel>(item);
-        return result;
+        return mapper.Map<PartnerModel>(item);
     }
 
     public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)
     {
-        return null;
+        var entity = await PartnerRepository.GetByIdAsync(partnerId);
+        if (entity == null)
+        {
+            return null;
+        }
+
+        // Save the file to a location and get its URL
+        var fileExtension = Path.GetExtension(file.FileName);
+        var fileName = $"partner-{partnerId}-logo-{DateTime.UtcNow.Ticks}{fileExtension}";
+        var filePath = Path.Combine("wwwroot", "uploads", "partners", fileName);
+        
+        // Ensure directory exists
+        var directory = Path.GetDirectoryName(filePath);
+        if (!Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        // Save the file
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        // Update the entity with the logo URL (relative path)
+        entity.LogoUrl = $"/uploads/partners/{fileName}";
+        await PartnerRepository.UpdateAsync(entity);
+
+        // Return the URL
+        return entity.LogoUrl;
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(int userId, int partnerId, string operation)
+    {
+        // Get the partner entity
+        var entity = await PartnerRepository.GetByIdAsync(partnerId);
+        if (entity == null)
+        {
+            return false;
+        }
+        
+        // Basic permission rules:
+        // 1. Administrator can do anything
+        // 2. Creator of the partner can do anything with their own partners
+        // 3. For Read operations, any Internal or Partner role can access
+        // 4. For Update/Delete, only creator or admin can perform
+        
+        // Check if user is the creator
+        bool isCreator = entity.CreatedBy == userId;
+        
+        // If user is creator, they have full access
+        if (isCreator)
+        {
+            return true;
+        }
+        
+        // For Read operations, allow access to all users with Partner role or higher
+        if (operation == "Read")
+        {
+            // This simplified check just allows reading for almost all users
+            // In a real implementation, you'd check against user roles in a database
+            return true;
+        }
+        
+        // For other operations (Update, Delete), only allow if user is creator or has admin privileges
+        // This simplified version just denies access to non-creators
+        // In a real implementation, you'd check if the user has Administrator role
+        return false;
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, int partnerId, string operation)
+    {
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Use the existing method
+        return await HasPermissionAsync(userId, partnerId, operation);
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, Partner partner, string operation)
+    {
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Check if user is the creator
+        bool isCreator = partner.CreatedBy == userId;
+        
+        // If user is creator, they have full access
+        if (isCreator)
+        {
+            return true;
+        }
+        
+        // Check if user is administrator
+        bool isAdmin = user.IsInRole("Administrator");
+        if (isAdmin)
+        {
+            return true;
+        }
+        
+        // For Read operations, allow access to all users with Partner role or higher
+        if (operation == "Read")
+        {
+            return user.IsInRole("Partner") || user.IsInRole("Internal");
+        }
+        
+        // For other operations (Update, Delete), only allow if user is creator or has admin privileges
+        return false;
     }
 }

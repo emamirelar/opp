@@ -38,6 +38,12 @@ public class DevelopmentLoginPageMiddleware
         {
             _logger.LogInformation("Direct login requested for: {Email}", email);
             
+            // Clear any existing cookies before setting new ones
+            foreach (var cookie in context.Request.Cookies.Keys)
+            {
+                context.Response.Cookies.Delete(cookie);
+            }
+            
             // Set the cookie directly
             context.Response.Cookies.Append("dev-user-email", email, new CookieOptions
             {
@@ -128,7 +134,7 @@ public class DevelopmentLoginPageMiddleware
             return;
         }
 
-        // Standard login page HTML
+        // Standard login page HTML with hardcoded test users
         await context.Response.WriteAsync(@"
 <!DOCTYPE html>
 <html>
@@ -153,11 +159,20 @@ public class DevelopmentLoginPageMiddleware
             document.getElementById('error-message').style.display = 'none';
             
             try {
-                // First clear any existing auth cookies
-                clearAuthCookies();
+                // First clear browser storage
+                localStorage.clear();
+                sessionStorage.clear();
                 
-                // Use direct URL to avoid AJAX issues
-                window.location.href = `/dev-login?user=${encodeURIComponent(email)}`;
+                // Clear all cookies
+                document.cookie.split(';').forEach(function(c) {
+                    document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
+                });
+                
+                // Wait a moment to ensure everything is cleared
+                setTimeout(() => {
+                    // Redirect to login with the selected user
+                    window.location.href = `/dev-login?user=${encodeURIComponent(email)}`;
+                }, 100);
             } catch (error) {
                 console.error('Login failed:', error);
                 document.getElementById('error-message').style.display = 'block';
@@ -165,120 +180,66 @@ public class DevelopmentLoginPageMiddleware
             }
         }
         
-        // Function to clear auth cookies
-        function clearAuthCookies() {
-            // Clear localStorage redirect flag
-            localStorage.removeItem('iap_redirect_handled');
-            
-            // This will still keep the cookies but at least we can try
-            document.cookie.split(';').forEach(function(c) {
-                document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
-            });
-            
-            // Explicitly clear the cookies we know about
-            document.cookie = 'dev-user-email=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
-            document.cookie = 'DevIAPAuth=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
-        }
-        
-        async function loadUsers() {
-            try {
-                const response = await fetch('/api/dev/users');
-                if (!response.ok) {
-                    throw new Error(`Failed to load users (status ${response.status})`);
-                }
-                
-                const users = await response.json();
-                const container = document.getElementById('users-container');
-                container.innerHTML = '';
-                
-                if (users.length === 0) {
-                    container.innerHTML = '<p>No users found. Click the button below to create development test users.</p>';
-                    return;
-                }
-                
-                users.forEach(user => {
-                    const div = document.createElement('div');
-                    div.className = 'user-box';
-                    div.onclick = () => loginAs(user.email);
-                    
-                    let rolesHtml = '';
-                    if (user.roles && user.roles.length) {
-                        rolesHtml = user.roles.map(role => 
-                            `<span class='role'>${role}</span>`).join('');
-                    } else {
-                        rolesHtml = '<span class=""role"">No roles</span>';
-                    }
-                    
-                    div.innerHTML = `
-                        <h3>${user.email}</h3>
-                        <div>${rolesHtml}</div>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (error) {
-                console.error('Failed to load users:', error);
-                document.getElementById('users-container').innerHTML = 
-                    `<p>Error loading users: ${error.message}</p>
-                     <p>Please try refreshing the page or seeding users.</p>`;
-            }
-        }
-        
-        async function seedUsers() {
-            try {
-                document.getElementById('seed-button').innerText = 'Creating users...';
-                document.getElementById('seed-button').disabled = true;
-                
-                const response = await fetch('/api/dev/seed-dev-users', {
-                    method: 'POST'
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to seed users (status ${response.status})`);
-                }
-                
-                const result = await response.json();
-                console.log('Seed users result:', result);
-                
-                await loadUsers();
-                document.getElementById('seed-button').innerText = 'Create Development Test Users';
-                document.getElementById('seed-button').disabled = false;
-            } catch (error) {
-                console.error('Failed to seed users:', error);
-                document.getElementById('error-message').style.display = 'block';
-                document.getElementById('error-message').innerText = `Error creating users: ${error.message}`;
-                document.getElementById('seed-button').innerText = 'Create Development Test Users';
-                document.getElementById('seed-button').disabled = false;
-            }
-        }
-        
         window.onload = function() {
-            // Clear the redirect handled flag on login page
-            localStorage.removeItem('iap_redirect_handled');
-            loadUsers();
+            // Clear storages on page load
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Show the predefined users
+            renderPredefinedUsers();
         };
+        
+        function renderPredefinedUsers() {
+            const users = [
+                { email: 'anushas@unops.org', roles: ['Internal'] },
+                { email: 'admin@unops.org', roles: ['Administrator'] },
+                { email: 'partner@partner.org', roles: ['Partner'] },
+                { email: 'external@unops.org', roles: ['External'] },
+                { email: 'partnerexternal@unops.org', roles: ['Partner', 'External'] }
+            ];
+            
+            const container = document.getElementById('users-container');
+            container.innerHTML = '';
+            
+            users.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'user-box';
+                div.onclick = () => loginAs(user.email);
+                
+                let rolesHtml = '';
+                if (user.roles && user.roles.length) {
+                    rolesHtml = user.roles.map(role => 
+                        `<span class='role'>${role}</span>`).join('');
+                }
+                
+                div.innerHTML = `
+                    <h3>${user.email}</h3>
+                    <div>${rolesHtml}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
     </script>
 </head>
 <body>
     <h1>Development Login</h1>
-    <div class=""info"">
-        <p>This page simulates IAP authentication in development by setting HTTP headers that the IAP authentication handler expects.</p>
-        <p>Select a user below to simulate IAP authentication with that identity.</p>
+    <div class='info'>
+        <p>Select a test user to login. Each user has specific roles for testing permissions.</p>
     </div>
     
-    <div id='error-message' style='background: #f8d7da; padding: 10px; border-radius: 4px; margin: 10px 0;'></div>
+    <div id='error-message'></div>
     
     <div id='users-container'>
-        <p>Loading users...</p>
+        <!-- Test users will be rendered here -->
     </div>
     
-    <button id='seed-button' onclick='seedUsers()'>Create Development Test Users</button>
-    
-    <div class=""info"">
+    <div class='info'>
         <h3>Available Test Users:</h3>
         <p><strong>admin@unops.org</strong> - Has Administrator role</p>
         <p><strong>anushas@unops.org</strong> - Has Internal role</p>
-        <p><strong>devuser@example.com</strong> - Has External role</p>
-        <p><strong>devuser@partner.com</strong> - Has Partner role</p>
+        <p><strong>partner@partner.org</strong> - Has Partner role</p>
+        <p><strong>external@unops.org</strong> - Has External role</p>
+        <p><strong>partnerexternal@unops.org</strong> - Has both Partner and External roles</p>
     </div>
 </body>
 </html>
