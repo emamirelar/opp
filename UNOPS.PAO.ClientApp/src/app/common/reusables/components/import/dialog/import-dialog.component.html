@@ -57,9 +57,11 @@
             <span class="ml-3">
               Selected: <span class="font-semibold">{{ selectedRows().length }}</span>
             </span>
-            <span class="ml-3 text-sm" *ngIf="paginatedData().length === 0 && totalRecords() > 0">
-              (Warning: Pagination not working properly)
-            </span>
+            @if (paginatedData().length === 0 && totalRecords() > 0) {
+              <span class="ml-3 text-sm">
+                (Warning: Pagination not working properly)
+              </span>
+            }
           </p>
         </div>
         <div class="flex items-center">
@@ -100,9 +102,11 @@
             <th style="width: 4rem">
               Edit
             </th>
-            <th *ngFor="let col of columns" class="min-w-32">
-              {{ col.header }}
-            </th>
+            @for (col of columns; track col) {
+              <th class="min-w-32">
+                {{ col.header }}
+              </th>
+            }
           </tr>
         </ng-template>
 
@@ -130,9 +134,11 @@
           @if (hasErrors(rowIndex)) {
             <tr>
               <td colspan="100%" class="p-error text-sm">
-                <div *ngFor="let error of getRowErrors(rowIndex)">
-                  {{ error }}
-                </div>
+                @for (error of getRowErrors(rowIndex); track error) {
+                  <div>
+                    {{ error }}
+                  </div>
+                }
               </td>
             </tr>
           }
@@ -160,12 +166,15 @@
       </p-paginator>
       
       <div class="text-xs text-gray-500 text-right mt-1">
-        <span *ngIf="totalRecords() > 0">
-          Showing {{ first() + 1 }} to {{ Math.min(first() + rows(), totalRecords()) }} of {{ totalRecords() }} records
-        </span>
-        <span *ngIf="totalRecords() === 0">
-          No records to display
-        </span>
+        @if (totalRecords() > 0) {
+          <span>
+            Showing {{ first() + 1 }} to {{ Math.min(first() + rows(), totalRecords()) }} of {{ totalRecords() }} records
+          </span>
+        } @else {
+          <span>
+            No records to display
+          </span>
+        }
       </div>
     </div>
   </div>
