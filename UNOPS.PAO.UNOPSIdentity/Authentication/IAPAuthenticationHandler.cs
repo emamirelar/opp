@@ -395,6 +395,7 @@ public class IAPAuthenticationOptions : AuthenticationSchemeOptions
     public bool AllowHeaderFallback { get; set; } = false;
     public string ProjectNumber { get; set; } = string.Empty;
     public string ProjectId { get; set; } = string.Empty;
+    public string BackendServiceId { get; set; } = string.Empty;
     public string HealthCheckPath { get; set; } = "/health";
     
     // Domain-specific role mappings (e.g., unops.org -> Internal)

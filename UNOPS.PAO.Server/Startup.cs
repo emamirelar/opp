@@ -231,6 +231,7 @@ public class Startup
                 options.AllowHeaderFallback = iapConfig.GetValue<bool>("AllowHeaderFallback", false);
                 options.ProjectNumber = iapConfig.GetValue<string>("ProjectNumber", "");
                 options.ProjectId = iapConfig.GetValue<string>("ProjectId", "");
+                options.BackendServiceId = iapConfig.GetValue<string>("BackendServiceId", "");
                 options.HealthCheckPath = iapConfig.GetValue<string>("HealthCheckPath", "/health");
                 
                 // Configure domain role mappings
