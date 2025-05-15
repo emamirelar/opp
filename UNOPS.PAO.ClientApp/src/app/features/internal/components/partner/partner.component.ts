@@ -172,7 +172,12 @@ export class PartnerComponent implements OnDestroy, OnInit {
   }
 
   handleOnOpenRecordDetails(record: any) {
-    this.router.navigate(['partner', record.id]);
+    if (record && record.id !== undefined && record.id !== null) {
+      console.log('Navigating to partner:', record.id);
+      this.router.navigate(['partnerships/partners', record.id.toString()]);
+    } else {
+      console.error('Cannot navigate: record or record.id is undefined', record);
+    }
   }
 
   handleOnRecordDelete(record: any) {
@@ -192,8 +197,11 @@ export class PartnerComponent implements OnDestroy, OnInit {
   }
 
   _handleOnRecordCreation(newRecordData: any) {
-    if (newRecordData?.id) {
-      this.router.navigate(['partner', newRecordData.id]);
+    if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
+      console.log('Navigating to newly created partner:', newRecordData.id);
+      this.router.navigate(['partnerships/partners', newRecordData.id.toString()]);
+    } else {
+      console.error('Cannot navigate to created record: id is undefined', newRecordData);
     }
   }
 

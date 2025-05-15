@@ -4,14 +4,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.Presentation.Controllers;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDataAccess.Seed;
 
-[ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = "Administrator", AuthenticationSchemes = "IAP")]
-public class AdminController : ControllerBase
+public class AdminController : BaseController
 {
     private readonly UNOPSAppDbContext _dbContext;
     private readonly UserManager<PAOIdentityUser> _userManager;
@@ -19,8 +22,12 @@ public class AdminController : ControllerBase
 
     public AdminController(
         UNOPSAppDbContext dbContext,
-        UserManager<PAOIdentityUser> userManager = null,
-        RoleManager<PAOIdentityRole> roleManager = null)
+        UserManager<PAOIdentityUser> userManager,
+        RoleManager<PAOIdentityRole> roleManager,
+        ILogger<AdminController> logger,
+        IAuthorizationService authorizationService,
+        UserResolverService<int> userResolverService)
+        : base(logger, authorizationService, userResolverService)
     {
         _dbContext = dbContext;
         _userManager = userManager;
@@ -29,15 +36,15 @@ public class AdminController : ControllerBase
 
     [HttpPost("setup-admin")]
     [AllowAnonymous] // Temporarily allow anonymous access for initial setup
-    public async Task<IActionResult> SetupAdminUser(string email, string password)
+    public async Task<ActionResult> SetupAdminUser(string email, string password)
     {
-        if (_userManager == null || _roleManager == null)
+        return await HandleOperationAsync(async () =>
         {
-            return BadRequest("User management is not available");
-        }
+            if (_userManager == null || _roleManager == null)
+            {
+                throw new BusinessException("User management is not available");
+            }
 
-        try
-        {
             // Check if admin role exists
             if (!await _roleManager.RoleExistsAsync("Administrator"))
             {
@@ -61,7 +68,7 @@ public class AdminController : ControllerBase
                 var result = await _userManager.CreateAsync(user, password);
                 if (!result.Succeeded)
                 {
-                    return BadRequest(result.Errors);
+                    throw new BusinessException("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
             }
 
@@ -71,19 +78,15 @@ public class AdminController : ControllerBase
                 await _userManager.AddToRoleAsync(user, "Administrator");
             }
 
-            return Ok(new { message = $"Admin user {email} setup successfully! You can now login with this account." });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { error = "Failed to setup admin user", details = ex.Message });
-        }
+            return new { message = $"Admin user {email} setup successfully! You can now login with this account." };
+        });
     }
 
     [HttpPost("seed-permissions")]
     [Authorize(Roles = "Administrator", AuthenticationSchemes = "IAP")]
-    public async Task<IActionResult> SeedEntityPermissions()
+    public async Task<ActionResult> SeedEntityPermissions()
     {
-        try
+        return await HandleOperationAsync(async () =>
         {
             // Delete existing permissions if any
             var existingPermissions = await _dbContext.EntityPermissions.ToListAsync();
@@ -96,28 +99,27 @@ public class AdminController : ControllerBase
             // Seed fresh permissions
             await _dbContext.SeedEntityPermissionsAsync();
             
-            return Ok(new { message = "Entity permissions seeded successfully!" });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { error = "Failed to seed entity permissions", details = ex.Message });
-        }
+            return new { message = "Entity permissions seeded successfully!" };
+        });
     }
 
     [HttpGet("check-permissions")]
-    public async Task<IActionResult> CheckPermissions()
+    public async Task<ActionResult> CheckPermissions()
     {
-        var permissions = await _dbContext.EntityPermissions.ToListAsync();
-        return Ok(new { 
-            count = permissions.Count,
-            permissions = permissions.Select(p => new {
-                p.Id,
-                p.EntityName,
-                p.Action,
-                p.RoleName,
-                p.PropertyName,
-                p.FilterExpression
-            }).OrderBy(p => p.EntityName).ThenBy(p => p.Action).ThenBy(p => p.RoleName).ToList()
+        return await HandleOperationAsync(async () =>
+        {
+            var permissions = await _dbContext.EntityPermissions.ToListAsync();
+            return new { 
+                count = permissions.Count,
+                permissions = permissions.Select(p => new {
+                    p.Id,
+                    p.EntityName,
+                    p.Action,
+                    p.RoleName,
+                    p.PropertyName,
+                    p.FilterExpression
+                }).OrderBy(p => p.EntityName).ThenBy(p => p.Action).ThenBy(p => p.RoleName).ToList()
+            };
         });
     }
 } 

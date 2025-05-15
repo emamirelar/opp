@@ -33,6 +33,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
         public async Task InvokeAsync(HttpContext context)
         {
+
             // Only apply in development and for API calls
             if (_environment.IsDevelopment() && context.Request.Path.StartsWithSegments("/api"))
             {
@@ -82,26 +83,25 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                 _logger.LogInformation("Successfully created development user: {Email}", email);
                                 
                                 // Assign roles based on email
-                                if (email.EndsWith("@unops.org"))
+                                if (email == "anushas@unops.org")
                                 {
                                     await EnsureRoleExists(scope, "Internal");
                                     await userManager.AddToRoleAsync(user, "Internal");
-                                    
-                                    if (email.ToLower().Contains("admin"))
-                                    {
-                                        await EnsureRoleExists(scope, "Administrator");
-                                        await userManager.AddToRoleAsync(user, "Administrator");
-                                    }
                                 }
-                                else
+                                else if (email == "admin@unops.org")
+                                {
+                                    await EnsureRoleExists(scope, "Administrator");
+                                    await userManager.AddToRoleAsync(user, "Administrator");
+                                }
+                                else if (email == "partner@partner.org")
                                 {
                                     await EnsureRoleExists(scope, "Partner");
                                     await userManager.AddToRoleAsync(user, "Partner");
+                                } else if (email == "external@unops.org")
+                                {
+                                    await EnsureRoleExists(scope, "External");
+                                    await userManager.AddToRoleAsync(user, "External");
                                 }
-                                
-                                // Always add basic user role
-                                await EnsureRoleExists(scope, "User");
-                                await userManager.AddToRoleAsync(user, "User");
                             }
                         }
                         
@@ -116,7 +116,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                 email, roles.Count, string.Join(", ", roles));
                                 
                             // Validate roles based on email domain - fix if necessary
-                            if (email.EndsWith("@unops.org") && !roles.Contains("Internal"))
+                            if (email == "anushas@unops.org" && !roles.Contains("Internal"))
                             {
                                 _logger.LogWarning("UNOPS user {Email} missing Internal role, adding it", email);
                                 await EnsureRoleExists(scope, "Internal");
@@ -124,7 +124,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                 roles = await userManager.GetRolesAsync(user);
                             }
                             
-                            if (email.ToLower().Contains("admin") && !roles.Contains("Administrator"))
+                            if (email == "admin@unops.org" && !roles.Contains("Administrator"))
                             {
                                 _logger.LogWarning("Admin user {Email} missing Administrator role, adding it", email);
                                 await EnsureRoleExists(scope, "Administrator");
@@ -132,7 +132,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                 roles = await userManager.GetRolesAsync(user);
                             }
                             
-                            if (!email.EndsWith("@unops.org") && !roles.Contains("Partner"))
+                            if (email == "partner@partner.org" && !roles.Contains("Partner"))
                             {
                                 _logger.LogWarning("External user {Email} missing Partner role, adding it", email);
                                 await EnsureRoleExists(scope, "Partner");

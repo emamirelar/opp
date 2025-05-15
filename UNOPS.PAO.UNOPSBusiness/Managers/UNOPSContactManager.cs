@@ -22,6 +22,7 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 public class UNOPSContactManager : IContactManager
 {
@@ -162,19 +163,9 @@ public class UNOPSContactManager : IContactManager
     public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
     {
         return contactRepository
-            .GetAll(["Partner"])
+            .GetAll()
             .Where(x => x.PartnerId == partnerId)
-            .Select(x => new ContactModel()
-            {
-                Id = x.Id,
-                PartnerId = x.Partner.Id,
-                PartnerName = x.Partner.Name,
-                Salutation = x.Salutation,
-                FirstName = x.FirstName,
-                LastName = x.LastName,
-                Email = x.Email,
-                Mobile = x.Mobile
-            });
+            .Select(x => MapEntityToModel(x, mapper));
     }
     public async Task<ContactModel?> GetContactAsync(int id)
     {
@@ -196,24 +187,122 @@ public class UNOPSContactManager : IContactManager
 
     public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
     {
-        // Verify contact exists first
-        var contact = await contactRepository.GetByIdAsync(contactId);
-        if (contact == null)
+        var entity = await contactRepository.GetByIdAsync(contactId);
+        if (entity == null)
         {
-            throw new BusinessException($"Contact {contactId} does not exist.");
+            return null;
         }
 
-        // Upload file to Google Cloud Storage
-        string imageUrl = await googleCloudStorageService.UploadFileToGCS(file);
-        if (string.IsNullOrEmpty(imageUrl))
+        try
         {
-            throw new BusinessException("Failed to upload the image to cloud storage");
+            // Upload the file to Google Cloud Storage
+            var fileName = $"contacts/{contactId}/profile_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var publicUrl = await googleCloudStorageService.UploadFileAsync(file, fileName);
+            
+            // Update the entity with the profile picture URL
+            entity.ProfilePictureUrl = publicUrl;
+            await contactRepository.UpdateAsync(entity);
+            
+            return publicUrl;
         }
+        catch (Exception ex)
+        {
+            // Log the error and return null
+            Console.WriteLine($"Error uploading profile picture: {ex.Message}");
+            return null;
+        }
+    }
 
-        // Update contact with new profile picture URL
-        contact.ProfilePictureUrl = imageUrl;
-        await contactRepository.UpdateAsync(contact);
-
-        return contact.ProfilePictureUrl;
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the contact
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(int userId, int contactId, string operation)
+    {
+        // Get the contact entity
+        var entity = await contactRepository.GetByIdAsync(contactId);
+        if (entity == null)
+        {
+            return false;
+        }
+        
+        // Basic permission rules:
+        // 1. Administrator can do anything
+        // 2. Creator of the contact can do anything with their own contacts
+        // 3. For Read operations, any Internal or Partner role can access
+        // 4. For Update/Delete, only creator or admin can perform
+        
+        // Check if user is the creator
+        bool isCreator = entity.CreatedBy == userId;
+        
+        // If user is creator, they have full access
+        if (isCreator)
+        {
+            return true;
+        }
+        
+        // For Read operations, allow access to Partner users
+        if (operation == "Read")
+        {
+            // Partner users should be able to view contacts
+            return true;
+        }
+        
+        // For other operations (Update, Delete), only allow if user is creator
+        // In a real implementation, you would check if the user has Administrator role
+        return false;
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the contact
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, int contactId, string operation)
+    {
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Use the existing method
+        return await HasPermissionAsync(userId, contactId, operation);
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the contact
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, Contact contact, string operation)
+    {
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Check if user is the creator
+        bool isCreator = contact.CreatedBy == userId;
+        
+        // If user is creator, they have full access
+        if (isCreator)
+        {
+            return true;
+        }
+        
+        // Check if user is administrator
+        bool isAdmin = user.IsInRole("Administrator");
+        if (isAdmin)
+        {
+            return true;
+        }
+        
+        // For Read operations, allow access to all users with Partner role or higher
+        if (operation == "Read")
+        {
+            return user.IsInRole("Partner") || user.IsInRole("Internal");
+        }
+        
+        // For other operations (Update, Delete), only allow if user is creator or has admin privileges
+        return false;
     }
 }

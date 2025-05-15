@@ -12,6 +12,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.UNOPSDomain.Authorization;
+using UNOPS.PAO.UNOPSDataAccess.Context;
 
 namespace UNOPS.PAO.UNOPSPresentation.Controllers;
 
@@ -22,15 +24,18 @@ public class DevelopmentController : ControllerBase
     private readonly IWebHostEnvironment _environment;
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly RoleManager<PAOIdentityRole> _roleManager;
+    private readonly UNOPSAppDbContext _context;
 
     public DevelopmentController(
         IWebHostEnvironment environment,
         UserManager<PAOIdentityUser> userManager,
-        RoleManager<PAOIdentityRole> roleManager)
+        RoleManager<PAOIdentityRole> roleManager,
+        UNOPSAppDbContext context)
     {
         _environment = environment;
         _userManager = userManager;
         _roleManager = roleManager;
+        _context = context;
     }
 
     [HttpGet("users")]
@@ -686,4 +691,74 @@ public class DevelopmentController : ControllerBase
         
         return Ok(results);
     }
+
+    [HttpPost("setup-row-level-filters")]
+    public async Task<IActionResult> SetupRowLevelFilters()
+    {
+        if (!_environment.IsDevelopment())
+            return NotFound();
+            
+        // First, clear existing entity permissions
+        var existingPermissions = await _context.EntityPermissions.ToListAsync();
+        _context.EntityPermissions.RemoveRange(existingPermissions);
+        await _context.SaveChangesAsync();
+        
+        // Define basic entity permissions for different roles
+        var permissions = new[]
+        {
+            // Administrator has access to everything (not needed in EntityPermissions)
+            
+            // Internal role permissions
+            new { EntityName = "Partner", Action = "Read", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
+            new { EntityName = "Partner", Action = "Create", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
+            new { EntityName = "Partner", Action = "Update", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
+            new { EntityName = "Partner", Action = "Delete", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
+            
+            // External role permissions with row-level filters
+            new { EntityName = "Partner", Action = "Read", RoleName = "External", PropertyName = (string)null, FilterExpression = "IsPublic == true" },
+            new { EntityName = "Partner", Action = "Create", RoleName = "External", PropertyName = (string)null, FilterExpression = (string)null },
+            new { EntityName = "Partner", Action = "Update", RoleName = "External", PropertyName = (string)null, FilterExpression = "CreatedBy == CurrentUser" },
+            
+            // Partner role permissions with row-level filters
+            new { EntityName = "Partner", Action = "Read", RoleName = "Partner", PropertyName = (string)null, FilterExpression = "CreatedBy == CurrentUser" },
+            new { EntityName = "Partner", Action = "Update", RoleName = "Partner", PropertyName = (string)null, FilterExpression = "CreatedBy == CurrentUser" },
+            
+            // Contact permissions
+            new { EntityName = "Contact", Action = "Read", RoleName = "Internal", PropertyName = (string)null, FilterExpression = (string)null },
+            new { EntityName = "Contact", Action = "Read", RoleName = "External", PropertyName = (string)null, FilterExpression = "IsPublic == true" },
+            new { EntityName = "Contact", Action = "Read", RoleName = "Partner", PropertyName = (string)null, FilterExpression = "CreatedBy == CurrentUser" }
+        };
+        
+        // Add permissions to the database
+        foreach (var permission in permissions)
+        {
+            _context.EntityPermissions.Add(new UNOPS.PAO.UNOPSDomain.Authorization.EntityPermission
+            {
+                EntityName = permission.EntityName,
+                Action = permission.Action,
+                RoleName = permission.RoleName,
+                PropertyName = permission.PropertyName,
+                FilterExpression = permission.FilterExpression
+            });
+        }
+        
+        await _context.SaveChangesAsync();
+        
+        return Ok(new
+        {
+            Success = true,
+            Message = "Row-level filtering permissions configured successfully",
+            PermissionsCount = permissions.Length
+        });
+    }
+
+}
+
+// Class for testing row-level filtering
+public class TestEntity
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public bool IsPublic { get; set; }
+    public string CreatedBy { get; set; } = string.Empty;
 } 

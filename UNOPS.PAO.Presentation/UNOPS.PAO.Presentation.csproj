@@ -36,6 +36,7 @@
     <ProjectReference Include="..\UNOPS.PAO.Domain\UNOPS.PAO.Domain.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.GoogleServices\UNOPS.PAO.GoogleServices.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.UNOPSBusiness\UNOPS.PAO.UNOPSBusiness.csproj" />
   </ItemGroup>
 
 </Project>

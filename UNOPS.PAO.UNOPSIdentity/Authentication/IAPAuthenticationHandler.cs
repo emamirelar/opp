@@ -254,10 +254,10 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             // For App Engine/Cloud Run services
             string audience;
             
-            if (!string.IsNullOrEmpty(Options.ProjectNumber) && !string.IsNullOrEmpty(Options.ProjectId))
+            if (!string.IsNullOrEmpty(Options.ProjectNumber) && !string.IsNullOrEmpty(Options.BackendServiceId))
             {
                 // For backend services
-                audience = $"/projects/{Options.ProjectNumber}/global/backendServices/{Options.ProjectId}";
+                audience = $"/projects/{Options.ProjectNumber}/global/backendServices/{Options.BackendServiceId}";
             }
             else if (!string.IsNullOrEmpty(Options.ProjectNumber))
             {
@@ -395,6 +395,7 @@ public class IAPAuthenticationOptions : AuthenticationSchemeOptions
     public bool AllowHeaderFallback { get; set; } = false;
     public string ProjectNumber { get; set; } = string.Empty;
     public string ProjectId { get; set; } = string.Empty;
+    public string BackendServiceId { get; set; } = string.Empty;
     public string HealthCheckPath { get; set; } = "/health";
     
     // Domain-specific role mappings (e.g., unops.org -> Internal)

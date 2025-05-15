@@ -149,8 +149,16 @@ export class ContactListComponent implements OnInit {
       });
   }
 
-  handleOnOpenRecordDetails(record: Contact) {
-    this.router.navigate(['contact', record.id]);
+  handleOnOpenRecordDetails(record: any) {
+    if (record?.data) {
+      record = record.data;
+    }
+    if (record && record.id !== undefined && record.id !== null) {
+      console.log('Navigating to contact:', record.id);
+      this.router.navigate(['partnerships/contacts', record.id.toString()]);
+    } else {
+      console.error('Cannot navigate: record or record.id is undefined', record);
+    }
   }
 
   handleOnRecordDelete(record: Contact) {
@@ -170,11 +178,14 @@ export class ContactListComponent implements OnInit {
   }
 
   _handleOnRecordCreation(newRecordData: Contact) {
-    if (newRecordData?.id) {
+    if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
       // Refresh the list before navigating to show the new contact
       window.dispatchEvent(new CustomEvent('refresh-listview'));
       // Navigate to the new contact details
-      this.router.navigate(['contact', newRecordData.id]);
+      console.log('Navigating to newly created contact:', newRecordData.id);
+      this.router.navigate(['partnerships/contacts', newRecordData.id.toString()]);
+    } else {
+      console.error('Cannot navigate to created contact: id is undefined', newRecordData);
     }
   }
 

@@ -32,6 +32,7 @@ using UNOPS.PAO.UNOPSPresentation.Authorization;
 using UNOPS.PAO.UNOPSDataAccess.Seed;
 using UNOPS.PAO.UNOPSPresentation.Middleware;
 using System.IO;
+using UNOPS.PAO.Presentation.Security;
 
 namespace UNOPS.PAO.Server;
 
@@ -187,6 +188,12 @@ public class Startup
         // Register the shared permission service
         services.AddScoped<SharedPermissionService>();
         services.AddScoped<IPermissionService>(sp => sp.GetRequiredService<SharedPermissionService>());
+        
+        // Register EntityPermissionHelper
+        services.AddScoped<EntityPermissionHelper>();
+        
+        // Register authorization handlers
+        ConfigureAuthorization(services);
 
         // Configure authentication with support for both IAP and cookies
         services.AddAuthentication(options =>
@@ -224,6 +231,7 @@ public class Startup
                 options.AllowHeaderFallback = iapConfig.GetValue<bool>("AllowHeaderFallback", false);
                 options.ProjectNumber = iapConfig.GetValue<string>("ProjectNumber", "");
                 options.ProjectId = iapConfig.GetValue<string>("ProjectId", "");
+                options.BackendServiceId = iapConfig.GetValue<string>("BackendServiceId", "");
                 options.HealthCheckPath = iapConfig.GetValue<string>("HealthCheckPath", "/health");
                 
                 // Configure domain role mappings
@@ -437,5 +445,27 @@ public class Startup
 
             services.AddSingleton(registerType, register);
         }
+    }
+
+    private void ConfigureAuthorization(ServiceRegistry services)
+    {
+        services.AddAuthorizationBuilder()
+            .AddPolicy("RequireAdministratorRole", policy => 
+                policy.RequireRole("Administrator"))
+            .AddPolicy("RequireInternalRole", policy => 
+                policy.RequireRole("Administrator", "Internal"))
+            .AddPolicy("RequirePartnerRole", policy => 
+                policy.RequireRole("Administrator", "Internal", "Partner"));
+        
+        // Add the entity permission authorization handler
+        services.AddScoped<IAuthorizationHandler, EntityPermissionHandler>();
+        
+        // Add all your entity-specific authorization handlers
+        services.AddScoped<IAuthorizationHandler, ContactAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, ProfileAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, PartnerTreeAuthorizationHandler>();
+        
+        // Add the wrapping authorization handler
+        services.AddScoped<IAuthorizationHandlerWrapper, AuthorizationHandlerWrapper>();
     }
 }

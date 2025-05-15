@@ -1,29 +1,41 @@
 ﻿namespace UNOPS.PAO.Presentation.Controllers;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Utilities.Helpers;
 
 [Route("/")]
-[ApiController]
-public class ConfigurationController : ControllerBase
+public class ConfigurationController : BaseController
 {
-    private readonly IConfiguration configuration;
-    public ConfigurationController(SystemConfigurationManager manager)
+    private readonly IConfiguration _configuration;
+    
+    public ConfigurationController(
+        SystemConfigurationManager manager,
+        ILogger<ConfigurationController> logger,
+        IAuthorizationService authorizationService,
+        UserResolverService<int> userResolverService)
+        : base(logger, authorizationService, userResolverService)
     {
-        configuration = manager.GetConfiguration();
+        _configuration = manager.GetConfiguration();
     }
 
     [HttpGet(APIDictionary.Configuration)]
-    public ConfigurationResponse Get()
+    public ActionResult Get()
     {
-        var googleSettings = configuration.GetSection("GoogleAuthSettings");
-        return new ConfigurationResponse()
+        return HandleOperationAsync(async () => 
         {
-            GoogleClientId = googleSettings.GetSection("clientId").Value
-            , GoogleApiKey = googleSettings.GetSection("apiKey").Value
-        };
+            var googleSettings = _configuration.GetSection("GoogleAuthSettings");
+            return await Task.FromResult(new ConfigurationResponse()
+            {
+                GoogleClientId = googleSettings.GetSection("clientId").Value,
+                GoogleApiKey = googleSettings.GetSection("apiKey").Value
+            });
+        }).Result;
     }
 }

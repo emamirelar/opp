@@ -17,97 +17,113 @@ using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Domain.Entities;
 using Google.Cloud.Vision.V1;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Domain.Infrastructure;
 
 [Route("/")]
-[ApiController]
-[Authorize(AuthenticationSchemes = "IAP")]
-public class GeminiController : ControllerBase
+public class GeminiController : BaseController
 {
-    private readonly IGeminiManager manager;
-    private UserResolverService<int> userResolverService;
-    private int currentUserId => userResolverService.GetCurrentUserId();
+    private readonly IGeminiManager _manager;
 
-    public GeminiController(IManagerWrapper manager, UserResolverService<int> userResolverService)
+    public GeminiController(
+        IManagerWrapper manager, 
+        UserResolverService<int> userResolverService,
+        IAuthorizationService authorizationService,
+        ILogger<GeminiController> logger)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.manager = manager.GeminiManager;
-        this.userResolverService = userResolverService;
+        _manager = manager.GeminiManager;
     }
 
     [HttpPost(APIDictionary.AiAssistantGetUserSessions)]
-    public async Task<ActionResult> GetUserSessions() {
-        var sessionData = manager.GetUserSessions(currentUserId).ToList();
-        return Ok(sessionData);
+    public async Task<ActionResult> GetUserSessions() 
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            var sessionData = _manager.GetUserSessions(CurrentUserId).ToList();
+            return sessionData;
+        });
     }
 
     [HttpPost(APIDictionary.AiAssistantGetSession)]
-    public async Task<ActionResult> GetSessionDetails([FromBody] GeminiSessionRequest req) {
-        var sessionData = manager.GetSessionDataWithChats(req.sessionId, currentUserId).ToList();
-        return Ok(sessionData);
+    public async Task<ActionResult> GetSessionDetails([FromBody] GeminiSessionRequest req) 
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            var sessionData = _manager.GetSessionDataWithChats(req.sessionId, CurrentUserId).ToList();
+            return sessionData;
+        });
     }
 
     [HttpPost(APIDictionary.AiAssistantCreateSession)]
-    public async Task<ActionResult> CreateSession() {
-        var sessionId = manager.CreateNewSession(currentUserId);
-        return Ok(new {sessionId = sessionId});
+    public async Task<ActionResult> CreateSession() 
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            var sessionId = _manager.CreateNewSession(CurrentUserId);
+            return new { sessionId = sessionId };
+        });
     }
 
     [HttpPost(APIDictionary.AiAssistantEndSession)]
     public async Task<ActionResult> EndSession([FromBody] GeminiSessionRequest req)
     {
-        var success = manager.EndSession(req.sessionId);
-        return Ok(new { success = success });
-
+        return await HandleOperationAsync(async () => 
+        {
+            var success = _manager.EndSession(req.sessionId);
+            return new { success = success };
+        });
     }
 
     [HttpPost(APIDictionary.AiAssistantChat)]
     public async Task<ActionResult> ChatWithGemini([FromForm] GeminiAssistantRequest req) 
     {
-        if (req == null || req?.sessionId == Guid.Empty)
+        return await HandleOperationAsync(async () => 
         {
-            return BadRequest("Invalid request.");
-        }
-
-        if (req.File != null)
-        {
-            var fileType = manager.FindFileType(req.File);
-            if (string.IsNullOrEmpty(fileType)) {
-                return StatusCode(500, new { message = "File type not compatible" });
+            if (req == null || req?.sessionId == Guid.Empty)
+            {
+                throw new BusinessException("Invalid request.");
             }
-        }
 
-        var response = await manager.ProcessChatWithGemini(req, currentUserId);
-        
-        return Ok(response);
+            if (req.File != null)
+            {
+                var fileType = _manager.FindFileType(req.File);
+                if (string.IsNullOrEmpty(fileType)) 
+                {
+                    throw new BusinessException("File type not compatible");
+                }
+            }
+
+            return await _manager.ProcessChatWithGemini(req, CurrentUserId);
+        });
     }
 
     [HttpPost(APIDictionary.GeminiFileScan)]
-    public async Task<ActionResult> ScanFile([FromForm] GeminiFileRequest req) {
-        try
+    public async Task<ActionResult> ScanFile([FromForm] GeminiFileRequest req) 
+    {
+        return await HandleOperationAsync(async () => 
         {
             if (req?.File == null || req?.File.Length == 0)
             {
-                return BadRequest(new { message = "No valid file detected." });
+                throw new BusinessException("No valid file detected.");
             }
 
-            string fileType = manager.FindFileType(req.File);
+            string fileType = _manager.FindFileType(req.File);
 
-            if (string.IsNullOrEmpty(fileType)) {
-                return StatusCode(500, new { message = "File type not compatible" });
+            if (string.IsNullOrEmpty(fileType)) 
+            {
+                throw new BusinessException("File type not compatible");
             }
 
-            string response = await manager.ScanFileForGeminiProcessing(req);
+            string response = await _manager.ScanFileForGeminiProcessing(req);
 
             if (string.IsNullOrEmpty(response))
             {
-                return NotFound(new { message = $"Prompt configuration for the screen is not found." });
+                throw new BusinessException("Prompt configuration for the screen is not found.");
             }
 
-            return Ok(response.Trim());
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while processing the file.", details = ex.Message });
-        }
+            return response.Trim();
+        });
     }
 
     [HttpPost(APIDictionary.GeminiProcessDataSummary)]
@@ -115,92 +131,75 @@ public class GeminiController : ControllerBase
     [Authorize(AuthenticationSchemes = "IAP")]
     public async Task<ActionResult> ProcessDataRelatedSummaryDetails([FromBody] GeminiProcessDataRequest req)
     {
-        try {
+        return await HandleOperationAsync(async () => 
+        {
             if (req == null || req?.Id == null)
             {
-                return BadRequest(new { message = "Invalid request" });
+                throw new BusinessException("Invalid request");
             }
 
-            var response = await manager.ProcessDataRelatedSummaryDetails(req);
+            var response = await _manager.ProcessDataRelatedSummaryDetails(req);
             
             if (string.IsNullOrEmpty(response))
             {
-                return NotFound(new { message = $"Prompt configuration for the screen is not found." });
+                throw new BusinessException("Prompt configuration for the screen is not found.");
             }
 
-            return Ok(response.Trim());
-
-        } catch (Exception ex) {
-            return BadRequest(new { message = ex.Message });
-        }
+            return response.Trim();
+        });
     }
 
     [HttpPost(APIDictionary.AiAssistantAccessibility)]
     public async Task<ActionResult> UpdateAiAssistantAccessibility([FromBody] GeminiAccessibilityRequest req)
     {
-        try {
+        return await HandleOperationAsync(async () => 
+        {
             if (req == null || req?.SessionId == Guid.Empty)
             {
-                return BadRequest(new { message = "Invalid request" });
+                throw new BusinessException("Invalid request");
             }
-            var success = await manager.UpdateAiAssistantAccessibility(req);
-            return Ok(new { success = success });
-
-        } catch(Exception ex) {
-            return BadRequest(new { message = ex.Message });
-        }
+            var success = await _manager.UpdateAiAssistantAccessibility(req);
+            return new { success = success };
+        });
     }
 
     [HttpGet(APIDictionary.GenerateEmbeddings)]
     public async Task<ActionResult> GenerateAndStoreEmbeddings(string? entityName)
     {
-        try
+        return await HandleOperationAsync(async () => 
         {
-            var result = await manager.GenerateEmbeddings(entityName);
-
-            return Ok(new { message = $"Embeddings generated and published'." });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while generating embeddings.", details = ex.Message });
-        }
+            await _manager.GenerateEmbeddings(entityName);
+            return new { message = $"Embeddings generated and published'." };
+        });
     }
 
     [HttpPost(APIDictionary.BulkUpload)]
-    public async Task<ActionResult> BulkUpload([FromBody] BulkUploadRequest req) {
-        try {
+    public async Task<ActionResult> BulkUpload([FromBody] BulkUploadRequest req) 
+    {
+        return await HandleOperationAsync(async () => 
+        {
             if (req == null || string.IsNullOrEmpty(req.Type))
             {
-                return BadRequest("Invalid request.");
+                throw new BusinessException("Invalid request.");
             }
 
             // Call the updated BulkInsertRecordsAsync method
-            string response = await manager.BulkInsertRecordsAsync(req);
-
-            return Ok(new { message = response });
-        } 
-        catch (Exception ex) {
-            return BadRequest(new { message = ex.Message });
-        }
+            string response = await _manager.BulkInsertRecordsAsync(req);
+            return new { message = response };
+        });
     }
 
     [HttpPost(APIDictionary.AnalyseFile)]
     public async Task<ActionResult> AnalyseFile([FromBody]AnalyseFileRequest request)
     {
-        try
+        return await HandleOperationAsync(async () => 
         {
             if (request == null)
             {
-                return BadRequest(new { message = "Invalid request." });
+                throw new BusinessException("Invalid request.");
             }
 
-            var response = await manager.ExtractDataAfterAnalysis(request, currentUserId);
-
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred while processing the file.", details = ex.Message });
-        }
+            return await _manager.ExtractDataAfterAnalysis(request, CurrentUserId);
+        });
     }
 }

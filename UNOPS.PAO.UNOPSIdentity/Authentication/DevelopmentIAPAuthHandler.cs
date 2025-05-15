@@ -13,6 +13,7 @@ public class DevelopmentIAPAuthHandler : IMiddleware
     private readonly IWebHostEnvironment _environment;
     private readonly IConfiguration _configuration;
     private readonly ILogger<DevelopmentIAPAuthHandler> _logger;
+    private string _lastProcessedEmail = string.Empty;
 
     public DevelopmentIAPAuthHandler(
         IWebHostEnvironment environment,
@@ -40,6 +41,19 @@ public class DevelopmentIAPAuthHandler : IMiddleware
                 if (context.Request.Cookies.TryGetValue("dev-user-email", out var apiCookieEmail) || 
                     context.Request.Cookies.TryGetValue("DevIAPAuth", out apiCookieEmail))
                 {
+                    // Check if user has changed (previously processed a different email)
+                    bool isUserChanged = !string.IsNullOrEmpty(_lastProcessedEmail) && 
+                                        !string.Equals(_lastProcessedEmail, apiCookieEmail, StringComparison.OrdinalIgnoreCase);
+                    
+                    if (isUserChanged)
+                    {
+                        _logger.LogWarning("User change detected! From {OldEmail} to {NewEmail}", 
+                            _lastProcessedEmail, apiCookieEmail);
+                    }
+                    
+                    // Remember the current user
+                    _lastProcessedEmail = apiCookieEmail;
+                    
                     _logger.LogInformation("Setting IAP headers for API call: {Path} with dev user: {Email}", 
                         context.Request.Path, apiCookieEmail);
                     
@@ -47,15 +61,20 @@ public class DevelopmentIAPAuthHandler : IMiddleware
                     context.Request.Headers.Remove("X-Goog-Authenticated-User-Email");
                     context.Request.Headers.Remove("X-Goog-Iap-Jwt-Assertion");
                     context.Request.Headers.Remove("X-Dev-IAP-Simulation");
+                    context.Request.Headers.Remove("X-Dev-Auth-Timestamp");
                     
                     // Add the headers with new values
                     context.Request.Headers.Append("X-Goog-Authenticated-User-Email", $"accounts.google.com:{apiCookieEmail}");
                     context.Request.Headers.Append("X-Goog-Iap-Jwt-Assertion", "dev-jwt-placeholder");
                     context.Request.Headers.Append("X-Dev-IAP-Simulation", "true");
+                    
+                    // Add a timestamp to prevent caching of authentication
+                    context.Request.Headers.Append("X-Dev-Auth-Timestamp", DateTime.UtcNow.Ticks.ToString());
                 }
                 else
                 {
                     _logger.LogWarning("No dev cookie found for API call: {Path}", context.Request.Path);
+                    _lastProcessedEmail = string.Empty;
                 }
                 
                 await next(context);
@@ -80,6 +99,19 @@ public class DevelopmentIAPAuthHandler : IMiddleware
             {
                 _logger.LogInformation("Found dev cookie: {Email}", cookieEmail);
                 
+                // Check if user has changed
+                bool isUserChanged = !string.IsNullOrEmpty(_lastProcessedEmail) && 
+                                    !string.Equals(_lastProcessedEmail, cookieEmail, StringComparison.OrdinalIgnoreCase);
+                
+                if (isUserChanged)
+                {
+                    _logger.LogWarning("User change detected! From {OldEmail} to {NewEmail}", 
+                        _lastProcessedEmail, cookieEmail);
+                }
+                
+                // Update the last processed email
+                _lastProcessedEmail = cookieEmail;
+                
                 // Always set the IAP headers when we have a dev cookie
                 string devEmail = cookieEmail;
                 
@@ -97,10 +129,19 @@ public class DevelopmentIAPAuthHandler : IMiddleware
                     });
                 }
                 
+                // Clear any existing headers first
+                context.Request.Headers.Remove("X-Goog-Authenticated-User-Email");
+                context.Request.Headers.Remove("X-Goog-Iap-Jwt-Assertion");
+                context.Request.Headers.Remove("X-Dev-IAP-Simulation");
+                context.Request.Headers.Remove("X-Dev-Auth-Timestamp");
+                
                 // Directly set the IAP headers that the IAPAuthenticationHandler expects
                 context.Request.Headers["X-Goog-Authenticated-User-Email"] = $"accounts.google.com:{devEmail}";
                 context.Request.Headers["X-Goog-Iap-Jwt-Assertion"] = "dev-jwt-placeholder";
                 context.Request.Headers["X-Dev-IAP-Simulation"] = "true";
+                
+                // Add a timestamp to prevent caching of authentication
+                context.Request.Headers["X-Dev-Auth-Timestamp"] = DateTime.UtcNow.Ticks.ToString();
                 
                 _logger.LogInformation("Development IAP headers set for user: {Email}", devEmail);
                 
@@ -117,6 +158,13 @@ public class DevelopmentIAPAuthHandler : IMiddleware
             else
             {
                 _logger.LogWarning("No dev cookies (dev-user-email or DevIAPAuth) found in request");
+                
+                // Reset last processed email if we no longer have cookies
+                if (!string.IsNullOrEmpty(_lastProcessedEmail))
+                {
+                    _logger.LogWarning("Clearing last processed user email: {Email}", _lastProcessedEmail);
+                    _lastProcessedEmail = string.Empty;
+                }
                 
                 // If no dev cookie and trying to access a page that needs auth, 
                 // redirect to dev login instead of regular login

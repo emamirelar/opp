@@ -13,43 +13,38 @@ using UNOPS.PAO.Presentation.Security;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using System;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Presentation;
 
 [Route("/")]
-[ApiController]
-[Authorize(AuthenticationSchemes = "IAP")]
-public class PartnerController : ControllerBase
+public class PartnerController : BaseController
 {
-    private IPartnerManager manager;
-    private IAuthorizationService authorizationService;
+    private readonly IPartnerManager _manager;
 
-    private UserResolverService<int> userResolverService;
-
-    private int currentUserId => userResolverService.GetCurrentUserId();
-
-    public PartnerController(IManagerWrapper manager, UserResolverService<int> userResolverService, IAuthorizationService authorizationService)
+    public PartnerController(
+        IManagerWrapper manager, 
+        UserResolverService<int> userResolverService, 
+        IAuthorizationService authorizationService,
+        ILogger<PartnerController> logger)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.manager = manager.PartnerManager;
-        this.userResolverService = userResolverService;
-        this.authorizationService = authorizationService;
+        _manager = manager.PartnerManager;
     }
 
     [HttpPost(APIDictionary.Partner)]
-    // Internal call: Create a Partner
+    [AutoAuthorize]
     public async Task<IActionResult> Create([FromBody] PartnerRequest req)
     {
-        var result = await manager.CreatePartnerAsync(req);
-
+        var result = await _manager.CreatePartnerAsync(req);
         if (result == null)
         {
             return BadRequest();
         }
-
         return CreatedAtAction(nameof(Create), result.Id, result);
     }
 
     [HttpGet(APIDictionary.Partner)]
-    // Internal call: get Partners created by logged-in user
-    // TODO add permissions
+    [AutoAuthorize]
     public ActionResult<PaginationResponse<PartnerModel>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
     {
         if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
@@ -69,76 +64,63 @@ public class PartnerController : ControllerBase
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { error = ex.Message, searchCriteria });
+                throw new BusinessException(ex.Message);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = "Failed to process advanced search criteria", details = ex.Message, searchCriteria });
+                throw new BusinessException($"Failed to process advanced search criteria: {ex.Message}");
             }
         }
 
         var specification = new PartnerCompositeSpecification(request);
-        return manager.GetPartnersWithSpecification(currentUserId, specification, request);
+        return _manager.GetPartnersWithSpecification(CurrentUserId, specification, request);
     }
 
     [HttpGet(APIDictionary.Partner + "/{id}")]
-    // Internal call: Partner details
-    // TODO add permissions
-
-    public async Task<ActionResult> Get(int id)
+    [AutoAuthorize]
+    public async Task<IActionResult> Get(int id)
     {
-        var x = await manager.GetPartner(currentUserId, id);
-
-        if (x == null)
+        var partner = await _manager.GetPartner(CurrentUserId, id);
+        if (partner == null)
         {
             return NotFound();
         }
 
-        return Ok(x);
+        // Return partner data directly using JsonResult to avoid the wrapper metadata
+        return new JsonResult(partner);
     }
 
     [HttpPut(APIDictionary.Partner)]
-    // Internal call: update Partner
+    [AutoAuthorize]
     public async Task<IActionResult> Update([FromBody] UpdatePartnerRequest req)
     {
-        await manager.UpdatePartnerAsync(currentUserId, req);
-
+        await _manager.UpdatePartnerAsync(CurrentUserId, req);
         return NoContent();
     }
 
     [HttpDelete(APIDictionary.Partner + "/{id}")]
-    // Internal call: delete Partner
+    [AutoAuthorize]
     public async Task<IActionResult> Delete(int id)
     {
-        await manager.DeletePartnerAsync(currentUserId, id);
+        await _manager.DeletePartnerAsync(CurrentUserId, id);
         return NoContent();
     }
 
     [HttpGet(APIDictionary.Partner + "/{id}/permissions")]
+    [AutoAuthorize]
     public async Task<IActionResult> PermissionsGet(int id)
     {
-        var Partner = await manager.GetPartner(currentUserId, id);
-
-        if (Partner == null)
+        var partner = await _manager.GetPartner(CurrentUserId, id);
+        if (partner == null)
         {
             return NotFound();
         }
 
-        var canReadResult = await authorizationService.AuthorizeAsync(User, Partner, Operations.Read);
-        var canUpdateResult = await authorizationService.AuthorizeAsync(User, Partner, Operations.Update);
-        var canCreateResult = await authorizationService.AuthorizeAsync(User, Partner, Operations.Create);
-        var canDeleteResult = await authorizationService.AuthorizeAsync(User, Partner, Operations.Delete);
-
-        return Ok(new
-        {
-            CanRead = canReadResult.Succeeded,
-            CanUpdate = canUpdateResult.Succeeded,
-            CanCreate = canCreateResult.Succeeded,
-            CanDelete = canDeleteResult.Succeeded
-        });
+        return Ok(await GetEntityPermissionsAsync(partner));
     }
 
     [HttpPost(APIDictionary.Partner + "/{id}/logo")]
+    [AutoAuthorize]
     public async Task<IActionResult> UploadLogo(int id, IFormFile file)
     {
         if (file == null || file.Length == 0)
@@ -159,18 +141,7 @@ public class PartnerController : ControllerBase
             return BadRequest("Invalid file type. Only JPEG, PNG, and WEBP files are allowed.");
         }
 
-        try 
-        {
-            var result = await manager.UpdatePartnerLogoAsync(id, file);
-            return Ok(new { imageUrl = result });
-        }
-        catch (BusinessException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch
-        {
-            return StatusCode(500, "An error occurred while processing your request");
-        }
+        var result = await _manager.UpdatePartnerLogoAsync(id, file);
+        return Ok(new { imageUrl = result });
     }
 }
