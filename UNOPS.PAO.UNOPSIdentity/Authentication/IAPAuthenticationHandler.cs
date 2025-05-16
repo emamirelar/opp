@@ -249,40 +249,71 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         
         var jwt = jwtValues.ToString();
         
-        try
+        // Generate all possible audience strings based on configuration
+        var audiences = new List<string>();
+        
+        // For Cloud Run services
+        if (!string.IsNullOrEmpty(Options.ProjectNumber) && 
+            !string.IsNullOrEmpty(Options.Region) && 
+            !string.IsNullOrEmpty(Options.ServiceName))
         {
-            // For App Engine/Cloud Run services
-            string audience;
-            
-            if (!string.IsNullOrEmpty(Options.ProjectNumber) && !string.IsNullOrEmpty(Options.BackendServiceId))
-            {
-                // For backend services
-                audience = $"/projects/{Options.ProjectNumber}/global/backendServices/{Options.BackendServiceId}";
-            }
-            else if (!string.IsNullOrEmpty(Options.ProjectNumber))
-            {
-                // Fallback to project number only (for App Engine)
-                audience = $"/projects/{Options.ProjectNumber}";
-            }
-            else
-            {
-                _logger.LogError("Missing ProjectNumber in configuration");
-                return false;
-            }
-            
-            var settings = new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = new[] { audience }
-            };
-            
-            var payload = await GoogleJsonWebSignature.ValidateAsync(jwt, settings);
-            return payload != null;
+            audiences.Add($"/projects/{Options.ProjectNumber}/locations/{Options.Region}/services/{Options.ServiceName}");
         }
-        catch (Exception ex)
+        
+        // For backend services
+        if (!string.IsNullOrEmpty(Options.ProjectNumber) && 
+            !string.IsNullOrEmpty(Options.BackendServiceId))
         {
-            _logger.LogError(ex, "Error validating IAP JWT");
+            audiences.Add($"/projects/{Options.ProjectNumber}/global/backendServices/{Options.BackendServiceId}");
+        }
+        
+        // Fallback to project number only
+        if (!string.IsNullOrEmpty(Options.ProjectNumber))
+        {
+            audiences.Add($"/projects/{Options.ProjectNumber}");
+        }
+        
+        if (!audiences.Any())
+        {
+            _logger.LogError("No valid audience configurations found. Check IAP settings.");
             return false;
         }
+        
+        _logger.LogDebug("Will try validating IAP JWT with the following audiences: {Audiences}", string.Join(", ", audiences));
+        
+        // Try each audience format until one succeeds
+        foreach (var audience in audiences)
+        {
+            try
+            {
+                var settings = new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { audience }
+                };
+                
+                _logger.LogDebug("Attempting JWT validation with audience: {Audience}", audience);
+                var payload = await GoogleJsonWebSignature.ValidateAsync(jwt, settings);
+                
+                if (payload != null)
+                {
+                    _logger.LogInformation("JWT validation successful for user: {Email} using audience: {Audience}", 
+                        payload.Email, audience);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "JWT validation failed with audience {Audience}. Will try next audience if available.", audience);
+                // Continue to the next audience
+            }
+        }
+        
+        // If we get here, all validation attempts failed
+        _logger.LogError("JWT validation failed with all audience formats: {Audiences}. Headers: {Headers}",
+            string.Join(", ", audiences),
+            string.Join(", ", Request.Headers.Select(h => $"{h.Key}: (len={h.Value.ToString().Length})")));
+        
+        return false;
     }
     
     private async Task AssignDomainSpecificRolesAsync(PAOIdentityUser user)
@@ -397,6 +428,8 @@ public class IAPAuthenticationOptions : AuthenticationSchemeOptions
     public string ProjectId { get; set; } = string.Empty;
     public string BackendServiceId { get; set; } = string.Empty;
     public string HealthCheckPath { get; set; } = "/health";
+    public string Region { get; set; } = string.Empty;
+    public string ServiceName { get; set; } = string.Empty;
     
     // Domain-specific role mappings (e.g., unops.org -> Internal)
     public Dictionary<string, string> DomainRoles { get; set; } = new();

@@ -237,6 +237,10 @@ public class Startup
                 options.BackendServiceId = iapConfig.GetValue<string>("BackendServiceId", "");
                 options.HealthCheckPath = iapConfig.GetValue<string>("HealthCheckPath", "/health");
                 
+                // Add Cloud Run-specific settings
+                options.Region = iapConfig.GetValue<string>("Region", "");
+                options.ServiceName = iapConfig.GetValue<string>("ServiceName", "");
+                
                 // Configure domain role mappings
                 options.DomainRoles = new Dictionary<string, string>();
                 var domainMappings = iapConfig.GetSection("DomainRoles");
