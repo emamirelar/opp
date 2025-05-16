@@ -79,6 +79,9 @@ public class Startup
         // Add diagnostic logging middleware to check headers
         app.UseMiddleware<AuthenticationLoggingMiddleware>();
         
+        // Add IAP verification middleware first
+        app.UseIAPVerification();
+        
         // Add IAP simulation in development
         if (env.IsDevelopment())
         {
@@ -170,7 +173,10 @@ public class Startup
         services.AddScoped<IUserLookupService, UserLookupService>();
         services.AddScoped<IEmailToUserIdResolver>(sp => sp.GetRequiredService<IUserLookupService>());
         services.AddScoped(typeof(UserResolverService<int>));
-
+        
+        // Add services for IAP verification
+        services.AddIAPVerification();
+        
         // Add memory cache for permission caching
         services.AddMemoryCache();
         
@@ -197,7 +203,7 @@ public class Startup
         
         // Register authorization handlers
         ConfigureAuthorization(services);
-
+        
         // Configure authentication with support for both IAP and cookies
         services.AddAuthentication(options =>
             {

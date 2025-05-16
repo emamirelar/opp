@@ -301,9 +301,9 @@ export class AuthService {
     // Set checking flag
     this.isCheckingAuth = true;
     
-    // Check if we're in a development environment - only call the dev endpoint in dev
+    // Check if we're in a development environment
     const hostname = window.location.hostname;
-    const isDevelopment = hostname === 'localhost' || hostname.includes('dev-');
+    const isDevelopment = hostname === 'localhost' || hostname.includes('localhost') || hostname.startsWith('dev-');
     
     if (isDevelopment) {
       // Only make the dev simulation check call in development environments
@@ -328,9 +328,8 @@ export class AuthService {
         })
       );
     } else {
-      // In test/production, assume IAP is properly configured
-      // Use a more suitable endpoint for auth check, or assume authenticated if user has claims
-      return this.user().pipe(
+      // In test/production, use the user claims endpoint to check authentication
+      return this.http.get<UserClaim[]>('/user/claims').pipe(
         map(claims => {
           const isAuthenticated = claims.length > 0;
           
