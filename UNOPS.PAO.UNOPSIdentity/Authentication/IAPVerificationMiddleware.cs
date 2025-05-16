@@ -188,6 +188,10 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 throw new SecurityTokenException("JWT missing kid (key ID) header");
             }
             
+            // Log token information for debugging
+            _logger.LogDebug("JWT Header: {@JwtHeader}", jsonToken.Header);
+            _logger.LogDebug("JWT Claims: {@JwtClaims}", jsonToken.Claims.Select(c => new { c.Type, c.Value }));
+            
             // Get the public key for this kid
             var publicKey = await GetPublicKeyAsync(kid);
             
@@ -240,6 +244,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 throw new InvalidOperationException("No valid audience configuration found. Configure IAP:Audience or IAP:ProjectNumber");
             }
             
+            _logger.LogDebug("Trying JWT validation with audience formats: {@Audiences}", audiences);
+            
             // Try each audience until one works
             SecurityToken validatedToken = null;
             ClaimsPrincipal validatedPrincipal = null;
@@ -282,11 +288,44 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 throw lastException ?? new SecurityTokenException("JWT validation failed with all audience formats");
             }
             
-            // Extract the email claim from the validated token
-            var email = jsonToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+            // Extract the email claim from the validated token - try multiple possible claim types
+            string email = null;
+            
+            // Common claim types for email in IAP tokens
+            var emailClaimTypes = new[] { 
+                "email", 
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+                "preferred_username",
+                "unique_name",
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
+                "sub" // Sometimes the subject claim contains the email
+            };
+            
+            // Check all possible email claim types
+            foreach (var claimType in emailClaimTypes)
+            {
+                email = jsonToken.Claims.FirstOrDefault(c => c.Type == claimType)?.Value;
+                if (!string.IsNullOrEmpty(email))
+                {
+                    _logger.LogDebug("Found email claim in claim type: {ClaimType}", claimType);
+                    break;
+                }
+            }
+            
+            // If still no email, check for the subject claim which might have the email
             if (string.IsNullOrEmpty(email))
             {
-                // For external identities, the email might be in the gcip claim
+                var subClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                if (!string.IsNullOrEmpty(subClaim) && subClaim.Contains("@"))
+                {
+                    email = subClaim;
+                    _logger.LogDebug("Using subject claim as email: {Email}", email);
+                }
+            }
+            
+            // For external identities, the email might be in the gcip claim
+            if (string.IsNullOrEmpty(email))
+            {
                 var gcipClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "gcip")?.Value;
                 if (!string.IsNullOrEmpty(gcipClaim))
                 {
@@ -296,17 +335,50 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         if (gcipJson.RootElement.TryGetProperty("email", out var emailElement))
                         {
                             email = emailElement.GetString();
+                            _logger.LogDebug("Found email in gcip claim: {Email}", email);
                         }
                     }
-                    catch (JsonException)
+                    catch (JsonException ex)
                     {
-                        _logger.LogWarning("Failed to parse gcip claim for email");
+                        _logger.LogWarning(ex, "Failed to parse gcip claim for email");
                     }
+                }
+            }
+            
+            // Last resort: try to extract from any claim that looks like an email
+            if (string.IsNullOrEmpty(email))
+            {
+                foreach (var claim in jsonToken.Claims)
+                {
+                    if (claim.Value.Contains("@") && claim.Value.Contains("."))
+                    {
+                        email = claim.Value;
+                        _logger.LogDebug("Found potential email in claim {ClaimType}: {Email}", claim.Type, email);
+                        break;
+                    }
+                }
+            }
+            
+            // Check if we need to fall back to IAP header
+            if (string.IsNullOrEmpty(email) && context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
+            {
+                var emailHeader = emailHeaderValues.ToString();
+                if (emailHeader.Contains(':'))
+                {
+                    email = emailHeader.Split(':').Last();
+                    _logger.LogDebug("Used email from IAP header as fallback: {Email}", email);
+                }
+                else
+                {
+                    email = emailHeader;
                 }
             }
             
             if (string.IsNullOrEmpty(email))
             {
+                // Log all claims to help diagnose the issue
+                _logger.LogWarning("JWT missing email claim. Available claims: {@Claims}", 
+                    jsonToken.Claims.Select(c => new { c.Type, c.Value }));
                 throw new SecurityTokenException("JWT missing email claim");
             }
             
