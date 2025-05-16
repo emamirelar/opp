@@ -46,6 +46,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// </summary>
         /// <param name="context">Action executing context from action filter</param>
         /// <returns>True if authorized, false otherwise</returns>
+        [NonAction]
         public async Task<bool> AutoAuthorizeRequest(ActionExecutingContext context)
         {
             try
