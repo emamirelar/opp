@@ -48,7 +48,32 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             return AuthenticateResult.NoResult();
         }
         
-        // Validate IAP JWT if required
+        // Check if the JWT was already validated by the middleware
+        if (Request.Headers.TryGetValue("X-IAP-JWT-Validated", out var validatedHeader) && validatedHeader == "true")
+        {
+            _logger.LogDebug("JWT already validated by middleware, skipping validation");
+            
+            if (Request.Headers.TryGetValue("X-IAP-JWT-Email", out var validatedEmail) && !string.IsNullOrEmpty(validatedEmail))
+            {
+                // Use the pre-validated email directly
+                string userEmail = validatedEmail;
+                _logger.LogInformation("Using pre-validated email from middleware: {Email}", userEmail);
+                
+                // Process user normally with this email
+                var (user, isNewUser) = await GetOrCreateUserAsync(userEmail);
+                
+                if (user == null)
+                {
+                    _logger.LogWarning("Failed to get or create user for email: {Email}", userEmail);
+                    return AuthenticateResult.Fail("User not found and could not be created");
+                }
+                
+                var principal = await CreateAuthenticationPrincipalAsync(user);
+                return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
+            }
+        }
+        
+        // Normal validation if not already validated
         if (Options.RequireJwtVerification && !await ValidateIapJwtAsync())
         {
             _logger.LogWarning("IAP JWT validation failed");
@@ -86,151 +111,29 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         // Extract IAP headers if JWT verification failed or was skipped
         if (!Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var userEmailValues))
         {
-            _logger.LogDebug("No IAP email header found");
-            
-            // Check if we're in development mode and should use cookie auth as fallback
-            var env = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
-            var config = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
-            
-            if (env?.IsDevelopment() == true && 
-                config?.GetValue<bool>("Development:IAPSimulation:Enabled", false) == true)
-            {
-                // Look for dev auth cookie
-                if (Request.Cookies.TryGetValue("DevIAPAuth", out var emailFromCookie) && !string.IsNullOrEmpty(emailFromCookie))
-                {
-                    _logger.LogInformation("Using dev auth cookie for authentication: {Email}", emailFromCookie);
-                    userEmailValues = new Microsoft.Extensions.Primitives.StringValues(emailFromCookie);
-                }
-                else
-                {
-                    return AuthenticateResult.NoResult();
-                }
-            }
-            else
-            {
-                return AuthenticateResult.NoResult();
-            }
+            _logger.LogWarning("IAP header not found");
+            return AuthenticateResult.Fail("IAP header not found");
         }
-
-        // The email header is in the format "accounts.google.com:user@example.com"
+        
+        // Parse the email from header (format: "accounts.google.com:user@example.com")
         userEmail = userEmailValues.ToString();
         if (userEmail.Contains(':'))
         {
             userEmail = userEmail.Split(':').Last();
         }
-        _logger.LogInformation("IAP email header found: {Email}", userEmail);
+        
+        _logger.LogInformation("Using email from IAP header: {Email}", userEmail);
         
     ProcessUser:
-        // Find or create user based on Google identity
-        var user = await _userManager.FindByEmailAsync(userEmail);
+        var (user, isNewUser) = await GetOrCreateUserAsync(userEmail);
+        
         if (user == null)
         {
-            // Auto-provision user if enabled
-            if (Options.AutoProvisionUsers)
-            {
-                _logger.LogInformation("Auto-provisioning new user: {Email}", userEmail);
-                user = new PAOIdentityUser
-                {
-                    UserName = userEmail,
-                    Email = userEmail,
-                    EmailConfirmed = true,
-                    IsInternal = userEmail.EndsWith("@unops.org"),
-                    GoogleSignIn = true
-                };
-                
-                var result = await _userManager.CreateAsync(user);
-                if (!result.Succeeded)
-                {
-                    _logger.LogError("Failed to create user account: {Errors}", 
-                        string.Join(", ", result.Errors.Select(e => e.Description)));
-                    return AuthenticateResult.Fail("Failed to create user account");
-                }
-                
-                // Assign default role if needed
-                if (!string.IsNullOrEmpty(Options.DefaultRole))
-                {
-                    if (!await _roleManager.RoleExistsAsync(Options.DefaultRole))
-                    {
-                        await _roleManager.CreateAsync(new PAOIdentityRole { Name = Options.DefaultRole });
-                    }
-                    
-                    await _userManager.AddToRoleAsync(user, Options.DefaultRole);
-                }
-                
-                // Assign domain-specific roles
-                await AssignDomainSpecificRolesAsync(user);
-            }
-            else
-            {
-                _logger.LogWarning("User not found and auto-provisioning is disabled: {Email}", userEmail);
-                return AuthenticateResult.Fail("User not found");
-            }
-        }
-
-        // Process IAP groups if available
-        await ProcessGroupsAsync(user);
-
-        // Get user roles and claims
-        var roles = await _userManager.GetRolesAsync(user);
-        var claims = await _userManager.GetClaimsAsync(user);
-        
-        // Create identity with explicit authentication type - ensure it's not null or empty
-        var identity = new ClaimsIdentity(claims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
-        
-        // Make sure all essential claims are present
-        if (!identity.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
-            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
-        
-        if (!identity.HasClaim(c => c.Type == ClaimTypes.Name))
-            identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
-        
-        if (!identity.HasClaim(c => c.Type == ClaimTypes.Email))
-            identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
-        
-        if (!identity.HasClaim(c => c.Type == "IsInternal"))
-            identity.AddClaim(new Claim("IsInternal", user.IsInternal.ToString()));
-        
-        // Add IAPAuthenticated claim if not present
-        if (!claims.Any(c => c.Type == "IAPAuthenticated"))
-        {
-            var iapAuthClaim = new Claim("IAPAuthenticated", "true");
-            await _userManager.AddClaimAsync(user, iapAuthClaim);
-            identity.AddClaim(iapAuthClaim);
-        }
-        else
-        {
-            identity.AddClaim(new Claim("IAPAuthenticated", "true"));
+            _logger.LogWarning("Failed to get or create user for email: {Email}", userEmail);
+            return AuthenticateResult.Fail("User not found and could not be created");
         }
         
-        // Add role claims
-        foreach (var role in roles)
-        {
-            if (!identity.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == role))
-                identity.AddClaim(new Claim(ClaimTypes.Role, role));
-        }
-        
-        // Store authentication in cookie for development mode
-        var hostEnv = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
-        var appConfig = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
-        
-        if (hostEnv?.IsDevelopment() == true && 
-            appConfig?.GetValue<bool>("Development:IAPSimulation:Enabled", false) == true)
-        {
-            // Set a dev auth cookie to persist authentication
-            Response.Cookies.Append("DevIAPAuth", userEmail, new Microsoft.AspNetCore.Http.CookieOptions
-            {
-                HttpOnly = true,
-                Secure = Request.IsHttps,
-                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax,
-                Expires = DateTimeOffset.Now.AddHours(8)
-            });
-        }
-        
-        // Log the authentication state
-        _logger.LogInformation("IAP Authentication successful: {Email}, IsAuthenticated={IsAuthenticated}", 
-            user.Email, identity.IsAuthenticated);
-        
-        var principal = new ClaimsPrincipal(identity);
+        var principal = await CreateAuthenticationPrincipalAsync(user);
         return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
     }
     
@@ -472,6 +375,121 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                 }
             }
         }
+    }
+
+    private async Task<(PAOIdentityUser?, bool isNewUser)> GetOrCreateUserAsync(string email)
+    {
+        // Find user by email
+        var user = await _userManager.FindByEmailAsync(email);
+        bool isNewUser = false;
+        
+        // Auto-provision user if enabled and user doesn't exist
+        if (user == null && Options.AutoProvisionUsers)
+        {
+            _logger.LogInformation("Auto-provisioning new user: {Email}", email);
+            user = new PAOIdentityUser
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                IsInternal = email.EndsWith("@unops.org"),
+                GoogleSignIn = true
+            };
+            
+            var result = await _userManager.CreateAsync(user);
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Failed to create user account: {Errors}", 
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                return (null, false);
+            }
+            
+            isNewUser = true;
+            
+            // Assign default role if needed
+            if (!string.IsNullOrEmpty(Options.DefaultRole))
+            {
+                if (!await _roleManager.RoleExistsAsync(Options.DefaultRole))
+                {
+                    await _roleManager.CreateAsync(new PAOIdentityRole { Name = Options.DefaultRole });
+                }
+                
+                await _userManager.AddToRoleAsync(user, Options.DefaultRole);
+            }
+            
+            // Assign domain-specific roles
+            await AssignDomainSpecificRolesAsync(user);
+        }
+        
+        return (user, isNewUser);
+    }
+    
+    private async Task<ClaimsPrincipal> CreateAuthenticationPrincipalAsync(PAOIdentityUser user)
+    {
+        // Process IAP groups if available
+        await ProcessGroupsAsync(user);
+        
+        // Get user roles and claims
+        var roles = await _userManager.GetRolesAsync(user);
+        var claims = await _userManager.GetClaimsAsync(user);
+        
+        // Create identity with explicit authentication type - ensure it's not null or empty
+        var identity = new ClaimsIdentity(claims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
+        
+        // Make sure all essential claims are present
+        if (!identity.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
+            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+        
+        if (!identity.HasClaim(c => c.Type == ClaimTypes.Name))
+            identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
+        
+        if (!identity.HasClaim(c => c.Type == ClaimTypes.Email))
+            identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
+        
+        if (!identity.HasClaim(c => c.Type == "IsInternal"))
+            identity.AddClaim(new Claim("IsInternal", user.IsInternal.ToString()));
+        
+        // Add IAPAuthenticated claim if not present
+        if (!claims.Any(c => c.Type == "IAPAuthenticated"))
+        {
+            var iapAuthClaim = new Claim("IAPAuthenticated", "true");
+            await _userManager.AddClaimAsync(user, iapAuthClaim);
+            identity.AddClaim(iapAuthClaim);
+        }
+        else
+        {
+            identity.AddClaim(new Claim("IAPAuthenticated", "true"));
+        }
+        
+        // Add role claims
+        foreach (var role in roles)
+        {
+            if (!identity.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == role))
+                identity.AddClaim(new Claim(ClaimTypes.Role, role));
+        }
+        
+        // Store authentication in cookie for development mode
+        var hostEnv = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
+        var appConfig = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
+        
+        if (hostEnv?.IsDevelopment() == true && 
+            appConfig?.GetValue<bool>("Development:IAPSimulation:Enabled", false) == true)
+        {
+            // Set a dev auth cookie to persist authentication
+            Response.Cookies.Append("DevIAPAuth", user.Email, new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax,
+                Expires = DateTimeOffset.Now.AddHours(8)
+            });
+        }
+        
+        // Log the authentication state
+        _logger.LogInformation("IAP Authentication successful: {Email}, IsAuthenticated={IsAuthenticated}", 
+            user.Email, identity.IsAuthenticated);
+        
+        return new ClaimsPrincipal(identity);
     }
 }
 
