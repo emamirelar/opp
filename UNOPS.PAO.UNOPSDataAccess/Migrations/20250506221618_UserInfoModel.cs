@@ -37,37 +37,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 {
                     table.PrimaryKey("PK_UserInfos", x => x.UserId);
                 });
-
-            migrationBuilder.AddColumn<string>(
-                name: "LastName",
-                schema: "public",
-                table: "UserProfile",
-                type: "character varying(200)",
-                maxLength: 200,
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "FirstName",
-                schema: "public",
-                table: "UserProfile",
-                type: "character varying(200)",
-                maxLength: 200,
-                nullable: true);
-
-            migrationBuilder.DropColumn(
-                name: "UserEmail",
-                schema: "public",
-                table: "UserProfile");
-
-            migrationBuilder.DropColumn(
-                name: "OrgUnit",
-                schema: "public",
-                table: "UserProfile");
-
-            migrationBuilder.DropColumn(
-                name: "SupervisorId",
-                schema: "public",
-                table: "UserProfile");
         }
 
         /// <inheritdoc />
