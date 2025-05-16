@@ -396,6 +396,14 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             // Add a special claim to indicate this is a verified IAP JWT (used for security checks)
             identity.AddClaim(new Claim("iap-jwt-verified", "true"));
             
+            // Add the IAP validation status to the HTTP context items to prevent duplicate validation
+            context.Items["IAP_JWT_VALIDATED"] = true;
+            context.Items["IAP_JWT_EMAIL"] = email;
+            
+            // Also add a special header for the authentication handler to detect
+            context.Request.Headers["X-IAP-JWT-Validated"] = "true";
+            context.Request.Headers["X-IAP-JWT-Email"] = email;
+            
             // Add all original JWT claims for potential use in authorization
             foreach (var claim in jsonToken.Claims)
             {
