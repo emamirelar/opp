@@ -12,7 +12,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Encodings.Web;
+using System.Text.Json;
 using System.Threading.Tasks;
 using UNOPS.PAO.Identity.Entities;
 
@@ -45,8 +48,42 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             return AuthenticateResult.NoResult();
         }
         
-        // Extract IAP headers
-        // Header will be different based on auth methods enabled on the IdP
+        // Validate IAP JWT if required
+        if (Options.RequireJwtVerification && !await ValidateIapJwtAsync())
+        {
+            _logger.LogWarning("IAP JWT validation failed");
+            return AuthenticateResult.Fail("Invalid IAP JWT token");
+        }
+        
+        // Extract email from IAP headers or from JWT validation
+        string userEmail;
+        
+        // Check if we have a verified email from JWT
+        if (Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtValues))
+        {
+            var jwt = jwtValues.ToString();
+            try 
+            {
+                var principle = await VerifyIapJwtAndGetPrincipalAsync(jwt);
+                if (principle != null)
+                {
+                    var email = principle.FindFirstValue(ClaimTypes.Email);
+                    if (!string.IsNullOrEmpty(email))
+                    {
+                        userEmail = email;
+                        _logger.LogInformation("Using JWT-verified email: {Email}", userEmail);
+                        goto ProcessUser; // Skip the header check
+                    }
+                }
+            }
+            catch
+            {
+                // JWT verification failed, continue to header-based auth
+                _logger.LogDebug("JWT validation failed, falling back to header-based auth");
+            }
+        }
+        
+        // Extract IAP headers if JWT verification failed or was skipped
         if (!Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var userEmailValues))
         {
             _logger.LogDebug("No IAP email header found");
@@ -76,20 +113,14 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         }
 
         // The email header is in the format "accounts.google.com:user@example.com"
-        var userEmail = userEmailValues.ToString();
+        userEmail = userEmailValues.ToString();
         if (userEmail.Contains(':'))
         {
             userEmail = userEmail.Split(':').Last();
         }
         _logger.LogInformation("IAP email header found: {Email}", userEmail);
         
-        // Validate IAP JWT if available
-        if (Options.RequireJwtVerification && !await ValidateIapJwtAsync())
-        {
-            _logger.LogWarning("IAP JWT validation failed");
-            return AuthenticateResult.Fail("Invalid IAP JWT token");
-        }
-        
+    ProcessUser:
         // Find or create user based on Google identity
         var user = await _userManager.FindByEmailAsync(userEmail);
         if (user == null)
@@ -241,14 +272,41 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             return true;
         }
         
-        if (!Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtValues))
+        // Primary Authentication: JWT Verification
+        bool jwtVerified = false;
+        ClaimsPrincipal? jwtPrincipal = null;
+        string? verifiedEmail = null;
+
+        if (Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtHeaderValues))
         {
-            _logger.LogDebug("No IAP JWT header found");
-            return false;
+            var jwt = jwtHeaderValues.ToString();
+            try
+            {
+                jwtPrincipal = await VerifyIapJwtAndGetPrincipalAsync(jwt);
+                if (jwtPrincipal != null)
+                {
+                    jwtVerified = true;
+                    verifiedEmail = jwtPrincipal.FindFirstValue(ClaimTypes.Email);
+                    _logger.LogDebug("Successfully verified JWT for user: {Email}", verifiedEmail);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "JWT verification failed");
+            }
+        }
+        else
+        {
+            _logger.LogDebug("No JWT header found");
         }
         
-        var jwt = jwtValues.ToString();
-        
+        // If we reached here, JWT verification failed or no JWT was present
+        return false;
+    }
+    
+    private async Task<ClaimsPrincipal?> VerifyIapJwtAndGetPrincipalAsync(string jwt)
+    {
         // Generate all possible audience strings based on configuration
         var audiences = new List<string>();
         
@@ -273,15 +331,9 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             audiences.Add($"/projects/{Options.ProjectNumber}");
         }
         
-        if (!audiences.Any())
-        {
-            _logger.LogError("No valid audience configurations found. Check IAP settings.");
-            return false;
-        }
+        _logger.LogDebug("Will try JWT validation with audiences: {Audiences}", string.Join(", ", audiences));
         
-        _logger.LogDebug("Will try validating IAP JWT with the following audiences: {Audiences}", string.Join(", ", audiences));
-        
-        // Try each audience format until one succeeds
+        // Try each audience format
         foreach (var audience in audiences)
         {
             try
@@ -291,29 +343,34 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                     Audience = new[] { audience }
                 };
                 
-                _logger.LogDebug("Attempting JWT validation with audience: {Audience}", audience);
                 var payload = await GoogleJsonWebSignature.ValidateAsync(jwt, settings);
                 
                 if (payload != null)
                 {
                     _logger.LogInformation("JWT validation successful for user: {Email} using audience: {Audience}", 
                         payload.Email, audience);
-                    return true;
+                    
+                    // Create a claims principal from the validated payload
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Email, payload.Email),
+                        new Claim(ClaimTypes.Name, payload.Name ?? payload.Email),
+                        new Claim("sub", payload.Subject),
+                        new Claim("IAPAuthenticated", "true")
+                    };
+                    
+                    var identity = new ClaimsIdentity(claims, "IAP");
+                    return new ClaimsPrincipal(identity);
                 }
             }
-            catch (Exception ex)
+            catch (InvalidJwtException ex)
             {
-                _logger.LogWarning(ex, "JWT validation failed with audience {Audience}. Will try next audience if available.", audience);
-                // Continue to the next audience
+                _logger.LogWarning(ex, "JWT validation failed with audience {Audience}", audience);
             }
         }
         
-        // If we get here, all validation attempts failed
-        _logger.LogError("JWT validation failed with all audience formats: {Audiences}. Headers: {Headers}",
-            string.Join(", ", audiences),
-            string.Join(", ", Request.Headers.Select(h => $"{h.Key}: (len={h.Value.ToString().Length})")));
-        
-        return false;
+        // If we reach here, all validation attempts failed
+        return null;
     }
     
     private async Task AssignDomainSpecificRolesAsync(PAOIdentityUser user)
