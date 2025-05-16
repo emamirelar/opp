@@ -301,27 +301,54 @@ export class AuthService {
     // Set checking flag
     this.isCheckingAuth = true;
     
-    // Make a maximum of one API call - no incrementing counters needed
-    return this.http.get<any>('/api/dev/check-iap-simulation').pipe(
-      map(result => {
-        // Check only for the header
-        const isAuthenticated = result && result.hasIapHeader === true;
-        
-        // Cache result
-        this.iapAuthenticationChecked = true;
-        this.iapAuthenticationStatus = isAuthenticated;
-        
-        // Reset checking flag
-        this.isCheckingAuth = false;
-        
-        return isAuthenticated;
-      }),
-      catchError((error) => {
-        // On error, reset flags and return false
-        this.isCheckingAuth = false;
-        return of(false);
-      })
-    );
+    // Check if we're in a development environment - only call the dev endpoint in dev
+    const hostname = window.location.hostname;
+    const isDevelopment = hostname === 'localhost' || hostname.includes('dev-');
+    
+    if (isDevelopment) {
+      // Only make the dev simulation check call in development environments
+      return this.http.get<any>('/api/dev/check-iap-simulation').pipe(
+        map(result => {
+          // Check only for the header
+          const isAuthenticated = result && result.hasIapHeader === true;
+          
+          // Cache result
+          this.iapAuthenticationChecked = true;
+          this.iapAuthenticationStatus = isAuthenticated;
+          
+          // Reset checking flag
+          this.isCheckingAuth = false;
+          
+          return isAuthenticated;
+        }),
+        catchError((error) => {
+          // On error, reset flags and return false
+          this.isCheckingAuth = false;
+          return of(false);
+        })
+      );
+    } else {
+      // In test/production, assume IAP is properly configured
+      // Use a more suitable endpoint for auth check, or assume authenticated if user has claims
+      return this.user().pipe(
+        map(claims => {
+          const isAuthenticated = claims.length > 0;
+          
+          // Cache result
+          this.iapAuthenticationChecked = true;
+          this.iapAuthenticationStatus = isAuthenticated;
+          
+          // Reset checking flag
+          this.isCheckingAuth = false;
+          
+          return isAuthenticated;
+        }),
+        catchError(() => {
+          this.isCheckingAuth = false;
+          return of(false);
+        })
+      );
+    }
   }
 
   public isLogedIn(): Observable<boolean> {

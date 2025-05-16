@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace UNOPS.PAO.Server.Infrastructure
 {
@@ -36,6 +37,29 @@ namespace UNOPS.PAO.Server.Infrastructure
                 {
                     _logger.LogInformation("Dev IAP Simulation: {Header}", devHeader);
                 }
+                
+                // Log IAP JWT header presence (not the full token for security)
+                if (context.Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtHeader))
+                {
+                    _logger.LogInformation("IAP JWT Header: {Present}, Length: {Length}", 
+                        "Present", jwtHeader.ToString().Length);
+                }
+                else
+                {
+                    _logger.LogWarning("IAP JWT Header: Missing");
+                }
+                
+                // Print all headers for troubleshooting
+                var headerLog = new StringBuilder("All request headers:\n");
+                foreach (var header in context.Request.Headers)
+                {
+                    var headerValue = header.Key.Contains("JWT", StringComparison.OrdinalIgnoreCase) ? 
+                        $"[REDACTED - Length: {header.Value.ToString().Length}]" : 
+                        header.Value.ToString();
+                    
+                    headerLog.AppendLine($"  {header.Key}: {headerValue}");
+                }
+                _logger.LogInformation(headerLog.ToString());
             }
 
             // Call the next middleware in the pipeline

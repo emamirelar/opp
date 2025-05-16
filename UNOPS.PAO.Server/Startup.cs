@@ -76,6 +76,9 @@ public class Startup
         app.UseStaticFiles();
         app.UseRouting();
         
+        // Add diagnostic logging middleware to check headers
+        app.UseMiddleware<AuthenticationLoggingMiddleware>();
+        
         // Add IAP simulation in development
         if (env.IsDevelopment())
         {
