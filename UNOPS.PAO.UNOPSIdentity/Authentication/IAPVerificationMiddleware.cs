@@ -295,7 +295,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         ValidateIssuer = true,
                         ValidIssuer = IAP_ISSUER,
                         ValidateAudience = true,
-                        ValidAudience = audience,
+                        ValidAudience = "1069310298210-ubl2naqi5bjeqlqrroiqb4qdm482aans.apps.googleusercontent.com",
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = publicKey,
