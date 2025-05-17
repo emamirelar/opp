@@ -275,19 +275,6 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 audiences.Add($"/projects/{projectNumber}/global/backendServices/{backendServiceId}");
             }
             
-            // Simplest format
-            if (!string.IsNullOrEmpty(projectNumber))
-            {
-                audiences.Add($"/projects/{projectNumber}");
-            }
-            
-            // Project ID/app format
-            string projectId = _configuration["IAP:ProjectId"];
-            if (!string.IsNullOrEmpty(projectNumber) && !string.IsNullOrEmpty(projectId))
-            {
-                audiences.Add($"/projects/{projectNumber}/apps/{projectId}");
-            }
-            
             if (!audiences.Any())
             {
                 throw new InvalidOperationException("No valid audience configuration found. Configure IAP:Audience or IAP:ProjectNumber");
@@ -310,7 +297,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         ValidateIssuer = true,
                         ValidIssuer = IAP_ISSUER,
                         ValidateAudience = true,
-                        ValidAudience = "1069310298210-ubl2naqi5bjeqlqrroiqb4qdm482aans.apps.googleusercontent.com",
+                        ValidAudience = audience,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = publicKey,
