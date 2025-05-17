@@ -219,6 +219,21 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             {
                 throw new SecurityTokenException("JWT missing kid (key ID) header");
             }
+
+            _logger.LogWarning("JWT Header:");
+            foreach (var headerItem in jsonToken.Header)
+            {
+                _logger.LogWarning("  {Key}: {Value}", headerItem.Key, headerItem.Value);
+            }
+
+            _logger.LogWarning("JWT Claims:");
+            foreach (var claim in jsonToken.Claims)
+            {
+                _logger.LogWarning("  {Type}: {Value}", claim.Type, claim.Value);
+            }
+
+            _logger.LogWarning("JWT Audience(s): {Aud}", string.Join(",", jsonToken.Audiences));
+            _logger.LogWarning("JWT Issuer: {Issuer}", jsonToken.Issuer);
             
             // Log token information for debugging
             _logger.LogDebug("JWT Header: {@JwtHeader}", jsonToken.Header);
