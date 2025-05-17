@@ -12,14 +12,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+// Add Google Auth libraries
 using Google.Apis.Auth;
 using Google.Apis.Auth.OAuth2;
+using static Google.Apis.Auth.GoogleJsonWebSignature;
 
 namespace UNOPS.PAO.UNOPSIdentity.Authentication
 {
     public class IAPVerificationMiddleware
     {
+        private static readonly string PUBLIC_KEY_URL = "https://www.gstatic.com/iap/verify/public_key-jwk";
         private static readonly string IAP_ISSUER = "https://cloud.google.com/iap";
+        private static readonly Dictionary<string, JsonWebKey> _cachedKeys = new Dictionary<string, JsonWebKey>();
+        private static DateTime _keysLastRefreshed = DateTime.MinValue;
+        private static readonly SemaphoreSlim _refreshLock = new SemaphoreSlim(1, 1);
+
         private readonly RequestDelegate _next;
         private readonly IConfiguration _configuration;
         private readonly ILogger<IAPVerificationMiddleware> _logger;
@@ -204,7 +211,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
         {
             try
             {
-                // Parse the JWT without validation first to get information for logging
+                // Parse the JWT without validation first to log info
                 var handler = new JwtSecurityTokenHandler();
                 var jsonToken = handler.ReadToken(jwt) as JwtSecurityToken;
                 
@@ -214,22 +221,75 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 }
                 
                 // Log token information for debugging
-                _logger.LogDebug("JWT Header: {@JwtHeader}", jsonToken.Header);
-                _logger.LogDebug("JWT Claims: {@JwtClaims}", jsonToken.Claims.Select(c => new { c.Type, c.Value }));
-                _logger.LogDebug("JWT Audience(s): {Aud}", string.Join(",", jsonToken.Audiences));
-                _logger.LogDebug("JWT Issuer: {Issuer}", jsonToken.Issuer);
+                _logger.LogWarning("JWT Header:");
+                foreach (var headerItem in jsonToken.Header)
+                {
+                    _logger.LogWarning("  {Key}: {Value}", headerItem.Key, headerItem.Value);
+                }
+
+                _logger.LogWarning("JWT Claims:");
+                foreach (var claim in jsonToken.Claims)
+                {
+                    _logger.LogWarning("  {Type}: {Value}", claim.Type, claim.Value);
+                }
+
+                _logger.LogWarning("JWT Audience(s): {Aud}", string.Join(",", jsonToken.Audiences));
+                _logger.LogWarning("JWT Issuer: {Issuer}", jsonToken.Issuer);
                 
-                // Get the expected audience(s)
-                List<string> audiences = GetExpectedAudiences();
+                // Get the expected audience
+                string projectNumber = _configuration["IAP:ProjectNumber"];
+                _logger.LogDebug("Using project number from config: {ProjectNumber}", projectNumber);
+                
+                // Try multiple audience formats
+                List<string> audiences = new List<string>();
+                
+                // Add configured audience if available
+                string configuredAudience = _configuration["IAP:Audience"];
+                if (!string.IsNullOrEmpty(configuredAudience))
+                {
+                    audiences.Add(configuredAudience);
+                }
+                
+                // Cloud Run format
+                string region = _configuration["IAP:Region"];
+                string serviceName = _configuration["IAP:ServiceName"];
+                if (!string.IsNullOrEmpty(projectNumber) && 
+                    !string.IsNullOrEmpty(region) && 
+                    !string.IsNullOrEmpty(serviceName))
+                {
+                    audiences.Add($"/projects/{projectNumber}/locations/{region}/services/{serviceName}");
+                }
+                
+                // Backend service format
+                string backendServiceId = _configuration["IAP:BackendServiceId"];
+                if (!string.IsNullOrEmpty(projectNumber) && 
+                    !string.IsNullOrEmpty(backendServiceId))
+                {
+                    audiences.Add($"/projects/{projectNumber}/global/backendServices/{backendServiceId}");
+                }
+                
+                // Simplest format
+                if (!string.IsNullOrEmpty(projectNumber))
+                {
+                    audiences.Add($"/projects/{projectNumber}");
+                }
+                
+                // Project ID/app format
+                string projectId = _configuration["IAP:ProjectId"];
+                if (!string.IsNullOrEmpty(projectNumber) && !string.IsNullOrEmpty(projectId))
+                {
+                    audiences.Add($"/projects/{projectNumber}/apps/{projectId}");
+                }
+                
                 if (!audiences.Any())
                 {
                     throw new InvalidOperationException("No valid audience configuration found. Configure IAP:Audience or IAP:ProjectNumber");
                 }
                 
                 _logger.LogDebug("Trying JWT validation with audience formats: {@Audiences}", audiences);
-                
-                // Use Google's official verification library
-                JsonWebSignature.Payload payload = null;
+
+                // Try Google's SignedTokenVerificationOptions approach
+                Payload payload = null;
                 Exception lastException = null;
                 
                 foreach (var audience in audiences)
@@ -238,16 +298,14 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     {
                         var options = new SignedTokenVerificationOptions
                         {
-                            IssuedAtClockTolerance = TimeSpan.FromMinutes(2),
-                            ExpiryClockTolerance = TimeSpan.FromMinutes(2),
+                            IssuedAtClockTolerance = TimeSpan.FromMinutes(1),
+                            ExpiryClockTolerance = TimeSpan.FromMinutes(1),
                             TrustedAudiences = { audience },
-                            TrustedIssuers = { IAP_ISSUER },
-                            CertificatesUrl = GoogleAuthConsts.IapKeySetUrl
+                            TrustedIssuers = { "https://cloud.google.com/iap" },
+                            CertificatesUrl = GoogleAuthConsts.IapKeySetUrl,
                         };
-                        
-                        // This will throw if validation fails
-                        payload = await JsonWebSignature.VerifySignedTokenAsync(jwt, options);
-                        
+
+                        payload = (Payload?)await JsonWebSignature.VerifySignedTokenAsync(jwt, options);
                         _logger.LogInformation("JWT validation successful with audience: {Audience}", audience);
                         break; // Success, exit the loop
                     }
@@ -265,43 +323,52 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     _logger.LogWarning("JWT validation failed with all audience formats");
                     throw lastException ?? new SecurityTokenException("JWT validation failed with all audience formats");
                 }
+
+                // Ensure payload is not null
+                var validatedPayload = payload;
+                _logger.LogDebug("Successfully validated IAP JWT payload for subject: {Subject}", validatedPayload.Subject);
                 
-                // Create a claims identity using the payload
+                // Create a claims principal from the validated payload
                 var claims = new List<Claim>();
                 
-                // Add email claim - Google payload should have the Email property
-                string emailValue = payload.Email;
+                // Extract the email claim - Google's payload should have it directly
+                string emailValue = null;
                 
-                // If email is still null, try the subject claim or other claims
-                if (string.IsNullOrEmpty(emailValue))
+                // Try to get the email directly from the payload
+                if (!string.IsNullOrEmpty(validatedPayload.Email))
                 {
-                    if (!string.IsNullOrEmpty(payload.Subject) && payload.Subject.Contains("@"))
-                    {
-                        emailValue = payload.Subject;
-                        _logger.LogDebug("Using subject as email: {Email}", emailValue);
-                    }
-                    else if (payload.ContainsKey("email"))
-                    {
-                        emailValue = payload["email"] as string;
-                        _logger.LogDebug("Found email in custom claim: {Email}", emailValue);
-                    }
+                    emailValue = validatedPayload.Email;
+                    _logger.LogDebug("Found email in Google payload: {Email}", emailValue);
+                }
+                else if (!string.IsNullOrEmpty(validatedPayload.Subject) && validatedPayload.Subject.Contains("@"))
+                {
+                    // Sometimes 'sub' contains the email
+                    emailValue = validatedPayload.Subject;
+                    _logger.LogDebug("Using subject claim as email: {Email}", emailValue);
                 }
                 
                 // Check if we need to fall back to IAP header
                 if (string.IsNullOrEmpty(emailValue) && context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
                 {
                     var emailHeader = emailHeaderValues.ToString();
-                    emailValue = ExtractEmailFromHeader(emailHeader);
-                    _logger.LogDebug("Used email from IAP header as fallback: {Email}", emailValue);
+                    if (emailHeader.Contains(':'))
+                    {
+                        emailValue = emailHeader.Split(':').Last();
+                        _logger.LogDebug("Used email from IAP header as fallback: {Email}", emailValue);
+                    }
+                    else
+                    {
+                        emailValue = emailHeader;
+                    }
                 }
                 
                 if (string.IsNullOrEmpty(emailValue))
                 {
-                    // Log all payload properties to help diagnose the issue
-                    _logger.LogWarning("JWT missing email claim. Available payload properties: {@Payload}", 
-                        payload.ToDictionary(k => k.Key, v => v.Value));
-                    
-                    // Instead of throwing an exception, try to continue with header-based authentication
+                    // Log all payload data to help diagnose the issue
+                    _logger.LogWarning("JWT missing email claim. Available payload data: Subject={Subject}, Email={Email}, Name={Name}", 
+                        validatedPayload.Subject, validatedPayload.Email, validatedPayload.Name);
+
+                    // Try to continue with header-based authentication
                     if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var fallbackEmailValues))
                     {
                         var fallbackEmailHeader = fallbackEmailValues.ToString();
@@ -322,28 +389,38 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     }
                 }
                 
-                // Add standard claims
+                // Add the claims from the payload
                 claims.Add(new Claim(ClaimTypes.Name, emailValue));
                 claims.Add(new Claim(ClaimTypes.Email, emailValue));
                 claims.Add(new Claim("iap-jwt-verified", "true"));
                 
-                // Add subject claim if available
-                if (!string.IsNullOrEmpty(payload.Subject))
-                {
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, payload.Subject));
-                    claims.Add(new Claim("sub", payload.Subject));
-                }
+                // Add common properties from the payload
+                if (!string.IsNullOrEmpty(validatedPayload.Subject))
+                    claims.Add(new Claim("sub", validatedPayload.Subject));
                 
-                // Add all other claims from payload
-                foreach (var entry in payload)
-                {
-                    if (entry.Value != null && !claims.Any(c => c.Type == entry.Key))
-                    {
-                        claims.Add(new Claim(entry.Key, entry.Value.ToString()));
-                    }
-                }
+                if (!string.IsNullOrEmpty(validatedPayload.Name))
+                    claims.Add(new Claim("name", validatedPayload.Name));
                 
-                // Add the IAP validation status to the HTTP context
+                if (!string.IsNullOrEmpty(validatedPayload.GivenName))
+                    claims.Add(new Claim("given_name", validatedPayload.GivenName));
+                
+                if (!string.IsNullOrEmpty(validatedPayload.FamilyName))
+                    claims.Add(new Claim("family_name", validatedPayload.FamilyName));
+                
+                if (!string.IsNullOrEmpty(validatedPayload.HostedDomain))
+                    claims.Add(new Claim("hd", validatedPayload.HostedDomain));
+                
+                // EmailVerified is a boolean, not a string
+                claims.Add(new Claim("email_verified", validatedPayload.EmailVerified.ToString().ToLower()));
+                
+                // Add issuance and expiration claims - these are numeric values, not strings
+                claims.Add(new Claim("iat", validatedPayload.IssuedAtTimeSeconds.ToString()));
+                claims.Add(new Claim("exp", validatedPayload.ExpirationTimeSeconds.ToString()));
+                
+                var identity = new ClaimsIdentity(claims, "IAP-JWT");
+                var validatedPrincipal = new ClaimsPrincipal(identity);
+                
+                // Add the IAP validation status to the HTTP context items to prevent duplicate validation
                 context.Items["IAP_JWT_VALIDATED"] = true;
                 context.Items["IAP_JWT_EMAIL"] = emailValue;
                 
@@ -351,48 +428,84 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 context.Request.Headers["X-IAP-JWT-Validated"] = "true";
                 context.Request.Headers["X-IAP-JWT-Email"] = emailValue;
                 
-                return new ClaimsPrincipal(new ClaimsIdentity(claims, "IAP-JWT"));
+                return validatedPrincipal;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error verifying IAP JWT token");
+                _logger.LogError(ex, "Error validating IAP JWT");
                 throw;
             }
         }
 
-        private List<string> GetExpectedAudiences()
+        private async Task<JsonWebKey> GetPublicKeyAsync(string kid)
         {
-            List<string> audiences = new List<string>();
-            
-            // Add configured audience if available
-            string configuredAudience = _configuration["IAP:Audience"];
-            if (!string.IsNullOrEmpty(configuredAudience))
+            // Refresh keys if they're more than 1 hour old
+            if (_keysLastRefreshed.AddHours(1) < DateTime.UtcNow)
             {
-                audiences.Add(configuredAudience);
+                await RefreshPublicKeysAsync();
             }
             
-            // Get the project number
-            string projectNumber = _configuration["IAP:ProjectNumber"];
-            
-            // Cloud Run format
-            string region = _configuration["IAP:Region"];
-            string serviceName = _configuration["IAP:ServiceName"];
-            if (!string.IsNullOrEmpty(projectNumber) && 
-                !string.IsNullOrEmpty(region) && 
-                !string.IsNullOrEmpty(serviceName))
+            // Try to get key from cache
+            if (_cachedKeys.TryGetValue(kid, out var key))
             {
-                audiences.Add($"/projects/{projectNumber}/locations/{region}/services/{serviceName}");
+                return key;
             }
             
-            // Backend service format
-            string backendServiceId = _configuration["IAP:BackendServiceId"];
-            if (!string.IsNullOrEmpty(projectNumber) && 
-                !string.IsNullOrEmpty(backendServiceId))
+            // If key not in cache, refresh and try again
+            await RefreshPublicKeysAsync();
+            
+            if (_cachedKeys.TryGetValue(kid, out key))
             {
-                audiences.Add($"/projects/{projectNumber}/global/backendServices/{backendServiceId}");
+                return key;
             }
             
-            return audiences;
+            throw new SecurityTokenException($"No public key found for kid: {kid}");
+        }
+
+        private async Task RefreshPublicKeysAsync()
+        {
+            // Use a lock to prevent multiple simultaneous refreshes
+            await _refreshLock.WaitAsync();
+            try
+            {
+                // Check again in case another thread already refreshed while waiting
+                if (_keysLastRefreshed.AddHours(1) > DateTime.UtcNow)
+                {
+                    return;
+                }
+                
+                var client = _httpClientFactory.CreateClient();
+                var response = await client.GetStringAsync(PUBLIC_KEY_URL);
+                
+                var jwkSet = JsonWebKeySet.Create(response);
+                var newKeys = new Dictionary<string, JsonWebKey>();
+                
+                foreach (var jwk in jwkSet.Keys)
+                {
+                    if (jwk.Kid != null)
+                    {
+                        newKeys[jwk.Kid] = jwk;
+                    }
+                }
+                
+                // Update the cache atomically
+                _cachedKeys.Clear();
+                foreach (var entry in newKeys)
+                {
+                    _cachedKeys[entry.Key] = entry.Value;
+                }
+                
+                _keysLastRefreshed = DateTime.UtcNow;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to refresh IAP public keys");
+                throw;
+            }
+            finally
+            {
+                _refreshLock.Release();
+            }
         }
 
         private string GetDevelopmentUserEmail(HttpContext context)
