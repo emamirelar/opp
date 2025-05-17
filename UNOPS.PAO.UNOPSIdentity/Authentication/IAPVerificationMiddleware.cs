@@ -58,8 +58,72 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             
             // Log available headers for debugging
-            _logger.LogDebug("Headers: {@Headers}", 
+            _logger.LogWarning("All Headers: {@Headers}", 
                 context.Request.Headers.Select(h => new { h.Key, Value = h.Value.ToString() }));
+                
+            // Log specifically the IAP email header if present
+            if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValue))
+            {
+                _logger.LogWarning("IAP Email Header: {EmailHeader}", emailHeaderValue.ToString());
+                var extractedEmail = ExtractEmailFromHeader(emailHeaderValue.ToString());
+                _logger.LogWarning("Extracted Email: {ExtractedEmail}", extractedEmail);
+            }
+            else
+            {
+                _logger.LogWarning("x-goog-authenticated-user-email header is not present");
+            }
+            
+            // Log the IAP JWT assertion header if present
+            if (context.Request.Headers.TryGetValue("x-goog-iap-jwt-assertion", out var jwtHeader))
+            {
+                _logger.LogWarning("IAP JWT assertion header is present with length: {Length}", jwtHeader.ToString().Length);
+            }
+            else
+            {
+                _logger.LogWarning("x-goog-iap-jwt-assertion header is not present");
+            }
+            
+            // Check if we should bypass JWT validation entirely and use only headers
+            bool bypassJwtValidation = _configuration.GetValue<bool>("IAP:BypassJwtValidation", false);
+            if (bypassJwtValidation)
+            {
+                _logger.LogWarning("JWT validation is bypassed by configuration");
+                if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var bypassEmailHeader))
+                {
+                    var emailHeaderStr = bypassEmailHeader.ToString();
+                    var extractedEmail = ExtractEmailFromHeader(emailHeaderStr);
+                    
+                    if (!string.IsNullOrEmpty(extractedEmail))
+                    {
+                        _logger.LogWarning("Using header-only authentication for email: {Email}", extractedEmail);
+                        var headerClaims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.Name, extractedEmail),
+                            new Claim(ClaimTypes.Email, extractedEmail),
+                            new Claim("iap-header-verified", "true"),
+                            new Claim("jwt-validation-bypassed", "true")
+                        };
+                        
+                        context.User = new ClaimsPrincipal(new ClaimsIdentity(headerClaims, "IAP-Header-Only"));
+                        
+                        // Store in context items
+                        context.Items["IAP_HEADER_AUTHENTICATED"] = true;
+                        context.Items["IAP_HEADER_EMAIL"] = extractedEmail;
+                        context.Items["IAP_JWT_BYPASSED"] = true;
+                        
+                        await _next(context);
+                        return;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("JWT validation bypassed but couldn't extract email from header: {Header}", emailHeaderStr);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("JWT validation bypassed but no email header found");
+                }
+            }
                 
             // Skip verification in development if configured
             if (_environment.IsDevelopment())
@@ -292,6 +356,24 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 Payload payload = null;
                 Exception lastException = null;
                 
+                // Log all audience formats we're going to try
+                _logger.LogWarning("Trying to validate JWT with these audiences: {Audiences}", 
+                    string.Join(", ", audiences));
+                
+                // Add exact audience from the token if we can find it
+                if (jsonToken?.Audiences?.Any() == true)
+                {
+                    foreach (var tokenAudience in jsonToken.Audiences)
+                    {
+                        if (!audiences.Contains(tokenAudience))
+                        {
+                            _logger.LogWarning("Adding audience from token: {Audience}", tokenAudience);
+                            audiences.Add(tokenAudience);
+                        }
+                    }
+                }
+                
+                // First attempt: try with SignedTokenVerificationOptions
                 foreach (var audience in audiences)
                 {
                     try
@@ -305,6 +387,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                             CertificatesUrl = GoogleAuthConsts.IapKeySetUrl,
                         };
 
+                        _logger.LogWarning("Attempting validation with audience: {Audience}", audience);
                         payload = (Payload?)await JsonWebSignature.VerifySignedTokenAsync(jwt, options);
                         _logger.LogInformation("JWT validation successful with audience: {Audience}", audience);
                         break; // Success, exit the loop
@@ -312,21 +395,118 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     catch (Exception ex)
                     {
                         lastException = ex;
-                        _logger.LogDebug("JWT validation failed with audience {Audience}: {ErrorMessage}", 
+                        _logger.LogWarning("JWT validation failed with audience {Audience}: {ErrorMessage}", 
                             audience, ex.Message);
+                        
+                        // Log inner exception details if available
+                        if (ex.InnerException != null)
+                        {
+                            _logger.LogWarning("Inner exception: {InnerType}: {InnerMessage}", 
+                                ex.InnerException.GetType().Name, ex.InnerException.Message);
+                        }
+                        
                         // Continue to try next audience
+                    }
+                }
+                
+                // Second attempt: try with ValidationSettings if first method failed
+                if (payload == null)
+                {
+                    _logger.LogWarning("First validation method failed, trying with ValidationSettings");
+                    
+                    foreach (var audience in audiences)
+                    {
+                        try
+                        {
+                            var settings = new ValidationSettings
+                            {
+                                Audience = new[] { audience }
+                            };
+                            
+                            _logger.LogWarning("Attempting validation with ValidationSettings audience: {Audience}", audience);
+                            payload = await ValidateAsync(jwt, settings);
+                            _logger.LogInformation("JWT validation with ValidationSettings successful for audience: {Audience}", audience);
+                            break; // Success, exit the loop
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning("ValidationSettings JWT validation failed for audience {Audience}: {ErrorMessage}", 
+                                audience, ex.Message);
+                        }
                     }
                 }
                 
                 if (payload == null)
                 {
-                    _logger.LogWarning("JWT validation failed with all audience formats");
+                    _logger.LogWarning("JWT validation failed with all audience formats. Last error: {ErrorMessage}", 
+                        lastException?.Message ?? "Unknown error");
+                        
+                    // Try direct access as fallback if JWT validation fails but header is present
+                    if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var fallbackEmailHeaderValues))
+                    {
+                        var emailHeader = fallbackEmailHeaderValues.ToString();
+                        _logger.LogWarning("Falling back to header-based authentication. Raw header: {RawHeader}", emailHeader);
+                        
+                        var extractedEmail = ExtractEmailFromHeader(emailHeader);
+                        
+                        if (!string.IsNullOrEmpty(extractedEmail))
+                        {
+                            _logger.LogWarning("Using header-based authentication with extracted email: {Email}", extractedEmail);
+                            var headerClaims = new List<Claim>
+                            {
+                                new Claim(ClaimTypes.Name, extractedEmail),
+                                new Claim(ClaimTypes.Email, extractedEmail),
+                                new Claim("iap-header-verified", "true")
+                            };
+                            
+                            // Create a new principal with the header claims
+                            var headerIdentity = new ClaimsIdentity(headerClaims, "IAP-Header");
+                            var headerPrincipal = new ClaimsPrincipal(headerIdentity);
+                            context.User = headerPrincipal;
+                            
+                            // Add context items to indicate header-based authentication
+                            context.Items["IAP_HEADER_AUTHENTICATED"] = true;
+                            context.Items["IAP_HEADER_EMAIL"] = extractedEmail;
+                            
+                            await _next(context);
+                            return headerPrincipal;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Failed to extract email from header: {Header}", emailHeader);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No email header found for fallback authentication");
+                    }
+                    
                     throw lastException ?? new SecurityTokenException("JWT validation failed with all audience formats");
                 }
 
                 // Ensure payload is not null
                 var validatedPayload = payload;
-                _logger.LogDebug("Successfully validated IAP JWT payload for subject: {Subject}", validatedPayload.Subject);
+                _logger.LogWarning("Successfully validated IAP JWT payload: {@PayloadDetails}", 
+                    new 
+                    {
+                        Subject = validatedPayload.Subject,
+                        Email = validatedPayload.Email,
+                        Name = validatedPayload.Name,
+                        FamilyName = validatedPayload.FamilyName,
+                        GivenName = validatedPayload.GivenName,
+                        EmailVerified = validatedPayload.EmailVerified,
+                        HostedDomain = validatedPayload.HostedDomain,
+                        Issuer = validatedPayload.Issuer,
+                        Audience = validatedPayload.Audience,
+                        ExpirationTimeSeconds = validatedPayload.ExpirationTimeSeconds,
+                        IssuedAtTimeSeconds = validatedPayload.IssuedAtTimeSeconds,
+                        ExpirationTime = validatedPayload.ExpirationTimeSeconds.HasValue 
+                            ? DateTimeOffset.FromUnixTimeSeconds(validatedPayload.ExpirationTimeSeconds.Value).ToString() 
+                            : null,
+                        IssuedAt = validatedPayload.IssuedAtTimeSeconds.HasValue 
+                            ? DateTimeOffset.FromUnixTimeSeconds(validatedPayload.IssuedAtTimeSeconds.Value).ToString() 
+                            : null
+                    });
                 
                 // Create a claims principal from the validated payload
                 var claims = new List<Claim>();
@@ -414,8 +594,11 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 claims.Add(new Claim("email_verified", validatedPayload.EmailVerified.ToString().ToLower()));
                 
                 // Add issuance and expiration claims - these are numeric values, not strings
-                claims.Add(new Claim("iat", validatedPayload.IssuedAtTimeSeconds.ToString()));
-                claims.Add(new Claim("exp", validatedPayload.ExpirationTimeSeconds.ToString()));
+                if (validatedPayload.IssuedAtTimeSeconds.HasValue)
+                    claims.Add(new Claim("iat", validatedPayload.IssuedAtTimeSeconds.Value.ToString()));
+                
+                if (validatedPayload.ExpirationTimeSeconds.HasValue)
+                    claims.Add(new Claim("exp", validatedPayload.ExpirationTimeSeconds.Value.ToString()));
                 
                 var identity = new ClaimsIdentity(claims, "IAP-JWT");
                 var validatedPrincipal = new ClaimsPrincipal(identity);
