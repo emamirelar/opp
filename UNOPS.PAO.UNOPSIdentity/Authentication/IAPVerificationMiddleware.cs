@@ -12,10 +12,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-// Add Google Auth libraries
-using Google.Apis.Auth;
-using Google.Apis.Auth.OAuth2;
-using static Google.Apis.Auth.GoogleJsonWebSignature;
 
 namespace UNOPS.PAO.UNOPSIdentity.Authentication
 {
@@ -57,103 +53,18 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 return;
             }
             
-            // Log available headers for debugging
-            _logger.LogWarning("All Headers: {@Headers}", 
-                context.Request.Headers.Select(h => new { h.Key, Value = h.Value.ToString() }));
-                
-            // Log specifically the IAP email header if present
-            if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValue))
-            {
-                _logger.LogWarning("IAP Email Header: {EmailHeader}", emailHeaderValue.ToString());
-                var extractedEmail = ExtractEmailFromHeader(emailHeaderValue.ToString());
-                _logger.LogWarning("Extracted Email: {ExtractedEmail}", extractedEmail);
-            }
-            else
-            {
-                _logger.LogWarning("x-goog-authenticated-user-email header is not present");
-            }
-            
-            // Log the IAP JWT assertion header if present
-            if (context.Request.Headers.TryGetValue("x-goog-iap-jwt-assertion", out var jwtHeader))
-            {
-                _logger.LogWarning("IAP JWT assertion header is present with length: {Length}", jwtHeader.ToString().Length);
-            }
-            else
-            {
-                _logger.LogWarning("x-goog-iap-jwt-assertion header is not present");
-            }
-            
-            // Check if we should bypass JWT validation entirely and use only headers
-            bool bypassJwtValidation = _configuration.GetValue<bool>("IAP:BypassJwtValidation", false);
-            if (bypassJwtValidation)
-            {
-                _logger.LogWarning("JWT validation is bypassed by configuration");
-                if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var bypassEmailHeader))
-                {
-                    var emailHeaderStr = bypassEmailHeader.ToString();
-                    var extractedEmail = ExtractEmailFromHeader(emailHeaderStr);
-                    
-                    if (!string.IsNullOrEmpty(extractedEmail))
-                    {
-                        _logger.LogWarning("Using header-only authentication for email: {Email}", extractedEmail);
-                        var headerClaims = new List<Claim>
-                        {
-                            new Claim(ClaimTypes.Name, extractedEmail),
-                            new Claim(ClaimTypes.Email, extractedEmail),
-                            new Claim("iap-header-verified", "true"),
-                            new Claim("jwt-validation-bypassed", "true")
-                        };
-                        
-                        context.User = new ClaimsPrincipal(new ClaimsIdentity(headerClaims, "IAP-Header-Only"));
-                        
-                        // Store in context items
-                        context.Items["IAP_HEADER_AUTHENTICATED"] = true;
-                        context.Items["IAP_HEADER_EMAIL"] = extractedEmail;
-                        context.Items["IAP_JWT_BYPASSED"] = true;
-                        
-                        await _next(context);
-                        return;
-                    }
-                    else
-                    {
-                        _logger.LogWarning("JWT validation bypassed but couldn't extract email from header: {Header}", emailHeaderStr);
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("JWT validation bypassed but no email header found");
-                }
-            }
-                
             // Skip verification in development if configured
-            if (_environment.IsDevelopment())
+            if (_environment.IsDevelopment() && _configuration.GetValue<bool>("IAP:SkipValidationInDevelopment", _configuration.GetValue<bool>("Development:IAPSimulation:SkipValidationInDevelopment", false)))
             {
-                bool skipValidation = _configuration.GetValue<bool>("IAP:SkipValidationInDevelopment", 
-                               _configuration.GetValue<bool>("Development:IAPSimulation:SkipValidationInDevelopment", false));
-                
-                // Check for development cookie indicators
-                bool hasDevelopmentCookie = context.Request.Cookies.ContainsKey("DevIAPAuth") || 
-                                           context.Request.Cookies.ContainsKey("dev-user-email");
-                bool hasDevFlag = context.Request.Headers.ContainsKey("x-using-dev-cookie") ||
-                                 context.Request.Headers.ContainsKey("X-Dev-IAP-Simulation");
-                
-                if (skipValidation || hasDevelopmentCookie || hasDevFlag)
+                string devEmail = GetDevelopmentUserEmail(context);
+                if (!string.IsNullOrEmpty(devEmail))
                 {
-                    _logger.LogDebug("Development authentication detected. Using development user setup.");
-                    string devEmail = GetDevelopmentUserEmail(context);
-                    if (!string.IsNullOrEmpty(devEmail))
-                    {
-                        SetupDevUserPrincipal(context, devEmail);
-                        await _next(context);
-                        return;
-                    }
+                    SetupDevUserPrincipal(context, devEmail);
+                    await _next(context);
+                    return;
                 }
             }
 
-            // Check if header-based authentication is allowed
-            bool allowHeaderAuth = _configuration.GetValue<bool>("IAP:AllowHeaderAuthentication", true);
-            _logger.LogDebug("Header-based authentication allowed: {AllowHeaderAuth}", allowHeaderAuth);
-            
             // Primary Authentication: JWT Verification
             bool jwtVerified = false;
             ClaimsPrincipal? jwtPrincipal = null;
@@ -175,7 +86,6 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "JWT verification failed, falling back to header-based authentication");
-                    // Don't immediately fail here, continue and try to use header authentication
                 }
             }
             else
@@ -210,9 +120,9 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         }
                     }
                 }
-                else if (allowHeaderAuth || !_configuration.GetValue<bool>("IAP:RequireJwtVerification", true) || _environment.IsDevelopment())
+                else if (!_configuration.GetValue<bool>("IAP:RequireJwtVerification", true) || _environment.IsDevelopment())
                 {
-                    // Use email header if header auth is allowed, JWT verification isn't required, or in development
+                    // Only use email header if JWT verification isn't required or in development
                     _logger.LogDebug("Using email from header: {Email}", extractedEmail);
                     var claims = new List<Claim>
                     {
@@ -226,17 +136,9 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 }
                 else
                 {
-                    // Allow header-based authentication in production if JWT validation failed but a header is present
-                    // This helps in cases where the JWT is properly signed but missing the email claim
-                    _logger.LogInformation("Allowing header-based authentication for: {Email}", extractedEmail);
-                    var claims = new List<Claim>
-                    {
-                        new Claim(ClaimTypes.Name, extractedEmail),
-                        new Claim(ClaimTypes.Email, extractedEmail),
-                        new Claim("iap-header-verified", "true")
-                    };
-                    context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "IAP-Header"));
-                    await _next(context);
+                    _logger.LogWarning("JWT verification required but failed. Denying access.");
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    await context.Response.WriteAsync("Unauthorized: JWT verification required");
                     return;
                 }
             }
@@ -266,358 +168,252 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
         {
             // Header format: "accounts.google.com:john.doe@example.com"
             var parts = emailHeader.Split(':', 2);
-            var result = parts.Length == 2 ? parts[1].Trim() : string.Empty;
-            _logger.LogDebug("Extracted email from header: '{Header}' -> '{Email}'", emailHeader, result);
-            return result;
+            return parts.Length == 2 ? parts[1].Trim() : string.Empty;
         }
 
         private async Task<ClaimsPrincipal> VerifyIapJwtAndGetPrincipalAsync(string jwt, HttpContext context)
         {
-            try
+            // Parse the JWT without validation first to get the kid (key ID)
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(jwt) as JwtSecurityToken;
+            
+            if (jsonToken == null)
             {
-                // Parse the JWT without validation first to log info
-                var handler = new JwtSecurityTokenHandler();
-                var jsonToken = handler.ReadToken(jwt) as JwtSecurityToken;
-                
-                if (jsonToken == null)
+                throw new SecurityTokenException("Invalid JWT token format");
+            }
+            
+            var kid = jsonToken.Header["kid"]?.ToString();
+            if (string.IsNullOrEmpty(kid))
+            {
+                throw new SecurityTokenException("JWT missing kid (key ID) header");
+            }
+            
+            // Log token information for debugging
+            _logger.LogDebug("JWT Header: {@JwtHeader}", jsonToken.Header);
+            _logger.LogDebug("JWT Claims: {@JwtClaims}", jsonToken.Claims.Select(c => new { c.Type, c.Value }));
+            
+            // Get the public key for this kid
+            var publicKey = await GetPublicKeyAsync(kid);
+            
+            // Get the expected audience
+            string projectNumber = _configuration["IAP:ProjectNumber"];
+            
+            // Try multiple audience formats
+            List<string> audiences = new List<string>();
+            
+            // Add configured audience if available
+            string configuredAudience = _configuration["IAP:Audience"];
+            if (!string.IsNullOrEmpty(configuredAudience))
+            {
+                audiences.Add(configuredAudience);
+            }
+            
+            // Cloud Run format
+            string region = _configuration["IAP:Region"];
+            string serviceName = _configuration["IAP:ServiceName"];
+            if (!string.IsNullOrEmpty(projectNumber) && 
+                !string.IsNullOrEmpty(region) && 
+                !string.IsNullOrEmpty(serviceName))
+            {
+                audiences.Add($"/projects/{projectNumber}/locations/{region}/services/{serviceName}");
+            }
+            
+            // Backend service format
+            string backendServiceId = _configuration["IAP:BackendServiceId"];
+            if (!string.IsNullOrEmpty(projectNumber) && 
+                !string.IsNullOrEmpty(backendServiceId))
+            {
+                audiences.Add($"/projects/{projectNumber}/global/backendServices/{backendServiceId}");
+            }
+            
+            // Simplest format
+            if (!string.IsNullOrEmpty(projectNumber))
+            {
+                audiences.Add($"/projects/{projectNumber}");
+            }
+            
+            // Project ID/app format
+            string projectId = _configuration["IAP:ProjectId"];
+            if (!string.IsNullOrEmpty(projectNumber) && !string.IsNullOrEmpty(projectId))
+            {
+                audiences.Add($"/projects/{projectNumber}/apps/{projectId}");
+            }
+            
+            if (!audiences.Any())
+            {
+                throw new InvalidOperationException("No valid audience configuration found. Configure IAP:Audience or IAP:ProjectNumber");
+            }
+            
+            _logger.LogDebug("Trying JWT validation with audience formats: {@Audiences}", audiences);
+            
+            // Try each audience until one works
+            SecurityToken validatedToken = null;
+            ClaimsPrincipal validatedPrincipal = null;
+            Exception lastException = null;
+            
+            foreach (var audience in audiences)
+            {
+                try
                 {
-                    throw new SecurityTokenException("Invalid JWT token format");
-                }
-                
-                // Log token information for debugging
-                _logger.LogWarning("JWT Header:");
-                foreach (var headerItem in jsonToken.Header)
-                {
-                    _logger.LogWarning("  {Key}: {Value}", headerItem.Key, headerItem.Value);
-                }
-
-                _logger.LogWarning("JWT Claims:");
-                foreach (var claim in jsonToken.Claims)
-                {
-                    _logger.LogWarning("  {Type}: {Value}", claim.Type, claim.Value);
-                }
-
-                _logger.LogWarning("JWT Audience(s): {Aud}", string.Join(",", jsonToken.Audiences));
-                _logger.LogWarning("JWT Issuer: {Issuer}", jsonToken.Issuer);
-                
-                // Get the expected audience
-                string projectNumber = _configuration["IAP:ProjectNumber"];
-                _logger.LogDebug("Using project number from config: {ProjectNumber}", projectNumber);
-                
-                // Try multiple audience formats
-                List<string> audiences = new List<string>();
-                
-                // Add configured audience if available
-                string configuredAudience = _configuration["IAP:Audience"];
-                if (!string.IsNullOrEmpty(configuredAudience))
-                {
-                    audiences.Add(configuredAudience);
-                }
-                
-                // Cloud Run format
-                string region = _configuration["IAP:Region"];
-                string serviceName = _configuration["IAP:ServiceName"];
-                if (!string.IsNullOrEmpty(projectNumber) && 
-                    !string.IsNullOrEmpty(region) && 
-                    !string.IsNullOrEmpty(serviceName))
-                {
-                    audiences.Add($"/projects/{projectNumber}/locations/{region}/services/{serviceName}");
-                }
-                
-                // Backend service format
-                string backendServiceId = _configuration["IAP:BackendServiceId"];
-                if (!string.IsNullOrEmpty(projectNumber) && 
-                    !string.IsNullOrEmpty(backendServiceId))
-                {
-                    audiences.Add($"/projects/{projectNumber}/global/backendServices/{backendServiceId}");
-                }
-                
-                // Simplest format
-                if (!string.IsNullOrEmpty(projectNumber))
-                {
-                    audiences.Add($"/projects/{projectNumber}");
-                }
-                
-                // Project ID/app format
-                string projectId = _configuration["IAP:ProjectId"];
-                if (!string.IsNullOrEmpty(projectNumber) && !string.IsNullOrEmpty(projectId))
-                {
-                    audiences.Add($"/projects/{projectNumber}/apps/{projectId}");
-                }
-                
-                if (!audiences.Any())
-                {
-                    throw new InvalidOperationException("No valid audience configuration found. Configure IAP:Audience or IAP:ProjectNumber");
-                }
-                
-                _logger.LogDebug("Trying JWT validation with audience formats: {@Audiences}", audiences);
-
-                // Try Google's SignedTokenVerificationOptions approach
-                Payload payload = null;
-                Exception lastException = null;
-                
-                // Log all audience formats we're going to try
-                _logger.LogWarning("Trying to validate JWT with these audiences: {Audiences}", 
-                    string.Join(", ", audiences));
-                
-                // Add exact audience from the token if we can find it
-                if (jsonToken?.Audiences?.Any() == true)
-                {
-                    foreach (var tokenAudience in jsonToken.Audiences)
+                    // Set up the parameters for JWT validation
+                    var validationParameters = new TokenValidationParameters
                     {
-                        if (!audiences.Contains(tokenAudience))
-                        {
-                            _logger.LogWarning("Adding audience from token: {Audience}", tokenAudience);
-                            audiences.Add(tokenAudience);
-                        }
-                    }
+                        ValidateIssuer = true,
+                        ValidIssuer = IAP_ISSUER,
+                        ValidateAudience = true,
+                        ValidAudience = audience,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = publicKey,
+                        ClockSkew = TimeSpan.FromMinutes(5)
+                    };
+                    
+                    // Validate the JWT
+                    validatedPrincipal = handler.ValidateToken(jwt, validationParameters, out validatedToken);
+                    _logger.LogInformation("JWT validation successful with audience: {Audience}", audience);
+                    break; // Success, exit the loop
                 }
-                
-                // First attempt: try with SignedTokenVerificationOptions
-                foreach (var audience in audiences)
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    _logger.LogDebug("JWT validation failed with audience {Audience}: {ErrorMessage}", 
+                        audience, ex.Message);
+                    // Continue to try next audience
+                }
+            }
+            
+            if (validatedPrincipal == null)
+            {
+                _logger.LogWarning("JWT validation failed with all audience formats");
+                throw lastException ?? new SecurityTokenException("JWT validation failed with all audience formats");
+            }
+            
+            // Extract the email claim from the validated token - try multiple possible claim types
+            string email = null;
+            
+            // Common claim types for email in IAP tokens
+            var emailClaimTypes = new[] { 
+                "email", 
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
+                "preferred_username",
+                "unique_name",
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
+                "sub" // Sometimes the subject claim contains the email
+            };
+            
+            // Check all possible email claim types
+            foreach (var claimType in emailClaimTypes)
+            {
+                email = jsonToken.Claims.FirstOrDefault(c => c.Type == claimType)?.Value;
+                if (!string.IsNullOrEmpty(email))
+                {
+                    _logger.LogDebug("Found email claim in claim type: {ClaimType}", claimType);
+                    break;
+                }
+            }
+            
+            // If still no email, check for the subject claim which might have the email
+            if (string.IsNullOrEmpty(email))
+            {
+                var subClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+                if (!string.IsNullOrEmpty(subClaim) && subClaim.Contains("@"))
+                {
+                    email = subClaim;
+                    _logger.LogDebug("Using subject claim as email: {Email}", email);
+                }
+            }
+            
+            // For external identities, the email might be in the gcip claim
+            if (string.IsNullOrEmpty(email))
+            {
+                var gcipClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "gcip")?.Value;
+                if (!string.IsNullOrEmpty(gcipClaim))
                 {
                     try
                     {
-                        var options = new SignedTokenVerificationOptions
+                        var gcipJson = JsonDocument.Parse(gcipClaim);
+                        if (gcipJson.RootElement.TryGetProperty("email", out var emailElement))
                         {
-                            IssuedAtClockTolerance = TimeSpan.FromMinutes(1),
-                            ExpiryClockTolerance = TimeSpan.FromMinutes(1),
-                            TrustedAudiences = { audience },
-                            TrustedIssuers = { "https://cloud.google.com/iap" },
-                            CertificatesUrl = GoogleAuthConsts.IapKeySetUrl,
-                        };
-
-                        _logger.LogWarning("Attempting validation with audience: {Audience}", audience);
-                        payload = (Payload?)await JsonWebSignature.VerifySignedTokenAsync(jwt, options);
-                        _logger.LogInformation("JWT validation successful with audience: {Audience}", audience);
-                        break; // Success, exit the loop
-                    }
-                    catch (Exception ex)
-                    {
-                        lastException = ex;
-                        _logger.LogWarning("JWT validation failed with audience {Audience}: {ErrorMessage}", 
-                            audience, ex.Message);
-                        
-                        // Log inner exception details if available
-                        if (ex.InnerException != null)
-                        {
-                            _logger.LogWarning("Inner exception: {InnerType}: {InnerMessage}", 
-                                ex.InnerException.GetType().Name, ex.InnerException.Message);
-                        }
-                        
-                        // Continue to try next audience
-                    }
-                }
-                
-                // Second attempt: try with ValidationSettings if first method failed
-                if (payload == null)
-                {
-                    _logger.LogWarning("First validation method failed, trying with ValidationSettings");
-                    
-                    foreach (var audience in audiences)
-                    {
-                        try
-                        {
-                            var settings = new ValidationSettings
-                            {
-                                Audience = new[] { audience }
-                            };
-                            
-                            _logger.LogWarning("Attempting validation with ValidationSettings audience: {Audience}", audience);
-                            payload = await ValidateAsync(jwt, settings);
-                            _logger.LogInformation("JWT validation with ValidationSettings successful for audience: {Audience}", audience);
-                            break; // Success, exit the loop
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogWarning("ValidationSettings JWT validation failed for audience {Audience}: {ErrorMessage}", 
-                                audience, ex.Message);
+                            email = emailElement.GetString();
+                            _logger.LogDebug("Found email in gcip claim: {Email}", email);
                         }
                     }
-                }
-                
-                if (payload == null)
-                {
-                    _logger.LogWarning("JWT validation failed with all audience formats. Last error: {ErrorMessage}", 
-                        lastException?.Message ?? "Unknown error");
-                        
-                    // Try direct access as fallback if JWT validation fails but header is present
-                    if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var fallbackEmailHeaderValues))
+                    catch (JsonException ex)
                     {
-                        var emailHeader = fallbackEmailHeaderValues.ToString();
-                        _logger.LogWarning("Falling back to header-based authentication. Raw header: {RawHeader}", emailHeader);
-                        
-                        var extractedEmail = ExtractEmailFromHeader(emailHeader);
-                        
-                        if (!string.IsNullOrEmpty(extractedEmail))
-                        {
-                            _logger.LogWarning("Using header-based authentication with extracted email: {Email}", extractedEmail);
-                            var headerClaims = new List<Claim>
-                            {
-                                new Claim(ClaimTypes.Name, extractedEmail),
-                                new Claim(ClaimTypes.Email, extractedEmail),
-                                new Claim("iap-header-verified", "true")
-                            };
-                            
-                            // Create a new principal with the header claims
-                            var headerIdentity = new ClaimsIdentity(headerClaims, "IAP-Header");
-                            var headerPrincipal = new ClaimsPrincipal(headerIdentity);
-                            context.User = headerPrincipal;
-                            
-                            // Add context items to indicate header-based authentication
-                            context.Items["IAP_HEADER_AUTHENTICATED"] = true;
-                            context.Items["IAP_HEADER_EMAIL"] = extractedEmail;
-                            
-                            await _next(context);
-                            return headerPrincipal;
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Failed to extract email from header: {Header}", emailHeader);
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("No email header found for fallback authentication");
-                    }
-                    
-                    throw lastException ?? new SecurityTokenException("JWT validation failed with all audience formats");
-                }
-
-                // Ensure payload is not null
-                var validatedPayload = payload;
-                _logger.LogWarning("Successfully validated IAP JWT payload: {@PayloadDetails}", 
-                    new 
-                    {
-                        Subject = validatedPayload.Subject,
-                        Email = validatedPayload.Email,
-                        Name = validatedPayload.Name,
-                        FamilyName = validatedPayload.FamilyName,
-                        GivenName = validatedPayload.GivenName,
-                        EmailVerified = validatedPayload.EmailVerified,
-                        HostedDomain = validatedPayload.HostedDomain,
-                        Issuer = validatedPayload.Issuer,
-                        Audience = validatedPayload.Audience,
-                        ExpirationTimeSeconds = validatedPayload.ExpirationTimeSeconds,
-                        IssuedAtTimeSeconds = validatedPayload.IssuedAtTimeSeconds,
-                        ExpirationTime = validatedPayload.ExpirationTimeSeconds.HasValue 
-                            ? DateTimeOffset.FromUnixTimeSeconds(validatedPayload.ExpirationTimeSeconds.Value).ToString() 
-                            : null,
-                        IssuedAt = validatedPayload.IssuedAtTimeSeconds.HasValue 
-                            ? DateTimeOffset.FromUnixTimeSeconds(validatedPayload.IssuedAtTimeSeconds.Value).ToString() 
-                            : null
-                    });
-                
-                // Create a claims principal from the validated payload
-                var claims = new List<Claim>();
-                
-                // Extract the email claim - Google's payload should have it directly
-                string emailValue = null;
-                
-                // Try to get the email directly from the payload
-                if (!string.IsNullOrEmpty(validatedPayload.Email))
-                {
-                    emailValue = validatedPayload.Email;
-                    _logger.LogDebug("Found email in Google payload: {Email}", emailValue);
-                }
-                else if (!string.IsNullOrEmpty(validatedPayload.Subject) && validatedPayload.Subject.Contains("@"))
-                {
-                    // Sometimes 'sub' contains the email
-                    emailValue = validatedPayload.Subject;
-                    _logger.LogDebug("Using subject claim as email: {Email}", emailValue);
-                }
-                
-                // Check if we need to fall back to IAP header
-                if (string.IsNullOrEmpty(emailValue) && context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
-                {
-                    var emailHeader = emailHeaderValues.ToString();
-                    if (emailHeader.Contains(':'))
-                    {
-                        emailValue = emailHeader.Split(':').Last();
-                        _logger.LogDebug("Used email from IAP header as fallback: {Email}", emailValue);
-                    }
-                    else
-                    {
-                        emailValue = emailHeader;
+                        _logger.LogWarning(ex, "Failed to parse gcip claim for email");
                     }
                 }
-                
-                if (string.IsNullOrEmpty(emailValue))
-                {
-                    // Log all payload data to help diagnose the issue
-                    _logger.LogWarning("JWT missing email claim. Available payload data: Subject={Subject}, Email={Email}, Name={Name}", 
-                        validatedPayload.Subject, validatedPayload.Email, validatedPayload.Name);
-
-                    // Try to continue with header-based authentication
-                    if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var fallbackEmailValues))
-                    {
-                        var fallbackEmailHeader = fallbackEmailValues.ToString();
-                        emailValue = ExtractEmailFromHeader(fallbackEmailHeader);
-                        
-                        if (!string.IsNullOrEmpty(emailValue))
-                        {
-                            _logger.LogInformation("Using email from header after JWT validation: {Email}", emailValue);
-                        }
-                        else
-                        {
-                            throw new SecurityTokenException("JWT missing email claim and header email extraction failed");
-                        }
-                    }
-                    else
-                    {
-                        throw new SecurityTokenException("JWT missing email claim");
-                    }
-                }
-                
-                // Add the claims from the payload
-                claims.Add(new Claim(ClaimTypes.Name, emailValue));
-                claims.Add(new Claim(ClaimTypes.Email, emailValue));
-                claims.Add(new Claim("iap-jwt-verified", "true"));
-                
-                // Add common properties from the payload
-                if (!string.IsNullOrEmpty(validatedPayload.Subject))
-                    claims.Add(new Claim("sub", validatedPayload.Subject));
-                
-                if (!string.IsNullOrEmpty(validatedPayload.Name))
-                    claims.Add(new Claim("name", validatedPayload.Name));
-                
-                if (!string.IsNullOrEmpty(validatedPayload.GivenName))
-                    claims.Add(new Claim("given_name", validatedPayload.GivenName));
-                
-                if (!string.IsNullOrEmpty(validatedPayload.FamilyName))
-                    claims.Add(new Claim("family_name", validatedPayload.FamilyName));
-                
-                if (!string.IsNullOrEmpty(validatedPayload.HostedDomain))
-                    claims.Add(new Claim("hd", validatedPayload.HostedDomain));
-                
-                // EmailVerified is a boolean, not a string
-                claims.Add(new Claim("email_verified", validatedPayload.EmailVerified.ToString().ToLower()));
-                
-                // Add issuance and expiration claims - these are numeric values, not strings
-                if (validatedPayload.IssuedAtTimeSeconds.HasValue)
-                    claims.Add(new Claim("iat", validatedPayload.IssuedAtTimeSeconds.Value.ToString()));
-                
-                if (validatedPayload.ExpirationTimeSeconds.HasValue)
-                    claims.Add(new Claim("exp", validatedPayload.ExpirationTimeSeconds.Value.ToString()));
-                
-                var identity = new ClaimsIdentity(claims, "IAP-JWT");
-                var validatedPrincipal = new ClaimsPrincipal(identity);
-                
-                // Add the IAP validation status to the HTTP context items to prevent duplicate validation
-                context.Items["IAP_JWT_VALIDATED"] = true;
-                context.Items["IAP_JWT_EMAIL"] = emailValue;
-                
-                // Also add a special header for the authentication handler to detect
-                context.Request.Headers["X-IAP-JWT-Validated"] = "true";
-                context.Request.Headers["X-IAP-JWT-Email"] = emailValue;
-                
-                return validatedPrincipal;
             }
-            catch (Exception ex)
+            
+            // Last resort: try to extract from any claim that looks like an email
+            if (string.IsNullOrEmpty(email))
             {
-                _logger.LogError(ex, "Error validating IAP JWT");
-                throw;
+                foreach (var claim in jsonToken.Claims)
+                {
+                    if (claim.Value.Contains("@") && claim.Value.Contains("."))
+                    {
+                        email = claim.Value;
+                        _logger.LogDebug("Found potential email in claim {ClaimType}: {Email}", claim.Type, email);
+                        break;
+                    }
+                }
             }
+            
+            // Check if we need to fall back to IAP header
+            if (string.IsNullOrEmpty(email) && context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
+            {
+                var emailHeader = emailHeaderValues.ToString();
+                if (emailHeader.Contains(':'))
+                {
+                    email = emailHeader.Split(':').Last();
+                    _logger.LogDebug("Used email from IAP header as fallback: {Email}", email);
+                }
+                else
+                {
+                    email = emailHeader;
+                }
+            }
+            
+            if (string.IsNullOrEmpty(email))
+            {
+                // Log all claims to help diagnose the issue
+                _logger.LogWarning("JWT missing email claim. Available claims: {@Claims}", 
+                    jsonToken.Claims.Select(c => new { c.Type, c.Value }));
+                throw new SecurityTokenException("JWT missing email claim");
+            }
+            
+            // Add user identity claims if not already present
+            var identity = validatedPrincipal.Identity as ClaimsIdentity;
+            if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Name))
+            {
+                identity.AddClaim(new Claim(ClaimTypes.Name, email));
+            }
+            if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Email))
+            {
+                identity.AddClaim(new Claim(ClaimTypes.Email, email));
+            }
+            
+            // Add a special claim to indicate this is a verified IAP JWT (used for security checks)
+            identity.AddClaim(new Claim("iap-jwt-verified", "true"));
+            
+            // Add the IAP validation status to the HTTP context items to prevent duplicate validation
+            context.Items["IAP_JWT_VALIDATED"] = true;
+            context.Items["IAP_JWT_EMAIL"] = email;
+            
+            // Also add a special header for the authentication handler to detect
+            context.Request.Headers["X-IAP-JWT-Validated"] = "true";
+            context.Request.Headers["X-IAP-JWT-Email"] = email;
+            
+            // Add all original JWT claims for potential use in authorization
+            foreach (var claim in jsonToken.Claims)
+            {
+                if (!validatedPrincipal.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
+                {
+                    identity.AddClaim(new Claim(claim.Type, claim.Value));
+                }
+            }
+            
+            return validatedPrincipal;
         }
 
         private async Task<JsonWebKey> GetPublicKeyAsync(string kid)
@@ -693,9 +489,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
         private string GetDevelopmentUserEmail(HttpContext context)
         {
-            _logger.LogDebug("Looking for development user email");
-            
-            // Option 1: Development simulation from header
+            // Development simulation from header
             if (context.Request.Headers.TryGetValue("X-Dev-IAP-Simulation", out _))
             {
                 if (context.Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var headerEmail))
@@ -705,60 +499,49 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     {
                         email = email.Split(':').Last();
                     }
-                    _logger.LogDebug("Found development email in header: {Email}", email);
                     return email;
                 }
             }
             
-            // Option 2: Check for dev auth cookie (preferred for web apps)
+            // Check for dev auth cookie
             if (context.Request.Cookies.TryGetValue("DevIAPAuth", out var cookieEmail) && 
                 !string.IsNullOrEmpty(cookieEmail))
             {
-                _logger.LogDebug("Found DevIAPAuth cookie with value: {Email}", cookieEmail);
-                return Uri.UnescapeDataString(cookieEmail);
+                return cookieEmail;
             }
             
-            // Option 3: Check for dev-user-email cookie (client-side set)
-            if (context.Request.Cookies.TryGetValue("dev-user-email", out var devUserEmail) && 
-                !string.IsNullOrEmpty(devUserEmail))
-            {
-                _logger.LogDebug("Found dev-user-email cookie with value: {Email}", devUserEmail);
-                return Uri.UnescapeDataString(devUserEmail);
-            }
-            
-            // Option 4: Use a fixed value from configuration
+            // Option 1: Use a fixed value from configuration
             var configuredEmail = _configuration["Development:IAPSimulation:UserEmail"];
             if (!string.IsNullOrEmpty(configuredEmail))
             {
-                _logger.LogDebug("Using configured development email: {Email}", configuredEmail);
                 return configuredEmail;
             }
             
-            // Option 5: Use a query parameter for testing different users
+            // Option 2: Use a query parameter for testing different users
             if (context.Request.Query.TryGetValue("dev-user", out var queryEmail))
             {
-                _logger.LogDebug("Using development email from query string: {Email}", queryEmail.ToString());
                 return queryEmail.ToString();
             }
             
+            // Option 3: Use a cookie for persistent development identity
+            if (context.Request.Cookies.TryGetValue("dev-user-email", out var devCookieEmail))
+            {
+                return devCookieEmail;
+            }
+            
             // Default dev user
-            _logger.LogDebug("Using default development email: dev.user@example.com");
             return "dev.user@example.com";
         }
 
         private void SetupDevUserPrincipal(HttpContext context, string email)
         {
-            // Ensure we handle emails with account provider prefix and any URL encoding
-            email = Uri.UnescapeDataString(email);
-            
+            // Ensure we handle emails with account provider prefix
             if (email.Contains(':'))
             {
                 email = email.Split(':').Last();
             }
             
-            _logger.LogInformation("Setting up development user principal for: {Email}", email);
-            
-            var devClaims = new List<Claim>
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, email),
                 new Claim(ClaimTypes.Email, email),
@@ -771,29 +554,29 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             // Add role claims based on domain
             if (email.EndsWith("@unops.org"))
             {
-                devClaims.Add(new Claim(ClaimTypes.Role, "Internal"));
+                claims.Add(new Claim(ClaimTypes.Role, "Internal"));
                 
                 // If admin is in the email, add Administrator role
                 if (email.ToLower().Contains("admin"))
                 {
-                    devClaims.Add(new Claim(ClaimTypes.Role, "Administrator"));
+                    claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
                 }
             }
             else
             {
-                devClaims.Add(new Claim(ClaimTypes.Role, "External"));
+                claims.Add(new Claim(ClaimTypes.Role, "External"));
                 
                 // Check for partner domain patterns
                 if (_configuration.GetSection("IAP:DomainRoles").Exists())
                 {
-                    string emailDomain = email.Substring(email.IndexOf('@') + 1);
+                    string domain = email.Substring(email.IndexOf('@') + 1);
                     var domainRoles = _configuration.GetSection("IAP:DomainRoles").GetChildren();
                     
                     foreach (var domainRole in domainRoles)
                     {
-                        if (emailDomain == domainRole.Key)
+                        if (domain == domainRole.Key)
                         {
-                            devClaims.Add(new Claim(ClaimTypes.Role, domainRole.Value));
+                            claims.Add(new Claim(ClaimTypes.Role, domainRole.Value));
                             break;
                         }
                     }
@@ -801,10 +584,10 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             
             // Add basic User role
-            devClaims.Add(new Claim(ClaimTypes.Role, "User"));
+            claims.Add(new Claim(ClaimTypes.Role, "User"));
             
-            var devIdentity = new ClaimsIdentity(devClaims, "Development-IAP");
-            context.User = new ClaimsPrincipal(devIdentity);
+            var identity = new ClaimsIdentity(claims, "Development-IAP");
+            context.User = new ClaimsPrincipal(identity);
             
             // Store the development authentication in a cookie for session persistence
             if (_configuration.GetValue<bool>("Development:IAPSimulation:Enabled", true))

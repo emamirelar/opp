@@ -81,7 +81,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         }
         
         // Extract email from IAP headers or from JWT validation
-        string authEmail;
+        string userEmail;
         
         // Check if we have a verified email from JWT
         if (Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtValues))
@@ -89,14 +89,14 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             var jwt = jwtValues.ToString();
             try 
             {
-                var jwtPrinciple = await VerifyIapJwtAndGetPrincipalAsync(jwt);
-                if (jwtPrinciple != null)
+                var principle = await VerifyIapJwtAndGetPrincipalAsync(jwt);
+                if (principle != null)
                 {
-                    var email = jwtPrinciple.FindFirstValue(ClaimTypes.Email);
+                    var email = principle.FindFirstValue(ClaimTypes.Email);
                     if (!string.IsNullOrEmpty(email))
                     {
-                        authEmail = email;
-                        _logger.LogInformation("Using JWT-verified email: {Email}", authEmail);
+                        userEmail = email;
+                        _logger.LogInformation("Using JWT-verified email: {Email}", userEmail);
                         goto ProcessUser; // Skip the header check
                     }
                 }
@@ -116,25 +116,25 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         }
         
         // Parse the email from header (format: "accounts.google.com:user@example.com")
-        authEmail = userEmailValues.ToString();
-        if (authEmail.Contains(':'))
+        userEmail = userEmailValues.ToString();
+        if (userEmail.Contains(':'))
         {
-            authEmail = authEmail.Split(':').Last();
+            userEmail = userEmail.Split(':').Last();
         }
         
-        _logger.LogInformation("Using email from IAP header: {Email}", authEmail);
+        _logger.LogInformation("Using email from IAP header: {Email}", userEmail);
         
     ProcessUser:
-        var (authUser, isAuthUserNew) = await GetOrCreateUserAsync(authEmail);
+        var (user, isNewUser) = await GetOrCreateUserAsync(userEmail);
         
-        if (authUser == null)
+        if (user == null)
         {
-            _logger.LogWarning("Failed to get or create user for email: {Email}", authEmail);
+            _logger.LogWarning("Failed to get or create user for email: {Email}", userEmail);
             return AuthenticateResult.Fail("User not found and could not be created");
         }
         
-        var authPrincipal = await CreateAuthenticationPrincipalAsync(authUser);
-        return AuthenticateResult.Success(new AuthenticationTicket(authPrincipal, Scheme.Name));
+        var principal = await CreateAuthenticationPrincipalAsync(user);
+        return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
     }
     
     private async Task<bool> ValidateIapJwtAsync()
@@ -176,21 +176,21 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         }
         
         // Primary Authentication: JWT Verification
-        bool validateJwtVerified = false;
-        ClaimsPrincipal? validateJwtPrincipal = null;
-        string? validateVerifiedEmail = null;
+        bool jwtVerified = false;
+        ClaimsPrincipal? jwtPrincipal = null;
+        string? verifiedEmail = null;
 
         if (Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtHeaderValues))
         {
             var jwt = jwtHeaderValues.ToString();
             try
             {
-                validateJwtPrincipal = await VerifyIapJwtAndGetPrincipalAsync(jwt);
-                if (validateJwtPrincipal != null)
+                jwtPrincipal = await VerifyIapJwtAndGetPrincipalAsync(jwt);
+                if (jwtPrincipal != null)
                 {
-                    validateJwtVerified = true;
-                    validateVerifiedEmail = validateJwtPrincipal.FindFirstValue(ClaimTypes.Email);
-                    _logger.LogDebug("Successfully verified JWT for user: {Email}", validateVerifiedEmail);
+                    jwtVerified = true;
+                    verifiedEmail = jwtPrincipal.FindFirstValue(ClaimTypes.Email);
+                    _logger.LogDebug("Successfully verified JWT for user: {Email}", verifiedEmail);
                     return true;
                 }
             }
