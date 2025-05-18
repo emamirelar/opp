@@ -76,13 +76,13 @@ public class Startup
         app.UseStaticFiles();
         app.UseRouting();
         
-        // Add diagnostic logging middleware to check headers
+        // Add diagnostic logging middleware to check headers FIRST
         app.UseMiddleware<AuthenticationLoggingMiddleware>();
         
-        // Add IAP verification middleware first
+        // Add IAP verification middleware second - will log headers in original form
         app.UseIAPVerification();
         
-        // Add IAP simulation in development
+        // Add IAP simulation in development THIRD - it may modify the headers
         if (env.IsDevelopment())
         {
             // Development login page middleware
@@ -93,6 +93,31 @@ public class Startup
             
             // Set IAP headers for development
             app.UseMiddleware<DevelopmentIAPAuthHandler>();
+            
+            // Add a second instance of logging AFTER development middleware to see modified headers
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    var logger = loggerFactory.CreateLogger("PostDevMiddlewareLogger");
+                    logger.LogInformation("Headers AFTER dev middleware:");
+                    
+                    foreach (var header in context.Request.Headers)
+                    {
+                        if (header.Key.Contains("jwt", StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.LogInformation("  {Key}: [REDACTED - Length: {Length}]", 
+                                header.Key, header.Value.ToString().Length);
+                        }
+                        else
+                        {
+                            logger.LogInformation("  {Key}: {Value}", header.Key, header.Value);
+                        }
+                    }
+                }
+                
+                await next();
+            });
         }
         
         app.UseCors(myAllowSpecificOrigins);

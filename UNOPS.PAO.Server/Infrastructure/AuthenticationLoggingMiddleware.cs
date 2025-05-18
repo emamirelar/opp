@@ -31,6 +31,17 @@ namespace UNOPS.PAO.Server.Infrastructure
                 if (context.Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var emailHeader))
                 {
                     _logger.LogInformation("IAP Email Header: {Header}", emailHeader);
+                    
+                    // Extract and log the actual email part
+                    var emailParts = emailHeader.ToString().Split(':', 2);
+                    if (emailParts.Length == 2)
+                    {
+                        _logger.LogInformation("IAP Email (extracted): {Email}", emailParts[1]);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("IAP Email Header: Missing");
                 }
 
                 if (context.Request.Headers.TryGetValue("X-Dev-IAP-Simulation", out var devHeader))
@@ -50,7 +61,7 @@ namespace UNOPS.PAO.Server.Infrastructure
                 }
                 
                 // Print all headers for troubleshooting
-                var headerLog = new StringBuilder("All request headers:\n");
+                var headerLog = new StringBuilder("AuthLoggingMiddleware - All request headers:\n");
                 foreach (var header in context.Request.Headers)
                 {
                     var headerValue = header.Key.Contains("JWT", StringComparison.OrdinalIgnoreCase) ? 

@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using System.Text;
 
 namespace UNOPS.PAO.UNOPSIdentity.Authentication
 {
@@ -45,6 +46,49 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // Log all headers at the beginning for troubleshooting
+            var headerLog = new StringBuilder("IAPVerificationMiddleware - All Request Headers:\n");
+            
+            // Check for any IAP-related headers with different casing
+            bool foundIapEmailHeader = false;
+            bool foundIapJwtHeader = false;
+            
+            foreach (var header in context.Request.Headers)
+            {
+                var headerValue = header.Key.Contains("jwt", StringComparison.OrdinalIgnoreCase) ? 
+                    $"[REDACTED - Length: {header.Value.ToString().Length}]" : 
+                    header.Value.ToString();
+                
+                headerLog.AppendLine($"  {header.Key}: {headerValue}");
+                
+                // Check for IAP headers with different casing
+                if (header.Key.Contains("authenticated-user-email", StringComparison.OrdinalIgnoreCase))
+                {
+                    foundIapEmailHeader = true;
+                    _logger.LogInformation("Found IAP email header with key: {Key}, value: {Value}", 
+                        header.Key, header.Value);
+                }
+                
+                if (header.Key.Contains("iap-jwt", StringComparison.OrdinalIgnoreCase))
+                {
+                    foundIapJwtHeader = true;
+                    _logger.LogInformation("Found IAP JWT header with key: {Key}, length: {Length}", 
+                        header.Key, header.Value.ToString().Length);
+                }
+            }
+            
+            if (!foundIapEmailHeader)
+            {
+                _logger.LogWarning("No IAP email header found in any case variation");
+            }
+            
+            if (!foundIapJwtHeader)
+            {
+                _logger.LogWarning("No IAP JWT header found in any case variation");
+            }
+            
+            _logger.LogInformation(headerLog.ToString());
+            
             // Health check path exception
             string healthCheckPath = _configuration["IAP:HealthCheckPath"] ?? "/health";
             if (context.Request.Path.StartsWithSegments(healthCheckPath))
@@ -73,6 +117,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             if (context.Request.Headers.TryGetValue("x-goog-iap-jwt-assertion", out var jwtHeaderValues))
             {
                 var jwt = jwtHeaderValues.ToString();
+                _logger.LogInformation("Found JWT header with length: {Length}", jwt.Length);
                 try
                 {
                     jwtPrincipal = await VerifyIapJwtAndGetPrincipalAsync(jwt, context);
@@ -90,13 +135,14 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             else
             {
-                _logger.LogDebug("No JWT header found, checking for email header");
+                _logger.LogWarning("No JWT header found, checking for email header");
             }
 
             // Secondary Authentication: Email Header Check (fallback or verification)
             if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
             {
                 var emailHeader = emailHeaderValues.ToString();
+                _logger.LogInformation("Found IAP email header: {Header}", emailHeader);
                 string extractedEmail = ExtractEmailFromHeader(emailHeader);
 
                 if (string.IsNullOrEmpty(extractedEmail))
@@ -118,6 +164,10 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                             await context.Response.WriteAsync("Unauthorized: Identity mismatch");
                             return;
                         }
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Email in JWT and header match: {Email}", extractedEmail);
                     }
                 }
                 else if (!_configuration.GetValue<bool>("IAP:RequireJwtVerification", true) || _environment.IsDevelopment())
