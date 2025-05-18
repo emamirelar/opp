@@ -41,6 +41,23 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        // Log all headers for debugging purposes
+        _logger.LogDebug("Received headers:");
+        foreach (var header in Request.Headers)
+        {
+            _logger.LogDebug("Header: {Key} = {Value}", header.Key, header.Value);
+        }
+        
+        // Specifically log IAP email header if present
+        if (Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var iapEmailHeader))
+        {
+            _logger.LogInformation("IAP Email Header: {Email}", iapEmailHeader);
+        }
+        else
+        {
+            _logger.LogWarning("IAP Email Header not found");
+        }
+
         // Skip authentication on the dev-login page
         if (Request.Path.StartsWithSegments("/dev-login"))
         {
@@ -80,65 +97,59 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             return AuthenticateResult.Fail("Invalid IAP JWT token");
         }
         
-        // Extract email from IAP headers or from JWT validation
-        string userEmail;
-        
-        // Check if we have a verified email from JWT
-        if (Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtValues))
-        {
-            var jwt = jwtValues.ToString();
-            try 
-            {
-                var principle = await VerifyIapJwtAndGetPrincipalAsync(jwt);
-                if (principle != null)
-                {
-                    var email = principle.FindFirstValue(ClaimTypes.Email);
-                    if (!string.IsNullOrEmpty(email))
-                    {
-                        userEmail = email;
-                        _logger.LogInformation("Using JWT-verified email: {Email}", userEmail);
-                        goto ProcessUser; // Skip the header check
-                    }
-                }
-            }
-            catch
-            {
-                // JWT verification failed, continue to header-based auth
-                _logger.LogDebug("JWT validation failed, falling back to header-based auth");
-            }
-        }
-        
-        // Extract IAP headers if JWT verification failed or was skipped
+        // Extract IAP header for email
         if (!Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var userEmailValues))
         {
-            _logger.LogWarning("IAP header not found");
+            _logger.LogWarning("IAP email header not found");
             return AuthenticateResult.Fail("IAP header not found");
         }
         
         // Parse the email from header (format: "accounts.google.com:user@example.com")
-        userEmail = userEmailValues.ToString();
-        if (userEmail.Contains(':'))
+        string extractedEmail = userEmailValues.ToString();
+        _logger.LogDebug("Raw IAP email header value: {RawValue}", extractedEmail);
+
+        if (extractedEmail.Contains(':'))
         {
-            userEmail = userEmail.Split(':').Last();
+            string originalValue = extractedEmail;
+            extractedEmail = extractedEmail.Split(':').Last();
+            _logger.LogDebug("Extracted email from IAP header: {Original} -> {Extracted}", originalValue, extractedEmail);
         }
         
-        _logger.LogInformation("Using email from IAP header: {Email}", userEmail);
+        _logger.LogInformation("Using email from IAP header: {Email}", extractedEmail);
         
-    ProcessUser:
-        var (user, isNewUser) = await GetOrCreateUserAsync(userEmail);
+        // Process user with extracted email
+        var (extractedUser, isExtractedUserNew) = await GetOrCreateUserAsync(extractedEmail);
         
-        if (user == null)
+        if (extractedUser == null)
         {
-            _logger.LogWarning("Failed to get or create user for email: {Email}", userEmail);
+            _logger.LogWarning("Failed to get or create user for email: {Email}", extractedEmail);
             return AuthenticateResult.Fail("User not found and could not be created");
         }
         
-        var principal = await CreateAuthenticationPrincipalAsync(user);
-        return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
+        var extractedPrincipal = await CreateAuthenticationPrincipalAsync(extractedUser);
+        return AuthenticateResult.Success(new AuthenticationTicket(extractedPrincipal, Scheme.Name));
     }
     
     private async Task<bool> ValidateIapJwtAsync()
     {
+        // Log if JWT header is present
+        if (Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtHeaderValue))
+        {
+            _logger.LogInformation("JWT header found: {JwtLength} characters", jwtHeaderValue.ToString().Length);
+            
+            // Log first 20 chars of JWT (for identification, not the full token for security)
+            string jwtPreview = jwtHeaderValue.ToString();
+            if (jwtPreview.Length > 20)
+            {
+                jwtPreview = jwtPreview.Substring(0, 20) + "...";
+            }
+            _logger.LogDebug("JWT preview: {Preview}", jwtPreview);
+        }
+        else
+        {
+            _logger.LogInformation("No JWT header found in request");
+        }
+
         // Check for development simulation flag first
         if (Request.Headers.TryGetValue("X-Dev-IAP-Simulation", out _))
         {
@@ -177,26 +188,38 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         
         // Primary Authentication: JWT Verification
         bool jwtVerified = false;
-        ClaimsPrincipal? jwtPrincipal = null;
-        string? verifiedEmail = null;
+        // ClaimsPrincipal? jwtPrincipal = null;
+        // string? verifiedEmail = null;
 
         if (Request.Headers.TryGetValue("X-Goog-IAP-JWT-Assertion", out var jwtHeaderValues))
         {
             var jwt = jwtHeaderValues.ToString();
             try
             {
-                jwtPrincipal = await VerifyIapJwtAndGetPrincipalAsync(jwt);
+                // Only validate the JWT against audience, ignore email claims
+                var jwtPrincipal = await VerifyIapJwtAndGetPrincipalAsync(jwt);
                 if (jwtPrincipal != null)
                 {
                     jwtVerified = true;
-                    verifiedEmail = jwtPrincipal.FindFirstValue(ClaimTypes.Email);
-                    _logger.LogDebug("Successfully verified JWT for user: {Email}", verifiedEmail);
+                    // Ignoring email verification and just checking if JWT is valid
+                    // verifiedEmail = jwtPrincipal.FindFirstValue(ClaimTypes.Email);
+                    _logger.LogDebug("Successfully verified JWT, ignoring email claims");
                     return true;
+                }
+                else
+                {
+                    _logger.LogWarning("JWT verification returned null principal");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "JWT verification failed");
+                _logger.LogWarning(ex, "JWT verification failed with error: {ErrorType} - {ErrorMessage}", 
+                    ex.GetType().Name, ex.Message);
+                
+                if (ex is InvalidJwtException ijex)
+                {
+                    _logger.LogWarning("Invalid JWT details: {Details}", ijex.Message);
+                }
             }
         }
         else
@@ -213,27 +236,12 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         // Generate all possible audience strings based on configuration
         var audiences = new List<string>();
         
-        // For Cloud Run services
-        if (!string.IsNullOrEmpty(Options.ProjectNumber) && 
-            !string.IsNullOrEmpty(Options.Region) && 
-            !string.IsNullOrEmpty(Options.ServiceName))
-        {
-            audiences.Add($"/projects/{Options.ProjectNumber}/locations/{Options.Region}/services/{Options.ServiceName}");
-        }
-        
         // For backend services
         if (!string.IsNullOrEmpty(Options.ProjectNumber) && 
             !string.IsNullOrEmpty(Options.BackendServiceId))
         {
             audiences.Add($"/projects/{Options.ProjectNumber}/global/backendServices/{Options.BackendServiceId}");
         }
-        
-        // Fallback to project number only
-        if (!string.IsNullOrEmpty(Options.ProjectNumber))
-        {
-            audiences.Add($"/projects/{Options.ProjectNumber}");
-        }
-        
         _logger.LogDebug("Will try JWT validation with audiences: {Audiences}", string.Join(", ", audiences));
         
         // Try each audience format
