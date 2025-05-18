@@ -265,7 +265,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             
             // Extract the email claim from the validated token - try multiple possible claim types
-          /*  string email = null;
+            string email = null;
             
             // Common claim types for email in IAP tokens
             var emailClaimTypes = new[] { 
@@ -333,10 +333,10 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         break;
                     }
                 }
-            }*/
+            }
             
             // Check if we need to fall back to IAP header
-           /* if (string.IsNullOrEmpty(email) && context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
+            if (string.IsNullOrEmpty(email) && context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
             {
                 var emailHeader = emailHeaderValues.ToString();
                 if (emailHeader.Contains(':'))
@@ -356,29 +356,21 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 _logger.LogWarning("JWT missing email claim. Available claims: {@Claims}", 
                     jsonToken.Claims.Select(c => new { c.Type, c.Value }));
                 throw new SecurityTokenException("JWT missing email claim");
-            }*/
+            }
             
             // Add user identity claims if not already present
             var identity = validatedPrincipal.Identity as ClaimsIdentity;
-            /*if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Name))
+            if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Name))
             {
                 identity.AddClaim(new Claim(ClaimTypes.Name, email));
             }
             if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Email))
             {
                 identity.AddClaim(new Claim(ClaimTypes.Email, email));
-            }*/
+            }
             
             // Add a special claim to indicate this is a verified IAP JWT (used for security checks)
             identity.AddClaim(new Claim("iap-jwt-verified", "true"));
-            
-            // Add the IAP validation status to the HTTP context items to prevent duplicate validation
-            context.Items["IAP_JWT_VALIDATED"] = true;
-            //context.Items["IAP_JWT_EMAIL"] = email;
-            
-            // Also add a special header for the authentication handler to detect
-            context.Request.Headers["X-IAP-JWT-Validated"] = "true";
-            //context.Request.Headers["X-IAP-JWT-Email"] = email;
             
             // Add all original JWT claims for potential use in authorization
             foreach (var claim in jsonToken.Claims)
