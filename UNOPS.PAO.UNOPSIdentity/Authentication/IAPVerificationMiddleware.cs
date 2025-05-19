@@ -194,26 +194,38 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         
                         // Get the user manager
                         var userManager = context.RequestServices.GetService<UserManager<PAOIdentityUser>>();
-                        if (userManager != null)
+                        var roleManager = context.RequestServices.GetService<RoleManager<PAOIdentityRole>>();
+                        if (userManager != null && roleManager != null)
                         {
                             try
                             {
-                                // Find user by email first
+                                // Extract email from the header
+                                extractedEmail = context.Request.Headers["x-goog-authenticated-user-email"].ToString().Split(':').Last();
+                                _logger.LogInformation("IAPVerificationMiddleware - Looking up user by email: {Email}", extractedEmail);
+
+                                // Find the user in the database
                                 var user = await userManager.FindByEmailAsync(extractedEmail);
                                 if (user != null)
                                 {
-                                    // Use the database ID
+                                    // Use the database ID as NameIdentifier
                                     claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
                                     _logger.LogInformation("IAPVerificationMiddleware - Added database ID as NameIdentifier: {Id}", user.Id);
-                                    
+
                                     // Check if user has any roles
                                     var roles = await userManager.GetRolesAsync(user);
                                     if (!roles.Any())
                                     {
-                                        // Add Administrator role if no roles exist
+                                        // Ensure Administrator role exists
+                                        if (!await roleManager.RoleExistsAsync("Administrator"))
+                                        {
+                                            await roleManager.CreateAsync(new PAOIdentityRole { Name = "Administrator" });
+                                            _logger.LogInformation("IAPVerificationMiddleware - Created Administrator role");
+                                        }
+
+                                        // Add Administrator role
                                         await userManager.AddToRoleAsync(user, "Administrator");
                                         claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
-                                        _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user with no roles");
+                                        _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user");
                                     }
                                     else
                                     {
@@ -227,60 +239,13 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                 }
                                 else
                                 {
-                                    // Create new user if not found
-                                    user = new PAOIdentityUser
-                                    {
-                                        UserName = extractedEmail,
-                                        Email = extractedEmail,
-                                        EmailConfirmed = true,
-                                        IsInternal = extractedEmail.EndsWith("@unops.org"),
-                                        GoogleSignIn = true
-                                    };
-                                    
-                                    var result = await userManager.CreateAsync(user);
-                                    if (result.Succeeded)
-                                    {
-                                        claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
-                                        _logger.LogInformation("IAPVerificationMiddleware - Created new user and added database ID as NameIdentifier: {Id}", user.Id);
-                                        
-                                        // Add Administrator role for new users
-                                        await userManager.AddToRoleAsync(user, "Administrator");
-                                        claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
-                                        _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to new user");
-                                        
-                                        // Add domain-specific role
-                                        if (extractedEmail.EndsWith("@unops.org"))
-                                        {
-                                            if (!await userManager.IsInRoleAsync(user, "Internal"))
-                                            {
-                                                await userManager.AddToRoleAsync(user, "Internal");
-                                                claims.Add(new Claim(ClaimTypes.Role, "Internal"));
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (!await userManager.IsInRoleAsync(user, "External"))
-                                            {
-                                                await userManager.AddToRoleAsync(user, "External");
-                                                claims.Add(new Claim(ClaimTypes.Role, "External"));
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        _logger.LogError("IAPVerificationMiddleware - Failed to create user: {Errors}", 
-                                            string.Join(", ", result.Errors.Select(e => e.Description)));
-                                    }
+                                    _logger.LogWarning("IAPVerificationMiddleware - User not found in database for email: {Email}", extractedEmail);
                                 }
                             }
                             catch (Exception ex)
                             {
-                                _logger.LogError(ex, "IAPVerificationMiddleware - Error handling user lookup/creation");
+                                _logger.LogError(ex, "IAPVerificationMiddleware - Error processing user ID header");
                             }
-                        }
-                        else
-                        {
-                            _logger.LogWarning("IAPVerificationMiddleware - UserManager not available");
                         }
                     }
                     else
@@ -593,26 +558,34 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             
             // Get the user manager
             var userManager = context.RequestServices.GetService<UserManager<PAOIdentityUser>>();
-            if (userManager != null)
+            var roleManager = context.RequestServices.GetService<RoleManager<PAOIdentityRole>>();
+            if (userManager != null && roleManager != null)
             {
                 try
                 {
-                    // Find user by email first
+                    // Find the user in the database
                     var user = await userManager.FindByEmailAsync(userEmail);
                     if (user != null)
                     {
-                        // Use the database ID
+                        // Use the database ID as NameIdentifier
                         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
                         _logger.LogInformation("IAPVerificationMiddleware - Added database ID as NameIdentifier from JWT: {Id}", user.Id);
-                        
+
                         // Check if user has any roles
                         var roles = await userManager.GetRolesAsync(user);
                         if (!roles.Any())
                         {
-                            // Add Administrator role if no roles exist
+                            // Ensure Administrator role exists
+                            if (!await roleManager.RoleExistsAsync("Administrator"))
+                            {
+                                await roleManager.CreateAsync(new PAOIdentityRole { Name = "Administrator" });
+                                _logger.LogInformation("IAPVerificationMiddleware - Created Administrator role");
+                            }
+
+                            // Add Administrator role
                             await userManager.AddToRoleAsync(user, "Administrator");
                             identity.AddClaim(new Claim(ClaimTypes.Role, "Administrator"));
-                            _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user with no roles");
+                            _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user");
                         }
                         else
                         {
@@ -626,50 +599,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     }
                     else
                     {
-                        // Create new user if not found
-                        user = new PAOIdentityUser
-                        {
-                            UserName = userEmail,
-                            Email = userEmail,
-                            EmailConfirmed = true,
-                            IsInternal = userEmail.EndsWith("@unops.org"),
-                            GoogleSignIn = true
-                        };
-                        
-                        var result = await userManager.CreateAsync(user);
-                        if (result.Succeeded)
-                        {
-                            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
-                            _logger.LogInformation("IAPVerificationMiddleware - Created new user and added database ID as NameIdentifier from JWT: {Id}", user.Id);
-                            
-                            // Add Administrator role for new users
-                            await userManager.AddToRoleAsync(user, "Administrator");
-                            identity.AddClaim(new Claim(ClaimTypes.Role, "Administrator"));
-                            _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to new user");
-                            
-                            // Add domain-specific role
-                            if (userEmail.EndsWith("@unops.org"))
-                            {
-                                if (!await userManager.IsInRoleAsync(user, "Internal"))
-                                {
-                                    await userManager.AddToRoleAsync(user, "Internal");
-                                    identity.AddClaim(new Claim(ClaimTypes.Role, "Internal"));
-                                }
-                            }
-                            else
-                            {
-                                if (!await userManager.IsInRoleAsync(user, "External"))
-                                {
-                                    await userManager.AddToRoleAsync(user, "External");
-                                    identity.AddClaim(new Claim(ClaimTypes.Role, "External"));
-                                }
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogError("IAPVerificationMiddleware - Failed to create user from JWT: {Errors}", 
-                                string.Join(", ", result.Errors.Select(e => e.Description)));
-                        }
+                        _logger.LogWarning("IAPVerificationMiddleware - User not found in database for JWT email: {Email}", userEmail);
                     }
                 }
                 catch (Exception ex)
@@ -679,7 +609,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             else
             {
-                _logger.LogWarning("IAPVerificationMiddleware - UserManager not available for JWT processing");
+                _logger.LogWarning("IAPVerificationMiddleware - UserManager or RoleManager not available for JWT processing");
             }
             
             return validatedPrincipal;
