@@ -188,15 +188,27 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-id", out var userIdHeaderValues))
                     {
                         var userIdHeader = userIdHeaderValues.ToString();
+                        _logger.LogInformation("IAPVerificationMiddleware - Found user ID header: {Header}", userIdHeader);
+                        
                         var userIdParts = userIdHeader.Split(':', 2);
                         if (userIdParts.Length == 2)
                         {
                             var userId = userIdParts[1].Trim();
+                            _logger.LogInformation("IAPVerificationMiddleware - Extracted user ID from header: {UserId}", userId);
+                            
                             if (long.TryParse(userId, out _))
                             {
                                 claims.Add(new Claim(ClaimTypes.NameIdentifier, userId));
-                                _logger.LogDebug("Added numeric NameIdentifier claim from user ID header: {Id}", userId);
+                                _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from user ID header: {Id}", userId);
                             }
+                            else
+                            {
+                                _logger.LogWarning("IAPVerificationMiddleware - User ID from header is not numeric: {UserId}", userId);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("IAPVerificationMiddleware - Invalid user ID header format: {Header}", userIdHeader);
                         }
                     }
                     // Fallback to checking if email is numeric
@@ -384,6 +396,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             
             // Check for subject claim which might contain either email or numeric ID
             var subClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+            _logger.LogInformation("IAPVerificationMiddleware - Processing subject claim: {SubClaim}", subClaim);
+
             // Add user identity claims if not already present
             var identity = validatedPrincipal.Identity as ClaimsIdentity;
             if (!string.IsNullOrEmpty(subClaim))
@@ -392,7 +406,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 {
                     // If subject contains @, it's an email
                     email = subClaim;
-                    _logger.LogDebug("Using subject claim as email: {Email}", email);
+                    _logger.LogInformation("IAPVerificationMiddleware - Using subject claim as email: {Email}", email);
                 }
                 else if (long.TryParse(subClaim, out _))
                 {
@@ -403,12 +417,13 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         var existingNameId = identity.FindFirst(ClaimTypes.NameIdentifier);
                         if (existingNameId != null)
                         {
+                            _logger.LogInformation("IAPVerificationMiddleware - Removing existing NameIdentifier claim: {ExistingId}", existingNameId.Value);
                             identity.RemoveClaim(existingNameId);
                         }
 
                         // Add the numeric ID as NameIdentifier
                         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, subClaim));
-                        _logger.LogDebug("Added numeric NameIdentifier claim from JWT subject: {Id}", subClaim);
+                        _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from JWT subject: {Id}", subClaim);
                     }
                 }
             }
@@ -505,7 +520,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     if (long.TryParse(userId, out _))
                     {
                         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
-                        _logger.LogDebug("Added numeric NameIdentifier claim from user ID header: {Id}", userId);
+                        _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from user ID header: {Id}", userId);
                     }
                 }
             }
@@ -661,10 +676,12 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     {
                         // Use the actual user ID from the database
                         claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
-                        _logger.LogDebug("Added numeric NameIdentifier claim from database in dev mode: {Id}", user.Id);
+                        _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from database in dev mode: {Id}", user.Id);
                         
                         // Add user roles
                         var roles = await userManager.GetRolesAsync(user);
+                        _logger.LogInformation("IAPVerificationMiddleware - Found roles for dev user: {Roles}", string.Join(", ", roles));
+                        
                         foreach (var role in roles)
                         {
                             claims.Add(new Claim(ClaimTypes.Role, role));
@@ -675,7 +692,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         // If user not found, use a default numeric ID based on the email
                         var numericId = Math.Abs(email.GetHashCode()).ToString();
                         claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
-                        _logger.LogDebug("User not found in database, using default numeric NameIdentifier claim in dev mode: {Id}", numericId);
+                        _logger.LogInformation("IAPVerificationMiddleware - User not found in database, using default numeric NameIdentifier claim in dev mode: {Id}", numericId);
                         
                         // Add default roles
                         if (email.EndsWith("@unops.org"))
@@ -698,7 +715,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     // If user manager is not available, use default numeric ID
                     var numericId = Math.Abs(email.GetHashCode()).ToString();
                     claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
-                    _logger.LogDebug("User manager not available, using default numeric NameIdentifier claim in dev mode: {Id}", numericId);
+                    _logger.LogInformation("IAPVerificationMiddleware - User manager not available, using default numeric NameIdentifier claim in dev mode: {Id}", numericId);
                     
                     // Add default roles
                     if (email.EndsWith("@unops.org"))
@@ -722,7 +739,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 // Fallback to default numeric ID if there's an error
                 var numericId = Math.Abs(email.GetHashCode()).ToString();
                 claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
-                _logger.LogDebug("Using fallback numeric NameIdentifier claim due to error: {Id}", numericId);
+                _logger.LogInformation("IAPVerificationMiddleware - Using fallback numeric NameIdentifier claim due to error: {Id}", numericId);
                 
                 // Add default roles
                 if (email.EndsWith("@unops.org"))

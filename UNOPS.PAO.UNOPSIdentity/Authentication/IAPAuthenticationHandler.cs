@@ -191,6 +191,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         var identity = new ClaimsIdentity(claims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
         
         // Make sure all essential claims are present
+        _logger.LogInformation("Setting NameIdentifier in AuthenticationHandler line 194");
         if (!identity.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
             identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
         
@@ -540,7 +541,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             
             // Add the numeric ID as NameIdentifier
             identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, subClaim));
-            _logger.LogDebug("Added numeric NameIdentifier claim from JWT: {Id}", subClaim);
+            _logger.LogDebug("Added numeric NameIdentifier claim from JWT: {Id} in IAPAuthentication line 543", subClaim);
         }
         
         return validatedPrincipal;
