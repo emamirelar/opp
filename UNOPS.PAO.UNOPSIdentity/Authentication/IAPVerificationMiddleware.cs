@@ -439,24 +439,6 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     userEmail = subClaim;
                     _logger.LogInformation("IAPVerificationMiddleware - Using subject claim as email: {Email}", userEmail);
                 }
-                else if (long.TryParse(subClaim, out _))
-                {
-                    // If subject is numeric, use it as NameIdentifier
-                    if (identity != null)
-                    {
-                        // Remove any existing NameIdentifier claim
-                        var existingNameId = identity.FindFirst(ClaimTypes.NameIdentifier);
-                        if (existingNameId != null)
-                        {
-                            _logger.LogInformation("IAPVerificationMiddleware - Removing existing NameIdentifier claim: {ExistingId}", existingNameId.Value);
-                            identity.RemoveClaim(existingNameId);
-                        }
-
-                        // Add the numeric ID as NameIdentifier
-                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, subClaim));
-                        _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from JWT subject: {Id}", subClaim);
-                    }
-                }
             }
             
             // For external identities, the email might be in the gcip claim
@@ -539,23 +521,6 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 }
             }
             
-            // Check for user ID header if we don't have a numeric NameIdentifier
-            if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.NameIdentifier) && 
-                context.Request.Headers.TryGetValue("x-goog-authenticated-user-id", out var userIdHeaderValues))
-            {
-                var userIdHeader = userIdHeaderValues.ToString();
-                var userIdParts = userIdHeader.Split(':', 2);
-                if (userIdParts.Length == 2)
-                {
-                    var userId = userIdParts[1].Trim();
-                    if (long.TryParse(userId, out _))
-                    {
-                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
-                        _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from user ID header: {Id}", userId);
-                    }
-                }
-            }
-            
             // Get the user manager
             var userManager = context.RequestServices.GetService<UserManager<PAOIdentityUser>>();
             var roleManager = context.RequestServices.GetService<RoleManager<PAOIdentityRole>>();
@@ -567,6 +532,13 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     var user = await userManager.FindByEmailAsync(userEmail);
                     if (user != null)
                     {
+                        // Remove any existing NameIdentifier claim
+                        var existingNameId = identity.FindFirst(ClaimTypes.NameIdentifier);
+                        if (existingNameId != null)
+                        {
+                            identity.RemoveClaim(existingNameId);
+                        }
+
                         // Use the database ID as NameIdentifier
                         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
                         _logger.LogInformation("IAPVerificationMiddleware - Added database ID as NameIdentifier from JWT: {Id}", user.Id);
