@@ -21,7 +21,7 @@ public class UserInfoController : ControllerBase
         _userResolverService = userResolverService;
     }
 
-    [HttpGet(APIDictionary.UserInfo)]
+    [HttpGet(APIDictionary.CurrentUserInfo)]
     public async Task<ActionResult<UserInfo>> GetCurrentUserInfo()
     {
         var currentEmail = _userResolverService.GetUserEmail();

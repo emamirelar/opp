@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using UNOPS.PAO.Identity.Entities;
 
 namespace UNOPS.PAO.UNOPSIdentity.Authentication
 {
@@ -103,7 +106,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 string devEmail = GetDevelopmentUserEmail(context);
                 if (!string.IsNullOrEmpty(devEmail))
                 {
-                    SetupDevUserPrincipal(context, devEmail);
+                    await SetupDevUserPrincipal(context, devEmail);
                     await _next(context);
                     return;
                 }
@@ -181,15 +184,30 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         new Claim("iap-header-verified", "true")
                     };
 
-                    // If the extracted value is numeric, use it as the NameIdentifier
-                    if (long.TryParse(extractedEmail, out _))
+                    // Check for user ID header
+                    if (context.Request.Headers.TryGetValue("x-goog-authenticated-user-id", out var userIdHeaderValues))
+                    {
+                        var userIdHeader = userIdHeaderValues.ToString();
+                        var userIdParts = userIdHeader.Split(':', 2);
+                        if (userIdParts.Length == 2)
+                        {
+                            var userId = userIdParts[1].Trim();
+                            if (long.TryParse(userId, out _))
+                            {
+                                claims.Add(new Claim(ClaimTypes.NameIdentifier, userId));
+                                _logger.LogDebug("Added numeric NameIdentifier claim from user ID header: {Id}", userId);
+                            }
+                        }
+                    }
+                    // Fallback to checking if email is numeric
+                    else if (long.TryParse(extractedEmail, out _))
                     {
                         claims.Add(new Claim(ClaimTypes.NameIdentifier, extractedEmail));
-                        _logger.LogDebug("Added numeric NameIdentifier claim: {Id}", extractedEmail);
+                        _logger.LogDebug("Added numeric NameIdentifier claim from email: {Id}", extractedEmail);
                     }
                     else
                     {
-                        _logger.LogWarning("Extracted email is not numeric, cannot set NameIdentifier claim");
+                        _logger.LogWarning("No numeric ID found in headers or email");
                     }
 
                     var identity = new ClaimsIdentity(claims, "IAP-Header");
@@ -350,8 +368,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress",
                 "preferred_username",
                 "unique_name",
-                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name",
-                "sub" // Sometimes the subject claim contains the email
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
             };
             
             // Check all possible email claim types
@@ -365,22 +382,34 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 }
             }
             
-            // If still no email, check for the subject claim which might have the email
-            if (string.IsNullOrEmpty(email))
+            // Check for subject claim which might contain either email or numeric ID
+            var subClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+            // Add user identity claims if not already present
+            var identity = validatedPrincipal.Identity as ClaimsIdentity;
+            if (!string.IsNullOrEmpty(subClaim))
             {
-                var subClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-                if (!string.IsNullOrEmpty(subClaim) && subClaim.Contains("@"))
+                if (subClaim.Contains("@"))
                 {
+                    // If subject contains @, it's an email
                     email = subClaim;
                     _logger.LogDebug("Using subject claim as email: {Email}", email);
                 }
-                
-                // If we have a numeric ID from the subject claim, use it as the NameIdentifier
-                if (!string.IsNullOrEmpty(subClaim) && long.TryParse(subClaim, out _))
+                else if (long.TryParse(subClaim, out _))
                 {
-                    // Add the numeric ID as NameIdentifier
-                    validatedPrincipal.AddIdentity(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, subClaim) }));
-                    _logger.LogDebug("Added numeric NameIdentifier claim from JWT: {Id}", subClaim);
+                    // If subject is numeric, use it as NameIdentifier
+                    if (identity != null)
+                    {
+                        // Remove any existing NameIdentifier claim
+                        var existingNameId = identity.FindFirst(ClaimTypes.NameIdentifier);
+                        if (existingNameId != null)
+                        {
+                            identity.RemoveClaim(existingNameId);
+                        }
+
+                        // Add the numeric ID as NameIdentifier
+                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, subClaim));
+                        _logger.LogDebug("Added numeric NameIdentifier claim from JWT subject: {Id}", subClaim);
+                    }
                 }
             }
             
@@ -443,8 +472,6 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 throw new SecurityTokenException("JWT missing email claim");
             }
             
-            // Add user identity claims if not already present
-            var identity = validatedPrincipal.Identity as ClaimsIdentity;
             if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Name))
             {
                 identity.AddClaim(new Claim(ClaimTypes.Name, email));
@@ -463,6 +490,23 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 if (!validatedPrincipal.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
                 {
                     identity.AddClaim(new Claim(claim.Type, claim.Value));
+                }
+            }
+            
+            // Check for user ID header if we don't have a numeric NameIdentifier
+            if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.NameIdentifier) && 
+                context.Request.Headers.TryGetValue("x-goog-authenticated-user-id", out var userIdHeaderValues))
+            {
+                var userIdHeader = userIdHeaderValues.ToString();
+                var userIdParts = userIdHeader.Split(':', 2);
+                if (userIdParts.Length == 2)
+                {
+                    var userId = userIdParts[1].Trim();
+                    if (long.TryParse(userId, out _))
+                    {
+                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId));
+                        _logger.LogDebug("Added numeric NameIdentifier claim from user ID header: {Id}", userId);
+                    }
                 }
             }
             
@@ -586,7 +630,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             return "dev.user@example.com";
         }
 
-        private void SetupDevUserPrincipal(HttpContext context, string email)
+        private async Task SetupDevUserPrincipal(HttpContext context, string email)
         {
             // Ensure we handle emails with account provider prefix
             if (email.Contains(':'))
@@ -603,41 +647,98 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 new Claim("IsInternal", email.EndsWith("@unops.org").ToString()),
                 new Claim("hd", email.Split('@')[1]) // Domain claim for testing domain-based policies
             };
-            
-            // Add role claims based on domain
-            if (email.EndsWith("@unops.org"))
+
+            try
             {
-                claims.Add(new Claim(ClaimTypes.Role, "Internal"));
+                // Get the user manager from the service provider
+                var userManager = context.RequestServices.GetService<UserManager<PAOIdentityUser>>();
                 
-                // If admin is in the email, add Administrator role
-                if (email.ToLower().Contains("admin"))
+                if (userManager != null)
                 {
-                    claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
-                }
-            }
-            else
-            {
-                claims.Add(new Claim(ClaimTypes.Role, "External"));
-                
-                // Check for partner domain patterns
-                if (_configuration.GetSection("IAP:DomainRoles").Exists())
-                {
-                    string domain = email.Substring(email.IndexOf('@') + 1);
-                    var domainRoles = _configuration.GetSection("IAP:DomainRoles").GetChildren();
-                    
-                    foreach (var domainRole in domainRoles)
+                    // Find the user in the database
+                    var user = await userManager.FindByEmailAsync(email);
+                    if (user != null)
                     {
-                        if (domain == domainRole.Key)
+                        // Use the actual user ID from the database
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+                        _logger.LogDebug("Added numeric NameIdentifier claim from database in dev mode: {Id}", user.Id);
+                        
+                        // Add user roles
+                        var roles = await userManager.GetRolesAsync(user);
+                        foreach (var role in roles)
                         {
-                            claims.Add(new Claim(ClaimTypes.Role, domainRole.Value));
-                            break;
+                            claims.Add(new Claim(ClaimTypes.Role, role));
                         }
                     }
+                    else
+                    {
+                        // If user not found, use a default numeric ID based on the email
+                        var numericId = Math.Abs(email.GetHashCode()).ToString();
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
+                        _logger.LogDebug("User not found in database, using default numeric NameIdentifier claim in dev mode: {Id}", numericId);
+                        
+                        // Add default roles
+                        if (email.EndsWith("@unops.org"))
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, "Internal"));
+                            if (email.ToLower().Contains("admin"))
+                            {
+                                claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
+                            }
+                        }
+                        else
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, "External"));
+                        }
+                        claims.Add(new Claim(ClaimTypes.Role, "User"));
+                    }
+                }
+                else
+                {
+                    // If user manager is not available, use default numeric ID
+                    var numericId = Math.Abs(email.GetHashCode()).ToString();
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
+                    _logger.LogDebug("User manager not available, using default numeric NameIdentifier claim in dev mode: {Id}", numericId);
+                    
+                    // Add default roles
+                    if (email.EndsWith("@unops.org"))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, "Internal"));
+                        if (email.ToLower().Contains("admin"))
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
+                        }
+                    }
+                    else
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, "External"));
+                    }
+                    claims.Add(new Claim(ClaimTypes.Role, "User"));
                 }
             }
-            
-            // Add basic User role
-            claims.Add(new Claim(ClaimTypes.Role, "User"));
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error setting up dev user principal for email: {Email}", email);
+                // Fallback to default numeric ID if there's an error
+                var numericId = Math.Abs(email.GetHashCode()).ToString();
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
+                _logger.LogDebug("Using fallback numeric NameIdentifier claim due to error: {Id}", numericId);
+                
+                // Add default roles
+                if (email.EndsWith("@unops.org"))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, "Internal"));
+                    if (email.ToLower().Contains("admin"))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
+                    }
+                }
+                else
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, "External"));
+                }
+                claims.Add(new Claim(ClaimTypes.Role, "User"));
+            }
             
             var identity = new ClaimsIdentity(claims, "Development-IAP");
             context.User = new ClaimsPrincipal(identity);

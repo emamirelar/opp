@@ -82,5 +82,6 @@ public class APIDictionary
     // User Data
     public const string CurrentUserData = APIPrefix + "current-user-data";
 
-    public const string UserInfo = APIPrefix + "user-info";
+    public const string UserInfo = APIPrefix + "user-info/by-email";
+    public const string CurrentUserInfo = APIPrefix + "user-info/current";
 }
