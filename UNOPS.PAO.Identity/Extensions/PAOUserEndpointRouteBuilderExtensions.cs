@@ -13,6 +13,7 @@ using Google.Apis.Auth;
 using UNOPS.PAO.Identity.Models;
 using Microsoft.AspNetCore.Authentication;
 using UNOPS.PAO.Identity.Context;
+using System.Security.Claims;
 
 public static class PAOUserEndpointRouteBuilderExtensions
 {
@@ -85,19 +86,37 @@ public static class PAOUserEndpointRouteBuilderExtensions
             return TypedResults.Ok(user.IsInternal);
         });
 
-        routeGroup.MapGet("/claims", object
-            (HttpContext context, [FromServices] IServiceProvider sp) =>
+        routeGroup.MapGet("/claims", async Task<dynamic>
+            (HttpContext context, [FromServices] UserManager<TUser> userManager) =>
         {
             if (!context.User.Identity.IsAuthenticated)
             {
                 return Results.Unauthorized();
             }
 
-            var userClaims = context.User.Claims.Select(x => new { x.Type, x.Value }).ToList();
+            var user = await userManager.FindByNameAsync(context.User.Identity.Name);
+            if (user == null)
+            {
+                return Results.Unauthorized();
+            }
 
-            return userClaims;
+            // Get all claims from the user manager
+            var userClaims = await userManager.GetClaimsAsync(user);
+            
+            // Add role claims
+            var roles = await userManager.GetRolesAsync(user);
+            foreach (var role in roles)
+            {
+                userClaims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
-        }).RequireAuthorization();
+            // Add essential claims
+            userClaims.Add(new Claim(ClaimTypes.Name, user.UserName));
+            userClaims.Add(new Claim(ClaimTypes.Email, user.Email));
+            userClaims.Add(new Claim("IsInternal", user.IsInternal.ToString()));
+
+            return userClaims.Select(x => new { x.Type, x.Value }).ToList();
+        });
 
         routeGroup.MapGet("/permissions", async Task<object>
             (HttpContext context, [FromServices] IPAOExecutionContext executionContext) =>
