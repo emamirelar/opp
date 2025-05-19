@@ -1,22 +1,6 @@
 <div class="layout-sidebar">
-    <!-- Home is visible to everyone -->
-    <app-menu [model]="[menuItems[0]]"></app-menu>
-
-    <!-- Partnerships section only visible to Partner, Internal, and Admin users -->
-    <div *appHasRole="['Administrator', 'Internal', 'Partner']">
-        <app-menu [model]="[menuItems[1]]"></app-menu>
-    </div>
-
-    <!-- Leads section visible to all users -->
-    <app-menu [model]="[menuItems[2]]"></app-menu>
-
-    <!-- Initiatives section only visible to Internal and Admin users -->
-    <div *appHasRole="['Administrator', 'Internal']">
-        <app-menu [model]="[menuItems[3]]"></app-menu>
-    </div>
-
-    <!-- Admin section only visible to Admin users -->
-    <div *appHasRole="['Administrator']">
-        <app-menu [model]="adminMenuItems"></app-menu>
-    </div>
+    <!-- Display all menu items -->
+    <app-menu [model]="menuItems"></app-menu>
+    <!-- Display admin menu items -->
+    <app-menu [model]="adminMenuItems"></app-menu>
 </div>
