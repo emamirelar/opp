@@ -16,6 +16,8 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Identity.Entities;
+using System.Security.Cryptography;
+using System.IO;
 
 namespace UNOPS.PAO.UNOPSIdentity.Authentication
 {
@@ -190,36 +192,100 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         var userIdHeader = userIdHeaderValues.ToString();
                         _logger.LogInformation("IAPVerificationMiddleware - Found user ID header: {Header}", userIdHeader);
                         
-                        var userIdParts = userIdHeader.Split(':', 2);
-                        if (userIdParts.Length == 2)
+                        // Get the user manager
+                        var userManager = context.RequestServices.GetService<UserManager<PAOIdentityUser>>();
+                        if (userManager != null)
                         {
-                            var userId = userIdParts[1].Trim();
-                            _logger.LogInformation("IAPVerificationMiddleware - Extracted user ID from header: {UserId}", userId);
-                            
-                            if (long.TryParse(userId, out _))
+                            try
                             {
-                                claims.Add(new Claim(ClaimTypes.NameIdentifier, userId));
-                                _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from user ID header: {Id}", userId);
+                                // Find user by email first
+                                var user = await userManager.FindByEmailAsync(extractedEmail);
+                                if (user != null)
+                                {
+                                    // Use the database ID
+                                    claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+                                    _logger.LogInformation("IAPVerificationMiddleware - Added database ID as NameIdentifier: {Id}", user.Id);
+                                    
+                                    // Check if user has any roles
+                                    var roles = await userManager.GetRolesAsync(user);
+                                    if (!roles.Any())
+                                    {
+                                        // Add Administrator role if no roles exist
+                                        await userManager.AddToRoleAsync(user, "Administrator");
+                                        claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
+                                        _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user with no roles");
+                                    }
+                                    else
+                                    {
+                                        // Add existing roles as claims
+                                        foreach (var role in roles)
+                                        {
+                                            claims.Add(new Claim(ClaimTypes.Role, role));
+                                        }
+                                        _logger.LogInformation("IAPVerificationMiddleware - Added existing roles: {Roles}", string.Join(", ", roles));
+                                    }
+                                }
+                                else
+                                {
+                                    // Create new user if not found
+                                    user = new PAOIdentityUser
+                                    {
+                                        UserName = extractedEmail,
+                                        Email = extractedEmail,
+                                        EmailConfirmed = true,
+                                        IsInternal = extractedEmail.EndsWith("@unops.org"),
+                                        GoogleSignIn = true
+                                    };
+                                    
+                                    var result = await userManager.CreateAsync(user);
+                                    if (result.Succeeded)
+                                    {
+                                        claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+                                        _logger.LogInformation("IAPVerificationMiddleware - Created new user and added database ID as NameIdentifier: {Id}", user.Id);
+                                        
+                                        // Add Administrator role for new users
+                                        await userManager.AddToRoleAsync(user, "Administrator");
+                                        claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
+                                        _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to new user");
+                                        
+                                        // Add domain-specific role
+                                        if (extractedEmail.EndsWith("@unops.org"))
+                                        {
+                                            if (!await userManager.IsInRoleAsync(user, "Internal"))
+                                            {
+                                                await userManager.AddToRoleAsync(user, "Internal");
+                                                claims.Add(new Claim(ClaimTypes.Role, "Internal"));
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if (!await userManager.IsInRoleAsync(user, "External"))
+                                            {
+                                                await userManager.AddToRoleAsync(user, "External");
+                                                claims.Add(new Claim(ClaimTypes.Role, "External"));
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        _logger.LogError("IAPVerificationMiddleware - Failed to create user: {Errors}", 
+                                            string.Join(", ", result.Errors.Select(e => e.Description)));
+                                    }
+                                }
                             }
-                            else
+                            catch (Exception ex)
                             {
-                                _logger.LogWarning("IAPVerificationMiddleware - User ID from header is not numeric: {UserId}", userId);
+                                _logger.LogError(ex, "IAPVerificationMiddleware - Error handling user lookup/creation");
                             }
                         }
                         else
                         {
-                            _logger.LogWarning("IAPVerificationMiddleware - Invalid user ID header format: {Header}", userIdHeader);
+                            _logger.LogWarning("IAPVerificationMiddleware - UserManager not available");
                         }
-                    }
-                    // Fallback to checking if email is numeric
-                    else if (long.TryParse(extractedEmail, out _))
-                    {
-                        claims.Add(new Claim(ClaimTypes.NameIdentifier, extractedEmail));
-                        _logger.LogDebug("Added numeric NameIdentifier claim from email: {Id}", extractedEmail);
                     }
                     else
                     {
-                        _logger.LogWarning("No numeric ID found in headers or email");
+                        _logger.LogWarning("IAPVerificationMiddleware - No user ID header found");
                     }
 
                     var identity = new ClaimsIdentity(claims, "IAP-Header");
@@ -372,7 +438,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             
             // Extract the email claim from the validated token - try multiple possible claim types
-            string email = null;
+            string userEmail = null;
             
             // Common claim types for email in IAP tokens
             var emailClaimTypes = new[] { 
@@ -386,8 +452,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             // Check all possible email claim types
             foreach (var claimType in emailClaimTypes)
             {
-                email = jsonToken.Claims.FirstOrDefault(c => c.Type == claimType)?.Value;
-                if (!string.IsNullOrEmpty(email))
+                userEmail = jsonToken.Claims.FirstOrDefault(c => c.Type == claimType)?.Value;
+                if (!string.IsNullOrEmpty(userEmail))
                 {
                     _logger.LogDebug("Found email claim in claim type: {ClaimType}", claimType);
                     break;
@@ -405,8 +471,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 if (subClaim.Contains("@"))
                 {
                     // If subject contains @, it's an email
-                    email = subClaim;
-                    _logger.LogInformation("IAPVerificationMiddleware - Using subject claim as email: {Email}", email);
+                    userEmail = subClaim;
+                    _logger.LogInformation("IAPVerificationMiddleware - Using subject claim as email: {Email}", userEmail);
                 }
                 else if (long.TryParse(subClaim, out _))
                 {
@@ -429,7 +495,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             
             // For external identities, the email might be in the gcip claim
-            if (string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(userEmail))
             {
                 var gcipClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "gcip")?.Value;
                 if (!string.IsNullOrEmpty(gcipClaim))
@@ -439,8 +505,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         var gcipJson = JsonDocument.Parse(gcipClaim);
                         if (gcipJson.RootElement.TryGetProperty("email", out var emailElement))
                         {
-                            email = emailElement.GetString();
-                            _logger.LogDebug("Found email in gcip claim: {Email}", email);
+                            userEmail = emailElement.GetString();
+                            _logger.LogDebug("Found email in gcip claim: {Email}", userEmail);
                         }
                     }
                     catch (JsonException ex)
@@ -451,35 +517,35 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             }
             
             // Last resort: try to extract from any claim that looks like an email
-            if (string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(userEmail))
             {
                 foreach (var claim in jsonToken.Claims)
                 {
                     if (claim.Value.Contains("@") && claim.Value.Contains("."))
                     {
-                        email = claim.Value;
-                        _logger.LogDebug("Found potential email in claim {ClaimType}: {Email}", claim.Type, email);
+                        userEmail = claim.Value;
+                        _logger.LogDebug("Found potential email in claim {ClaimType}: {Email}", claim.Type, userEmail);
                         break;
                     }
                 }
             }
             
             // Check if we need to fall back to IAP header
-            if (string.IsNullOrEmpty(email) && context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
+            if (string.IsNullOrEmpty(userEmail) && context.Request.Headers.TryGetValue("x-goog-authenticated-user-email", out var emailHeaderValues))
             {
                 var emailHeader = emailHeaderValues.ToString();
                 if (emailHeader.Contains(':'))
                 {
-                    email = emailHeader.Split(':').Last();
-                    _logger.LogDebug("Used email from IAP header as fallback: {Email}", email);
+                    userEmail = emailHeader.Split(':').Last();
+                    _logger.LogDebug("Used email from IAP header as fallback: {Email}", userEmail);
                 }
                 else
                 {
-                    email = emailHeader;
+                    userEmail = emailHeader;
                 }
             }
             
-            if (string.IsNullOrEmpty(email))
+            if (string.IsNullOrEmpty(userEmail))
             {
                 // Log all claims to help diagnose the issue
                 _logger.LogWarning("JWT missing email claim. Available claims: {@Claims}", 
@@ -489,11 +555,11 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             
             if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Name))
             {
-                identity.AddClaim(new Claim(ClaimTypes.Name, email));
+                identity.AddClaim(new Claim(ClaimTypes.Name, userEmail));
             }
             if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Email))
             {
-                identity.AddClaim(new Claim(ClaimTypes.Email, email));
+                identity.AddClaim(new Claim(ClaimTypes.Email, userEmail));
             }
             
             // Add a special claim to indicate this is a verified IAP JWT (used for security checks)
@@ -523,6 +589,97 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from user ID header: {Id}", userId);
                     }
                 }
+            }
+            
+            // Get the user manager
+            var userManager = context.RequestServices.GetService<UserManager<PAOIdentityUser>>();
+            if (userManager != null)
+            {
+                try
+                {
+                    // Find user by email first
+                    var user = await userManager.FindByEmailAsync(userEmail);
+                    if (user != null)
+                    {
+                        // Use the database ID
+                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+                        _logger.LogInformation("IAPVerificationMiddleware - Added database ID as NameIdentifier from JWT: {Id}", user.Id);
+                        
+                        // Check if user has any roles
+                        var roles = await userManager.GetRolesAsync(user);
+                        if (!roles.Any())
+                        {
+                            // Add Administrator role if no roles exist
+                            await userManager.AddToRoleAsync(user, "Administrator");
+                            identity.AddClaim(new Claim(ClaimTypes.Role, "Administrator"));
+                            _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user with no roles");
+                        }
+                        else
+                        {
+                            // Add existing roles as claims
+                            foreach (var role in roles)
+                            {
+                                identity.AddClaim(new Claim(ClaimTypes.Role, role));
+                            }
+                            _logger.LogInformation("IAPVerificationMiddleware - Added existing roles: {Roles}", string.Join(", ", roles));
+                        }
+                    }
+                    else
+                    {
+                        // Create new user if not found
+                        user = new PAOIdentityUser
+                        {
+                            UserName = userEmail,
+                            Email = userEmail,
+                            EmailConfirmed = true,
+                            IsInternal = userEmail.EndsWith("@unops.org"),
+                            GoogleSignIn = true
+                        };
+                        
+                        var result = await userManager.CreateAsync(user);
+                        if (result.Succeeded)
+                        {
+                            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+                            _logger.LogInformation("IAPVerificationMiddleware - Created new user and added database ID as NameIdentifier from JWT: {Id}", user.Id);
+                            
+                            // Add Administrator role for new users
+                            await userManager.AddToRoleAsync(user, "Administrator");
+                            identity.AddClaim(new Claim(ClaimTypes.Role, "Administrator"));
+                            _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to new user");
+                            
+                            // Add domain-specific role
+                            if (userEmail.EndsWith("@unops.org"))
+                            {
+                                if (!await userManager.IsInRoleAsync(user, "Internal"))
+                                {
+                                    await userManager.AddToRoleAsync(user, "Internal");
+                                    identity.AddClaim(new Claim(ClaimTypes.Role, "Internal"));
+                                }
+                            }
+                            else
+                            {
+                                if (!await userManager.IsInRoleAsync(user, "External"))
+                                {
+                                    await userManager.AddToRoleAsync(user, "External");
+                                    identity.AddClaim(new Claim(ClaimTypes.Role, "External"));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogError("IAPVerificationMiddleware - Failed to create user from JWT: {Errors}", 
+                                string.Join(", ", result.Errors.Select(e => e.Description)));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "IAPVerificationMiddleware - Error handling user lookup/creation from JWT");
+                }
+            }
+            else
+            {
+                _logger.LogWarning("IAPVerificationMiddleware - UserManager not available for JWT processing");
             }
             
             return validatedPrincipal;
@@ -678,13 +835,23 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
                         _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from database in dev mode: {Id}", user.Id);
                         
-                        // Add user roles
+                        // Check if user has any roles
                         var roles = await userManager.GetRolesAsync(user);
-                        _logger.LogInformation("IAPVerificationMiddleware - Found roles for dev user: {Roles}", string.Join(", ", roles));
-                        
-                        foreach (var role in roles)
+                        if (!roles.Any())
                         {
-                            claims.Add(new Claim(ClaimTypes.Role, role));
+                            // Add Administrator role if no roles exist
+                            await userManager.AddToRoleAsync(user, "Administrator");
+                            claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
+                            _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user with no roles");
+                        }
+                        else
+                        {
+                            // Add existing roles as claims
+                            foreach (var role in roles)
+                            {
+                                claims.Add(new Claim(ClaimTypes.Role, role));
+                            }
+                            _logger.LogInformation("IAPVerificationMiddleware - Added existing roles: {Roles}", string.Join(", ", roles));
                         }
                     }
                     else
