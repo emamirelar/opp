@@ -30,9 +30,6 @@ public class ValuesManager : IApplicationService
     public IEnumerable<OrganizationUnitModel> GetOrganizationUnits()
         => repository.GetOrganizationUnits().Select(mapper.Map<OrganizationUnitModel>);
 
-    public IEnumerable<PartnerCategoryModel> GetPartnerCategories()
-        => repository.GetPartnerCategories().Select(mapper.Map<PartnerCategoryModel>);
-
     public IEnumerable<ContactValueModel> GetContacts()
          => repository.GetContacts().Select(mapper.Map<ContactValueModel>);
 

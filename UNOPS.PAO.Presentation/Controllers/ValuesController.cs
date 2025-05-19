@@ -64,12 +64,6 @@ public class ValuesController : ControllerBase
         return Ok(manager.GetOrganizationUnits());
     }
 
-    [HttpGet(APIDictionary.PartnerCategories)]
-    public ActionResult GetPartnerCategories()
-    {
-        return Ok(manager.GetPartnerCategories());
-    }
-
     [HttpGet(APIDictionary.Contacts)]
     public ActionResult GetContacts()
     {

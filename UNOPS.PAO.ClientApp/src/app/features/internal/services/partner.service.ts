@@ -104,4 +104,5 @@ export class PartnerService {
   getUploadLogoUrl(recordId: string) {
     return `${this.apiUrl}/${recordId}/logo`;
   }
+  
 }

@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Business.Managers.Mapping;
+namespace UNOPS.PAO.Business.Managers.Mapping;
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
@@ -31,12 +31,13 @@ public class MappingProfile : Profile
         CreateMap<UpdateLinkRequest, Link>();
         CreateMap<OrganizationUnit, OrganizationUnitModel>();
         CreateMap<OrganizationUnitModel, OrganizationUnit>();
-        CreateMap<PartnerCategory, PartnerCategoryModel>();
-        CreateMap<PartnerCategoryModel, PartnerCategory>();
-        CreateMap<Partner, PartnerValueModel>();
+        CreateMap<PartnerTree, PartnerTreeModel>();
+        CreateMap<PartnerTreeModel, PartnerTree>();
+        CreateMap<Partner, PartnerModel>();
+        CreateMap<PartnerModel, Partner>();
         CreateMap<Contact, ContactValueModel>();
         CreateMap<GrantUser, UserValueModel>();
-        CreateMap<UserProfile, UserProfileValueModel>();
         CreateMap<GrantUser, PAOUserModel>();
+        CreateMap<UserProfile, UserProfileValueModel>();
     }
 }

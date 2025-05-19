@@ -3,6 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { tap } from 'rxjs';
 import { PartnerTree } from '../models/partner-tree.model';
+import { PartnerCategoryGroup, PartnerGroup } from '../models/partner-category-group.model';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,10 @@ export class PartnerTreeService {
   levelThreeOptions: PartnerTree[] = [];
   originalData: PartnerTree[] = [];
   partnerGroupOptions: PartnerTree[] = [];
+
+  // Add signal for the category and group structure
+  private categoryGroupStructure = signal<PartnerCategoryGroup[]>([]);
+  allCategoryGroupStructure = this.categoryGroupStructure.asReadonly();
 
   constructor() { }
 
@@ -121,5 +126,21 @@ export class PartnerTreeService {
           this.isLoading.set(false);
         }
       }));
+  }
+
+  getCategoryAndGroupStructure() {
+    this.isLoading.set(true);
+    return this.http.get<PartnerCategoryGroup[]>(`/api/partner-tree-structure`).pipe(
+      tap({
+        next: (data) => {
+          this.categoryGroupStructure.set(data);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error fetching category and group structure:', err);
+          this.isLoading.set(false);
+        }
+      })
+    );
   }
 }

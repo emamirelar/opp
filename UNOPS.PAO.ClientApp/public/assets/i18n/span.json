@@ -153,6 +153,7 @@
         "entityMeetEligibleEntitiesRequired": "'Cumplir con entidades elegibles' requerido",
         "entityMeetEligibleCriteriaRequired": "'Cumplir con criterios de elegibilidad' requerido",
         "noRecordsFound": "No se encontraron registros.",
+        "noPartnerGroups": "No se encontraron grupos de socios",
         "welcomeTitle": "Bienvenido a Grant+",
         "deleteInteractionConfirmation": "¿Está seguro de que desea eliminar esta interacción?",
         "interactionDeleted": "Interacción eliminada con éxito",

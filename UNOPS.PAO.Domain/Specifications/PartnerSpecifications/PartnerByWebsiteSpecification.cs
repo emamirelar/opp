@@ -16,6 +16,5 @@ public class PartnerByWebsiteSpecification : BaseSpecification<Partner>
     {
         // Include related entities
         AddInclude(p => p.PartnerOffice);
-        AddInclude(p => p.PartnerCategory);
     }
 } 

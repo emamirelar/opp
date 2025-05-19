@@ -198,4 +198,32 @@ public class PartnerController : ControllerBase
             return StatusCode(500, "An error occurred while processing your request");
         }
     }
+
+    [HttpGet(APIDictionary.Partner + "/by-partner-group-code/{code}")]
+    public ActionResult<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(string code, [FromQuery] PaginationRequest request)
+    {
+        try
+        {
+            var result = manager.GetPartnersByPartnerGroup(currentUserId, code, request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpGet(APIDictionary.Partner + "/by-partner-category-code/{code}")]
+    public ActionResult<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(string code, [FromQuery] PaginationRequest request)
+    {
+        try
+        {
+            var result = manager.GetPartnersByPartnerCategory(currentUserId, code, request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
 }

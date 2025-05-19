@@ -18,6 +18,7 @@ using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 public class UNOPSPartnerTreeManager : IPartnerTreeManager
 {
@@ -25,8 +26,8 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
     private BaseRepository<UNOPSPartnerTree> partnerTreeRepository;
     private CommonEntityRepository commonRepository;
     
-    // Special codes where Level_2 children should have editable Partner Category
-    private readonly string[] specialParentCodes = { "MULTILATERAL", "GOVERNMENT" };
+    // Special codes array for Level_2 children with editable Partner Category
+    private static readonly string[] specialCodes = { "MULTILATERAL", "GOVERNMENT" };
 
     //private string[] includes = ["Currency", "Documents"];
 
@@ -42,18 +43,51 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         {
             result.Data.PartnerCategoryEditable = DeterminePartnerCategoryEditable(result.Data);
             result.Data.PartnerGroupEditable = DeterminePartnerGroupEditable(result.Data);
+            
+            // Apply the conditional display rules
+            ApplyConditionalDisplayRules(result.Data);
         }
 
         return result;
+    }
+    
+    private static void ApplyConditionalDisplayRules(PartnerTreeDataModel data)
+    {
+        if (data == null) return;
+        
+        // Apply Partner Category display rules
+        if (data.PartnerCategoryEditable)
+        {
+            // If editable, provide default values if not set
+            data.PartnerCategoryCode = string.IsNullOrEmpty(data.PartnerCategoryCode) ? data.Code : data.PartnerCategoryCode;
+            data.PartnerCategoryName = string.IsNullOrEmpty(data.PartnerCategoryName) ? data.Name : data.PartnerCategoryName;
+        }
+        else
+        {
+            // If not editable, hide these values
+            data.PartnerCategoryCode = null;
+            data.PartnerCategoryName = null;
+        }
+        
+        // Apply Partner Group display rules
+        if (data.PartnerGroupEditable)
+        {
+            // If editable, provide default values if not set
+            data.PartnerGroupCode = string.IsNullOrEmpty(data.PartnerGroupCode) ? data.Code : data.PartnerGroupCode;
+            data.PartnerGroupName = string.IsNullOrEmpty(data.PartnerGroupName) ? data.Name : data.PartnerGroupName;
+        }
+        else
+        {
+            // If not editable, hide these values
+            data.PartnerGroupCode = null;
+            data.PartnerGroupName = null;
+        }
     }
     
     // Determine if Partner Category should be editable
     private static bool DeterminePartnerCategoryEditable(PartnerTreeDataModel data)
     {
         if (data == null) return false;
-        
-        // Special codes array for Level_2 children with editable Partner Category
-        string[] specialCodes = { "MULTILATERAL", "GOVERNMENT" };
         
         // For Level_1 partners (except MULTILATERAL and GOVERNMENT)
         if (data.Type == "Level_1" && !specialCodes.Contains(data.Code))
@@ -76,8 +110,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         if (data == null || string.IsNullOrEmpty(data.Parent) || string.IsNullOrEmpty(data.Type)) 
             return false;
         
-        // Special codes array for partner group editability rules
-        string[] specialCodes = { "MULTILATERAL", "GOVERNMENT" };
+
         
         var levelParts = data.Type.Split('_');
         if (levelParts.Length < 2 || !int.TryParse(levelParts[1], out int level))
@@ -104,9 +137,6 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         if (data == null || string.IsNullOrEmpty(data.Type))
             return;
             
-        // Special codes array for parent category rules
-        string[] specialCodes = { "MULTILATERAL", "GOVERNMENT" };
-            
         // Parse the level
         var levelParts = data.Type.Split('_');
         if (levelParts.Length < 2 || !int.TryParse(levelParts[1], out int level))
@@ -119,6 +149,9 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
             if (specialCodes.Contains(grandparentCode))
             {
                 data.PartnerGroupEditable = true;
+                
+                // Since the PartnerGroupEditable flag has changed, reapply display rules
+                ApplyConditionalDisplayRules(data);
             }
         }
     }
@@ -172,8 +205,11 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
     public IEnumerable<PartnerTreeModel> GetPartnerTrees(int userId, string sortBy = "Name", bool ascending = true)
     {
         var allTrees = partnerTreeRepository
-            .GetAllSortedAsync(sortBy, ascending)
-            .Result
+            .GetAll()
+            .AsQueryable()  // Ensure we're working with IQueryable
+            .Include(x => x.Partners)  // Eagerly load the related partners
+            .OrderBy(x => sortBy == "Name" ? x.Name : x.Code)
+            .ToList()
             .Select(x => MapEntityToModel(x, mapper))
             .ToList();
 
@@ -201,6 +237,9 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
                 
                 // Set initial partnerGroupEditable flags
                 node.Data.PartnerGroupEditable = DeterminePartnerGroupEditable(node.Data);
+                
+                // Apply the conditional display rules based on editability
+                ApplyConditionalDisplayRules(node.Data);
             }
             
             // Process children recursively
@@ -308,6 +347,9 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
             {
                 result.Data.PartnerCategoryEditable = DeterminePartnerCategoryEditable(result.Data);
                 result.Data.PartnerGroupEditable = DeterminePartnerGroupEditable(result.Data);
+                
+                // Apply the conditional display rules
+                ApplyConditionalDisplayRules(result.Data);
             }
             
             // Process children if any exist
@@ -366,6 +408,17 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
 
         var result = MapEntityToModel(entity, mapper);
         
+        // Process editability flags and apply conditional display rules
+        if (result.Data != null)
+        {
+            // Set the editability flags
+            result.Data.PartnerCategoryEditable = DeterminePartnerCategoryEditable(result.Data);
+            result.Data.PartnerGroupEditable = DeterminePartnerGroupEditable(result.Data);
+            
+            // Apply the conditional display rules
+            ApplyConditionalDisplayRules(result.Data);
+        }
+        
         // Process children if any exist
         if (result.Children != null && result.Children.Any())
         {
@@ -405,4 +458,104 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
             await partnerTreeRepository.Delete(entity);
         }
     }
+
+    public IEnumerable<object> GetCategoryAndGroupStructure(int userId)
+    {
+        // Use existing GetPartnerTrees method which already applies MapEntityToModel
+        var partnerTreeStructure = GetPartnerTrees(userId).ToList();
+        
+        // Create a list to store categories
+        var categories = new List<object>();
+        
+        // Process all levels of the tree, not just top-level items
+        ProcessAllLevelsForCategories(partnerTreeStructure, categories);
+        
+        return categories;
+    }
+
+    // Helper method to recursively process all tree levels for categories
+    private void ProcessAllLevelsForCategories(IEnumerable<PartnerTreeModel> nodes, List<object> categories)
+    {
+        if (nodes == null) return;
+        
+        foreach (var tree in nodes)
+        {
+            if (tree.Data == null) continue;
+            
+            // Check if this node is a category (has PartnerCategoryEditable == true)
+            if (tree.Data.PartnerCategoryEditable)
+            {
+                // Create category object - using PartnerCategoryCode/Name if they're non-null (they should be at this point)
+                var categoryCode = tree.Data.PartnerCategoryCode ?? tree.Data.Code;
+                var categoryName = tree.Data.PartnerCategoryName ?? tree.Data.Name;
+                
+                var category = new
+                {
+                    partnerCategoryId = tree.Data.Id,
+                    partnerCategoryCode = categoryCode,
+                    partnerCategoryName = categoryName,
+                    children = new List<object>()
+                };
+                
+                // Collect all editable groups under this category
+                if (tree.Children != null && tree.Children.Any())
+                {
+                    CollectAllEditableGroups(tree.Children, (List<object>)category.children);
+                }
+                
+                categories.Add(category);
+            }
+            
+            // Continue checking children nodes for more categories
+            if (tree.Children != null && tree.Children.Any())
+            {
+                ProcessAllLevelsForCategories(tree.Children, categories);
+            }
+        }
+    }
+
+    // Helper method to recursively collect all editable groups under a category
+    private void CollectAllEditableGroups(IEnumerable<PartnerTreeModel> nodes, List<object> groupList)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.Data == null) continue;
+            // Only include groups that are editable
+            if (node.Data.PartnerGroupEditable)
+            {
+                // Use PartnerGroupCode/Name if they're non-null (they should be at this point)
+                var groupCode = node.Data.PartnerGroupCode ?? node.Data.Code;
+                var groupName = node.Data.PartnerGroupName ?? node.Data.Name;
+                
+                // Add this node as a group
+                groupList.Add(new
+                {
+                    partnerGroupId = node.Data.Id,
+                    partnerGroupCode = groupCode,
+                    partnerGroupName = groupName
+                });
+            }
+            
+            // Recursively process its children regardless of their editability
+            // This ensures we check all levels for editable groups
+            if (node.Children != null && node.Children.Any())
+            {
+                CollectAllEditableGroups(node.Children, groupList);
+            }
+        }
+    }
+    
+        public async Task<PartnerTreeModel?> GetPartnerTreeByCode(int userId, string code)
+    {
+        var item = partnerTreeRepository.GetAll()
+            .FirstOrDefault(x => x.Code == code);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        return mapper.Map<PartnerTreeModel>(item);
+    }
+    
 }

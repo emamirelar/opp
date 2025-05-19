@@ -48,7 +48,6 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
     {
         // Include related entities
         AddInclude(p => p.PartnerOffice);
-        AddInclude(p => p.PartnerCategory);
         
         // Default ordering is by name
         ApplyOrderBy(p => p.Name);
@@ -130,13 +129,6 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         {
             Expression<Func<Partner, bool>> partnerOfficeFilter = p => p.PartnerOfficeId == partnerOfficeId.Value;
             predicate = CombineExpressions(predicate, partnerOfficeFilter);
-        }
-        
-        // Add partner category filter if specified
-        if (partnerCategoryId.HasValue)
-        {
-            Expression<Func<Partner, bool>> partnerCategoryFilter = p => p.PartnerCategoryId == partnerCategoryId.Value;
-            predicate = CombineExpressions(predicate, partnerCategoryFilter);
         }
         
         // Add address city filter if specified

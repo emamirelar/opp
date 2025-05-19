@@ -124,4 +124,61 @@ public class PartnerTreeManager : IPartnerTreeManager
             await PartnerTreeRepository.Delete(entity);
         }
     }
+
+    public IEnumerable<object> GetCategoryAndGroupStructure(int userId)
+    {
+        // Get all partner trees
+        var partnerTreeStructure = GetPartnerTrees(userId).ToList();
+        
+        // Create a list to store categories
+        var categories = new List<object>();
+        
+        // Process top-level items as categories
+        foreach (var tree in partnerTreeStructure)
+        {
+            if (tree.Data == null) continue;
+            
+            // Create category object
+            var category = new
+            {
+                id = tree.Data.Id,
+                partnerCategoryCode = tree.Data.Code,
+                partnerCategoryName = tree.Data.Name,
+                children = new List<object>()
+            };
+            
+            // Collect all groups (children) under this category
+            if (tree.Children != null && tree.Children.Any())
+            {
+                CollectGroups(tree.Children, (List<object>)category.children);
+            }
+            
+            categories.Add(category);
+        }
+        
+        return categories;
+    }
+    
+    // Helper method to recursively collect all groups under a category
+    private void CollectGroups(IEnumerable<PartnerTreeModel> nodes, List<object> groupList)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.Data == null) continue;
+            
+            // Add this node as a group
+            groupList.Add(new
+            {
+                id = node.Data.Id,
+                partnerGroupCode = node.Data.Code,
+                partnerGroupName = node.Data.Name
+            });
+            
+            // Recursively process its children
+            if (node.Children != null && node.Children.Any())
+            {
+                CollectGroups(node.Children, groupList);
+            }
+        }
+    }
 }

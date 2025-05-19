@@ -1077,8 +1077,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("PartnerCategoryId")
-                        .HasColumnType("integer");
+                    b.Property<string>("PartnerGroupCode")
+                        .HasColumnType("text");
 
                     b.Property<int?>("PartnerOfficeId")
                         .HasColumnType("integer");
@@ -1109,7 +1109,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PartnerCategoryId");
+                    b.HasIndex("PartnerGroupCode");
 
                     b.HasIndex("PartnerOfficeId");
 
@@ -1120,70 +1120,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("DeletedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("character varying(21)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LastModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PartnerCategories", "public");
-
-                    b.HasDiscriminator().HasValue("PartnerCategory");
-
-                    b.UseTphMappingStrategy();
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerTree", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("CreatedBy")
@@ -1206,6 +1145,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasMaxLength(21)
                         .HasColumnType("character varying(21)");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -1236,7 +1178,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("Id");
+                    b.HasKey("Code");
 
                     b.ToTable("PartnerTrees", "public");
 
@@ -1611,13 +1553,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasDiscriminator().HasValue("UNOPSPartner");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartnerCategory", b =>
-                {
-                    b.HasBaseType("UNOPS.PAO.Domain.Entities.PartnerCategory");
-
-                    b.HasDiscriminator().HasValue("UNOPSPartnerCategory");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.UNOPSPartnerTree", b =>
                 {
                     b.HasBaseType("UNOPS.PAO.Domain.Entities.PartnerTree");
@@ -1779,15 +1714,15 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Partner", b =>
                 {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.PartnerCategory", "PartnerCategory")
-                        .WithMany()
-                        .HasForeignKey("PartnerCategoryId");
+                    b.HasOne("UNOPS.PAO.Domain.Entities.PartnerTree", "PartnerGroup")
+                        .WithMany("Partners")
+                        .HasForeignKey("PartnerGroupCode");
 
                     b.HasOne("UNOPS.PAO.Domain.Entities.OrganizationUnit", "PartnerOffice")
                         .WithMany()
                         .HasForeignKey("PartnerOfficeId");
 
-                    b.Navigation("PartnerCategory");
+                    b.Navigation("PartnerGroup");
 
                     b.Navigation("PartnerOffice");
                 });
@@ -1886,6 +1821,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Partner", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerTree", b =>
+                {
+                    b.Navigation("Partners");
                 });
 #pragma warning restore 612, 618
         }

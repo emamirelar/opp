@@ -153,9 +153,10 @@
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Atender entidades elegíveis' obrigatório",
-        "entityMeetEligibleCriteriaRequired": "'Atender critérios de elegibilidade' obrigatório",
+        "entityMeetEligibleCriteriaRequired": "'Atender critérios elegíveis' obrigatório",
         "noRecordsFound": "Nenhum registro encontrado.",
-        "welcomeTitle": "Bem-vindo ao Grant+",
+        "noPartnerGroups": "Nenhum grupo de parceiro encontrado",
+        "welcomeTitle": "Bem-vindo ao Opportunity+",
         "deleteInteractionConfirmation": "Tem certeza que deseja excluir esta interação?",
         "interactionDeleted": "Interação excluída com sucesso",
         "errorDeletingInteraction": "Erro ao excluir interação",

@@ -41,7 +41,8 @@ import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
-import {PartnerTabsComponent} from '../tabs/partner-tabs.component';
+import { PartnerTabsComponent } from '../tabs/partner-tabs.component';
+import { Partner } from '../../../models/partner.model';
 
 @Component({
   selector: 'app-partner-view',
@@ -68,7 +69,6 @@ import {PartnerTabsComponent} from '../tabs/partner-tabs.component';
     LinkListComponent,
     PictureComponent,
     PartnerViewContactsComponent,
-    PartnerTabsComponent
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
@@ -102,7 +102,7 @@ export class PartnerViewComponent implements OnInit {
 
   showValidationFailedError = signal<boolean>(false);
   recordId: string = '';
-  recordData = signal<any>({});
+  recordData = signal<Partner>({});
   showCommentDialog = false;
   riskProfile = signal<string>('');
   riskIsLoading = signal<boolean>(true);
@@ -126,7 +126,17 @@ export class PartnerViewComponent implements OnInit {
         this.recordId = paramMap.get("recordId") || '';
 
         if (this.recordId != '') {
-          this._loadRecordDetails();
+          // Check if data is already available from the resolver
+          this.activatedRoute.parent?.data.subscribe(data => {
+            if (data['partnerData']) {
+              this.recordData.set(data['partnerData']);
+              this.infoLoading.set(false);
+            } else {
+              // Fallback to loading details directly if resolver data isn't available
+              this._loadRecordDetails();
+            }
+          });
+          
           this._loadGeminiData();
         }
       }

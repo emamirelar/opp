@@ -54,7 +54,6 @@ public class PartnerTreeController : ControllerBase
     [HttpGet(APIDictionary.PartnerTree + "/{id}")]
     // Internal call: Partner Tree details
     // TODO add permissions
-
     public async Task<ActionResult> Get(int id)
     {
         var x = await manager.GetPartnerTree(currentUserId, id);
@@ -116,5 +115,11 @@ public class PartnerTreeController : ControllerBase
             CanCreate = canCreateResult.Succeeded,
             CanDelete = canDeleteResult.Succeeded
         });
+    }
+
+    [HttpGet(APIDictionary.PartnerTree + "-structure")]
+    public ActionResult GetCategoryAndGroupStructure()
+    {
+        return Ok(manager.GetCategoryAndGroupStructure(currentUserId));
     }
 }

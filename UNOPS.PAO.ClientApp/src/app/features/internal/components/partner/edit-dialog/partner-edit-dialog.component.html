@@ -46,7 +46,7 @@
         <p-message severity="error" variant="simple">Partner Office is required.</p-message>
         }
       </div>
-      <div class="col-span-9 sm:col-span-3 sm:col-span-2 flex flex-col gap-2">
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label>{{ "label.partner.phone" | translate }}</label>
         <input pInputText fluid="true" formControlName="phone" />
       </div>
@@ -81,16 +81,26 @@
         {{ "title.partnerTitles.additionalInformation" | translate }}
       </div>
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="partnerCategoryId">{{ 'label.partner.partnerCategory' | translate }}*</label>
-        <p-select formControlName="partnerCategoryId" [options]="allPartnerCategoriesData()"
+        <label for="partnerGroupCode">{{ 'label.partnerTree.partnerGroup' | translate }}*</label>
+        <p-select formControlName="partnerGroupCode" [options]="allPartnerGroupsForSelect()"
                   optionLabel="name"
-                  optionValue="id"
+                  optionValue="value"
+                  [group]="true"
+                  [filter]="true" filterBy="name"
                   [appendTo]="'body'"
-                  fluid="true" id="partnerCategoryId" ariaLabel="Select Partner Category" />
-        @if( formGroup.get("partnerCategoryId")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Partner Category is required.</p-message>
+                  fluid="true" id="partnerGroupCode" ariaLabel="Select Partner Group"
+                  >
+                  <ng-template let-group #group>
+                    <div class="flex items-center font-bold">
+                        <span>{{ group.name }}</span>
+                    </div>
+                </ng-template>
+          </p-select>
+        @if( formGroup.get("partnerGroupId")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Partner Group is required.</p-message>
         }
       </div>
+
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label>{{ "label.partner.shortName" | translate }} *</label>
         <input pInputText fluid="true" formControlName="shortName" />

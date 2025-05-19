@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System;
 using UNOPS.PAO.Domain.Infrastructure;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace UNOPS.PAO.Domain.Entities;
 
@@ -35,7 +37,10 @@ public class Partner : ModifiableDeletableEntity
     public List<Document>? Documents { get; set; }
     public OrganizationUnit? PartnerOffice { get; set; }
     public int? PartnerOfficeId { get; set; }
-    public PartnerCategory? PartnerCategory { get; set; }
-    public int? PartnerCategoryId { get; set; }
+    
+    [ForeignKey("PartnerGroupCode")]
+    public PartnerTree? PartnerGroup { get; set; }
+    
+    public string? PartnerGroupCode { get; set; }
 }
 

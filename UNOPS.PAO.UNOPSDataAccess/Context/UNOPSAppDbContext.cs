@@ -41,6 +41,19 @@ public class UNOPSAppDbContext : AppDbContext
         //.HasIndex(x => x.PartnerNumber) 
         //.IsUnique();
 
+        // Configure Partner to PartnerTree relationship properly with only one foreign key
+        modelBuilder
+            .Entity<Partner>()
+            .HasOne(x => x.PartnerGroup)
+            .WithMany(x => x.Partners)
+            .HasForeignKey(x => x.PartnerGroupCode)
+            .HasPrincipalKey(x => x.Code);
+
+        // Ignore any convention-based relationship that would create a PartnerTreeCode column
+        modelBuilder
+            .Entity<Partner>()
+            .Ignore("PartnerTree");
+        
         modelBuilder
             .Entity<UNOPSLink>();
     }
@@ -61,7 +74,6 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<AiChatHistory> AiChatHistory { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
     public DbSet<UNOPSOrganizationUnit> OrganizationUnits { get; set; }
-    public DbSet<UNOPSPartnerCategory> PartnerCategories { get; set; }
 
     public new DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
     public new DbSet<InteractionContact> InteractionContacts { get; set; }

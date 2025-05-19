@@ -19,8 +19,23 @@ public class MappingProfile : Profile
         CreateMap<UNOPSInteraction, InteractionModel>();
         CreateMap<InteractionModel, UNOPSInteraction>();
         CreateMap<PartnerTreeRequest, UNOPSPartnerTree>();
-        CreateMap<UNOPSPartnerTree, PartnerTreeModel>();
-        CreateMap<PartnerTreeModel, UNOPSPartnerTree>();
+        
+
+        CreateMap<UNOPSPartnerTree, PartnerTreeModel>()
+            .ForMember(dest => dest.Children, opt => opt.Ignore())
+            .ForMember(dest => dest.Data, opt => opt.MapFrom(src => new PartnerTreeDataModel 
+            {
+                Id = src.Id,
+                Code = src.Code,
+                Description = src.Description,
+                Type = src.Type,
+                PartnerCategoryCode = src.PartnerCategoryCode,
+                PartnerGroupCode = src.PartnerGroupCode,
+            }));
+            
+        CreateMap<PartnerTreeModel, UNOPSPartnerTree>()
+            .ForMember(dest => dest.Partners, opt => opt.Ignore());
+            
         CreateMap<GeminiProcessDataRequest, AiPromptModel>();
         CreateMap<UNOPSDocument, DocumentModel>();
         CreateMap<DocumentModel, UNOPSDocument>();
@@ -29,7 +44,10 @@ public class MappingProfile : Profile
         CreateMap<UpdateDocumentRequest, UNOPSDocument>();
         CreateMap<UNOPSOrganizationUnit, OrganizationUnitModel>();
         CreateMap<OrganizationUnitModel, UNOPSOrganizationUnit>();
-        CreateMap<UNOPSPartnerCategory, PartnerCategoryModel>();
-        CreateMap<PartnerCategoryModel, UNOPSPartnerCategory>();
+        
+        CreateMap<PartnerRequest, UNOPSPartner>();
+        CreateMap<UpdatePartnerRequest, UNOPSPartner>();
+        
+        CreateMap<UNOPSPartner, PartnerModel>();
     }
 }

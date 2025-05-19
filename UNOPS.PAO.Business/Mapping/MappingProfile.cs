@@ -24,6 +24,7 @@ public class MappingProfile : Profile
         CreateMap<InteractionUserModel, InteractionUser>();
         CreateMap<OrganizationUnit, OrganizationUnitModel>();
         CreateMap<OrganizationUnitModel, OrganizationUnit>();
+        CreateMap<Partner, PartnerValueModel>();
         CreateMap<Notification, NotificationModel>()
             .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Message))
             .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category))

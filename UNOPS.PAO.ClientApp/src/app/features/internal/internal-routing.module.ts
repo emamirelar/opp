@@ -14,6 +14,9 @@ import { PartnerTabsComponent } from './components/partner/tabs/partner-tabs.com
 import { ComingSoonComponent } from '../../common/pages/components/coming-soon/coming-soon.component';
 import { adminGuard } from '../../essentials/guards/admin.guard';
 import { SearchResultComponent } from './components/search-result/search-result.component';
+import { PartnerTreeViewComponent } from './components/partner-tree/view/partner-tree-view.component';
+import { PartnerDataResolver } from './resolvers/partner-data.resolver';
+import { PartnerTreeDataResolver } from './resolvers/partner-tree-data.resolver';
 
 const internalRoutes: Routes = [
   {
@@ -59,12 +62,6 @@ const internalRoutes: Routes = [
             ]
           },
           {
-            path: 'partner-tree',
-            data: { breadcrumb: 'Partner Tree' },
-            component: PartnerTreeComponent,
-            canActivate: [authGuard]
-          },
-          {
             path: 'partners',
             component: PartnerComponent,
             canActivate: [authGuard],
@@ -75,6 +72,9 @@ const internalRoutes: Routes = [
             component: PartnerTabsComponent,
             canActivate: [authGuard],
             data: { breadcrumb: 'Partner' },
+            resolve: {
+              partnerData: PartnerDataResolver
+            },
             children: [
               { 
                 path: '', 
@@ -125,8 +125,17 @@ const internalRoutes: Routes = [
         children: [
           {
             path: 'partner-tree',
-            redirectTo: '/partnerships/partner-tree',
-            pathMatch: 'full'
+            children: [
+              { path: '', component: PartnerTreeComponent, data: { breadcrumb: 'Partner Tree' } },
+              { 
+                path: ':recordId', 
+                component: PartnerTreeViewComponent, 
+                data: { breadcrumb: 'Partner Tree View' },
+                resolve: {
+                  partnerTreeData: PartnerTreeDataResolver
+                }
+              }
+            ]
           },
           {
             path: 'ai-prompts',
@@ -163,7 +172,7 @@ const internalRoutes: Routes = [
       {
         path: 'contact/:recordId',
         redirectTo: 'partnerships/contacts/:recordId',
-        pathMatch: 'prefix'
+        pathMatch: 'prefix',
       },
       {
         path: 'interactions',
@@ -172,6 +181,7 @@ const internalRoutes: Routes = [
       },
       {
         path: 'partner-tree',
+        
         redirectTo: 'partnerships/partner-tree',
         pathMatch: 'full'
       },

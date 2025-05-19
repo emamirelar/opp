@@ -164,10 +164,11 @@
         }
     },
     "message": {
-        "entityMeetEligibleEntitiesRequired": "'Respecter les entités éligibles' requis",
-        "entityMeetEligibleCriteriaRequired": "'Respecter les critères d'éligibilité' requis",
+        "entityMeetEligibleEntitiesRequired": "'Répondre aux entités éligibles' requis",
+        "entityMeetEligibleCriteriaRequired": "'Répondre aux critères d'éligibilité' requis",
         "noRecordsFound": "Aucun enregistrement trouvé.",
-        "welcomeTitle": "Bienvenue sur Grant+",
+        "noPartnerGroups": "Aucun groupe de partenaire trouvé",
+        "welcomeTitle": "Bienvenue sur Opportunity+",
         "deleteInteractionConfirmation": "Êtes-vous sûr de vouloir supprimer cette interaction ?",
         "interactionDeleted": "L'interaction a été supprimée avec succès",
         "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction",
