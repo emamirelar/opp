@@ -253,7 +253,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         _logger.LogWarning("IAPVerificationMiddleware - No user ID header found");
                     }
 
-                    var identity = new ClaimsIdentity(claims, "IAP-Header");
+                    var identity = new ClaimsIdentity(claims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
                     context.User = new ClaimsPrincipal(identity);
                     await _next(context);
                     return;
