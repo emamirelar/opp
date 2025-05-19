@@ -180,7 +180,20 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         new Claim(ClaimTypes.Email, extractedEmail),
                         new Claim("iap-header-verified", "true")
                     };
-                    context.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "IAP-Header"));
+
+                    // If the extracted value is numeric, use it as the NameIdentifier
+                    if (long.TryParse(extractedEmail, out _))
+                    {
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, extractedEmail));
+                        _logger.LogDebug("Added numeric NameIdentifier claim: {Id}", extractedEmail);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Extracted email is not numeric, cannot set NameIdentifier claim");
+                    }
+
+                    var identity = new ClaimsIdentity(claims, "IAP-Header");
+                    context.User = new ClaimsPrincipal(identity);
                     await _next(context);
                     return;
                 }
@@ -216,9 +229,23 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
         private string ExtractEmailFromHeader(string emailHeader)
         {
-            // Header format: "accounts.google.com:john.doe@example.com"
+            // Header format: "accounts.google.com:user@example.com" or "accounts.google.com:123456789"
             var parts = emailHeader.Split(':', 2);
-            return parts.Length == 2 ? parts[1].Trim() : string.Empty;
+            if (parts.Length != 2)
+            {
+                return string.Empty;
+            }
+
+            var value = parts[1].Trim();
+            
+            // If the value is numeric, it's a user ID - find or create user with this ID
+            if (long.TryParse(value, out _))
+            {
+                // Use the numeric ID as is - it will be converted to int when used as NameIdentifier
+                return value;
+            }
+            
+            return value;
         }
 
         private async Task<ClaimsPrincipal> VerifyIapJwtAndGetPrincipalAsync(string jwt, HttpContext context)
@@ -346,6 +373,14 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 {
                     email = subClaim;
                     _logger.LogDebug("Using subject claim as email: {Email}", email);
+                }
+                
+                // If we have a numeric ID from the subject claim, use it as the NameIdentifier
+                if (!string.IsNullOrEmpty(subClaim) && long.TryParse(subClaim, out _))
+                {
+                    // Add the numeric ID as NameIdentifier
+                    validatedPrincipal.AddIdentity(new ClaimsIdentity(new[] { new Claim(ClaimTypes.NameIdentifier, subClaim) }));
+                    _logger.LogDebug("Added numeric NameIdentifier claim from JWT: {Id}", subClaim);
                 }
             }
             

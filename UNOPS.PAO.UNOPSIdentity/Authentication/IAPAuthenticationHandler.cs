@@ -423,12 +423,26 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         // If still no email, check for the subject claim which might have the email
         if (string.IsNullOrEmpty(email))
         {
-            var subClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-            if (!string.IsNullOrEmpty(subClaim) && subClaim.Contains("@"))
+            if (!string.IsNullOrEmpty(jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value) && (jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value).Contains("@"))
             {
-                email = subClaim;
+                email = (jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value);
                 _logger.LogDebug("Using subject claim as email: {Email}", email);
             }
+            
+            // If we have a numeric ID from the subject claim, use it as the NameIdentifier
+           /* if (!string.IsNullOrEmpty(jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value) && long.TryParse(jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value, out _))
+            {
+                // Remove any existing NameIdentifier claim
+                var existingNameId = identity.FindFirst(ClaimTypes.NameIdentifier);
+                if (existingNameId != null)
+                {
+                    identity.RemoveClaim(existingNameId);
+                }
+                
+                // Add the numeric ID as NameIdentifier
+                identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value));
+                _logger.LogDebug("Added numeric NameIdentifier claim from JWT: {Id}", jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value);
+            }*/
         }
         
         // For external identities, the email might be in the gcip claim
@@ -511,6 +525,22 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             {
                 identity.AddClaim(new Claim(claim.Type, claim.Value));
             }
+        }
+        
+        // If we have a numeric ID from the subject claim, use it as the NameIdentifier
+        var subClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+        if (!string.IsNullOrEmpty(subClaim) && long.TryParse(subClaim, out _))
+        {
+            // Remove any existing NameIdentifier claim
+            var existingNameId = identity.FindFirst(ClaimTypes.NameIdentifier);
+            if (existingNameId != null)
+            {
+                identity.RemoveClaim(existingNameId);
+            }
+            
+            // Add the numeric ID as NameIdentifier
+            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, subClaim));
+            _logger.LogDebug("Added numeric NameIdentifier claim from JWT: {Id}", subClaim);
         }
         
         return validatedPrincipal;
