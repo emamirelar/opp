@@ -2,7 +2,6 @@
   [value]="data"
   [columns]="columns"
   [scrollable]="config.scrollable"
-  [selectionMode]="config.selectionMode"
   [loading]="loading"
   [first]="first"
   [lazy]="true"
@@ -38,7 +37,7 @@
 
   <!-- Rows template -->
   <ng-template pTemplate="body" let-rowData let-columns="columns">
-    <tr [pSelectableRow]="rowData" (dblclick)="onRowDblClick(rowData)" >
+    <tr (click)="onRowClick(rowData)" >
       @for (column of columns; track column) {
         <td class="cursor-pointer">
           @switch (column.type) {

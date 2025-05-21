@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Specifications;
+using System.Linq;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -31,7 +32,7 @@ public class UNOPSPartnerManager : IPartnerManager
     private readonly IConfiguration _configuration;
     private BaseRepository<UNOPSPartner> PartnerRepository;
     private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
-    private BaseRepository<UNOPSPartnerCategory> PartnerCategoryRepository;
+    private BaseRepository<UNOPSPartnerTree> PartnerTreeRepository;
 
     private CommonEntityRepository commonRepository;
 
@@ -40,23 +41,17 @@ public class UNOPSPartnerManager : IPartnerManager
 
     //private string[] includes = ["Currency", "Documents"];
 
-    private static PartnerModel MapEntityToModel(UNOPSPartner entity, IMapper mapper)
+    private PartnerModel MapEntityToModel(UNOPSPartner entity, IMapper mapper)
     {
+        // Use AutoMapper with the updated configuration
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
 
-        /*result.EligibleEntities = entity.EligibleEntities?.Select(mapper.Map<EligibleEntityModel>).ToList();
-        
-        var appType = typeof(ApplicationType)
-            .GetMembers()
-            .Select(x => new { value = x, attr = x.GetCustomAttributes(typeof(EnumDisplayNameAttribute), true).Cast<EnumDisplayNameAttribute>().SingleOrDefault() })
-            .Where(x => x.attr != null)
-            .Select(x => new ApplicationTypeModel() { Id = x.value.Name, DisplayName = x.attr?.Value })
-            .Where(x => x.Id == entity.ApplicationTypeCode)
-            .FirstOrDefault();
-
-        result.ApplicationType = appType;*/
-
-        //result.Extensions.Add("project", project);
+        if (result.PartnerGroupCode != null && entity.PartnerGroup != null)
+        {
+            result.PartnerGroupName = entity.PartnerGroup.Name;
+            result.PartnerGroupCode = entity.PartnerGroup.Code;
+            result.PartnerGroupId = entity.PartnerGroup.Id;
+        }
 
         return result;
     }
@@ -121,8 +116,8 @@ public class UNOPSPartnerManager : IPartnerManager
         _context = context;
         _configuration = configuration;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
+        PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
-        PartnerCategoryRepository = new BaseRepository<UNOPSPartnerCategory>(context, configuration);
         
         GoogleCloudStorageService = new GoogleCloudStorageService(configuration);
 
@@ -171,15 +166,7 @@ public class UNOPSPartnerManager : IPartnerManager
         {
             return default;
         }
-
-        if(item.PartnerCategoryId.HasValue)
-        {
-            var partnerCategory = await PartnerCategoryRepository.GetByIdAsync(item.PartnerCategoryId.Value);
-            if (partnerCategory != null)
-            {
-                item.PartnerCategory = partnerCategory;
-            }
-        }
+        
         if (item.PartnerOfficeId.HasValue)
         {
             var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
@@ -296,6 +283,111 @@ public class UNOPSPartnerManager : IPartnerManager
         return result;
     }
     
+    public PaginationResponse<PartnerModel> GetPartnersByPartnerGroup(int userId, string partnerGroupCode, PaginationRequest request)
+    {
+        // Add logging
+        Console.WriteLine($"GetPartnersByPartnerGroup called with partnerGroupCode: {partnerGroupCode}");
+        var partnerTree = PartnerTreeRepository.GetAll()
+            .FirstOrDefault(pt => pt.PartnerGroupCode == partnerGroupCode);
+        
+        try
+        {
+            // First get the partner tree by ID
+            if (partnerTree == null)
+            {
+                Console.WriteLine($"No partner tree found with PartnerGroupCode: {partnerGroupCode}");
+                // If no partner tree found, return empty result
+                return new PaginationResponse<PartnerModel>
+                {
+                    Records = new List<PartnerModel>(),
+                    TotalCount = 0
+                };
+            }
+            
+            // Get the code from the partner tree
+            var code = partnerTree.Code;
+            Console.WriteLine($"Found partner tree with Code: {code}");
+            
+            // Get all partners with the matching code
+            var q = PartnerRepository
+                .GetAll()
+                .Where(x => !x.IsDeleted && x.PartnerGroupCode == code)
+                .AsQueryable();
+
+            var result = q.Paginate(
+                x => MapEntityToModel(x, _mapper),
+                request
+            );
+            
+            Console.WriteLine($"Found {result.TotalCount} partners matching PartnerGroupCode: {code}");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in GetPartnersByPartnerGroup: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            
+            // Rethrow the exception with more context
+            // If no partner tree found, return empty result
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = [],
+                TotalCount = 0
+            };
+        }
+        
+        // Get the code from the partner tree
+        var partnerTreeCode = partnerTree.Code;
+        
+        // Get all partners with the matching code
+        var query = PartnerRepository
+            .GetAll()
+            .Where(x => !x.IsDeleted && x.PartnerGroupCode == partnerTreeCode)
+            .AsQueryable();
+
+        return query.Paginate(
+            x => MapEntityToModel(x, _mapper),
+            request
+        );
+    }
+    
+    public PaginationResponse<PartnerModel> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request)
+    {
+        // First get all partner trees with this category code
+        // By default take the Partner Tree CODE
+        var partnerTreesByCategory = PartnerTreeRepository.GetAll()
+            .Where(pt => pt.PartnerCategoryCode != null
+                ? pt.PartnerCategoryCode == partnerCategoryCode
+                : pt.Code == partnerCategoryCode)
+            .Distinct()
+            .ToList();
+            
+        if (!partnerTreesByCategory.Any())
+        {
+            // If no partner trees found, return empty result
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = [],
+                TotalCount = 0
+            };
+        }
+        
+        // Get all the codes from the partner trees
+        var partnerTreesByCategoryCodes = partnerTreesByCategory.Select(pt => pt.Code).ToList();
+        
+        var partnerTreesByGroupInCategoryCode = GetAllDescendantPartnerTrees(partnerTreesByCategoryCodes).Select(pt => pt.Code).ToList();
+        
+        // Get all partners with the matching codes
+        var query = PartnerRepository
+            .GetAll()
+            .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
+            .AsQueryable();
+
+        return query.Paginate(
+            x => MapEntityToModel(x, _mapper),
+            request
+        );
+    }
     
     public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)
     {
@@ -364,6 +456,43 @@ public class UNOPSPartnerManager : IPartnerManager
         // This simplified version just denies access to non-creators
         // In a real implementation, you'd check if the user has Administrator role
         return false;
+    }
+
+    public List<PartnerTree> GetChildPartnerTreesRecursively(List<string> parentCodes)
+    {
+        if (parentCodes == null || !parentCodes.Any())
+            return new List<PartnerTree>();
+
+        // Get immediate children
+        var children = PartnerTreeRepository.GetAll()
+            .Where(pt => pt.Parent != null && parentCodes.Contains(pt.Parent))
+            .ToList();
+
+        if (!children.Any())
+            return new List<PartnerTree>();
+
+        // Get child codes
+        var childCodes = children.Select(c => c.Code).ToList();
+
+        // Recursively get descendants
+        var descendants = GetChildPartnerTreesRecursively(childCodes);
+
+        // Combine immediate children with their descendants
+        return children.Union(descendants).ToList();
+    }
+    
+    public List<PartnerTree> GetAllDescendantPartnerTrees(List<string> partnerTreesByCategoryCodes)
+    {
+        // Get the original PartnerTrees by their codes
+        var originalPartnerTrees = PartnerTreeRepository.GetAll()
+            .Where(pt => partnerTreesByCategoryCodes.Contains(pt.Code))
+            .ToList();
+            
+        // Get all descendants recursively
+        var descendants = GetChildPartnerTreesRecursively(partnerTreesByCategoryCodes);
+        
+        // Return all trees including the original ones and their descendants
+        return originalPartnerTrees.Union(descendants).ToList();
     }
     
     /// <summary>

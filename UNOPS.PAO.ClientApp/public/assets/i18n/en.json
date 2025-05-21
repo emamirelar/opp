@@ -204,6 +204,9 @@
     "no": "No",
     "postedDate": "Posted Date",
     "sdgs": "SDGs",
+    "search": {
+      "results": "Search Results for"
+    },
     "selectEligibleEntities": "Select Eligible Entities",
     "selectFromDrive": "Select from Drive",
     "selectionMethodology": "Selection Methodology",
@@ -258,6 +261,7 @@
     "entityMeetEligibleEntitiesRequired": "'Meet eligible entities' required",
     "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
     "noRecordsFound": "No records found.",
+    "noPartnerGroups": "No partner groups found",
     "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
     "welcomeTitle": "Welcome to Opportunity+",
     "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
@@ -322,5 +326,14 @@
   "validation": {
     "required": "This field is required",
     "maxLength": "Maximum length is {{max}} characters"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "recentSearches": "Recent Searches",
+    "results": "Results",
+    "showAllResults": "Show All Results",
+    "seeAllResults": "See all results",
+    "contact": "Contact",
+    "partner": "Partner"
   }
 }

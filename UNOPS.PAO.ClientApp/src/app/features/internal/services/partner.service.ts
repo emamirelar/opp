@@ -13,7 +13,13 @@ export class PartnerService {
   allPartners = this.partnerData.asReadonly();
   isLoading = signal(false);
 
+  public readonly apiUrl = `/api/partner`;
+
   constructor() { }
+
+  getClassicSearchUrl(): string {
+    return `${this.apiUrl}/classic-search`;
+  }
 
   getAllPartners() {
     this.isLoading.set(true);
@@ -30,7 +36,7 @@ export class PartnerService {
 
   getPartnerById(recordId: string) : Observable<Partner> {
     this.isLoading.set(true);
-    return this.http.get<Partner>(`/api/partner/${recordId}`).pipe(tap(
+    return this.http.get<Partner>(`${this.apiUrl}/${recordId}`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -44,7 +50,7 @@ export class PartnerService {
   createPartner( requestJson: object ){
 
     this.isLoading.set( true );
-    return this.http.post('/api/partner', requestJson).pipe(tap(
+    return this.http.post(this.apiUrl, requestJson).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -58,7 +64,7 @@ export class PartnerService {
   updatePartnerById( requestJson: any ){
 
     this.isLoading.set( true );
-    return this.http.put('/api/partner', requestJson).pipe(tap(
+    return this.http.put(this.apiUrl, requestJson).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );
@@ -71,7 +77,7 @@ export class PartnerService {
 
   deletePartnerById(id: any) {
     this.isLoading.set(true);
-    return this.http.delete(`/api/partner/${id}`).pipe(tap(
+    return this.http.delete(`${this.apiUrl}/${id}`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -84,7 +90,7 @@ export class PartnerService {
 
   getAllContactsById(recordId: string) {
     this.isLoading.set(true);
-    return this.http.get('/api/partner/' + recordId + '/contacts').pipe(tap(
+    return this.http.get(`${this.apiUrl}/${recordId}/contacts`).pipe(tap(
       {
         next: (event) => {
           this.isLoading.set(false);
@@ -96,6 +102,7 @@ export class PartnerService {
   }
 
   getUploadLogoUrl(recordId: string) {
-    return `/api/partner/${recordId}/logo`;
+    return `${this.apiUrl}/${recordId}/logo`;
   }
+  
 }

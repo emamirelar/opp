@@ -42,7 +42,6 @@ interface PartnerTreeFormControls {
     PartnerTreeItemFooterComponent
   ],
   templateUrl: './partner-tree-item.component.html',
-  styleUrl: './partner-tree-item.component.scss',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })

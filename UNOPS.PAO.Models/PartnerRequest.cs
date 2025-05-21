@@ -36,5 +36,5 @@ public class PartnerRequest : ExtensibleModel
     public string? LevyTreatment { get; set; }
     //public List<int>? ContactIds { get; set; }
     public int? PartnerOfficeId { get; set; }
-    public int? PartnerCategoryId { get; set; }
+    public string? PartnerGroupCode { get; set; }
 }

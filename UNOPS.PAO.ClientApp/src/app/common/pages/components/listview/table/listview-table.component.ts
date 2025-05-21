@@ -36,8 +36,7 @@ export class ListviewTableComponent<T = any> {
   // Events
   @Output() pageChange = new EventEmitter<{first: number, rows: number}>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
-  @Output() rowSelect = new EventEmitter<T>();
-  @Output() rowDblClick = new EventEmitter<T>();
+  @Output() rowClick = new EventEmitter<T>();
   
   // Custom template references
   @ContentChild('tableActionsTemplate') actionsTemplate?: TemplateRef<any>;
@@ -58,15 +57,8 @@ export class ListviewTableComponent<T = any> {
   /**
    * Handle row selection
    */
-  onRowSelect(event: any): void {
-    this.rowSelect.emit(event);
-  }
-
-  /**
-   * Handle row double click
-   */
-  onRowDblClick(event: any): void {
-    this.rowDblClick.emit(event);
+  onRowClick(event: any): void {
+    this.rowClick.emit(event);
   }
 
   /**

@@ -1,4 +1,4 @@
-<div class="layout-topbar">
+<div class="layout-topbar flex justify-between gap-4 items-center">
 	<div class="layout-topbar-logo-container flex items-center">
 		<button pButton pRipple type="button" text class="p-link layout-menu-button" (click)="layoutService.onMenuToggle()">
 			<i class="pi pi-bars"></i>
@@ -6,16 +6,17 @@
 		<a class="layout-topbar-logo"
 			routerLink="/">
 			<img src="images/PNG/Opportunity Horizontal1000px.png"
-				class="brand-logo hidden md:block"
+				class="brand-logo hidden lg:block flex-shrink-0"
 				alt="UNOPS Opportunity+ Logo">
 			<img src="images/PNG/Opportunity Logo Graphic1000px.png"
-				class="md:hidden w-6 flex-shrink-0"
+				class="lg:hidden w-6 flex-shrink-0"
 				alt="UNOPS Opportunity+ Logo">
 		</a>
 	</div>
 
-	<div class="layout-topbar-actions">
-		<div class="flex items-center">
+  <app-global-search-bar></app-global-search-bar>
+
+	<div class="flex items-center justify-end">
       <!--				<app-theme-toggler></app-theme-toggler>-->
 
       <!-- Dev Login link - only visible in development mode -->
@@ -108,8 +109,6 @@
           <p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
         </div>
       </div>
-		</div>
 	</div>
-
-	<p-toast position="bottom-right"></p-toast>
 </div>
+<p-toast position="bottom-right"></p-toast>

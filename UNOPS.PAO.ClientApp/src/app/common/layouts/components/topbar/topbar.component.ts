@@ -26,6 +26,7 @@ import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
 import { InputTextModule } from 'primeng/inputtext';
 import { AvatarModule } from 'primeng/avatar';
+import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.component';
 
 interface UserInfo {
   userId: number;
@@ -40,9 +41,9 @@ interface UserInfo {
   imports: [
     CommonModule,
     HttpClientModule,
-    LanguageSelectorComponent, 
-    ProfileMenubarComponent, 
-    StyleClassModule, 
+    LanguageSelectorComponent,
+    ProfileMenubarComponent,
+    StyleClassModule,
     ButtonModule,
     OverlayPanelModule,
     ToastModule,
@@ -52,7 +53,8 @@ interface UserInfo {
     MenuModule,
     RippleModule,
     InputTextModule,
-    AvatarModule
+    AvatarModule,
+    GlobalSearchBarComponent
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -228,7 +230,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
     if (newItems.length > 0) {
       let message = '';
-      
+
       if (newItems.length === 1) {
         const notification = newItems[0];
         
@@ -329,7 +331,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
           this.importDialogService.setData(notification.records);
           
           const currentData = this.importDialogService.data();
-          
+
           if (currentData.length === 0) {
             this.messageService.add({
               severity: 'error',

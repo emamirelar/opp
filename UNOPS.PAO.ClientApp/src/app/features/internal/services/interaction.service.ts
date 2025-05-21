@@ -13,6 +13,10 @@ import { map } from 'rxjs/operators';
 export class InteractionService {
   private apiUrl = `/api/interactions`;
 
+  getClassicSearchUrl(): string {
+    return this.apiUrl;
+  }
+
   constructor(private http: HttpClient) {}
 
   getAll(queryParams: InteractionFilterParams): Observable<HttpResponse<PaginationResponse<Interaction>>> {

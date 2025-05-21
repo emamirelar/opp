@@ -1,4 +1,4 @@
-﻿using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models;
@@ -23,7 +23,7 @@ public class ValuesRepository
 
     public IEnumerable<Partner> GetPartners()
         => context.Partners.Where(x => x.Status.Equals("Active") && !x.IsDeleted);
-
+    
     // Get flat list of organization units by type
     public IEnumerable<OrganizationHierarchy> GetOrganizationsByType(OrganizationUnitType type)
         => context.OrganizationHierarchies
@@ -97,9 +97,7 @@ public class ValuesRepository
         => context.OrganizationHierarchies
             .Where(x => !x.IsDeleted)
             .OrderBy(x => x.Name);
-
-    public IEnumerable<PartnerCategory> GetPartnerCategories()
-        => context.PartnerCategories.Where(x => x.Status == EntityStatus.Active && !x.IsDeleted);
+    
 
     public IEnumerable<Contact> GetContacts()
         => context.Contacts.Where(x => !x.IsDeleted);

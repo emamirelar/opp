@@ -44,7 +44,6 @@ export class PartnerComponent implements OnDestroy, OnInit {
   listviewConfig: ListViewConfig = {
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
-    selectionMode: 'single',
     enablePagination: true,
     enableSorting: true,
     enableSearch: true,

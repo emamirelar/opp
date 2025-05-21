@@ -14,14 +14,14 @@ import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { CachedDataService } from '../../../../common/services/cached-data.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { PartnerTree } from '../../models/partner-tree.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
 
 @Component({
   selector: 'app-partner-tree',
-  imports: [DialogModule, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule, TooltipModule],
+  imports: [DialogModule, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule, TooltipModule, RouterModule],
   templateUrl: './partner-tree.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './partner-tree.component.scss'

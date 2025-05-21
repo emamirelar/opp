@@ -31,9 +31,6 @@ public class ValuesManager : IApplicationService
     public IEnumerable<OrganizationHierarchyModel> GetOrganizationUnits()
         => repository.GetOrganizationsByType(OrganizationUnitType.OrgUnit).Select(mapper.Map<OrganizationHierarchyModel>);
 
-    public IEnumerable<PartnerCategoryModel> GetPartnerCategories()
-        => repository.GetPartnerCategories().Select(mapper.Map<PartnerCategoryModel>);
-
     public IEnumerable<ContactValueModel> GetContacts()
          => repository.GetContacts().Select(mapper.Map<ContactValueModel>);
 

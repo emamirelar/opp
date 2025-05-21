@@ -127,4 +127,10 @@ public class PartnerTreeController : BaseController
             return await GetEntityPermissionsAsync(partnerTree);
         });
     }
+
+    [HttpGet(APIDictionary.PartnerTree + "-structure")]
+    public ActionResult GetCategoryAndGroupStructure()
+    {
+        return Ok(_manager.GetCategoryAndGroupStructure(CurrentUserId));
+    }
 }

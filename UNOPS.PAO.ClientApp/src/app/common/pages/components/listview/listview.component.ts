@@ -84,10 +84,6 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   
   @Input() 
   set config(value: ListViewConfig) {
-    console.log('Listview config set:', value);
-    console.log('Advanced search enabled:', !!value.searchConfig?.useAdvancedSearch);
-    console.log('Searchable fields:', value.searchConfig?.searchableFields);
-    
     this._config = value;
     
     // Force a refresh of the signals to ensure they pick up the new config
@@ -117,7 +113,6 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   private _config: ListViewConfig = {
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
-    selectionMode: 'single',
     enablePagination: true,
     enableSorting: true,
     enableSearch: false,
@@ -144,8 +139,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   viewMode: 'table' | 'card' = 'table';
 
   // Events
-  @Output() rowSelect = new EventEmitter<T>();
-  @Output() rowDblClick = new EventEmitter<T>();
+  @Output() rowClick = new EventEmitter<T>();
   @Output() pageChange = new EventEmitter<{first: number, rows: number}>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
   @Output() searchChange = new EventEmitter<SearchParams>();
@@ -378,15 +372,8 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   /**
    * Handle row selection
    */
-  onRowSelect(event: any): void {
-    this.rowSelect.emit(event);
-  }
-
-  /**
-   * Handle row double click
-   */
-  onRowDblClick(rowData: T): void {
-    this.rowDblClick.emit(rowData);
+  onRowClick(event: any): void {
+    this.rowClick.emit(event);
   }
 
   /**
