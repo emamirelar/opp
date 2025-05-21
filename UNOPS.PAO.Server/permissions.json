@@ -1,0 +1,368 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "name": "Home",
+      "allowedRoles": ["ALL"],
+      "apiEndpoints": [
+        {
+          "path": "api/home",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/configuration",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/currency",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/eligible-entity",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/country",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/application-type",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/partners",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/organization-units",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/partner-categories",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/contacts",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/values/users",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/process-data",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/links",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/ai-assistant",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/ai-assistant/get-user-sessions",
+          "methods": ["GET", "POST"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/ai-assistant/get-session",
+          "methods": ["GET", "POST"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/ai-assistant/create-session",
+          "methods": ["GET", "POST"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/ai-assistant/end-session",
+          "methods": ["GET", "POST"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/ai-assistant/chat",
+          "methods": ["GET", "POST"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/ai-assistant/accessibility",
+          "methods": ["GET", "POST"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/document",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/document/{entityType}/{entityId}",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["ALL"]
+        },
+        {
+          "path": "api/current-user-data",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["ALL"]
+        }
+      ]
+    },
+    {
+      "path": "/partnerships",
+      "name": "Partnerships", 
+      "allowedRoles": ["Administrator", "Internal", "Partner"],
+      "apiEndpoints": [
+        {
+          "path": "api/partner",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["Administrator", "Internal", "Partner"]
+        },
+        {
+          "path": "api/partner/{id}",
+          "methods": ["GET", "PUT", "DELETE"],
+          "allowedRoles": ["Administrator", "Internal", "Partner"]
+        },
+        {
+          "path": "api/contact",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["Administrator", "Internal", "Partner"]
+        },
+        {
+          "path": "api/contact/{id}",
+          "methods": ["GET", "PUT", "DELETE"],
+          "allowedRoles": ["Administrator", "Internal", "Partner"]
+        },
+        {
+          "path": "api/interaction",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["Administrator", "Internal", "Partner"]
+        },
+        {
+          "path": "api/interaction/{id}",
+          "methods": ["GET", "PUT", "DELETE"],
+          "allowedRoles": ["Administrator", "Internal", "Partner"]
+        },
+        {
+          "path": "api/partner-tree",
+          "methods": ["GET"],
+          "allowedRoles": ["Administrator", "Internal", "Partner"]
+        }
+      ],
+      "children": [
+        {
+          "path": "partners",
+          "name": "Partners",
+          "allowedRoles": ["Administrator", "Internal", "Partner"],
+          "apiEndpoints": [
+            {
+              "path": "api/partner",
+              "methods": ["GET"],
+              "allowedRoles": ["Administrator", "Internal", "Partner"]
+            }
+          ]
+        },
+        {
+          "path": "contacts",
+          "name": "Contacts",
+          "allowedRoles": ["Administrator", "Internal", "Partner"],
+          "apiEndpoints": [
+            {
+              "path": "api/contact",
+              "methods": ["GET"],
+              "allowedRoles": ["Administrator", "Internal", "Partner"]
+            }
+          ]
+        },
+        {
+          "path": "interactions",
+          "name": "Interactions",
+          "allowedRoles": ["Administrator", "Internal", "Partner"],
+          "apiEndpoints": [
+            {
+              "path": "api/interaction",
+              "methods": ["GET"],
+              "allowedRoles": ["Administrator", "Internal", "Partner"]
+            }
+          ]
+        },
+        {
+          "path": "partner-tree",
+          "name": "Partner Tree",
+          "allowedRoles": ["Administrator", "Internal", "Partner"],
+          "apiEndpoints": [
+            {
+              "path": "api/partner-tree",
+              "methods": ["GET"],
+              "allowedRoles": ["Administrator", "Internal", "Partner"]
+            }
+          ]
+        },
+        {
+          "path": "partnership-agreements",
+          "name": "Partnership Agreements",
+          "allowedRoles": ["Administrator", "Internal", "Partner"],
+          "apiEndpoints": [
+            {
+              "path": "api/partnerships-agreements",
+              "methods": ["GET", "POST", "PUT", "DELETE"],
+              "allowedRoles": ["Administrator", "Internal", "Partner"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/leads",
+      "name": "Leads",
+      "allowedRoles": ["ALL"],
+      "apiEndpoints": [
+        {
+          "path": "api/leads",
+          "methods": ["GET"],
+          "allowedRoles": ["ALL"]
+        }
+      ]
+    },
+    {
+      "path": "/initiatives",
+      "name": "Initiatives",
+      "allowedRoles": ["Administrator", "Internal"],
+      "apiEndpoints": [
+        {
+          "path": "api/initiatives",
+          "methods": ["GET"],
+          "allowedRoles": ["Administrator", "Internal"]
+        }
+      ]
+    },
+    {
+      "path": "/admin",
+      "name": "Admin",
+      "allowedRoles": ["Administrator"],
+      "apiEndpoints": [
+        {
+          "path": "api/admin",
+          "methods": ["GET", "POST", "PUT", "DELETE"],
+          "allowedRoles": ["Administrator"]
+        }
+      ],
+      "children": [
+        {
+          "path": "partner-tree",
+          "name": "Partner Tree",
+          "allowedRoles": ["Administrator"],
+          "apiEndpoints": [
+            {
+              "path": "api/admin/partner-tree",
+              "methods": ["GET"],
+              "allowedRoles": ["Administrator"]
+            }
+          ]
+        },
+        {
+          "path": "ai-prompts",
+          "name": "AI Prompts Admin",
+          "allowedRoles": ["Administrator"],
+          "apiEndpoints": [
+            {
+              "path": "api/admin/ai-prompts",
+              "methods": ["GET", "POST", "PUT", "DELETE"],
+              "allowedRoles": ["Administrator"]
+            }
+          ]
+        },
+        {
+          "path": "office-management",
+          "name": "Office Management",
+          "allowedRoles": ["Administrator"],
+          "apiEndpoints": [
+            {
+              "path": "api/admin/office-management",
+              "methods": ["GET", "POST", "PUT", "DELETE"],
+              "allowedRoles": ["Administrator"]
+            }
+          ]
+        },
+        {
+          "path": "translations",
+          "name": "Translations",
+          "allowedRoles": ["Administrator"],
+          "apiEndpoints": [
+            {
+              "path": "api/admin/translations",
+              "methods": ["GET", "POST", "PUT", "DELETE"],
+              "allowedRoles": ["Administrator"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "name": "Partner",
+      "permissions": {
+        "Create": ["Administrator", "Internal"],
+        "Read": ["Administrator", "Internal", "Partner"],
+        "Update": ["Administrator", "Internal"],
+        "Delete": ["Administrator"]
+      }
+    },
+    {
+      "name": "Contact",
+      "permissions": {
+        "Create": ["Administrator", "Internal"],
+        "Read": ["Administrator", "Internal", "Partner"],
+        "Update": ["Administrator", "Internal"],
+        "Delete": ["Administrator"]
+      }
+    },
+    {
+      "name": "Interaction",
+      "permissions": {
+        "Create": ["Administrator", "Internal"],
+        "Read": ["Administrator", "Internal", "Partner"],
+        "Update": ["Administrator", "Internal"],
+        "Delete": ["Administrator"]
+      }
+    },
+    {
+      "name": "Lead",
+      "permissions": {
+        "Create": ["ALL"],
+        "Read": ["ALL"],
+        "Update": ["Administrator", "Internal", "External", "Partner"],
+        "Delete": ["Administrator", "Internal"]
+      }
+    },
+    {
+      "name": "Initiative",
+      "permissions": {
+        "Create": ["Administrator", "Internal"],
+        "Read": ["Administrator", "Internal"],
+        "Update": ["Administrator", "Internal"],
+        "Delete": ["Administrator"]
+      }
+    }
+  ]
+} 

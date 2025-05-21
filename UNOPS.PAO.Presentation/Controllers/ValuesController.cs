@@ -1,78 +1,90 @@
-﻿namespace UNOPS.PAO.Presentation.Controllers;
+namespace UNOPS.PAO.Presentation.Controllers;
 
 using System.ComponentModel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Managers;
+using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Utilities.Helpers;
 
 [Route("/")]
 [ApiController]
-public class ValuesController : ControllerBase
+[Authorize(AuthenticationSchemes = "IAP")]
+public class ValuesController : BaseController
 {
-    private ValuesManager manager;
+    private readonly ValuesManager _manager;
+    private int currentUserId => _userResolverService.GetCurrentUserId();
 
-    public ValuesController(ValuesManager manager)
+    public ValuesController(
+        ValuesManager manager,
+        ILogger<ValuesController> logger,
+        IAuthorizationService authorizationService,
+        UserResolverService<int> userResolverService)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.manager = manager;
+        _manager = manager;
     }
 
     [HttpGet(APIDictionary.Currency)]
-    public ActionResult GetCurrencies()
+    public async Task<ActionResult> GetCurrencies()
     {
-        return Ok(manager.GetCurrencies());
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetCurrencies()));
     }
 
     [HttpGet(APIDictionary.EligibleEntity)]
-    public ActionResult GetEligibleEntities()
+    public async Task<ActionResult> GetEligibleEntities()
     {
-        return Ok(manager.GetEligibleEntities());
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetEligibleEntities()));
     }
 
     [HttpGet(APIDictionary.Country)]
-    public ActionResult GetCountries()
+    public async Task<ActionResult> GetCountries()
     {
-        return Ok(manager.GetCountries());
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetCountries()));
     }
 
-
     [HttpGet(APIDictionary.ApplicationType)]
-    public ActionResult GetApplicationTypes()
+    public async Task<ActionResult> GetApplicationTypes()
     {
-        var types = typeof(ApplicationType)
-            .GetMembers()
-            .Select(x => new { value = x, attr = x.GetCustomAttributes(typeof(EnumDisplayNameAttribute), true).Cast<EnumDisplayNameAttribute>().SingleOrDefault() })
-            .Where(x => x.attr != null)
-            .Select(x => new { Id = x.value.Name, DisplayName = x.attr?.Value});
+        return await HandleOperationAsync(async () => 
+        {
+            var types = typeof(ApplicationType)
+                .GetMembers()
+                .Select(x => new { value = x, attr = x.GetCustomAttributes(typeof(EnumDisplayNameAttribute), true).Cast<EnumDisplayNameAttribute>().SingleOrDefault() })
+                .Where(x => x.attr != null)
+                .Select(x => new { Id = x.value.Name, DisplayName = x.attr?.Value});
 
-
-        return Ok(types);
+            return await Task.FromResult(types);
+        });
     }
 
     [HttpGet(APIDictionary.Partners)]
-    public ActionResult GetPartners()
+    public async Task<ActionResult> GetPartners()
     {
-        return Ok(manager.GetPartners());
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetPartners()));
     }
 
     [HttpGet(APIDictionary.OrganizationUnits)]
-    public ActionResult GetOrganizationUnits()
+    public async Task<ActionResult> GetOrganizationUnits()
     {
-        return Ok(manager.GetOrganizationUnits());
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOrganizationUnits()));
     }
 
     [HttpGet(APIDictionary.Contacts)]
-    public ActionResult GetContacts()
+    public async Task<ActionResult> GetContacts()
     {
-        return Ok(manager.GetContacts());
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetContacts()));
     }
 
     [HttpGet(APIDictionary.Users)]
-    public ActionResult GetUsers()
+    public async Task<ActionResult> GetUsers()
     {
-        return Ok(manager.GetUsers());
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUsers()));
     }
 }

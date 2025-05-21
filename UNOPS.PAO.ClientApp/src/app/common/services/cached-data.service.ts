@@ -7,7 +7,6 @@ import { PartnerTreeService } from '../../features/internal/services/partner-tre
   providedIn: 'root'
 })
 export class CachedDataService {
-
   http = inject( HttpClient );
   partnerTreeService = inject(PartnerTreeService);
 

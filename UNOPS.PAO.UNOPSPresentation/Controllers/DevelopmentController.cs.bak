@@ -1,0 +1,844 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using UNOPS.PAO.Identity.Entities;
+
+namespace UNOPS.PAO.UNOPSPresentation.Controllers;
+
+[ApiController]
+[Route("api/dev")]
+public class DevelopmentController : ControllerBase
+{
+    private readonly IWebHostEnvironment _environment;
+    private readonly UserManager<PAOIdentityUser> _userManager;
+    private readonly RoleManager<PAOIdentityRole> _roleManager;
+
+    public DevelopmentController(
+        IWebHostEnvironment environment,
+        UserManager<PAOIdentityUser> userManager,
+        RoleManager<PAOIdentityRole> roleManager)
+    {
+        _environment = environment;
+        _userManager = userManager;
+        _roleManager = roleManager;
+    }
+
+    [HttpGet("users")]
+    public async Task<IActionResult> GetDevelopmentUsers()
+    {
+        if (!_environment.IsDevelopment())
+            return NotFound();
+            
+        // First get all users
+        var allUsers = await _userManager.Users.ToListAsync();
+        
+        // Then get roles for each user separately
+        var userModels = new List<object>();
+        foreach (var user in allUsers)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+            userModels.Add(new
+            {
+                user.Id,
+                user.Email,
+                user.UserName,
+                Roles = roles
+            });
+        }
+            
+        return Ok(userModels);
+    }
+
+    [HttpPost("login/{email}")]
+    public IActionResult SetDevelopmentUser(string email)
+    {
+        if (!_environment.IsDevelopment())
+            return NotFound();
+            
+        // Clear any existing authentication cookies to avoid conflicts
+        foreach (var cookie in Request.Cookies.Keys)
+        {
+            if (cookie.StartsWith(".AspNetCore.") || cookie.StartsWith("Identity."))
+            {
+                Response.Cookies.Delete(cookie);
+            }
+        }
+            
+        // Set cookie for development identity
+        Response.Cookies.Append("dev-user-email", email, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false, // For local development
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.Now.AddDays(7)
+        });
+        
+        // Provide instructions for better experience
+        var html = @$"
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>IAP Simulation Active</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 40px; max-width: 800px; margin: 0 auto; padding: 20px; }}
+                .info {{ background: #e1ecf4; padding: 15px; border-radius: 4px; margin: 20px 0; }}
+                button {{ background: #0095ff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-top: 20px; }}
+                button:hover {{ background: #0077cc; }}
+            </style>
+            <script>
+                function redirectToHome() {{
+                    window.location.href = '/';
+                }}
+                
+                // Auto-redirect after 3 seconds
+                setTimeout(redirectToHome, 3000);
+            </script>
+        </head>
+        <body>
+            <h1>IAP Simulation Active</h1>
+            <div class=""info"">
+                <p>You are now simulating IAP authentication as: <strong>{email}</strong></p>
+                <p>You will be redirected to the homepage in 3 seconds...</p>
+            </div>
+            <button onclick=""redirectToHome()"">Go to Home Page Now</button>
+        </body>
+        </html>
+        ";
+        
+        Response.ContentType = "text/html";
+        return Content(html, "text/html");
+    }
+
+    [HttpPost("seed-dev-users")]
+    public async Task<IActionResult> SeedDevelopmentUsers()
+    {
+        if (!_environment.IsDevelopment())
+            return NotFound();
+            
+        // Set IAP simulation header to bypass UNOPSUserValidator checks
+        Request.Headers["X-Dev-IAP-Simulation"] = "true";
+            
+        try
+        {
+            // Create standard roles if they don't exist
+            var standardRoles = new[] { "Administrator", "Internal", "Partner", "External", "User" };
+            
+            foreach (var role in standardRoles)
+            {
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    var result = await _roleManager.CreateAsync(new PAOIdentityRole { Name = role });
+                    if (!result.Succeeded)
+                    {
+                        return StatusCode(500, new { error = $"Failed to create role {role}", details = string.Join(", ", result.Errors.Select(e => e.Description)) });
+                    }
+                }
+            }
+            
+            // Create development test users with different roles
+            var devUsers = new[]
+            {
+                new { Email = "admin@unops.org", Password = "Admin123!", Roles = new[] { "Administrator", "Internal" } },
+                new { Email = "internal@unops.org", Password = "Internal123!", Roles = new[] { "Internal" } },
+                new { Email = "partner@gmail.com", Password = "Partner123!", Roles = new[] { "Partner" } },
+                new { Email = "external@example.com", Password = "External123!", Roles = new[] { "External" } }
+            };
+            
+            List<object> results = new List<object>();
+            
+            // Create all users first
+            foreach (var devUser in devUsers)
+            {
+                var user = await _userManager.FindByEmailAsync(devUser.Email);
+                if (user == null)
+                {
+                    // Create user
+                    user = new PAOIdentityUser
+                    {
+                        UserName = devUser.Email,
+                        Email = devUser.Email,
+                        EmailConfirmed = true,
+                        IsInternal = devUser.Email.EndsWith("@unops.org"),
+                        // Set GoogleSignIn to true for UNOPS users to bypass validator
+                        GoogleSignIn = devUser.Email.EndsWith("@unops.org")
+                    };
+                    
+                    var result = await _userManager.CreateAsync(user, devUser.Password);
+                    if (!result.Succeeded)
+                    {
+                        results.Add(new { 
+                            status = "error",
+                            user = devUser.Email,
+                            message = $"Failed to create user: {string.Join(", ", result.Errors.Select(e => e.Description))}"
+                        });
+                        continue;
+                    }
+                }
+                
+                // Get fresh user from database
+                user = await _userManager.FindByEmailAsync(devUser.Email) 
+                    ?? throw new InvalidOperationException($"User {devUser.Email} not found after creation");
+                
+                // Get current roles
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                
+                // Remove roles not in the desired list
+                var rolesToRemove = currentRoles.Except(devUser.Roles);
+                if (rolesToRemove.Any())
+                {
+                    await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+                }
+                
+                // Add missing roles
+                var rolesToAdd = devUser.Roles.Except(currentRoles);
+                if (rolesToAdd.Any())
+                {
+                    var result = await _userManager.AddToRolesAsync(user, rolesToAdd);
+                    if (!result.Succeeded)
+                    {
+                        results.Add(new { 
+                            status = "warning",
+                            user = devUser.Email,
+                            message = $"User created but failed to assign some roles: {string.Join(", ", result.Errors.Select(e => e.Description))}"
+                        });
+                        continue;
+                    }
+                }
+                
+                // Verify final roles
+                var finalRoles = await _userManager.GetRolesAsync(user);
+                
+                results.Add(new { 
+                    status = "success",
+                    user = devUser.Email,
+                    roles = finalRoles
+                });
+            }
+            
+            return Ok(new { 
+                message = "Development users processed", 
+                results = results
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Failed to create development users", details = ex.Message });
+        }
+    }
+
+    [HttpGet("check-iap-simulation")]
+    public IActionResult CheckIAPSimulation()
+    {
+        if (!_environment.IsDevelopment())
+            return NotFound();
+        
+        // Check if IAP simulation headers are present
+        var hasIapEmail = Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var emailValue);
+        var hasIapJwt = Request.Headers.TryGetValue("X-Goog-Iap-Jwt-Assertion", out var jwtValue);
+        var hasDevCookie = Request.Cookies.TryGetValue("dev-user-email", out var cookieValue);
+        
+        var email = hasIapEmail ? emailValue.ToString().Split(':').Last() : "Not set";
+        
+        // Check if user is authenticated
+        var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+        var username = User.Identity?.Name;
+        var claims = User.Claims.Select(c => new { type = c.Type, value = c.Value }).ToList();
+        
+        // Check for IAPAuthenticated claim
+        var hasIapClaim = claims.Any(c => c.type == "IAPAuthenticated" && c.value == "true");
+        
+        var roles = User.Claims
+            .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
+            
+        return Ok(new {
+            hasIapEmailHeader = hasIapEmail,
+            hasIapEmailHeaderValue = email,
+            hasIapJwtHeader = hasIapJwt,
+            hasDevCookie = hasDevCookie,
+            cookieValue = cookieValue,
+            isAuthenticated = isAuthenticated,
+            hasIapClaim = hasIapClaim,
+            username = username,
+            roles = roles,
+            claims = claims,
+            allHeaders = Request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
+            allCookies = Request.Cookies.Keys.ToDictionary(k => k, k => Request.Cookies[k])
+        });
+    }
+
+    [HttpGet("debug")]
+    public IActionResult DebugAuthPage()
+    {
+        // Check if user is authenticated
+        var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+        var username = User.Identity?.Name;
+        
+        // Get IAP headers
+        var hasIapEmail = Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var emailValue);
+        var email = hasIapEmail ? emailValue.ToString() : "Not set";
+        
+        // Check for dev cookie
+        var hasDevCookie = Request.Cookies.TryGetValue("dev-user-email", out var cookieEmail);
+        
+        // Get roles
+        var roles = User.Claims
+            .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
+            
+        // Get all claims
+        var claims = User.Claims
+            .Select(c => $"<tr><td>{c.Type}</td><td>{c.Value}</td></tr>")
+            .ToList();
+            
+        // Get all headers
+        var headers = Request.Headers
+            .Select(h => $"<tr><td>{h.Key}</td><td>{h.Value}</td></tr>")
+            .ToList();
+            
+        // Get all cookies
+        var cookies = Request.Cookies
+            .Select(c => $"<tr><td>{c.Key}</td><td>{c.Value}</td></tr>")
+            .ToList();
+        
+        var html = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Authentication Debug</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; }}
+        h1, h2 {{ color: #333; }}
+        .status {{ padding: 10px; margin: 10px 0; border-radius: 5px; }}
+        .authenticated {{ background: #d4edda; color: #155724; }}
+        .not-authenticated {{ background: #f8d7da; color: #721c24; }}
+        .warning {{ background: #fff3cd; color: #856404; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 10px 0; }}
+        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+        th {{ background-color: #f2f2f2; }}
+        .action-btn {{ display: inline-block; margin: 10px 5px; padding: 8px 12px; 
+                     background: #007bff; color: white; text-decoration: none; 
+                     border-radius: 4px; cursor: pointer; }}
+        .action-btn:hover {{ background: #0069d9; }}
+    </style>
+</head>
+<body>
+    <h1>Authentication Debug Page</h1>
+    
+    <div class=""status {(isAuthenticated ? "authenticated" : "not-authenticated")}"">
+        <strong>Authentication Status:</strong> {(isAuthenticated ? "AUTHENTICATED" : "NOT AUTHENTICATED")}
+        {(isAuthenticated ? $"<br><strong>Username:</strong> {username}" : "")}
+    </div>
+    
+    <div>
+        <strong>IAP Email Header:</strong> {email}
+    </div>
+    
+    <div class=""status {(hasDevCookie ? "warning" : "not-authenticated")}"">
+        <strong>Dev Cookie Status:</strong> {(hasDevCookie ? $"SET TO {cookieEmail}" : "NOT SET")}
+    </div>
+    
+    <div>
+        <a class=""action-btn"" href=""/dev-login"">Go to Dev Login</a>
+        <a class=""action-btn"" href=""/api/dev/check-iap-simulation"">View Raw JSON</a>
+        <a class=""action-btn"" href=""/"">Go to Home</a>
+        <a class=""action-btn"" href=""/api/SecureResource/authtest"">Check Auth</a>
+        
+        <a class=""action-btn"" href=""/api/dev/seed-dev-users"" style=""background: #28a745;"">Seed Dev Users</a>
+        
+        <a class=""action-btn"" href=""javascript:clearCookies()"" style=""background: #dc3545;"">Clear Auth Cookies</a>
+    </div>
+    
+    <h2>User Roles</h2>
+    <ul>
+        {(roles.Any() ? string.Join("", roles.Select(r => $"<li>{r}</li>")) : "<li>No roles</li>")}
+    </ul>
+    
+    <h2>Authentication Check</h2>
+    <div id=""auth-test-result"">
+        <button onclick=""checkAuth()"">Check Authentication Status</button>
+    </div>
+    
+    <h2>Claims</h2>
+    <table>
+        <tr>
+            <th>Type</th>
+            <th>Value</th>
+        </tr>
+        {string.Join("", claims)}
+    </table>
+    
+    <h2>Headers</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+        </tr>
+        {string.Join("", headers)}
+    </table>
+    
+    <h2>Cookies</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Value</th>
+        </tr>
+        {string.Join("", cookies)}
+    </table>
+    
+    <script>
+        function checkAuth() {{
+            var resultDiv = document.getElementById('auth-test-result');
+            resultDiv.innerHTML = 'Checking...';
+            
+            fetch('/api/SecureResource/authtest')
+                .then(function(response) {{
+                    return response.json();
+                }})
+                .then(function(result) {{
+                    var prettyJson = JSON.stringify(result, null, 2);
+                    resultDiv.innerHTML = '<pre style=""background: #f5f5f5; padding: 10px; overflow: auto; max-height: 200px;"">' + 
+                        prettyJson + '</pre>';
+                }})
+                .catch(function(error) {{
+                    resultDiv.innerHTML = '<div style=""color: red;"">Error: ' + error.message + '</div>';
+                }});
+        }}
+        
+        function clearCookies() {{
+            var cookies = document.cookie.split(';');
+            
+            for (var i = 0; i < cookies.length; i++) {{
+                var cookie = cookies[i];
+                var eqPos = cookie.indexOf('=');
+                var name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+            }}
+            
+            // Reload the page
+            setTimeout(function() {{
+                window.location.reload();
+            }}, 500);
+        }}
+    </script>
+</body>
+</html>
+        ";
+        
+        return Content(html, "text/html");
+    }
+
+    [HttpGet("direct-login/{email}")]
+    public async Task<IActionResult> DirectLogin(string email)
+    {
+        if (!_environment.IsDevelopment())
+            return NotFound();
+            
+        // Set IAP simulation header to bypass UNOPSUserValidator checks
+        Request.Headers["X-Dev-IAP-Simulation"] = "true";
+        
+        // Also set the IAP headers right now (don't wait for middleware)
+        Request.Headers["X-Goog-Authenticated-User-Email"] = $"accounts.google.com:{email}";
+        Request.Headers["X-Goog-Iap-Jwt-Assertion"] = "dev-jwt-placeholder";
+            
+        // Validate user exists
+        var user = await _userManager.FindByEmailAsync(email);
+        bool userCreated = false;
+        
+        if (user == null)
+        {
+            // If user doesn't exist, check if it's one of our standard users
+            var standardUsers = new Dictionary<string, string[]>
+            {
+                { "admin@unops.org", new[] { "Administrator", "Internal" } },
+                { "internal@unops.org", new[] { "Internal" } },
+                { "partner@gmail.com", new[] { "Partner" } }, 
+                { "external@example.com", new[] { "External" } }
+            };
+            
+            if (standardUsers.ContainsKey(email))
+            {
+                // Ensure roles exist
+                foreach (var role in standardUsers[email])
+                {
+                    if (!await _roleManager.RoleExistsAsync(role))
+                    {
+                        await _roleManager.CreateAsync(new PAOIdentityRole { Name = role });
+                    }
+                }
+                
+                // Create user
+                user = new PAOIdentityUser
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    IsInternal = email.EndsWith("@unops.org"),
+                    // Set GoogleSignIn to true for UNOPS users to bypass validator
+                    GoogleSignIn = email.EndsWith("@unops.org")
+                };
+                
+                var password = "Dev123!@#";
+                var result = await _userManager.CreateAsync(user, password);
+                if (!result.Succeeded)
+                {
+                    return BadRequest(new { error = $"Failed to create user {email}", details = result.Errors });
+                }
+                
+                userCreated = true;
+                
+                // Get fresh user from database
+                user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+                    return BadRequest(new { error = $"Failed to retrieve user {email} after creation" });
+                }
+                
+                // Assign roles
+                foreach (var role in standardUsers[email])
+                {
+                    await _userManager.AddToRoleAsync(user, role);
+                }
+            }
+            else
+            {
+                // If not a standard user, just create a basic user with External role
+                user = new PAOIdentityUser
+                {
+                    UserName = email,
+                    Email = email,
+                    EmailConfirmed = true,
+                    IsInternal = email.EndsWith("@unops.org"),
+                    GoogleSignIn = email.EndsWith("@unops.org")
+                };
+                
+                var result = await _userManager.CreateAsync(user, "Dev123!@#");
+                if (!result.Succeeded)
+                {
+                    return BadRequest(new { error = $"Failed to create user {email}", details = result.Errors });
+                }
+                
+                userCreated = true;
+                
+                // Assign default External role
+                if (!await _roleManager.RoleExistsAsync("External"))
+                {
+                    await _roleManager.CreateAsync(new PAOIdentityRole { Name = "External" });
+                }
+                
+                await _userManager.AddToRoleAsync(user, "External");
+            }
+        }
+        
+        // Ensure user has the IAPAuthenticated claim
+        var iapClaim = new System.Security.Claims.Claim("IAPAuthenticated", "true");
+        var userClaims = await _userManager.GetClaimsAsync(user);
+        if (!userClaims.Any(c => c.Type == "IAPAuthenticated"))
+        {
+            await _userManager.AddClaimAsync(user, iapClaim);
+            
+            // Log that we added the claim
+            Response.Headers.Add("X-Added-IAP-Claim", "true");
+        }
+        
+        // Clear auth cookies
+        foreach (var cookie in Request.Cookies.Keys)
+        {
+            if (cookie.StartsWith(".AspNetCore.") || cookie.StartsWith("Identity."))
+            {
+                Response.Cookies.Delete(cookie);
+            }
+        }
+        
+        // Set dev-user-email cookie
+        Response.Cookies.Append("dev-user-email", email, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.Now.AddDays(7)
+        });
+        
+        // Return HTML that provides debugging info and redirects after checking
+        var html = @$"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>IAP Authentication Check</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 0 auto; padding: 20px; max-width: 800px; }}
+        .info {{ background: #e1ecf4; padding: 15px; border-radius: 4px; margin: 20px 0; }}
+        .status {{ padding: 10px; margin: 10px 0; border-radius: 5px; }}
+        .success {{ background: #d4edda; color: #155724; }}
+        .error {{ background: #f8d7da; color: #721c24; }}
+        .warning {{ background: #fff3cd; color: #856404; }}
+        button {{ background: #0095ff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }}
+        button:hover {{ background: #0077cc; }}
+        pre {{ background: #f5f5f5; padding: 10px; overflow: auto; }}
+    </style>
+    <script>
+        // Set a flag to prevent redirect loops (use localStorage which is more reliable)
+        console.log('[DEBUG-DEV] Setting redirect flag in localStorage');
+        localStorage.setItem('iap_redirect_handled', 'true');
+        
+        // Debug variables
+        let checkCount = 0;
+        let loadCount = 0;
+        
+        // Log all storage for debugging
+        function logStorage() {{
+            try {{
+                console.log('localStorage:');
+                for (let i = 0; i < localStorage.length; i++) {{
+                    const key = localStorage.key(i);
+                    console.log(`- ${{key}}: ${{localStorage.getItem(key)}}`);
+                }}
+                
+                console.log('sessionStorage:');
+                for (let i = 0; i < sessionStorage.length; i++) {{
+                    const key = sessionStorage.key(i);
+                    console.log(`- ${{key}}: ${{sessionStorage.getItem(key)}}`);
+                }}
+            }} catch (e) {{
+                console.error('Error logging storage:', e);
+            }}
+        }}
+        
+        // Check authentication before redirecting to home
+        async function checkAuthAndRedirect() {{
+            logStorage();
+            try {{
+                checkCount++;
+                console.log(`[DEBUG-DEV] Authentication check #${{checkCount}}`);
+                
+                const response = await fetch('/api/dev/check-iap-simulation');
+                const result = await response.json();
+                console.log('[DEBUG-DEV] Auth check result:', result);
+                
+                // Display raw result for debugging
+                document.getElementById('debug-output').textContent = JSON.stringify(result, null, 2);
+                
+                // Update status on page
+                const statusDiv = document.getElementById('auth-status');
+                if (result.hasIapEmailHeader) {{
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `<h3>IAP Authentication Success</h3>
+                        <p>IAP Email: ${{result.hasIapEmailHeaderValue}}</p>
+                        <p>Roles: ${{result.roles.join(', ') || 'None - this may indicate a problem'}}</p>`;
+                    
+                    if (!result.roles || result.roles.length === 0) {{
+                        statusDiv.className = 'status warning';
+                        statusDiv.innerHTML += '<p>Warning: No roles assigned. There may be an issue with user creation.</p>';
+                        return;
+                    }}
+                    
+                    // Wait before redirecting
+                    statusDiv.innerHTML += '<p>Authenticated successfully! Click the button below to continue, or wait for automatic redirect...</p>';
+                    
+                    // Create a direct navigation button
+                    const btn = document.createElement('button');
+                    btn.innerText = 'Go to Home Page Now';
+                    btn.onclick = () => {{ redirectHome(); }};
+                    statusDiv.appendChild(btn);
+                    
+                    // Set a timeout for automatic redirect
+                    document.getElementById('redirect-timer').innerText = '5';
+                    const countdownInterval = setInterval(() => {{
+                        const timerEl = document.getElementById('redirect-timer');
+                        const currentVal = parseInt(timerEl.innerText, 10);
+                        if (currentVal <= 1) {{
+                            clearInterval(countdownInterval);
+                            redirectHome();
+                        }} else {{
+                            timerEl.innerText = (currentVal - 1).toString();
+                        }}
+                    }}, 1000);
+                }} else {{
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = `<h3>IAP Authentication Failed</h3>
+                        <p>IAP headers not set properly. Please try again.</p>`;
+                }}
+            }} catch (error) {{
+                console.error('[DEBUG-DEV] Auth check failed:', error);
+                document.getElementById('auth-status').className = 'status error';
+                document.getElementById('auth-status').innerHTML = `<h3>Error Checking Authentication</h3><p>${{error.message}}</p>`;
+            }}
+        }}
+        
+        function redirectHome() {{
+            console.log('[DEBUG-DEV] Navigating to home');
+            // Set flag again just to be sure
+            localStorage.setItem('iap_redirect_handled', 'true');
+            // Use window.location.replace to avoid adding to history
+            document.getElementById('redirect-message').innerText = 'Redirecting now...';
+            window.location.replace('/');
+        }}
+        
+        window.onload = function() {{
+            loadCount++;
+            console.log(`[DEBUG-DEV] Page loaded (${{loadCount}} times)`);
+            checkAuthAndRedirect();
+        }};
+    </script>
+</head>
+<body>
+    <h1>IAP Authentication Setup</h1>
+    <div class=""info"">
+        <p>Setting up IAP development authentication for <strong>{email}</strong></p>
+        <p>Checking authentication status...</p>
+        <p id=""redirect-message"">Auto-redirect in <span id=""redirect-timer"">5</span> seconds...</p>
+    </div>
+    
+    <div id=""auth-status"" class=""status"">
+        <p>Verifying IAP authentication...</p>
+    </div>
+    
+    <div>
+        <button onclick=""redirectHome()"">Go to Home Page</button>
+        <button onclick=""window.location.href = '/api/dev/debug'"">View Debug Info</button>
+    </div>
+    
+    <div>
+        <h3>Debug Output:</h3>
+        <pre id=""debug-output"">Loading...</pre>
+    </div>
+</body>
+</html>";
+        
+        Response.ContentType = "text/html";
+        return Content(html, "text/html");
+    }
+
+    [HttpGet("set-cookie/{email}")]
+    public IActionResult SetBrowserCookie(string email)
+    {
+        if (!_environment.IsDevelopment())
+        {
+            return NotFound();
+        }
+        
+        // Clear any existing cookies first
+        foreach (var cookie in Request.Cookies.Keys)
+        {
+            if (cookie.StartsWith(".AspNetCore.") || cookie.StartsWith("Identity.") || cookie == "dev-user-email")
+            {
+                Response.Cookies.Delete(cookie);
+            }
+        }
+        
+        // Set the cookie with browser-friendly options (not HttpOnly)
+        Response.Cookies.Append("dev-user-email", email, new CookieOptions
+        {
+            HttpOnly = false,  // Allow JavaScript to access
+            Secure = false,    // Allow HTTP in development
+            Path = "/",        // Ensure it's available for all paths
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.Now.AddDays(7)
+        });
+        
+        var html = $@"<!DOCTYPE html>
+<html>
+<head>
+    <title>Cookie Test</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }}
+        .box {{ background: #f0f7ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }}
+        .success {{ background: #d4edda; color: #155724; }}
+        .error {{ background: #f8d7da; color: #721c24; }}
+        button {{ padding: 10px 15px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }}
+        pre {{ background: #f5f5f5; padding: 10px; border-radius: 4px; overflow: auto; }}
+    </style>
+    <script>
+        // Also set a JavaScript cookie as a fallback method
+        function setJsCookie() {{
+            document.cookie = 'dev-user-email={email};path=/;max-age=604800';
+            checkCookie();
+        }}
+        
+        function checkCookie() {{
+            const cookies = document.cookie.split(';').map(c => c.trim());
+            const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
+            const statusElement = document.getElementById('cookie-status');
+            
+            let cookieReport = '';
+            cookies.forEach(cookie => {{
+                cookieReport += `- ${{cookie}}<br>`;
+            }});
+            document.getElementById('all-cookies').innerHTML = cookieReport || 'No cookies found';
+            
+            if (devCookie) {{
+                statusElement.className = 'box success';
+                statusElement.innerHTML = `
+                    <h3>Cookie Found!</h3>
+                    <p>The authentication cookie was set successfully: <strong>${{devCookie}}</strong></p>
+                    <p>You should now be able to navigate to the home page and be authenticated.</p>
+                `;
+            }} else {{
+                statusElement.className = 'box error';
+                statusElement.innerHTML = `
+                    <h3>Cookie Not Found</h3>
+                    <p>The authentication cookie was not set. This might be due to browser security settings.</p>
+                    <p>Try clicking the 'Set JavaScript Cookie' button below.</p>
+                `;
+            }}
+        }}
+        
+        // Try to force set a cookie on page load
+        window.onload = function() {{
+            // Check if cookie exists
+            checkCookie();
+            
+            // If cookie doesn't exist, try to set it via JavaScript
+            if (!document.cookie.includes('dev-user-email=')) {{
+                console.log('Cookie not found, trying to set manually');
+                setJsCookie();
+            }}
+        }};
+    </script>
+</head>
+<body>
+    <h1>Authentication Cookie Test</h1>
+    
+    <div id="cookie-status" class="box">
+        Checking cookie status...
+    </div>
+    
+    <div class="box">
+        <h3>All Cookies</h3>
+        <div id="all-cookies">Loading...</div>
+    </div>
+    
+    <div>
+        <button onclick="setJsCookie()">Set JavaScript Cookie</button>
+        <button onclick="window.location.href = '/'">Go to Home Page</button>
+        <button onclick="window.location.href = '/api/dev/debug'">View Debug Info</button>
+    </div>
+    
+    <div class="box">
+        <h3>Troubleshooting</h3>
+        <p>If the cookie is not being set, try the following:</p>
+        <ol>
+            <li>Check your browser's cookie settings and ensure cookies are allowed for localhost</li>
+            <li>Try using Chrome or Edge which typically have fewer cookie restrictions</li>
+            <li>Try accessing the site via IP address instead of localhost</li>
+            <li>Try clicking the "Set JavaScript Cookie" button</li>
+            <li>If all else fails, try using the debug view to manually set the cookie</li>
+        </ol>
+    </div>
+</body>
+</html>";
+        
+        return Content(html, "text/html");
+    }
+} 

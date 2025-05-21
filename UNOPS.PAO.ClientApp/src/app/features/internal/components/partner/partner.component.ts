@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -14,6 +14,7 @@ import { PartnerEditDialogFooterComponent } from './edit-dialog/footer/partner-e
 import { PartnerEditDialogComponent } from './edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ImportDialogService } from '../../../../common/reusables/components/import/dialog/import-dialog.service';
+import { SearchField } from '../../../../common/services/search-parser.service';
 
 @Component({
   selector: 'app-partner',
@@ -28,7 +29,7 @@ import { ImportDialogService } from '../../../../common/reusables/components/imp
   ],
   providers: [DialogService]
 })
-export class PartnerComponent implements OnDestroy {
+export class PartnerComponent implements OnDestroy, OnInit {
   private langChangeSubscription: Subscription = new Subscription;
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
@@ -49,7 +50,55 @@ export class PartnerComponent implements OnDestroy {
     enableExport: true,
     scrollable: true,
     scrollHeight: 'flex',
-    entityName: 'Partner'
+    entityName: 'Partner',
+    searchConfig: {
+      useAdvancedSearch: true,
+      placeholder: 'Search partners...',
+      searchableFields: [
+        { 
+          field: 'name', 
+          label: 'Name', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'shortName', 
+          label: 'Short Name', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'status', 
+          label: 'Status', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'website', 
+          label: 'Website', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'street', 
+          label: 'Street', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'city', 
+          label: 'City', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'country', 
+          label: 'Country', 
+          type: 'string',
+          operators: ['is', 'is not']
+        }
+      ] as SearchField[]
+    }
   };
 
   columns: ListViewColumn[] = [
@@ -81,26 +130,15 @@ export class PartnerComponent implements OnDestroy {
     }
   ];
 
+  constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) {
+    console.log('Partner component constructor');
+    console.log('Initial listview config:', this.listviewConfig);
+    this.setNewPartnerFromAIAssistant();
+  }
+
   ngOnInit() {
-    // Set advanced search configuration
-    this.listviewConfig = {
-      ...this.listviewConfig,
-      searchConfig: {
-        useAdvancedSearch: true,
-        placeholder: 'Search partners...',
-        searchableFields: [
-          { field: 'name', label: 'Name' },
-          { field: 'shortName', label: 'Short Name' },
-          { field: 'status', label: 'Status' },
-          { field: 'website', label: 'Website' },
-          { field: 'street', label: 'Street' },
-          { field: 'city', label: 'City' },
-          { field: 'country', label: 'Country' }
-        ]
-      }
-    };
-    
-    console.log('Partner list config:', this.listviewConfig);
+    console.log('Partner component ngOnInit');
+    console.log('Searchable fields:', this.listviewConfig.searchConfig?.searchableFields);
     
     this.activatedRoute.queryParams
       .subscribe(params => {
@@ -110,10 +148,6 @@ export class PartnerComponent implements OnDestroy {
           this.openPartnerEditDialog(state?.data || emptyPartner);
         }
       });
-  }
-
-  constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) {
-    this.setNewPartnerFromAIAssistant();
   }
 
   private setNewPartnerFromAIAssistant() {
@@ -137,7 +171,12 @@ export class PartnerComponent implements OnDestroy {
   }
 
   handleOnOpenRecordDetails(record: any) {
-    this.router.navigate(['partner', record.id]);
+    if (record && record.id !== undefined && record.id !== null) {
+      console.log('Navigating to partner:', record.id);
+      this.router.navigate(['partnerships/partners', record.id.toString()]);
+    } else {
+      console.error('Cannot navigate: record or record.id is undefined', record);
+    }
   }
 
   handleOnRecordDelete(record: any) {
@@ -157,8 +196,11 @@ export class PartnerComponent implements OnDestroy {
   }
 
   _handleOnRecordCreation(newRecordData: any) {
-    if (newRecordData?.id) {
-      this.router.navigate(['partner', newRecordData.id]);
+    if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
+      console.log('Navigating to newly created partner:', newRecordData.id);
+      this.router.navigate(['partnerships/partners', newRecordData.id.toString()]);
+    } else {
+      console.error('Cannot navigate to created record: id is undefined', newRecordData);
     }
   }
 

@@ -4,70 +4,49 @@
   
   <!-- Search bar -->
   @if (config.enableSearch) {
-        <!-- Simple Search Input -->
-        @if (!config.searchConfig?.useAdvancedSearch) {
-          <div class="w-full">
-            <p-iconfield iconPosition="left" class="w-full">
-              <p-inputicon class="pi pi-search" />
-              <input pInputText type="text"
-                [placeholder]="searchPlaceholder()"
-                [(ngModel)]="searchText"
-                (input)="onSearchInput(searchText)"
-                (keyup.enter)="onSearch()"
-                class="w-full"
-              />
-              @if (searchText.length > 0) {
-                <p-inputicon class="pi pi-times" (click)="clearSearch()" />
-              }
-            </p-iconfield>
-          </div>
-        }
+    <!-- Simple Search Input -->
+    @if (!config.searchConfig?.useAdvancedSearch) {
+      <div class="w-full">
+        <p-iconfield iconPosition="left" class="w-full">
+          <p-inputicon class="pi pi-search" />
+          <input pInputText type="text"
+            [placeholder]="searchPlaceholder()"
+            [(ngModel)]="searchText"
+            (input)="onSearchInput(searchText)"
+            (keyup.enter)="onSearch()"
+            class="w-full h-10"
+          />
+          @if (searchText.length > 0) {
+            <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
+          }
+        </p-iconfield>
+      </div>
+    }
+    
+    <!-- Advanced Search -->
+    @if (config.searchConfig?.useAdvancedSearch) {
+      <div class="w-full bg-gray-50 rounded-lg p-3 shadow-sm">
+        <div class="flex justify-between items-center mb-2">
+          <div class="text-md font-medium text-gray-700">Advanced Search</div>
+          @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
+            <p-button
+              [label]="config.exportOptions?.buttonLabel ?? 'Export'"
+              icon="pi pi-file-export"
+              severity="secondary"
+              (onClick)="exportData()"
+              [disabled]="isLoading()"
+              class="text-gray-700 hover:bg-gray-100"
+            ></p-button>
+          }
+        </div>
         
-        <!-- Advanced Search with Chips -->
-        @if (config.searchConfig?.useAdvancedSearch) {
-          <app-listview-advenced-search
-            [config]="config"
-            [isLoading]="isLoading()"
-            [searchCriteria]="searchCriteria"
-            (search)="onAdvancedSearch($event)"
-            (removeCriterion)="onRemoveSearchCriterion($event)"
-            (clearSearch)="clearSearch()"
-            (exportData)="exportData()"
-          ></app-listview-advenced-search>
-        }
-      
-      
-      <!-- <div class="flex align-items-center gap-2">
-        @if (config.enableExport && (config.exportOptions?.showButton ?? true) && !config.searchConfig?.useAdvancedSearch) {
-          <p-button
-            [label]="config.exportOptions?.buttonLabel ?? 'Export'"
-            icon="pi pi-file-export"
-            severity="secondary"
-            (onClick)="exportData()"
-            [disabled]="isLoading()"
-            styleClass="p-button-text p-button-export"
-          ></p-button>
-        }
-        
-        @if (config.showViewModeToggle !== false) {
-          <div class="p-buttonset">
-            <button pButton
-              icon="pi pi-list"
-              [ngClass]="{'p-button-primary': viewMode === 'table', 'p-button-outlined': viewMode !== 'table'}"
-              (click)="setViewMode('table', true)"
-              pTooltip="Table view"
-              tooltipPosition="bottom"
-            ></button>
-            <button pButton
-              icon="pi pi-th-large"
-              [ngClass]="{'p-button-primary': viewMode === 'card', 'p-button-outlined': viewMode !== 'card'}"
-              (click)="setViewMode('card', true)"
-              pTooltip="Card view"
-              tooltipPosition="bottom"
-            ></button>
-          </div>
-        }
-      </div> -->
+        <app-advanced-search
+          [searchableFields]="searchableFields"
+          (searchChange)="onAdvancedSearchChange($event)"
+          [advancedSearchEnabled]="isAdvancedSearch()">
+        </app-advanced-search>
+      </div>
+    }
   }
 
     <!-- Table view -->

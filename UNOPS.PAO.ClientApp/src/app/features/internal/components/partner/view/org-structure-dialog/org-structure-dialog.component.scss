@@ -1,0 +1,73 @@
+// Custom styles for organization chart component with simpler approach
+:host {
+  // Apply to the entire component
+  ::ng-deep {
+    // Basic styling for organization chart
+    .p-organizationchart {
+      width: 100%;
+      
+      // Force default styles
+      * {
+        font-family: Arial, sans-serif;
+        box-sizing: border-box;
+      }
+      
+      // Node content container
+      .p-organizationchart-node-content {
+        display: block;
+        padding: 0;
+        border: none;
+        background: transparent;
+      }
+      
+      // Lines between nodes
+      .p-organizationchart-line-down,
+      .p-organizationchart-line-left,
+      .p-organizationchart-line-right {
+        border-color: #000000;
+        border-width: 2px;
+      }
+      
+      .p-organizationchart-line-down {
+        background: #000000;
+        width: 2px;
+      }
+      
+      // Tables that hold the structure
+      table, tr, td {
+        border-spacing: 4px;
+        border-collapse: separate;
+        background: transparent;
+      }
+      
+      // Override any PrimeNG styles that might hide content
+      .p-component * {
+        visibility: visible;
+        opacity: 1;
+      }
+    }
+    
+    // Custom chart class
+    .custom-org-chart {
+      padding: 20px;
+      
+      // Make all node content visible
+      .p-organizationchart-node-content {
+        // Add !important to override PrimeNG styles
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        border: none !important;
+        background: transparent !important;
+      }
+    }
+  }
+}
+
+// Add global styles to ensure node content is visible
+:root {
+  .p-organizationchart-node-content {
+    visibility: visible !important;
+    display: block !important;
+  }
+} 

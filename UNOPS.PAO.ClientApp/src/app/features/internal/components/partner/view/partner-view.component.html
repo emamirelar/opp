@@ -198,7 +198,11 @@
         <ng-template #header>
           <div class="flex gap-2 items-center w-full justify-between">
             <div class="font-semibold">{{'label.partner.summaryOfInteractions' | translate}}</div>
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            <div class="flex gap-2 items-center">
+              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('summary')"></p-button-->
+              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshSummaryOfInteractions()" [loading]="summaryOfInteractionsIsLoading()"></p-button>
+              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            </div>
           </div>
         </ng-template>
 
@@ -215,7 +219,11 @@
         <ng-template #header>
           <div class="flex gap-2 items-center w-full justify-between">
             <div class="font-semibold">{{'label.partner.riskProfile' | translate}}</div>
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            <div class="flex gap-2 items-center">
+              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('risk')"></p-button-->
+              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshRiskProfile()" [loading]="riskIsLoading()"></p-button>
+              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            </div>
           </div>
         </ng-template>
 
@@ -232,7 +240,11 @@
         <ng-template #header>
           <div class="flex gap-2 items-center w-full justify-between">
             <div class="font-semibold">{{'label.partner.partnerNews' | translate}}</div>
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            <div class="flex gap-2 items-center">
+              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('news')"></p-button-->
+              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshPartnerNews()" [loading]="partnerNewsIsLoading()"></p-button>
+              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            </div>
           </div>
         </ng-template>
         @if (partnerNewsIsLoading()) {

@@ -1,25 +1,42 @@
 <div class="layout-topbar flex justify-between gap-4">
 	<div class="layout-topbar-logo-container">
-		<button (click)="layoutService.onMenuToggle()"
-			aria-label="Menu"
-			class="layout-menu-button layout-topbar-action">
+		<button pButton pRipple type="button" text class="p-link layout-menu-button" (click)="layoutService.onMenuToggle()">
 			<i class="pi pi-bars"></i>
 		</button>
 		<a class="layout-topbar-logo"
 			routerLink="/">
-			<img src="images/Circle.png"
-				class="items-center brand-logo hidden lg:flex"
-				alt="UNOPS Grant+ Logo">
-			<span class="text-sm lg:text-2xl">Opportunity+</span>
+			<img src="images/PNG/Opportunity Horizontal1000px.png"
+				class="brand-logo"
+				alt="UNOPS Opportunity+ Logo">
 		</a>
 	</div>
 
   <app-global-search-bar></app-global-search-bar>
 
-		<div class="flex items-center justify-end">
+	<div class="flex items-center justify-end">
       <!--				<app-theme-toggler></app-theme-toggler>-->
 
+      <!-- Dev Login link - only visible in development mode -->
+      <button *ngIf="isDevelopment" 
+			type="button"
+			aria-label="Dev Login"
+			class="layout-topbar-action p-button-text mr-1"
+            (click)="navigateToDevLogin()"
+            pTooltip="Dev Login" tooltipPosition="bottom">
+			<i class="pi pi-user-edit"></i>
+            <span class="dev-login-badge">DEV</span>
+      </button>
 
+      <!-- Debug link - only visible in development mode -->
+      <button *ngIf="isDevelopment" 
+			type="button"
+			aria-label="Debug"
+			class="layout-topbar-action p-button-text mr-1"
+            (click)="navigateToDebug()"
+            pTooltip="Debug Info" tooltipPosition="bottom">
+			<i class="pi pi-cog"></i>
+            <span class="debug-badge">DEBUG</span>
+      </button>
 
       <app-language-selector></app-language-selector>
 	  <button (click)="layoutService.onAIAssistantToggle()"
@@ -79,9 +96,16 @@
           </div>
         </div>
       </p-overlayPanel>
-      <app-profile-menubar></app-profile-menubar>
+      <div class="layout-topbar-menu">
+        <div class="flex align-items-center gap-2">
+          <button type="button"
+                class="p-button-text layout-topbar-action cursor-pointer"
+                (click)="menu.toggle($event)">
+            <i class="pi pi-user"></i>
+          </button>
+          <p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
+        </div>
+      </div>
 	</div>
-
-
 </div>
 <p-toast position="bottom-right"></p-toast>

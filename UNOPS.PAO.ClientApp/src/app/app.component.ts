@@ -1,5 +1,5 @@
 import { Component, ViewChild, ViewContainerRef, AfterViewInit } from '@angular/core';
-import { RouterModule, RouterOutlet } from '@angular/router';
+import { RouterModule, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './essentials/services/auth.service';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -31,15 +31,48 @@ export class AppComponent implements AfterViewInit {
   public isLoggedIn: Boolean = false;
   @ViewChild('dynamicComponent', { read: ViewContainerRef, static: false }) dynamicComponent!: ViewContainerRef;
   viewContainerRef!: ViewContainerRef;
+  
   constructor(
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) { }
+  
   ngOnInit() {
+    console.log('[APP] Initializing app component');
+    
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
+    const hasCookie = !!devCookie;
+    
+    console.log('[APP] Current cookies:', {
+      allCookies: document.cookie,
+      cookies: cookies,
+      devCookie: devCookie,
+      hasCookie: hasCookie
+    });
+    
+    // Fast path for dev cookie - skip all API checks
+    if (hasCookie) {
+      console.log('[APP] Dev cookie found, setting isLoggedIn=true without API calls');
+      this.isLoggedIn = true;
+      // If on login page with dev cookie, redirect to home
+      if (window.location.href.includes('/login')) {
+        console.log('[APP] On login page with dev cookie - redirecting to home');
+        window.location.href = '/';
+      }
+      return;
+    }
+    
+    // If no dev cookie, proceed with normal auth check
+    console.log('[APP] No dev cookie, checking login status via API');
+    
     this.authService.isLogedIn().subscribe((res) => {
       this.isLoggedIn = res;
+      console.log('[APP] isLoggedIn result:', res);
     });
   }
+  
   ngAfterViewInit() {
-      this.viewContainerRef = this.dynamicComponent;
+    this.viewContainerRef = this.dynamicComponent;
   }
 }

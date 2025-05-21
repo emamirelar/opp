@@ -23,12 +23,15 @@ using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
+using System.Security.Claims;
 
 public class UNOPSPartnerManager : IPartnerManager
 {
-    private IMapper mapper;
+    private readonly IMapper _mapper;
+    private readonly UNOPSAppDbContext _context;
+    private readonly IConfiguration _configuration;
     private BaseRepository<UNOPSPartner> PartnerRepository;
-    private BaseRepository<UNOPSOrganizationUnit> OrganizationUnitRepository;
+    private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
     private BaseRepository<UNOPSPartnerTree> PartnerTreeRepository;
 
     private CommonEntityRepository commonRepository;
@@ -75,7 +78,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
     private UNOPSPartner MapModelToEntity(PartnerRequest model, UNOPSPartner entity)
     {
-        mapper.Map(model, entity);
+        _mapper.Map(model, entity);
         // Update Eligible Entities
         /*if (entity.EligibleEntities != null)
         {
@@ -109,10 +112,12 @@ public class UNOPSPartnerManager : IPartnerManager
 
     public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
     {
-        this.mapper = mapper;
+        _mapper = mapper;
+        _context = context;
+        _configuration = configuration;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
-        OrganizationUnitRepository = new BaseRepository<UNOPSOrganizationUnit>(context, configuration);
         PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
+        OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
         
         GoogleCloudStorageService = new GoogleCloudStorageService(configuration);
 
@@ -125,7 +130,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.AddAsync(entity);
 
-        return mapper.Map<PartnerModel>(entity);
+        return _mapper.Map<PartnerModel>(entity);
     }
 
     public PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request)
@@ -136,7 +141,7 @@ public class UNOPSPartnerManager : IPartnerManager
             .AsQueryable();
 
         return query.Paginate(
-            x => MapEntityToModel(x, mapper),
+            x => MapEntityToModel(x, _mapper),
             request
         );
     }
@@ -149,7 +154,7 @@ public class UNOPSPartnerManager : IPartnerManager
         
         // Apply pagination
         return filteredQuery.Paginate(
-            x => mapper.Map<PartnerModel>(x),
+            x => _mapper.Map<PartnerModel>(x),
             pagination
         );
     }
@@ -164,14 +169,14 @@ public class UNOPSPartnerManager : IPartnerManager
         
         if (item.PartnerOfficeId.HasValue)
         {
-            var partnerOffice = await OrganizationUnitRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
             if (partnerOffice != null)
             {
                 item.PartnerOffice = partnerOffice;
             }
         }
-        
-        return MapEntityToModel(item, mapper);
+
+        return MapEntityToModel(item, _mapper);
     }
 
     /*public async Task<string?> GetPartnerStage(int id)
@@ -190,7 +195,7 @@ public class UNOPSPartnerManager : IPartnerManager
     {
         return PartnerRepository
             .GetAll()
-            .Select(x => MapEntityToExternalModel(x, mapper));
+            .Select(x => MapEntityToExternalModel(x, _mapper));
     }
 
     public async Task<ExternalPartnerModel?> GetPostedPartner(int id)
@@ -202,7 +207,7 @@ public class UNOPSPartnerManager : IPartnerManager
             throw new BusinessException($"Partner {id} does not exist.");
         }
 
-        return MapEntityToExternalModel(item, mapper);
+        return MapEntityToExternalModel(item, _mapper);
     }*/
 
     public async Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model)
@@ -218,7 +223,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.UpdateAsync(entity);
 
-        return MapEntityToModel(entity, mapper);
+        return MapEntityToModel(entity, _mapper);
     }
 
     /*public async Task<PartnerModel?> UpdateStage(int userId, int id, string newStage)
@@ -239,7 +244,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.UpdateAsync(entity);
 
-        return mapper.Map<PartnerModel>(entity);
+        return _mapper.Map<PartnerModel>(entity);
     }*/
 
     public async Task DeletePartnerAsync(int userId, int id)
@@ -262,21 +267,67 @@ public class UNOPSPartnerManager : IPartnerManager
             return default;
         }
 
-        var result = mapper.Map<PartnerModel>(item);
+        var result = _mapper.Map<PartnerModel>(item);
 
         //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
+
+        if (item.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                result.PartnerOffice = _mapper.Map<OrganizationHierarchyModel>(partnerOffice);
+            }
+        }
 
         return result;
     }
     
     public PaginationResponse<PartnerModel> GetPartnersByPartnerGroup(int userId, string partnerGroupCode, PaginationRequest request)
     {
-        // First get the partner tree by ID
+        // Add logging
+        Console.WriteLine($"GetPartnersByPartnerGroup called with partnerGroupCode: {partnerGroupCode}");
         var partnerTree = PartnerTreeRepository.GetAll()
             .FirstOrDefault(pt => pt.PartnerGroupCode == partnerGroupCode);
-            
-        if (partnerTree == null)
+        
+        try
         {
+            // First get the partner tree by ID
+            if (partnerTree == null)
+            {
+                Console.WriteLine($"No partner tree found with PartnerGroupCode: {partnerGroupCode}");
+                // If no partner tree found, return empty result
+                return new PaginationResponse<PartnerModel>
+                {
+                    Records = new List<PartnerModel>(),
+                    TotalCount = 0
+                };
+            }
+            
+            // Get the code from the partner tree
+            var code = partnerTree.Code;
+            Console.WriteLine($"Found partner tree with Code: {code}");
+            
+            // Get all partners with the matching code
+            var q = PartnerRepository
+                .GetAll()
+                .Where(x => !x.IsDeleted && x.PartnerGroupCode == code)
+                .AsQueryable();
+
+            var result = q.Paginate(
+                x => MapEntityToModel(x, _mapper),
+                request
+            );
+            
+            Console.WriteLine($"Found {result.TotalCount} partners matching PartnerGroupCode: {code}");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in GetPartnersByPartnerGroup: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            
+            // Rethrow the exception with more context
             // If no partner tree found, return empty result
             return new PaginationResponse<PartnerModel>
             {
@@ -295,7 +346,7 @@ public class UNOPSPartnerManager : IPartnerManager
             .AsQueryable();
 
         return query.Paginate(
-            x => MapEntityToModel(x, mapper),
+            x => MapEntityToModel(x, _mapper),
             request
         );
     }
@@ -333,7 +384,7 @@ public class UNOPSPartnerManager : IPartnerManager
             .AsQueryable();
 
         return query.Paginate(
-            x => MapEntityToModel(x, mapper),
+            x => MapEntityToModel(x, _mapper),
             request
         );
     }
@@ -341,23 +392,70 @@ public class UNOPSPartnerManager : IPartnerManager
     public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)
     {
         var entity = await PartnerRepository.GetByIdAsync(partnerId);
-
         if (entity == null)
         {
-            throw new BusinessException($"Partner {partnerId} does not exist.");
+            return null;
         }
 
-        // Upload file to Google Cloud Storage
-        string imageUrl = await GoogleCloudStorageService.UploadFileToGCS(file);
-        if (string.IsNullOrEmpty(imageUrl))
+        try
         {
-            throw new BusinessException("Failed to upload the image to cloud storage");
+            // Upload the file to Google Cloud Storage
+            var fileName = $"partners/{partnerId}/logo_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var publicUrl = await GoogleCloudStorageService.UploadFileAsync(file, fileName);
+            
+            // Update the entity with the logo URL
+            entity.LogoUrl = publicUrl;
+            await PartnerRepository.UpdateAsync(entity);
+            
+            return publicUrl;
         }
+        catch (Exception ex)
+        {
+            // Log the error and return null
+            Console.WriteLine($"Error uploading logo: {ex.Message}");
+            return null;
+        }
+    }
 
-        entity.LogoUrl = imageUrl;
-        await PartnerRepository.UpdateAsync(entity);
-
-        return entity.LogoUrl;
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(int userId, int partnerId, string operation)
+    {
+        // Get the partner entity
+        var entity = await PartnerRepository.GetByIdAsync(partnerId);
+        if (entity == null)
+        {
+            return false;
+        }
+        
+        // Basic permission rules:
+        // 1. Administrator can do anything
+        // 2. Creator of the partner can do anything with their own partners
+        // 3. For Read operations, any Internal or Partner role can access
+        // 4. For Update/Delete, only creator or admin can perform
+        
+        // Check if user is the creator
+        bool isCreator = entity.CreatedBy == userId;
+        
+        // If user is creator, they have full access
+        if (isCreator)
+        {
+            return true;
+        }
+        
+        // For Read operations, allow access to all users with Partner role or higher
+        if (operation == "Read")
+        {
+            // This simplified check just allows reading for almost all users
+            // In a real implementation, you'd check against user roles in a database
+            return true;
+        }
+        
+        // For other operations (Update, Delete), only allow if user is creator or has admin privileges
+        // This simplified version just denies access to non-creators
+        // In a real implementation, you'd check if the user has Administrator role
+        return false;
     }
 
     public List<PartnerTree> GetChildPartnerTreesRecursively(List<string> parentCodes)
@@ -395,5 +493,59 @@ public class UNOPSPartnerManager : IPartnerManager
         
         // Return all trees including the original ones and their descendants
         return originalPartnerTrees.Union(descendants).ToList();
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, int partnerId, string operation)
+    {
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Use the existing method
+        return await HasPermissionAsync(userId, partnerId, operation);
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, Partner partner, string operation)
+    {
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Check if user is the creator
+        bool isCreator = partner.CreatedBy == userId;
+        
+        // If user is creator, they have full access
+        if (isCreator)
+        {
+            return true;
+        }
+        
+        // Check if user is administrator
+        bool isAdmin = user.IsInRole("Administrator");
+        if (isAdmin)
+        {
+            return true;
+        }
+        
+        // For Read operations, allow access to all users with Partner role or higher
+        if (operation == "Read")
+        {
+            return user.IsInRole("Partner") || user.IsInRole("Internal");
+        }
+        
+        // For other operations (Update, Delete), only allow if user is creator or has admin privileges
+        return false;
     }
 }

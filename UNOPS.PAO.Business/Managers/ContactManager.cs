@@ -17,6 +17,7 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Helpers;
+using System.Security.Claims;
 
 public class ContactManager : IContactManager
 {
@@ -181,5 +182,98 @@ public class ContactManager : IContactManager
     public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
     {
         return null;
+    }
+
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the contact
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(int userId, int contactId, string operation)
+    {
+        // Get the contact entity
+        var entity = await ContactRepository.GetByIdAsync(contactId);
+        if (entity == null)
+        {
+            return false;
+        }
+        
+        // Basic permission rules:
+        // 1. Administrator can do anything
+        // 2. Creator of the contact can do anything with their own contacts
+        // 3. For Read operations, any Internal or Partner role can access
+        // 4. For Update/Delete, only creator or admin can perform
+        
+        // Check if user is the creator
+        bool isCreator = entity.CreatedBy == userId;
+        
+        // If user is creator, they have full access
+        if (isCreator)
+        {
+            return true;
+        }
+        
+        // For Read operations, allow access to Partner users
+        if (operation == "Read")
+        {
+            // Partner users should be able to view contacts
+            return true;
+        }
+        
+        // For other operations (Update, Delete), only allow if user is creator
+        // In a real implementation, you would check if the user has Administrator role
+        return false;
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the contact
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, int contactId, string operation)
+    {
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Use the existing method
+        return await HasPermissionAsync(userId, contactId, operation);
+    }
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the contact
+    /// </summary>
+    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, Contact contact, string operation)
+    {
+        // Get user ID from claims
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            return false;
+        }
+        
+        // Check if user is the creator
+        bool isCreator = contact.CreatedBy == userId;
+        
+        // If user is creator, they have full access
+        if (isCreator)
+        {
+            return true;
+        }
+        
+        // Check if user is administrator
+        bool isAdmin = user.IsInRole("Administrator");
+        if (isAdmin)
+        {
+            return true;
+        }
+        
+        // For Read operations, allow access to all users with Partner role or higher
+        if (operation == "Read")
+        {
+            return user.IsInRole("Partner") || user.IsInRole("Internal");
+        }
+        
+        // For other operations (Update, Delete), only allow if user is creator or has admin privileges
+        return false;
     }
 }

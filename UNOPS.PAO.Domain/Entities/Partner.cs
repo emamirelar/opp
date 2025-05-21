@@ -35,7 +35,7 @@ public class Partner : ModifiableDeletableEntity
     public string? LevyTreatment { get; set; }
     public string? LogoUrl { get; set; }
     public List<Document>? Documents { get; set; }
-    public OrganizationUnit? PartnerOffice { get; set; }
+    public OrganizationHierarchy? PartnerOffice { get; set; }
     public int? PartnerOfficeId { get; set; }
     
     [ForeignKey("PartnerGroupCode")]

@@ -1,6 +1,7 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, throwError, timer } from 'rxjs';
+import { catchError, mergeMap, retry, retryWhen } from 'rxjs/operators';
 import {
   AiAssistantRequest,
   AiAssistantSessionRequest,
@@ -18,13 +19,20 @@ import { AiResponse } from '../../../common/reusables/widgets/ai-assistant/ai-as
 export class AiAssistantService {
   private readonly apiUrl = '/api';
   private readonly aiAssistantUrl = `${this.apiUrl}/ai-assistant`;
+  private readonly maxRetries = 3;
 
   constructor(private http: HttpClient) {}
 
 
   // Get all sessions for the current user
   getUserSessions(): Observable<HttpResponse<SessionData[]>> {
-    return this.http.post<SessionData[]>(`${this.aiAssistantUrl}/get-user-sessions`, {}, { observe: 'response' });
+    return this.http.post<SessionData[]>(
+      `${this.aiAssistantUrl}/get-user-sessions`, 
+      {}, 
+      { observe: 'response' }
+    ).pipe(
+      this.addIapRetryStrategy<HttpResponse<SessionData[]>>()
+    );
   }
 
   // Get details for a specific session
@@ -33,12 +41,20 @@ export class AiAssistantService {
       `${this.aiAssistantUrl}/get-session`,
       { sessionId } as AiAssistantSessionRequest,
       { observe: 'response' }
+    ).pipe(
+      this.addIapRetryStrategy<HttpResponse<SessionData[]>>()
     );
   }
 
-  // Create a new chat session
-  createSession(): Observable<HttpResponse<SessionResponse>> {
-    return this.http.post<SessionResponse>(`${this.aiAssistantUrl}/create-session`, {}, { observe: 'response' });
+  // Create a new AI assistant session
+  createSession(): Observable<HttpResponse<{ sessionId: string }>> {
+    return this.http.post<{ sessionId: string }>(
+      `${this.aiAssistantUrl}/create-session`,
+      {},
+      { observe: 'response' }
+    ).pipe(
+      this.addIapRetryStrategy<HttpResponse<{ sessionId: string }>>()
+    );
   }
 
   // End a chat session
@@ -65,6 +81,25 @@ export class AiAssistantService {
       `${this.aiAssistantUrl}/accessibility`,
       { textToSpeech, sessionId },
       { observe: 'response' }
+    );
+  }
+
+  // Helper method for IAP retry strategy
+  private addIapRetryStrategy<T>() {
+    return retryWhen<T>(errors => 
+      errors.pipe(
+        mergeMap((error, count) => {
+          // Only retry on 401 errors
+          if (error instanceof HttpErrorResponse && error.status === 401 && count < this.maxRetries) {
+            console.log(`[AI-ASSISTANT] Retrying API call after 401 error (attempt ${count + 1}/${this.maxRetries})`);
+            // Exponential backoff
+            return timer(1000 * Math.pow(2, count));
+          }
+          
+          console.error('[AI-ASSISTANT] API call failed after retries or non-401 error', error);
+          return throwError(() => error);
+        })
+      )
     );
   }
 }

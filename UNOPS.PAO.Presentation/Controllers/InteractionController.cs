@@ -7,106 +7,114 @@ using UNOPS.PAO.Domain.Specifications.InteractionSpecifications;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
-
     [Route("/")]
-    [ApiController]
-    [Authorize]
-    public class InteractionController : ControllerBase
+    public class InteractionController : BaseController
     {
-        private IInteractionManager manager;
-        private IAuthorizationService authorizationService;
+        private readonly IInteractionManager _manager;
 
-        private UserResolverService<int> userResolverService;
-
-        private int currentUserId => userResolverService.GetCurrentUserId();
-
-        public InteractionController(IManagerWrapper manager, UserResolverService<int> userResolverService, IAuthorizationService authorizationService)
+        public InteractionController(
+            IManagerWrapper manager, 
+            UserResolverService<int> userResolverService, 
+            IAuthorizationService authorizationService,
+            ILogger<InteractionController> logger)
+            : base(logger, authorizationService, userResolverService)
         {
-            this.manager = manager.InteractionManager;
-            this.userResolverService = userResolverService;
-            this.authorizationService = authorizationService;
+            _manager = manager.InteractionManager;
         }
 
         [HttpPost(APIDictionary.Interaction)]
-        public async Task<IActionResult> Create([FromBody] InteractionRequest req)
+        public async Task<ActionResult> Create([FromBody] InteractionRequest req)
         {
-            var result = await manager.CreateInteractionAsync(req);
-
-            if (result == null)
+            return await HandleOperationAsync(async () =>
             {
-                return BadRequest();
-            }
-
-            return CreatedAtAction(nameof(Create), result.Id, result);
+                var result = await _manager.CreateInteractionAsync(req);
+                if (result == null)
+                {
+                    throw new BusinessException("Failed to create interaction");
+                }
+                return result;
+            }, 201);
         }
 
         [HttpGet(APIDictionary.Interaction)]
-        // TODO add permissions
         public ActionResult GetAll([FromQuery] InteractionFilterRequest request)
         {
-            var specification = new InteractionCompositeSpecification(
-                contactId: request.ContactId,
-                type: request.Type,
-                fromDate: request.FromDate,
-                toDate: request.ToDate,
-                searchText: request.SearchText);
-            
-            return Ok(manager.GetInteractionsWithSpecification(currentUserId, specification, request));
+            try
+            {
+                var specification = new InteractionCompositeSpecification(
+                    contactId: request.ContactId,
+                    type: request.Type,
+                    fromDate: request.FromDate,
+                    toDate: request.ToDate,
+                    searchText: request.SearchText);
+                
+                return Ok(_manager.GetInteractionsWithSpecification(CurrentUserId, specification, request));
+            }
+            catch (BusinessException ex)
+            {
+                _logger.LogWarning(ex, "Business exception occurred: {Message}", ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogWarning(ex, "Unauthorized access: {Message}", ex.Message);
+                return Forbid();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while processing the request");
+                return StatusCode(500, new { error = "An error occurred while processing your request" });
+            }
         }
 
         [HttpGet(APIDictionary.Interaction + "/{id}")]
-        // TODO add permissions
         public async Task<ActionResult> Get(int id)
         {
-            var x = await manager.GetInteraction(currentUserId, id);
-
-            if (x == null)
+            return await HandleOperationAsync(async () =>
             {
-                return NotFound();
-            }
-
-            return Ok(x);
+                var interaction = await _manager.GetInteraction(CurrentUserId, id);
+                if (interaction == null)
+                {
+                    throw new BusinessException($"Interaction with ID {id} not found");
+                }
+                return interaction;
+            });
         }
 
         [HttpPut(APIDictionary.Interaction)]
-        public async Task<IActionResult> Update([FromBody] UpdateInteractionRequest req)
+        public async Task<ActionResult> Update([FromBody] UpdateInteractionRequest req)
         {
-            await manager.UpdateInteractionAsync(currentUserId, req);
-
-            return NoContent();
+            return await HandleOperationAsync(async () =>
+            {
+                await _manager.UpdateInteractionAsync(CurrentUserId, req);
+            });
         }
 
         [HttpDelete(APIDictionary.Interaction + "/{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            await manager.DeleteInteractionAsync(currentUserId, id);
-            return NoContent();
+            return await HandleOperationAsync(async () =>
+            {
+                await _manager.DeleteInteractionAsync(CurrentUserId, id);
+            });
         }
 
         [HttpGet(APIDictionary.Interaction + "/{id}/permissions")]
-        public async Task<IActionResult> PermissionsGet(int id)
+        public async Task<ActionResult> PermissionsGet(int id)
         {
-            var interaction = await manager.GetInteraction(currentUserId, id);
-
-            if (interaction == null)
+            return await HandleOperationAsync(async () =>
             {
-                return NotFound();
-            }
-
-            var canReadResult = await authorizationService.AuthorizeAsync(User, interaction, Operations.Read);
-            var canUpdateResult = await authorizationService.AuthorizeAsync(User, interaction, Operations.Update);
-            var canCreateResult = await authorizationService.AuthorizeAsync(User, interaction, Operations.Create);
-            var canDeleteResult = await authorizationService.AuthorizeAsync(User, interaction, Operations.Delete);
-
-            return Ok(new
-            {
-                CanRead = canReadResult.Succeeded,
-                CanUpdate = canUpdateResult.Succeeded,
-                CanCreate = canCreateResult.Succeeded,
-                CanDelete = canDeleteResult.Succeeded
+                var interaction = await _manager.GetInteraction(CurrentUserId, id);
+                if (interaction == null)
+                {
+                    throw new BusinessException($"Interaction with ID {id} not found");
+                }
+                return await GetEntityPermissionsAsync(interaction);
             });
         }
     }

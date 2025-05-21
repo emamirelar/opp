@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Domain.Specifications;
+using System.Security.Claims;
 
 public interface IPartnerManager
 {
@@ -32,4 +33,31 @@ public interface IPartnerManager
     PaginationResponse<PartnerModel> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request);
     PaginationResponse<PartnerModel> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request);
     Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file);
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    /// <param name="userId">ID of the user</param>
+    /// <param name="partnerId">ID of the partner</param>
+    /// <param name="operation">Operation to check (e.g., "Read", "Update", "Delete")</param>
+    /// <returns>True if the user has permission, false otherwise</returns>
+    Task<bool> HasPermissionAsync(int userId, int partnerId, string operation);
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    /// <param name="user">ClaimsPrincipal of the user</param>
+    /// <param name="partnerId">ID of the partner</param>
+    /// <param name="operation">Operation to check (e.g., "Read", "Update", "Delete")</param>
+    /// <returns>True if the user has permission, false otherwise</returns>
+    Task<bool> HasPermissionAsync(ClaimsPrincipal user, int partnerId, string operation);
+    
+    /// <summary>
+    /// Checks if the user has permission to perform the specified operation on the partner
+    /// </summary>
+    /// <param name="user">ClaimsPrincipal of the user</param>
+    /// <param name="partner">Partner entity</param>
+    /// <param name="operation">Operation to check (e.g., "Read", "Update", "Delete")</param>
+    /// <returns>True if the user has permission, false otherwise</returns>
+    Task<bool> HasPermissionAsync(ClaimsPrincipal user, Partner partner, string operation);
 }

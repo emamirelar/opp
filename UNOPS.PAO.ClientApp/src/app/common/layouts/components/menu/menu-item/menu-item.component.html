@@ -1,27 +1,31 @@
 <div class="flex flex-col w-full" [ngClass]="{'border-l-3 border-l-solid': item.items, 'border-l-primary': active && item.items}">
-    <a *ngIf="item.items && !item.routerLink" (click)="itemClick($event)" [attr.tabindex]="0"
-        class="flex flex-row items-center justify-start gap-2 py-2 rounded-md cursor-pointer text-text-color hover:bg-surface-hover transition-colors duration-200 bg-black/[0.01] font-medium"
-        [ngClass]="{'font-bold text-primary': active}">
+    @if (item.items && !item.routerLink) {
+        <a (click)="itemClick($event)" [attr.tabindex]="0"
+            class="flex flex-row items-center justify-start gap-2 py-2 rounded-md cursor-pointer text-text-color hover:bg-surface-hover transition-colors duration-200 bg-black/[0.01] font-medium"
+            [ngClass]="{'font-bold text-primary': active}">
 
-        <span class="material-symbols-outlined text-xl">{{item.icon}}</span>
-        <span>{{ item.label! | translate }}</span>
+            <span class="material-symbols-outlined text-xl">{{item.icon}}</span>
+            <span>{{ item.label! | translate }}</span>
 
-        <i class="pi pi-angle-down ml-auto transition-transform duration-200" [ngClass]="{'rotate-180': active}"></i>
+            <i class="pi pi-angle-down ml-auto transition-transform duration-200" [ngClass]="{'rotate-180': active}"></i>
+        </a>
+    }
 
-    </a>
+    @if (item.routerLink) {
+        <a (click)="itemClick($event)" [routerLink]="item.routerLink"
+            routerLinkActive="font-bold text-primary" [routerLinkActiveOptions]="{exact: true}" [attr.tabindex]="0" 
+            class="flex flex-row items-center justify-start gap-2 py-2 rounded-md cursor-pointer text-text-color hover:bg-surface-hover transition-colors duration-200">
 
-    <a *ngIf="item.routerLink" (click)="itemClick($event)" [routerLink]="item.routerLink"
-        routerLinkActive="font-bold text-primary" [routerLinkActiveOptions]="{exact: true}" [attr.tabindex]="0" 
-        class="flex flex-row items-center justify-start gap-2 py-2 rounded-md cursor-pointer text-text-color hover:bg-surface-hover transition-colors duration-200">
+            <span class="material-symbols-outlined text-xl">{{item.icon}}</span>
+            <span>{{ item.label! | translate }}</span>
+        </a>
+    }
 
-        <span class="material-symbols-outlined text-xl">{{item.icon}}</span>
-        <span>{{ item.label! | translate }}</span>
-
-    </a>
-
-    <ul *ngIf="item.items" [@submenu]="active ? 'visible' : 'hidden'" class="list-none m-0 p-0 overflow-hidden">
-        <ng-container *ngFor="let child of item.items">
-            <app-menu-item [item]="child" class="block pl-4 text-[0.92rem]"></app-menu-item>
-        </ng-container>
-    </ul>
+    @if (item.items) {
+        <ul [@submenu]="active ? 'visible' : 'hidden'" class="list-none m-0 p-0 overflow-hidden">
+            @for (child of item.items; track child) {
+                <app-menu-item [item]="child" class="block pl-4 text-[0.92rem]"></app-menu-item>
+            }
+        </ul>
+    }
 </div>

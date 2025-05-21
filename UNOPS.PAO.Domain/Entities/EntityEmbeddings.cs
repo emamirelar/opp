@@ -6,6 +6,6 @@ public class EntityEmbeddings
     public int Id { get; set; }
     public string EntityName { get; set; }
     public int EntityId { get; set; }
+    public string EntityData { get; set; }
     public byte[] FullEmbedding { get; set; }
-    public byte[]? NameEmbedding { get; set; }
 }

@@ -3,52 +3,59 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Managers;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 
 [Route("/")]
-[ApiController]
-[Authorize]
-public class ProfileController : ControllerBase
+public class ProfileController : BaseController
 {
-    private ProfileManager profileManager;
-    private IAuthorizationService authorizationService;
+    private readonly ProfileManager _profileManager;
 
-    public ProfileController(ProfileManager profileManager, IAuthorizationService authorizationService)
+    public ProfileController(
+        ProfileManager profileManager, 
+        IAuthorizationService authorizationService,
+        ILogger<ProfileController> logger,
+        UserResolverService<int> userResolverService)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.profileManager = profileManager;
-        this.authorizationService = authorizationService;
+        _profileManager = profileManager;
     }
 
     [HttpGet(APIDictionary.Profile)]
-    public async Task<IActionResult> Get()
+    public async Task<ActionResult> Get()
     {
-        var email = HttpContext.User.Identity?.Name;
-        var profile = profileManager.Get(email);
-
-        if (profile == null)
+        return await HandleOperationAsync(async () =>
         {
-            return NotFound();
-        }
+            var email = HttpContext.User.Identity?.Name;
+            var profile = _profileManager.Get(email);
 
-        var authorizationResult = await this.authorizationService.AuthorizeAsync(User, profile, Operations.Read);
+            if (profile == null)
+            {
+                throw new BusinessException("Profile not found");
+            }
 
-        if (authorizationResult.Succeeded)
-        {
-            return Ok(profile);
-        }
-        else
-        {
-            return Forbid();
-        }
+            var authorizationResult = await _authorizationService.AuthorizeAsync(User, profile, Operations.Read);
+
+            if (!authorizationResult.Succeeded)
+            {
+                throw new UnauthorizedAccessException("You don't have permission to view this profile");
+            }
+            
+            return profile;
+        });
     }
 
     [HttpPost(APIDictionary.Profile)]
-    public async Task UpdateProfile([FromBody] ProfileModel profile)
+    public async Task<ActionResult> UpdateProfile([FromBody] ProfileModel profile)
     {
-        await profileManager.Update(profile);
-
+        return await HandleOperationAsync(async () =>
+        {
+            await _profileManager.Update(profile);
+        });
     }
 }

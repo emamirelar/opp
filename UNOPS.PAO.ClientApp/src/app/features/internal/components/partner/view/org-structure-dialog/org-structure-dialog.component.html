@@ -1,0 +1,87 @@
+<div class="flex flex-col gap-4 p-4">
+  <!-- Header with controls -->
+  <div class="flex justify-between mb-4">
+    <h2 class="text-xl font-bold">Organization Hierarchy</h2>
+    <div>
+      <p-button label="Expand All" icon="pi pi-plus" 
+               [outlined]="true" styleClass="mr-2"
+               (onClick)="expandAll()"></p-button>
+      <p-button label="Collapse All" icon="pi pi-minus" 
+               [outlined]="true"
+               (onClick)="collapseAll()"></p-button>
+    </div>
+  </div>
+  
+  <!-- Debugging info to verify if data is loaded -->
+  <div *ngIf="data.length > 0" class="mb-4 p-3 bg-blue-100 text-blue-800 rounded">
+    <div>Total nodes: {{getTotalNodeCount()}} | Displaying: {{limitedData.length}} nodes</div>
+    
+    <!-- Debug first node data -->
+    <div class="mt-2">
+      First node: 
+      <pre class="bg-white p-2 rounded text-xs">{{ limitedData.length > 0 ? (limitedData[0] | json) : 'No data' }}</pre>
+    </div>
+  </div>
+  <div *ngIf="data.length === 0" class="mb-4 p-3 bg-red-100 text-red-800 rounded">
+    No data loaded yet. Please check the API response.
+  </div>
+  
+  <!-- Simple list representation as a fallback -->
+  <div class="bg-white border border-gray-200 rounded-lg p-5">
+    <h3 class="mb-3 font-bold">Organization Data (Simple Table)</h3>
+    <table class="w-full border">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="p-2 border">Name</th>
+          <th class="p-2 border">Code</th>
+          <th class="p-2 border">Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let node of limitedData" class="border-b" (click)="selectNode(node)">
+          <td class="p-2 border">{{node.data?.name || 'Unnamed'}}</td>
+          <td class="p-2 border">{{node.data?.code || 'No Code'}}</td>
+          <td class="p-2 border">{{getTypeText(node.data?.type || 0)}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Organization chart with limited data -->
+  <div class="bg-white border border-gray-200 rounded-lg p-5 overflow-auto max-h-[70vh]">
+    <h3 class="mb-3 font-bold">Organization Chart</h3>
+    
+    <!-- Show simple organization chart with limited data -->
+    <p-organizationChart 
+      [value]="limitedData" 
+      selectionMode="single" 
+      [(selection)]="selectedNode" 
+      (onNodeSelect)="onNodeSelect($event)"
+      styleClass="custom-org-chart">
+      <ng-template let-node pTemplate="default">
+        <!-- Super simple node template with maximum contrast -->
+        <div style="background-color: #ffffff; border: 2px solid #000000; padding: 10px; width: 250px; min-height: 80px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-radius: 8px;">
+          <div style="font-weight: bold; font-size: 16px; margin-bottom: 5px; color: #000000;">
+            {{node.data?.name || 'Unnamed'}}
+          </div>
+          <div style="font-size: 14px; margin-bottom: 5px; color: #333333;">
+            {{node.data?.code || 'No Code'}}
+          </div>
+          <div style="font-size: 12px; color: #666666;">
+            {{getTypeText(node.data?.type || 0)}}
+          </div>
+        </div>
+      </ng-template>
+    </p-organizationChart>
+  </div>
+
+  <!-- Footer actions -->
+  <div class="flex justify-end gap-2 mt-4">
+    <p-button label="Cancel" 
+              [outlined]="true"
+              (onClick)="onCancel()"></p-button>
+    <p-button label="Select" 
+              [disabled]="!selectedNode"
+              (onClick)="onSelect()"></p-button>
+  </div>
+</div> 

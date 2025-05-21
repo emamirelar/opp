@@ -29,8 +29,19 @@ public class MappingProfile : Profile
         CreateMap<Link, LinkModel>();
         CreateMap<LinkRequest, Link>();
         CreateMap<UpdateLinkRequest, Link>();
-        CreateMap<OrganizationUnit, OrganizationUnitModel>();
-        CreateMap<OrganizationUnitModel, OrganizationUnit>();
+
+        // OrganizationHierarchy mappings
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>()
+            .ForMember(dest => dest.ParentId, opt => opt.MapFrom(src => src.Parent != null ? src.Parent.Id : (int?)null))
+            .ReverseMap();
+
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyTreeModel>()
+            .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
+
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyDataModel>()
+            .ForMember(dest => dest.ParentId, opt => opt.MapFrom(src => src.Parent != null ? src.Parent.Id : (int?)null))
+            .ForMember(dest => dest.Children, opt => opt.MapFrom(src => src.Children));
+        CreateMap<Partner, PartnerValueModel>();
         CreateMap<PartnerTree, PartnerTreeModel>();
         CreateMap<PartnerTreeModel, PartnerTree>();
         CreateMap<Partner, PartnerModel>();

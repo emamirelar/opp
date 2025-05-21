@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from '../../common/layouts/components/layout/layout.component';
 import { HomeComponent } from '../../common/pages/components/home/home.component';
-import { authGuard } from '../../essentials/guards/auth.guard';
+import { authGuard, adminGuard, routePermissionGuard } from '../../essentials/guards';
 import { InteractionListComponent } from './components/interaction/list/interaction-list.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
@@ -12,7 +12,6 @@ import { ContactListComponent } from './components/contact/list/contact-list.com
 import { ContactViewComponent } from './components/contact/view/contact-view.component';
 import { PartnerTabsComponent } from './components/partner/tabs/partner-tabs.component';
 import { ComingSoonComponent } from '../../common/pages/components/coming-soon/coming-soon.component';
-import { adminGuard } from '../../essentials/guards/admin.guard';
 import { SearchResultComponent } from './components/search-result/search-result.component';
 import { PartnerTreeViewComponent } from './components/partner-tree/view/partner-tree-view.component';
 import { PartnerDataResolver } from './resolvers/partner-data.resolver';
@@ -22,12 +21,14 @@ const internalRoutes: Routes = [
   {
     path: '',
     component: LayoutComponent,
+    data: { routeId: 'main-layout' },
     children: [
       {
         path: '',
         component: HomeComponent,
-        canActivate: [authGuard],
-        data: { breadcrumb: 'Home', icon: 'pi pi-home' },
+        // Home is visible to all users - no need for role guard
+        canActivate: [authGuard], 
+        data: { breadcrumb: 'Home', icon: 'pi pi-home', routeId: 'home-route' },
       },
       {
         path: 'search',
@@ -37,24 +38,24 @@ const internalRoutes: Routes = [
       },
       {
         path: 'partnerships',
-        canActivate: [authGuard],
+        canActivate: [authGuard, routePermissionGuard],
         data: { breadcrumb: 'Partnerships' },
         children: [
           {
             path: 'contacts',
             component: ContactListComponent,
-            canActivate: [authGuard],
+            canActivate: [authGuard, routePermissionGuard],
             data: { breadcrumb: 'Contacts' }
           },
           {
             path: 'contacts/:recordId',
             data: { breadcrumb: 'Contact' },
             component: ContactViewComponent,
-            canActivate: [authGuard],
+            canActivate: [authGuard, routePermissionGuard],
           },
           {
             path: 'interactions',
-            canActivate: [authGuard],
+            canActivate: [authGuard, routePermissionGuard],
             data: { breadcrumb: 'Interactions' },
             children: [
               { path: '', component: InteractionListComponent },
@@ -62,15 +63,21 @@ const internalRoutes: Routes = [
             ]
           },
           {
+            path: 'partner-tree',
+            data: { breadcrumb: 'Partner Tree' },
+            component: PartnerTreeComponent,
+            canActivate: [authGuard, routePermissionGuard]
+          },
+          {
             path: 'partners',
             component: PartnerComponent,
-            canActivate: [authGuard],
+            canActivate: [authGuard, routePermissionGuard],
             data: { breadcrumb: 'Partners' }
           },
           {
             path: 'partners/:recordId',
             component: PartnerTabsComponent,
-            canActivate: [authGuard],
+            canActivate: [authGuard, routePermissionGuard],
             data: { breadcrumb: 'Partner' },
             resolve: {
               partnerData: PartnerDataResolver
@@ -91,7 +98,7 @@ const internalRoutes: Routes = [
           {
             path: 'partnership-agreements',
             component: ComingSoonComponent,
-            canActivate: [authGuard],
+            canActivate: [authGuard, routePermissionGuard],
             data: { 
               breadcrumb: 'Partnership Agreements',
               featureName: 'Partnership Agreements'
@@ -102,7 +109,8 @@ const internalRoutes: Routes = [
       {
         path: 'leads',
         component: ComingSoonComponent,
-        canActivate: [authGuard],
+        // All authenticated users can access leads (External, Partner, Internal, Admin)
+        canActivate: [authGuard, routePermissionGuard],
         data: { 
           breadcrumb: 'Leads',
           featureName: 'Leads'
@@ -111,7 +119,8 @@ const internalRoutes: Routes = [
       {
         path: 'initiatives',
         component: ComingSoonComponent,
-        canActivate: [authGuard],
+        // Only Internal and Admin users can access Initiatives
+        canActivate: [authGuard, routePermissionGuard],
         data: { 
           breadcrumb: 'Initiatives',
           featureName: 'Initiatives'
@@ -203,4 +212,8 @@ const internalRoutes: Routes = [
   imports: [RouterModule.forChild(internalRoutes)],
   exports: [RouterModule],
 })
-export class InternalRoutingModule {}
+export class InternalRoutingModule {
+  constructor() {
+    console.log('[ROUTES] InternalRoutingModule constructor called');
+  }
+}

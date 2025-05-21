@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { DocumentService } from '../../../services/document.service';
@@ -69,6 +70,8 @@ import { Partner } from '../../../models/partner.model';
     LinkListComponent,
     PictureComponent,
     PartnerViewContactsComponent,
+    PartnerTabsComponent,
+    TooltipModule,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
@@ -171,6 +174,7 @@ export class PartnerViewComponent implements OnInit {
   _loadGeminiData() {
     this.summaryOfInteractionsIsLoading.set(true);
     this.riskIsLoading.set(true);
+    this.partnerNewsIsLoading.set(true);
     this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
       next: (summary: string) => {
         this.summaryOfInteractions.set(summary);
@@ -204,6 +208,101 @@ export class PartnerViewComponent implements OnInit {
       }
     });
   }
+
+  refreshSummaryOfInteractions() {
+    this.summaryOfInteractionsIsLoading.set(true);
+    this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
+      next: (summary: string) => {
+        this.summaryOfInteractions.set(summary);
+        this.summaryOfInteractionsIsLoading.set(false);
+      },
+      error: () => {
+        this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
+        this.summaryOfInteractionsIsLoading.set(false);
+      }
+    });
+  }
+
+  refreshRiskProfile() {
+    this.riskIsLoading.set(true);
+    this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
+      next: (risk: string) => {
+        this.riskProfile.set(risk);
+        this.riskIsLoading.set(false);
+      },
+      error: () => {
+        this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
+        this.riskIsLoading.set(false);
+      }
+    });
+  }
+
+  refreshPartnerNews() {
+    this.partnerNewsIsLoading.set(true);
+    this.geminiService.get(this.recordId, 'partner_news').subscribe({
+      next: (news: string) => {
+        this.partnerNews.set(news);
+        this.partnerNewsIsLoading.set(false);
+      },
+      error: () => {
+        this.partnerNews.set(this.translateService.instant('errors.failedToLoad'));
+        this.partnerNewsIsLoading.set(false);
+      }
+    });
+  }
+
+    /*handleOnCancelClick(event: MouseEvent) {
+      this.router.navigate(['partners']);
+    }
+
+    handleOnSaveClick(event: MouseEvent) {
+      this._validate()
+
+      this.partnerService.updatePartnerById(this._getRequestPayload()).subscribe({
+        next: (data: any) => {
+          this._loadRecordDetails();
+          this.feedbackDialogService.showSuccessToast({ detail: 'Changes saved successfully!' });
+        }
+      });
+    }*/
+
+    /*_validate(){
+      let result = true;
+
+      if( this.formGroup.invalid )
+      {
+        this.showValidationFailedError.set( false );
+
+        if( this.formGroup.get("firstName")?.invalid )
+        {
+          this.formGroup.get("firstName")?.markAsDirty();
+        }
+        result = false;
+      }
+
+      return result;
+    }
+
+    _getRequestPayload() {
+      let valueObj = this.formGroup.value,
+      requestJsonObj: any = {};
+
+      for (let key in valueObj) {
+        if (valueObj.hasOwnProperty(key)) {
+          let indexValue = (valueObj as any)[key];
+
+          switch (key) {
+            default:
+              requestJsonObj[key] = indexValue;
+              break;
+          }
+        }
+      }
+
+      requestJsonObj['id'] = this.recordId;
+
+      return requestJsonObj;
+    }*/
 
   _handleOnViewContacts() {
     this.showCommentDialog = true;
@@ -310,4 +409,51 @@ export class PartnerViewComponent implements OnInit {
   getUploadLogoUrl() {
     return this.partnerService.getUploadLogoUrl(this.recordId);
   }
+
+  /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
+    console.log('Opening org structure dialog for type:', type);
+    
+    const ref = this.dialogService.open(OrgStructureDialogComponent, {
+      header: 'Select Organizational Structure',
+      width: '95vw',
+      height: '95vh',
+      style: { 
+        maxWidth: '1400px', 
+        maxHeight: '900px',
+        backgroundColor: 'white',
+        padding: '0' 
+      },
+      contentStyle: {
+        padding: '0',
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      },
+      baseZIndex: 10000,
+      dismissableMask: true,
+      closeOnEscape: true,
+      closable: true,
+      data: {
+        type: type,
+        partnerId: this.recordId
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        console.log('Selected organization:', result);
+        // Refresh the corresponding panel based on type
+        switch (type) {
+          case 'summary':
+            this.refreshSummaryOfInteractions();
+            break;
+          case 'risk':
+            this.refreshRiskProfile();
+            break;
+          case 'news':
+            this.refreshPartnerNews();
+            break;
+        }
+      }
+    });
+  }*/
 }

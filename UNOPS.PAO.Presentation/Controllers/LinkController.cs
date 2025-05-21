@@ -2,9 +2,11 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
@@ -12,15 +14,18 @@ using UNOPS.PAO.Presentation.Security;
 namespace UNOPS.PAO.Presentation.Controllers;
 
 [Route("/")]
-[ApiController]
-[Authorize]
-public class LinkController : ControllerBase
+public class LinkController : BaseController
 {
-    private readonly ILinkManager manager;
+    private readonly ILinkManager _manager;
 
-    public LinkController(IManagerWrapper manager)
+    public LinkController(
+        IManagerWrapper manager,
+        ILogger<LinkController> logger,
+        IAuthorizationService authorizationService,
+        UserResolverService<int> userResolverService)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.manager = manager.LinkManager;
+        _manager = manager.LinkManager;
     }
 
     [HttpGet(APIDictionary.Link)]
@@ -29,32 +34,41 @@ public class LinkController : ControllerBase
         [FromQuery] int entityId,
         [FromQuery] PaginationRequest parameters)
     {
-        var links = await manager.GetEntityLinks(entity, entityId, parameters);
-        return Ok(links);
+        return await HandleOperationAsync(async () =>
+        {
+            return await _manager.GetEntityLinks(entity, entityId, parameters);
+        });
     }
 
     [HttpPost(APIDictionary.Link)]
-    public async Task<IActionResult> Create([FromBody] LinkRequest req)
+    public async Task<ActionResult> Create([FromBody] LinkRequest req)
     {
-        var result = await manager.CreateLinkAsync(req);
-        if (result == null)
+        return await HandleOperationAsync(async () =>
         {
-            return BadRequest();
-        }
-        return CreatedAtAction(nameof(GetLinks), new { entity = req.Entity, entityId = req.EntityId }, result);
+            var result = await _manager.CreateLinkAsync(req);
+            if (result == null)
+            {
+                throw new BusinessException("Failed to create link");
+            }
+            return result;
+        }, 201);
     }
 
     [HttpPut(APIDictionary.Link)]
-    public async Task<IActionResult> Update([FromBody] UpdateLinkRequest req)
+    public async Task<ActionResult> Update([FromBody] UpdateLinkRequest req)
     {
-        await manager.UpdateLinkAsync(req);
-        return NoContent();
+        return await HandleOperationAsync(async () =>
+        {
+            await _manager.UpdateLinkAsync(req);
+        });
     }
 
     [HttpDelete(APIDictionary.Link)]
-    public async Task<IActionResult> Delete([FromQuery] int id)
+    public async Task<ActionResult> Delete([FromQuery] int id)
     {
-        await manager.DeleteLinkAsync(id);
-        return NoContent();
+        return await HandleOperationAsync(async () =>
+        {
+            await _manager.DeleteLinkAsync(id);
+        });
     }
 } 

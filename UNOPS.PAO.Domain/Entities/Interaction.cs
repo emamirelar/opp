@@ -45,7 +45,7 @@ namespace UNOPS.PAO.Domain.Entities
         public string Subject { get; set; }
 
         [JsonIgnore]  // Prevents circular reference in serialization
-        public virtual OrganizationUnit? OrgUnit { get; set; }
+        public virtual OrganizationHierarchy? OrgUnit { get; set; }
 
         public int? OrgUnitId { get; set; }
 
