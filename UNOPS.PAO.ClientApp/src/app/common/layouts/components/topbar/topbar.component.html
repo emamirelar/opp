@@ -1,12 +1,15 @@
 <div class="layout-topbar">
-	<div class="layout-topbar-logo-container">
+	<div class="layout-topbar-logo-container flex items-center">
 		<button pButton pRipple type="button" text class="p-link layout-menu-button" (click)="layoutService.onMenuToggle()">
 			<i class="pi pi-bars"></i>
 		</button>
 		<a class="layout-topbar-logo"
 			routerLink="/">
 			<img src="images/PNG/Opportunity Horizontal1000px.png"
-				class="brand-logo"
+				class="brand-logo hidden md:block"
+				alt="UNOPS Opportunity+ Logo">
+			<img src="images/PNG/Opportunity Logo Graphic1000px.png"
+				class="md:hidden w-6 flex-shrink-0"
 				alt="UNOPS Opportunity+ Logo">
 		</a>
 	</div>
