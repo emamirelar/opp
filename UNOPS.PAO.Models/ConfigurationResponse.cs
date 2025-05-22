@@ -4,4 +4,5 @@ public class ConfigurationResponse
 {
     public string? GoogleClientId { get; set; }
     public string? GoogleApiKey { get; set; }
+    public string? Environment { get; set; }
 }

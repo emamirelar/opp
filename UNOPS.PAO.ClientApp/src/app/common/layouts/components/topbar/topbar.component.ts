@@ -26,6 +26,7 @@ import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
 import { InputTextModule } from 'primeng/inputtext';
 import { AvatarModule } from 'primeng/avatar';
+import { RoleService, Role } from '../../../../essentials/services/role.service';
 
 interface UserInfo {
   userId: number;
@@ -73,10 +74,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   private confirmationService = inject(ConfirmationService);
   private notificationInterval: any;
   private http = inject(HttpClient);
+  private roleService = inject(RoleService);
   
   menuActive: boolean = false;
   userInfo: UserInfo | null = null;
   profileMenuItems: MenuItem[] = [];
+  userRoles: Role[] = [];
+  roleMenuItems: MenuItem[] = [];
 
   constructor(
     public layoutService: LayoutService,
@@ -104,14 +108,16 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    debugger;
     this.authService.user().subscribe({
       next: (claims) => {
-        const userIdClaim = claims.find(c => c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier');
+        const userIdClaim = claims.find(c => c.type === 'userId');
         if (userIdClaim) {
           this.userId = userIdClaim.value;
-          this.loadUserInfo();
+          this.loadUserRoles();
           this.startNotificationPolling();
         }
+        this.loadUserInfo();
       },
       error: (error) => {
         // Error getting user claims
@@ -119,36 +125,28 @@ export class TopbarComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.profileMenuItems = [
-      {
-        label: 'Logout',
-        icon: 'pi pi-sign-out',
-        command: () => this.logout()
-      }
-    ];
+    this.profileMenuItems = [];
   }
 
   private loadUserInfo() {
-    this.http.get<UserInfo>(`/api/user-info`).subscribe({
+    this.http.get<UserInfo>(`/api/user-info/current`).subscribe({
       next: (data) => {
         this.userInfo = data;
-        this.loadNotifications();
       },
       error: (err) => {
         console.error('Error loading user info:', err);
         
-        // Try to find the user using their email
         this.authService.user().subscribe({
           next: (claims) => {
             const emailClaim = claims.find(c => c.type === 'email' || 
                                          c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
             
             if (emailClaim?.value) {
-              // Call the user info endpoint with email parameter
               this.http.get<UserInfo>(`/api/user-info?email=${encodeURIComponent(emailClaim.value)}`).subscribe({
                 next: (userData) => {
                   this.userInfo = userData;
                   this.loadNotifications();
+                  this.loadUserRoles();
                 },
                 error: (userLookupErr) => {
                   console.error('Error looking up user by email:', userLookupErr);
@@ -156,12 +154,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
                 }
               });
             } else {
-              // No email claim found, use fallback
               this.createFallbackUserInfo(claims);
             }
           },
           error: () => {
-            // Error getting claims, use fallback
             if (err.status === 401) {
               setTimeout(() => this.loadUserInfo(), 1000);
             }
@@ -435,5 +431,26 @@ export class TopbarComponent implements OnInit, OnDestroy {
   
   navigateToDebug() {
     window.open('https://localhost:7123/api/dev/debug', '_blank');
+  }
+
+  private loadUserRoles() {
+    if (this.userId) {
+      this.roleService.getUserRoles(this.userId).subscribe({
+        next: (data) => {
+          this.userRoles = data.roles;
+          // Create menu items from roles
+          this.roleMenuItems = this.userRoles.map(role => ({
+            label: role.name,
+            description: role.description || `User has the ${role.name} role`,
+            icon: 'pi pi-check-circle',
+            disabled: true // Make items non-clickable
+          }));
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          console.error('Error loading user roles:', error);
+        }
+      });
+    }
   }
 }

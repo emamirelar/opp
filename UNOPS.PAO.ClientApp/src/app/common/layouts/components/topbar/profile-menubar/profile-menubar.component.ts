@@ -19,36 +19,14 @@ import {Ripple} from 'primeng/ripple';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProfileMenubarComponent implements OnInit, OnDestroy {
-  menuItems: MenuItem[] = [
-  ];
+  menuItems: MenuItem[] = [];
 
   profileItems: MenuItem[] = [];
   private langChangeSubscription: Subscription = new Subscription;
 
   constructor(private authService: AuthService, private router: Router, private languageService: LanguageService, private cdr: ChangeDetectorRef)
   {
-    this.profileItems = [
-      // {
-      //   label: 'button.profile',
-      //   icon: 'pi pi-user',
-      //   command: () => {
-      //   }
-      // },
-      {
-        label: 'button.logout',
-        icon: 'pi pi-sign-out',
-        command: () => {
-          this.logout();
-        }
-      }
-    ];
-  }
-
-  logout() {
-    this.authService.logOut().subscribe((res) => {
-      this.router.navigate(['/']);
-      window.location.reload();
-    });
+    this.profileItems = [];
   }
 
   ngOnInit(): void {

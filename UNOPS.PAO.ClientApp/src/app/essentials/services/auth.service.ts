@@ -208,9 +208,9 @@ export class AuthService {
 
   public user(): Observable<UserClaim[]> {
     // If we have a dev cookie, don't even try the API - just use synthetic claims
-    if (this.hasDevCookie()) {
+    /*if (this.hasDevCookie()) {
       return of(this.createSyntheticClaimsFromCookie());
-    }
+    }*/
     
     // Otherwise try the API with fallback to synthetic claims
     return this.http.get<UserClaim[]>('/user/claims').pipe(
@@ -382,14 +382,6 @@ export class AuthService {
       }),
       catchError(() => of([]))
     );
-  }
-
-  public logOut() {
-    // Reset cache on logout
-    this.iapAuthenticationChecked = false;
-    this.iapAuthenticationStatus = false;
-    this.redirectCounter = 0;
-    return this.http.post('/user/logout', {});
   }
 }
 
