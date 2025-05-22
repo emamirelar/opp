@@ -10,20 +10,41 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Partners_PartnerTrees_PartnerTreeCode",
-                schema: "public",
-                table: "Partners");
+            // Check if the constraint exists before trying to drop it
+            migrationBuilder.Sql(
+                @"DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_constraint 
+                        WHERE conname = 'FK_Partners_PartnerTrees_PartnerTreeCode'
+                    ) THEN
+                        ALTER TABLE ""public"".""Partners"" DROP CONSTRAINT ""FK_Partners_PartnerTrees_PartnerTreeCode"";
+                    END IF;
+                END $$;");
 
-            migrationBuilder.DropIndex(
-                name: "IX_Partners_PartnerTreeCode",
-                schema: "public",
-                table: "Partners");
+            // Check if the index exists before trying to drop it
+            migrationBuilder.Sql(
+                @"DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_indexes 
+                        WHERE indexname = 'IX_Partners_PartnerTreeCode'
+                    ) THEN
+                        DROP INDEX ""public"".""IX_Partners_PartnerTreeCode"";
+                    END IF;
+                END $$;");
 
-            migrationBuilder.DropColumn(
-                name: "PartnerTreeCode",
-                schema: "public",
-                table: "Partners");
+            // Check if the column exists before trying to drop it
+            migrationBuilder.Sql(
+                @"DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.columns 
+                        WHERE table_schema = 'public' AND table_name = 'Partners' AND column_name = 'PartnerTreeCode'
+                    ) THEN
+                        ALTER TABLE ""public"".""Partners"" DROP COLUMN ""PartnerTreeCode"";
+                    END IF;
+                END $$;");
         }
 
         /// <inheritdoc />
