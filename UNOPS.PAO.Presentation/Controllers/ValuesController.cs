@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Presentation.Controllers;
+namespace UNOPS.PAO.Presentation.Controllers;
 
 using System.ComponentModel;
 using Microsoft.AspNetCore.Authorization;
@@ -74,12 +74,6 @@ public class ValuesController : BaseController
     public async Task<ActionResult> GetOrganizationUnits()
     {
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOrganizationUnits()));
-    }
-
-    [HttpGet(APIDictionary.PartnerCategories)]
-    public async Task<ActionResult> GetPartnerCategories()
-    {
-        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetPartnerCategories()));
     }
 
     [HttpGet(APIDictionary.Contacts)]

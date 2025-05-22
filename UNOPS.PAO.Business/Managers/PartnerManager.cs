@@ -26,15 +26,15 @@ public class PartnerManager : IPartnerManager
     private IMapper mapper;
 
     private DataRepository<Partner> PartnerRepository;
+    private DataRepository<PartnerTree> PartnerTreeRepository;
     private DataRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
-    private DataRepository<PartnerCategory> PartnerCategoryRepository;
 
     public PartnerManager(IMapper mapper, AppDbContext context)
     {
         this.mapper = mapper;
         this.PartnerRepository = new DataRepository<Partner>(context);
+        this.PartnerTreeRepository = new DataRepository<PartnerTree>(context);
         this.OrganizationHierarchyRepository = new DataRepository<OrganizationHierarchy>(context);
-        this.PartnerCategoryRepository = new DataRepository<PartnerCategory>(context);
     }
 
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
@@ -92,14 +92,6 @@ public class PartnerManager : IPartnerManager
             return default;
         }
 
-        if (item.PartnerCategoryId.HasValue)
-        {
-            var partnerCategory = await PartnerCategoryRepository.GetByIdAsync(item.PartnerCategoryId.Value);
-            if (partnerCategory != null)
-            {
-                item.PartnerCategory = partnerCategory;
-            }
-        }
         if (item.PartnerOfficeId.HasValue)
         {
             var partnerOffice = await OrganizationHierarchyRepository
@@ -207,6 +199,35 @@ public class PartnerManager : IPartnerManager
         }
 
         return mapper.Map<PartnerModel>(item);
+    }
+
+    public PaginationResponse<PartnerModel> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request)
+    {
+
+        var partnerTreeCode = partnerTreeId;
+        
+        var query = PartnerRepository
+            .GetAll(["PartnerOffice"])
+            .Where(x => !x.IsDeleted && x.PartnerGroupCode == partnerTreeCode)
+            .AsQueryable();
+
+        return query.Paginate(
+            x => mapper.Map<PartnerModel>(x),
+            request
+        );
+    }
+
+    public PaginationResponse<PartnerModel> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request)
+    {
+        var query = PartnerRepository
+            .GetAll(["PartnerOffice"])
+            .Where(x => !x.IsDeleted && x.PartnerGroup != null && x.PartnerGroup.PartnerCategoryCode == partnerCategoryCode)
+            .AsQueryable();
+
+        return query.Paginate(
+            x => mapper.Map<PartnerModel>(x),
+            request
+        );
     }
 
     public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)
@@ -336,5 +357,42 @@ public class PartnerManager : IPartnerManager
         
         // For other operations (Update, Delete), only allow if user is creator or has admin privileges
         return false;
+    }
+
+    public List<PartnerTree> GetChildPartnerTreesRecursively(List<string> parentCodes)
+    {
+        if (parentCodes == null || !parentCodes.Any())
+            return new List<PartnerTree>();
+
+        // Get immediate children
+        var children = PartnerTreeRepository.GetAll()
+            .Where(pt => pt.Parent != null && parentCodes.Contains(pt.Parent))
+            .ToList();
+
+        if (!children.Any())
+            return new List<PartnerTree>();
+
+        // Get child codes
+        var childCodes = children.Select(c => c.Code).ToList();
+
+        // Recursively get descendants
+        var descendants = GetChildPartnerTreesRecursively(childCodes);
+
+        // Combine immediate children with their descendants
+        return children.Union(descendants).ToList();
+    }
+    
+    public List<PartnerTree> GetAllDescendantPartnerTrees(List<string> partnerTreesByCategoryCodes)
+    {
+        // Get the original PartnerTrees by their codes
+        var originalPartnerTrees = PartnerTreeRepository.GetAll()
+            .Where(pt => partnerTreesByCategoryCodes.Contains(pt.Code))
+            .ToList();
+            
+        // Get all descendants recursively
+        var descendants = GetChildPartnerTreesRecursively(partnerTreesByCategoryCodes);
+        
+        // Return all trees including the original ones and their descendants
+        return originalPartnerTrees.Union(descendants).ToList();
     }
 }

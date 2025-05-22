@@ -1,9 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { Router, RouterModule, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { Tab, TabList, Tabs } from 'primeng/tabs';
+import { TooltipModule } from 'primeng/tooltip';
 import { filter, Subscription } from 'rxjs';
+import { PartnerTreeViewNavigationComponent } from "../../partner-tree/view/navigation/partner-tree-view-navigation.component";
+import { Partner } from '../../../models/partner.model';
 
 interface TabItem {
   label: string;
@@ -13,8 +16,31 @@ interface TabItem {
 @Component({
   selector: 'app-partner-tabs',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule, Tabs, TabList, Tab],
+  imports: [CommonModule, RouterModule, TranslateModule, Tabs, TabList, Tab, PartnerTreeViewNavigationComponent, TooltipModule],
   template: `
+  <div class="flex flex-col gap-8"> 
+    @if(recordData.partnerCategoryId){
+      <div class="flex items-center gap-2 mt-2">
+        <a [routerLink]="['/partner-tree', recordData.partnerCategoryId]"
+        pTooltip="{{recordData.partnerCategoryName}}"
+        class="text-lg text-gray-7e00 font-semibold hover:text-gray-500 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis max-w-1/3">
+            {{recordData.partnerCategoryName}}
+        </a>
+
+        @if(recordData.partnerGroupId){
+          
+        <div class="px-2 text-lg">
+          <i class="pi pi-angle-right"></i>
+        </div>
+
+        <a [routerLink]="['/partner-tree', recordData.partnerGroupId]"
+        pTooltip="{{recordData.partnerGroupName}}"
+        class="text-lg text-gray-7e00 font-semibold hover:text-gray-500 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis max-w-1/3">
+            {{recordData.partnerGroupName}}
+        </a>
+        }
+      </div>
+      }
       <p-tabs [value]="activeRoute">
         <p-tablist>
           <p-tab *ngFor="let tab of tabs" 
@@ -25,10 +51,10 @@ interface TabItem {
           </p-tab>
         </p-tablist>
       </p-tabs>
-      
-      <div class="mt-8">
+      <div>
         <router-outlet></router-outlet>
       </div>
+  </div>
   `,
   styles: `
     :host ::ng-deep {
@@ -41,6 +67,7 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
   activeRoute: string = '';
   
   tabs: TabItem[] = [];
+  recordData: Partner = {} as Partner;
   private routerSubscription: Subscription | null = null;
 
   constructor(
@@ -51,15 +78,20 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.recordId = this.activatedRoute.snapshot.paramMap.get('recordId') || '';
     
+    // Get the resolved data from the route
+    this.activatedRoute.data.subscribe(data => {
+      this.recordData = data['partnerData'];
+    });
+    
     // Create tabs based on recordId
     this.tabs = [
       {
         label: 'Partner Details',
-        route: `/partner/${this.recordId}`
+        route: `/admin/partner/${this.recordId}`
       },
       {
         label: 'Partner Data',
-        route: `/partner/${this.recordId}/data`
+        route: `/admin/partner/${this.recordId}/data`
       }
     ];
     

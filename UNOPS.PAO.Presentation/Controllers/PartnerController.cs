@@ -75,6 +75,31 @@ public class PartnerController : BaseController
         var specification = new PartnerCompositeSpecification(request);
         return _manager.GetPartnersWithSpecification(CurrentUserId, specification, request);
     }
+    
+    [HttpGet(APIDictionary.Partner + "/classic-search" )]
+    // Internal call: get Partners created by logged-in user
+    // TODO add permissions
+    public ActionResult GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
+    {
+        var specification = new PartnerCompositeClassicSearchSpecification(
+            id: request.Id,
+            name: request.Name,
+            status: request.Status,
+            newEngagement: request.NewEngagement,
+            phone: request.Phone,
+            website: request.Website,
+            shortName: request.ShortName,
+            partnerOfficeId: request.PartnerOfficeId,
+            partnerCategoryId: request.PartnerCategoryId,
+            addressCity: request.AddressCity,
+            addressStateProvince: request.AddressStateProvince,
+            addressPostalCode: request.AddressPostalCode,
+            addressCountry: request.AddressCountry,
+            searchText: request.SearchText);
+
+        return Ok(_manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
+    }
+
 
     [HttpGet(APIDictionary.Partner + "/{id}")]
     [AutoAuthorize]
@@ -143,5 +168,33 @@ public class PartnerController : BaseController
 
         var result = await _manager.UpdatePartnerLogoAsync(id, file);
         return Ok(new { imageUrl = result });
+    }
+
+    [HttpGet(APIDictionary.Partner + "/by-partner-group-code/{code}")]
+    public ActionResult<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(string code, [FromQuery] PaginationRequest request)
+    {
+        try
+        {
+            var result = _manager.GetPartnersByPartnerGroup(CurrentUserId, code, request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {       
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpGet(APIDictionary.Partner + "/by-partner-category-code/{code}")]
+    public ActionResult<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(string code, [FromQuery] PaginationRequest request)
+    {
+        try
+        {
+            var result = _manager.GetPartnersByPartnerCategory(CurrentUserId, code, request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

@@ -43,7 +43,7 @@ export class ListviewCardComponent<T = any> {
   @Output() pageChange = new EventEmitter<{first: number, rows: number}>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
   @Output() rowSelect = new EventEmitter<T>();
-  @Output() rowDblClick = new EventEmitter<T>();
+  @Output() rowClick = new EventEmitter<T>();
   
   // Custom template references
   @ContentChild('cardActionsTemplate') actionsTemplate?: TemplateRef<any>;
@@ -120,8 +120,8 @@ export class ListviewCardComponent<T = any> {
   /**
    * Handle card double click
    */
-  onCardDblClick(item: T): void {
-    this.rowDblClick.emit(item);
+  onCardClick(item: T): void {
+    this.rowClick.emit(item);
   }
 
   /**

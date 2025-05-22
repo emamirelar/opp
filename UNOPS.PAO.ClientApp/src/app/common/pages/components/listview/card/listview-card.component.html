@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4 bg-white">
   <!-- Loading skeleton -->
   @if (loading) {
     <div class="grid">
@@ -47,8 +47,7 @@
           <div [class]="columnClass() + ' flex flex-col gap-4'">
             <div
               class="bg-surface-50 p-4 rounded-lg cursor-pointer"
-              (click)="onCardSelect(item)"
-              (dblclick)="onCardDblClick(item)">
+              (click)="onCardClick(item)">
 
               <div class="flex gap-4">
 

@@ -1,4 +1,5 @@
 ﻿using UNOPS.PAO.Domain.Entities;
+using System.Text.Json.Serialization;
 
 namespace UNOPS.PAO.Models;
 
@@ -33,7 +34,10 @@ public class PartnerModel
     public List<DocumentModel>? Documents { get; set; }
     public OrganizationHierarchyModel? PartnerOffice { get; set; }
     public int? PartnerOfficeId { get; set; }
-    public PartnerCategory? PartnerCategory { get; set; }
-    public int? PartnerCategoryId { get; set; }
+    
     public string? LogoUrl { get; set; }
-}
+    public string? PartnerGroupCode{ get; set; }
+    public string? PartnerGroupName{ get; set; }
+    public int? PartnerGroupId { get; set; }
+    
+}   

@@ -1,12 +1,15 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
-import { tap, of } from 'rxjs';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { PartnerCategoryGroup, PartnerGroup } from '../../features/internal/models/partner-category-group.model';
+import { PartnerTreeService } from '../../features/internal/services/partner-tree.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CachedDataService {
   http = inject( HttpClient );
+  partnerTreeService = inject(PartnerTreeService);
+
   isLoading = signal(false);
 
   //Projects
@@ -80,6 +83,26 @@ export class CachedDataService {
   private allPartnerCategoriesData = signal([]);
   allPartnerCategories = this.allPartnerCategoriesData.asReadonly();
 
+  // Add signal for partner category and group structure
+  private partnerCategoryGroupData = signal<PartnerCategoryGroup[]>([]);
+  partnerCategoryGroups = this.partnerCategoryGroupData.asReadonly();
+
+  getParterGroupByCategoryCode(categoryCode?: string) : PartnerGroup[] {
+    if (categoryCode) {
+      return this.partnerCategoryGroups()?.find(group => group.partnerCategoryCode === categoryCode)?.children || [];
+    }
+    return [];
+  }
+
+  getPartnerGroupsForSelect = computed(() => this.partnerCategoryGroups()?.map(category => ({
+    name: category.partnerCategoryName,
+    value: category.partnerCategoryCode,
+    items: category.children.map(group => ({
+      name: group.partnerGroupName,
+      value: group.partnerGroupCode
+    }))
+  })) || []);
+
   private allContactsData = signal<any[]>([]);
   allContacts = this.allContactsData.asReadonly();
 
@@ -104,6 +127,7 @@ export class CachedDataService {
     this.loadPartnerLevelTypeData();
     this.loadPartnerOffices();
     this.loadPartnerCategories();
+    this.loadPartnerCategoryGroups(); // Load category and group structure
     this.loadContacts();
     this.loadUsers();
     this.loadCurrentUserData();
@@ -136,6 +160,7 @@ export class CachedDataService {
     this.allPartnersData.set([]);
     this.allPartnerOfficesData.set([]);
     this.allPartnerCategoriesData.set([]);
+    this.partnerCategoryGroupData.set([]); // Clear category and group structure
   }
 
   loadProjects(){
@@ -479,6 +504,22 @@ export class CachedDataService {
           this.isLoading.set(false);
         },
         error: (err) => {
+          this.isLoading.set(false);
+        }
+      });
+    }
+  }
+
+  loadPartnerCategoryGroups() {
+    if ((this.partnerCategoryGroupData() == undefined) || (this.partnerCategoryGroupData().length <= 0)) {
+      this.isLoading.set(true);
+      this.partnerTreeService.getCategoryAndGroupStructure().subscribe({
+        next: (data) => {
+          this.partnerCategoryGroupData.set(data);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error fetching partner category and group structure:', err);
           this.isLoading.set(false);
         }
       });

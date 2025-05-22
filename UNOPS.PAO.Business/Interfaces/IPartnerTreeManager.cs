@@ -23,4 +23,6 @@ public interface IPartnerTreeManager
     Task<PartnerTreeModel?> UpdatePartnerTreeAsync(int userId, PartnerTreeDataModel model);
 
     Task DeletePartnerTreeAsync(int userId, int id);
+    
+    IEnumerable<object> GetCategoryAndGroupStructure(int userId);
 }

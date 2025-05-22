@@ -125,6 +125,32 @@ public class ContactController : BaseFilteredController
         
         return result;
     }
+    
+    
+    [HttpGet(APIDictionary.Contact + "/classic-search")]
+    public ActionResult GetAll([FromQuery] ContactFilterRequest request)
+    {
+        var specification = new ClassicContactCompositeSpecification(
+            id: request.Id,
+            partnerId: request.PartnerId,
+            status: request.Status,
+            salutation: request.Salutation,
+            title: request.Title,
+            department: request.Department,
+            phone: request.Phone,
+            mobile: request.Mobile,
+            assistant: request.Assistant,
+            assistantEmail: request.AssistantEmail,
+            assistantPhone: request.AssistantPhone,
+            mailingCity: request.MailingCity,
+            mailingStateProvince: request.MailingStateProvince,
+            mailingPostalCode: request.MailingPostalCode,
+            mailingCountry: request.MailingCountry,
+            searchText: request.SearchText);
+        
+        return Ok(_manager.GetContactsWithSpecification(CurrentUserId, specification, request));
+    }
+
 
     [HttpGet(APIDictionary.Contact + "/{id}")]
     public async Task<ActionResult> Get(int id)

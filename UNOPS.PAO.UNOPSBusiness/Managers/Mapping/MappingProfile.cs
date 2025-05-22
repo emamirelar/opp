@@ -1,4 +1,4 @@
-﻿using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Entities;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers.Mapping;
 using AutoMapper;
@@ -19,15 +19,35 @@ public class MappingProfile : Profile
         CreateMap<UNOPSInteraction, InteractionModel>();
         CreateMap<InteractionModel, UNOPSInteraction>();
         CreateMap<PartnerTreeRequest, UNOPSPartnerTree>();
-        CreateMap<UNOPSPartnerTree, PartnerTreeModel>();
-        CreateMap<PartnerTreeModel, UNOPSPartnerTree>();
+        
+
+        CreateMap<UNOPSPartnerTree, PartnerTreeModel>()
+            .ForMember(dest => dest.Children, opt => opt.Ignore())
+            .ForMember(dest => dest.Data, opt => opt.MapFrom(src => new PartnerTreeDataModel 
+            {
+                Id = src.Id,
+                Code = src.Code,
+                Description = src.Description,
+                Type = src.Type,
+                PartnerCategoryCode = src.PartnerCategoryCode,
+                PartnerGroupCode = src.PartnerGroupCode,
+            }));
+            
+        CreateMap<PartnerTreeModel, UNOPSPartnerTree>()
+            .ForMember(dest => dest.Partners, opt => opt.Ignore());
+            
         CreateMap<GeminiProcessDataRequest, AiPromptModel>();
         CreateMap<UNOPSDocument, DocumentModel>();
         CreateMap<DocumentModel, UNOPSDocument>();
         CreateMap<DocumentUploadModel, UNOPSDocument>();
         CreateMap<DocumentLinkModel, UNOPSDocument>();
         CreateMap<UpdateDocumentRequest, UNOPSDocument>();
-        CreateMap<UNOPSPartnerCategory, PartnerCategoryModel>();
-        CreateMap<PartnerCategoryModel, UNOPSPartnerCategory>();
+        CreateMap<UNOPSOrganizationUnit, OrganizationUnitModel>();
+        CreateMap<OrganizationUnitModel, UNOPSOrganizationUnit>();
+        
+        CreateMap<PartnerRequest, UNOPSPartner>();
+        CreateMap<UpdatePartnerRequest, UNOPSPartner>();
+        
+        CreateMap<UNOPSPartner, PartnerModel>();
     }
 }

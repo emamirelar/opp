@@ -29,8 +29,7 @@
     [dataUrl]="contactService.getUrl()"
     [columns]="contactColumns"
     [config]="listviewConfig"
-    (rowSelect)="handleOnOpenRecordDetails($event)"
-    (rowDblClick)="handleOnOpenRecordDetails($event)"
+    (rowClick)="onRowClick($event)"
     (searchChange)="onSearchChange($event)"
   >
   </app-listview>

@@ -92,6 +92,9 @@
         "selectEligibleEntities": "Selecionar Entidades Elegíveis",
         "selectFromDrive": "Selecionar do Drive",
         "selectionMethodology": "Metodologia de Seleção",
+        "search": {
+            "results": "Resultados da pesquisa para"
+        },
         "stage": "Etapa",
         "status": "Status",
         "yes": "Sim",
@@ -150,9 +153,10 @@
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Atender entidades elegíveis' obrigatório",
-        "entityMeetEligibleCriteriaRequired": "'Atender critérios de elegibilidade' obrigatório",
+        "entityMeetEligibleCriteriaRequired": "'Atender critérios elegíveis' obrigatório",
         "noRecordsFound": "Nenhum registro encontrado.",
-        "welcomeTitle": "Bem-vindo ao Grant+",
+        "noPartnerGroups": "Nenhum grupo de parceiro encontrado",
+        "welcomeTitle": "Bem-vindo ao Opportunity+",
         "deleteInteractionConfirmation": "Tem certeza que deseja excluir esta interação?",
         "interactionDeleted": "Interação excluída com sucesso",
         "errorDeletingInteraction": "Erro ao excluir interação",
@@ -202,5 +206,14 @@
     },
     "action": {
         "search": "Pesquisar"
+    },
+    "search": {
+        "placeholder": "Pesquisar...",
+        "recentSearches": "Pesquisas recentes",
+        "results": "Resultados",
+        "showAllResults": "Mostrar todos os resultados",
+        "seeAllResults": "Ver todos os resultados",
+        "contact": "Contato",
+        "partner": "Parceiro"
     }
 }
