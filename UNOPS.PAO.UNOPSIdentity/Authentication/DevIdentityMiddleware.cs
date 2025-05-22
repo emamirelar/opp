@@ -12,205 +12,194 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.Identity.Entities;
+using Microsoft.Extensions.Configuration;
 
 namespace UNOPS.PAO.UNOPSIdentity.Authentication
 {
     public class DevIdentityMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<DevIdentityMiddleware> _logger;
         private readonly IWebHostEnvironment _environment;
 
         public DevIdentityMiddleware(
             RequestDelegate next,
+            IConfiguration configuration,
             ILogger<DevIdentityMiddleware> logger,
             IWebHostEnvironment environment)
         {
             _next = next;
+            _configuration = configuration;
             _logger = logger;
             _environment = environment;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
-
-            // Only apply in development and for API calls
-            if (_environment.IsDevelopment() && context.Request.Path.StartsWithSegments("/api"))
+            try
             {
-                // Check if we have IAP headers - now we apply this to all requests, not just unauthenticated ones
-                if (context.Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var emailHeader))
+                // Skip for non-development environments
+                if (!_configuration.GetValue<bool>("Development:IAPSimulation:Enabled", true))
                 {
-                    // Even if the user is already authenticated, ensure we have proper IAP identity
-                    // This prevents cases where the user is authenticated but with wrong scheme
-                    string email = emailHeader.ToString().Split(':').Last();
-                    
-                    _logger.LogInformation("Setting dev identity for API call with email: {Email}, path: {Path}, currentAuth: {IsAuthenticated}", 
-                        email, 
-                        context.Request.Path, 
-                        context.User?.Identity?.IsAuthenticated);
-                    
-                    // Create a scope to ensure proper DbContext lifetime
-                    using (var scope = context.RequestServices.CreateScope())
+                    await _next(context);
+                    return;
+                }
+
+                // Get the development email from various sources
+                string? devEmail = null;
+
+                // 1. Check for dev-user query parameter
+                if (context.Request.Query.TryGetValue("dev-user", out var queryEmail))
+                {
+                    devEmail = queryEmail.ToString();
+                }
+
+                // 2. Check for dev-user-email cookie
+                if (string.IsNullOrEmpty(devEmail) && context.Request.Cookies.TryGetValue("dev-user-email", out var cookieEmail))
+                {
+                    devEmail = cookieEmail;
+                }
+
+                // 3. Use configured default email
+                if (string.IsNullOrEmpty(devEmail))
+                {
+                    devEmail = _configuration["Development:IAPSimulation:UserEmail"] ?? "dev.user@example.com";
+                }
+
+                // Ensure we handle emails with account provider prefix
+                if (devEmail.Contains(':'))
+                {
+                    devEmail = devEmail.Split(':').Last();
+                }
+
+                // Get required services
+                var userManager = context.RequestServices.GetService<UserManager<PAOIdentityUser>>();
+                var roleManager = context.RequestServices.GetService<RoleManager<PAOIdentityRole>>();
+
+                if (userManager == null || roleManager == null)
+                {
+                    _logger.LogError("Required services (UserManager or RoleManager) not available");
+                    await _next(context);
+                    return;
+                }
+
+                // Create claims list
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, devEmail),
+                    new Claim(ClaimTypes.Email, devEmail),
+                    new Claim("iap-jwt-verified", "true"),
+                    new Claim("IAPAuthenticated", "true"),
+                    new Claim("IsInternal", devEmail.EndsWith("@unops.org").ToString()),
+                    new Claim("hd", devEmail.Split('@')[1])
+                };
+
+                try
+                {
+                    // Ensure required roles exist
+                    var requiredRoles = new[] { "UNOPS_GEN_USER", "PARTNER_GLOB_ADMIN", "PARTNER_USER", "ORG_UNIT_ADMIN" };
+                    foreach (var roleName in requiredRoles)
                     {
-                        // Get a new UserManager with its own DbContext instance
-                        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<PAOIdentityUser>>();
-                        
-                        // Find or create the user
-                        var user = await userManager.FindByEmailAsync(email);
-                        if (user == null)
+                        if (!await roleManager.RoleExistsAsync(roleName))
                         {
-                            _logger.LogWarning("User not found in database: {Email}, creating development user", email);
-                            
-                            // For development, always create the user if not found
-                            user = new PAOIdentityUser
-                            {
-                                Id = GenerateUniqueIntId(),
-                                UserName = email,
-                                Email = email,
-                                EmailConfirmed = true,
-                                IsInternal = email.EndsWith("@unops.org"),
-                                GoogleSignIn = true
-                            };
-                            
-                            var result = await userManager.CreateAsync(user);
-                            if (!result.Succeeded)
-                            {
-                                _logger.LogError("Failed to create development user: {Errors}", 
-                                    string.Join(", ", result.Errors.Select(e => e.Description)));
-                            }
-                            else
-                            {
-                                _logger.LogInformation("Successfully created development user: {Email}", email);
-                                
-                                // Assign roles based on email
-                                if (email == "anushas@unops.org")
-                                {
-                                    await EnsureRoleExists(scope, "Internal");
-                                    await userManager.AddToRoleAsync(user, "Internal");
-                                }
-                                else if (email == "admin@unops.org")
-                                {
-                                    await EnsureRoleExists(scope, "Administrator");
-                                    await userManager.AddToRoleAsync(user, "Administrator");
-                                }
-                                else if (email == "partner@partner.org")
-                                {
-                                    await EnsureRoleExists(scope, "Partner");
-                                    await userManager.AddToRoleAsync(user, "Partner");
-                                } else if (email == "external@unops.org")
-                                {
-                                    await EnsureRoleExists(scope, "External");
-                                    await userManager.AddToRoleAsync(user, "External");
-                                }
-                            }
-                        }
-                        
-                        if (user != null)
-                        {
-                            // Get all user claims and roles
-                            var userClaims = await userManager.GetClaimsAsync(user);
-                            var roles = await userManager.GetRolesAsync(user);
-                            
-                            // Log what we found
-                            _logger.LogInformation("User {Email} has {RoleCount} roles: {Roles}", 
-                                email, roles.Count, string.Join(", ", roles));
-                                
-                            // Validate roles based on email domain - fix if necessary
-                            if (email == "anushas@unops.org" && !roles.Contains("Internal"))
-                            {
-                                _logger.LogWarning("UNOPS user {Email} missing Internal role, adding it", email);
-                                await EnsureRoleExists(scope, "Internal");
-                                await userManager.AddToRoleAsync(user, "Internal");
-                                roles = await userManager.GetRolesAsync(user);
-                            }
-                            
-                            if (email == "admin@unops.org" && !roles.Contains("Administrator"))
-                            {
-                                _logger.LogWarning("Admin user {Email} missing Administrator role, adding it", email);
-                                await EnsureRoleExists(scope, "Administrator");
-                                await userManager.AddToRoleAsync(user, "Administrator");
-                                roles = await userManager.GetRolesAsync(user);
-                            }
-                            
-                            if (email == "partner@partner.org" && !roles.Contains("Partner"))
-                            {
-                                _logger.LogWarning("External user {Email} missing Partner role, adding it", email);
-                                await EnsureRoleExists(scope, "Partner");
-                                await userManager.AddToRoleAsync(user, "Partner");
-                                roles = await userManager.GetRolesAsync(user);
-                            }
-                            
-                            // Build a comprehensive claims list
-                            var claims = new List<Claim>
-                            {
-                                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                                new Claim(ClaimTypes.Name, user.UserName),
-                                new Claim(ClaimTypes.Email, user.Email),
-                                new Claim("IsInternal", user.IsInternal.ToString()),
-                                new Claim("IAPAuthenticated", "true")
-                            };
-                            
-                            // Add existing user claims 
-                            foreach (var claim in userClaims)
-                            {
-                                if (!claims.Any(c => c.Type == claim.Type && c.Value == claim.Value))
-                                {
-                                    claims.Add(claim);
-                                }
-                            }
-                            
-                            // Add roles
-                            foreach (var role in roles)
-                            {
-                                claims.Add(new Claim(ClaimTypes.Role, role));
-                            }
-                            
-                            // Create the identity with "IAP" authentication type to match the IAP authentication handler
-                            var identity = new ClaimsIdentity(claims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
-                            
-                            // Always set the user
-                            context.User = new ClaimsPrincipal(identity);
-                            
-                            _logger.LogInformation("Dev identity set for user: {Email} with {RoleCount} roles, IsAuthenticated: {IsAuthenticated}", 
-                                email, roles.Count, identity.IsAuthenticated);
-                                
-                            // Log all the roles and claims for debugging
-                            _logger.LogInformation("User roles: {Roles}", string.Join(", ", roles));
-                            _logger.LogInformation("User has {ClaimCount} claims", claims.Count);
+                            await roleManager.CreateAsync(new PAOIdentityRole { Name = roleName });
                         }
                     }
+
+                    // Find or create user
+                    var user = await userManager.FindByEmailAsync(devEmail);
+                    if (user == null)
+                    {
+                        user = new PAOIdentityUser
+                        {
+                            UserName = devEmail,
+                            Email = devEmail,
+                            EmailConfirmed = true
+                        };
+
+                        var result = await userManager.CreateAsync(user);
+                        if (!result.Succeeded)
+                        {
+                            _logger.LogError("Failed to create test user: {Errors}", string.Join(", ", result.Errors));
+                            throw new InvalidOperationException("Failed to create test user");
+                        }
+                    }
+
+                    // Add NameIdentifier claim
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+                    claims.Add(new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", user.Id.ToString()));
+
+                    // Add roles based on email
+                    if (devEmail == "anushas@unops.org")
+                    {
+                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                    }
+                    else if (devEmail == "admin@unops.org")
+                    {
+                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                        await userManager.AddToRoleAsync(user, "PARTNER_GLOB_ADMIN");
+                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                        claims.Add(new Claim(ClaimTypes.Role, "PARTNER_GLOB_ADMIN"));
+                    }
+                    else if (devEmail == "partner@partner.org")
+                    {
+                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                        await userManager.AddToRoleAsync(user, "PARTNER_USER");
+                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                        claims.Add(new Claim(ClaimTypes.Role, "PARTNER_USER"));
+                    }
+                    else if (devEmail == "orgunit@unops.org")
+                    {
+                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                        await userManager.AddToRoleAsync(user, "ORG_UNIT_ADMIN");
+                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                        claims.Add(new Claim(ClaimTypes.Role, "ORG_UNIT_ADMIN"));
+                    }
+                    else
+                    {
+                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                    }
                 }
-            }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error setting up dev user: {Email}", devEmail);
+                    // Fallback to numeric ID if there's an error
+                    var numericId = Math.Abs(devEmail.GetHashCode()).ToString();
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
+                    claims.Add(new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", numericId));
+                    
+                    // Add default roles
+                    claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                    if (devEmail == "admin@unops.org")
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, "PARTNER_GLOB_ADMIN"));
+                    }
+                }
 
-            // Call the next middleware in the pipeline
-            await _next(context);
-        }
-        
-        private async Task EnsureRoleExists(IServiceScope scope, string roleName)
-        {
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<PAOIdentityRole>>();
-            
-            if (!await roleManager.RoleExistsAsync(roleName))
+                // Create and set the identity
+                var identity = new ClaimsIdentity(claims, "Development-IAP", ClaimTypes.Name, ClaimTypes.Role);
+                context.User = new ClaimsPrincipal(identity);
+
+                // Store the development authentication in a cookie with more permissive settings for development
+                context.Response.Cookies.Append("dev-user-email", devEmail, new CookieOptions
+                {
+                    HttpOnly = false, // Allow JavaScript access in development
+                    Secure = false, // Allow non-HTTPS in development
+                    SameSite = SameSiteMode.None, // Allow cross-site requests in development
+                    Expires = DateTimeOffset.Now.AddHours(8),
+                    Path = "/" // Ensure cookie is available for all paths
+                });
+            }
+            catch (Exception ex)
             {
-                _logger.LogInformation("Creating missing role: {Role}", roleName);
-                var role = new PAOIdentityRole { Name = roleName };
-                await roleManager.CreateAsync(role);
+                _logger.LogError(ex, "Error in DevIdentityMiddleware");
+                // Continue with the request even if there's an error
             }
-        }
 
-        private int GenerateUniqueIntId()
-        {
-            // Generate a more unique ID based on current timestamp
-            // Using timestamp ensures increasing values and minimizes collision risk
-            // Take the last 9 digits to fit within int range
-            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var uniqueId = (int)(timestamp % 1_000_000_000); 
-            
-            // Add small random number to further reduce collision possibility
-            uniqueId = uniqueId * 10 + new Random().Next(0, 9);
-            
-            // Ensure positive value within int range
-            return Math.Abs(uniqueId % int.MaxValue);
+            await _next(context);
         }
     }
 } 

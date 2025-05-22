@@ -191,11 +191,10 @@ public class DevelopmentLoginPageMiddleware
         
         function renderPredefinedUsers() {
             const users = [
-                { email: 'anushas@unops.org', roles: ['Internal'] },
-                { email: 'admin@unops.org', roles: ['Administrator'] },
-                { email: 'partner@partner.org', roles: ['Partner'] },
-                { email: 'external@unops.org', roles: ['External'] },
-                { email: 'partnerexternal@unops.org', roles: ['Partner', 'External'] }
+                { email: 'anushas@unops.org', roles: ['UNOPS_GEN_USER'] },
+                { email: 'admin@unops.org', roles: ['UNOPS_GEN_USER', 'PARTNER_GLOB_ADMIN'] },
+                { email: 'partner@partner.org', roles: ['UNOPS_GEN_USER', 'PARTNER_USER'] },
+                { email: 'orgunit@unops.org', roles: ['UNOPS_GEN_USER', 'ORG_UNIT_ADMIN'] },
             ];
             
             const container = document.getElementById('users-container');
