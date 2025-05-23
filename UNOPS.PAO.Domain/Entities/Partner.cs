@@ -3,6 +3,7 @@ using System;
 using UNOPS.PAO.Domain.Infrastructure;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace UNOPS.PAO.Domain.Entities;
 
@@ -42,5 +43,14 @@ public class Partner : ModifiableDeletableEntity
     public PartnerTree? PartnerGroup { get; set; }
     
     public string? PartnerGroupCode { get; set; }
+
+    
+    // Collection of all contacts for this partner
+    public virtual ICollection<Contact> Contacts { get; set; } = new HashSet<Contact>();
+    
+    // Computed property to get the first 5 contacts ordered by creation date (newest first)
+    [NotMapped]
+    public IEnumerable<Contact> First5ContactsByDate => 
+        Contacts?.OrderByDescending(c => c.CreatedDate).Take(5) ?? Enumerable.Empty<Contact>();
 }
 

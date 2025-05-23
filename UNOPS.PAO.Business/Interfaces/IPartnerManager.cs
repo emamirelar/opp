@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Interfaces;
 
@@ -16,9 +17,9 @@ public interface IPartnerManager
 {
     Task<PartnerModel> CreatePartnerAsync(PartnerRequest model);
 
-    PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request);
+    Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request);
     
-    PaginationResponse<PartnerModel> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination);
+    Task<PaginationResponse<PartnerModel>> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination);
 
     Task<PartnerModel?> GetPartner(int userId, int id);
 
@@ -30,8 +31,8 @@ public interface IPartnerManager
 
     Task DeletePartnerAsync(int userId, int id);
     Task<PartnerModel?> GetPartnerAsync(int id);
-    PaginationResponse<PartnerModel> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request);
-    PaginationResponse<PartnerModel> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request);
+    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request);
+    Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request);
     Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file);
     
     /// <summary>

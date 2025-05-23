@@ -28,7 +28,7 @@ import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
 })
 export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit {
   @ViewChild('partnerTreeTable') partnerTreeTable: any;
-  
+
   // State management
   expandedNodes: Map<string, boolean> = new Map();
   override data: TreeNode<PartnerTree>[] = [];
@@ -38,13 +38,13 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   cachedDataService = inject(CachedDataService);
   originalData: any[] = [];
   override isDataLoading = this.service.isLoading();
-  
+
   // Dialog state
   parentUpdated: boolean = false;
   updatePartnerLevel: boolean = false;
   createPartnerLevel: boolean = false;
   changeRecord: any = null;
-  
+
   // Data options
   partnerGroupOptions: any[] = [];
   partnerTree: TreeNode<PartnerTree>[] = [];
@@ -68,8 +68,6 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       this.cdr.detectChanges();
     });
 
-    this.loadPartnerTree();
-    
     // Initialize expandedNodes map
     this.expandedNodes = new Map();
   }
@@ -122,7 +120,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     // Check if the record actually changed
     var originalData = this.parentOptions.find(option => option.id === event.field?.id);
     let valueChanged = this.hasRecordChanged(originalData, event.field);
-    
+
     if (valueChanged) {
       this.updatedRecords.push(event.field);
       if (event.data === 'parent') {
@@ -136,7 +134,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   // Convert object selections to string values
   private convertObjectSelectionsToValues(field: any) {
     if (!field) return;
-    
+
     // Handle partnerCategory selection, converting object to code if needed
     if (field.partnerCategory && typeof field.partnerCategory === 'object') {
       field.partnerCategoryName = field.partnerCategory.name;
@@ -153,14 +151,14 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   // Check if a record has changed compared to original
   private hasRecordChanged(originalData: any, currentData: any): boolean {
     if (!originalData) return true;
-    
+
     const columnIds = ['name', 'description', 'type', 'partnerCategory', 'partnerGroup', 'code'];
     for (const columnId of columnIds) {
       if (originalData[columnId] !== currentData[columnId]) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -180,20 +178,6 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     });
   }
 
-  loadPartnerTree() {
-    this.loading = true;
-    this.service.getAllPartnerTree().subscribe({
-      next: (data) => {
-        this.partnerTree = data;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading partner tree:', error);
-        this.loading = false;
-      }
-    });
-  }
-
   onNodeSelect(event: { node: TreeNode<PartnerTree> }) {
     this.selectedNode = event.node;
   }
@@ -204,7 +188,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       next: (data: any) => {
         this.updatedRecords = [];
         this.data = data;
-        
+
         // Restore expanded state after loading data
         this.restoreExpansionState();
         this.cdr.detectChanges(); // Trigger change detection
@@ -241,7 +225,7 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
       id: null,
       status: 'Active'
     };
-    
+
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
       header: 'New Partner Level',
       width: '50rem',
@@ -378,14 +362,14 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   // Recursive function to capture all expanded nodes
   private captureExpandedNodes(nodes: TreeNode<PartnerTree>[]) {
     if (!nodes) return;
-    
+
     nodes.forEach(node => {
       if (node.expanded) {
         if (node.data && node.data.id) {
           this.expandedNodes.set(String(node.data.id), true);
         }
       }
-      
+
       if (node.children && node.children.length > 0) {
         this.captureExpandedNodes(node.children);
       }
@@ -401,12 +385,12 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   // Recursive function to restore expanded nodes
   private applyExpansionState(nodes: TreeNode<PartnerTree>[]) {
     if (!nodes) return;
-    
+
     nodes.forEach(node => {
       if (node.data && node.data.id && this.expandedNodes.has(String(node.data.id))) {
         node.expanded = true;
       }
-      
+
       if (node.children && node.children.length > 0) {
         this.applyExpansionState(node.children);
       }

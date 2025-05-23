@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -33,6 +34,7 @@ public class UNOPSPartnerManager : IPartnerManager
     private BaseRepository<UNOPSPartner> PartnerRepository;
     private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
     private BaseRepository<UNOPSPartnerTree> PartnerTreeRepository;
+    private PartnerTreeService PartnerTreeService;
 
     private CommonEntityRepository commonRepository;
 
@@ -41,40 +43,30 @@ public class UNOPSPartnerManager : IPartnerManager
 
     //private string[] includes = ["Currency", "Documents"];
 
-    private PartnerModel MapEntityToModel(UNOPSPartner entity, IMapper mapper)
+    private async Task<PartnerModel> MapEntityToModelAsync(UNOPSPartner entity, IMapper mapper)
     {
         // Use AutoMapper with the updated configuration
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
 
-        if (result.PartnerGroupCode != null && entity.PartnerGroup != null)
+        if (result.PartnerGroupCode != null && PartnerTreeService != null)
         {
-            result.PartnerGroupName = entity.PartnerGroup.Name;
-            result.PartnerGroupCode = entity.PartnerGroup.Code;
-            result.PartnerGroupId = entity.PartnerGroup.Id;
+            var partnerTreeGroup = await PartnerTreeService.GetPartnerTreeByCodeAsync(result.PartnerGroupCode);
+            var partnerTreeCategory = await PartnerTreeService.GetPartnerCategoryByPartnerGroupCodeAsync(result.PartnerGroupCode);
+            if (partnerTreeGroup != null) {
+                result.PartnerGroupName = partnerTreeGroup.Name;
+                result.PartnerGroupCode = partnerTreeGroup.Code;
+                result.PartnerGroupId = partnerTreeGroup.Id;
+            }
+
+            if (partnerTreeCategory != null) {
+                result.PartnerCategoryCode = partnerTreeCategory.Code;
+                result.PartnerCategoryName = partnerTreeCategory.Name;
+                result.PartnerCategoryId = partnerTreeCategory.Id;
+            }
         }
 
         return result;
     }
-    /*private static ExternalPartnerModel MapEntityToExternalModel(UNOPSPartner entity, IMapper mapper)
-    {
-        var result = mapper.Map<UNOPSPartner, ExternalPartnerModel>(entity);
-
-        *//*result.EligibleEntities = entity.EligibleEntities?.Select(mapper.Map<EligibleEntityModel>).ToList();
-        
-        var appType = typeof(ApplicationType)
-            .GetMembers()
-            .Select(x => new { value = x, attr = x.GetCustomAttributes(typeof(EnumDisplayNameAttribute), true).Cast<EnumDisplayNameAttribute>().SingleOrDefault() })
-            .Where(x => x.attr != null)
-            .Select(x => new ApplicationTypeModel() { Id = x.value.Name, DisplayName = x.attr?.Value })
-            .Where(x => x.Id == entity.ApplicationTypeCode)
-            .FirstOrDefault();
-
-        result.ApplicationType = appType;*//*
-
-        //result.Extensions.Add("project", project);
-
-        return result;
-    }*/
 
     private UNOPSPartner MapModelToEntity(PartnerRequest model, UNOPSPartner entity)
     {
@@ -110,7 +102,7 @@ public class UNOPSPartnerManager : IPartnerManager
         return MapModelToEntity(model, new UNOPSPartner());
     }
 
-    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
+    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService)
     {
         _mapper = mapper;
         _context = context;
@@ -118,6 +110,8 @@ public class UNOPSPartnerManager : IPartnerManager
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
         PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
+        
+        PartnerTreeService = partnerTreeService;
         
         GoogleCloudStorageService = new GoogleCloudStorageService(configuration);
 
@@ -133,30 +127,83 @@ public class UNOPSPartnerManager : IPartnerManager
         return _mapper.Map<PartnerModel>(entity);
     }
 
-    public PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerCategory"])
+            .GetAll(["PartnerOffice", "PartnerCategory", "Contacts"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
-        return query.Paginate(
-            x => MapEntityToModel(x, _mapper),
-            request
-        );
-    }
-
-    public PaginationResponse<PartnerModel> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination)
-    {
-        // Apply the specification to the query
-        var query = PartnerRepository.GetAll().AsQueryable();
-        var filteredQuery = query.ApplySpecification(specification);
+        // Get total count
+        var totalCount = query.Count();
         
         // Apply pagination
-        return filteredQuery.Paginate(
-            x => _mapper.Map<PartnerModel>(x),
-            pagination
-        );
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        if (request.OrderBy != null)
+        {
+            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+        }
+        
+        // Get the entities for this page
+        var entities = query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToList();
+        
+        // Map entities asynchronously
+        var mappedEntities = new List<PartnerModel>();
+        foreach (var entity in entities)
+        {
+            var mapped = await MapEntityToModelAsync(entity, _mapper);
+            mappedEntities.Add(mapped);
+        }
+
+        return new PaginationResponse<PartnerModel>
+        {
+            TotalCount = totalCount,
+            Records = mappedEntities
+        };
+    }
+
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination)
+    {
+        // Apply the specification to the query
+        var query = PartnerRepository.GetAll(["Contacts"]).AsQueryable();
+        var filteredQuery = query.ApplySpecification(specification);
+        
+        // Get total count
+        var totalCount = filteredQuery.Count();
+        
+        // Apply pagination
+        var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+        var excludedRows = (pageIndex - 1) * pagination.PageSize;
+        
+        if (pagination.OrderBy != null)
+        {
+            filteredQuery = filteredQuery.OrderByColumnName(pagination.OrderBy, pagination.Ascending ?? true);
+        }
+        
+        // Get the entities for this page
+        var entities = filteredQuery
+            .Skip(excludedRows)
+            .Take(pagination.PageSize)
+            .ToList();
+        
+        // Map entities asynchronously
+        var mappedEntities = new List<PartnerModel>();
+        foreach (var entity in entities)
+        {
+            var mapped = await MapEntityToModelAsync((UNOPSPartner)entity, _mapper);
+            mappedEntities.Add(mapped);
+        }
+
+        return new PaginationResponse<PartnerModel>
+        {
+            TotalCount = totalCount,
+            Records = mappedEntities
+        };
     }
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
@@ -167,6 +214,7 @@ public class UNOPSPartnerManager : IPartnerManager
             return default;
         }
         
+        // Load partner office if needed
         if (item.PartnerOfficeId.HasValue)
         {
             var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
@@ -176,7 +224,7 @@ public class UNOPSPartnerManager : IPartnerManager
             }
         }
 
-        return MapEntityToModel(item, _mapper);
+        return await MapEntityToModelAsync(item, _mapper);
     }
 
     /*public async Task<string?> GetPartnerStage(int id)
@@ -223,7 +271,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.UpdateAsync(entity);
 
-        return MapEntityToModel(entity, _mapper);
+        return await MapEntityToModelAsync(entity, _mapper);
     }
 
     /*public async Task<PartnerModel?> UpdateStage(int userId, int id, string newStage)
@@ -258,7 +306,7 @@ public class UNOPSPartnerManager : IPartnerManager
     }
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory"];
+        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory", "Contacts"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -267,23 +315,20 @@ public class UNOPSPartnerManager : IPartnerManager
             return default;
         }
 
-        var result = _mapper.Map<PartnerModel>(item);
-
-        //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
-
+        // Load partner office if needed
         if (item.PartnerOfficeId.HasValue)
         {
             var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
             if (partnerOffice != null)
             {
-                result.PartnerOffice = _mapper.Map<OrganizationHierarchyModel>(partnerOffice);
+                item.PartnerOffice = partnerOffice;
             }
         }
 
-        return result;
+        return await MapEntityToModelAsync(item, _mapper);
     }
     
-    public PaginationResponse<PartnerModel> GetPartnersByPartnerGroup(int userId, string partnerGroupCode, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerGroupCode, PaginationRequest request)
     {
         // Add logging
         Console.WriteLine($"GetPartnersByPartnerGroup called with partnerGroupCode: {partnerGroupCode}");
@@ -309,15 +354,42 @@ public class UNOPSPartnerManager : IPartnerManager
             Console.WriteLine($"Found partner tree with Code: {code}");
             
             // Get all partners with the matching code
-            var q = PartnerRepository
+            var query = PartnerRepository
                 .GetAll()
                 .Where(x => !x.IsDeleted && x.PartnerGroupCode == code)
                 .AsQueryable();
 
-            var result = q.Paginate(
-                x => MapEntityToModel(x, _mapper),
-                request
-            );
+            // Get total count
+            var totalCount = query.Count();
+            
+            // Apply pagination
+            var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+            var excludedRows = (pageIndex - 1) * request.PageSize;
+            
+            if (request.OrderBy != null)
+            {
+                query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+            }
+            
+            // Get the entities for this page
+            var entities = query
+                .Skip(excludedRows)
+                .Take(request.PageSize)
+                .ToList();
+            
+            // Map entities asynchronously
+            var mappedEntities = new List<PartnerModel>();
+            foreach (var entity in entities)
+            {
+                var mapped = await MapEntityToModelAsync(entity, _mapper);
+                mappedEntities.Add(mapped);
+            }
+            
+            var result = new PaginationResponse<PartnerModel>
+            {
+                TotalCount = totalCount,
+                Records = mappedEntities
+            };
             
             Console.WriteLine($"Found {result.TotalCount} partners matching PartnerGroupCode: {code}");
             return result;
@@ -327,7 +399,6 @@ public class UNOPSPartnerManager : IPartnerManager
             Console.WriteLine($"Error in GetPartnersByPartnerGroup: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
             
-            // Rethrow the exception with more context
             // If no partner tree found, return empty result
             return new PaginationResponse<PartnerModel>
             {
@@ -335,23 +406,9 @@ public class UNOPSPartnerManager : IPartnerManager
                 TotalCount = 0
             };
         }
-        
-        // Get the code from the partner tree
-        var partnerTreeCode = partnerTree.Code;
-        
-        // Get all partners with the matching code
-        var query = PartnerRepository
-            .GetAll()
-            .Where(x => !x.IsDeleted && x.PartnerGroupCode == partnerTreeCode)
-            .AsQueryable();
-
-        return query.Paginate(
-            x => MapEntityToModel(x, _mapper),
-            request
-        );
     }
     
-    public PaginationResponse<PartnerModel> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request)
     {
         // First get all partner trees with this category code
         // By default take the Partner Tree CODE
@@ -383,10 +440,37 @@ public class UNOPSPartnerManager : IPartnerManager
             .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
-        return query.Paginate(
-            x => MapEntityToModel(x, _mapper),
-            request
-        );
+        // Get total count
+        var totalCount = query.Count();
+        
+        // Apply pagination
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        if (request.OrderBy != null)
+        {
+            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+        }
+        
+        // Get the entities for this page
+        var entities = query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToList();
+        
+        // Map entities asynchronously
+        var mappedEntities = new List<PartnerModel>();
+        foreach (var entity in entities)
+        {
+            var mapped = await MapEntityToModelAsync(entity, _mapper);
+            mappedEntities.Add(mapped);
+        }
+
+        return new PaginationResponse<PartnerModel>
+        {
+            TotalCount = totalCount,
+            Records = mappedEntities
+        };
     }
     
     public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)

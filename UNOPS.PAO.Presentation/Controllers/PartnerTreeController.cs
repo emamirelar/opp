@@ -49,7 +49,7 @@ public class PartnerTreeController : BaseController
     {
         try
         {
-            return Ok(_manager.GetPartnerTrees(CurrentUserId, sortBy, ascending));
+            return Ok(_manager.GetPartnerTreesAsync(CurrentUserId, sortBy, ascending));
         }
         catch (BusinessException ex)
         {

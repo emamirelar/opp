@@ -56,31 +56,82 @@ public class PartnerManager : IPartnerManager
         return mapper.Map<PartnerModel>(entity);
     }
 
-    public PaginationResponse<PartnerModel> GetPartners(int userId, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerCategory"])
+            .GetAll(["PartnerOffice", "PartnerCategory", "Contacts"])
             .Where(x => !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
             .AsQueryable();
 
-        return query.Paginate(
-            x => mapper.Map<PartnerModel>(x),
-            request
-        );
+        // Get total count
+        var totalCount = await query.CountAsync();
+        
+        // Apply pagination
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        if (request.OrderBy != null)
+        {
+            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+        }
+        
+        // Get the entities for this page
+        var entities = await query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToListAsync();
+        
+        // Map entities
+        var mappedEntities = entities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
+
+        return new PaginationResponse<PartnerModel>
+        {
+            TotalCount = totalCount,
+            Records = mappedEntities
+        };
     }
     
-    public PaginationResponse<PartnerModel> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersWithSpecification(int userId, ISpecification<Partner> specification, PaginationRequest pagination)
     {
         // Apply the specification to the query
         var query = PartnerRepository.GetAll().AsQueryable();
         var filteredQuery = query.ApplySpecification(specification)
             .Where(x => x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit);
         
+        // Get total count
+        var totalCount = await filteredQuery.CountAsync();
+        
         // Apply pagination
-        return filteredQuery.Paginate(
-            x => mapper.Map<PartnerModel>(x),
-            pagination
-        );
+        var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+        var excludedRows = (pageIndex - 1) * pagination.PageSize;
+        
+        if (pagination.OrderBy != null)
+        {
+            filteredQuery = filteredQuery.OrderByColumnName(pagination.OrderBy, pagination.Ascending ?? true);
+        }
+        
+        // Get the entities for this page
+        var entities = await filteredQuery
+            .Skip(excludedRows)
+            .Take(pagination.PageSize)
+            .ToListAsync();
+        
+        // Map entities
+        var mappedEntities = entities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
+
+        return new PaginationResponse<PartnerModel>
+        {
+            TotalCount = totalCount,
+            Records = mappedEntities
+        };
+    }
+
+    // Implementation for UNOPSPartner specification (interface requirement)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersWithSpecification(int userId, ISpecification<UNOPSPartner> specification, PaginationRequest pagination)
+    {
+        // This implementation doesn't support UNOPSPartner specifications since this manager works with Partner entities
+        // Return empty result or throw NotSupportedException
+        throw new NotSupportedException("This PartnerManager implementation does not support UNOPSPartner specifications. Use UNOPSPartnerManager instead.");
     }
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
@@ -186,7 +237,7 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory"];
+        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory", "Contacts"];
 
         var item = await PartnerRepository
             .GetAll(includes)
@@ -201,9 +252,8 @@ public class PartnerManager : IPartnerManager
         return mapper.Map<PartnerModel>(item);
     }
 
-    public PaginationResponse<PartnerModel> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request)
     {
-
         var partnerTreeCode = partnerTreeId;
         
         var query = PartnerRepository
@@ -211,23 +261,67 @@ public class PartnerManager : IPartnerManager
             .Where(x => !x.IsDeleted && x.PartnerGroupCode == partnerTreeCode)
             .AsQueryable();
 
-        return query.Paginate(
-            x => mapper.Map<PartnerModel>(x),
-            request
-        );
+        // Get total count
+        var totalCount = await query.CountAsync();
+        
+        // Apply pagination
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        if (request.OrderBy != null)
+        {
+            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+        }
+        
+        // Get the entities for this page
+        var entities = await query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToListAsync();
+        
+        // Map entities
+        var mappedEntities = entities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
+
+        return new PaginationResponse<PartnerModel>
+        {
+            TotalCount = totalCount,
+            Records = mappedEntities
+        };
     }
 
-    public PaginationResponse<PartnerModel> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request)
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request)
     {
         var query = PartnerRepository
             .GetAll(["PartnerOffice"])
             .Where(x => !x.IsDeleted && x.PartnerGroup != null && x.PartnerGroup.PartnerCategoryCode == partnerCategoryCode)
             .AsQueryable();
 
-        return query.Paginate(
-            x => mapper.Map<PartnerModel>(x),
-            request
-        );
+        // Get total count
+        var totalCount = await query.CountAsync();
+        
+        // Apply pagination
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        if (request.OrderBy != null)
+        {
+            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+        }
+        
+        // Get the entities for this page
+        var entities = await query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToListAsync();
+        
+        // Map entities
+        var mappedEntities = entities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
+
+        return new PaginationResponse<PartnerModel>
+        {
+            TotalCount = totalCount,
+            Records = mappedEntities
+        };
     }
 
     public async Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file)

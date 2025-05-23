@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { tap } from 'rxjs';
 import { PartnerTree } from '../models/partner-tree.model';
@@ -47,7 +47,7 @@ export class PartnerTreeService {
     if (!parentCode) {
       return [];
     }
-    return this.parentOptions.filter(option => 
+    return this.parentOptions.filter(option =>
       option.parent === parentCode || option.code === parentCode
     );
   }
@@ -61,7 +61,7 @@ export class PartnerTreeService {
           const originalData = JSON.parse(JSON.stringify(data));
           const flatData: PartnerTree[] = this.flattenTree(originalData);
           this.parentOptions = flatData;
-          
+
           this.partnerGroupOptions = this.parentOptions;
           this.isLoading.set(false);
         },
@@ -112,7 +112,7 @@ export class PartnerTreeService {
         complete: () => {
           this.isLoading.set(false);
         }
-      })); 
+      }));
   }
 
   deletePartnerLevel(id: string) {

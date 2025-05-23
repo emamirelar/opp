@@ -45,7 +45,7 @@ public class PartnerController : BaseController
 
     [HttpGet(APIDictionary.Partner)]
     [AutoAuthorize]
-    public ActionResult<PaginationResponse<PartnerModel>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
     {
         if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
         {
@@ -73,13 +73,13 @@ public class PartnerController : BaseController
         }
 
         var specification = new PartnerCompositeSpecification(request);
-        return _manager.GetPartnersWithSpecification(CurrentUserId, specification, request);
+        return Ok(await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
     }
     
     [HttpGet(APIDictionary.Partner + "/classic-search" )]
     // Internal call: get Partners created by logged-in user
     // TODO add permissions
-    public ActionResult GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
+    public async Task<ActionResult> GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
     {
         var specification = new PartnerCompositeClassicSearchSpecification(
             id: request.Id,
@@ -97,7 +97,7 @@ public class PartnerController : BaseController
             addressCountry: request.AddressCountry,
             searchText: request.SearchText);
 
-        return Ok(_manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
+        return Ok(await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
     }
 
 
@@ -171,11 +171,11 @@ public class PartnerController : BaseController
     }
 
     [HttpGet(APIDictionary.Partner + "/by-partner-group-code/{code}")]
-    public ActionResult<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(string code, [FromQuery] PaginationRequest request)
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerGroup(string code, [FromQuery] PaginationRequest request)
     {
         try
         {
-            var result = _manager.GetPartnersByPartnerGroup(CurrentUserId, code, request);
+            var result = await _manager.GetPartnersByPartnerGroup(CurrentUserId, code, request);
             return Ok(result);
         }
         catch (Exception ex)
@@ -185,11 +185,11 @@ public class PartnerController : BaseController
     }
 
     [HttpGet(APIDictionary.Partner + "/by-partner-category-code/{code}")]
-    public ActionResult<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(string code, [FromQuery] PaginationRequest request)
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerCategory(string code, [FromQuery] PaginationRequest request)
     {
         try
         {
-            var result = _manager.GetPartnersByPartnerCategory(CurrentUserId, code, request);
+            var result = await _manager.GetPartnersByPartnerCategory(CurrentUserId, code, request);
             return Ok(result);
         }
         catch (Exception ex)

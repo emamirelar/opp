@@ -103,6 +103,22 @@ export class PartnerComponent implements OnDestroy, OnInit {
 
   columns: ListViewColumn[] = [
     {
+      field: 'partnerCategoryName',
+      label: 'label.partnerTree.partnerCategory',
+      sortable: false,
+      type: 'text',
+      width: '15%',
+      ellipsis: true
+    },
+    {
+      field: 'partnerGroupName',
+      label: 'label.partnerTree.partnerGroup',
+      sortable: false,
+      type: 'text',
+      width: '15%',
+      ellipsis: true
+    },
+    {
       field: 'logoUrl',
       label: '',
       sortable: false,
@@ -115,18 +131,12 @@ export class PartnerComponent implements OnDestroy, OnInit {
       type: 'text'
     },
     {
-      field: 'status',
-      label: 'label.partner.status',
+      field: 'first5ContactsByDate.profilePictureUrl',
+      firstLetterFallbackField: 'first5ContactsByDate.firstName',
+      label: 'label.partner.partnerTeam',
       sortable: false,
-      type: 'conditionalIcon',
-      conditionFn: (rowData: any) => rowData.status === 'Active'
-    },
-    {
-      field: 'newEngagement',
-      label: 'label.partner.newEngagement',
-      sortable: false,
-      type: 'conditionalIcon',
-      conditionFn: (rowData: any) => rowData.newEngagement === 'Allowed'
+      type: 'multiple-avatars',
+      width: '10%',
     }
   ];
 

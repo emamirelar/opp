@@ -24,8 +24,8 @@
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.partnerCategory" | translate }}</label>
     <p-select
-    [disabled]="!canEditPartnerCategory()"
-    [options]="parentOptions" formControlName="partnerCategory" optionLabel="name" valueField="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Category" class="w-full" [appendTo]="'body'">
+    [disabled]="record?.partnerCategoryEditable !== true"
+    [options]="parentOptions" formControlName="partnerCategoryCode" optionLabel="name" valueField="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Category" class="w-full" [appendTo]="'body'">
       <ng-template let-item pTemplate="item">
         <div>{{ item.name }}</div>
       </ng-template>
@@ -34,9 +34,9 @@
 
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.partnerGroup" | translate }}</label>
-    <p-select [options]="filteredPartnerGroupOptions" 
-    [disabled]="!canEditPartnerGroup()"
-    formControlName="partnerGroup" optionLabel="name" valueField="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Group" class="w-full" [appendTo]="'body'">
+    <p-select [options]="filteredPartnerGroupOptions"
+    [disabled]="record?.partnerGroupEditable !== true"
+    formControlName="partnerGroupCode" optionLabel="name" valueField="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Group" class="w-full" [appendTo]="'body'">
       <ng-template let-item pTemplate="item">
         <div>{{ item.name }}</div>
       </ng-template>

@@ -34,6 +34,7 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Partner } from '../../../models/partner.model';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { JsonPipe } from '@angular/common';
+import { PartnerTreeService } from '../../../services/partner-tree.service';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -133,6 +134,8 @@ export class PartnerEditDialogComponent implements OnInit {
   @Input() public record: Partner = {};
   @Output() onRecordCreationSuccess = new EventEmitter<any>();
 
+  partnerTreeService = inject(PartnerTreeService);
+
   showValidationFailedError = signal<boolean>(false);
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
@@ -142,7 +145,7 @@ export class PartnerEditDialogComponent implements OnInit {
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
   allPartnerOfficesData = this.cachedDataService.allPartnerOffices;
-  allPartnerCategoriesData = this.cachedDataService.allPartnerCategories;
+  allPartnerCategoriesData = this.cachedDataService.partnerCategoryGroups;
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
   recordId: string = '';
   recordData = signal<any>({});
