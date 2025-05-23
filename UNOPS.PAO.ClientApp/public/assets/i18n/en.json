@@ -183,7 +183,8 @@
       "riskProfile": "AI Risk Profile",
       "partnerNews": "Partner News",
       "partnerOffice": "Partner Office",
-      "partnerCategory": "Partner Category"
+      "partnerCategory": "Partner Category",
+      "partnerTeam": "Partner Team"
     },
     "clarificationDeadline": "Clarification Deadline",
     "document": {

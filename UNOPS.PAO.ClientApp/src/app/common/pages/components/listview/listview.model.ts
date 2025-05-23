@@ -13,8 +13,9 @@ export interface ListViewColumn {
    * - 'translate': Use the translation pipe to translate the value
    * - 'avatar': Display an image URL as an avatar using p-avatar component
    * - 'email': Display as clickable email with mailto link
+   * - 'multiple-avatars': Display multiple avatars from an array of objects
    */
-  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon';
+  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars';
   sortable: boolean;
   width?: string;
   /**
@@ -27,6 +28,16 @@ export interface ListViewColumn {
   format?: 'date' | 'number' | 'currency' | 'email';
   template?: string;
   conditionFn?: (rowData: any) => boolean;
+  /**
+   * Whether to apply CSS ellipsis (text truncation with "...") when text overflows
+   * @default false
+   */
+  ellipsis?: boolean;
+  /**
+   * Field to use as fallback for generating initials when avatar image is not available
+   * Used primarily with 'multiple-avatars' type
+   */
+  firstLetterFallbackField?: string;
 }
 
 export interface ListViewConfig {

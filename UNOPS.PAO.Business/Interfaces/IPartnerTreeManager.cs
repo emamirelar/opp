@@ -12,7 +12,7 @@ public interface IPartnerTreeManager
 {
     Task<PartnerTreeModel> CreatePartnerTreeAsync(PartnerTreeDataModel model);
 
-    IEnumerable<PartnerTreeModel> GetPartnerTrees(int userId, string sortBy = "Name", bool ascending = true);
+    IEnumerable<PartnerTreeModel> GetPartnerTreesAsync(int userId, string sortBy = "Name", bool ascending = true);
 
     Task<PartnerTreeModel?> GetPartnerTree(int userId, int id);
 

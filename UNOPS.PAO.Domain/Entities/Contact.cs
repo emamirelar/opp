@@ -38,6 +38,8 @@ public class Contact : ModifiableDeletableEntity
     {
         Interactions = new HashSet<Interaction>();
     }
+    
+    [JsonIgnore]  // Prevents circular reference in serialization
     public Partner Partner { get; set; }
     public int PartnerId { get; set; }
     public List<Document>? Documents { get; set; }

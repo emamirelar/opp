@@ -112,7 +112,7 @@ export class CachedDataService {
   private currentUserData = signal<any>({});
   currentUser = this.currentUserData.asReadonly();
 
-  constructor() { 
+  constructor() {
     this.loadSalutations();
     this.loadStatus();
     this.loadPronouns();
@@ -376,7 +376,7 @@ export class CachedDataService {
       id: 'They/Them',
       name: 'They/Them'
     }, {
-      id: 'He/They',  
+      id: 'He/They',
       name: 'He/They'
     }, {
       id: 'She/They',
@@ -463,7 +463,7 @@ export class CachedDataService {
     if (this.allPartnersData() === undefined || this.allPartnersData().length <= 0) {
       // Default to empty array before API response
       this.allPartnersData.set([]);
-      
+
       this.isLoading.set(true);
       this.http.get('/api/values/partners').subscribe({
         next: (data: any) => {
