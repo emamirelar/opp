@@ -50,20 +50,42 @@ public class PartnerController : BaseController
     }
 
     [HttpGet(APIDictionary.Partner)]
-    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll([FromQuery] PaginationRequest request)
+    [AutoAuthorize]
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
     {
-        // Check permission to read partners
-        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
-        if (permissionResult != null) return permissionResult;
-        
-        var result = await _manager.GetPartnersAsync(User, request);
-        return Ok(result);
+        if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
+        {
+            try
+            {
+                var newRequest = AdvancedSearchHelper.MapAdvancedSearchCriteria<PartnerFilterRequest>(searchCriteria);
+                // Copy over any properties that weren't in the search criteria but were in the original request
+                foreach (var prop in typeof(PartnerFilterRequest).GetProperties())
+                {
+                    if (prop.GetValue(newRequest) == null)
+                    {
+                        prop.SetValue(newRequest, prop.GetValue(request));
+                    }
+                }
+                request = newRequest;
+            }
+            catch (ArgumentException ex)
+            {
+                throw new BusinessException(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                throw new BusinessException($"Failed to process advanced search criteria: {ex.Message}");
+            }
+        }
+
+        var specification = new PartnerCompositeSpecification(request);
+        return Ok(await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
     }
     
     [HttpGet(APIDictionary.Partner + "/classic-search" )]
     // Internal call: get Partners created by logged-in user
     // TODO add permissions
-    public ActionResult GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
+    public async Task<ActionResult> GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
     {
         var specification = new PartnerCompositeClassicSearchSpecification(
             id: request.Id,
@@ -81,7 +103,7 @@ public class PartnerController : BaseController
             addressCountry: request.AddressCountry,
             searchText: request.SearchText);
 
-        return Ok(_manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
+        return Ok(await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
     }
 
 
@@ -188,11 +210,7 @@ public class PartnerController : BaseController
     {
         try
         {
-            // Check permission to read partners
-            var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
-            if (permissionResult != null) return permissionResult;
-            
-            var result = await _manager.GetPartnersByPartnerGroupAsync(User, code, request);
+            var result = await _manager.GetPartnersByPartnerGroup(CurrentUserId, code, request);
             return Ok(result);
         }
         catch (Exception ex)
@@ -206,11 +224,7 @@ public class PartnerController : BaseController
     {
         try
         {
-            // Check permission to read partners
-            var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
-            if (permissionResult != null) return permissionResult;
-            
-            var result = await _manager.GetPartnersByCategoryAsync(User, code, request);
+            var result = await _manager.GetPartnersByPartnerCategory(CurrentUserId, code, request);
             return Ok(result);
         }
         catch (Exception ex)

@@ -193,11 +193,6 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   constructor() {
     this.rows = this.config.pageSize || 50;
     this.setupSearchDebounce();
-    
-    // Add debugging for initialization
-    console.log('ListviewComponent constructor');
-    console.log('Initial config:', this.config);
-    console.log('Is advanced search?', this.isAdvancedSearch());
   }
 
   ngAfterViewInit(): void {
@@ -518,11 +513,6 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   }
 
   private initializeSearchableFields(): void {
-    console.log('Initializing searchable fields...');
-    console.log('Current config:', this._config);
-    console.log('Current columns:', this.columns);
-    
-    // First try to get searchable fields from config
     if (this._config.searchConfig?.searchableFields) {
       this.searchableFields = this._config.searchConfig.searchableFields.map(field => {
         const column = this.columns.find(c => c.field === field.field);
@@ -532,10 +522,8 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
           type: column ? this.getFieldType(column) : 'string',
           operators: column ? this.getOperatorsForType(this.getFieldType(column)) : ['is', 'is not', 'like', 'not like']
         };
-        console.log(`Mapped field ${field.field}:`, result);
         return result;
       });
-      console.log('Initialized searchable fields from config:', this.searchableFields);
       return;
     }
 
@@ -550,7 +538,6 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       console.log(`Mapped column ${column.field}:`, result);
       return result;
     });
-    console.log('Initialized searchable fields from columns:', this.searchableFields);
   }
 
   private getFieldType(column: ListViewColumn): 'string' | 'number' | 'date' {

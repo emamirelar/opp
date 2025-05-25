@@ -16,7 +16,15 @@ public class MappingProfile : Profile
         CreateMap<InteractionRequest, Interaction>();
         CreateMap<PartnerRequest, Partner>();
         CreateMap<UpdatePartnerRequest, Partner>();
-        CreateMap<Partner, PartnerModel>();
+        CreateMap<Partner, PartnerModel>()
+            .ForMember(dest => dest.First5ContactsByDate, opt => opt.MapFrom(src => src.First5ContactsByDate));
+        CreateMap<PartnerModel, Partner>();
+        CreateMap<Contact, ContactValueModel>();
+        CreateMap<Contact, ContactModel>()
+            .ForMember(dest => dest.Partner, opt => opt.Ignore())
+            .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null));
+        CreateMap<ContactModel, Contact>()
+            .ForMember(dest => dest.Partner, opt => opt.Ignore());
         CreateMap<AiPromptModel, AiPrompt>();
         CreateMap<AiScreenMappingModel, AiScreenMapping>();
         CreateMap<AiChatHistoryModel, AiChatHistory>();
@@ -44,9 +52,6 @@ public class MappingProfile : Profile
         CreateMap<Partner, PartnerValueModel>();
         CreateMap<PartnerTree, PartnerTreeModel>();
         CreateMap<PartnerTreeModel, PartnerTree>();
-        CreateMap<Partner, PartnerModel>();
-        CreateMap<PartnerModel, Partner>();
-        CreateMap<Contact, ContactValueModel>();
         CreateMap<GrantUser, UserValueModel>();
         CreateMap<GrantUser, PAOUserModel>();
         CreateMap<UserProfile, UserProfileValueModel>();

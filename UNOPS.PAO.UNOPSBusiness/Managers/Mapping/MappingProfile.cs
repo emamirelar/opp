@@ -13,8 +13,12 @@ public class MappingProfile : Profile
     {
         CreateMap<Project, ProjectModel>();
         CreateMap<ContactRequest, UNOPSContact>();
-        CreateMap<UNOPSContact, ContactModel>();
-        CreateMap<ContactModel, UNOPSContact>();
+        CreateMap<UNOPSContact, ContactModel>()
+            .ForMember(dest => dest.Partner, opt => opt.Ignore())
+            .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
+            .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.ProfilePictureUrl));
+        CreateMap<ContactModel, UNOPSContact>()
+            .ForMember(dest => dest.Partner, opt => opt.Ignore());
         CreateMap<InteractionRequest, UNOPSInteraction>();
         CreateMap<UNOPSInteraction, InteractionModel>();
         CreateMap<InteractionModel, UNOPSInteraction>();
@@ -48,6 +52,8 @@ public class MappingProfile : Profile
         CreateMap<PartnerRequest, UNOPSPartner>();
         CreateMap<UpdatePartnerRequest, UNOPSPartner>();
         
-        CreateMap<UNOPSPartner, PartnerModel>();
+        CreateMap<UNOPSPartner, PartnerModel>()
+            .ForMember(dest => dest.First5ContactsByDate, opt => opt.MapFrom((src, dest, destMember, context) => 
+                src.First5ContactsByDate.Cast<UNOPSContact>().Select(contact => context.Mapper.Map<UNOPSContact, ContactModel>(contact)).ToList()));
     }
 }

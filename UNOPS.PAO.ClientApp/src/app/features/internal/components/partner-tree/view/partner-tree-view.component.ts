@@ -86,7 +86,6 @@ export class PartnerTreeViewComponent implements OnInit {
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
-  partnerTreeService = inject(PartnerTreeService);
 
   partnerTreeId = signal<number>(0);
   partnerTree = signal<PartnerTree | null>(null);
@@ -134,7 +133,7 @@ export class PartnerTreeViewComponent implements OnInit {
     ref.onClose.subscribe((result: PartnerTree) => {
       if (result) {
         // Reload the tree data after successful edit
-        this.partnerTreeService.getPartnerTreeDataById(result.id!.toString()).subscribe({
+        this.cachedDataService.partnerTreeService.getPartnerTreeDataById(result.id!.toString()).subscribe({
           next: (data: any) => {
             this.partnerTree.set(data.data);
             this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));

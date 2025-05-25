@@ -60,12 +60,12 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
           this.partnerGroupOptions.set(this.cachedDataService.getParterGroupByCategoryCode(partnerTree.partnerCategoryCode));
         } else if (this.partnerTree()?.partnerGroupCode) {
           const partnerGroupCode = this.partnerTree()?.partnerGroupCode;
-          
+
           // Find which category contains this group
-          const categoryWithGroup = categories.find(category => 
+          const categoryWithGroup = categories.find(category =>
             category.children.some(group => group.partnerGroupCode === partnerGroupCode)
           );
-          
+
           if (categoryWithGroup) {
             this.selectedPartnerCategory = categoryWithGroup;
             this.partnerGroupOptions.set(categoryWithGroup.children);

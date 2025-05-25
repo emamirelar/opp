@@ -30,14 +30,14 @@ interface PartnerTreeFormControls {
 @Component({
   selector: 'app-partner-tree-item',
   imports: [
-    ReactiveFormsModule, 
-    SelectModule, 
-    TranslateModule, 
-    ButtonModule, 
-    PanelModule, 
-    InputTextModule, 
-    CommonModule, 
-    TextareaModule, 
+    ReactiveFormsModule,
+    SelectModule,
+    TranslateModule,
+    ButtonModule,
+    PanelModule,
+    InputTextModule,
+    CommonModule,
+    TextareaModule,
     DialogModule,
     PartnerTreeItemFooterComponent
   ],
@@ -85,7 +85,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   constructor() {
     this.record = this.dialogConfig.data?.record;
     this.parentOptions = this.partnerTreeService.parentOptions;
-    
+
     // Setup footer template and bind actions
     this.dialogConfig.templates = {
       footer: PartnerTreeItemFooterComponent
@@ -109,7 +109,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
       }
     }
     this.updateFormValidity();
-    
+
     // Subscribe to form status changes
     this.formGroup.statusChanges.subscribe(() => {
       this.updateFormValidity();
@@ -125,7 +125,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
 
   handleDelete() {
     if (!this.record?.id) return;
-    
+
     const recordToDelete = { ...this.record, status: '0' };
     this.partnerTreeService.updatePartnerTreeLevel([recordToDelete]).subscribe({
       next: (data: any) => {
@@ -148,7 +148,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
       if (formValue.parent) {
         this.parent = this.parentOptions.find(p => p.code === formValue.parent);
       }
-      
+
       const payload: PartnerTree = {
         id: formValue.id || undefined,
         name: formValue.name || undefined,
@@ -180,7 +180,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
       if (formValue.parent) {
         this.parent = this.parentOptions.find(p => p.code === formValue.parent);
       }
-      
+
       const payload: PartnerTree = {
         id: formValue.id || undefined,
         name: formValue.name || undefined,
@@ -222,7 +222,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   onNameBlur() {
     const nameValue = this.formGroup.get('name')?.value;
     const codeValue = this.formGroup.get('code')?.value;
-    
+
     // Only update code if it's empty and name has a value
     if (!codeValue && nameValue) {
       const formattedCode = nameValue.toUpperCase().replace(/\s+/g, '_');

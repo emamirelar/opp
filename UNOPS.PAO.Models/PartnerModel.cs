@@ -30,7 +30,10 @@ public class PartnerModel
     public string LevyPotentiallyApplies { get; set; }
     public string? ReasonForLevyNotApplying { get; set; }
     public string? LevyTreatment { get; set; }
-    //public List<ContactModel>? Contacts { get; set; }
+    
+    // First 5 contacts by date (computed property will be handled in mapping)
+    public List<ContactModel>? First5ContactsByDate { get; set; }
+    
     public List<DocumentModel>? Documents { get; set; }
     public OrganizationHierarchyModel? PartnerOffice { get; set; }
     public int? PartnerOfficeId { get; set; }
@@ -39,6 +42,10 @@ public class PartnerModel
     public string? PartnerGroupCode{ get; set; }
     public string? PartnerGroupName{ get; set; }
     public int? PartnerGroupId { get; set; }
+    
+    public string? PartnerCategoryCode { get; set; }
+    public string? PartnerCategoryName { get; set; }
+    public int? PartnerCategoryId { get; set; }
     
     /// <summary>
     /// Permissions for this specific partner

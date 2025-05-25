@@ -38,7 +38,7 @@ export class OrgStructureDialogComponent implements OnInit {
 
   ngOnInit() {
     console.log('OrgStructureDialogComponent initialized with ultra simple approach');
-    
+
     // Always use hard-coded test data for now until we resolve the display issues
     this.createUltraSimpleTestData();
   }
@@ -49,25 +49,25 @@ export class OrgStructureDialogComponent implements OnInit {
     if (this.mainRootNode) {
       return this.mainRootNode;
     }
-    
+
     // Look for node with type 0 (organization) and code OPS
-    this.mainRootNode = this.data.find(node => 
-      node.data.type === 0 && 
+    this.mainRootNode = this.data.find(node =>
+      node.data.type === 0 &&
       node.data.code === 'OPS'
     ) || null;
-    
+
     return this.mainRootNode;
   }
-  
+
   // Filter organizations based on search text
   filterOrganizations() {
     if (!this.searchText) {
       this.filteredData = [...this.data];
       return;
     }
-    
+
     const searchLower = this.searchText.toLowerCase();
-    
+
     this.filteredData = this.data.filter(node => {
       return (
         node.data.name?.toLowerCase().includes(searchLower) ||
@@ -77,7 +77,7 @@ export class OrgStructureDialogComponent implements OnInit {
       );
     });
   }
-  
+
   // Select a node from the grid view
   selectNode(node: TreeNode) {
     this.selectedNode = node;
@@ -90,15 +90,15 @@ export class OrgStructureDialogComponent implements OnInit {
     if (this.data.length === 0) {
       return [];
     }
-    
+
     // Start with a clean copy of limited records
     const limited = this.data.slice(0, limit);
-    
+
     // If we have a main root node, ensure it's included
     if (this.mainRootNode && !limited.some(node => node.data.id === this.mainRootNode?.data.id)) {
       limited.unshift(this.mainRootNode);
     }
-    
+
     return limited;
   }
 
@@ -107,11 +107,11 @@ export class OrgStructureDialogComponent implements OnInit {
     this.organizationService.getOrganizationHierarchy().subscribe({
       next: (response: any) => {
         console.log('Component: API response received:', response);
-        
+
         // Log data to console for debugging
         if (response && response.length > 0) {
           console.log('Component: First node in response:', response[0]);
-          
+
           // Check for data properties
           if (response[0].data) {
             console.log('Component: Node data properties:', Object.keys(response[0].data));
@@ -128,12 +128,12 @@ export class OrgStructureDialogComponent implements OnInit {
         } else {
           console.warn('Component: Empty response or no items in response array');
         }
-        
+
         // Set the data
         this.data = response;
         this.filteredData = [...response];
         console.log('Component: Data loaded:', this.data.length, 'nodes');
-        
+
         // Find main root node
         this.findMainRootNode(); // This will set this.mainRootNode
         if (this.mainRootNode) {
@@ -141,10 +141,9 @@ export class OrgStructureDialogComponent implements OnInit {
         } else {
           console.warn('No main organization node found with type 0 and code OPS');
         }
-        
+
         // Get limited data for testing
         this.limitedData = this.getLimitedData(5);
-        debugger;
         console.log('Limited data for testing:', this.limitedData.length, 'nodes');
       },
       error: (error: Error) => {
@@ -177,7 +176,7 @@ export class OrgStructureDialogComponent implements OnInit {
   getTypeText(type: number): string {
     switch (type) {
       case 0: return 'Organization';
-      case 1: return 'Business Group';  
+      case 1: return 'Business Group';
       case 2: return 'Country Office';
       case 3: return 'Unit';
       default: return `Type ${type}`;
@@ -212,17 +211,17 @@ export class OrgStructureDialogComponent implements OnInit {
     // Create a map of all nodes by their ID
     const nodeMap = new Map<number, TreeNode>();
     let rootNodes: TreeNode[] = [];
-    
+
     // First pass: Create all nodes
     response.forEach(item => {
       if (!item || !item.data) {
         console.warn('Invalid item in response:', item);
         return;
       }
-      
+
       const nodeData = item.data;
       console.log('Processing node:', nodeData.code, nodeData);
-      
+
       const node: TreeNode = {
         expanded: true,
         type: 'person',
@@ -236,20 +235,20 @@ export class OrgStructureDialogComponent implements OnInit {
         },
         children: []
       };
-      
+
       // Make sure data is fully assigned
       Object.keys(nodeData).forEach(key => {
         if (!(key in node.data)) {
           node.data[key] = nodeData[key];
         }
       });
-      
+
       nodeMap.set(nodeData.id, node);
     });
 
     // Find or create a root node of type 0
     let rootNode = Array.from(nodeMap.values()).find(n => n.data.type === 0 && n.data.code === 'OPS');
-    
+
     if (!rootNode) {
       console.log('Creating virtual root node');
       // Create a virtual root node if none exists
@@ -268,18 +267,18 @@ export class OrgStructureDialogComponent implements OnInit {
       };
       nodeMap.set(0, rootNode);
     }
-    
+
     // Second pass: Build the tree structure
     response.forEach(item => {
       const nodeData = item.data;
       const node = nodeMap.get(nodeData.id);
-      
+
       if (node) {
         // Process any existing children in the API response
         if (nodeData.children && nodeData.children.length > 0) {
           this.processChildren(node, nodeData.children, nodeMap);
         }
-        
+
         if (nodeData.parentId) {
           // Find parent by ID
           const parentNode = nodeMap.get(nodeData.parentId);
@@ -307,16 +306,16 @@ export class OrgStructureDialogComponent implements OnInit {
         }
       }
     });
-    
+
     // Sort all children nodes by type and then by name within each type
     this.sortTreeNodes(rootNode);
-    
+
     // Add the root node to the result
     rootNodes.unshift(rootNode);
-    
+
     return rootNodes;
   }
-  
+
   private sortTreeNodes(node: TreeNode) {
     if (node.children && node.children.length > 0) {
       // Sort the children by type first, then by name
@@ -326,7 +325,7 @@ export class OrgStructureDialogComponent implements OnInit {
         }
         return a.data.name.localeCompare(b.data.name);
       });
-      
+
       // Recursively sort children
       node.children.forEach(child => this.sortTreeNodes(child));
     }
@@ -351,15 +350,15 @@ export class OrgStructureDialogComponent implements OnInit {
         };
         nodeMap.set(child.id, childNode);
       }
-      
+
       const childNode = nodeMap.get(child.id);
-      
+
       if (childNode && parentNode.children) {
         // Add to parent if not already there
         if (!parentNode.children.some((c: TreeNode) => c.data.id === childNode.data.id)) {
           parentNode.children.push(childNode);
         }
-        
+
         // Process child's children recursively
         if (child.children && child.children.length > 0) {
           this.processChildren(childNode, child.children, nodeMap);
@@ -371,19 +370,19 @@ export class OrgStructureDialogComponent implements OnInit {
   // Count total nodes in the organization hierarchy
   getTotalNodeCount(): number {
     let count = 0;
-    
+
     const countNodes = (nodes: TreeNode[]) => {
       if (!nodes || nodes.length === 0) return;
-      
+
       count += nodes.length;
-      
+
       for (const node of nodes) {
         if (node.children && node.children.length > 0) {
           countNodes(node.children);
         }
       }
     };
-    
+
     countNodes(this.data);
     return count;
   }
@@ -481,19 +480,19 @@ export class OrgStructureDialogComponent implements OnInit {
         ]
       }
     ];
-    
+
     // Set the data
     this.data = testData;
     this.filteredData = [...testData];
     console.log('Test data loaded:', this.data);
-    
+
     // Find the main root node
     this.findMainRootNode();
-    
+
     // Log the debug info that should appear in the UI
     console.log('Nodes loaded:', this.getTotalNodeCount());
     console.log('Root nodes:', this.data.length);
-    
+
     if (this.data.length > 0 && this.data[0].data) {
       console.log('Sample node data:',
         'ID:', this.data[0].data.id,
@@ -508,7 +507,7 @@ export class OrgStructureDialogComponent implements OnInit {
   // Create the most basic possible test data
   createUltraSimpleTestData() {
     console.log('Creating ultra-simple test data with direct approach');
-    
+
     // Create ultra simple test data with exact PrimeNG TreeNode format
     this.data = [
       {
@@ -539,12 +538,12 @@ export class OrgStructureDialogComponent implements OnInit {
         ]
       }
     ];
-    
+
     // Set all data references
     this.filteredData = [...this.data];
     this.limitedData = [...this.data];
-    
+
     // Log the actual data structure for debugging
     console.log('Ultra-simple test data:', JSON.stringify(this.data, null, 2));
   }
-} 
+}

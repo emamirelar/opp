@@ -9,6 +9,7 @@ namespace UNOPS.PAO.Domain.Entities;
 
 public class PartnerTree : ModifiableDeletableEntity
 {
+    public static readonly string[] specialCategoryCodes = { "MULTILATERAL", "GOVERNMENT" };
     public string Description { get; set; }
     
     [Key]

@@ -44,7 +44,7 @@ public class PartnerTreeManager : IPartnerTreeManager
         return MapEntityToModel(entity);
     }
 
-    public IEnumerable<PartnerTreeModel> GetPartnerTrees(int userId, string sortBy = "Name", bool ascending = true)
+    public IEnumerable<PartnerTreeModel> GetPartnerTreesAsync(int userId, string sortBy = "Name", bool ascending = true)
     {
         var allTrees = PartnerTreeRepository
             .GetAllSortedAsync(sortBy, ascending)
@@ -128,7 +128,7 @@ public class PartnerTreeManager : IPartnerTreeManager
     public IEnumerable<object> GetCategoryAndGroupStructure(int userId)
     {
         // Get all partner trees
-        var partnerTreeStructure = GetPartnerTrees(userId).ToList();
+        var partnerTreeStructure = GetPartnerTreesAsync(userId).ToList();
         
         // Create a list to store categories
         var categories = new List<object>();

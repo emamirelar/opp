@@ -1,4 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
+using UNOPS.PAO.Business.Repositories.Generic;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -27,11 +31,18 @@ public class UNOPSManagerWrapper : ManagerWrapper
                                UserManager<PAOIdentityUser> userManager, IHttpContextAccessor httpContextAccessor, 
                                IBusinessSecurityService securityService = null) : base(mapper, context, userManager, httpContextAccessor)
     {
+        // Create a MemoryCache instance for services that need it
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        
+        // Create a PartnerTreeService instance
+        var partnerTreeRepository = new DataRepository<PartnerTree>(opsContext);
+        var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
+        
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
         contactManager = new UNOPSContactManager(mapper, opsContext, configuration, securityService);
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration);
-        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration);
-        partnerManager = new UNOPSPartnerManager(mapper,opsContext, configuration, securityService);
+        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, partnerTreeService);
+        partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, securityService);
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
         linkManager = new LinkManager(mapper, opsContext);
     }

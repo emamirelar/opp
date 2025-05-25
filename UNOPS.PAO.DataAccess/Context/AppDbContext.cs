@@ -80,6 +80,12 @@ public class AppDbContext : AuditableDbContext<int, int>
                 p.HasOne(x => x.PartnerOffice)
                     .WithMany()
                     .HasForeignKey(x => x.PartnerOfficeId);
+                
+                // Configure one-to-many relationship with Contacts
+                p.HasMany(x => x.Contacts)
+                    .WithOne(c => c.Partner)
+                    .HasForeignKey(c => c.PartnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         modelBuilder
