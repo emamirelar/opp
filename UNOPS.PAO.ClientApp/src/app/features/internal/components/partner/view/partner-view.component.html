@@ -16,11 +16,13 @@
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
             <span class="font-semibold">Partner Information</span>
-            <p-button icon="pi pi-pencil"
-                      [rounded]="true"
-                      [text]="true"
-                      [size]="'small'"
-                      (onClick)="handleEditClick()"></p-button>
+            @if (recordPermissions().permissions.canUpdate) {
+              <p-button icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        [size]="'small'"
+                        (onClick)="handleEditClick()"></p-button>
+            }
           </div>
         </ng-template>
 

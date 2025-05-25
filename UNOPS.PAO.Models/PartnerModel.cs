@@ -40,4 +40,8 @@ public class PartnerModel
     public string? PartnerGroupName{ get; set; }
     public int? PartnerGroupId { get; set; }
     
+    /// <summary>
+    /// Permissions for this specific partner
+    /// </summary>
+    public EntityPermissionsModel? Permissions { get; set; }
 }   

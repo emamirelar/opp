@@ -6,7 +6,7 @@
       {{ 'title.contacts' | translate }}
     </div>
     <div class="ml-auto flex gap-2 flex-wrap">
-      <ng-container *ngIf="(permissions$ | async)?.permissions?.canCreate">
+      <ng-container *ngIf="entityPermissions().permissions.canCreate">
         <p-button
           icon="pi pi-file-import"
           [label]="'button.import' | translate"

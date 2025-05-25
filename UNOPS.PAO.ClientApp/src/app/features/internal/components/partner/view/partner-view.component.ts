@@ -44,6 +44,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
 import { PartnerTabsComponent } from '../tabs/partner-tabs.component';
 import { Partner } from '../../../models/partner.model';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 @Component({
   selector: 'app-partner-view',
@@ -88,7 +89,6 @@ import { Partner } from '../../../models/partner.model';
 export class PartnerViewComponent implements OnInit {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
-  recordPermissions = signal<any>({});
   documentService = inject(DocumentService);
   dialogService = inject(DialogService);
 
@@ -99,6 +99,11 @@ export class PartnerViewComponent implements OnInit {
   translateService = inject(TranslateService);
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
+  permissionService = inject(PermissionUtilityService);
+  
+  // Permission management using utility service
+  private permissionUtils = this.permissionService.createInstancePermissions('Partner');
+  recordPermissions = this.permissionUtils.recordPermissions;
 
   private langChangeSubscription: Subscription = new Subscription();
   onRecordCreationSuccess = output();
@@ -139,6 +144,9 @@ export class PartnerViewComponent implements OnInit {
               this._loadRecordDetails();
             }
           });
+          
+          // Load permissions for this specific partner
+          this.permissionUtils.loadPermissions(this.recordId, this.cdr);
           
           this._loadGeminiData();
         }

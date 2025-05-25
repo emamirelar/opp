@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { NgIf, AsyncPipe } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
@@ -17,13 +17,12 @@ import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.com
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
 import {ListviewComponent} from '../../../../../common/pages/components/listview/listview.component';
 import {ContactService} from '../../../services/contact.service';
-import {FeedbackDialogService} from '../../../../../common/reusables/services/feedback-dialog.service';
+import {FeedbackDialogService} from '../../../../../common/pages/services/feedback-dialog.service';
 import {ListViewColumn, ListViewConfig, SearchParams} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 import { SearchField } from '../../../../../common/services/search-parser.service';
-import { PermissionService, EntityPermissions } from '../../../../../essentials/services/permission.service';
-import { BehaviorSubject } from 'rxjs';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 @Component({
   selector: 'app-contact-list',
@@ -52,7 +51,13 @@ export class ContactListComponent implements OnInit, OnDestroy {
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
   importDialogService = inject(ImportDialogService);
-  permissionService = inject(PermissionService);
+  permissionUtilityService = inject(PermissionUtilityService);
+  cdr = inject(ChangeDetectorRef);
+
+  // Permission management using utility service
+  private permissionUtils = this.permissionUtilityService.createEntityPermissions('Contact');
+  entityPermissions = this.permissionUtils.entityPermissions;
+  permissionsLoading = this.permissionUtils.permissionsLoading;
 
   // Define contact columns for the listview
   contactColumns: ListViewColumn[] = [
@@ -140,39 +145,11 @@ export class ContactListComponent implements OnInit, OnDestroy {
   // Track current search term
   currentSearchText = '';
 
-  // Track user permissions for the Contact entity
-  permissions$ = new BehaviorSubject<EntityPermissions>({
-    entity: 'Contact',
-    hasAccess: false,
-    permissions: {
-      canRead: false,
-      canCreate: false,
-      canUpdate: false,
-      canDelete: false
-    }
-  });
-
   ngOnInit() {
     console.log('Contact list config:', this.listviewConfig);
     
-    // Get the current route path for permission check
-    const currentPath = this.router.url;
-    
-    // Get permissions from cache or fetch if not available
-    const cachedPermissions = this.permissionService.getEntityPermissionsFromCache(currentPath);
-    if (cachedPermissions) {
-      console.log('Using cached permissions for path:', currentPath);
-      this.permissions$.next(cachedPermissions);
-      this.updateListViewConfig(cachedPermissions);
-    } else {
-      // If not in cache, fetch them
-      this.permissionService.getEntityPermissions(currentPath)
-        .subscribe(permissions => {
-          console.log('Permissions for path:', currentPath, permissions);
-          this.permissions$.next(permissions);
-          this.updateListViewConfig(permissions);
-        });
-    }
+    // Load permissions using utility service
+    this.permissionUtils.loadPermissions(this.router, this.cdr);
     
     this.route.queryParams
       .subscribe(params => {
@@ -184,16 +161,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
       });
   }
 
-  private updateListViewConfig(permissions: EntityPermissions) {
-    this.listviewConfig = {
-      ...this.listviewConfig,
-      enableExport: permissions.permissions?.canCreate || false
-    };
-  }
-
   ngOnDestroy() {
-    // Clear permission caches when leaving the list view
-    this.permissionService.clearPermissionCaches();
+    // No need to clear caches manually - utility service handles this
   }
 
   handleOnOpenRecordDetails(record: any) {
@@ -210,8 +179,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
 
   handleOnRecordDelete(record: Contact) {
     // Check if user has delete permission
-    const permissions = this.permissions$.getValue();
-    if (!permissions.permissions?.canDelete) {
+    if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'You do not have permission to delete contacts',
         summary: 'Permission Denied'
@@ -247,16 +215,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   openContactEditDialog(contactData: Contact = {}) {
-    const permissions = this.permissions$.getValue();
-    
     // Check if user has appropriate permission
-    if (contactData.id && !permissions.permissions?.canUpdate) {
+    if (contactData.id && !this.permissionUtilityService.canUpdate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'You do not have permission to edit contacts',
         summary: 'Permission Denied'
       });
       return;
-    } else if (!contactData.id && !permissions.permissions?.canCreate) {
+    } else if (!contactData.id && !this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'You do not have permission to create contacts',
         summary: 'Permission Denied'
@@ -288,10 +254,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   openBusinessCardScanner() {
-    const permissions = this.permissions$.getValue();
-    
     // Check if user has create permission
-    if (!permissions.permissions?.canCreate) {
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'You do not have permission to create contacts',
         summary: 'Permission Denied'
@@ -314,10 +278,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
   }
 
   openImportDialog() {
-    const permissions = this.permissions$.getValue();
-    
     // Check if user has create permission
-    if (!permissions.permissions?.canCreate) {
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'You do not have permission to import contacts',
         summary: 'Permission Denied'

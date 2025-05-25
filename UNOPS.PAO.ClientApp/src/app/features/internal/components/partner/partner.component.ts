@@ -15,6 +15,8 @@ import { PartnerEditDialogComponent } from './edit-dialog/partner-edit-dialog.co
 import { DialogService } from 'primeng/dynamicdialog';
 import { ImportDialogService } from '../../../../common/reusables/components/import/dialog/import-dialog.service';
 import { SearchField } from '../../../../common/services/search-parser.service';
+import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
+import { EntityPermissions } from '../../../../essentials/services/permission.service';
 
 @Component({
   selector: 'app-partner',
@@ -37,8 +39,14 @@ export class PartnerComponent implements OnDestroy, OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
   importDialogService = inject(ImportDialogService);
+  permissionUtilityService = inject(PermissionUtilityService);
 
   newPartnerData = signal<Partner|null>(null);
+
+  // Permission management using utility service
+  private permissionUtils = this.permissionUtilityService.createEntityPermissions('Partner');
+  entityPermissions = this.permissionUtils.entityPermissions;
+  permissionsLoading = this.permissionUtils.permissionsLoading;
 
   // Listview configuration
   listviewConfig: ListViewConfig = {
@@ -139,6 +147,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
   ngOnInit() {
     console.log('Partner component ngOnInit');
     console.log('Searchable fields:', this.listviewConfig.searchConfig?.searchableFields);
+    
+    // Load permissions using utility service
+    this.permissionUtils.loadPermissions(this.router, this.cdr);
     
     this.activatedRoute.queryParams
       .subscribe(params => {

@@ -29,7 +29,7 @@ import { ContactEditDialogFooterComponent } from '../edit-dialog/footer/contact-
 import { Contact } from '../../../models/contact.model';
 import { ContactViewInteractionsComponent } from './interactions/contact-view-interactions.component';
 import { PictureComponent } from '../../../../../common/reusables/components/picture/picture.component';
-import { PermissionService, EntityPermissions } from '../../../../../essentials/services/permission.service';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 @Component({
   selector: 'app-contact-view',
@@ -67,8 +67,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   documentService = inject(DocumentService);
   contactService = inject(ContactService);
   languageService = inject(LanguageService);
-  permissionService = inject(PermissionService);
+  permissionUtilityService = inject(PermissionUtilityService);
   translateService = inject(TranslateService);
+  cdr = inject(ChangeDetectorRef);
 
   infoLoading = signal<boolean>(false);
   showContactInfo = signal<boolean>(false);
@@ -76,50 +77,18 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
 
+  // Permission management using utility service
+  private permissionUtils = this.permissionUtilityService.createInstancePermissions('Contact');
+  recordPermissions = this.permissionUtils.recordPermissions;
+
   private langChangeSubscription: Subscription = new Subscription();
   recordId: string = '';
   recordData = signal<Contact>({});
 
-  // Track user permissions for the Contact entity
-  permissions$ = new BehaviorSubject<EntityPermissions>({
-    entity: 'Contact',
-    hasAccess: false,
-    permissions: {
-      canRead: false,
-      canCreate: false,
-      canUpdate: false,
-      canDelete: false
-    }
-  });
-
-  // Convert BehaviorSubject to signal for reactivity
-  permissions = toSignal(this.permissions$, {
-    initialValue: {
-      entity: 'Contact',
-      hasAccess: false,
-      permissions: {
-        canRead: false,
-        canCreate: false,
-        canUpdate: false,
-        canDelete: false
-      }
-    }
-  });
-
-  // Computed property to check if user can edit or create
-  canEditOrCreate$ = computed(() => {
-    const permissions = this.permissions();
-    return permissions.permissions?.canUpdate || permissions.permissions?.canCreate || false;
-  });
-
   readonly entityTypeContact = EntityType.Contact;
-
-  constructor() {}
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
-    // Clear permission caches when leaving the view
-    this.permissionService.clearPermissionCaches();
   }
 
   ngOnInit() {
@@ -128,39 +97,22 @@ export class ContactViewComponent implements OnInit, OnDestroy {
         this.recordId = paramMap.get("recordId") || '';
 
         if (this.recordId != '') {
-          this._loadRecordDetails();
-          this._loadPermissions();
+          // Check if data is already available from the resolver
+          this.activatedRoute.parent?.data.subscribe(data => {
+            if (data['contactData']) {
+              this.recordData.set(data['contactData']);
+              this.infoLoading.set(false);
+            } else {
+              // Fallback to loading details directly if resolver data isn't available
+              this._loadRecordDetails();
+            }
+          });
+          
+          // Load permissions for this specific contact
+          this.permissionUtils.loadPermissions(this.recordId, this.cdr);
         }
       }
     });
-  }
-
-  /**
-   * Load permissions for the current contact
-   */
-  _loadPermissions() {
-    // Get instance-specific permissions for this contact
-    this.permissionService.getEntityInstancePermissions('Contact', this.recordId)
-      .subscribe({
-        next: (permissions: EntityPermissions) => {
-          console.log('Loaded permissions for contact:', this.recordId, permissions);
-          this.permissions$.next(permissions);
-        },
-        error: (error) => {
-          console.error('Error loading permissions for contact:', this.recordId, error);
-          // Set default permissions on error
-          this.permissions$.next({
-            entity: 'Contact',
-            hasAccess: false,
-            permissions: {
-              canRead: false,
-              canCreate: false,
-              canUpdate: false,
-              canDelete: false
-            }
-          });
-        }
-      });
   }
 
   /**
@@ -172,16 +124,6 @@ export class ContactViewComponent implements OnInit, OnDestroy {
       next: (data: any) => {
         this.recordData.set(data);
         this.infoLoading.set(false);
-        
-        // Check if contact data includes permissions and apply them
-        if (data.permissions) {
-          const permissions: EntityPermissions = {
-            entity: 'Contact',
-            hasAccess: true,
-            permissions: data.permissions
-          };
-          this.permissions$.next(permissions);
-        }
       },
       error: (error) => {
         console.error('Error loading contact details:', error);
@@ -190,17 +132,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     });
   }
 
-  handleOnCancelClick(event: MouseEvent) {
-    this.router.navigate(['contacts']);
-  }
-
   handleEditClick() {
-    // Check if user has update or create permission
-    const permissions = this.permissions();
-    const canUpdate = permissions.permissions?.canUpdate || false;
-    const canCreate = permissions.permissions?.canCreate || false;
-    
-    if (!canUpdate && !canCreate) {
+    // Check if user has update permission
+    if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'You do not have permission to edit this contact',
         summary: 'Permission Denied'
@@ -228,19 +162,15 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     ref.onClose.subscribe((result) => {
       if (result) {
         this._loadRecordDetails();
-        this._loadPermissions();
+        // Reload permissions after edit
+        this.permissionUtils.loadPermissions(this.recordId, this.cdr);
       }
     });
   }
 
-  get acceptedMiMIETypesForgDrive() {
-    return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
-  }
-
   onFileUploaded(response: any) {
     // Check if user has update permission
-    const permissions = this.permissions();
-    if (!permissions.permissions?.canUpdate) {
+    if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'You do not have permission to upload documents for this contact',
         summary: 'Permission Denied'
@@ -269,8 +199,7 @@ export class ContactViewComponent implements OnInit, OnDestroy {
 
   onDriveFileUploaded(response: any) {
     // Check if user has update permission
-    const permissions = this.permissions();
-    if (!permissions.permissions?.canUpdate) {
+    if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
       this.feedbackDialogService.showErrorToast({
         detail: 'You do not have permission to upload documents for this contact',
         summary: 'Permission Denied'
@@ -298,7 +227,19 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     });
   }
 
-  getUploadProfilePictureUrl() {
-    return this.contactService.getUploadProfilePictureUrl(this.recordId);
+  onFileSelected(event: any) {
+    console.log('Files selected:', event);
+  }
+
+  onFileRemoved(event: any) {
+    console.log('File removed:', event);
+  }
+
+  onFilesCleared() {
+    console.log('All files cleared');
+  }
+
+  get acceptedMiMIETypesForgDrive() {
+    return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
   }
 }
