@@ -11,6 +11,7 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 public class UNOPSManagerWrapper : ManagerWrapper
 {
@@ -23,10 +24,11 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly LinkManager linkManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
-                               UserManager<PAOIdentityUser> userManager, IHttpContextAccessor httpContextAccessor) : base(mapper, context, userManager, httpContextAccessor)
+                               UserManager<PAOIdentityUser> userManager, IHttpContextAccessor httpContextAccessor, 
+                               IBusinessSecurityService securityService = null) : base(mapper, context, userManager, httpContextAccessor)
     {
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
-        contactManager = new UNOPSContactManager(mapper, opsContext, configuration);
+        contactManager = new UNOPSContactManager(mapper, opsContext, configuration, securityService);
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration);
         partnerManager = new UNOPSPartnerManager(mapper,opsContext, configuration);

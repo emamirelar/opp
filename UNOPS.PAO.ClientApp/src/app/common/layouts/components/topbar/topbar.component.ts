@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ViewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
@@ -27,7 +27,8 @@ import { RippleModule } from 'primeng/ripple';
 import { InputTextModule } from 'primeng/inputtext';
 import { AvatarModule } from 'primeng/avatar';
 import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.component';
-import { RoleService, Role } from '../../../../essentials/services/role.service';
+import { RoleService } from '../../../../essentials/services/role.service';
+import { RoleDialogComponent } from './role-dialog/role-dialog.component';
 
 interface UserInfo {
   userId: number;
@@ -55,7 +56,8 @@ interface UserInfo {
     RippleModule,
     InputTextModule,
     AvatarModule,
-    GlobalSearchBarComponent
+    GlobalSearchBarComponent,
+    RoleDialogComponent
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -64,6 +66,8 @@ interface UserInfo {
   providers: [MessageService, ConfirmationService]
 })
 export class TopbarComponent implements OnInit, OnDestroy {
+  @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
+
   items!: MenuItem[];
   notifications: Notification[] = [];
   unreadCount: number = 0;
@@ -81,7 +85,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   menuActive: boolean = false;
   userInfo: UserInfo | null = null;
   profileMenuItems: MenuItem[] = [];
-  userRoles: Role[] = [];
+  userRoles: string[] = [];
   roleMenuItems: MenuItem[] = [];
 
   constructor(
@@ -110,7 +114,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    debugger;
     this.authService.user().subscribe({
       next: (claims) => {
         const userIdClaim = claims.find(c => c.type === 'userId');
@@ -436,23 +439,18 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   private loadUserRoles() {
-    if (this.userId) {
-      this.roleService.getUserRoles(this.userId).subscribe({
-        next: (data) => {
-          this.userRoles = data.roles;
-          // Create menu items from roles
-          this.roleMenuItems = this.userRoles.map(role => ({
-            label: role.name,
-            description: role.description || `User has the ${role.name} role`,
-            icon: 'pi pi-check-circle',
-            disabled: true // Make items non-clickable
-          }));
-          this.cdr.markForCheck();
-        },
-        error: (error) => {
-          console.error('Error loading user roles:', error);
-        }
-      });
-    }
+    this.roleService.getUserRoles().subscribe({
+      next: (userRoles) => {
+        this.userRoles = userRoles.roles;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading user roles:', error);
+      }
+    });
+  }
+
+  showRoleDialog() {
+    this.roleDialog.show();
   }
 }

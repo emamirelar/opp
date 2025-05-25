@@ -3,23 +3,32 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Role {
+  id: number;
   name: string;
-  description: string;
 }
 
 export interface UserRoles {
-  userId: string;
   email: string;
-  roles: Role[];
+  roles: string[];
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class RoleService {
-  constructor(private http: HttpClient) {}
+  private baseUrl = 'api/role';
 
-  getUserRoles(userId: string): Observable<UserRoles> {
-    return this.http.get<UserRoles>(`/api/permissions/user/${userId}`);
+  constructor(private http: HttpClient) { }
+
+  getAllRoles(): Observable<Role[]> {
+    return this.http.get<Role[]>(`${this.baseUrl}/all`);
+  }
+
+  getUserRoles(): Observable<UserRoles> {
+    return this.http.get<UserRoles>(`${this.baseUrl}/user`);
+  }
+
+  updateUserRoles(roles: string[]): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update`, roles);
   }
 } 

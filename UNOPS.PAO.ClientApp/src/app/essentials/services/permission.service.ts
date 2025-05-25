@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, catchError, map, of, tap, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of, tap, switchMap, shareReplay } from 'rxjs';
 import { AuthService } from './auth.service';
 
 export interface ApiEndpoint {
@@ -27,12 +27,29 @@ export interface PermissionConfig {
   entities: EntityPermission[];
 }
 
+export interface EntityPermissions {
+  route?: string;
+  entity: string;
+  hasAccess: boolean;
+  permissions: {
+    canRead: boolean;
+    canCreate: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class PermissionService {
   private permissionConfig$ = new BehaviorSubject<PermissionConfig | null>(null);
   private isLoadingConfig = false;
+  
+  // Cache for entity permissions
+  private entityPermissionsCache = new Map<string, Observable<EntityPermissions>>();
+  private entityInstancePermissionsCache = new Map<string, Observable<EntityPermissions>>();
+  private currentEntityId: string | undefined;
 
   constructor(
     private http: HttpClient,
@@ -99,88 +116,153 @@ export class PermissionService {
   }
 
   /**
+   * Gets the full permissions response for an entity, route, or specific instance
+   * @private
+   */
+  private getPermissionsResponse(path: string, id?: string | number): Observable<EntityPermissions> {
+    // Don't normalize the path if an ID is explicitly provided
+    let permissionUrl: string;
+    
+    if (id && id !== 'undefined' && id !== undefined) {
+      // For explicit ID calls, use direct path construction
+      permissionUrl = `/api/permissions/check/${path}/${id}`;
+    } else {
+      // For path-based calls, use normalization
+      const { path: normalizedPath, entityId } = this.normalizeRoutePath(path);
+      permissionUrl = `/api/permissions/check/${normalizedPath}`;
+      
+      // Only append entityId if it's valid
+      if (entityId && entityId !== 'undefined') {
+        permissionUrl += `/${entityId}`;
+      }
+    }
+    
+    // Check cache first
+    const cached = this.entityPermissionsCache.get(permissionUrl);
+    if (cached) {
+      return cached;
+    }
+    
+    // If not in cache, make the request and cache it
+    const response = this.http.get<{
+      route?: string;
+      hasAccess: boolean;
+      entity?: string;
+      permissions: {
+        canRead: boolean;
+        canCreate: boolean;
+        canUpdate: boolean;
+        canDelete: boolean;
+      };
+    }>(permissionUrl).pipe(
+      map(response => {
+        return {
+          route: response.route,
+          entity: response.entity || path,
+          hasAccess: !!response.hasAccess,
+          permissions: response.permissions
+        } as EntityPermissions;
+      }),
+      catchError(error => {
+        console.error(`[PERMISSION-SERVICE] Error fetching permissions for ${permissionUrl}`, error);
+        return of({
+          entity: path,
+          hasAccess: false,
+          permissions: {
+            canRead: false,
+            canCreate: false,
+            canUpdate: false,
+            canDelete: false
+          }
+        });
+      }),
+      shareReplay(1)
+    );
+    
+    this.entityPermissionsCache.set(permissionUrl, response);
+    return response;
+  }
+
+  /**
+   * Gets the full permission set for an entity or route
+   * @param path The route path or entity name
+   * @returns Observable with complete permission details
+   */
+  getEntityPermissions(path: string): Observable<EntityPermissions> {
+    return this.getPermissionsResponse(path);
+  }
+
+  /**
+   * Gets the full permission set for a specific entity instance
+   * @param entityName The name of the entity (e.g., 'Contact', 'Partner')
+   * @param id The ID of the entity instance
+   * @returns Observable with complete permission details
+   */
+  getEntityInstancePermissions(entityName: string, id: string | number): Observable<EntityPermissions> {
+    // Validate ID before making the call
+    if (!id || id === 'undefined' || id === undefined) {
+      console.warn(`[PERMISSION-SERVICE] Invalid ID provided for ${entityName}`);
+      return of({
+        entity: entityName,
+        hasAccess: false,
+        permissions: {
+          canRead: false,
+          canCreate: false,
+          canUpdate: false,
+          canDelete: false
+        }
+      });
+    }
+    return this.getPermissionsResponse(entityName, id);
+  }
+
+  /**
    * Check if the user has access to a specific route
    */
   canAccessRoute(route: string): Observable<boolean> {
-    // Normalize the route by removing query parameters and ensuring it starts with /
-    const normalizedRoute = this.normalizeRoutePath(route);
-    
-    return this.http.get<{route: string, hasAccess: boolean}>(`/api/permissions/check/${normalizedRoute.startsWith('/') ? normalizedRoute.substring(1) : normalizedRoute}`).pipe(
-      map(response => response.hasAccess),
-      catchError(() => {
-        // Fall back to local checking using the config
-        return this.getConfig().pipe(
-          switchMap(config => {
-            // Find the route in the config
-            const routeConfig = this.findRouteConfig(config.routes, normalizedRoute);
-            if (!routeConfig) {
-              return of(false);
-            }
-            
-            // Check if ALL is allowed
-            if (routeConfig.allowedRoles.includes('ALL')) {
-              return of(true);
-            }
-            
-            // Check user roles - first using dev cookies if available
-            if (this.authService.hasDevCookie()) {
-              const cookies = document.cookie.split(';').map(c => c.trim());
-              const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
-              if (devCookie) {
-                const email = devCookie.substring('dev-user-email='.length);
-                
-                // Administrator has access to everything
-                if (email.toLowerCase().includes('admin')) {
-                  return of(true);
-                }
-                
-                // Check other roles
-                if (routeConfig.allowedRoles.includes('Internal') && email.endsWith('@unops.org')) {
-                  return of(true);
-                }
-                
-                if (routeConfig.allowedRoles.includes('Partner') && email.includes('partner')) {
-                  return of(true);
-                }
-                
-                if (routeConfig.allowedRoles.includes('External') && email.includes('example.com')) {
-                  return of(true);
-                }
-                
-                return of(false);
-              }
-            }
-            
-            // Fall back to AuthService role check
-            return this.authService.getUserRoles().pipe(
-              map(userRoles => {
-                // Administrator always has access
-                if (userRoles.includes('Administrator')) {
-                  return true;
-                }
-                
-                // Check if any role matches
-                return routeConfig.allowedRoles.some(role => userRoles.includes(role));
-              }),
-              catchError(() => of(false))
-            );
-          })
-        );
-      })
+    return this.getPermissionsResponse(route).pipe(
+      map(response => response.hasAccess)
     );
   }
 
   /**
-   * Normalize a route path for permission checking
-   * This makes the route consistent with how it's defined in the permission config
+   * Gets entity permissions directly from cache if available
+   * @param path The route path or entity name
+   * @returns EntityPermissions if cached, null otherwise
    */
-  private normalizeRoutePath(route: string): string {
-    if (!route) {
-      return '/';
+  getEntityPermissionsFromCache(path: string, id?: string | number): EntityPermissions | null {
+    let cacheKey: string;
+    
+    if (id && id !== 'undefined' && id !== undefined) {
+      cacheKey = `/api/permissions/check/${path}/${id}`;
+    } else {
+      const { path: normalizedPath, entityId } = this.normalizeRoutePath(path);
+      cacheKey = `/api/permissions/check/${normalizedPath}`;
+      if (entityId && entityId !== 'undefined') {
+        cacheKey += `/${entityId}`;
+      }
     }
     
-    // Ensure route starts with slash
-    route = route.startsWith('/') ? route : '/' + route;
+    const cached = this.entityPermissionsCache.get(cacheKey);
+    if (cached) {
+      let latestValue: EntityPermissions | null = null;
+      cached.subscribe(value => {
+        latestValue = value;
+      });
+      return latestValue;
+    }
+    
+    return null;
+  }
+
+  /**
+   * Normalize a route path for permission checking and extract entity ID if present
+   * @private
+   */
+  private normalizeRoutePath(route: string): { path: string, entityId?: string } {
+    if (!route) {
+      return { path: '' };
+    }
     
     // Remove query parameters
     const queryParamIndex = route.indexOf('?');
@@ -194,53 +276,98 @@ export class PermissionService {
       route = route.substring(0, hashIndex);
     }
     
-    // Split the route into segments
+    // Remove leading and trailing slashes
+    route = route.replace(/^\/+|\/+$/g, '');
+
+    // Extract entity ID if present (e.g., partnerships/contacts/123)
     const segments = route.split('/');
+    let entityId: string | undefined;
     
-    // Normalize segments that are likely parameters (numbers, guids)
-    for (let i = 0; i < segments.length; i++) {
-      const segment = segments[i];
-      
-      // Skip empty segments
-      if (!segment) {
-        continue;
-      }
-      
-      // Check if segment is a number or a GUID
-      if (/^\d+$/.test(segment) || 
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)) {
-        // Replace with generic ID marker to match route patterns
-        segments[i] = ':id';
-      }
+    // Only extract ID if it's a valid number and not undefined
+    const lastSegment = segments[segments.length - 1];
+    if (segments.length > 2 && !isNaN(Number(lastSegment)) && lastSegment !== 'undefined') {
+      entityId = segments.pop(); // Remove the ID from segments
+      route = segments.join('/'); // Rejoin without the ID
     }
     
-    return segments.join('/');
+    return { path: route, entityId };
   }
 
   /**
-   * Find a route configuration from a path
+   * Clears the permission caches
+   * Call this when navigating away or when permissions need to be refreshed
    */
-  private findRouteConfig(routes: RoutePermission[], path: string): RoutePermission | null {
-    path = path.startsWith('/') ? path.substring(1) : path;
-    
-    // First try direct match
-    for (const route of routes) {
-      const routePath = route.path.startsWith('/') ? route.path.substring(1) : route.path;
-      if (routePath === path) {
-        return route;
-      }
-      
-      // Check children
-      if (route.children && path.startsWith(routePath)) {
-        const remainingPath = path.substring(routePath.length);
-        const childPath = remainingPath.startsWith('/') ? remainingPath.substring(1) : remainingPath;
+  clearPermissionCaches() {
+    this.entityPermissionsCache.clear();
+    this.entityInstancePermissionsCache.clear();
+  }
+
+  /**
+   * Check if the current user has any of the specified roles
+   * @private
+   */
+  private checkUserRoles(allowedRoles: string[]): Observable<boolean> {
+    // Check dev cookies if available
+    if (this.authService.hasDevCookie()) {
+      const cookies = document.cookie.split(';').map(c => c.trim());
+      const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
+      if (devCookie) {
+        const email = devCookie.substring('dev-user-email='.length);
         
-        for (const child of route.children) {
-          if (child.path === childPath) {
-            return child;
-          }
+        // Administrator has access to everything
+        if (email.toLowerCase().includes('admin')) {
+          return of(true);
         }
+        
+        // Check other roles
+        if (allowedRoles.includes('Internal') && email.endsWith('@unops.org')) {
+          return of(true);
+        }
+        
+        if (allowedRoles.includes('Partner') && email.includes('partner')) {
+          return of(true);
+        }
+        
+        if (allowedRoles.includes('External') && email.includes('example.com')) {
+          return of(true);
+        }
+        
+        return of(false);
       }
+    }
+    
+    // Get user roles from auth service
+    return this.authService.getUserRoles().pipe(
+      map(userRoles => {
+        // Administrator always has access
+        if (userRoles.includes('Administrator')) {
+          return true;
+        }
+        
+        // Check if any role matches
+        return allowedRoles.some(role => userRoles.includes(role));
+      }),
+      catchError(() => of(false))
+    );
+  }
+
+  /**
+   * Gets entity instance permissions directly from cache if available
+   * @param entityName The name of the entity (e.g., 'contact', 'partner')
+   * @param id The ID of the entity instance
+   * @returns EntityPermissions if cached, null otherwise
+   */
+  getEntityInstancePermissionsFromCache(entityName: string, id: string | number): EntityPermissions | null {
+    const cacheKey = `${entityName.toLowerCase()}_${id}`;
+    const cached = this.entityInstancePermissionsCache.get(cacheKey);
+    
+    if (cached) {
+      // Get the latest value from the Observable
+      let latestValue: EntityPermissions | null = null;
+      cached.subscribe(value => {
+        latestValue = value;
+      });
+      return latestValue;
     }
     
     return null;

@@ -29,7 +29,17 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
     
     // Use the backend permission service to check the route
     // This centralizes permission logic to use our shared JSON configuration
-    return http.get<{route: string, hasAccess: boolean}>(`/api/permissions/check/${state.url}`).pipe(
+    return http.get<{
+      route: string; 
+      hasAccess: boolean; 
+      entity?: string; 
+      permissions?: {
+        canRead: boolean;
+        canCreate: boolean;
+        canUpdate: boolean;
+        canDelete: boolean;
+      }
+    }>(`/api/permissions/check/${state.url}`).pipe(
       map(response => {
         const hasAccess = response.hasAccess;
         
@@ -37,6 +47,11 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
           console.log(`[ROLE-GUARD] Backend denied access to ${state.url}, redirecting to home`);
           router.navigate(['/']);
           return false;
+        }
+        
+        // Log the detailed permissions for debugging
+        if (response.entity && response.permissions) {
+          console.log(`[ROLE-GUARD] ${response.entity} permissions:`, response.permissions);
         }
         
         return true;

@@ -300,6 +300,9 @@ public class Startup
         // RBAC Services
         services.AddScoped<IPermissionService, PermissionService>();
         
+        // Add Business Security Service for row-level filtering
+        services.AddScoped<IBusinessSecurityService, BusinessSecurityService>();
+        
         // Configure authorization
         services.AddAuthorization(options =>
         {
@@ -454,14 +457,6 @@ public class Startup
 
     private void ConfigureAuthorization(ServiceRegistry services)
     {
-        services.AddAuthorizationBuilder()
-            .AddPolicy("RequireAdministratorRole", policy => 
-                policy.RequireRole("Administrator"))
-            .AddPolicy("RequireInternalRole", policy => 
-                policy.RequireRole("Administrator", "Internal"))
-            .AddPolicy("RequirePartnerRole", policy => 
-                policy.RequireRole("Administrator", "Internal", "Partner"));
-        
         // Add the entity permission authorization handler
         services.AddScoped<IAuthorizationHandler, EntityPermissionHandler>();
         

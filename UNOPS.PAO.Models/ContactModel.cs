@@ -28,4 +28,9 @@ public class ContactModel
     public int? PartnerId { get; set; }
     public string? PartnerName { get; set; }
     public List<DocumentModel>? Documents { get; set; }
+    
+    /// <summary>
+    /// Permissions for this specific contact
+    /// </summary>
+    public EntityPermissionsModel? Permissions { get; set; }
 }

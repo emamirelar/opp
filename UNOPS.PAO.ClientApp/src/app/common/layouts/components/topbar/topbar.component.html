@@ -17,27 +17,16 @@
   <app-global-search-bar></app-global-search-bar>
 
 	<div class="flex items-center justify-end">
-      <!-- User Roles Menu -->
+      <!-- User Roles Button -->
       <div class="flex gap-2 mr-4 items-center" *ngIf="userRoles.length > 0">
         <button type="button"
                 class="p-button-text layout-topbar-action cursor-pointer hover:bg-surface-hover transition-colors"
-                (click)="rolesMenu.toggle($event)"
-                pTooltip="User Roles"
+                (click)="showRoleDialog()"
+                pTooltip="Manage Roles"
                 tooltipPosition="bottom">
           <i class="pi pi-users text-primary"></i>
           <span class="ml-2 text-sm font-medium text-primary">{{ userRoles.length }} Roles</span>
         </button>
-        <p-menu #rolesMenu [popup]="true" [model]="roleMenuItems" [style]="{'width': '300px'}">
-          <ng-template pTemplate="item" let-item>
-            <div class="flex items-center p-3 bg-surface-100 hover:bg-surface-200 transition-colors">
-              <i class="pi pi-check-circle text-primary mr-2"></i>
-              <div class="flex flex-col">
-                <span class="font-medium">{{ item.label }}</span>
-                <span class="text-sm text-surface-600">{{ item.description }}</span>
-              </div>
-            </div>
-          </ng-template>
-        </p-menu>
       </div>
 
       <!-- Dev Login link - only visible in development mode -->
@@ -133,3 +122,4 @@
 	</div>
 </div>
 <p-toast position="bottom-right"></p-toast>
+<app-role-dialog></app-role-dialog>

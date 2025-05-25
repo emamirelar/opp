@@ -22,35 +22,27 @@ using UNOPS.PAO.UNOPSBusiness.Authorization;
 
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]
-public class ContactController : BaseFilteredController
+public class ContactController : BaseController
 {
     private readonly IContactManager _manager;
-    private readonly ILogger<ContactController> _logger;
-    private readonly UserResolverService<int> _userResolverService;
-
-    // Get current user ID from resolver service
-    private int CurrentUserId => _userResolverService.GetCurrentUserId();
 
     public ContactController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
         ILogger<ContactController> logger,
+        IAuthorizationService authorizationService,
         IPermissionService permissionService)
-        : base(permissionService)
+        : base(logger, authorizationService, userResolverService, permissionService)
     {
         _manager = manager.ContactManager;
-        _logger = logger;
-        _userResolverService = userResolverService;
     }
 
     [HttpPost(APIDictionary.Contact)]
     public async Task<ActionResult> Create([FromBody] ContactRequest req)
     {
         // Check permission to create contacts
-        if (!await _permissionService.CanPerformActionAsync("Contact", "create", User))
-        {
-            return Forbid();
-        }
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "create");
+        if (permissionResult != null) return permissionResult;
         
         var result = await _manager.CreateContactAsync(req);
         if (result == null)
@@ -61,153 +53,54 @@ public class ContactController : BaseFilteredController
     }
 
     [HttpGet(APIDictionary.Contact)]
-    public async Task<ActionResult<PaginationResponse<ContactModel>>> GetAll([FromQuery] ContactFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
+    public async Task<ActionResult> Get([FromQuery] PaginationRequest request)
     {
-        _logger.LogInformation("Getting all contacts");
         // Check permission to read contacts
-        if (!await _permissionService.CanPerformActionAsync("Contact", "read", User))
-        {
-            return Forbid();
-        }
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
+        if (permissionResult != null) return permissionResult;
         
-        if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
-        {
-            Debug.WriteLine($"SEARCH CRITERIA RAW: {searchCriteria}");
-            
-            // Log all the parameters that came in 
-            Debug.WriteLine("Query Parameters:");
-            foreach (var param in HttpContext.Request.Query)
-            {
-                Debug.WriteLine($"  {param.Key}: {param.Value}");
-            }
-            
-            try
-            {
-                Debug.WriteLine($"Advanced search requested with criteria: {searchCriteria}");
-                var newRequest = AdvancedSearchHelper.MapAdvancedSearchCriteria<ContactFilterRequest>(searchCriteria);
-                
-                // Copy over any properties that weren't in the search criteria but were in the original request
-                foreach (var prop in typeof(ContactFilterRequest).GetProperties())
-                {
-                    if (prop.GetValue(newRequest) == null)
-                    {
-                        prop.SetValue(newRequest, prop.GetValue(request));
-                    }
-                }
-                
-                // Debug the processed request
-                Debug.WriteLine($"Processed advanced search request:");
-                foreach (var prop in typeof(ContactFilterRequest).GetProperties())
-                {
-                    Debug.WriteLine($"  {prop.Name}: {prop.GetValue(newRequest)}");
-                }
-                
-                request = newRequest;
-            }
-            catch (ArgumentException ex)
-            {
-                throw new BusinessException(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                throw new BusinessException($"Failed to process advanced search criteria: {ex.Message}");
-            }
-        }
-
-        Debug.WriteLine($"Creating specification with AdvancedSearch={request.AdvancedSearch}, SearchCriteria={(request.SearchCriteria ?? "null")}");
-        var specification = new ContactCompositeSpecification(request);
-        
-        // Use the manager to get contacts but apply security filtering
-        var result = _manager.GetContactsWithSpecification(CurrentUserId, specification, request);
-        
-        // Row-level security will be automatically applied by the database query permissions
-        // when data is retrieved
-        
-        return result;
+        // Use the new secure method that includes row filtering and permissions
+        var result = await _manager.GetContactsAsync(User, request);
+        return Ok(result);
     }
-    
-    
-    [HttpGet(APIDictionary.Contact + "/classic-search")]
-    public ActionResult GetAll([FromQuery] ContactFilterRequest request)
-    {
-        var specification = new ClassicContactCompositeSpecification(
-            id: request.Id,
-            partnerId: request.PartnerId,
-            status: request.Status,
-            salutation: request.Salutation,
-            title: request.Title,
-            department: request.Department,
-            phone: request.Phone,
-            mobile: request.Mobile,
-            assistant: request.Assistant,
-            assistantEmail: request.AssistantEmail,
-            assistantPhone: request.AssistantPhone,
-            mailingCity: request.MailingCity,
-            mailingStateProvince: request.MailingStateProvince,
-            mailingPostalCode: request.MailingPostalCode,
-            mailingCountry: request.MailingCountry,
-            searchText: request.SearchText);
-        
-        return Ok(_manager.GetContactsWithSpecification(CurrentUserId, specification, request));
-    }
-
 
     [HttpGet(APIDictionary.Contact + "/{id}")]
     public async Task<ActionResult> Get(int id)
     {
-        var contact = await _manager.GetContact(CurrentUserId, id);
+        // Check permission to read contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
+        if (permissionResult != null) return permissionResult;
+        
+        // Use the new secure method that checks entity-level access
+        var contact = await _manager.GetContactAsync(User, id);
         if (contact == null)
         {
             return NotFound();
         }
-        
-        // Check permission for this specific contact entity
-        if (!await _permissionService.CanPerformActionAsync("Contact", "read", User, contact))
-        {
-            return Forbid();
-        }
-        
-        // Return contact data directly using JsonResult
-        return new JsonResult(contact);
+        return Ok(contact);
     }
 
     [HttpPut(APIDictionary.Contact)]
     public async Task<ActionResult> Update([FromBody] UpdateContactRequest req)
     {
-        // Get the contact to check permissions on it
-        var contact = await _manager.GetContact(CurrentUserId, req.Id);
-        if (contact == null)
-        {
-            return NotFound();
-        }
+        // Check permission to update contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "update");
+        if (permissionResult != null) return permissionResult;
         
-        // Check permission for this specific contact
-        if (!await _permissionService.CanPerformActionAsync("Contact", "update", User, contact))
-        {
-            return Forbid();
-        }
-        
-        await _manager.UpdateContactAsync(CurrentUserId, req);
-        return NoContent();
+        // Use the new secure method that checks entity-level permissions
+        var result = await _manager.UpdateContactAsync(User, req);
+        return Ok(result);
     }
 
     [HttpDelete(APIDictionary.Contact + "/{id}")]
     public async Task<ActionResult> Delete(int id)
     {
-        // Get the contact to check permissions on it
-        var contact = await _manager.GetContact(CurrentUserId, id);
-        if (contact == null)
-        {
-            return NotFound();
-        }
+        // Check permission to delete contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "delete");
+        if (permissionResult != null) return permissionResult;
         
-        // Check permission for this specific contact
-        if (!await _permissionService.CanPerformActionAsync("Contact", "delete", User, contact))
-        {
-            return Forbid();
-        }
-        
-        await _manager.DeleteContactAsync(CurrentUserId, id);
+        // Use the new secure method that checks entity-level permissions
+        await _manager.DeleteContactAsync(User, id);
         return NoContent();
     }
 
@@ -215,10 +108,8 @@ public class ContactController : BaseFilteredController
     public async Task<ActionResult> PartnerContacts(int partnerId)
     {
         // Check permission to read contacts
-        if (!await _permissionService.CanPerformActionAsync("Contact", "read", User))
-        {
-            return Forbid();
-        }
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
+        if (permissionResult != null) return permissionResult;
         
         return Ok(_manager.GetPartnerContacts(partnerId));
     }
@@ -233,13 +124,7 @@ public class ContactController : BaseFilteredController
         }
         
         // Return permissions for this contact
-        var permissions = new
-        {
-            CanRead = await _permissionService.CanPerformActionAsync("Contact", "read", User, contact),
-            CanCreate = await _permissionService.CanPerformActionAsync("Contact", "create", User, contact),
-            CanUpdate = await _permissionService.CanPerformActionAsync("Contact", "update", User, contact),
-            CanDelete = await _permissionService.CanPerformActionAsync("Contact", "delete", User, contact)
-        };
+        var permissions = await GetEntityPermissionsAsync("Contact", contact);
         
         return Ok(permissions);
     }
@@ -255,10 +140,8 @@ public class ContactController : BaseFilteredController
         }
         
         // Check update permission for this specific contact
-        if (!await _permissionService.CanPerformActionAsync("Contact", "update", User, contact))
-        {
-            return Forbid();
-        }
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "update", contact);
+        if (permissionResult != null) return permissionResult;
         
         if (file == null || file.Length == 0)
         {

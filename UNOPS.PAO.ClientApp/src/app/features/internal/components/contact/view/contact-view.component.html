@@ -7,13 +7,15 @@
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
             <span class="font-semibold">Personal Information</span>
-            <p-button
-              icon="pi pi-pencil"
-              [rounded]="true"
-              [text]="true"
-              [size]="'small'"
-              (onClick)="handleEditClick()"
-            ></p-button>
+            @if(canEditOrCreate$()){
+              <p-button
+                icon="pi pi-pencil"
+                [rounded]="true"
+                [text]="true"
+                [size]="'small'"
+                (onClick)="handleEditClick()"
+              ></p-button>
+            }
           </div>
         </ng-template>
 
@@ -25,6 +27,7 @@
               [uploadUrl]="getUploadProfilePictureUrl()"
               [altText]="'Profile picture'"
               [size]="'medium'"
+              [disabled]="!canEditOrCreate$()"
               (imageChanged)="_loadRecordDetails()"
             />
             <div class="flex flex-col gap-1">
@@ -137,6 +140,7 @@
         <app-link-list
           [entityType]="entityTypeContact"
           [entityId]="+recordId"
+          [disabled]="!canEditOrCreate$()"
         />
       </p-panel>
 
@@ -151,18 +155,22 @@
 
       <app-contact-view-interactions
         [contactId]="recordId"
+        [disabled]="!canEditOrCreate$()"
       />
 
-      <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
+  <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
         <app-document #appDocument
                       [entityId]="recordId"
                       [entityName]="'contact'"
-                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                      [disabled]="!canEditOrCreate$()">
           <div ngProjectAs="document-toolbar">
-            <app-document-gdrive [entityId]="recordId"
+            @if(canEditOrCreate$()){
+              <app-document-gdrive [entityId]="recordId"
                                  [entityName]="'contact'"
                                  [appDocumentRef]="appDocument"
                                  [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+            }
           </div>
         </app-document>
       </p-panel>

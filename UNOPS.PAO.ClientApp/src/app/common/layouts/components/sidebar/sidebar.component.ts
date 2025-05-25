@@ -5,12 +5,11 @@ import { AuthService } from '../../../../essentials/services/auth.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
-import { HasRoleDirective } from '../../../../essentials/directives/has-role.directive';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [MenuComponent, HasRoleDirective, CommonModule],
+  imports: [MenuComponent, CommonModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
   standalone: true,
