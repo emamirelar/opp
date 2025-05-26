@@ -1,4 +1,4 @@
-<p-blockui [blocked]="partnerService.isLoading()" />
+<p-blockui [blocked]="partnerService.isLoading() || isLoading() || cachedDataService.isLoading()" />
 
 <div class="flex flex-col h-full gap-4">
   @if( showValidationFailedError() === true ){

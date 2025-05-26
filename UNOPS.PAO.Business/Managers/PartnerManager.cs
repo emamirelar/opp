@@ -498,31 +498,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetPartnersAsync(ClaimsPrincipal user, PaginationRequest request)
     {
-        // Fallback implementation - just use the basic GetPartners method
-        // In a real implementation, you would apply security filtering here
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        int userId = userIdClaim != null && int.TryParse(userIdClaim.Value, out var id) ? id : 0;
-        
-        var result = GetPartners(userId, request);
-        
-        // Add basic permission structure to each partner
-        var partnersWithPermissions = result.Records.Select(partner => 
-        {
-            partner.Permissions = new EntityPermissionsModel
-            {
-                CanRead = true, // Basic implementation allows reading
-                CanCreate = false, // Not applicable to individual partners
-                CanUpdate = false,
-                CanDelete = false,
-            };
-            return partner;
-        }).ToList();
-        
-        return new PaginationResponse<PartnerModel>
-        {
-            Records = partnersWithPermissions,
-            TotalCount = result.TotalCount
-        };
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -531,25 +507,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id)
     {
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        int userId = userIdClaim != null && int.TryParse(userIdClaim.Value, out var uid) ? uid : 0;
-        
-        var partner = await GetPartner(userId, id);
-        if (partner == null)
-        {
-            return null;
-        }
-
-        // Add permission structure
-        partner.Permissions = new EntityPermissionsModel
-        {
-            CanRead = true, // User can read since they found the partner
-            CanCreate = false, // Not applicable to individual partners
-            CanUpdate = false,
-            CanDelete = false
-        };
-
-        return partner;
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -558,30 +516,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> CreatePartnerAsync(ClaimsPrincipal user, PartnerRequest model)
     {
-        // Basic permission check - only allow if user has appropriate role
-        if (!user.IsInRole("Administrator") && !user.IsInRole("PartnerManager"))
-        {
-            return null; // User doesn't have permission to create partners
-        }
-
-        var result = await CreatePartnerAsync(model);
-        
-        // Add permission structure
-        if (result != null)
-        {
-            var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-            int userId = userIdClaim != null && int.TryParse(userIdClaim.Value, out var id) ? id : 0;
-            
-            result.Permissions = new EntityPermissionsModel
-            {
-                CanRead = true,
-                CanCreate = false, // Not applicable to individual partners
-                CanUpdate = true, // Creator can update
-                CanDelete = true  // Creator can delete
-            };
-        }
-
-        return result;
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -590,30 +525,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model)
     {
-        // Check permission using existing method
-        if (!await HasPermissionAsync(user, model.Id, "Update"))
-        {
-            return null; // User doesn't have permission to update this partner
-        }
-
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        int userId = userIdClaim != null && int.TryParse(userIdClaim.Value, out var id) ? id : 0;
-
-        var result = await UpdatePartnerAsync(userId, model);
-        
-        // Add permission structure
-        if (result != null)
-        {
-            result.Permissions = new EntityPermissionsModel
-            {
-                CanRead = true,
-                CanCreate = false, // Not applicable to individual partners
-                CanUpdate = true, // User can update since they passed the permission check
-                CanDelete = await HasPermissionAsync(user, model.Id, "Delete")
-            };
-        }
-
-        return result;
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -622,17 +534,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id)
     {
-        // Check permission using existing method
-        if (!await HasPermissionAsync(user, id, "Delete"))
-        {
-            return false; // User doesn't have permission to delete this partner
-        }
-
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        int userId = userIdClaim != null && int.TryParse(userIdClaim.Value, out var uid) ? uid : 0;
-
-        await DeletePartnerAsync(userId, id);
-        return true;
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -641,29 +543,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, string partnerGroupCode, PaginationRequest request)
     {
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        int userId = userIdClaim != null && int.TryParse(userIdClaim.Value, out var id) ? id : 0;
-        
-        var result = GetPartnersByPartnerGroup(userId, partnerGroupCode, request);
-        
-        // Add basic permission structure to each partner
-        var partnersWithPermissions = result.Records.Select(partner => 
-        {
-            partner.Permissions = new EntityPermissionsModel
-            {
-                CanRead = true,
-                CanCreate = false,
-                CanUpdate = false,
-                CanDelete = false
-            };
-            return partner;
-        }).ToList();
-        
-        return new PaginationResponse<PartnerModel>
-        {
-            Records = partnersWithPermissions,
-            TotalCount = result.TotalCount
-        };
+        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -672,29 +552,7 @@ public class PartnerManager : IPartnerManager
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request)
     {
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        int userId = userIdClaim != null && int.TryParse(userIdClaim.Value, out var id) ? id : 0;
-        
-        var result = GetPartnersByPartnerCategory(userId, partnerCategoryCode, request);
-        
-        // Add basic permission structure to each partner
-        var partnersWithPermissions = result.Records.Select(partner => 
-        {
-            partner.Permissions = new EntityPermissionsModel
-            {
-                CanRead = true,
-                CanCreate = false,
-                CanUpdate = false,
-                CanDelete = false
-            };
-            return partner;
-        }).ToList();
-        
-        return new PaginationResponse<PartnerModel>
-        {
-            Records = partnersWithPermissions,
-            TotalCount = result.TotalCount
-        };
+        throw new NotImplementedException();
     }
     
     #endregion

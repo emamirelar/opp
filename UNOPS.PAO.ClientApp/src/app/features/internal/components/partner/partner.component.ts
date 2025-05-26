@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -48,14 +48,14 @@ export class PartnerComponent implements OnDestroy, OnInit {
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
 
-  // Listview configuration
-  listviewConfig: ListViewConfig = {
+  // Computed listview configuration that respects permissions
+  listviewConfig = computed<ListViewConfig>(() => ({
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enablePagination: true,
     enableSorting: true,
     enableSearch: true,
-    enableExport: true,
+    enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     scrollable: true,
     scrollHeight: 'flex',
     entityName: 'Partner',
@@ -107,7 +107,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
         }
       ] as SearchField[]
     }
-  };
+  }));
 
   columns: ListViewColumn[] = [
     {
@@ -150,13 +150,13 @@ export class PartnerComponent implements OnDestroy, OnInit {
 
   constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) {
     console.log('Partner component constructor');
-    console.log('Initial listview config:', this.listviewConfig);
+    console.log('Initial listview config:', this.listviewConfig());
     this.setNewPartnerFromAIAssistant();
   }
 
   ngOnInit() {
     console.log('Partner component ngOnInit');
-    console.log('Searchable fields:', this.listviewConfig.searchConfig?.searchableFields);
+    console.log('Searchable fields:', this.listviewConfig().searchConfig?.searchableFields);
     
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);

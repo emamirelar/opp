@@ -70,32 +70,54 @@ public class UNOPSPartnerManager : IPartnerManager
         return result;
     }
 
-    private UNOPSPartner MapModelToEntity(PartnerRequest model, UNOPSPartner entity)
+    private async Task<PartnerModel> MapEntityToModelWithPermissionsAsync(UNOPSPartner entity, IMapper mapper, ClaimsPrincipal? user = null)
     {
-        _mapper.Map(model, entity);
-        // Update Eligible Entities
-        /*if (entity.EligibleEntities != null)
+        var result = await MapEntityToModelAsync(entity, mapper);
+        
+        // Add permissions if user context is available
+        if (user != null && _securityService != null)
         {
-            entity.EligibleEntities.Clear();
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = await _securityService.CanUserAccessEntityAsync(entity, user, "read"),
+                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create"),
+                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete")
+            };
         }
         else
         {
-            entity.EligibleEntities = [];
+            // Default permissions when no user context available
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = true, // Assume readable if no security context
+                CanCreate = false,
+                CanUpdate = false, // Default to no write access
+                CanDelete = false
+            };
         }
 
-        if (model.EligibleEntityIds != null)
+        return result;
+    }
+
+    private PartnerModel MapEntityToModel(UNOPSPartner entity, IMapper mapper)
+    {
+        // Use AutoMapper with the updated configuration
+        var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
+
+        if (result.PartnerGroupCode != null && PartnerTreeService != null)
         {
-            var entities = (from x in commonRepository.GetEligibleEntities()
-                            join id in model.EligibleEntityIds on x.Id equals id
-                            select x
-                            );
+            // Note: This is a synchronous version, so we can't await async calls
+            // For full functionality, use MapEntityToModelAsync instead
+            // This method is used in LINQ expressions where async is not supported
+        }
 
-            foreach (var e in entities)
-            {
-                entity.EligibleEntities.Add(e);
-            }
-        }*/
+        return result;
+    }
 
+    private UNOPSPartner MapModelToEntity(PartnerRequest model, UNOPSPartner entity)
+    {
+        _mapper.Map(model, entity);
         return entity;
     }
 
@@ -127,7 +149,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.AddAsync(entity);
 
-        return _mapper.Map<PartnerModel>(entity);
+        return await MapEntityToModelWithPermissionsAsync(entity, _mapper);
     }
 
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
@@ -155,11 +177,11 @@ public class UNOPSPartnerManager : IPartnerManager
             .Take(request.PageSize)
             .ToList();
         
-        // Map entities asynchronously
+        // Map entities asynchronously with default permissions
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
         {
-            var mapped = await MapEntityToModelAsync(entity, _mapper);
+            var mapped = await MapEntityToModelWithPermissionsAsync(entity, _mapper);
             mappedEntities.Add(mapped);
         }
 
@@ -194,11 +216,11 @@ public class UNOPSPartnerManager : IPartnerManager
             .Take(pagination.PageSize)
             .ToList();
         
-        // Map entities asynchronously
+        // Map entities asynchronously with default permissions
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
         {
-            var mapped = await MapEntityToModelAsync((UNOPSPartner)entity, _mapper);
+            var mapped = await MapEntityToModelWithPermissionsAsync((UNOPSPartner)entity, _mapper);
             mappedEntities.Add(mapped);
         }
 
@@ -227,7 +249,7 @@ public class UNOPSPartnerManager : IPartnerManager
             }
         }
 
-        return await MapEntityToModelAsync(item, _mapper);
+        return await MapEntityToModelWithPermissionsAsync(item, _mapper);
     }
 
     /*public async Task<string?> GetPartnerStage(int id)
@@ -274,7 +296,7 @@ public class UNOPSPartnerManager : IPartnerManager
 
         await PartnerRepository.UpdateAsync(entity);
 
-        return await MapEntityToModelAsync(entity, _mapper);
+        return await MapEntityToModelWithPermissionsAsync(entity, _mapper);
     }
 
     /*public async Task<PartnerModel?> UpdateStage(int userId, int id, string newStage)
@@ -334,7 +356,7 @@ public class UNOPSPartnerManager : IPartnerManager
             }
         }
 
-        return await MapEntityToModelAsync(item, _mapper);
+        return await MapEntityToModelWithPermissionsAsync(item, _mapper);
     }
     
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerGroupCode, PaginationRequest request)
@@ -386,11 +408,11 @@ public class UNOPSPartnerManager : IPartnerManager
                 .Take(request.PageSize)
                 .ToList();
             
-            // Map entities asynchronously
+            // Map entities asynchronously with default permissions
             var mappedEntities = new List<PartnerModel>();
             foreach (var entity in entities)
             {
-                var mapped = await MapEntityToModelAsync(entity, _mapper);
+                var mapped = await MapEntityToModelWithPermissionsAsync(entity, _mapper);
                 mappedEntities.Add(mapped);
             }
             
@@ -467,11 +489,11 @@ public class UNOPSPartnerManager : IPartnerManager
             .Take(request.PageSize)
             .ToList();
         
-        // Map entities asynchronously
+        // Map entities asynchronously with default permissions
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
         {
-            var mapped = await MapEntityToModelAsync(entity, _mapper);
+            var mapped = await MapEntityToModelWithPermissionsAsync(entity, _mapper);
             mappedEntities.Add(mapped);
         }
 

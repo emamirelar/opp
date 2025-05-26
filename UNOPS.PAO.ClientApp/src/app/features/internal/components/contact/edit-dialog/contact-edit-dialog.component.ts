@@ -119,6 +119,7 @@ export class ContactEditDialogComponent implements OnInit {
   allPronounsData = this.cachedDataService.allPronouns;
   allPartners = this.cachedDataService.allPartners;
   showValidationFailedError = signal<boolean>(false);
+  isLoading = signal<boolean>(false);
   maxDate = new Date();
 
   @Output() closeModal = new EventEmitter<void>();
@@ -134,16 +135,28 @@ export class ContactEditDialogComponent implements OnInit {
 
   ngOnInit() {
     this.record = this.dialogConfig.data?.record;
-    this.formGroup.patchValue(this.record);
-
-    // Exposer la fonction handleSave
-    this.dialogConfig.data.handleSave = this.handleSave.bind(this);
-
+    
+    // Set initial loading state
+    this.isLoading.set(true);
+    
+    // Check if we have the record data
+    if (this.record) {
+      this.formGroup.patchValue(this.record);
+    }
+    
     // Check if any assistant fields have values
     const hasAssistantInfo = this.record?.assistant || 
                            this.record?.assistantPhone || 
                            this.record?.assistantEmail;
     this.showAssistantFields.set(!!hasAssistantInfo);
+
+    // Exposer la fonction handleSave
+    this.dialogConfig.data.handleSave = this.handleSave.bind(this);
+
+    // Set loading to false after a short delay to ensure form is properly initialized
+    setTimeout(() => {
+      this.isLoading.set(false);
+    }, 100);
   }
 
   handleSave() {

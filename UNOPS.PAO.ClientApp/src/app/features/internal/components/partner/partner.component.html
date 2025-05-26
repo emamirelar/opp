@@ -24,7 +24,7 @@
   <app-listview
     [dataUrl]="'/api/partner'"
     [columns]="columns"
-    [config]="listviewConfig"
+    [config]="listviewConfig()"
     (rowClick)="handleOnOpenRecordDetails($event)"
     (searchChange)="onSearchChange($event)"
   >

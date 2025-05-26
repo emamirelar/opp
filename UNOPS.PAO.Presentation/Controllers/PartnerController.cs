@@ -50,9 +50,12 @@ public class PartnerController : BaseController
     }
 
     [HttpGet(APIDictionary.Partner)]
-    [AutoAuthorize]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
     {
+        // Check permission to read partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+        if (permissionResult != null) return permissionResult;
+        
         if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
         {
             try
@@ -84,9 +87,12 @@ public class PartnerController : BaseController
     
     [HttpGet(APIDictionary.Partner + "/classic-search" )]
     // Internal call: get Partners created by logged-in user
-    // TODO add permissions
     public async Task<ActionResult> GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
     {
+        // Check permission to read partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+        if (permissionResult != null) return permissionResult;
+        
         var specification = new PartnerCompositeClassicSearchSpecification(
             id: request.Id,
             name: request.Name,
@@ -210,7 +216,11 @@ public class PartnerController : BaseController
     {
         try
         {
-            var result = await _manager.GetPartnersByPartnerGroup(CurrentUserId, code, request);
+            // Check permission to read partners
+            var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+            if (permissionResult != null) return permissionResult;
+            
+            var result = await _manager.GetPartnersByPartnerGroupAsync(User, code, request);
             return Ok(result);
         }
         catch (Exception ex)
@@ -224,7 +234,11 @@ public class PartnerController : BaseController
     {
         try
         {
-            var result = await _manager.GetPartnersByPartnerCategory(CurrentUserId, code, request);
+            // Check permission to read partners
+            var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+            if (permissionResult != null) return permissionResult;
+            
+            var result = await _manager.GetPartnersByCategoryAsync(User, code, request);
             return Ok(result);
         }
         catch (Exception ex)
