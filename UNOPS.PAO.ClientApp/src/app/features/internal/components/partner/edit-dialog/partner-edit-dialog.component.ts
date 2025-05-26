@@ -35,6 +35,7 @@ import { Partner } from '../../../models/partner.model';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -58,7 +59,8 @@ import { PartnerTreeService } from '../../../services/partner-tree.service';
     MarkdownPipe,
     LinkListComponent,
     AiTranscribeComponent,
-    JsonPipe
+    JsonPipe,
+    ProgressSpinnerModule
   ],
   templateUrl: './partner-edit-dialog.component.html',
   standalone: true,

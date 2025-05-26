@@ -26,6 +26,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
 import { ContactEditDialogFooterComponent } from './footer/contact-edit-dialog-footer.component';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -48,7 +49,8 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
     DialogModule,
     CheckboxModule,
     FormsModule,
-    AiTranscribeComponent
+    AiTranscribeComponent,
+    ProgressSpinnerModule
   ],
   templateUrl: './contact-edit-dialog.component.html',
   standalone: true,
