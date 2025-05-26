@@ -226,10 +226,6 @@ export class AuthService {
     );
   }
 
-  public isInternal() {
-    return this.http.get<boolean>('/user/isInternal');
-  }
-
   // Check if user has a specific role
   public hasRole(role: string): Observable<boolean> {
     // Fast path for dev cookies
@@ -369,7 +365,7 @@ export class AuthService {
 
   public isAdmin(): Observable<boolean> {
     return this.getUserRoles().pipe(
-      map(roles => roles.includes('Administrator')),
+      map(roles => roles.includes('PARTNER_GLOB_ADMIN') || roles.includes('ORG_ADMIN')),
       catchError(() => of(false))
     );
   }
@@ -377,8 +373,8 @@ export class AuthService {
   public getUserRoles(): Observable<string[]> {
     return this.user().pipe(
       map(claims => {
-        const roleClaims = claims.filter(claim => claim.type === 'role');
-        return roleClaims.map(claim => claim.value);
+        const roleClaims = claims.filter(claim => claim.type === 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role');
+        return roleClaims.map(claim => claim.value.toUpperCase());
       }),
       catchError(() => of([]))
     );

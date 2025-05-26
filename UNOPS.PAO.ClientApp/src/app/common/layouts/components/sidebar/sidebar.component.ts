@@ -34,9 +34,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
   // Initialize signals
   internalUserSignal = signal<boolean>(false);
   adminUserSignal = signal<boolean>(false);
+  restrictedRoleSignal = signal<boolean>(false);
   
   // Initialize menu items in ngOnInit after signals are available
-  private initializeMenuItems() {
+  private initializeMenuItems(isAdmin: boolean) {
     this.menuItems = [
       {
         label: 'title.home',
@@ -46,7 +47,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
       {
         label: 'title.partnerships',
         icon: 'handshake',
-        visible: this.isPartnerOrInternalUser(),
         items: [
           {
             label: 'title.partners',
@@ -78,16 +78,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
       {
         label: 'title.initiatives',
         icon: 'lightbulb',
-        routerLink: ['/initiatives'],
-        visible: this.isInternalUser() || this.isAdmin()
+        routerLink: ['/initiatives']
       }
     ];
 
-    this.adminMenuItems = [
+    this.adminMenuItems = !isAdmin ? [] : [
       {
         label: 'title.admin',
         icon: 'admin_panel_settings',
-        visible: this.isAdmin(),
         items: [
           {
             label: 'title.partnerTree',
@@ -112,14 +110,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
         ]
       }
     ];
-
-    this.externalMenuItems = [
-      {
-        label: 'title.home',
-        icon: 'home',
-        routerLink: ['/'],
-      }
-    ];
   }
 
   get combinedMenuItems(): MenuItem[] {
@@ -127,15 +117,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.authService.isInternal().subscribe((isInternal) => {
-      this.internalUserSignal.set(isInternal);
-      this.initializeMenuItems();
-      this.cdr.detectChanges();
-    });
-
     this.authService.isAdmin().subscribe((isAdmin: boolean) => {
-      this.adminUserSignal.set(isAdmin);
-      this.initializeMenuItems();
+      this.initializeMenuItems(isAdmin);
       this.cdr.detectChanges();
     });
 
@@ -144,7 +127,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
     
     // Initialize menu items on startup
-    this.initializeMenuItems();
+    this.initializeMenuItems(false);
   }
 
   ngOnDestroy(): void {
@@ -160,61 +143,5 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.translateMenu(item.items);
       }
     }
-  }
-
-  isAdmin(): boolean {
-    if (this.authService.hasDevCookie()) {
-      const cookies = document.cookie.split(';').map(c => c.trim());
-      const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
-      if (devCookie) {
-        const email = devCookie.substring('dev-user-email='.length);
-        return email.toLowerCase().includes('admin');
-      }
-    }
-    
-    return this.adminUserSignal();
-  }
-
-  isInternalUser(): boolean {
-    if (this.authService.hasDevCookie()) {
-      const cookies = document.cookie.split(';').map(c => c.trim());
-      const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
-      if (devCookie) {
-        const email = devCookie.substring('dev-user-email='.length);
-        return email.endsWith('@unops.org');
-      }
-    }
-    
-    return this.internalUserSignal();
-  }
-
-  isPartnerUser(): boolean {
-    if (this.authService.hasDevCookie()) {
-      const cookies = document.cookie.split(';').map(c => c.trim());
-      const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
-      if (devCookie) {
-        const email = devCookie.substring('dev-user-email='.length);
-        return email.includes('partner');
-      }
-    }
-    
-    return this.authService.hasRole('Partner') as unknown as boolean;
-  }
-
-  isExternalUser(): boolean {
-    if (this.authService.hasDevCookie()) {
-      const cookies = document.cookie.split(';').map(c => c.trim());
-      const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
-      if (devCookie) {
-        const email = devCookie.substring('dev-user-email='.length);
-        return email.includes('example.com');
-      }
-    }
-    
-    return this.authService.hasRole('External') as unknown as boolean;
-  }
-  
-  isPartnerOrInternalUser(): boolean {
-    return this.isPartnerUser() || this.isInternalUser() || this.isAdmin();
   }
 }

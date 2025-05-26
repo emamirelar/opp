@@ -4,6 +4,7 @@ using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.Business.Repositories;
 public class ValuesRepository
@@ -21,8 +22,10 @@ public class ValuesRepository
 
     public IEnumerable<Country> GetCountries() => context.Countries.Where(x => x.Status == EntityStatus.Active);
 
-    public IEnumerable<Partner> GetPartners()
-        => context.Partners.Where(x => x.Status.Equals("Active") && !x.IsDeleted);
+    public IQueryable<Partner> GetPartners()
+        => context.Partners
+            .Include(p => p.PartnerOffice)
+            .Where(x => x.Status.Equals("Active") && !x.IsDeleted);
     
     // Get flat list of organization units by type
     public IEnumerable<OrganizationHierarchy> GetOrganizationsByType(OrganizationUnitType type)

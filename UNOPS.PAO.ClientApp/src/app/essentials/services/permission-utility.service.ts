@@ -1,12 +1,31 @@
 import { Injectable, inject, signal, ChangeDetectorRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { PermissionService, EntityPermissions } from './permission.service';
+import { filter } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PermissionUtilityService {
   private permissionService = inject(PermissionService);
+  private router = inject(Router);
+  private lastRoute: string = '';
+
+  constructor() {
+    // Listen to router navigation events and clear cache when route changes
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      const newRoute = event.url;
+      
+      // Only clear cache if the route actually changed
+      if (this.lastRoute !== newRoute) {
+        console.log('[PERMISSION-UTILITY] Route changed from', this.lastRoute, 'to', newRoute, '- clearing cache');
+        this.permissionService.clearPermissionCaches();
+        this.lastRoute = newRoute;
+      }
+    });
+  }
 
   /**
    * Creates permission signals and loading logic for entity list components
@@ -30,22 +49,17 @@ export class PermissionUtilityService {
     const loadPermissions = (router: Router, cdr?: ChangeDetectorRef) => {
       permissionsLoading.set(true);
       
+      // Clear cache before loading to ensure fresh permissions
+      this.permissionService.clearPermissionCaches();
+      
       // Get current route path for permission checking
       const currentPath = router.url;
       
-      // First check cache
-      const cachedPermissions = this.permissionService.getEntityPermissionsFromCache(currentPath);
-      if (cachedPermissions) {
-        entityPermissions.set(cachedPermissions);
-        permissionsLoading.set(false);
-        cdr?.detectChanges();
-        return;
-      }
-      
-      // If not cached, load from server
+      // Load from server (cache was cleared above)
       this.permissionService.getEntityPermissions(currentPath)
         .subscribe({
           next: (permissions) => {
+            console.log(`[PERMISSION-UTILITY] Loaded ${entityName} permissions for route ${currentPath}:`, permissions);
             entityPermissions.set(permissions);
             permissionsLoading.set(false);
             cdr?.detectChanges();
@@ -85,13 +99,14 @@ export class PermissionUtilityService {
     const loadPermissions = (entityId: string, cdr?: ChangeDetectorRef) => {
       if (!entityId) return;
       
-      // Clear permission caches when loading a new entity
+      // Clear permission caches when loading a new entity instance
       this.permissionService.clearPermissionCaches();
       
       // Load permissions for the specific entity instance
       this.permissionService.getEntityInstancePermissions(entityName, entityId)
         .subscribe({
           next: (permissions) => {
+            console.log(`[PERMISSION-UTILITY] Loaded ${entityName} instance permissions for ID ${entityId}:`, permissions);
             recordPermissions.set(permissions);
             cdr?.detectChanges();
           },
@@ -120,30 +135,28 @@ export class PermissionUtilityService {
   }
 
   /**
-   * Utility method to check if user can create entities
+   * Manually clear all permission caches
+   * Use this when you need to force a refresh of permissions
    */
-  canCreate(entityPermissions: EntityPermissions): boolean {
-    return entityPermissions.permissions.canCreate;
+  clearCaches() {
+    console.log('[PERMISSION-UTILITY] Manually clearing permission caches');
+    this.permissionService.clearPermissionCaches();
   }
 
-  /**
-   * Utility method to check if user can update entities
-   */
-  canUpdate(entityPermissions: EntityPermissions): boolean {
-    return entityPermissions.permissions.canUpdate;
+  // Utility methods for checking specific permissions
+  canRead(permissions: EntityPermissions): boolean {
+    return permissions.permissions.canRead;
   }
 
-  /**
-   * Utility method to check if user can delete entities
-   */
-  canDelete(entityPermissions: EntityPermissions): boolean {
-    return entityPermissions.permissions.canDelete;
+  canCreate(permissions: EntityPermissions): boolean {
+    return permissions.permissions.canCreate;
   }
 
-  /**
-   * Utility method to check if user can read entities
-   */
-  canRead(entityPermissions: EntityPermissions): boolean {
-    return entityPermissions.permissions.canRead;
+  canUpdate(permissions: EntityPermissions): boolean {
+    return permissions.permissions.canUpdate;
+  }
+
+  canDelete(permissions: EntityPermissions): boolean {
+    return permissions.permissions.canDelete;
   }
 } 

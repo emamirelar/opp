@@ -12,6 +12,9 @@ using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Utilities.Helpers;
+using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSDomain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 [Route("/")]
 [ApiController]
@@ -19,16 +22,19 @@ using UNOPS.PAO.Utilities.Helpers;
 public class ValuesController : BaseController
 {
     private readonly ValuesManager _manager;
+    private readonly IBusinessSecurityService _businessSecurityService;
     private int currentUserId => _userResolverService.GetCurrentUserId();
 
     public ValuesController(
         ValuesManager manager,
+        IBusinessSecurityService businessSecurityService,
         ILogger<ValuesController> logger,
         IAuthorizationService authorizationService,
         UserResolverService<int> userResolverService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager;
+        _businessSecurityService = businessSecurityService;
     }
 
     [HttpGet(APIDictionary.Currency)]
@@ -67,7 +73,22 @@ public class ValuesController : BaseController
     [HttpGet(APIDictionary.Partners)]
     public async Task<ActionResult> GetPartners()
     {
-        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetPartners()));
+        return await HandleOperationAsync(async () => 
+        {
+            // Get all partners and evaluate on client side to avoid EF translation issues
+            var allPartners = await _manager.GetPartnersForFiltering().ToListAsync();
+            
+            // Apply row-level filtering based on user's role and organization unit
+            var filteredPartners = await _businessSecurityService.ApplyRowFiltersAsync(allPartners.AsQueryable(), User, "create");
+            
+            // Map to PartnerValueModel after filtering
+            return filteredPartners.Select(p => new PartnerValueModel
+            {
+                Id = p.Id,
+                Name = p.Name,
+                PartnerOfficeId = p.PartnerOfficeId
+            }).ToList();
+        });
     }
 
     [HttpGet(APIDictionary.OrganizationUnits)]

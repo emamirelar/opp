@@ -30,7 +30,7 @@
   <app-listview
     [dataUrl]="contactService.getUrl()"
     [columns]="contactColumns"
-    [config]="listviewConfig"
+    [config]="listviewConfig()"
     (rowClick)="onRowClick($event)"
     (searchChange)="onSearchChange($event)"
   >

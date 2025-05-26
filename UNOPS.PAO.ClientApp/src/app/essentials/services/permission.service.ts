@@ -298,8 +298,16 @@ export class PermissionService {
    * Call this when navigating away or when permissions need to be refreshed
    */
   clearPermissionCaches() {
+    const entityCacheSize = this.entityPermissionsCache.size;
+    const instanceCacheSize = this.entityInstancePermissionsCache.size;
+    
+    console.log(`[PERMISSION-SERVICE] Clearing permission caches: ${entityCacheSize} entity entries, ${instanceCacheSize} instance entries`);
+    
     this.entityPermissionsCache.clear();
     this.entityInstancePermissionsCache.clear();
+    this.currentEntityId = undefined;
+    
+    console.log('[PERMISSION-SERVICE] Permission caches cleared successfully');
   }
 
   /**

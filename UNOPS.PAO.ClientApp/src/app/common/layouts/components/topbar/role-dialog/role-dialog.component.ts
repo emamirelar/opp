@@ -4,8 +4,9 @@ import { DialogModule } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { RoleService, Role, UserRoles } from '../../../../../essentials/services/role.service';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-role-dialog',
@@ -15,7 +16,8 @@ import { MessageService } from 'primeng/api';
     DialogModule,
     MultiSelectModule,
     ButtonModule,
-    FormsModule
+    FormsModule,
+    ConfirmDialogModule
   ],
   template: `
     <p-dialog 
@@ -75,6 +77,8 @@ import { MessageService } from 'primeng/api';
         </div>
       </ng-template>
     </p-dialog>
+    
+    <p-confirmDialog></p-confirmDialog>
   `,
   styles: [`
     :host ::ng-deep {
@@ -97,7 +101,8 @@ export class RoleDialogComponent implements OnInit {
 
   constructor(
     private roleService: RoleService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService
   ) {}
 
   ngOnInit() {
@@ -157,15 +162,26 @@ export class RoleDialogComponent implements OnInit {
       next: () => {
         var message = 'Roles updated successfully. ';
         if (!genUser) {
-          message += 'UNOPS_GEN_USER is a default role, hence it has been added to your roles automatically.';
+          message += 'UNOPS_GEN_USER is a default role, hence it has been added to your roles automatically. ';
         }
-        message += ' Please refresh the page to see the changes.';
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: message
-        });
+        message += 'Would you like to refresh the page to see the changes?';
+        
         this.hideDialog();
+        
+        // Show confirmation dialog for page refresh
+        this.confirmationService.confirm({
+          message: message,
+          header: 'Refresh Page',
+          icon: 'pi pi-refresh',
+          acceptLabel: 'Yes, Refresh',
+          rejectLabel: 'No, Later',
+          accept: () => {
+            window.location.reload();
+          },
+          reject: () => {
+            // User chose not to refresh, do nothing
+          }
+        });
       },
       error: (error) => {
         console.error('Error updating roles:', error);

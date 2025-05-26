@@ -100,7 +100,18 @@ export class ContactViewComponent implements OnInit, OnDestroy {
           // Check if data is already available from the resolver
           this.activatedRoute.parent?.data.subscribe(data => {
             if (data['contactData']) {
-              this.recordData.set(data['contactData']);
+              const contactData = data['contactData'];
+              this.recordData.set(contactData);
+              
+              // Extract permissions from the resolver data if they exist
+              if (contactData.permissions) {
+                this.recordPermissions.set({
+                  entity: 'Contact',
+                  hasAccess: true,
+                  permissions: contactData.permissions
+                });
+              }
+              
               this.infoLoading.set(false);
             } else {
               // Fallback to loading details directly if resolver data isn't available
@@ -109,7 +120,7 @@ export class ContactViewComponent implements OnInit, OnDestroy {
           });
           
           // Load permissions for this specific contact
-          this.permissionUtils.loadPermissions(this.recordId, this.cdr);
+          // Permissions are now extracted from the contact response directly
         }
       }
     });
@@ -123,6 +134,16 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     this.contactService.getContactById(this.recordId).subscribe({
       next: (data: any) => {
         this.recordData.set(data);
+        
+        // Extract permissions from the response if they exist
+        if (data.permissions) {
+          this.recordPermissions.set({
+            entity: 'Contact',
+            hasAccess: true,
+            permissions: data.permissions
+          });
+        }
+        
         this.infoLoading.set(false);
       },
       error: (error) => {
@@ -162,8 +183,6 @@ export class ContactViewComponent implements OnInit, OnDestroy {
     ref.onClose.subscribe((result) => {
       if (result) {
         this._loadRecordDetails();
-        // Reload permissions after edit
-        this.permissionUtils.loadPermissions(this.recordId, this.cdr);
       }
     });
   }

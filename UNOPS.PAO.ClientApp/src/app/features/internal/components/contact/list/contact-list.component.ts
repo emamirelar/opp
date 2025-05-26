@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { NgIf, AsyncPipe } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
@@ -68,15 +68,15 @@ export class ContactListComponent implements OnInit, OnDestroy {
     { field: 'mobile', label: 'label.contact.mobile', type: 'text', sortable: true, width: '15%' }
   ];
 
-  // Configure listview behavior
-  listviewConfig: ListViewConfig = {
+  // Configure listview behavior with computed permissions
+  listviewConfig = computed<ListViewConfig>(() => ({
     enableSelection: true,
     enablePagination: true,
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
     enableSearch: true,
-    enableExport: true,
+    enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     entityName: 'Contact',
     scrollable: true,
     scrollHeight: 'flex',
@@ -140,13 +140,13 @@ export class ContactListComponent implements OnInit, OnDestroy {
         }
       ] as SearchField[]
     }
-  };
+  }));
 
   // Track current search term
   currentSearchText = '';
 
   ngOnInit() {
-    console.log('Contact list config:', this.listviewConfig);
+    console.log('Contact list config:', this.listviewConfig());
     
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);

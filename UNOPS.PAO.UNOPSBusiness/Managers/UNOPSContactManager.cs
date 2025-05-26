@@ -55,9 +55,9 @@ public class UNOPSContactManager : IContactManager
             result.Permissions = new EntityPermissionsModel
             {
                 CanRead = ((dynamic)permissions).canRead,
-                CanUpdate = ((dynamic)permissions).canUpdate,
-                CanDelete = ((dynamic)permissions).canDelete,
-                CanCreate = ((dynamic)permissions).canCreate
+                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
+                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
             };
         }
         
