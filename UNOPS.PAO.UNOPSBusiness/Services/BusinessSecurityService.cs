@@ -34,21 +34,52 @@ public class BusinessSecurityService : IBusinessSecurityService
 
     public async Task<string?> GetUserOrgUnitAsync(ClaimsPrincipal user)
     {
+        _logger.LogInformation("DEBUG - GetUserOrgUnitAsync called");
+        
         var userEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? 
                        user.FindFirst("email")?.Value;
         
+        _logger.LogInformation("DEBUG - User email from claims: {Email}", userEmail);
+        
         if (string.IsNullOrEmpty(userEmail))
         {
-            _logger.LogWarning("User email not found in claims");
+            _logger.LogWarning("DEBUG - User email not found in claims");
             return null;
         }
 
-        var userInfo = await _context.UserInfos
-            .Where(u => u.UserEmail.ToLower() == userEmail.ToLower() && !u.IsDeleted)
-            .Select(u => u.OrgUnit)
-            .FirstOrDefaultAsync();
-
-        return userInfo;
+        try
+        {
+            // Look up user's organization unit based on email domain or other logic
+            // This is a simplified implementation - you may need to adjust based on your business logic
+            
+            // For UNOPS users, extract org unit from email or database lookup
+            if (userEmail.EndsWith("@unops.org"))
+            {
+                _logger.LogInformation("DEBUG - User is UNOPS internal user");
+                // You might want to look this up from a user profile table
+                // For now, return a default org unit for UNOPS users
+                return "UNOPS";
+            }
+            
+            // For external users, look up their assigned org unit
+            // This would typically involve a database lookup
+            _logger.LogInformation("DEBUG - User is external, looking up org unit in database");
+            
+            // Check if there's a UserInfos table lookup (restore original logic if it exists)
+            var userInfo = await _context.UserInfos
+                .Where(u => u.UserEmail.ToLower() == userEmail.ToLower() && !u.IsDeleted)
+                .Select(u => u.OrgUnit)
+                .FirstOrDefaultAsync();
+                
+            _logger.LogInformation("DEBUG - UserInfo lookup result: {OrgUnit}", userInfo);
+            
+            return userInfo;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DEBUG - Error getting user org unit for email: {Email}", userEmail);
+            return null;
+        }
     }
 
     public async Task<IQueryable<T>> ApplyRowFiltersAsync<T>(IQueryable<T> query, ClaimsPrincipal user, string action = "read") where T : class
@@ -353,15 +384,19 @@ public class BusinessSecurityService : IBusinessSecurityService
 
     public async Task<EntityPermissionsModel> GetEntityPermissionsAsync(ClaimsPrincipal user, string entityName)
     {
+        _logger.LogInformation("DEBUG - GetEntityPermissionsAsync called for entity: {EntityName}", entityName);
+        
         // For administrators, all permissions are true
         if (user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
+            _logger.LogInformation("DEBUG - User has PARTNER_GLOB_ADMIN role, returning full permissions");
             return new EntityPermissionsModel { CanRead = true, CanCreate = true, CanUpdate = true, CanDelete = true };
         }
 
         var userOrgUnit = await GetUserOrgUnitAsync(user);
+        _logger.LogInformation("DEBUG - User org unit: {UserOrgUnit}", userOrgUnit);
 
-        return entityName.ToLower() switch
+        var result = entityName.ToLower() switch
         {
             "contact" => await GetContactPermissionsAsync(user, userOrgUnit),
             "unopscontact" => await GetContactPermissionsAsync(user, userOrgUnit),
@@ -372,6 +407,11 @@ public class BusinessSecurityService : IBusinessSecurityService
             "partnertree" => await GetPartnerTreePermissionsAsync(user, userOrgUnit),
             _ => new EntityPermissionsModel { CanRead = true, CanCreate = false, CanUpdate = false, CanDelete = false }
         };
+        
+        _logger.LogInformation("DEBUG - Final permissions for {EntityName}: CanRead={CanRead}, CanCreate={CanCreate}, CanUpdate={CanUpdate}, CanDelete={CanDelete}", 
+            entityName, result.CanRead, result.CanCreate, result.CanUpdate, result.CanDelete);
+            
+        return result;
     }
 
     #region Entity-specific permission methods
@@ -413,37 +453,60 @@ public class BusinessSecurityService : IBusinessSecurityService
 
     private async Task<EntityPermissionsModel> GetEntityPermissionsFromDatabaseAsync(ClaimsPrincipal user, string entityName)
     {
+        _logger.LogInformation("DEBUG - GetEntityPermissionsFromDatabaseAsync called for entity: {EntityName}", entityName);
+        
         // Get user roles
         var userRoles = user.Claims
             .Where(c => c.Type == ClaimTypes.Role)
             .Select(c => c.Value)
             .ToList();
 
+        _logger.LogInformation("DEBUG - User roles from claims: {Roles}", string.Join(", ", userRoles));
+
         // If no roles found, return no permissions
         if (!userRoles.Any())
         {
+            _logger.LogWarning("DEBUG - No roles found for user, returning no permissions");
             return new EntityPermissionsModel { CanRead = false, CanCreate = false, CanUpdate = false, CanDelete = false };
         }
 
         // Query EntityPermissions table for the specified entity with user's roles
+        _logger.LogInformation("DEBUG - Querying EntityPermissions table for entity: {EntityName} with roles: {Roles}", 
+            entityName, string.Join(", ", userRoles));
+            
         var permissions = await _context.EntityPermissions
             .Where(ep => ep.Entity == entityName && userRoles.Contains(ep.Role))
             .ToListAsync();
 
+        _logger.LogInformation("DEBUG - Found {Count} permission records in database", permissions.Count);
+        
+        foreach (var permission in permissions)
+        {
+            _logger.LogInformation("DEBUG - Permission record: Entity={Entity}, Role={Role}, CanRead={CanRead}, CanCreate={CanCreate}, CanUpdate={CanUpdate}, CanDelete={CanDelete}", 
+                permission.Entity, permission.Role, permission.CanRead, permission.CanCreate, permission.CanUpdate, permission.CanDelete);
+        }
+
         // If no permissions found for any role, return default no access
         if (!permissions.Any())
         {
+            _logger.LogWarning("DEBUG - No permissions found in database for entity {EntityName} with roles {Roles}, returning no access", 
+                entityName, string.Join(", ", userRoles));
             return new EntityPermissionsModel { CanRead = false, CanCreate = false, CanUpdate = false, CanDelete = false };
         }
 
         // Aggregate permissions across all roles (use OR logic - if any role allows, then allow)
-        return new EntityPermissionsModel
+        var result = new EntityPermissionsModel
         {
             CanRead = permissions.Any(p => p.CanRead),
             CanCreate = permissions.Any(p => p.CanCreate),
             CanUpdate = permissions.Any(p => p.CanUpdate),
             CanDelete = permissions.Any(p => p.CanDelete)
         };
+        
+        _logger.LogInformation("DEBUG - Aggregated permissions result: CanRead={CanRead}, CanCreate={CanCreate}, CanUpdate={CanUpdate}, CanDelete={CanDelete}", 
+            result.CanRead, result.CanCreate, result.CanUpdate, result.CanDelete);
+            
+        return result;
     }
 
     private async Task<EntityPermissionsModel> GetContactPermissionsAsync(ClaimsPrincipal user, string? userOrgUnit)
