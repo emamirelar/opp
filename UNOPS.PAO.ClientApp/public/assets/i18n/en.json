@@ -41,7 +41,8 @@
     "admin": "Administration",
     "aiPromptsAdmin": "AI Prompts Admin",
     "userManagement": "Manage User Permissions",
-    "editUserRoles": "Edit User Roles",
+    "impersonateRoles": "Impersonate Roles",
+    "editUserRoles": "Assign Roles for Impersonation",
     "manageOffice": "Manage my Office",
     "translationWorkbench": "Translation Workbench",
     "partnerTitles": {
@@ -101,7 +102,7 @@
     "backToHome": "Back to Home",
     "refresh": "Refresh",
     "clearFilters": "Clear Filters",
-    "editRoles": "Edit Roles"
+    "editRoles": "Assign Roles"
   },
   "label": {
     "actions": "Actions",
@@ -300,7 +301,7 @@
     "noUsersFound": "No users found",
     "selectRolesToAssign": "Select the roles to assign to this user",
     "loadingPermissions": "Loading permissions...",
-    "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access user management."
+    "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access role impersonation."
   },
   "label.interaction.contact": "Contact",
   "errors": {

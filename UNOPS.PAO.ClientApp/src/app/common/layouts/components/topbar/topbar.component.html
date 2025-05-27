@@ -20,12 +20,13 @@
       <!-- User Roles Button -->
       <div class="flex gap-2 mr-4 items-center" *ngIf="userRoles.length > 0">
         <button type="button"
-                class="p-button-text layout-topbar-action cursor-pointer hover:bg-surface-hover transition-colors"
+                class="p-button p-button-outlined p-button-primary layout-topbar-action cursor-pointer hover:bg-primary-50 transition-colors border-2 border-primary"
                 (click)="showRoleDialog()"
-                pTooltip="Manage Roles"
+                title="Impersonate Roles"
+                pTooltip="Impersonate Roles"
                 tooltipPosition="bottom">
-          <i class="pi pi-users text-primary"></i>
-          <span class="ml-2 text-sm font-medium text-primary">{{ userRoles.length }} Roles</span>
+          <i class="pi pi-users text-primary mr-2"></i>
+          <span class="text-sm font-bold text-primary">Impersonate Roles</span>
         </button>
       </div>
 

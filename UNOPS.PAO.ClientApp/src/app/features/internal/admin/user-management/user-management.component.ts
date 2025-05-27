@@ -155,11 +155,11 @@ export class UserManagementComponent implements OnInit {
       .subscribe({
         next: (permissions) => {
           if (!permissions.hasAccess) {
-            console.log(`[USER-MANAGEMENT] No access to user management for route ${currentPath}`);
+            console.log(`[IMPERSONATE-ROLES] No access to role impersonation for route ${currentPath}`);
             this.router.navigate(['/access-denied']);
             return;
           }
-          console.log(`[USER-MANAGEMENT] Loaded user management permissions for route ${currentPath}:`, permissions);
+          console.log(`[IMPERSONATE-ROLES] Loaded role impersonation permissions for route ${currentPath}:`, permissions);
           this.entityPermissions.set(permissions);
           this.permissionsLoading.set(false);
           
@@ -172,12 +172,12 @@ export class UserManagementComponent implements OnInit {
           this.cdr.detectChanges();
         },
         error: (error) => {
-          console.error('Error loading user management permissions:', error);
+          console.error('Error loading role impersonation permissions:', error);
           this.permissionsLoading.set(false);
           this.messageService.add({
             severity: 'error',
             summary: 'Access Error',
-            detail: 'Unable to verify permissions for user management'
+            detail: 'Unable to verify permissions for role impersonation'
           });
           this.cdr.detectChanges();
         }
