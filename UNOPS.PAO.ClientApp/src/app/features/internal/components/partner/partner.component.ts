@@ -130,6 +130,17 @@ export class PartnerComponent implements OnDestroy, OnInit {
       sortable: false,
       type: 'text'
     },
+      { 
+        field: 'partnerOfficeName',
+        label: 'label.partner.partnerOffice',
+        sortable: false,
+        width: '20%',
+        type: 'template',
+        ellipsis: true,
+        templateFn: (partner: any) => {
+          return partner.partnerOffice?.name || '';
+        }
+      },
     {
       field: 'first5ContactsByDate.profilePictureUrl',
       firstLetterFallbackField: 'first5ContactsByDate.firstName',
