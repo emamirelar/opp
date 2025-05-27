@@ -13,45 +13,49 @@ using UNOPS.PAO.Presentation.Security;
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using System;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.Presentation;
+using UNOPS.PAO.UNOPSBusiness.Authorization;
 
 [Route("/")]
-[ApiController]
-[Authorize]
-public class PartnerController : ControllerBase
+[Authorize(AuthenticationSchemes = "IAP")]
+public class PartnerController : BaseController
 {
-    private IPartnerManager manager;
-    private IAuthorizationService authorizationService;
+    private readonly IPartnerManager _manager;
 
-    private UserResolverService<int> userResolverService;
-
-    private int currentUserId => userResolverService.GetCurrentUserId();
-
-    public PartnerController(IManagerWrapper manager, UserResolverService<int> userResolverService, IAuthorizationService authorizationService)
+    public PartnerController(
+        IManagerWrapper manager, 
+        UserResolverService<int> userResolverService, 
+        IAuthorizationService authorizationService,
+        ILogger<PartnerController> logger,
+        IPermissionService permissionService)
+        : base(logger, authorizationService, userResolverService, permissionService)
     {
-        this.manager = manager.PartnerManager;
-        this.userResolverService = userResolverService;
-        this.authorizationService = authorizationService;
+        _manager = manager.PartnerManager;
     }
 
     [HttpPost(APIDictionary.Partner)]
-    // Internal call: Create a Partner
     public async Task<IActionResult> Create([FromBody] PartnerRequest req)
     {
-        var result = await manager.CreatePartnerAsync(req);
-
+        // Check permission to create partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "create");
+        if (permissionResult != null) return permissionResult;
+        
+        var result = await _manager.CreatePartnerAsync(User, req);
         if (result == null)
         {
-            return BadRequest();
+            return Forbid(); // User doesn't have permission to create partners
         }
-
         return CreatedAtAction(nameof(Create), result.Id, result);
     }
 
     [HttpGet(APIDictionary.Partner)]
-    // Internal call: get Partners created by logged-in user
-    // TODO add permissions
-    public ActionResult<PaginationResponse<PartnerModel>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
     {
+        // Check permission to read partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+        if (permissionResult != null) return permissionResult;
+        
         if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
         {
             try
@@ -69,78 +73,122 @@ public class PartnerController : ControllerBase
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(new { error = ex.Message, searchCriteria });
+                throw new BusinessException(ex.Message);
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = "Failed to process advanced search criteria", details = ex.Message, searchCriteria });
+                throw new BusinessException($"Failed to process advanced search criteria: {ex.Message}");
             }
         }
 
         var specification = new PartnerCompositeSpecification(request);
-        return manager.GetPartnersWithSpecification(currentUserId, specification, request);
+        return Ok(await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
+    }
+    
+    [HttpGet(APIDictionary.Partner + "/classic-search" )]
+    // Internal call: get Partners created by logged-in user
+    public async Task<ActionResult> GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
+    {
+        // Check permission to read partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+        if (permissionResult != null) return permissionResult;
+        
+        var specification = new PartnerCompositeClassicSearchSpecification(
+            id: request.Id,
+            name: request.Name,
+            status: request.Status,
+            newEngagement: request.NewEngagement,
+            phone: request.Phone,
+            website: request.Website,
+            shortName: request.ShortName,
+            partnerOfficeId: request.PartnerOfficeId,
+            partnerCategoryId: request.PartnerCategoryId,
+            addressCity: request.AddressCity,
+            addressStateProvince: request.AddressStateProvince,
+            addressPostalCode: request.AddressPostalCode,
+            addressCountry: request.AddressCountry,
+            searchText: request.SearchText);
+
+        return Ok(await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
     }
 
+
     [HttpGet(APIDictionary.Partner + "/{id}")]
-    // Internal call: Partner details
-    // TODO add permissions
-
-    public async Task<ActionResult> Get(int id)
+    public async Task<IActionResult> Get(int id)
     {
-        var x = await manager.GetPartner(currentUserId, id);
-
-        if (x == null)
+        // Check permission to read partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+        if (permissionResult != null) return permissionResult;
+        
+        var partner = await _manager.GetPartnerAsync(User, id);
+        if (partner == null)
         {
             return NotFound();
         }
 
-        return Ok(x);
+        // Return partner data directly using JsonResult to avoid the wrapper metadata
+        return new JsonResult(partner);
     }
 
     [HttpPut(APIDictionary.Partner)]
-    // Internal call: update Partner
     public async Task<IActionResult> Update([FromBody] UpdatePartnerRequest req)
     {
-        await manager.UpdatePartnerAsync(currentUserId, req);
-
-        return NoContent();
+        // Check permission to update partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "update");
+        if (permissionResult != null) return permissionResult;
+        
+        var result = await _manager.UpdatePartnerAsync(User, req);
+        if (result == null)
+        {
+            return NotFound(); // Partner not found or user doesn't have permission
+        }
+        return Ok(result);
     }
 
     [HttpDelete(APIDictionary.Partner + "/{id}")]
-    // Internal call: delete Partner
     public async Task<IActionResult> Delete(int id)
     {
-        await manager.DeletePartnerAsync(currentUserId, id);
+        // Check permission to delete partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "delete");
+        if (permissionResult != null) return permissionResult;
+        
+        var success = await _manager.DeletePartnerAsync(User, id);
+        if (!success)
+        {
+            return NotFound(); // Partner not found or user doesn't have permission
+        }
         return NoContent();
     }
 
     [HttpGet(APIDictionary.Partner + "/{id}/permissions")]
     public async Task<IActionResult> PermissionsGet(int id)
     {
-        var Partner = await manager.GetPartner(currentUserId, id);
-
-        if (Partner == null)
+        var partner = await _manager.GetPartnerAsync(User, id);
+        if (partner == null)
         {
             return NotFound();
         }
 
-        var canReadResult = await authorizationService.AuthorizeAsync(User, Partner, Operations.Read);
-        var canUpdateResult = await authorizationService.AuthorizeAsync(User, Partner, Operations.Update);
-        var canCreateResult = await authorizationService.AuthorizeAsync(User, Partner, Operations.Create);
-        var canDeleteResult = await authorizationService.AuthorizeAsync(User, Partner, Operations.Delete);
-
-        return Ok(new
-        {
-            CanRead = canReadResult.Succeeded,
-            CanUpdate = canUpdateResult.Succeeded,
-            CanCreate = canCreateResult.Succeeded,
-            CanDelete = canDeleteResult.Succeeded
-        });
+        // Return permissions for this partner
+        var permissions = await GetEntityPermissionsAsync("Partner", partner);
+        
+        return Ok(permissions);
     }
 
     [HttpPost(APIDictionary.Partner + "/{id}/logo")]
     public async Task<IActionResult> UploadLogo(int id, IFormFile file)
     {
+        // Get the partner to check permissions on it
+        var partner = await _manager.GetPartnerAsync(User, id);
+        if (partner == null)
+        {
+            return NotFound();
+        }
+        
+        // Check update permission for this specific partner
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "update", partner);
+        if (permissionResult != null) return permissionResult;
+        
         if (file == null || file.Length == 0)
         {
             return BadRequest("No file was uploaded");
@@ -159,18 +207,43 @@ public class PartnerController : ControllerBase
             return BadRequest("Invalid file type. Only JPEG, PNG, and WEBP files are allowed.");
         }
 
-        try 
+        var result = await _manager.UpdatePartnerLogoAsync(id, file);
+        return Ok(new { imageUrl = result });
+    }
+
+    [HttpGet(APIDictionary.Partner + "/by-partner-group-code/{code}")]
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerGroup(string code, [FromQuery] PaginationRequest request)
+    {
+        try
         {
-            var result = await manager.UpdatePartnerLogoAsync(id, file);
-            return Ok(new { imageUrl = result });
+            // Check permission to read partners
+            var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+            if (permissionResult != null) return permissionResult;
+            
+            var result = await _manager.GetPartnersByPartnerGroupAsync(User, code, request);
+            return Ok(result);
         }
-        catch (BusinessException ex)
-        {
-            return BadRequest(ex.Message);
+        catch (Exception ex)
+        {       
+            return BadRequest(new { error = ex.Message });
         }
-        catch
+    }
+
+    [HttpGet(APIDictionary.Partner + "/by-partner-category-code/{code}")]
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerCategory(string code, [FromQuery] PaginationRequest request)
+    {
+        try
         {
-            return StatusCode(500, "An error occurred while processing your request");
+            // Check permission to read partners
+            var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+            if (permissionResult != null) return permissionResult;
+            
+            var result = await _manager.GetPartnersByCategoryAsync(User, code, request);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
         }
     }
 }

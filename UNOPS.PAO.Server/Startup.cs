@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.GoogleServices;
@@ -30,6 +31,13 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Google.Api.Gax;
 using Google.Cloud.SecretManager.V1;
+using UNOPS.PAO.UNOPSIdentity.Authentication;
+using UNOPS.PAO.UNOPSBusiness.Authorization;
+using UNOPS.PAO.UNOPSPresentation.Authorization;
+using UNOPS.PAO.UNOPSDataAccess.Seed;
+using UNOPS.PAO.UNOPSPresentation.Middleware;
+using System.IO;
+using UNOPS.PAO.Presentation.Security;
 
 namespace UNOPS.PAO.Server;
 
@@ -62,23 +70,85 @@ public class Startup
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
                 options.RoutePrefix = string.Empty;
             });
+            
+            // Development login page middleware
+            app.UseWhen(
+                context => context.Request.Path.StartsWithSegments("/dev-login"),
+                appBuilder => appBuilder.UseMiddleware<DevelopmentLoginPageMiddleware>()
+            );
         }
 
         app.UseStaticFiles();
         app.UseRouting();
+        
+        // Add diagnostic logging middleware to check headers FIRST
+        app.UseMiddleware<AuthenticationLoggingMiddleware>();
+        
+        // Add IAP verification middleware second - will log headers in original form
+        app.UseIAPVerification();
+        
+        // Add IAP simulation in development THIRD - it may modify the headers
+        if (env.IsDevelopment())
+        {
+            // Development login page middleware
+            app.UseWhen(
+                context => context.Request.Path.StartsWithSegments("/dev-login"),
+                appBuilder => appBuilder.UseMiddleware<DevelopmentLoginPageMiddleware>()
+            );
+            
+            // Set IAP headers for development
+            app.UseMiddleware<DevelopmentIAPAuthHandler>();
+            
+            // Add a second instance of logging AFTER development middleware to see modified headers
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api"))
+                {
+                    var logger = loggerFactory.CreateLogger("PostDevMiddlewareLogger");
+                    logger.LogInformation("Headers AFTER dev middleware:");
+                    
+                    foreach (var header in context.Request.Headers)
+                    {
+                        if (header.Key.Contains("jwt", StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.LogInformation("  {Key}: [REDACTED - Length: {Length}]", 
+                                header.Key, header.Value.ToString().Length);
+                        }
+                        else
+                        {
+                            logger.LogInformation("  {Key}: {Value}", header.Key, header.Value);
+                        }
+                    }
+                }
+                
+                await next();
+            });
+        }
+        
         app.UseCors(myAllowSpecificOrigins);
+        
+        // Standard authentication processing
         app.UseAuthentication();
+        
+        // Add dev identity middleware after authentication but before authorization
+        if (env.IsDevelopment())
+        {
+            app.UseMiddleware<DevIdentityMiddleware>(); // Force identity for development
+        }
+        
         app.UseAuthorization();
+        
         app.UseHttpsRedirection();
         app.UseExceptionHandler();
 
+        // Configure Strict-Transport-Security header
         app.Use(async (context, next) =>
         {
-            //context.Response.Headers.Add("content-security-policy", "font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https://lh3.googleusercontent.com/a/ALm5wu1Dqwlmxtyx5gOEQ2wss0UQc8sW6uFz3qiy4g_GZw=s96-c https://i.ibb.co/r771gnJ/Logistica.png data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/ https://www.googletagmanager.com/gtag/js https://accounts.google.com/ https://region1.google-analytics.com/g/collect https://accounts.google.com/gsi/client https://lh3.googleusercontent.com https://fonts.gstatic.com/ https://play.google.com; default-src 'self' https://lh3.googleusercontent.com https://fonts.gstatic.com/ https://play.google.com https://accounts.google.com https://region1.google-analytics.com/g/collect ;");
-            //context.Response.Headers.Add("x-content-security-policy", "font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https://lh3.googleusercontent.com/a/ALm5wu1Dqwlmxtyx5gOEQ2wss0UQc8sW6uFz3qiy4g_GZw=s96-c https://i.ibb.co/r771gnJ/Logistica.png data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/ https://www.googletagmanager.com/gtag/js https://accounts.google.com/ https://region1.google-analytics.com/g/collect https://accounts.google.com/gsi/client https://lh3.googleusercontent.com https://fonts.gstatic.com/ https://play.google.com; default-src 'self' https://lh3.googleusercontent.com https://fonts.gstatic.com/ https://play.google.com https://accounts.google.com https://region1.google-analytics.com/g/collect ;");
-            context.Response.Headers.Add("x-content-type-options", "nosniff");
-            if (!env.IsDevelopment())
+            if (!context.Response.Headers.ContainsKey("X-Frame-Options"))
             {
+                context.Response.Headers.Add("X-Frame-Options", "SAMEORIGIN");
+                context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+                context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
                 context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains;");
             }
 
@@ -113,6 +183,10 @@ public class Startup
 
         services.AddScoped(GetDbSchema);
         services.AddHttpContextAccessor();
+        
+        // Register dev middleware
+        services.AddScoped<DevelopmentIAPAuthHandler>();
+        services.AddTransient<DevIdentityMiddleware>();
 
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -121,51 +195,100 @@ public class Startup
 
         services.AddScoped<IPAOExecutionContext, PAOExecutionContext>();
         services.AddScoped<SystemConfigurationManager>();
+        
+        // Add user resolver service with correct registration order
+        services.AddScoped<IUserLookupService, UserLookupService>();
+        services.AddScoped<IEmailToUserIdResolver>(sp => sp.GetRequiredService<IUserLookupService>());
         services.AddScoped(typeof(UserResolverService<int>));
-
-        // Register IAuthService
-        services.AddScoped<UNOPS.PAO.Identity.Services.IAuthService, UNOPS.PAO.Identity.Services.AuthService>();
-
-        // Get JWT secret from Secret Manager
-        var projectId = Configuration["AppConfig:ProjectId"];
-        var secretManager = SecretManagerServiceClient.Create();
-        var secretName = $"projects/{projectId}/secrets/QA_Gmail_Plugin_Secret/versions/latest";
-        var secret = secretManager.AccessSecretVersion(secretName);
-        var jwtSecret = secret.Payload.Data.ToStringUtf8();
-
+        
+        // Add services for IAP verification
+        services.AddIAPVerification();
+        
+        // Add memory cache for permission caching
+        services.AddMemoryCache();
+        
+        // Register EntityPermissionHelper
+        services.AddScoped<EntityPermissionHelper>();
+        
+        // Register authorization handlers
+        ConfigureAuthorization(services);
+        
+        // Configure authentication with support for both IAP and cookies
         services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme; // Default to cookie
-            options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-            options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        })
-        .AddCookie(IdentityConstants.ApplicationScheme, opt => {
-            opt.Events.OnRedirectToLogin = (context) =>
             {
-                context.Response.StatusCode = 401;
-                return Task.CompletedTask;
-            };
-            opt.Events.OnRedirectToAccessDenied = context =>
+                // Always use IAP as the default authentication scheme for all requests
+                options.DefaultAuthenticateScheme = "IAP"; 
+                options.DefaultChallengeScheme = "IAP";
+                options.DefaultScheme = "IAP";
+                
+                // Keep cookie as the sign-in scheme for interactive login
+                options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
+            })
+            .AddCookie(IdentityConstants.ApplicationScheme,
+                opt => {
+                    opt.Events.OnRedirectToLogin = (context) =>
+                    {
+                        context.Response.StatusCode = 401;
+                        return Task.CompletedTask;
+                    };
+                    opt.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return Task.CompletedTask;
+                    };
+                })
+            // Add IAP authentication handler
+            .AddScheme<IAPAuthenticationOptions, IAPAuthenticationHandler>("IAP", options => 
             {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                return Task.CompletedTask;
-            };
-        })
-        .AddJwtBearer("Bearer", options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = Configuration["JWTSettings:validIssuer"],
-                ValidAudience = Configuration["JWTSettings:validAudience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))
-            };
-        });
-
-        services.AddAuthorization();
+                // Load IAP settings from configuration
+                var iapConfig = Configuration.GetSection("IAP");
+                
+                options.AutoProvisionUsers = iapConfig.GetValue<bool>("AutoProvisionUsers", true);
+                options.DefaultRole = iapConfig.GetValue<string>("DefaultRole", "User");
+                options.RequireJwtVerification = iapConfig.GetValue<bool>("RequireJwtVerification", true);
+                options.AllowHeaderFallback = iapConfig.GetValue<bool>("AllowHeaderFallback", false);
+                options.ProjectNumber = iapConfig.GetValue<string>("ProjectNumber", "");
+                options.ProjectId = iapConfig.GetValue<string>("ProjectId", "");
+                options.BackendServiceId = iapConfig.GetValue<string>("BackendServiceId", "");
+                options.HealthCheckPath = iapConfig.GetValue<string>("HealthCheckPath", "/health");
+                
+                // Add Cloud Run-specific settings
+                options.Region = iapConfig.GetValue<string>("Region", "");
+                options.ServiceName = iapConfig.GetValue<string>("ServiceName", "");
+                
+                // Configure domain role mappings
+                options.DomainRoles = new Dictionary<string, string>();
+                var domainMappings = iapConfig.GetSection("DomainRoles");
+                if (domainMappings.Exists())
+                {
+                    foreach (var child in domainMappings.GetChildren())
+                    {
+                        options.DomainRoles[child.Key] = child.Value;
+                    }
+                }
+                
+                // Configure external role mappings
+                options.ExternalRoleMappings = new Dictionary<string, string>();
+                var roleMappings = iapConfig.GetSection("ExternalRoleMappings");
+                if (roleMappings.Exists())
+                {
+                    foreach (var child in roleMappings.GetChildren())
+                    {
+                        options.ExternalRoleMappings[child.Key] = child.Value;
+                    }
+                }
+                
+                // Configure group role mappings
+                options.ExternalGroupMappings = new Dictionary<string, string>();
+                var groupMappings = iapConfig.GetSection("ExternalGroupMappings");
+                if (groupMappings.Exists())
+                {
+                    foreach (var child in groupMappings.GetChildren())
+                    {
+                        options.ExternalGroupMappings[child.Key] = child.Value;
+                    }
+                }
+            });
 
         services.AddIdentityCore<PAOIdentityUser>()
             .AddRoles<PAOIdentityRole>()
@@ -179,15 +302,43 @@ public class Startup
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
-        //services.AddScoped<IManagerWrapper, ManagerWrapper>();
-        services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();
+        // RBAC Services
+        services.AddScoped<IPermissionService, PermissionService>();
+        
+        // Add Business Security Service for row-level filtering
+        services.AddScoped<IBusinessSecurityService, BusinessSecurityService>();
+        
+        // Configure authorization
+        services.AddAuthorization(options =>
+        {
+            // Set default policy to accept IAP authentication
+            options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                .AddAuthenticationSchemes("IAP")
+                .RequireAuthenticatedUser()
+                .Build();
+        });
 
+        // Register authorization handlers and policy providers
+        services.AddSingleton<IAuthorizationPolicyProvider, EntityPermissionPolicyProvider>();
+        services.AddScoped<IAuthorizationHandler, EntityPermissionHandler>();
+
+        // Keep existing authorization services
         services.AddScoped<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionHandler>();
-
         services.AddScoped<IAuthorizationService, PAOAuthorizationService>();
-
         services.AddScoped<IAuthorizationHandlerWrapper, UNOPSAuthorizationHandlerWrapper>();
+
+        // Register UserInfo service
+        services.AddScoped<IUserInfoService, UserInfoService>();
+
+        // Register OrganizationHierarchy manager
+        services.AddScoped<IOrganizationHierarchyManager, OrganizationHierarchyManager>();
+
+        // Add data seeding services
+        services.AddDataSeeding();
+
+        //services.AddScoped<IManagerWrapper, ManagerWrapper>();
+        services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();
 
         AddServices(services);
         services.AddScoped<IGoogleDriveDocumentManager, GoogleDriveDocumentManager>();
@@ -307,5 +458,19 @@ public class Startup
 
             services.AddSingleton(registerType, register);
         }
+    }
+
+    private void ConfigureAuthorization(ServiceRegistry services)
+    {
+        // Add the entity permission authorization handler
+        services.AddScoped<IAuthorizationHandler, EntityPermissionHandler>();
+        
+        // Add all your entity-specific authorization handlers
+        services.AddScoped<IAuthorizationHandler, ContactAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, ProfileAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, PartnerTreeAuthorizationHandler>();
+        
+        // Add the wrapping authorization handler
+        services.AddScoped<IAuthorizationHandlerWrapper, AuthorizationHandlerWrapper>();
     }
 }

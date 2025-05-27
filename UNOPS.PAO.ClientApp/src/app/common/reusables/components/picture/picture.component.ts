@@ -17,6 +17,7 @@ export class PictureComponent {
   @Input() altText: string = 'Profile picture';
   @Input() size: 'medium' | 'large' = 'medium';
   @Input() uploadUrl: string | null = null;
+  @Input() disabled: boolean = false;
   @Output() imageChanged = new EventEmitter<string>();
 
   private dialogRef: DynamicDialogRef | null = null;

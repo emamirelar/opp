@@ -1,4 +1,6 @@
-﻿namespace UNOPS.PAO.Models;
+﻿using System.Text.Json.Serialization;
+
+namespace UNOPS.PAO.Models;
 
 public class ContactModel
 {
@@ -24,8 +26,18 @@ public class ContactModel
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
     public string? ProfilePictureUrl { get; set; }
+    
+    [JsonIgnore] // Prevent circular reference when PartnerModel includes Contacts
     public PartnerModel Partner { get; set; }
     public int? PartnerId { get; set; }
     public string? PartnerName { get; set; }
     public List<DocumentModel>? Documents { get; set; }
+
+    public string? CreatedByName { get; set; }
+    public string? CreatedByOfficeName { get; set; }
+    
+    /// <summary>
+    /// Permissions for this specific contact
+    /// </summary>
+    public EntityPermissionsModel? Permissions { get; set; }
 }

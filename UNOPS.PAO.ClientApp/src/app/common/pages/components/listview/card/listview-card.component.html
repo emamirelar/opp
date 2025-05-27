@@ -1,0 +1,152 @@
+<div class="flex flex-col gap-4 bg-white">
+  <!-- Loading skeleton -->
+  @if (loading) {
+    <div class="grid">
+      @for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; track i) {
+        <div [class]="columnClass()">
+          <p-card styleClass="h-full">
+            <div class="mb-2">
+              <p-skeleton width="85%" height="1.5rem"></p-skeleton>
+            </div>
+            <div class="mb-2">
+              <p-skeleton width="65%" height="1rem"></p-skeleton>
+            </div>
+            <div class="mb-2">
+              <p-skeleton width="75%" height="1rem"></p-skeleton>
+            </div>
+          </p-card>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Error message -->
+  @if (error && !loading) {
+    <div class="p-4 bg-surface-50 rounded-lg shadow-sm mb-4">
+      <div class="flex items-center justify-center p-5">
+        <i class="pi pi-exclamation-triangle text-3xl text-yellow-500 mr-3"></i>
+        <span class="text-xl">Error loading data. Please try again later.</span>
+      </div>
+    </div>
+  }
+
+  <!-- No data message -->
+  @if (!loading && !error && (!data || data.length === 0)) {
+    <div class="p-4 bg-surface-50 rounded-lg shadow-sm mb-4">
+      <div class="flex items-center justify-center p-5">
+        <i class="pi pi-info-circle text-3xl text-primary mr-3"></i>
+        <span class="text-xl">No data available</span>
+      </div>
+    </div>
+  }
+
+  <!-- Card grid -->
+  @if (!loading && !error && data && data.length > 0) {
+      <div class="grid">
+        @for (item of data; track getFieldValue(item, 'id')) {
+          <div [class]="columnClass() + ' flex flex-col gap-4'">
+            <div
+              class="bg-surface-50 p-4 rounded-lg cursor-pointer"
+              (click)="onCardClick(item)">
+
+              <div class="flex gap-4">
+
+                  @if (avatarColumn()) {
+                    <div class="p-2">
+                      @if (getFieldValue(item, avatarColumn()!.field)) {
+                        <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)" shape="circle" size="large" imageAlt="Avatar"></p-avatar>
+                      } @else {
+                        <p-avatar icon="pi pi-image" shape="circle" size="large" imageAlt="Avatar"></p-avatar>
+                      }
+                    </div>
+                  }
+
+                <div class="flex flex-col gap-2">
+                    <!-- Card title -->
+                    @if (titleColumn()) {
+                      <div class="font-semibold text-lg" [ngClass]="{'ellipsis-text': titleColumn()?.ellipsis}" [title]="titleColumn()?.ellipsis ? formatValue(item, titleColumn()) : ''">
+                          {{ formatValue(item, titleColumn()) }}
+                        </div>
+                    }
+
+                    <!-- Card content -->
+                    <div class="flex flex-col gap-2">
+                      @for (column of contentColumns(); track column.field) {
+
+                          @if (column.type === 'email') {
+                            <a href="mailto:{{ getFieldValue(item, column.field) }}" (click)="$event.stopPropagation()" class="text-primary hover:underline" [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? getFieldValue(item, column.field) : ''">{{ getFieldValue(item, column.field) }}</a>
+                          } @else if (column.type === 'conditionalIcon') {
+                            <div>
+                              {{ column.label | translate }}
+                              <i [ngClass]="(column.conditionFn ? column.conditionFn(item) : getFieldValue(item, column.field)) ? 'pi pi-verified text-green-500' : 'pi pi-times-circle text-red-300'"></i>
+                            </div>
+                          } @else if (column.type === 'multiple-avatars') {
+                            <div>
+                              <div class="text-sm text-gray-600 mb-1">{{ column.label | translate }}</div>
+                              <div class="flex -space-x-1 overflow-hidden">
+                                @for (contact of getMultipleAvatarItems(item, column); track $index; let i = $index) {
+                                  @if (i < 3) {
+                                    @if (getAvatarUrl(contact, column.field.split('.').pop()!)) {
+                                      <p-avatar 
+                                        [image]="getAvatarUrl(contact, column.field.split('.').pop()!)" 
+                                        shape="circle" 
+                                        [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white'}"
+                                        [title]="getAvatarTitle(contact, column.firstLetterFallbackField)"
+                                        imageAlt="Contact Avatar">
+                                      </p-avatar>
+                                    } @else {
+                                      <p-avatar 
+                                        [label]="getAvatarInitials(contact, column.firstLetterFallbackField)"
+                                        shape="circle" 
+                                        [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white', color: '#4b5563'}"
+                                        [title]="getAvatarTitle(contact, column.firstLetterFallbackField)">
+                                      </p-avatar>
+                                    }
+                                  }
+                                }
+                                @if (getMultipleAvatarItems(item, column).length > 3) {
+                                  <div class="flex items-center justify-center w-8 h-8 bg-surface-300 text-gray-600 rounded-full border-2 border-white text-xs font-medium" 
+                                       [title]="'And ' + (getMultipleAvatarItems(item, column).length - 3) + ' more'">
+                                    +
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          } @else if (column.type === 'template') {
+                            <span [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? getTemplateValue(item, column) : ''" [innerHTML]="getTemplateValue(item, column)"></span>
+                          } @else if (column.type !== 'avatar') {
+                            <span [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? formatValue(item, column) : ''">{{ formatValue(item, column) }}</span>
+                          }
+                      }
+                    </div>
+
+                </div>
+              </div>
+
+
+
+              <!-- Actions template -->
+              @if (hasActionsTemplate()) {
+                <ng-container
+                    [ngTemplateOutlet]="actionsTemplate || null"
+                    [ngTemplateOutletContext]="{ $implicit: item }">
+                  </ng-container>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+    <!-- Pagination -->
+    @if (config.enablePagination) {
+      <div class="flex justify-center w-full">
+        <p-paginator
+          [rows]="rows"
+          [totalRecords]="totalRecords"
+          [first]="first"
+          (onPageChange)="onPageChange($event)"
+        ></p-paginator>
+      </div>
+    }
+  }
+</div>

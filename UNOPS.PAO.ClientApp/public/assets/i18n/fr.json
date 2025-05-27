@@ -15,6 +15,7 @@
         "who": "Qui",
         "why": "Pourquoi",
         "contacts": "Contacts",
+        "partners": "Partners",
         "interactions": "Interactions",
         "newInteraction": "Nouvelle Interaction",
         "editInteraction": "Éditer une Interaction",
@@ -28,7 +29,11 @@
             "contactInformation": "Informations Personnelles",
             "addresses": "Adresses",
             "systemInformation": "Informations Système"
-        }
+        },
+        "admin": "Administration",
+        "aiPromptsAdmin": "Admin des prompts IA",
+        "manageOffice": "Gérer mon bureau",
+        "translationWorkbench": "Atelier de traduction"
     },
     "button": {
         "back": "Retour",
@@ -92,6 +97,9 @@
         "selectEligibleEntities": "Sélectionner des Entités Éligibles",
         "selectFromDrive": "Sélectionner depuis Drive",
         "selectionMethodology": "Méthodologie de Sélection",
+        "search": {
+            "results": "Résultats de recherche pour"
+        },
         "stage": "Étape",
         "status": "Statut",
         "yes": "Oui",
@@ -124,6 +132,7 @@
             "firstName": "Prénom",
             "middleName": "Deuxième prénom",
             "lastName": "Nom",
+            "fullName": "Nom complet",
             "suffix": "Suffixe",
             "email": "Email",
             "mobile": "Mobile",
@@ -147,7 +156,8 @@
             "mailingStateProvince": "État/Province d'envoi",
             "mailingPostalCode": "Code postal d'envoi",
             "mailingCountry": "Pays d'envoi",
-            "contactViaAssistant": "Contacter via l'assistant"
+            "contactViaAssistant": "Contacter via l'assistant",
+            "createdByOffice": "Créé par Bureau"
         },
         "pictureEditor": {
             "dropImageHere": "Déposez une image ici ou utilisez le bouton ci-dessous",
@@ -156,16 +166,18 @@
         }
     },
     "message": {
-        "entityMeetEligibleEntitiesRequired": "'Respecter les entités éligibles' requis",
-        "entityMeetEligibleCriteriaRequired": "'Respecter les critères d'éligibilité' requis",
+        "entityMeetEligibleEntitiesRequired": "'Répondre aux entités éligibles' requis",
+        "entityMeetEligibleCriteriaRequired": "'Répondre aux critères d'éligibilité' requis",
         "noRecordsFound": "Aucun enregistrement trouvé.",
-        "welcomeTitle": "Bienvenue sur Grant+",
+        "noPartnerGroups": "Aucun groupe de partenaire trouvé",
+        "welcomeTitle": "Bienvenue sur Opportunity+",
         "deleteInteractionConfirmation": "Êtes-vous sûr de vouloir supprimer cette interaction ?",
         "interactionDeleted": "L'interaction a été supprimée avec succès",
         "errorDeletingInteraction": "Erreur lors de la suppression de l'interaction",
         "dropUrlToAddLink": "Déposez une URL ou un fichier pour ajouter un lien",
         "failedToLoadImage": "Échec du chargement de l'image",
-        "failedToUploadImage": "Échec de l'envoi de l'image"
+        "failedToUploadImage": "Échec de l'envoi de l'image",
+        "comingSoon": "Bientôt Disponible"
     },
     "errors": {
         "failedToLoad": "Échec du chargement"
@@ -208,5 +220,16 @@
     "validation": {
         "required": "Ce champ est obligatoire",
         "maxLength": "La longueur maximale est de {{max}} caractères"
+    },
+    "search": {
+        "placeholder": "Rechercher...",
+        "recentSearches": "Recherches récentes",
+        "results": "Résultats",
+        "showAllResults": "Afficher tous les résultats",
+        "seeAllResults": "Voir tous les résultats",
+        "contact": "Contact",
+        "partner": "Partenaire",
+        "typeContact": "Contact",
+        "typePartner": "Partenaire"
     }
 }

@@ -1,0 +1,191 @@
+<div class="flex flex-col gap-8">
+
+  <app-partner-tree-view-navigation></app-partner-tree-view-navigation>
+  <div class="flex flex-col  gap-8">
+    <div class="xl:w-1/2 flex flex-col gap-8">
+      <p-panel>
+        <ng-template pTemplate="header">
+          <div class="flex justify-between items-center w-full">
+            <span class="font-semibold">
+              @if (partnerTree()?.partnerGroupCode) {
+                {{ 'label.partnerTree.partnerGroup' | translate }}
+              } @else if (partnerTree()?.partnerCategoryCode) {
+                {{ 'label.partnerTree.partnerCategory' | translate }}
+              } @else {
+                {{ 'title.partnerTree' | translate }}
+              }
+            </span>
+            @if(permissionUtilityService.canUpdate(recordPermissions())) {
+              <p-button icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        [size]="'small'"
+                        (onClick)="handleEditClick()"></p-button>
+            }
+          </div>
+        </ng-template>
+        <div class="text-2xl">
+          {{partnerTree()?.name}}
+        </div>
+
+
+
+      </p-panel>
+
+
+      @if (isPartnerCategory()) {
+        <p-panel>
+          <ng-template pTemplate="header">
+            <div class="font-semibold">{{ 'label.partnerTree.partnerGroup' | translate }}</div>
+          </ng-template>
+
+          <div class="flex flex-col gap-2 max-h-[150px] overflow-y-auto">
+            @for (partnerGroup of childrenPartnerGroups() || []; track partnerGroup.partnerGroupCode) {
+              <a class="text-primary hover:underline cursor-pointer"
+                    [routerLink]="['/admin/partner-tree', partnerGroup.partnerGroupId!]">
+                <div class="text-base font-medium">{{partnerGroup.partnerGroupName}}</div>
+              </a>
+            } @empty {
+              <div class="text-base text-gray-500">{{ 'message.noPartnerGroups' | translate }}</div>
+            }
+          </div>
+        </p-panel>
+      }
+
+
+
+
+      <!-- <p-panel header="{{ 'title.links' | translate }}">
+        <app-link-list [entityType]="entityTypePartner"
+                       [entityId]="+recordId" />
+      </p-panel> -->
+<!--
+      <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
+        <app-document #appDocument
+                      [entityId]="recordId"
+                      [entityName]="'partner'"
+                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+          <div ngProjectAs="document-toolbar">
+            <app-document-gdrive [entityId]="recordId"
+                                 [entityName]="'partner'"
+                                 [appDocumentRef]="appDocument"
+                                 [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+          </div>
+        </app-document>
+      </p-panel> -->
+
+      <!-- <p-panel header="Internal Hierarchy">
+      </p-panel> -->
+
+      <!-- <app-partner-view-contacts
+        [partnerId]="recordId"
+      /> -->
+
+      <!-- <p-panel header="Partnership Agreements & Templates">
+      </p-panel>
+    </div>
+
+  -->
+        </div>
+
+
+        <p-panel>
+          <ng-template pTemplate="header">
+            <div class="font-semibold">{{ 'title.partners' | translate }}</div>
+          </ng-template>
+          <app-listview
+          [dataUrl]="getPartnersUrl()"
+          [columns]="partnerColumns"
+          (rowClick)="navigateToPartner($event)"
+          >
+          </app-listview>
+        </p-panel>
+
+
+    <!--
+
+      <p-panel>
+        <ng-template #header>
+          <div class="flex gap-2 items-center w-full justify-between">
+            <div class="font-semibold">{{'label.partner.summaryOfInteractions' | translate}}</div>
+            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+          </div>
+        </ng-template>
+
+        @if (summaryOfInteractionsIsLoading()) {
+        <div class="w-full flex justify-center h-24 items-center">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        } @else {
+        <div [innerHTML]="summaryOfInteractions() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
+        }
+      </p-panel>
+
+      <p-panel>
+        <ng-template #header>
+          <div class="flex gap-2 items-center w-full justify-between">
+            <div class="font-semibold">{{'label.partner.riskProfile' | translate}}</div>
+            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+          </div>
+        </ng-template>
+
+        @if (riskIsLoading()) {
+        <div class="w-full flex justify-center h-24 items-center">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        } @else {
+        <div [innerHTML]="riskProfile() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
+        }
+      </p-panel>
+
+      <p-panel>
+        <ng-template #header>
+          <div class="flex gap-2 items-center w-full justify-between">
+            <div class="font-semibold">{{'label.partner.partnerNews' | translate}}</div>
+            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+          </div>
+        </ng-template>
+        @if (partnerNewsIsLoading()) {
+        <div class="w-full flex justify-center h-24 items-center">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+        } @else {
+        <div [innerHTML]="partnerNews() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
+        }
+      </p-panel>
+
+      <p-panel header="Partner Funding Opportunities">
+      </p-panel>
+
+      <p-panel header="Partner Pipeline & Portfolio (EA)">
+      </p-panel>
+    </div>-->
+  </div>
+</div>
+
+<!-- @defer (when showCommentDialog) {
+  <p-dialog
+    [header]="'title.contacts' | translate"
+    [modal]="true"
+    [(visible)]="showCommentDialog"
+    styleClass="contact-dialog"
+    [maximizable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    (onHide)="_handleOnViewContactsDaialogClose()">
+
+    <app-partner-contacts
+      [partnerId]="recordId"
+      [partnerName]="recordData()?.name || ''" />
+
+    <ng-template pTemplate="footer">
+      <p-button
+      class="mt-2"
+        [label]="'button.close' | translate"
+        severity="secondary"
+        icon="pi pi-times"
+        (onClick)="showCommentDialog = false" />
+    </ng-template>
+  </p-dialog>
+} -->
+<!--</p-blockui>-->

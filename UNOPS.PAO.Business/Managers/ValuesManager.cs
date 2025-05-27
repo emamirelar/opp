@@ -4,8 +4,10 @@ using AutoMapper;
 using UNOPS.PAO.Business.Repositories;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Interfaces;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 public class ValuesManager : IApplicationService
 {
@@ -24,14 +26,14 @@ public class ValuesManager : IApplicationService
     public IEnumerable<EligibleEntityModel> GetEligibleEntities() => repository.GetEligibleEntities().Select(mapper.Map<EligibleEntityModel>);
     public IEnumerable<CountryModel> GetCountries() => repository.GetCountries().Select(mapper.Map<CountryModel>);
 
-    public IEnumerable<PartnerValueModel> GetPartners()
-         => repository.GetPartners().Select(mapper.Map<PartnerValueModel>);
+    public IQueryable<PartnerValueModel> GetPartners()
+         => (IQueryable<PartnerValueModel>)repository.GetPartners().Select(mapper.Map<PartnerValueModel>);
 
-    public IEnumerable<OrganizationUnitModel> GetOrganizationUnits()
-        => repository.GetOrganizationUnits().Select(mapper.Map<OrganizationUnitModel>);
+    public IQueryable<Partner> GetPartnersForFiltering()
+         => repository.GetPartners();
 
-    public IEnumerable<PartnerCategoryModel> GetPartnerCategories()
-        => repository.GetPartnerCategories().Select(mapper.Map<PartnerCategoryModel>);
+    public IEnumerable<OrganizationHierarchyModel> GetOrganizationUnits()
+        => repository.GetOrganizationsByType(OrganizationUnitType.OrgUnit).Select(mapper.Map<OrganizationHierarchyModel>);
 
     public IEnumerable<ContactValueModel> GetContacts()
          => repository.GetContacts().Select(mapper.Map<ContactValueModel>);

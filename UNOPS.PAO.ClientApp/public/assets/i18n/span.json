@@ -90,6 +90,9 @@
         "selectEligibleEntities": "Seleccionar Entidades Elegibles",
         "selectFromDrive": "Seleccionar desde Drive",
         "selectionMethodology": "Metodología de Selección",
+        "search": {
+            "results": "Resultados de búsqueda para"
+        },
         "stage": "Etapa",
         "status": "Estado",
         "yes": "Sí",
@@ -120,6 +123,7 @@
             "firstName": "Nombre",
             "middleName": "Segundo nombre",
             "lastName": "Apellido",
+            "fullName": "Nombre completo",
             "suffix": "Sufijo",
             "email": "Correo electrónico",
             "mobile": "Móvil",
@@ -143,18 +147,21 @@
             "mailingStateProvince": "Estado/Provincia de envío",
             "mailingPostalCode": "Código postal de envío",
             "mailingCountry": "País de envío",
-            "contactViaAssistant": "Contactar a través del asistente"
+            "contactViaAssistant": "Contactar a través del asistente",
+            "createdByOffice": "Creado por Oficina"
         }
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Cumplir con entidades elegibles' requerido",
         "entityMeetEligibleCriteriaRequired": "'Cumplir con criterios de elegibilidad' requerido",
         "noRecordsFound": "No se encontraron registros.",
+        "noPartnerGroups": "No se encontraron grupos de socios",
         "welcomeTitle": "Bienvenido a Grant+",
         "deleteInteractionConfirmation": "¿Está seguro de que desea eliminar esta interacción?",
         "interactionDeleted": "Interacción eliminada con éxito",
         "errorDeletingInteraction": "Error al eliminar la interacción",
-        "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace"
+        "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace",
+        "comingSoon": "Próximamente"
     },
     "errors": {
         "failedToLoad": "Error al cargar"
@@ -197,5 +204,14 @@
     },
     "action": {
         "search": "Buscar"
+    },
+    "search": {
+        "placeholder": "Buscar...",
+        "recentSearches": "Búsquedas recientes",
+        "results": "Resultados",
+        "showAllResults": "Mostrar todos los resultados",
+        "seeAllResults": "Ver todos los resultados",
+        "contact": "Contacto",
+        "partner": "Socio"
     }
 }

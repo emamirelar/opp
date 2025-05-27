@@ -1,4 +1,4 @@
-﻿using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -7,6 +7,7 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSDomain.Entities.Common;
 using Microsoft.Extensions.Hosting;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Authorization;
 
 namespace UNOPS.PAO.UNOPSDataAccess.Context;
 
@@ -22,6 +23,9 @@ public class UNOPSAppDbContext : AppDbContext
         optionsBuilder.ConfigureWarnings(warnings => warnings
             .Ignore(RelationalEventId.PendingModelChangesWarning));
     }
+
+    // Entity permission for RBAC
+    public DbSet<EntityPermission> EntityPermissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,8 +45,28 @@ public class UNOPSAppDbContext : AppDbContext
         //.HasIndex(x => x.PartnerNumber) 
         //.IsUnique();
 
+        // Configure Partner to PartnerTree relationship properly with only one foreign key
+        modelBuilder
+            .Entity<Partner>()
+            .HasOne(x => x.PartnerGroup)
+            .WithMany(x => x.Partners)
+            .HasForeignKey(x => x.PartnerGroupCode)
+            .HasPrincipalKey(x => x.Code);
+
+        // Ignore any convention-based relationship that would create a PartnerTreeCode column
+        modelBuilder
+            .Entity<Partner>()
+            .Ignore("PartnerTree");
+        
         modelBuilder
             .Entity<UNOPSLink>();
+
+        modelBuilder
+            .Entity<OrganizationHierarchy>()
+            .HasOne(e => e.Parent)
+            .WithMany(e => e.Children)
+            .HasForeignKey(e => e.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     public DbSet<Project> Projects { get; set; }
@@ -60,8 +84,7 @@ public class UNOPSAppDbContext : AppDbContext
 
     public new DbSet<AiChatHistory> AiChatHistory { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
-    public DbSet<UNOPSOrganizationUnit> OrganizationUnits { get; set; }
-    public DbSet<UNOPSPartnerCategory> PartnerCategories { get; set; }
+    public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
 
     public new DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
     public new DbSet<InteractionContact> InteractionContacts { get; set; }

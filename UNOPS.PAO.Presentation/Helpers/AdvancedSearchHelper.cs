@@ -20,10 +20,32 @@ public class SearchCriterion
     
     [JsonPropertyName("operator")]
     public string Operator { get; set; }
+
+    [JsonPropertyName("logicalOperator")]
+    public string LogicalOperator { get; set; }
 }
 
 public static class AdvancedSearchHelper
 {
+    private static readonly HashSet<string> ValidOperators = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "is",
+        "is not",
+        "like",
+        "not like",
+        ">",
+        "<",
+        ">=",
+        "<=",
+        "in"
+    };
+
+    private static readonly HashSet<string> ValidLogicalOperators = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "AND",
+        "OR"
+    };
+
     public static T MapAdvancedSearchCriteria<T>(string searchCriteria) where T : class, new()
     {
         Debug.WriteLine($"Received search criteria: {searchCriteria}");
@@ -39,12 +61,27 @@ public static class AdvancedSearchHelper
             var criteria = JsonSerializer.Deserialize<List<SearchCriterion>>(searchCriteria);
             Debug.WriteLine($"Deserialized {criteria?.Count ?? 0} search criteria");
             
-            // Log all deserialized criteria
+            // Validate operators
             if (criteria != null)
             {
                 foreach (var criterion in criteria)
                 {
-                    Debug.WriteLine($"CRITERION: Field={criterion.Field}, Value={criterion.Value}, Operator={criterion.Operator ?? "null"}, Label={criterion.Label}");
+                    // Validate comparison operator
+                    if (!string.IsNullOrEmpty(criterion.Operator) && !ValidOperators.Contains(criterion.Operator))
+                    {
+                        throw new ArgumentException($"Invalid operator: {criterion.Operator}");
+                    }
+
+                    // Validate logical operator
+                    if (!string.IsNullOrEmpty(criterion.LogicalOperator) && !ValidLogicalOperators.Contains(criterion.LogicalOperator))
+                    {
+                        throw new ArgumentException($"Invalid logical operator: {criterion.LogicalOperator}");
+                    }
+
+                    Debug.WriteLine($"CRITERION: Field={criterion.Field}, Value={criterion.Value}, " +
+                                  $"Operator={criterion.Operator ?? "null"}, " +
+                                  $"LogicalOperator={criterion.LogicalOperator ?? "null"}, " +
+                                  $"Label={criterion.Label}");
                 }
             }
 
@@ -60,7 +97,7 @@ public static class AdvancedSearchHelper
                     continue;
                 }
 
-                Debug.WriteLine($"Processing field: {criterion.Field}, value: {criterion.Value}");
+                Debug.WriteLine($"Processing field: {criterion.Field}, value: {criterion.Value}, operator: {criterion.Operator}");
 
                 // Handle nested properties correctly
                 if (criterion.Field.Contains("."))
@@ -85,12 +122,13 @@ public static class AdvancedSearchHelper
                             criteriaList = JsonSerializer.Deserialize<List<SearchCriterion>>(existingCriteria);
                         }
                         
-                        // Add criterion with the original operator value preserved
+                        // Add criterion with all operators preserved
                         criteriaList.Add(criterion);
                         searchCriteriaProperty.SetValue(request, JsonSerializer.Serialize(criteriaList));
                         advancedSearchProperty.SetValue(request, true);
                         
-                        Debug.WriteLine($"Added nested property {criterion.Field} to SearchCriteria with operator {criterion.Operator ?? "null"}");
+                        Debug.WriteLine($"Added nested property {criterion.Field} to SearchCriteria with operator {criterion.Operator ?? "null"} " +
+                                      $"and logical operator {criterion.LogicalOperator ?? "null"}");
                     }
                     else
                     {

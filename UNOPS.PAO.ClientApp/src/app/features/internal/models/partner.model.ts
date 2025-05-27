@@ -1,3 +1,6 @@
+import { PartnerTree } from "./partner-tree.model";
+import { EntityPermissionSet } from './shared-types';
+
 export interface Partner {
   id?: string | null;
   name?: string | null;
@@ -27,8 +30,36 @@ export interface Partner {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   isDeleted?: boolean | null;
+  partnerOffice?: Office | null;
+  partnerOfficeId?: string | null;
+  partnerCategory?: string | null;
+  logoUrl?: string | null;
   deletedBy?: string | null;
   deletedDate?: Date | null;
   _updated?: boolean;
   _importRowId?: string;
+  partnerTree?: PartnerTree | null;
+  partnerGroupId?: number | null;
+  partnerGroupCode?: string | null;
+  partnerGroupName?: string | null;
+  partnerCategoryId?: number | null;
+  partnerCategoryCode?: string | null;
+  partnerCategoryName?: string | null;
+  
+  // RBAC permissions
+  permissions?: EntityPermissionSet;
+}
+
+export interface Office {
+  id?: string | null;
+  name?: string | null;
+  code?: string | null;
+  status?: number | null;
+  createdBy?: number | null;
+  createdDate?: string | null;
+  lastModifiedBy?: number | null;
+  lastModifiedDate?: string | null;
+  isDeleted?: boolean | null;
+  deletedBy?: number | null;
+  deletedDate?: string | null;
 }

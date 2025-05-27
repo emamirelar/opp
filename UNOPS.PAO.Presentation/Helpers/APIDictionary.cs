@@ -59,6 +59,8 @@ public class APIDictionary
     public const string Partner = APIPrefix + "partner";
     public const string PartnerContacts = Partner + "/{partnerId}/contacts";
 
+    public const string OrganizationHierarchy = APIPrefix + "organization-hierarchy";
+
     public const string GeminiProcessDataSummary = APIPrefix + "process-data";
     public const string AiAssistantCreateSession = APIPrefix + "ai-assistant/create-session";
     public const string AiAssistantGetSession = APIPrefix + "ai-assistant/get-session";
@@ -85,4 +87,7 @@ public class APIDictionary
     //public const string GmailAddonAuth = "api/gmail-addon/auth";
     //public const string GmailAddonRefresh = "api/gmail-addon/refresh";
     //public const string GmailAddonRevoke = "api/gmail-addon/revoke";
+
+    public const string UserInfo = APIPrefix + "user-info/by-email";
+    public const string CurrentUserInfo = APIPrefix + "user-info/current";
 }

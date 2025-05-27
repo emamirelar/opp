@@ -34,6 +34,17 @@
     },
     "confirmation": "Confirmation",
     "partners": "Partners",
+    "partnerships": "Partnerships",
+    "partnershipAgreements": "Partnership Agreements",
+    "leads": "Leads",
+    "initiatives": "Initiatives",
+    "admin": "Administration",
+    "aiPromptsAdmin": "AI Prompts Admin",
+    "userManagement": "Manage User Permissions",
+    "impersonateRoles": "Impersonate Roles",
+    "editUserRoles": "Assign Roles for Impersonation",
+    "manageOffice": "Manage my Office",
+    "translationWorkbench": "Translation Workbench",
     "partnerTitles": {
       "partnerInformation": "Partner Information",
       "addressInformation": "Address Information",
@@ -87,7 +98,11 @@
     "takePhoto": "Take Photo",
     "capture": "Capture",
     "remove": "Remove",
-    "updateImportData": "Update Import Data"
+    "updateImportData": "Update Import Data",
+    "backToHome": "Back to Home",
+    "refresh": "Refresh",
+    "clearFilters": "Clear Filters",
+    "editRoles": "Assign Roles"
   },
   "label": {
     "actions": "Actions",
@@ -104,6 +119,7 @@
       "firstName": "First Name",
       "middleName": "Middle Name",
       "lastName": "Last Name",
+      "fullName": "Full Name",
       "suffix": "Suffix",
       "email": "Email",
       "mobile": "Mobile",
@@ -127,7 +143,8 @@
       "mailingStateProvince": "Mailing State/Province",
       "mailingPostalCode": "Mailing Postal Code",
       "mailingCountry": "Mailing Country",
-      "contactViaAssistant": "Contact via Assistant"
+      "contactViaAssistant": "Contact via Assistant",
+      "createdByOffice": "Created By Office"
     },
     "partnerTree": {
       "id": "ID",
@@ -174,7 +191,8 @@
       "riskProfile": "AI Risk Profile",
       "partnerNews": "Partner News",
       "partnerOffice": "Partner Office",
-      "partnerCategory": "Partner Category"
+      "partnerCategory": "Partner Category",
+      "partnerTeam": "Partner Team"
     },
     "clarificationDeadline": "Clarification Deadline",
     "document": {
@@ -195,6 +213,9 @@
     "no": "No",
     "postedDate": "Posted Date",
     "sdgs": "SDGs",
+    "search": {
+      "results": "Search Results for"
+    },
     "selectEligibleEntities": "Select Eligible Entities",
     "selectFromDrive": "Select from Drive",
     "selectionMethodology": "Selection Methodology",
@@ -243,14 +264,23 @@
       "croppedImage": "Cropped image",
       "uploadProgress": "Progress: {{progress}}%"
     },
-    "scanBusinessCard": "Scan Business Card"
+    "scanBusinessCard": "Scan Business Card",
+    "search": "Search",
+    "filterByRole": "Filter by Role",
+    "orgUnit": "Organization Unit",
+    "showMyOrgUnitOnly": "Show My Org Unit Only",
+    "email": "Email",
+    "roles": "Roles",
+    "lastModified": "Last Modified",
+    "assignRoles": "Assign Roles"
   },
   "message": {
     "entityMeetEligibleEntitiesRequired": "'Meet eligible entities' required",
     "entityMeetEligibleCriteriaRequired": "'Meet eligible criteria' required",
     "noRecordsFound": "No records found.",
+    "noPartnerGroups": "No partner groups found",
     "proposalRequirements": "The proposal cannot be submitted until all required fields are completed.",
-    "welcomeTitle": "Welcome to Partners and Opportunities",
+    "welcomeTitle": "Welcome to Opportunity+",
     "deleteInteractionConfirmation": "Are you sure you want to delete this interaction?",
     "interactionDeleted": "Interaction successfully deleted",
     "errorDeletingInteraction": "Error while deleting interaction",
@@ -263,7 +293,15 @@
     "errorPreFilling": "Error transcribing data from file",
     "noDataExtracted": "No content could be transcribed from the uploaded media",
     "cameraError": "Could not access camera",
-    "selectFileToUpload": "Select a file to transcribe into interaction data"
+    "selectFileToUpload": "Select a file to transcribe into interaction data",
+    "comingSoon": "Coming Soon",
+    "stayTuned": "This feature is currently in development. Stay tuned for updates!",
+    "accessDenied": "Access Denied",
+    "noAccessPermissions": "You do not have permission to access this page",
+    "noUsersFound": "No users found",
+    "selectRolesToAssign": "Select the roles to assign to this user",
+    "loadingPermissions": "Loading permissions...",
+    "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access role impersonation."
   },
   "label.interaction.contact": "Contact",
   "errors": {
@@ -293,7 +331,11 @@
   },
   "placeholder": {
     "enterUrl": "Enter URL",
-    "enterName": "Enter name"
+    "enterName": "Enter name",
+    "searchByNameOrEmail": "Search by name or email",
+    "selectRole": "Select a role",
+    "filterByOrgUnit": "Filter by organization unit",
+    "selectRoles": "Select roles"
   },
   "table": {
     "noRecords": "No records found"
@@ -309,5 +351,22 @@
   "validation": {
     "required": "This field is required",
     "maxLength": "Maximum length is {{max}} characters"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "recentSearches": "Recent Searches",
+    "results": "Results",
+    "showAllResults": "Show All Results",
+    "seeAllResults": "See all results",
+    "contact": "Contact",
+    "partner": "Partner",
+    "filterByRole": "Filter by Role",
+    "orgUnit": "Organization Unit",
+    "showMyOrgUnitOnly": "Show My Org Unit Only",
+    "name": "Name",
+    "email": "Email",
+    "roles": "Roles",
+    "lastModified": "Last Modified",
+    "assignRoles": "Assign Roles"
   }
 }

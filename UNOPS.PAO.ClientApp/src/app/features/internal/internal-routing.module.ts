@@ -2,76 +2,216 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LayoutComponent } from '../../common/layouts/components/layout/layout.component';
 import { HomeComponent } from '../../common/pages/components/home/home.component';
-import { authGuard } from '../../essentials/guards/auth.guard';
-import {InteractionListComponent} from './components/interaction/list/interaction-list.component';
+import { authGuard, adminGuard, routePermissionGuard } from '../../essentials/guards';
+import { InteractionListComponent } from './components/interaction/list/interaction-list.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
-import {PartnerViewComponent} from './components/partner/view/partner-view.component';
-import {PartnerDataComponent} from './components/partner/data/partner-data.component';
+import { PartnerViewComponent } from './components/partner/view/partner-view.component';
+import { PartnerDataComponent } from './components/partner/data/partner-data.component';
 import { ContactListComponent } from './components/contact/list/contact-list.component';
 import { ContactViewComponent } from './components/contact/view/contact-view.component';
 import { PartnerTabsComponent } from './components/partner/tabs/partner-tabs.component';
+import { ComingSoonComponent } from '../../common/pages/components/coming-soon/coming-soon.component';
+import { SearchResultComponent } from './components/search-result/search-result.component';
+import { PartnerTreeViewComponent } from './components/partner-tree/view/partner-tree-view.component';
+import { PartnerDataResolver } from './resolvers/partner-data.resolver';
+import { PartnerTreeDataResolver } from './resolvers/partner-tree-data.resolver';
+import { UserManagementComponent } from './admin/user-management/user-management.component';
 
 const internalRoutes: Routes = [
   {
     path: '',
     component: LayoutComponent,
+    data: { routeId: 'main-layout' },
     children: [
       {
         path: '',
         component: HomeComponent,
-        canActivate: [authGuard],
-        data: { breadcrumb: 'Home', icon: 'pi pi-home' },
+        // Home is visible to all users - no need for role guard
+        canActivate: [authGuard], 
+        data: { breadcrumb: 'Home', icon: 'pi pi-home', routeId: 'home-route' },
       },
       {
-        path: 'contacts',
-        component: ContactListComponent,
+        path: 'search',
+        component: SearchResultComponent,
         canActivate: [authGuard],
-        data: {Breadcrumb: 'Contacts'}
+        data: { breadcrumb: 'Search' }
+      },
+      {
+        path: 'partnerships',
+        canActivate: [authGuard, routePermissionGuard],
+        data: { breadcrumb: 'Partnerships' },
+        children: [
+          {
+            path: 'contacts',
+            component: ContactListComponent,
+            canActivate: [authGuard, routePermissionGuard],
+            data: { breadcrumb: 'Contacts' }
+          },
+          {
+            path: 'contacts/:recordId',
+            data: { breadcrumb: 'Contact' },
+            component: ContactViewComponent,
+            canActivate: [authGuard, routePermissionGuard],
+          },
+          {
+            path: 'interactions',
+            canActivate: [authGuard, routePermissionGuard],
+            data: { breadcrumb: 'Interactions' },
+            children: [
+              { path: '', component: InteractionListComponent },
+              { path: ':id', component: InteractionListComponent, data: { breadcrumb: 'Edit' } }
+            ]
+          },
+          {
+            path: 'partner-tree',
+            data: { breadcrumb: 'Partner Tree' },
+            component: PartnerTreeComponent,
+            canActivate: [authGuard, routePermissionGuard]
+          },
+          {
+            path: 'partners',
+            component: PartnerComponent,
+            canActivate: [authGuard, routePermissionGuard],
+            data: { breadcrumb: 'Partners' }
+          },
+          {
+            path: 'partners/:recordId',
+            component: PartnerTabsComponent,
+            canActivate: [authGuard, routePermissionGuard],
+            data: { breadcrumb: 'Partner' },
+            resolve: {
+              partnerData: PartnerDataResolver
+            },
+            children: [
+              { 
+                path: '', 
+                component: PartnerViewComponent,
+                data: { breadcrumb: 'Details' }
+              },
+              {
+                path: 'data',
+                component: PartnerDataComponent,
+                data: { breadcrumb: 'Data' }
+              }
+            ]
+          },
+          {
+            path: 'partnership-agreements',
+            component: ComingSoonComponent,
+            canActivate: [authGuard, routePermissionGuard],
+            data: { 
+              breadcrumb: 'Partnership Agreements',
+              featureName: 'Partnership Agreements'
+            }
+          }
+        ]
+      },
+      {
+        path: 'leads',
+        component: ComingSoonComponent,
+        // All authenticated users can access leads (External, Partner, Internal, Admin)
+        canActivate: [authGuard, routePermissionGuard],
+        data: { 
+          breadcrumb: 'Leads',
+          featureName: 'Leads'
+        }
+      },
+      {
+        path: 'initiatives',
+        component: ComingSoonComponent,
+        // Only Internal and Admin users can access Initiatives
+        canActivate: [authGuard, routePermissionGuard],
+        data: { 
+          breadcrumb: 'Initiatives',
+          featureName: 'Initiatives'
+        }
+      },
+      // Admin routes
+      {
+        path: 'admin',
+        // canActivate: [authGuard, adminGuard],
+        canActivate: [authGuard],
+        data: { breadcrumb: 'Admin' },
+        children: [
+          {
+            path: 'partner-tree',
+            children: [
+              { path: '', component: PartnerTreeComponent, data: { breadcrumb: 'Partner Tree' } },
+              { 
+                path: ':recordId', 
+                component: PartnerTreeViewComponent, 
+                data: { breadcrumb: 'Partner Tree View' },
+                resolve: {
+                  partnerTreeData: PartnerTreeDataResolver
+                }
+              }
+            ]
+          },
+          {
+            path: 'ai-prompts',
+            component: ComingSoonComponent,
+            data: { 
+              breadcrumb: 'AI Prompts Admin',
+              featureName: 'AI Prompts Admin'
+            }
+          },
+          {
+            path: 'user-management',
+            component: UserManagementComponent,
+            data: { 
+              breadcrumb: 'Manage User Permissions'
+            }
+          },
+          {
+            path: 'office-management',
+            component: ComingSoonComponent,
+            data: { 
+              breadcrumb: 'Manage my Office',
+              featureName: 'Manage my Office'
+            }
+          },
+          {
+            path: 'translations',
+            component: ComingSoonComponent,
+            data: { 
+              breadcrumb: 'Translation Workbench',
+              featureName: 'Translation Workbench'
+            }
+          }
+        ]
+      },
+      // Legacy routes for backward compatibility - redirect to new structure
+      {
+        path: 'contacts',
+        redirectTo: 'partnerships/contacts',
+        pathMatch: 'full'
       },
       {
         path: 'contact/:recordId',
-        data: { breadcrumb: 'Contact' },
-        component: ContactViewComponent,
-        canActivate: [authGuard],
+        redirectTo: 'partnerships/contacts/:recordId',
+        pathMatch: 'prefix',
       },
       {
         path: 'interactions',
-        canActivate: [authGuard],
-        children: [
-          { path: '', component: InteractionListComponent},
-          { path: ':id', component: InteractionListComponent, data: { breadcrumb: 'Edit' } }
-        ]
+        redirectTo: 'partnerships/interactions',
+        pathMatch: 'full'
       },
       {
         path: 'partner-tree',
-        data: { breadcrumb: 'Partner Tree' },
-        component: PartnerTreeComponent,
-        canActivate: [authGuard]
+        
+        redirectTo: 'partnerships/partner-tree',
+        pathMatch: 'full'
       },
       {
         path: 'partners',
-        component: PartnerComponent,
-        canActivate: [authGuard],
-        data: { Breadcrumb: 'Partners' }
+        redirectTo: 'partnerships/partners',
+        pathMatch: 'full'
       },
       {
         path: 'partner/:recordId',
-        component: PartnerTabsComponent,
-        canActivate: [authGuard],
-        data: { breadcrumb: 'Partner' },
-        children: [
-          { 
-            path: '', 
-            component: PartnerViewComponent,
-            data: { breadcrumb: 'Details' }
-          },
-          {
-            path: 'data',
-            component: PartnerDataComponent,
-            data: { breadcrumb: 'Data' }
-          }
-        ]
+        redirectTo: 'partnerships/partners/:recordId',
+        pathMatch: 'prefix'
       }
     ],
   },
@@ -81,4 +221,8 @@ const internalRoutes: Routes = [
   imports: [RouterModule.forChild(internalRoutes)],
   exports: [RouterModule],
 })
-export class InternalRoutingModule {}
+export class InternalRoutingModule {
+  constructor() {
+    console.log('[ROUTES] InternalRoutingModule constructor called');
+  }
+}

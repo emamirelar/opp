@@ -92,6 +92,9 @@
         "selectEligibleEntities": "Selecionar Entidades Elegíveis",
         "selectFromDrive": "Selecionar do Drive",
         "selectionMethodology": "Metodologia de Seleção",
+        "search": {
+            "results": "Resultados da pesquisa para"
+        },
         "stage": "Etapa",
         "status": "Status",
         "yes": "Sim",
@@ -122,6 +125,7 @@
             "firstName": "Nome",
             "middleName": "Nome do meio",
             "lastName": "Sobrenome",
+            "fullName": "Nome completo",
             "suffix": "Sufixo",
             "email": "Email",
             "mobile": "Celular",
@@ -145,18 +149,21 @@
             "mailingStateProvince": "Estado/Província de envio",
             "mailingPostalCode": "Código postal de envio",
             "mailingCountry": "País de envio",
-            "contactViaAssistant": "Contatar através do assistente"
+            "contactViaAssistant": "Contatar através do assistente",
+            "createdByOffice": "Criado por Escritório"
         }
     },
     "message": {
         "entityMeetEligibleEntitiesRequired": "'Atender entidades elegíveis' obrigatório",
-        "entityMeetEligibleCriteriaRequired": "'Atender critérios de elegibilidade' obrigatório",
+        "entityMeetEligibleCriteriaRequired": "'Atender critérios elegíveis' obrigatório",
         "noRecordsFound": "Nenhum registro encontrado.",
-        "welcomeTitle": "Bem-vindo ao Grant+",
+        "noPartnerGroups": "Nenhum grupo de parceiro encontrado",
+        "welcomeTitle": "Bem-vindo ao Opportunity+",
         "deleteInteractionConfirmation": "Tem certeza que deseja excluir esta interação?",
         "interactionDeleted": "Interação excluída com sucesso",
         "errorDeletingInteraction": "Erro ao excluir interação",
-        "dropUrlToAddLink": "Solte uma URL ou arquivo para adicionar link"
+        "dropUrlToAddLink": "Solte uma URL ou arquivo para adicionar link",
+        "comingSoon": "Em Breve"
     },
     "label.interaction.contact": "Contato",
     "errors": {
@@ -201,5 +208,14 @@
     },
     "action": {
         "search": "Pesquisar"
+    },
+    "search": {
+        "placeholder": "Pesquisar...",
+        "recentSearches": "Pesquisas recentes",
+        "results": "Resultados",
+        "showAllResults": "Mostrar todos os resultados",
+        "seeAllResults": "Ver todos os resultados",
+        "contact": "Contato",
+        "partner": "Parceiro"
     }
 }

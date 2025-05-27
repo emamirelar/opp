@@ -1,4 +1,5 @@
 using UNOPS.PAO.Domain.Specifications;
+using System.Linq;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -22,13 +23,18 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 public class UNOPSContactManager : IContactManager
 {
     private IMapper mapper;
     private BaseRepository<UNOPSContact> contactRepository;
     private BaseRepository<UNOPSPartner> partnerRepository;
+    private BaseRepository<UserInfo> userInfoRepository;
+    private BaseRepository<OrganizationHierarchy> organizationHierarchyRepository;
     private GoogleCloudStorageService googleCloudStorageService;
+    private readonly IBusinessSecurityService _securityService;
 
     private CommonEntityRepository commonRepository;
 
@@ -38,8 +44,76 @@ public class UNOPSContactManager : IContactManager
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
         result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
+        
+        // Map CreatedBy user ID to user name and office
+        if (entity.CreatedBy > 0)
+        {
+            var userInfo = userInfoRepository.GetAll()
+                .FirstOrDefault(u => u.UserId == entity.CreatedBy);
+            
+            if (userInfo != null)
+            {
+                result.CreatedByName = userInfo.Name;
+                
+                // Get office name from OrganizationHierarchy where Code = userInfo.OrgUnit
+                if (!string.IsNullOrEmpty(userInfo.OrgUnit))
+                {
+                    var orgHierarchy = organizationHierarchyRepository.GetAll()
+                        .Where(o => !string.IsNullOrEmpty(o.Code))
+                        .FirstOrDefault(o => o.Code == userInfo.OrgUnit);
+                    if (orgHierarchy != null)
+                    {
+                        result.CreatedByOfficeName = orgHierarchy.Name;
+                    }
+                }
+            }
+        }
+        
         return result;
     }
+    
+    private ContactModel MapEntityToModelWithUserInfo(UNOPSContact entity, IMapper mapper, Dictionary<int, UserInfo> userInfoLookup, Dictionary<string, OrganizationHierarchy> orgHierarchyLookup)
+    {
+        var result = mapper.Map<UNOPSContact, ContactModel>(entity);
+        result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
+        
+        // Map CreatedBy user ID to user name and office
+        if (entity.CreatedBy > 0 && userInfoLookup.TryGetValue(entity.CreatedBy, out var userInfo))
+        {
+            result.CreatedByName = userInfo.Name;
+            
+            // Get office name from OrganizationHierarchy where Code = userInfo.OrgUnit
+            if (!string.IsNullOrEmpty(userInfo.OrgUnit) && 
+                orgHierarchyLookup.TryGetValue(userInfo.OrgUnit, out var orgHierarchy))
+            {
+                result.CreatedByOfficeName = orgHierarchy.Name;
+            }
+        }
+        
+        return result;
+    }
+
+    
+    private async Task<ContactModel> MapEntityToModelWithPermissionsAsync(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
+    {
+        var result = MapEntityToModel(entity, mapper);
+        
+        // Add permissions if security service is available
+        if (_securityService != null)
+        {
+            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = ((dynamic)permissions).canRead,
+                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
+                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
+            };
+        }
+        
+        return result;
+    }
+    
     private ExternalContactModel MapEntityToExternalModel(UNOPSContact entity, IMapper mapper)
     {
         var result = mapper.Map<UNOPSContact, ExternalContactModel>(entity);
@@ -59,13 +133,16 @@ public class UNOPSContactManager : IContactManager
         return MapModelToEntity(model, new UNOPSContact());
     }
 
-    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
+    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
     {
         this.mapper = mapper;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
+        userInfoRepository = new BaseRepository<UserInfo>(context, configuration);
+        organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
         commonRepository = new CommonEntityRepository(context);
         googleCloudStorageService = new GoogleCloudStorageService(configuration);
+        _securityService = securityService;
     }
 
     public async Task<ContactModel> CreateContactAsync(ContactRequest model)
@@ -77,29 +154,191 @@ public class UNOPSContactManager : IContactManager
         return mapper.Map<ContactModel>(entity);
     }
 
+    // Original methods (kept for backward compatibility)
     public PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request)
     {
         var query = contactRepository
             .GetAll(["Partner"])
             .AsQueryable();
 
-        return query.Paginate(
+        // Custom pagination with efficient user lookup
+        var totalCount = query.Count();
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        var items = query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToList();
+
+        // Get all unique user IDs from the contacts
+        var userIds = items.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
+        
+        // Batch lookup all user info at once
+        var userInfoLookup = userInfoRepository.GetAll()
+            .Where(u => userIds.Contains(u.UserId))
+            .ToDictionary(u => u.UserId, u => u);
+
+        // Get all unique org unit codes from the user info
+        var orgUnitCodes = userInfoLookup.Values
+            .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+            .Select(u => u.OrgUnit)
+            .Distinct()
+            .ToList();
+
+        // Batch lookup all organization hierarchy at once
+        var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+            .GroupBy(o => o.Code)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // Map entities to models with efficient user and org lookup
+        var mappedItems = items.Select(x => MapEntityToModelWithUserInfo(x, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
+
+        return new PaginationResponse<ContactModel>
+        {
+            Records = mappedItems,
+            TotalCount = totalCount
+        };
+    }
+
+    // New secure methods with row-level filtering and permissions
+    public async Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request)
+    {
+        var query = contactRepository
+            .GetAll(["Partner", "Partner.PartnerOffice"])
+            .AsQueryable();
+
+        // Apply row-level security filters
+        if (_securityService != null)
+        {
+            query = await _securityService.ApplyRowFiltersAsync(query, user, "read");
+        }
+
+        // Apply pagination with permissions
+        var pagedResults = query.Paginate(
             x => MapEntityToModel(x, mapper),
             request
         );
+
+        // Add permissions to each contact
+        if (_securityService != null)
+        {
+            var contactsWithPermissions = new List<ContactModel>();
+            foreach (var contact in pagedResults.Records)
+            {
+                var entity = await contactRepository.GetByIdAsync(contact.Id, ["Partner", "Partner.PartnerOffice"]);
+                if (entity != null)
+                {
+                    var contactWithPermissions = await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
+                    contactsWithPermissions.Add(contactWithPermissions);
+                }
+            }
+            
+            return new PaginationResponse<ContactModel>
+            {
+                Records = contactsWithPermissions,
+                TotalCount = pagedResults.TotalCount
+            };
+        }
+
+        return pagedResults;
+    }
+
+    public async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
+    {
+        var item = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice"]);
+        if (item == null) return null;
+
+        // Check if user can access this specific contact
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(item, user, "read"))
+        {
+            return null; // User cannot access this contact
+        }
+
+        return await MapEntityToModelWithPermissionsAsync(item, mapper, user);
+    }
+
+    public async Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model)
+    {
+        var entity = await contactRepository.GetByIdAsync(model.Id, ["Partner", "Partner.PartnerOffice"]);
+        if (entity == null)
+        {
+            throw new BusinessException($"Contact {model.Id} does not exist.");
+        }
+
+        // Check if user can update this contact
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "update"))
+        {
+            throw new UnauthorizedAccessException("You don't have permission to update this contact");
+        }
+
+        entity = MapModelToEntity(model, entity);
+        await contactRepository.UpdateAsync(entity);
+
+        return await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
+    }
+
+    public async Task DeleteContactAsync(ClaimsPrincipal user, int id)
+    {
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice"]);
+        if (entity == null) return;
+
+        // Check if user can delete this contact
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "delete"))
+        {
+            throw new UnauthorizedAccessException("You don't have permission to delete this contact");
+        }
+
+        await contactRepository.Delete(entity);
     }
 
     public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
     {
         // Apply the specification to the query
-        var query = contactRepository.GetAll().AsQueryable();
+        var query = contactRepository.GetAll(["Partner"]).AsQueryable();
         var filteredQuery = query.ApplySpecification(specification);
         
-        // Apply pagination
-        return filteredQuery.Paginate(
-            x => mapper.Map<ContactModel>(x),
-            pagination
-        );
+        // Custom pagination with efficient user lookup
+        var totalCount = filteredQuery.Count();
+        var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+        var excludedRows = (pageIndex - 1) * pagination.PageSize;
+        
+        var items = filteredQuery
+            .Skip(excludedRows)
+            .Take(pagination.PageSize)
+            .Cast<UNOPSContact>()
+            .ToList();
+
+        // Get all unique user IDs from the contacts
+        var userIds = items.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
+        
+        // Batch lookup all user info at once
+        var userInfoLookup = userInfoRepository.GetAll()
+            .Where(u => userIds.Contains(u.UserId))
+            .ToDictionary(u => u.UserId, u => u);
+
+        // Get all unique org unit codes from the user info
+        var orgUnitCodes = userInfoLookup.Values
+            .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+            .Select(u => u.OrgUnit)
+            .Distinct()
+            .ToList();
+
+        // Batch lookup all organization hierarchy at once
+        var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+            .GroupBy(o => o.Code)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // Map entities to models with efficient user and org lookup
+        var mappedItems = items.Select(x => MapEntityToModelWithUserInfo(x, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
+
+        return new PaginationResponse<ContactModel>
+        {
+            Records = mappedItems,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<ContactModel?> GetContact(int userId, int id)
@@ -133,6 +372,58 @@ public class UNOPSContactManager : IContactManager
         return MapEntityToExternalModel(item, mapper);
     }
 
+    public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
+    {
+        return contactRepository
+            .GetAll()
+            .Where(x => x.PartnerId == partnerId)
+            .Select(x => MapEntityToModel(x, mapper));
+    }
+
+    public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
+    {
+        var entity = await contactRepository.GetByIdAsync(contactId);
+        if (entity == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            // Upload the file to Google Cloud Storage
+            var fileName = $"contacts/{contactId}/profile_{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var publicUrl = await googleCloudStorageService.UploadFileAsync(file, fileName);
+            
+            // Update the entity with the profile picture URL
+            entity.ProfilePictureUrl = publicUrl;
+            await contactRepository.UpdateAsync(entity);
+            
+            return publicUrl;
+        }
+        catch (Exception ex)
+        {
+            // Log the error and return null
+            Console.WriteLine($"Error uploading profile picture: {ex.Message}");
+            return null;
+        }
+    }
+
+    // Legacy interface methods (kept for backward compatibility)
+    public async Task<ContactModel?> GetContactAsync(int id)
+    {
+        string[] includes = ["Documents", "Partner", "Partner.PartnerOffice"];
+
+        var item = await contactRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        var result = mapper.Map<ContactModel>(item);
+        return result;
+    }
+
     public async Task<ContactModel?> UpdateContactAsync(int userId, UpdateContactRequest model)
     {
         var entity = await contactRepository.GetByIdAsync(model.Id);
@@ -157,63 +448,5 @@ public class UNOPSContactManager : IContactManager
         {
             await contactRepository.Delete(entity);
         }
-    }
-
-    public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
-    {
-        return contactRepository
-            .GetAll(["Partner"])
-            .Where(x => x.PartnerId == partnerId)
-            .Select(x => new ContactModel()
-            {
-                Id = x.Id,
-                PartnerId = x.Partner.Id,
-                PartnerName = x.Partner.Name,
-                Salutation = x.Salutation,
-                FirstName = x.FirstName,
-                LastName = x.LastName,
-                Email = x.Email,
-                Mobile = x.Mobile
-            });
-    }
-    public async Task<ContactModel?> GetContactAsync(int id)
-    {
-        string[] includes = ["Documents"];
-
-        var item = await contactRepository.GetByIdAsync(id, includes);
-
-        if (item == null)
-        {
-            return default;
-        }
-
-        var result = mapper.Map<ContactModel>(item);
-
-        //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
-
-        return result;
-    }
-
-    public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
-    {
-        // Verify contact exists first
-        var contact = await contactRepository.GetByIdAsync(contactId);
-        if (contact == null)
-        {
-            throw new BusinessException($"Contact {contactId} does not exist.");
-        }
-
-        // Upload file to Google Cloud Storage
-        string imageUrl = await googleCloudStorageService.UploadFileToGCS(file);
-        if (string.IsNullOrEmpty(imageUrl))
-        {
-            throw new BusinessException("Failed to upload the image to cloud storage");
-        }
-
-        // Update contact with new profile picture URL
-        contact.ProfilePictureUrl = imageUrl;
-        await contactRepository.UpdateAsync(contact);
-
-        return contact.ProfilePictureUrl;
     }
 }

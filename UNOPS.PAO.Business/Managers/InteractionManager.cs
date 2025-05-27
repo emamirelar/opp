@@ -14,6 +14,8 @@ using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Business.Repositories;
+using System.Security.Claims;
+using System.Security.Principal;
 
 public class InteractionManager : IInteractionManager
 {
@@ -33,24 +35,7 @@ public class InteractionManager : IInteractionManager
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
     {
-        await using var transaction = await context.Database.BeginTransactionAsync();
-        var entity = mapper.Map<Interaction>(model);
-        try
-        {
-            entity.Name = model.ContactId + " - " + model.Date;
-
-            await interactionRepository.AddAsync(entity);
-            await context.SaveChangesAsync();
-            await transaction.CommitAsync();
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            throw;
-        }
-
-        await ProcessJunctionTables(entity, model);
-        return mapper.Map<InteractionModel>(entity);
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     private async Task ProcessJunctionTables(Interaction interaction, InteractionRequest model)
@@ -138,191 +123,83 @@ public class InteractionManager : IInteractionManager
 
     public PaginationResponse<InteractionModel> GetInteractions(int userId, PaginationRequest request)
     {
-        var query = interactionRepository
-            .GetAll()
-            .Include(i => i.Contact)
-            .Include(i => i.OrgUnit)
-            .Include(i => i.InteractionContacts).ThenInclude(ic => ic.Contact)
-            .Include(i => i.InteractionPartners).ThenInclude(ip => ip.Partner)
-            .Include(i => i.InteractionUsers).ThenInclude(iu => iu.User)
-            .Where(x => !x.IsDeleted)
-            .AsQueryable();
-
-        if (!string.IsNullOrEmpty(request.OrderBy))
-        {
-            switch (request.OrderBy.ToLower())
-            {
-                case "type":
-                    query = request.Ascending ?? true
-                        ? query.OrderBy(x => x.Type)
-                        : query.OrderByDescending(x => x.Type);
-                    break;
-                case "contactid":
-                    query = request.Ascending ?? true
-                        ? query.OrderBy(x => x.Contact.Name)
-                        : query.OrderByDescending(x => x.Contact.Name);
-                    break;
-                case "date":
-                    query = request.Ascending ?? true
-                        ? query.OrderBy(x => x.Date)
-                        : query.OrderByDescending(x => x.Date);
-                    break;
-                case "data":
-                    query = request.Ascending ?? true
-                        ? query.OrderBy(x => x.Data)
-                        : query.OrderByDescending(x => x.Data);
-                    break;
-                default:
-                    query = query.OrderByDescending(x => x.Date);
-                    break;
-            }
-        }
-        else
-        {
-            query = query.OrderByDescending(x => x.Date);
-        }
-
-        return query.Paginate(
-            x => mapper.Map<InteractionModel>(x),
-            request
-        );
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     public PaginationResponse<InteractionModel> GetInteractionsWithSpecification(int userId, ISpecification<Interaction> specification, PaginationRequest pagination)
     {
-        // Apply the specification to the query
-        var query = interactionRepository.GetAll()
-            .Include(i => i.Contact)
-            .Include(i => i.OrgUnit)
-            .Include(i => i.InteractionContacts).ThenInclude(ic => ic.Contact)
-            .Include(i => i.InteractionPartners).ThenInclude(ip => ip.Partner)
-            .Include(i => i.InteractionUsers).ThenInclude(iu => iu.User)
-            .AsQueryable();
-
-        var filteredQuery = query.ApplySpecification(specification);
-        
-        // Apply pagination
-        return filteredQuery.Paginate(
-            x => mapper.Map<InteractionModel>(x),
-            pagination
-        );
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     public async Task<InteractionModel?> GetInteraction(int userId, int id)
     {
-        var item = await interactionRepository.GetByIdAsync(id,
-            includes: new[]
-            {
-                nameof(Interaction.Contact),
-                nameof(Interaction.OrgUnit),
-                nameof(Interaction.InteractionContacts),
-                nameof(Interaction.InteractionPartners),
-                nameof(Interaction.InteractionUsers),
-                $"{nameof(Interaction.InteractionContacts)}.{nameof(InteractionContact.Contact)}",
-                $"{nameof(Interaction.InteractionPartners)}.{nameof(InteractionPartner.Partner)}",
-                $"{nameof(Interaction.InteractionUsers)}.{nameof(InteractionUser.User)}"
-            });
-
-        if (item == null)
-        {
-            return default;
-        }
-
-        InteractionModel retVal = mapper.Map<InteractionModel>(item);
-
-        foreach (var contact in item.InteractionContacts)
-        {
-            retVal.ContactIds.Add(contact.ContactId);
-        }
-
-        foreach (var partner in item.InteractionPartners)
-        {
-            retVal.PartnerIds.Add(partner.PartnerId);
-        }
-
-        foreach (var user in item.InteractionUsers)
-        {
-            retVal.UserIds.Add(user.UserId);
-        }
-
-        return retVal;
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     public IEnumerable<ExternalInteractionModel> GetPostedInteractions()
     {
-        return interactionRepository
-            .GetAll()
-            .Select(mapper.Map<ExternalInteractionModel>);
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     public async Task<ExternalInteractionModel?> GetPostedInteraction(int id)
     {
-        var item = await interactionRepository.GetByIdAsync(id, ["EligibleEntities"]);
-
-        if (item == null)
-        {
-            return default;
-        }
-
-        return mapper.Map<ExternalInteractionModel>(item);
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     public async Task<InteractionModel?> UpdateInteractionAsync(int userId, UpdateInteractionRequest model)
     {
-        var entity = await interactionRepository.GetByIdAsync(model.Id,
-            includes: new[]
-            {
-                nameof(Interaction.InteractionContacts),
-                nameof(Interaction.InteractionPartners),
-                nameof(Interaction.InteractionUsers)
-            });
-
-        if (entity == null) return null;
-
-        mapper.Map(model, entity);
-
-        // Update emails/phones
-        entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
-        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
-
-        // Update junction tables
-        await ProcessJunctionTables(entity, model);
-
-        await interactionRepository.UpdateAsync(entity);
-        return mapper.Map<InteractionModel>(entity);
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     public async Task DeleteInteractionAsync(int userId, int id)
     {
-        var entity = await interactionRepository.GetByIdAsync(id);
-        if (entity != null)
-        {
-            await interactionRepository.Delete(entity);
-        }
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     public async Task<InteractionModel> UpdateInteractionAsync(int id, InteractionRequest request)
     {
-        var interaction = await interactionRepository.GetByIdAsync(id);
-        if (interaction == null) {
-            return null;
-        }
-        
-        await interactionRepository.UpdateAsync(interaction);
-        return mapper.Map<InteractionModel>(interaction);
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
     public PaginationResponse<InteractionModel> GetContactInteractionsAsync(int contactId, PaginationRequest request)
     {
-        var query = interactionRepository
-            .GetAll()
-            .Where(x => x.ContactId == contactId)
-            .OrderByDescending(x => x.Date)
-            .AsQueryable();
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
+    }
 
-        return query.Paginate(
-            x => mapper.Map<InteractionModel>(x),
-            request
-        );
+    // New secure methods - stub implementations for base class
+    public virtual async Task<PaginationResponse<InteractionModel>> GetInteractionsAsync(ClaimsPrincipal user, PaginationRequest request)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+        
+        return GetInteractions(userId, request);
+    }
+    
+    public virtual async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.TryParse(userIdClaim, out var uid) ? uid : 0;
+        
+        return await GetInteraction(userId, id);
+    }
+    
+    public virtual async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+        
+        return await UpdateInteractionAsync(userId, model);
+    }
+    
+    public virtual async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.TryParse(userIdClaim, out var uid) ? uid : 0;
+        
+        await DeleteInteractionAsync(userId, id);
     }
 }

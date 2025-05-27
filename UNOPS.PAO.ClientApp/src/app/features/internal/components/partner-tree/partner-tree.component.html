@@ -2,7 +2,9 @@
   <div class="flex gap-4 items-center">
     <div class="text-2xl font-semibold">Partner Tree</div>
     <div class="grow"></div>
-    <p-button icon="pi pi-plus" label="New Partner Level" (onClick)="onCreateNewPartnerLevel()"/>
+    @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
+      <p-button icon="pi pi-plus" label="New Partner Level" (onClick)="onCreateNewPartnerLevel()"/>
+    }
   </div>
   <div class="table-container">
     <p-treetable
@@ -23,7 +25,7 @@
           <th class="w-20">{{ 'label.partnerTree.type' | translate }}</th>
           <th>{{ 'label.partnerTree.partnerCategory' | translate }}</th>
           <th>{{ 'label.partnerTree.partnerGroup' | translate }}</th>
-          <th class="w-20">{{ 'label.partnerTree.actions' | translate }}</th>
+          <th class="w-32">{{ 'label.partnerTree.actions' | translate }}</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
@@ -107,9 +109,10 @@
           </td>
           
           <!-- Action Column (last) -->
-          <td [ttEditableColumn]="'action'" [ttEditableColumnField]="rowData" class="w-20">
-            <div class="flex justify-center w-full">
-              <p-button icon="pi pi-eye" rounded="true" severity="success" outlined (onClick)="openPartnerDialog(rowData)"/>
+          <td [ttEditableColumn]="'action'" [ttEditableColumnField]="rowData" class="w-32">
+            <div class="flex justify-center w-full gap-2">
+              <p-button icon="pi pi-pencil" rounded="true" severity="success" outlined (onClick)="openPartnerDialog(rowData)"/>
+              <p-button icon="pi pi-list" rounded="true" severity="info" outlined [routerLink]="['/admin/partner-tree', rowData['id']]"/>
             </div>
           </td>
         </tr>

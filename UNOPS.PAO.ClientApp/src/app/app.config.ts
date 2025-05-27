@@ -10,6 +10,7 @@ import {
   withComponentInputBinding,
   withHashLocation,
   withInMemoryScrolling,
+  Router,
 } from '@angular/router';
 
 import {
@@ -33,6 +34,8 @@ import { authInterceptor } from './essentials/interceptors/auth.interceptor';
 import { serverErrorInterceptor } from './essentials/interceptors/server-error.interceptor';
 import { AuthService } from './essentials/services/auth.service';
 import { ConfigurationService } from './essentials/services/configuration.service';
+import { HasPermissionDirective } from './essentials/directives/has-permission.directive';
+import { PermissionService } from './essentials/services/permission.service';
 
 /******* PrimeNG specifc imports *********/
 import { providePrimeNG } from 'primeng/config';
@@ -40,6 +43,7 @@ import { providePrimeNG } from 'primeng/config';
 //  import Aura from '@primeng/themes/aura';
 import UnopsPreset from './common/themes/unops.preset';
 import { routes } from './app.routes';
+import { firstValueFrom } from 'rxjs';
 /********************************/
 const httpLoaderFactory: (http: HttpClient) => TranslateHttpLoader = (
   http: HttpClient,
@@ -67,8 +71,19 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
       withComponentInputBinding()
     ),
+    // Config loading initializer only - removed IAP check to prevent repeated calls
     provideAppInitializer(async () => {
       await inject(ConfigurationService).loadConfig();
+      console.log('[DEBUG-INIT] Config loaded');
+      
+      // Also load permissions during initialization
+      try {
+        const permissionService = inject(PermissionService);
+        await firstValueFrom(permissionService.loadConfig());
+        console.log('[DEBUG-INIT] Permissions loaded');
+      } catch (error) {
+        console.error('[DEBUG-INIT] Error loading permissions', error);
+      }
     }),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient(
@@ -92,9 +107,11 @@ export const appConfig: ApplicationConfig = {
     ]),
     provideAnimationsAsync(),
     AuthService,
+    PermissionService,
     DialogService,
     MessageService,
     ConfirmationService,
+    HasPermissionDirective,
     providePrimeNG({
       theme: {
         preset: UnopsPreset,

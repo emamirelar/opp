@@ -1,89 +1,100 @@
-﻿
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
 //using UNOPS.PAO.ContextPermissions.Handlers;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Identity.Security.Enums;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
+using UNOPS.PAO.Presentation.Security;
 using static Google.Cloud.SecretManager.V1.Replication.Types;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 [Route("/")]
-[ApiController]
-public class DocumentController : ControllerBase
+public class DocumentController : BaseController
 {
-    private IDocumentManager manager;
-    private IManagerWrapper managerWrapper;
-    private IAuthorizationService authorizationService;
+    private readonly IDocumentManager _manager;
+    private readonly IManagerWrapper _managerWrapper;
 
-    public DocumentController(IManagerWrapper managerWrapper, IAuthorizationService authorizationService)
+    public DocumentController(
+        IManagerWrapper managerWrapper, 
+        IAuthorizationService authorizationService,
+        ILogger<DocumentController> logger,
+        UserResolverService<int> userResolverService)
+        : base(logger, authorizationService, userResolverService)
     {
-        this.manager = managerWrapper.DocumentManager;
-        this.managerWrapper = managerWrapper;
-        this.authorizationService = authorizationService;
+        _manager = managerWrapper.DocumentManager;
+        _managerWrapper = managerWrapper;
     }
 
     [HttpGet(APIDictionary.Document + "/{entityName}/{entityId}")]
     public async Task<ActionResult> GetAll(string entityName, int entityId)
     {
-        /*var canListResult = await this.HasPermission(EntityNames.ByName(entityName).ToString(), entityId, this.GetRequirement(EntityNames.ByName(entityName).ToString(), "List"));
-
-        if (!canListResult)
+        return await HandleOperationAsync(async () => 
         {
-            return Forbid();
-        }*/
+            /*var canListResult = await this.HasPermission(EntityNames.ByName(entityName).ToString(), entityId, this.GetRequirement(EntityNames.ByName(entityName).ToString(), "List"));
 
-        return Ok(manager.ListDocumentsAsync(EntityNames.ByName(entityName), entityId));
+            if (!canListResult)
+            {
+                throw new UnauthorizedAccessException("You don't have permission to view these documents");
+            }*/
+
+            return _manager.ListDocumentsAsync(EntityNames.ByName(entityName), entityId);
+        });
     }
 
     [HttpGet(APIDictionary.Document + "/{id}")]
     public async Task<ActionResult> Get(int id)
     {
-        var x = await manager.GetDocumentByIdAsync(id);
-
-        if (x == null)
+        return await HandleOperationAsync(async () => 
         {
-            return NotFound();
-        }
+            var document = await _manager.GetDocumentByIdAsync(id);
 
-        var parentEntity = await manager.GetDocumentParentEntityByIdAsync(id);
-
-        /*if (parentEntity != null)
-        {
-            var canReadResult = await this.HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, this.GetRequirement(parentEntity.Value.EntityType, "Read"));
-
-            if (!canReadResult)
+            if (document == null)
             {
-                return Forbid();
+                throw new BusinessException($"Document with ID {id} not found");
             }
-        }*/
 
-        return Ok(x);
+            var parentEntity = await _manager.GetDocumentParentEntityByIdAsync(id);
+
+            /*if (parentEntity != null)
+            {
+                var canReadResult = await this.HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, this.GetRequirement(parentEntity.Value.EntityType, "Read"));
+
+                if (!canReadResult)
+                {
+                    throw new UnauthorizedAccessException("You don't have permission to view this document");
+                }
+            }*/
+
+            return document;
+        });
     }
 
     [HttpPut(APIDictionary.Document)]
-    public async Task<IActionResult> Update([FromBody] UpdateDocumentRequest req)
+    public async Task<ActionResult> Update([FromBody] UpdateDocumentRequest req)
     {
-        var parentEntity = await manager.GetDocumentParentEntityByIdAsync(req.Id);
-
-        /*if (parentEntity != null)
+        return await HandleOperationAsync(async () => 
         {
-            var canEditResult = await this.HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, this.GetRequirement(parentEntity.Value.EntityType, "Edit"));
+            var parentEntity = await _manager.GetDocumentParentEntityByIdAsync(req.Id);
 
-            if (!canEditResult)
+            /*if (parentEntity != null)
             {
-                return Forbid();
-            }
-        }*/
+                var canEditResult = await HasPermission(parentEntity.Value.EntityType, parentEntity.Value.EntityId, GetRequirement(parentEntity.Value.EntityType, "Edit"));
 
-        await manager.UpdateDocumentAsync(req);
+                if (!canEditResult)
+                {
+                    throw new UnauthorizedAccessException("You don't have permission to edit this document");
+                }
+            }*/
 
-        return NoContent();
+            await _manager.UpdateDocumentAsync(req);
+        });
     }
 
     private async Task<bool> HasPermission(string documentParentEntityType, int documentParentEntityId, IAuthorizationRequirement? authorizationRequirement)
@@ -92,15 +103,15 @@ public class DocumentController : ControllerBase
         {
             if (documentParentEntityType == nameof(DocumentParentEntityType.Contact))
             {
-                var contact = await managerWrapper.ContactManager.GetContactAsync(documentParentEntityId);
-                var canResult = await authorizationService.AuthorizeAsync(User, contact, authorizationRequirement);
+                var contact = await _managerWrapper.ContactManager.GetContactAsync(documentParentEntityId);
+                var canResult = await _authorizationService.AuthorizeAsync(User, contact, authorizationRequirement);
 
                 return canResult.Succeeded;
             }
             else if (documentParentEntityType == nameof(DocumentParentEntityType.Partner))
             {
-                var partner = await managerWrapper.PartnerManager.GetPartnerAsync(documentParentEntityId);
-                var canResult = await authorizationService.AuthorizeAsync(User, partner, authorizationRequirement);
+                var partner = await _managerWrapper.PartnerManager.GetPartnerAsync(documentParentEntityId);
+                var canResult = await _authorizationService.AuthorizeAsync(User, partner, authorizationRequirement);
 
                 return canResult.Succeeded;
             }

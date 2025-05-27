@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { DocumentService } from '../../../services/document.service';
@@ -41,7 +42,9 @@ import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
-import {PartnerTabsComponent} from '../tabs/partner-tabs.component';
+import { PartnerTabsComponent } from '../tabs/partner-tabs.component';
+import { Partner } from '../../../models/partner.model';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 @Component({
   selector: 'app-partner-view',
@@ -68,10 +71,10 @@ import {PartnerTabsComponent} from '../tabs/partner-tabs.component';
     LinkListComponent,
     PictureComponent,
     PartnerViewContactsComponent,
-    PartnerTabsComponent
+    PartnerTabsComponent,
+    TooltipModule,
   ],
   templateUrl: './partner-view.component.html',
-  styleUrl: './partner-view.component.scss',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [DialogService],
@@ -86,7 +89,6 @@ import {PartnerTabsComponent} from '../tabs/partner-tabs.component';
 export class PartnerViewComponent implements OnInit {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
-  recordPermissions = signal<any>({});
   documentService = inject(DocumentService);
   dialogService = inject(DialogService);
 
@@ -97,23 +99,18 @@ export class PartnerViewComponent implements OnInit {
   translateService = inject(TranslateService);
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
+  permissionService = inject(PermissionUtilityService);
+  
+  // Permission management using utility service
+  private permissionUtils = this.permissionService.createInstancePermissions('Partner');
+  recordPermissions = this.permissionUtils.recordPermissions;
 
   private langChangeSubscription: Subscription = new Subscription();
   onRecordCreationSuccess = output();
 
-  //allSalutationsData = this.cachedDataService.allSalutations;
-  //allPronounsData = this.cachedDataService.allPronouns;
   showValidationFailedError = signal<boolean>(false);
-  //maxDate = new Date();
-  /*allPartnerStatusData = this.cachedDataService.allPartnerStatus;
-  allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
-  allYesNoData = this.cachedDataService.allYesNo;
-  allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
-  allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
-  allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
-  allPartnerScopesData = this.cachedDataService.allPartnerScope;*/
   recordId: string = '';
-  recordData = signal<any>({});
+  recordData = signal<Partner>({});
   showCommentDialog = false;
   riskProfile = signal<string>('');
   riskIsLoading = signal<boolean>(true);
@@ -137,7 +134,31 @@ export class PartnerViewComponent implements OnInit {
         this.recordId = paramMap.get("recordId") || '';
 
         if (this.recordId != '') {
-          this._loadRecordDetails();
+          // Check if data is already available from the resolver
+          this.activatedRoute.parent?.data.subscribe(data => {
+            if (data['partnerData']) {
+              const partnerData = data['partnerData'];
+              this.recordData.set(partnerData);
+              
+              // Extract permissions from the resolver data if they exist
+              if (partnerData.permissions) {
+                this.recordPermissions.set({
+                  entity: 'Partner',
+                  hasAccess: true,
+                  permissions: partnerData.permissions
+                });
+              }
+              
+              this.infoLoading.set(false);
+            } else {
+              // Fallback to loading details directly if resolver data isn't available
+              this._loadRecordDetails();
+            }
+          });
+          
+          // Load permissions for this specific partner
+          // Permissions are now extracted from the partner response directly
+          
           this._loadGeminiData();
         }
       }
@@ -154,21 +175,26 @@ export class PartnerViewComponent implements OnInit {
     });
   }
 
-  /*_loadPermissions() {
-    //fetch permissions for record details
-    this.partnerService.getRecordDetailPermissionsById(this.recordId).subscribe({
-      next: (data: any) => {
-        this.recordPermissions.set(data);
-      },
-    });
-  }*/
-
   _loadRecordDetails() {
     //fetch record details
     this.infoLoading.set(true);
     this.partnerService.getPartnerById(this.recordId).subscribe({
       next: (data: any) => {
         this.recordData.set(data);
+        
+        // Extract permissions from the response if they exist
+        if (data.permissions) {
+          this.recordPermissions.set({
+            entity: 'Partner',
+            hasAccess: true,
+            permissions: data.permissions
+          });
+        }
+        
+        this.infoLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading partner details:', error);
         this.infoLoading.set(false);
       }
     });
@@ -181,6 +207,7 @@ export class PartnerViewComponent implements OnInit {
   _loadGeminiData() {
     this.summaryOfInteractionsIsLoading.set(true);
     this.riskIsLoading.set(true);
+    this.partnerNewsIsLoading.set(true);
     this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
       next: (summary: string) => {
         this.summaryOfInteractions.set(summary);
@@ -203,6 +230,48 @@ export class PartnerViewComponent implements OnInit {
       }
     });
 
+    this.geminiService.get(this.recordId, 'partner_news').subscribe({
+      next: (news: string) => {
+        this.partnerNews.set(news);
+        this.partnerNewsIsLoading.set(false);
+      },
+      error: () => {
+        this.partnerNews.set(this.translateService.instant('errors.failedToLoad'));
+        this.partnerNewsIsLoading.set(false);
+      }
+    });
+  }
+
+  refreshSummaryOfInteractions() {
+    this.summaryOfInteractionsIsLoading.set(true);
+    this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
+      next: (summary: string) => {
+        this.summaryOfInteractions.set(summary);
+        this.summaryOfInteractionsIsLoading.set(false);
+      },
+      error: () => {
+        this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
+        this.summaryOfInteractionsIsLoading.set(false);
+      }
+    });
+  }
+
+  refreshRiskProfile() {
+    this.riskIsLoading.set(true);
+    this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
+      next: (risk: string) => {
+        this.riskProfile.set(risk);
+        this.riskIsLoading.set(false);
+      },
+      error: () => {
+        this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
+        this.riskIsLoading.set(false);
+      }
+    });
+  }
+
+  refreshPartnerNews() {
+    this.partnerNewsIsLoading.set(true);
     this.geminiService.get(this.recordId, 'partner_news').subscribe({
       next: (news: string) => {
         this.partnerNews.set(news);
@@ -346,6 +415,15 @@ export class PartnerViewComponent implements OnInit {
   }
 
   handleEditClick() {
+    // Check if user has update permission
+    if (!this.permissionService.canUpdate(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to edit this partner',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+
     const requestingSaveSignal = signal<boolean>(false);
 
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
@@ -373,4 +451,51 @@ export class PartnerViewComponent implements OnInit {
   getUploadLogoUrl() {
     return this.partnerService.getUploadLogoUrl(this.recordId);
   }
+
+  /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
+    console.log('Opening org structure dialog for type:', type);
+    
+    const ref = this.dialogService.open(OrgStructureDialogComponent, {
+      header: 'Select Organizational Structure',
+      width: '95vw',
+      height: '95vh',
+      style: { 
+        maxWidth: '1400px', 
+        maxHeight: '900px',
+        backgroundColor: 'white',
+        padding: '0' 
+      },
+      contentStyle: {
+        padding: '0',
+        overflow: 'hidden',
+        backgroundColor: 'white'
+      },
+      baseZIndex: 10000,
+      dismissableMask: true,
+      closeOnEscape: true,
+      closable: true,
+      data: {
+        type: type,
+        partnerId: this.recordId
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        console.log('Selected organization:', result);
+        // Refresh the corresponding panel based on type
+        switch (type) {
+          case 'summary':
+            this.refreshSummaryOfInteractions();
+            break;
+          case 'risk':
+            this.refreshRiskProfile();
+            break;
+          case 'news':
+            this.refreshPartnerNews();
+            break;
+        }
+      }
+    });
+  }*/
 }

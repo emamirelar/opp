@@ -23,7 +23,7 @@ export class ListviewDataLoaderService {
   // Config state
   private url = '';
   private pageIndex = 1;
-  private pageSize = 50;
+  private pageSize = 20;
   private sortField = '';
   private sortOrder: 'asc' | 'desc' = 'asc';
   
@@ -51,7 +51,7 @@ export class ListviewDataLoaderService {
    * Set pagination parameters
    */
   setPagination(pageIndex: number, pageSize: number): void {
-    this.pageIndex = pageIndex;
+    this.pageIndex = pageIndex + 1;
     this.pageSize = pageSize;
   }
   

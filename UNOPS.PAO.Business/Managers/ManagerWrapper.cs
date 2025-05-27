@@ -25,6 +25,8 @@ public class ManagerWrapper : IManagerWrapper
     private IGeminiManager geminiManager;
     private ILinkManager linkManager;
     private IUserDataManager userDataManager;
+    private IUserManagementManager userManagementManager;
+    
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 
                           IHttpContextAccessor httpContextAccessor)
@@ -45,6 +47,9 @@ public class ManagerWrapper : IManagerWrapper
 
         linkManager = new LinkManager(mapper, context);
         userDataManager = new UserDataManager(mapper, context, httpContextAccessor);
+        
+        // Default implementation - will be overridden in UNOPSManagerWrapper
+        userManagementManager = null;
     }
 
     public virtual ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -65,4 +70,5 @@ public class ManagerWrapper : IManagerWrapper
 
     public virtual ILinkManager LinkManager => linkManager;
     public virtual IUserDataManager UserDataManager => userDataManager;
+    public virtual IUserManagementManager UserManagementManager => userManagementManager;
 }

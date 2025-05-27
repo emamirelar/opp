@@ -38,13 +38,13 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<DocumentRelationship> DocumentRelationships { get; set; }
     public DbSet<DocumentType> DocumentTypes { get; set; }
     public DbSet<UNOPS.PAO.Domain.Entities.Link> Links { get; set; }
-    public DbSet<OrganizationUnit> OrganizationUnits { get; set; }
-    public DbSet<PartnerCategory> PartnerCategories { get; set; }
+    public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
 
     public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
     public DbSet<InteractionContact> InteractionContacts { get; set; }
     public DbSet<InteractionUser> InteractionUsers { get; set; }
     public DbSet<InteractionPartner> InteractionPartners { get; set; }
+    public DbSet<UserInfo> UserInfos { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }
 
@@ -73,16 +73,19 @@ public class AppDbContext : AuditableDbContext<int, int>
             .HasForeignKey<UserProfile>(x => x.UserId)
             .IsRequired();
 
+
         modelBuilder
             .Entity<Partner>(p =>
             {
                 p.HasOne(x => x.PartnerOffice)
                     .WithMany()
                     .HasForeignKey(x => x.PartnerOfficeId);
-
-                p.HasOne(x => x.PartnerCategory)
-                    .WithMany()
-                    .HasForeignKey(x => x.PartnerCategoryId);
+                
+                // Configure one-to-many relationship with Contacts
+                p.HasMany(x => x.Contacts)
+                    .WithOne(c => c.Partner)
+                    .HasForeignKey(c => c.PartnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         modelBuilder
@@ -210,10 +213,46 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(e => e.EntityId);
             entity.Property(e => e.FullEmbedding)
               .HasColumnType("vector(768)");
-            entity.Property(e => e.NameEmbedding)
-              .HasColumnType("vector(768)");
             entity.HasIndex(e => new { e.EntityName, e.EntityId })
                     .IsUnique(); // This ensures uniqueness at the database level
+        });
+
+        modelBuilder.Entity<OrganizationHierarchy>(entity =>
+        {
+            entity.HasOne(e => e.Parent)
+                .WithMany(e => e.Children)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(e => e.Type)
+                .HasColumnType("text")
+                .IsRequired();
+
+            entity.Property(e => e.Code)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(e => e.Name)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(e => e.Description)
+                .HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<UserInfo>(entity =>
+        {
+            entity.ToTable("UserInfos", "public");
+            entity.HasKey(e => e.UserId);
+            
+            entity.Property(e => e.Name)
+                .HasMaxLength(200);
+            
+            entity.Property(e => e.UserEmail)
+                .HasMaxLength(256);
+            
+            entity.Property(e => e.OrgUnit)
+                .HasMaxLength(200);
         });
     }
 }

@@ -29,7 +29,8 @@ public class PAOAuthorizationService : IAuthorizationService
         // Convert claimsPrincipal.Claims to a list and add permissions
         var claims = user.Claims.ToList();
         claims.AddRange(permissions);
-        user = new ClaimsPrincipal(new ClaimsIdentity(claims, user.Identity.AuthenticationType));
+        var identity = new ClaimsIdentity(claims, "IAP-Header");
+        user = new ClaimsPrincipal(identity);
 
         var context = new AuthorizationHandlerContext(requirements, user, resource);
 
@@ -63,6 +64,19 @@ public class PAOAuthorizationService : IAuthorizationService
 
     Task<AuthorizationResult> IAuthorizationService.AuthorizeAsync(ClaimsPrincipal user, object? resource, string policyName)
     {
-        throw new NotImplementedException();
+        if (user == null)
+        {
+            return Task.FromResult(AuthorizationResult.Failed());
+        }
+
+        var policy = serviceProvider.GetRequiredService<IAuthorizationPolicyProvider>()
+            .GetPolicyAsync(policyName).GetAwaiter().GetResult();
+
+        if (policy == null)
+        {
+            return Task.FromResult(AuthorizationResult.Failed());
+        }
+
+        return AuthorizeAsync(user, resource, policy.Requirements);
     }
 }

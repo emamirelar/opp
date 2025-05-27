@@ -8,17 +8,21 @@
 <!--  </div>-->
 <!--</div>-->
 <div class="flex flex-col gap-8">
+
+  
   <div class="flex flex-col xl:flex-row gap-8">
     <div class="xl:w-1/2 flex flex-col gap-8">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}}">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
             <span class="font-semibold">Partner Information</span>
-            <p-button icon="pi pi-pencil"
-                      [rounded]="true"
-                      [text]="true"
-                      [size]="'small'"
-                      (onClick)="handleEditClick()"></p-button>
+            @if (recordPermissions().permissions.canUpdate) {
+              <p-button icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        [size]="'small'"
+                        (onClick)="handleEditClick()"></p-button>
+            }
           </div>
         </ng-template>
 
@@ -26,10 +30,11 @@
           <!-- Name and Title -->
           <div class="flex gap-4">
             <app-picture
-              [imageUrl]="recordData().logoUrl!"
+              [imageUrl]="recordData().logoUrl || ''"
               [uploadUrl]="getUploadLogoUrl()"
               [altText]="'Partner logo'"
               [size]="'medium'"
+              [disabled]="!recordPermissions().permissions.canUpdate"
               (imageChanged)="_loadRecordDetails()"
             />
             <div class="flex flex-col gap-1">
@@ -90,10 +95,10 @@
               <div>{{recordData().id}}</div>
             </div>
             }
-            @if(recordData().partnerCategory){
+            @if(recordData().partnerTree?.partnerCategoryName){
             <div class="flex flex-col gap-2">
               <div class="font-semibold">{{ 'label.partner.partnerCategory' | translate }}</div>
-              <div>{{recordData().partnerCategory?.name}}</div>
+              <div>{{recordData().partnerTree?.partnerCategoryName}}</div>
             </div>
             }
             @if(recordData().shortName){
@@ -164,19 +169,23 @@
 
       <p-panel header="{{ 'title.links' | translate }}">
         <app-link-list [entityType]="entityTypePartner"
-                       [entityId]="+recordId" />
+                       [entityId]="+recordId"
+                       [disabled]="!recordPermissions().permissions.canUpdate" />
       </p-panel>
 
       <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
         <app-document #appDocument
                       [entityId]="recordId"
                       [entityName]="'partner'"
-                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                      [disabled]="!recordPermissions().permissions.canUpdate">
           <div ngProjectAs="document-toolbar">
-            <app-document-gdrive [entityId]="recordId"
-                                 [entityName]="'partner'"
-                                 [appDocumentRef]="appDocument"
-                                 [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+            @if(recordPermissions().permissions.canUpdate){
+              <app-document-gdrive [entityId]="recordId"
+                                   [entityName]="'partner'"
+                                   [appDocumentRef]="appDocument"
+                                   [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+            }
           </div>
         </app-document>
       </p-panel>
@@ -191,12 +200,16 @@
       <p-panel header="Partnership Agreements & Templates">
       </p-panel>
     </div>
-    <div class="xl:w-1/2 flex flex-col gap-8">
+    <div class="md:w-1/2 flex flex-col gap-8">
       <p-panel>
         <ng-template #header>
           <div class="flex gap-2 items-center w-full justify-between">
             <div class="font-semibold">{{'label.partner.summaryOfInteractions' | translate}}</div>
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            <div class="flex gap-2 items-center">
+              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('summary')"></p-button-->
+              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshSummaryOfInteractions()" [loading]="summaryOfInteractionsIsLoading()"></p-button>
+              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            </div>
           </div>
         </ng-template>
 
@@ -213,7 +226,11 @@
         <ng-template #header>
           <div class="flex gap-2 items-center w-full justify-between">
             <div class="font-semibold">{{'label.partner.riskProfile' | translate}}</div>
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            <div class="flex gap-2 items-center">
+              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('risk')"></p-button-->
+              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshRiskProfile()" [loading]="riskIsLoading()"></p-button>
+              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            </div>
           </div>
         </ng-template>
 
@@ -230,7 +247,11 @@
         <ng-template #header>
           <div class="flex gap-2 items-center w-full justify-between">
             <div class="font-semibold">{{'label.partner.partnerNews' | translate}}</div>
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            <div class="flex gap-2 items-center">
+              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('news')"></p-button-->
+              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshPartnerNews()" [loading]="partnerNewsIsLoading()"></p-button>
+              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+            </div>
           </div>
         </ng-template>
         @if (partnerNewsIsLoading()) {

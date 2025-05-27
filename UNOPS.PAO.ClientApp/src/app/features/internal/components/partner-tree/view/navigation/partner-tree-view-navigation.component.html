@@ -1,0 +1,35 @@
+<div class="flex items-center gap-2">
+  <p-dropdown [(ngModel)]="selectedPartnerCategory"
+            [options]="partnerCategorieOptions()"
+            placeholder="Select Partner Category"
+            optionLabel="partnerCategoryName"
+            [filter]="true"
+            filterBy="partnerCategoryName"
+            [showClear]="true"
+            (onChange)="onPartnerCategoryChange($event)"
+            styleClass="breadcrumb-select w-1/2 lg:w-1/4">
+    <ng-template pTemplate="item" let-item>
+      <div>{{ item.partnerCategoryName }}</div>
+    </ng-template>
+  </p-dropdown>
+
+  <div class="px-2 text-gray-500">
+    <i class="pi pi-angle-right"></i>
+  </div>
+
+  <p-dropdown [(ngModel)]="selectedPartnerGroup"
+            [options]="partnerGroupOptions()"
+            placeholder="Select Partner Group"
+            optionLabel="partnerGroupName"
+            [filter]="true"
+            filterBy="partnerGroupName"
+            [showClear]="true"
+            (onChange)="onPartnerGroupChange($event)"
+            [disabled]="!selectedPartnerCategory?.children?.length"
+            styleClass="breadcrumb-select w-1/2 lg:w-1/4">
+    <ng-template pTemplate="item" let-item>
+      <div>{{ item.partnerGroupName }}</div>
+    </ng-template>
+  </p-dropdown>
+
+</div>

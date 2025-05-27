@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { NgIf, AsyncPipe } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
 import { TableModule } from 'primeng/table';
@@ -17,10 +17,12 @@ import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.com
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
 import {ListviewComponent} from '../../../../../common/pages/components/listview/listview.component';
 import {ContactService} from '../../../services/contact.service';
-import {FeedbackDialogService} from '../../../../../common/reusables/services/feedback-dialog.service';
+import {FeedbackDialogService} from '../../../../../common/pages/services/feedback-dialog.service';
 import {ListViewColumn, ListViewConfig, SearchParams} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
+import { SearchField } from '../../../../../common/services/search-parser.service';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 @Component({
   selector: 'app-contact-list',
@@ -36,68 +38,144 @@ import { ImportDialogService } from '../../../../../common/reusables/components/
     ProgressSpinnerModule,
     TranslateModule,
     ListviewComponent,
-    ConfirmDialog
+    ConfirmDialog,
+    NgIf,
+    AsyncPipe
   ],
   providers: [DialogService, ConfirmationService]
 })
-export class ContactListComponent implements OnInit {
+export class ContactListComponent implements OnInit, OnDestroy {
   router = inject(Router);
   route = inject(ActivatedRoute);
   contactService = inject(ContactService);
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
   importDialogService = inject(ImportDialogService);
+  permissionUtilityService = inject(PermissionUtilityService);
+  cdr = inject(ChangeDetectorRef);
+
+  // Permission management using utility service
+  private permissionUtils = this.permissionUtilityService.createEntityPermissions('Contact');
+  entityPermissions = this.permissionUtils.entityPermissions;
+  permissionsLoading = this.permissionUtils.permissionsLoading;
 
   // Define contact columns for the listview
   contactColumns: ListViewColumn[] = [
-    { field: 'id', label: 'label.contact.id', type: 'text', sortable: false, width: '10%' },
-    { field: 'salutation', label: 'label.contact.salutation', type: 'text', sortable: true, width: '10%' },
-    { field: 'firstName', label: 'label.contact.firstName', type: 'text', sortable: true, width: '15%' },
-    { field: 'lastName', label: 'label.contact.lastName', type: 'text', sortable: true, width: '15%' },
-    { field: 'email', label: 'label.contact.email', type: 'text', sortable: true, width: '25%' },
-    { field: 'mobile', label: 'label.contact.mobile', type: 'text', sortable: true, width: '15%' }
+    { field: 'profilePictureUrl', label: '', type: 'avatar', sortable: false, width: '5%' },
+    {
+      field: 'partnerName',
+      label: 'label.partner.partner',
+      type: 'text',
+      sortable: false,
+      width: '15%',
+      ellipsis: true
+    },
+    { 
+      field: 'fullName', 
+      label: 'label.contact.fullName', 
+      type: 'template', 
+      sortable: false, 
+      width: '20%',
+      templateFn: (contact: any) => {
+        const firstName = contact.firstName || '';
+        const lastName = contact.lastName || '';
+        const middleName = contact.middleName || '';
+        return `${firstName} ${middleName} ${lastName}`.trim();
+      }
+    },
+    { field: 'title', label: 'label.contact.title', type: 'text', sortable: true, width: '15%' },
+    { 
+      field: 'createdByName',
+      label: 'label.audit.createdBy',
+      type: 'text',
+      sortable: false,
+      width: '15%',
+    },
+    { field: 'createdByOfficeName', label: 'label.contact.createdByOffice', type: 'text', sortable: false, width: '15%' },
   ];
 
-  // Configure listview behavior
-  listviewConfig: ListViewConfig = {
+  // Configure listview behavior with computed permissions
+  listviewConfig = computed<ListViewConfig>(() => ({
     enableSelection: true,
-    selectionMode: 'single',
     enablePagination: true,
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
     enableSearch: true,
-    enableExport: true,
+    enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     entityName: 'Contact',
     scrollable: true,
-    scrollHeight: 'flex'
-  };
+    scrollHeight: 'flex',
+    searchConfig: {
+      useAdvancedSearch: true,
+      placeholder: 'Search contacts...',
+      searchableFields: [
+        { 
+          field: 'firstName', 
+          label: 'First Name', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'lastName', 
+          label: 'Last Name', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'email', 
+          label: 'Email', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'mobile', 
+          label: 'Mobile', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'phone', 
+          label: 'Phone', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'title', 
+          label: 'Title', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'mailingCity', 
+          label: 'City', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'mailingCountry', 
+          label: 'Country', 
+          type: 'string',
+          operators: ['is', 'is not']
+        },
+        { 
+          field: 'partner.name', 
+          label: 'Partner', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        }
+      ] as SearchField[]
+    }
+  }));
 
   // Track current search term
   currentSearchText = '';
 
   ngOnInit() {
-    // Set advanced search configuration
-    this.listviewConfig = {
-      ...this.listviewConfig,
-      searchConfig: {
-        useAdvancedSearch: true,
-        placeholder: 'Search contacts...',
-        searchableFields: [
-          { field: 'firstName', label: 'First Name' },
-          { field: 'lastName', label: 'Last Name' },
-          { field: 'email', label: 'Email' },
-          { field: 'mobile', label: 'Mobile' },
-          { field: 'phone', label: 'Phone' },
-          { field: 'title', label: 'Title' },
-          { field: 'mailingCity', label: 'City' },
-          { field: 'mailingCountry', label: 'Country' },
-          { field: 'partner.name', label: 'Partner' }
-        ]
-      }
-    };
+    console.log('Contact list config:', this.listviewConfig());
     
-    console.log('Contact list config:', this.listviewConfig);
+    // Load permissions using utility service
+    this.permissionUtils.loadPermissions(this.router, this.cdr);
     
     this.route.queryParams
       .subscribe(params => {
@@ -109,11 +187,32 @@ export class ContactListComponent implements OnInit {
       });
   }
 
-  handleOnOpenRecordDetails(record: Contact) {
-    this.router.navigate(['contact', record.id]);
+  ngOnDestroy() {
+    // No need to clear caches manually - utility service handles this
+  }
+
+  handleOnOpenRecordDetails(record: any) {
+    if (record?.data) {
+      record = record.data;
+    }
+    if (record && record.id !== undefined && record.id !== null) {
+      console.log('Navigating to contact:', record.id);
+      this.router.navigate(['partnerships/contacts', record.id.toString()]);
+    } else {
+      console.error('Cannot navigate: record or record.id is undefined', record);
+    }
   }
 
   handleOnRecordDelete(record: Contact) {
+    // Check if user has delete permission
+    if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to delete contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     this.contactService.deleteContactById(record.id).subscribe({
       next: () => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
@@ -130,15 +229,33 @@ export class ContactListComponent implements OnInit {
   }
 
   _handleOnRecordCreation(newRecordData: Contact) {
-    if (newRecordData?.id) {
+    if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
       // Refresh the list before navigating to show the new contact
       window.dispatchEvent(new CustomEvent('refresh-listview'));
       // Navigate to the new contact details
-      this.router.navigate(['contact', newRecordData.id]);
+      console.log('Navigating to newly created contact:', newRecordData.id);
+      this.router.navigate(['partnerships/contacts', newRecordData.id.toString()]);
+    } else {
+      console.error('Cannot navigate to created contact: id is undefined', newRecordData);
     }
   }
 
   openContactEditDialog(contactData: Contact = {}) {
+    // Check if user has appropriate permission
+    if (contactData.id && !this.permissionUtilityService.canUpdate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to edit contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    } else if (!contactData.id && !this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to create contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     const ref = this.dialogService.open(ContactEditDialogComponent, {
       header: contactData.id ? 'Edit Contact' : 'New Contact',
       width: '40vw',
@@ -158,11 +275,20 @@ export class ContactListComponent implements OnInit {
     });
   }
 
-  onRowDoubleClicked(contact: Contact) {
+  onRowClick(contact: Contact) {
     this.handleOnOpenRecordDetails(contact);
   }
 
   openBusinessCardScanner() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to create contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     const ref = this.dialogService.open(BusinessCardScannerComponent, {
       header: 'Scan Business Card',
       width: '95vw',
@@ -178,6 +304,15 @@ export class ContactListComponent implements OnInit {
   }
 
   openImportDialog() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to import contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('contact');
   }

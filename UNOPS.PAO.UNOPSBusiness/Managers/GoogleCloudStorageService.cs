@@ -71,4 +71,12 @@ public class GoogleCloudStorageService
         using var memoryStream = new MemoryStream(audioBytes);
         return await UploadToGCS(memoryStream, objectName, "audio/mpeg");
     }
+    
+    // Method called by UNOPSContactManager and UNOPSPartnerManager
+    public async Task<string> UploadFileAsync(IFormFile file, string fileName)
+    {
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream);
+        return await UploadToGCS(memoryStream, fileName, file.ContentType);
+    }
 }

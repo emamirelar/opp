@@ -17,6 +17,7 @@ using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Utilities.Helpers;
+using System.Security.Claims;
 
 public class ContactManager : IContactManager
 {
@@ -181,5 +182,42 @@ public class ContactManager : IContactManager
     public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
     {
         return null;
+    }
+
+    // New secure methods - stub implementations for base class
+    public virtual async Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+        
+        return GetContacts(userId, request);
+    }
+    
+    public virtual async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.TryParse(userIdClaim, out var uid) ? uid : 0;
+        
+        return await GetContact(userId, id);
+    }
+    
+    public virtual async Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.TryParse(userIdClaim, out var id) ? id : 0;
+        
+        return await UpdateContactAsync(userId, model);
+    }
+    
+    public virtual async Task DeleteContactAsync(ClaimsPrincipal user, int id)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        int userId = int.TryParse(userIdClaim, out var uid) ? uid : 0;
+        
+        await DeleteContactAsync(userId, id);
     }
 }

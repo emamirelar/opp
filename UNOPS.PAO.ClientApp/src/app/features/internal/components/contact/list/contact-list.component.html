@@ -1,56 +1,38 @@
 <p-confirmDialog></p-confirmDialog>
 
 <div class="flex flex-col gap-8">
-  <div class="flex flex-wrap items-center">
+  <div class="flex flex-wrap items-center gap-4">
     <div class="text-2xl font-semibold">
       {{ 'title.contacts' | translate }}
     </div>
-    <div class="ml-auto flex gap-2">
-      <p-button
-        icon="pi pi-file-import"
-        [label]="'button.import' | translate"
-        (click)="openImportDialog()"
-        severity="secondary"
-      />
-      <p-button
-        icon="pi pi-camera"
-        [label]="'title.scanBusinessCard' | translate"
-        (onClick)="openBusinessCardScanner()"
-      />
-      <p-button
-        icon="pi pi-plus"
-        [label]="'button.new' | translate"
-        (onClick)="openContactEditDialog()"
-      />
+    <div class="ml-auto flex gap-2 flex-wrap">
+      <ng-container *ngIf="entityPermissions().permissions.canCreate">
+        <p-button
+          icon="pi pi-file-import"
+          [label]="'button.import' | translate"
+          (click)="openImportDialog()"
+          severity="secondary"
+        />
+        <p-button
+          icon="pi pi-camera"
+          [label]="'title.scanBusinessCard' | translate"
+          (onClick)="openBusinessCardScanner()"
+        />
+        <p-button
+          icon="pi pi-plus"
+          [label]="'button.new' | translate"
+          (onClick)="openContactEditDialog()"
+        />
+      </ng-container>
     </div>
   </div>
 
   <app-listview
     [dataUrl]="contactService.getUrl()"
     [columns]="contactColumns"
-    [config]="listviewConfig"
-    (rowDblClick)="onRowDoubleClicked($event)"
+    [config]="listviewConfig()"
+    (rowClick)="onRowClick($event)"
     (searchChange)="onSearchChange($event)"
   >
-    <ng-template #actionsTemplate let-contact>
-      <div class="flex gap-2">
-        <p-button
-          icon="pi pi-file-edit"
-          [outlined]="true"
-          (click)="handleOnOpenRecordDetails(contact)"
-          title="Open Record Details"
-          rounded
-        />
-        <p-button
-          icon="pi pi-trash"
-          [outlined]="true"
-          severity="danger"
-          (click)="handleOnRecordDelete(contact)"
-          title="Delete Record"
-          rounded
-        />
-      </div>
-    </ng-template>
-  
   </app-listview>
 </div>

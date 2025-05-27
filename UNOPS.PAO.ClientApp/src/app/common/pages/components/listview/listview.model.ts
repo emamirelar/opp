@@ -1,18 +1,57 @@
+import { SearchField } from '../../../services/search-parser.service';
+
 export interface ListViewColumn {
   label: string;
   field: string;
-  type: string;
+  /**
+   * Type of column data. This affects how the data is formatted and displayed.
+   * Supported types:
+   * - 'text': Display as plain text (default)
+   * - 'date': Format as date using the DatePipe
+   * - 'number': Format as number using the DecimalPipe
+   * - 'currency': Format as currency using the CurrencyPipe
+   * - 'translate': Use the translation pipe to translate the value
+   * - 'avatar': Display an image URL as an avatar using p-avatar component
+   * - 'email': Display as clickable email with mailto link
+   * - 'multiple-avatars': Display multiple avatars from an array of objects
+   * - 'template': Use a custom template function to render the column content
+   */
+  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template';
   sortable: boolean;
   width?: string;
-  format?: string;
+  /**
+   * Format string for the column:
+   * - For 'date': Date format string (e.g., 'MM/dd/yyyy')
+   * - For 'number': Decimal format (e.g., '1.2-2')
+   * - For 'currency': Currency code (e.g., 'USD')
+   * - For 'email': Not used
+   */
+  format?: 'date' | 'number' | 'currency' | 'email';
   template?: string;
+  conditionFn?: (rowData: any) => boolean;
+  /**
+   * Whether to apply CSS ellipsis (text truncation with "...") when text overflows
+   * @default false
+   */
+  ellipsis?: boolean;
+  /**
+   * Field to use as fallback for generating initials when avatar image is not available
+   * Used primarily with 'multiple-avatars' type
+   */
+  firstLetterFallbackField?: string;
+  /**
+   * Custom template function for rendering column content
+   * Used with 'template' type to combine multiple fields or create custom displays
+   * @param rowData The row data object
+   * @returns HTML string or plain text to display
+   */
+  templateFn?: (rowData: any) => string;
 }
 
 export interface ListViewConfig {
   pageSize?: number;
   pageSizeOptions?: number[];
   enableSelection?: boolean;
-  selectionMode?: 'single' | 'multiple';
   enablePagination?: boolean;
   enableSorting?: boolean;
   enableSearch?: boolean;
@@ -22,16 +61,55 @@ export interface ListViewConfig {
   defaultSortOrder?: 'asc' | 'desc';
   scrollable?: boolean;
   scrollHeight?: string;
+  /**
+   * Default view mode between 'table' and 'card'
+   * @default 'table'
+   */
+  defaultViewMode?: 'table' | 'card';
+  /**
+   * Whether to show the view mode toggle buttons
+   * @default true
+   */
+  showViewModeToggle?: boolean;
+  /**
+   * Whether to automatically switch to card view when component width is small
+   * @default true
+   */
+  autoSwitchToCardView?: boolean;
+  /**
+   * Minimum width (in pixels) below which to automatically switch to card view
+   * @default 768
+   */
+  autoSwitchMinWidth?: number;
+  /**
+   * Configuration for card view display
+   */
+  cardConfig?: {
+    /**
+     * Field to use as the card title (defaults to first column)
+     */
+    titleField?: string;
+    /**
+     * Fields to display in card content (defaults to first 4 columns after title)
+     */
+    contentFields?: string[];
+    /**
+     * Number of cards per row on different screen sizes
+     */
+    cardsPerRow?: {
+      xs?: number; // Extra small screens
+      sm?: number; // Small screens
+      md?: number; // Medium screens
+      lg?: number; // Large screens
+      xl?: number; // Extra large screens
+    };
+  };
   searchConfig?: {
     /**
      * Searchable fields to display in the advanced search dropdown
      * If not provided, a general search is performed
      */
-    searchableFields?: Array<{
-      field: string;
-      label: string;
-      placeholder?: string;
-    }>;
+    searchableFields?: SearchField[];
     
     /**
      * Whether to use advanced search with chips
@@ -78,7 +156,8 @@ export interface SearchCriteria {
   field: string;
   value: string;
   label: string;
-  operator?: 'AND' | 'OR';  // Optional operator field defaulting to AND if not specified
+  operator: string;  // The comparison operator (is, like, >, etc.)
+  logicalOperator?: 'AND' | 'OR';  // The logical operator connecting this criterion with the next one
 }
 
 export interface SearchParams {

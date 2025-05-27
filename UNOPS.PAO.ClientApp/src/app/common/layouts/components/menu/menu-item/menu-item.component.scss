@@ -1,7 +1,31 @@
-li {
-    width: 100%;
-    padding: 0;
+/* CSS variables and special cases that Tailwind cannot easily handle */
+
+/* Animation-related styles for Angular animations */
+ul {
+    transition: height 0.3s ease-out;
 }
+
+/* Variables-based styles for theming */
+
+.hover\:bg-surface-hover:hover {
+    background-color: var(--surface-hover);
+}
+
+.border-l-primary {
+    border-left-color: var(--primary-color);
+}
+
+/* Utility classes for border */
+.border-l-3 {
+    border-left-width: 3px;
+}
+
+.border-l-solid {
+    border-left-style: solid;
+}
+
+/* Any other styles that need custom handling */
+
 
 li.active-menuitem>a .layout-submenu-toggler {
     transform: rotate(-180deg);
@@ -9,22 +33,7 @@ li.active-menuitem>a .layout-submenu-toggler {
 
 a {
     padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    position: relative;
-    color: var(--text-color);
-    cursor: pointer;
-    text-decoration: none;
     transition: background-color 0.2s;
-}
-
-a:hover {
-    background-color: var(--surface-hover);
-}
-
-a.active-menuitem-routerlink {
-    font-weight: 700;
-    color: var(--primary-color);
 }
 
 .layout-submenu-toggler {
@@ -36,13 +45,40 @@ i:not(.layout-submenu-toggler) {
     margin-right: 0.5rem;
 }
 
-ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
+.active-menuitem > a {
+    font-weight: 600;
 }
 
-.menu-item-link {
-    @apply flex flex-row items-center justify-start gap-2 border;
+.active-menuitem > a > .layout-submenu-toggler {
+    transform: rotate(-180deg);
+}
+
+.entity-icon {
+    font-size: 1.25rem;
+}
+
+// Styles for parent menu items
+.parent-menuitem {
+    border-left: 3px solid transparent;
+    
+    &.active-menuitem {
+        border-left-color: var(--primary-color);
+    }
+}
+
+.parent-link {
+    font-weight: 500;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+// Child menu styles
+ul app-menu-item {
+    .menu-item {
+        margin-left: 0.5rem;
+        font-size: 0.95rem;
+        
+        .menu-item-link {
+            padding-left: 1rem;
+        }
+    }
 }

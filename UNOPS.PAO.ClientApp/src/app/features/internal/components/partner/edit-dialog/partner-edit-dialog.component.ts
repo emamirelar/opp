@@ -33,6 +33,9 @@ import { BlockUI } from 'primeng/blockui';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Partner } from '../../../models/partner.model';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
+import { JsonPipe } from '@angular/common';
+import { PartnerTreeService } from '../../../services/partner-tree.service';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -55,7 +58,9 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
     ReactiveFormsModule,
     MarkdownPipe,
     LinkListComponent,
-    AiTranscribeComponent
+    AiTranscribeComponent,
+    JsonPipe,
+    ProgressSpinnerModule
   ],
   templateUrl: './partner-edit-dialog.component.html',
   standalone: true,
@@ -70,7 +75,7 @@ export class PartnerEditDialogComponent implements OnInit {
       partnerOfficeId: new FormControl(null, {
         validators: [Validators.required]
       }),
-      partnerCategoryId: new FormControl(null, {
+      partnerGroupCode: new FormControl(null, {
         validators: [Validators.required]
       }),
       name: new FormControl('', {
@@ -131,7 +136,10 @@ export class PartnerEditDialogComponent implements OnInit {
   @Input() public record: Partner = {};
   @Output() onRecordCreationSuccess = new EventEmitter<any>();
 
+  partnerTreeService = inject(PartnerTreeService);
+
   showValidationFailedError = signal<boolean>(false);
+  isLoading = signal<boolean>(false);
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
   allYesNoData = this.cachedDataService.allYesNo;
@@ -140,7 +148,8 @@ export class PartnerEditDialogComponent implements OnInit {
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
   allPartnerOfficesData = this.cachedDataService.allPartnerOffices;
-  allPartnerCategoriesData = this.cachedDataService.allPartnerCategories;
+  allPartnerCategoriesData = this.cachedDataService.partnerCategoryGroups;
+  allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
   recordId: string = '';
   recordData = signal<any>({});
   showCommentDialog = false;
@@ -160,13 +169,20 @@ export class PartnerEditDialogComponent implements OnInit {
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
-        debugger;
         if (this.recordId != '') {
+          this.isLoading.set(true);
           this._loadRecordDetails();
         } else {
+          // Data is passed directly via dialog config
+          this.isLoading.set(true);
           this.record = this.dialogConfig.data?.record;
           this.recordData.set(this.dialogConfig.data.record);
           this.formGroup.patchValue(this.dialogConfig.data.record);
+          
+          // Set loading to false after a short delay to ensure form is properly initialized
+          setTimeout(() => {
+            this.isLoading.set(false);
+          }, 100);
         }
       }
     });
@@ -186,7 +202,7 @@ export class PartnerEditDialogComponent implements OnInit {
                           this.dialogConfig.data?.record?.skipServerSave;
       
       if (isImportEdit) {
-        console.log('This is an import edit, skipping server save');
+        // This is an import edit, skipping server save
         // Create a copy of the payload with the _updated flag
         const updatedRecord = { 
           ...payload, 
@@ -247,6 +263,11 @@ export class PartnerEditDialogComponent implements OnInit {
       next: (data: any) => {
         this.recordData.set(data);
         this.formGroup.patchValue(data);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading partner details:', error);
+        this.isLoading.set(false);
       }
     });
   }
@@ -303,7 +324,8 @@ export class PartnerEditDialogComponent implements OnInit {
         address1City: data.address1City || this.formGroup.get('address1City')?.value,
         address1StateProvince: data.address1StateProvince || this.formGroup.get('address1StateProvince')?.value,
         address1PostalCode: data.address1PostalCode || this.formGroup.get('address1PostalCode')?.value,
-        address1Country: data.address1Country || this.formGroup.get('address1Country')?.value
+        address1Country: data.address1Country || this.formGroup.get('address1Country')?.value,
+        partnerGroupCode: data.partnerGroupCode || this.formGroup.get('partnerGroupCode')?.value,
       });
 
       this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.preFillSuccess') });

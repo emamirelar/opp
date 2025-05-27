@@ -12,6 +12,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using System.Security.Claims;
 
 public class PartnerTreeManager : IPartnerTreeManager
 {
@@ -44,7 +45,7 @@ public class PartnerTreeManager : IPartnerTreeManager
         return MapEntityToModel(entity);
     }
 
-    public IEnumerable<PartnerTreeModel> GetPartnerTrees(int userId, string sortBy = "Name", bool ascending = true)
+    public IEnumerable<PartnerTreeModel> GetPartnerTreesAsync(int userId, string sortBy = "Name", bool ascending = true)
     {
         var allTrees = PartnerTreeRepository
             .GetAllSortedAsync(sortBy, ascending)
@@ -123,5 +124,93 @@ public class PartnerTreeManager : IPartnerTreeManager
         {
             await PartnerTreeRepository.Delete(entity);
         }
+    }
+
+    public IEnumerable<object> GetCategoryAndGroupStructure(int userId)
+    {
+        // Get all partner trees
+        var partnerTreeStructure = GetPartnerTreesAsync(userId).ToList();
+        
+        // Create a list to store categories
+        var categories = new List<object>();
+        
+        // Process top-level items as categories
+        foreach (var tree in partnerTreeStructure)
+        {
+            if (tree.Data == null) continue;
+            
+            // Create category object
+            var category = new
+            {
+                id = tree.Data.Id,
+                partnerCategoryCode = tree.Data.Code,
+                partnerCategoryName = tree.Data.Name,
+                children = new List<object>()
+            };
+            
+            // Collect all groups (children) under this category
+            if (tree.Children != null && tree.Children.Any())
+            {
+                CollectGroups(tree.Children, (List<object>)category.children);
+            }
+            
+            categories.Add(category);
+        }
+        
+        return categories;
+    }
+    
+    // Helper method to recursively collect all groups under a category
+    private void CollectGroups(IEnumerable<PartnerTreeModel> nodes, List<object> groupList)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.Data == null) continue;
+            
+            // Add this node as a group
+            groupList.Add(new
+            {
+                id = node.Data.Id,
+                partnerGroupCode = node.Data.Code,
+                partnerGroupName = node.Data.Name
+            });
+            
+            // Recursively process its children
+            if (node.Children != null && node.Children.Any())
+            {
+                CollectGroups(node.Children, groupList);
+            }
+        }
+    }
+
+    // Secure methods with ClaimsPrincipal - implemented in UNOPSPartnerTreeManager
+    public Task<PartnerTreeModel> CreatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task<IEnumerable<PartnerTreeModel>> GetPartnerTreesAsync(ClaimsPrincipal user, string sortBy = "Name", bool ascending = true)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task<PartnerTreeModel?> GetPartnerTreeAsync(ClaimsPrincipal user, int id)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task<PartnerTreeModel?> UpdatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task DeletePartnerTreeAsync(ClaimsPrincipal user, int id)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task<IEnumerable<object>> GetCategoryAndGroupStructureAsync(ClaimsPrincipal user)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
     }
 }

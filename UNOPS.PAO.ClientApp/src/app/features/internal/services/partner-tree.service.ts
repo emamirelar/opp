@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { tap } from 'rxjs';
 import { PartnerTree } from '../models/partner-tree.model';
+import { PartnerCategoryGroup, PartnerGroup } from '../models/partner-category-group.model';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,10 @@ export class PartnerTreeService {
   levelThreeOptions: PartnerTree[] = [];
   originalData: PartnerTree[] = [];
   partnerGroupOptions: PartnerTree[] = [];
+
+  // Add signal for the category and group structure
+  private categoryGroupStructure = signal<PartnerCategoryGroup[]>([]);
+  allCategoryGroupStructure = this.categoryGroupStructure.asReadonly();
 
   constructor() { }
 
@@ -42,7 +47,7 @@ export class PartnerTreeService {
     if (!parentCode) {
       return [];
     }
-    return this.parentOptions.filter(option => 
+    return this.parentOptions.filter(option =>
       option.parent === parentCode || option.code === parentCode
     );
   }
@@ -56,7 +61,7 @@ export class PartnerTreeService {
           const originalData = JSON.parse(JSON.stringify(data));
           const flatData: PartnerTree[] = this.flattenTree(originalData);
           this.parentOptions = flatData;
-          
+
           this.partnerGroupOptions = this.parentOptions;
           this.isLoading.set(false);
         },
@@ -107,7 +112,7 @@ export class PartnerTreeService {
         complete: () => {
           this.isLoading.set(false);
         }
-      })); 
+      }));
   }
 
   deletePartnerLevel(id: string) {
@@ -121,5 +126,21 @@ export class PartnerTreeService {
           this.isLoading.set(false);
         }
       }));
+  }
+
+  getCategoryAndGroupStructure() {
+    this.isLoading.set(true);
+    return this.http.get<PartnerCategoryGroup[]>(`/api/partner-tree-structure`).pipe(
+      tap({
+        next: (data) => {
+          this.categoryGroupStructure.set(data);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error fetching category and group structure:', err);
+          this.isLoading.set(false);
+        }
+      })
+    );
   }
 }

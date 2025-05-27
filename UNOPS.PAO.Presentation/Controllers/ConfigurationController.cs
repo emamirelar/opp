@@ -1,29 +1,47 @@
 ﻿namespace UNOPS.PAO.Presentation.Controllers;
 
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Utilities.Helpers;
 
 [Route("/")]
-[ApiController]
-public class ConfigurationController : ControllerBase
+public class ConfigurationController : BaseController
 {
-    private readonly IConfiguration configuration;
-    public ConfigurationController(SystemConfigurationManager manager)
+    private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _environment;
+    
+    public ConfigurationController(
+        SystemConfigurationManager manager,
+        ILogger<ConfigurationController> logger,
+        IAuthorizationService authorizationService,
+        UserResolverService<int> userResolverService,
+        IWebHostEnvironment environment)
+        : base(logger, authorizationService, userResolverService)
     {
-        configuration = manager.GetConfiguration();
+        _configuration = manager.GetConfiguration();
+        _environment = environment;
     }
 
     [HttpGet(APIDictionary.Configuration)]
-    public ConfigurationResponse Get()
+    public ActionResult Get()
     {
-        var googleSettings = configuration.GetSection("GoogleAuthSettings");
-        return new ConfigurationResponse()
+        return HandleOperationAsync(async () => 
         {
-            GoogleClientId = googleSettings.GetSection("clientId").Value
-            , GoogleApiKey = googleSettings.GetSection("apiKey").Value
-        };
+            var googleSettings = _configuration.GetSection("GoogleAuthSettings");
+            var appConfig = _configuration.GetSection("AppConfig");
+            return await Task.FromResult(new ConfigurationResponse()
+            {
+                GoogleClientId = googleSettings.GetSection("clientId").Value,
+                GoogleApiKey = googleSettings.GetSection("apiKey").Value,
+                Environment = appConfig.GetSection("Environment").Value ?? _environment.EnvironmentName
+            });
+        }).Result;
     }
 }

@@ -1,24 +1,56 @@
-<div class="layout-topbar">
-	<div class="layout-topbar-logo-container">
-		<button (click)="layoutService.onMenuToggle()"
-			aria-label="Menu"
-			class="layout-menu-button layout-topbar-action">
+<div class="layout-topbar flex justify-between gap-4 items-center">
+	<div class="layout-topbar-logo-container flex items-center">
+		<button pButton pRipple type="button" text class="p-link layout-menu-button" (click)="layoutService.onMenuToggle()">
 			<i class="pi pi-bars"></i>
 		</button>
 		<a class="layout-topbar-logo"
 			routerLink="/">
-			<img src="images/Circle.png"
-				class="items-center brand-logo hidden sm:flex"
-				alt="UNOPS Grant+ Logo">
-			<span class="text-sm sm:text-2xl">Partners and Opportunities</span>
+			<img src="images/PNG/Opportunity Horizontal1000px.png"
+				class="brand-logo hidden lg:block flex-shrink-0"
+				alt="UNOPS Opportunity+ Logo">
+			<img src="images/PNG/Opportunity Logo Graphic1000px.png"
+				class="lg:hidden w-6 flex-shrink-0"
+				alt="UNOPS Opportunity+ Logo">
 		</a>
 	</div>
 
-	<div class="layout-topbar-actions">
-		<div class="flex items-center">
-      <!--				<app-theme-toggler></app-theme-toggler>-->
+  <app-global-search-bar></app-global-search-bar>
 
+	<div class="flex items-center justify-end">
+      <!-- User Roles Button -->
+      <div class="flex gap-2 mr-4 items-center" *ngIf="userRoles.length > 0">
+        <button type="button"
+                class="p-button p-button-outlined p-button-primary layout-topbar-action cursor-pointer hover:bg-primary-50 transition-colors border-2 border-primary"
+                (click)="showRoleDialog()"
+                title="Impersonate Roles"
+                pTooltip="Impersonate Roles"
+                tooltipPosition="bottom">
+          <i class="pi pi-users text-primary mr-2"></i>
+          <span class="text-sm font-bold text-primary">Impersonate Roles</span>
+        </button>
+      </div>
 
+      <!-- Dev Login link - only visible in development mode -->
+      <button *ngIf="isDevelopment" 
+			type="button"
+			aria-label="Dev Login"
+			class="layout-topbar-action p-button-text mr-1"
+            (click)="navigateToDevLogin()"
+            pTooltip="Dev Login" tooltipPosition="bottom">
+			<i class="pi pi-user-edit"></i>
+            <span class="dev-login-badge">DEV</span>
+      </button>
+
+      <!-- Debug link - only visible in development mode -->
+      <button *ngIf="isDevelopment" 
+			type="button"
+			aria-label="Debug"
+			class="layout-topbar-action p-button-text mr-1"
+            (click)="navigateToDebug()"
+            pTooltip="Debug Info" tooltipPosition="bottom">
+			<i class="pi pi-cog"></i>
+            <span class="debug-badge">DEBUG</span>
+      </button>
 
       <app-language-selector></app-language-selector>
 	  <button (click)="layoutService.onAIAssistantToggle()"
@@ -78,9 +110,17 @@
           </div>
         </div>
       </p-overlayPanel>
-      <app-profile-menubar></app-profile-menubar>
-		</div>
+      <div class="ml-auto">
+        <div class="flex items-center gap-2">
+          <button type="button"
+                class="p-button-text layout-topbar-action cursor-pointer"
+                (click)="menu.toggle($event)">
+            <i class="pi pi-user"></i>
+          </button>
+          <p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
+        </div>
+      </div>
 	</div>
-
-	<p-toast position="bottom-right"></p-toast>
 </div>
+<p-toast position="bottom-right"></p-toast>
+<app-role-dialog></app-role-dialog>

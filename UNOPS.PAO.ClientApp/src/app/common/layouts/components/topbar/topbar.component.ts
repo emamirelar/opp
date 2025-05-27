@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ViewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
@@ -9,32 +9,55 @@ import { ButtonModule } from 'primeng/button';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { ToastModule } from 'primeng/toast';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { TooltipModule } from 'primeng/tooltip';
 import { NotificationService, Notification } from '../../../services/notification.service';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HttpClient } from '@angular/common/http';
 import { ComponentResolverService } from '../../../../features/internal/services/component-resolver.service';
 import { interval, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { AuthService } from '../../../../essentials/services/auth.service';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ImportDialogService } from '../../../reusables/components/import/dialog/import-dialog.service';
 import { ImportService } from '../../../reusables/components/import/import.service';
 import { Router } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MenuModule } from 'primeng/menu';
+import { RippleModule } from 'primeng/ripple';
+import { InputTextModule } from 'primeng/inputtext';
+import { AvatarModule } from 'primeng/avatar';
+import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.component';
+import { RoleService } from '../../../../essentials/services/role.service';
+import { RoleDialogComponent } from './role-dialog/role-dialog.component';
+
+interface UserInfo {
+  userId: number;
+  name: string;
+  userEmail: string;
+  orgUnit: string;
+  supervisorId: number;
+}
 
 @Component({
   selector: 'app-topbar',
   imports: [
     CommonModule,
     HttpClientModule,
-    LanguageSelectorComponent, 
-    ProfileMenubarComponent, 
-    StyleClassModule, 
+    LanguageSelectorComponent,
+    ProfileMenubarComponent,
+    StyleClassModule,
     ButtonModule,
     OverlayPanelModule,
     ToastModule,
     ProgressBarModule,
-    ConfirmDialogModule
+    TooltipModule,
+    ConfirmDialogModule,
+    MenuModule,
+    RippleModule,
+    InputTextModule,
+    AvatarModule,
+    GlobalSearchBarComponent,
+    RoleDialogComponent
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -43,15 +66,27 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
   providers: [MessageService, ConfirmationService]
 })
 export class TopbarComponent implements OnInit, OnDestroy {
+  @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
+
   items!: MenuItem[];
   notifications: Notification[] = [];
   unreadCount: number = 0;
+  isDevelopment: boolean = false;
   private notificationSubscription?: Subscription;
   private userId: string = '';
   private previousNotifications: Notification[] = [];
   private importService = inject(ImportService);
   private importDialogService = inject(ImportDialogService);
   private confirmationService = inject(ConfirmationService);
+  private notificationInterval: any;
+  private http = inject(HttpClient);
+  private roleService = inject(RoleService);
+  
+  menuActive: boolean = false;
+  userInfo: UserInfo | null = null;
+  profileMenuItems: MenuItem[] = [];
+  userRoles: string[] = [];
+  roleMenuItems: MenuItem[] = [];
 
   constructor(
     public layoutService: LayoutService,
@@ -61,21 +96,107 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private cdr: ChangeDetectorRef,
     private router: Router
-  ) { }
+  ) {
+    // Check if we're in development mode
+    this.isDevelopment = this.checkIfDevelopment();
+  }
+
+  private checkIfDevelopment(): boolean {
+    // Method 1: Check for localhost in URL
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1';
+                        
+    // Method 2: Check for dev cookie
+    const hasDevCookie = document.cookie.split(';')
+      .some(c => c.trim().startsWith('dev-user-email='));
+      
+    return isLocalhost || hasDevCookie;
+  }
 
   ngOnInit() {
     this.authService.user().subscribe({
       next: (claims) => {
-        const userIdClaim = claims.find(c => c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier');
+        const userIdClaim = claims.find(c => c.type === 'userId');
         if (userIdClaim) {
           this.userId = userIdClaim.value;
+          this.loadUserRoles();
           this.startNotificationPolling();
         }
+        this.loadUserInfo();
       },
       error: (error) => {
+        // Error getting user claims
         console.error('Error getting user claims:', error);
       }
     });
+
+    this.profileMenuItems = [];
+  }
+
+  private loadUserInfo() {
+    this.http.get<UserInfo>(`/api/user-info/current`).subscribe({
+      next: (data) => {
+        this.userInfo = data;
+      },
+      error: (err) => {
+        console.error('Error loading user info:', err);
+        
+        this.authService.user().subscribe({
+          next: (claims) => {
+            debugger;
+            const emailClaim = claims.find(c => c.type === 'email' || 
+                                         c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
+            
+            if (emailClaim?.value) {
+              this.http.get<UserInfo>(`/api/user-info?email=${encodeURIComponent(emailClaim.value)}`).subscribe({
+                next: (userData) => {
+                  this.userInfo = userData;
+                  this.loadNotifications();
+                  this.loadUserRoles();
+                },
+                error: (userLookupErr) => {
+                  console.error('Error looking up user by email:', userLookupErr);
+                  this.createFallbackUserInfo(claims);
+                }
+              });
+            } else {
+              this.createFallbackUserInfo(claims);
+            }
+          },
+          error: () => {
+            if (err.status === 401) {
+              setTimeout(() => this.loadUserInfo(), 1000);
+            }
+          }
+        });
+      }
+    });
+  }
+  
+  /**
+   * Create a fallback user info object from claims when API methods fail
+   */
+  private createFallbackUserInfo(claims: any[]) {
+    const nameClaim = claims.find(c => c.type === 'name');
+    const emailClaim = claims.find(c => c.type === 'email' || 
+                                 c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
+    const userIdClaim = claims.find(c => c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier');
+    
+    // Create a simple userInfo object from claims
+    this.userInfo = {
+      userId: userIdClaim ? parseInt(userIdClaim.value, 10) : 0,
+      name: nameClaim?.value || emailClaim?.value?.split('@')[0] || 'User',
+      userEmail: emailClaim?.value || '',
+      orgUnit: '',
+      supervisorId: 0
+    };
+    
+    // If we have a userId from claims, we can still load notifications
+    if (userIdClaim) {
+      this.loadNotifications();
+    }
+    
+    this.cdr.markForCheck();
   }
 
   ngOnDestroy() {
@@ -83,10 +204,8 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   private startNotificationPolling() {
-    // Initial load
     this.loadNotifications();
 
-    // Start polling every 15 seconds
     this.notificationSubscription = interval(15000)
       .pipe(
         switchMap(() => this.notificationService.getNotifications(this.userId))
@@ -99,41 +218,35 @@ export class TopbarComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         },
         error: (error: any) => {
-          console.error('Error loading notifications:', error);
+          // Error loading notifications
         }
       });
   }
 
   private handleNewNotifications(newNotifications: Notification[]) {
-    // Find new notifications that weren't in the previous list
     const newItems = newNotifications.filter(newNotif => 
       !this.previousNotifications.some(prevNotif => prevNotif.id === newNotif.id)
     );
 
     if (newItems.length > 0) {
-      // Prepare messages for different notification types
       let message = '';
-      
+
       if (newItems.length === 1) {
         const notification = newItems[0];
         
-        // Enhanced message for bulk import notifications
         if (notification.category === 'bulk_contact_action' || notification.category.startsWith('bulk_')) {
-          // Check if we have records to count
           if (notification.records && notification.records.length > 0) {
             message = `You have a new notification. Click on the bell icon to read it.`;
           } else {
             message = 'Data imported and ready for review. Click to open.';
           }
         } else {
-          // Default message for other notifications
           message = notification.message;
         }
       } else {
         message = `You have ${newItems.length} new notifications`;
       }
       
-      // Show toast for new notifications
       this.messageService.add({
         severity: 'info',
         summary: 'New Notification',
@@ -142,27 +255,22 @@ export class TopbarComponent implements OnInit, OnDestroy {
         sticky: false
       });
       
-      // Only update previousNotifications when we find new ones
       this.previousNotifications = [...newNotifications];
     }
   }
   
-  // Helper method to count records in a notification
   private getRecordCount(notification: Notification): number {
     if (!notification.records || !notification.records.length) {
       return 0;
     }
     
-    // If records is an array with actual data
     if (notification.records.length > 1) {
       return notification.records.length;
     }
     
-    // If records contains a single item that might be a JSON string
     if (notification.records.length === 1) {
       const firstItem = notification.records[0];
       
-      // If it's a string that might be JSON
       if (typeof firstItem === 'string') {
         try {
           const parsed = JSON.parse(firstItem);
@@ -174,7 +282,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
         }
       }
       
-      // If it has a 'records' property that might contain the actual records
       if (typeof firstItem === 'object' && firstItem !== null && 'records' in firstItem) {
         const nestedRecords = firstItem.records;
         if (Array.isArray(nestedRecords)) {
@@ -192,7 +299,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
       }
     }
     
-    return 1; // Default to 1 if we can't determine the count
+    return 1;
   }
 
   private stopNotificationPolling() {
@@ -206,32 +313,26 @@ export class TopbarComponent implements OnInit, OnDestroy {
       next: (notifications: Notification[]) => {
         this.notifications = notifications;
         this.unreadCount = notifications.length;
-        // Initialize previousNotifications with the initial set
         this.previousNotifications = [...notifications];
         this.cdr.markForCheck();
       },
       error: (error: any) => {
-        console.error('Error loading notifications:', error);
+        // Error loading notifications
       }
     });
   }
 
   handleNotificationClick(notification: Notification) {
     if (notification.category && notification.records && notification.records.length > 0) {
-      // Check if this is a bulk import notification
       if (notification.category.startsWith('bulk_') && notification.responseType !== 'Error') {
         try {
-          // Clear previous data
           this.importDialogService.data.set([]);
           
-          // Set new data - we capture the result to check if it worked
           this.importDialogService.setData(notification.records);
           
-          // Verify data was set properly
           const currentData = this.importDialogService.data();
-          
+
           if (currentData.length === 0) {
-            // Show error message if no data was processed
             this.messageService.add({
               severity: 'error',
               summary: 'Data Error',
@@ -241,43 +342,31 @@ export class TopbarComponent implements OnInit, OnDestroy {
             return;
           }
           
-          // Store notification ID in the service for later use when import is completed or canceled
           this.importDialogService.setNotificationInfo(notification.id, this.userId, notification.message);
           
-          // Then open the dialog with the correct header
           this.importDialogService.openImportDialog(
             notification.category === 'bulk_contact_action' ? 'Import Contact' : 'Import'
           );
         } catch (error) {
-          console.error('Error processing notification data:', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Processing Error',
-            detail: 'An error occurred while processing notification data',
-            life: 5000
-          });
+          // Error processing notification data
         }
       } else {
-        // Use component resolver for other types of notifications
         this.componentResolverService.loadComponent(notification.category, null, notification.records);
         
-        // Mark non-import notification as read
         this.markNotificationAsRead(notification.id);
       }
     }
   }
   
-  // Separate method to mark notification as read
   markNotificationAsRead(notificationId: number): void {
     this.notificationService.markAsRead(notificationId, this.userId).subscribe({
       next: () => {
-        // Update local state
         this.notifications = this.notifications.filter(n => n.id !== notificationId);
         this.unreadCount = this.notifications.length;
         this.cdr.markForCheck();
       },
       error: (error) => {
-        console.error('Error marking notification as read:', error);
+        // Error marking notification as read
       }
     });
   }
@@ -285,25 +374,16 @@ export class TopbarComponent implements OnInit, OnDestroy {
   formatProgressMessage(message: string): string {
     if (!message) return '';
     
-    // Find progress bar pattern like [■■■■□□□□□□□□□□□□□□□□]
     const progressBarRegex = /\[(■+□*)\]/g;
     
-    // Replace the progress bar with HTML span with special styling
     return message.replace(progressBarRegex, (match) => {
       return `<span class="progress-bar">${match}</span>`;
     });
   }
 
-  /**
-   * Cancel a file analysis operation in progress
-   * @param notification The notification for the file analysis operation
-   * @param event The click event to stop propagation
-   */
   cancelFileAnalysis(notification: Notification, event: Event): void {
-    // Stop event propagation to prevent opening the notification
     event.stopPropagation();
     
-    // Extract jobId from the notification message if available
     let jobId = null;
     if (notification.message) {
       const match = notification.message.match(/Job ID: ([a-zA-Z0-9-]+)/);
@@ -312,26 +392,21 @@ export class TopbarComponent implements OnInit, OnDestroy {
       }
     }
     
-    // Show confirmation dialog
     this.confirmationService.confirm({
       message: 'Are you sure you want to cancel this file analysis operation?',
       header: 'Cancel File Analysis',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        // Call the cancel API
         this.importService.cancelAnalysis().subscribe({
           next: () => {
-            // Update notification status
             this.notificationService.updateNotification(
               notification.id,
               'File analysis was cancelled by user',
               'Done'
             ).subscribe({
               next: () => {
-                // Mark as read after updating
                 this.markNotificationAsRead(notification.id);
                 
-                // Show success message
                 this.messageService.add({
                   severity: 'success',
                   summary: 'Cancelled',
@@ -340,21 +415,43 @@ export class TopbarComponent implements OnInit, OnDestroy {
                 });
               },
               error: (err: any) => {
-                console.error('Error updating notification:', err);
+                // Error updating notification
               }
             });
           },
           error: (err: any) => {
-            console.error('Error cancelling file analysis:', err);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to cancel file analysis: ' + (err.message || 'Unknown error'),
-              life: 5000
-            });
+            // Error cancelling file analysis
           }
         });
       }
     });
+  }
+
+  logout() {
+    this.router.navigate(['/login']);
+  }
+
+  navigateToDevLogin() {
+    window.open('https://localhost:7123/dev-login', '_blank');
+  }
+  
+  navigateToDebug() {
+    window.open('https://localhost:7123/api/dev/debug', '_blank');
+  }
+
+  private loadUserRoles() {
+    this.roleService.getUserRoles().subscribe({
+      next: (userRoles) => {
+        this.userRoles = userRoles.roles;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading user roles:', error);
+      }
+    });
+  }
+
+  showRoleDialog() {
+    this.roleDialog.show();
   }
 }

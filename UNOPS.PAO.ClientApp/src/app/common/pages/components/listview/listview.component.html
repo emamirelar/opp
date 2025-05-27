@@ -1,6 +1,6 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="listview-container">
+<div class="flex flex-col gap-4">
   
   <!-- Search bar -->
   @if (config.enableSearch) {
@@ -14,18 +14,18 @@
             [(ngModel)]="searchText"
             (input)="onSearchInput(searchText)"
             (keyup.enter)="onSearch()"
-            class="w-full"
+            class="w-full h-10"
           />
           @if (searchText.length > 0) {
-            <p-inputicon class="pi pi-times" (click)="clearSearch()" />
+            <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
           }
         </p-iconfield>
       </div>
     }
     
-    <!-- Advanced Search with Chips -->
+    <!-- Advanced Search -->
     @if (config.searchConfig?.useAdvancedSearch) {
-      <div class="w-full bg-gray-50 rounded-lg p-3">
+      <div class="w-full bg-gray-50 rounded-lg p-3 shadow-sm">
         <div class="flex justify-between items-center mb-2">
           <div class="text-md font-medium text-gray-700">Advanced Search</div>
           @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
@@ -35,192 +35,69 @@
               severity="secondary"
               (onClick)="exportData()"
               [disabled]="isLoading()"
-              styleClass="p-button-text p-button-export"
+              class="text-gray-700 hover:bg-gray-100"
             ></p-button>
           }
         </div>
         
-        <!-- Search chips display -->
-        @if (searchCriteria.length > 0) {
-          <div class="flex flex-wrap gap-1 mb-2">
-            @for (criterion of searchCriteria; track criterion.field; let i = $index) {
-              @if (i > 0) {
-                <span class="flex items-center px-2 text-gray-600">{{ criterion.operator || 'AND' }}</span>
-              }
-              <p-chip>
-                <span class="font-semibold">{{ criterion.label }}:</span> {{ criterion.value }}
-                <span class="p-chip-remove-icon pi pi-times-circle" (click)="removeSearchCriterion(i)"></span>
-              </p-chip>
-            }
-            <p-button
-              icon="pi pi-times"
-              class="p-button-text p-button-rounded p-button-sm" 
-              severity="secondary"
-              (onClick)="clearSearch()"
-              [disabled]="isLoading()"
-              pTooltip="Clear all filters"
-            ></p-button>
-          </div>
-        }
-        
-        <!-- Search input and field dropdown -->
-        <div class="flex gap-2 flex-wrap md:flex-nowrap">
-          <p-dropdown 
-            [options]="searchableFields()" 
-            [(ngModel)]="selectedSearchField" 
-            optionLabel="label"
-            placeholder="Select field"
-            styleClass="h-input"
-            [style]="{'width': '200px'}"
-            (onChange)="onSearchFieldSelect($event.value)"
-          ></p-dropdown>
-          
-          @if (selectedSearchField) {
-            <div class="flex gap-2 flex-grow-1">
-              <p-dropdown
-                [options]="operators"
-                [(ngModel)]="selectedOperator"
-                placeholder="Operator"
-                styleClass="h-input"
-                [style]="{'width': '120px'}"
-              ></p-dropdown>
-              
-              <p-iconfield iconPosition="left" class="search-input-container flex-grow-1">
-                <p-inputicon class="pi pi-search" />
-                <input pInputText type="text"
-                  [placeholder]="'Enter ' + selectedSearchField.label + '...'"
-                  [(ngModel)]="advancedSearchText"
-                  (keyup.enter)="onAdvancedSearchEnter()"
-                  class="h-input"
-                />
-              </p-iconfield>
-              
-              <p-button 
-                icon="pi pi-plus"
-                label="Add Filter"
-                (onClick)="onSearch()"
-                [disabled]="!advancedSearchText || advancedSearchText.trim().length === 0"
-                pTooltip="Add search filter"
-                styleClass="h-input p-button-add-filter"
-              ></p-button>
-            </div>
-          }
-        </div>
+        <app-advanced-search
+          [searchableFields]="searchableFields"
+          (searchChange)="onAdvancedSearchChange($event)"
+          [advancedSearchEnabled]="isAdvancedSearch()">
+        </app-advanced-search>
       </div>
     }
   }
 
-  <!-- Main table with data -->
-  <div class="mt-3 flex flex-col flex-grow">
-    @if (config.enableExport && (config.exportOptions?.showButton ?? true) && !config.searchConfig?.useAdvancedSearch) {
-      <div class="flex justify-end mb-2">
-        <p-button
-          [label]="config.exportOptions?.buttonLabel ?? 'Export'"
-          icon="pi pi-file-export"
-          severity="secondary"
-          (onClick)="exportData()"
-          [disabled]="isLoading()"
-          styleClass="p-button-text p-button-export"
-        ></p-button>
-      </div>
+    <!-- Table view -->
+    @if (viewMode === 'table') {
+      <app-listview-table
+        [columns]="columns"
+        [config]="config"
+        [data]="currentPageData()"
+        [totalRecords]="totalRecordsCount()"
+        [loading]="isLoading()"
+        [error]="hasError()"
+        [first]="first"
+        [rows]="rows"
+        (pageChange)="onPageChange($event)"
+        (sortChange)="onSortChange($event)"
+        (rowClick)="onRowClick($event)"
+      >
+        @if (actionsTemplate) {
+          <ng-template #tableActionsTemplate let-rowData>
+            <ng-container
+              [ngTemplateOutlet]="actionsTemplate"
+              [ngTemplateOutletContext]="{ $implicit: rowData }"
+            ></ng-container>
+          </ng-template>
+        }
+      </app-listview-table>
     }
     
-    <p-table
-      [value]="currentPageData()"
-      [columns]="columns"
-      [scrollable]="config.scrollable"
-      [scrollHeight]="scrollHeightValue"
-      [selectionMode]="config.selectionMode"
-      [(selection)]="selectedRecord"
-      [loading]="isLoading()"
-      [first]="first"
-      [lazy]="true"
-      [paginator]="config.enablePagination && currentPageData().length > 0"
-      [rows]="rows"
-      [totalRecords]="totalRecordsCount()"
-      [rowsPerPageOptions]="config.pageSizeOptions"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
-      (onPage)="onPageChange($event)"
-      (onSort)="onSortChange($event)"
-      (onRowSelect)="onRowSelect($event)"
-      styleClass="p-datatable-sm"
-    >
-      <!-- Column header template -->
-      <ng-template pTemplate="header" let-columns>
-        <tr>
-          @for (column of columns; track column) {
-            @if (column.sortable && config.enableSorting) {
-              <th [pSortableColumn]="column.field" [ngStyle]="{'width': column.width || 'auto'}">
-                {{ column.label | translate }}
-                <p-sortIcon [field]="column.field"></p-sortIcon>
-              </th>
-            } @else {
-              <th [ngStyle]="{'width': column.width || 'auto'}">{{ column.label | translate }}</th>
-            }
-          }
-          <!-- Add actions column header if actions template exists -->
-          @if (hasActionsTemplate()) {
-            <th class="w-12">{{ 'label.actions' | translate }}</th>
-          }
-        </tr>
-      </ng-template>
-
-      <!-- Rows template -->
-      <ng-template pTemplate="body" let-rowData let-columns="columns">
-        <tr [pSelectableRow]="rowData" (dblclick)="onRowDblClick(rowData)">
-          @for (column of columns; track column) {
-            <td class="cursor-pointer">
-              @switch (column.type) {
-                @case ('date') {
-                  {{ rowData[column.field] | date: (column.format || 'medium') }}
-                }
-                @case ('number') {
-                  {{ rowData[column.field] | number: (column.format || '1.2-2') }}
-                }
-                @case ('currency') {
-                  {{ rowData[column.field] | currency: (column.format || 'USD') }}
-                }
-                @case ('translate') {
-                  {{ rowData[column.field] | translate }}
-                }
-                @default {
-                  {{ rowData[column.field] }}
-                }
-              }
-            </td>
-          }
-          <!-- Add actions column if actions template exists -->
-          @if (hasActionsTemplate()) {
-            <td>
-              <ng-container
-                [ngTemplateOutlet]="actionsTemplate!"
-                [ngTemplateOutletContext]="{ $implicit: rowData }"
-              ></ng-container>
-            </td>
-          }
-        </tr>
-      </ng-template>
-
-      <!-- Empty state template -->
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td [attr.colspan]="hasActionsTemplate() ? columns.length + 1 : columns.length" class="text-center p-4">
-            @if (isLoading()) {
-              <div class="flex justify-center items-center p-4">
-                <i class="pi pi-spin pi-spinner text-2xl"></i>
-              </div>
-            } @else if (hasError()) {
-              <div class="text-red-500">
-                <i class="pi pi-exclamation-circle mr-2"></i>
-                {{ 'error.dataLoad' | translate }}
-              </div>
-            } @else {
-              <div>{{ 'message.noRecordsFound' | translate }}</div>
-            }
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </div>
+    <!-- Card view -->
+    @if (viewMode === 'card') {
+      <app-listview-card
+        [columns]="columns"
+        [config]="config"
+        [data]="currentPageData()"
+        [totalRecords]="totalRecordsCount()"
+        [loading]="isLoading()"
+        [error]="hasError()"
+        [first]="first"
+        [rows]="rows"
+        (pageChange)="onPageChange($event)"
+        (sortChange)="onSortChange($event)"
+        (rowClick)="onRowClick($event)"
+      >
+        @if (actionsTemplate) {
+          <ng-template #cardActionsTemplate let-rowData>
+            <ng-container
+              [ngTemplateOutlet]="actionsTemplate" 
+              [ngTemplateOutletContext]="{ $implicit: rowData }"
+            ></ng-container>
+          </ng-template>
+        }
+      </app-listview-card>
+    }
 </div>

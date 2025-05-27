@@ -1,4 +1,4 @@
-﻿namespace UNOPS.PAO.Business.Managers.Mapping;
+namespace UNOPS.PAO.Business.Managers.Mapping;
 using AutoMapper;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
@@ -16,7 +16,15 @@ public class MappingProfile : Profile
         CreateMap<InteractionRequest, Interaction>();
         CreateMap<PartnerRequest, Partner>();
         CreateMap<UpdatePartnerRequest, Partner>();
-        CreateMap<Partner, PartnerModel>();
+        CreateMap<Partner, PartnerModel>()
+            .ForMember(dest => dest.First5ContactsByDate, opt => opt.MapFrom(src => src.First5ContactsByDate));
+        CreateMap<PartnerModel, Partner>();
+        CreateMap<Contact, ContactValueModel>();
+        CreateMap<Contact, ContactModel>()
+            .ForMember(dest => dest.Partner, opt => opt.Ignore())
+            .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null));
+        CreateMap<ContactModel, Contact>()
+            .ForMember(dest => dest.Partner, opt => opt.Ignore());
         CreateMap<AiPromptModel, AiPrompt>();
         CreateMap<AiScreenMappingModel, AiScreenMapping>();
         CreateMap<AiChatHistoryModel, AiChatHistory>();
@@ -29,14 +37,23 @@ public class MappingProfile : Profile
         CreateMap<Link, LinkModel>();
         CreateMap<LinkRequest, Link>();
         CreateMap<UpdateLinkRequest, Link>();
-        CreateMap<OrganizationUnit, OrganizationUnitModel>();
-        CreateMap<OrganizationUnitModel, OrganizationUnit>();
-        CreateMap<PartnerCategory, PartnerCategoryModel>();
-        CreateMap<PartnerCategoryModel, PartnerCategory>();
+
+        // OrganizationHierarchy mappings
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyModel>()
+            .ForMember(dest => dest.ParentId, opt => opt.MapFrom(src => src.Parent != null ? src.Parent.Id : (int?)null))
+            .ReverseMap();
+
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyTreeModel>()
+            .ForMember(dest => dest.Data, opt => opt.MapFrom(src => src));
+
+        CreateMap<OrganizationHierarchy, OrganizationHierarchyDataModel>()
+            .ForMember(dest => dest.ParentId, opt => opt.MapFrom(src => src.Parent != null ? src.Parent.Id : (int?)null))
+            .ForMember(dest => dest.Children, opt => opt.MapFrom(src => src.Children));
         CreateMap<Partner, PartnerValueModel>();
-        CreateMap<Contact, ContactValueModel>();
+        CreateMap<PartnerTree, PartnerTreeModel>();
+        CreateMap<PartnerTreeModel, PartnerTree>();
         CreateMap<GrantUser, UserValueModel>();
-        CreateMap<UserProfile, UserProfileValueModel>();
         CreateMap<GrantUser, PAOUserModel>();
+        CreateMap<UserProfile, UserProfileValueModel>();
     }
 }

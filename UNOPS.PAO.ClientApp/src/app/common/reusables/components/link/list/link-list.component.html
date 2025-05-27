@@ -50,14 +50,16 @@
                 </div>
 
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <p-button
-                    icon="pi pi-pencil"
-                    severity="primary"
-                    rounded
-                    text
-                    size="small"
-                    (onClick)="openEditDialog(link, $event)"
-                    pTooltip="{{ 'tooltip.edit' | translate }}" />
+                  @if (!disabled()) {
+                    <p-button
+                      icon="pi pi-pencil"
+                      severity="primary"
+                      rounded
+                      text
+                      size="small"
+                      (onClick)="openEditDialog(link, $event)"
+                      pTooltip="{{ 'tooltip.edit' | translate }}" />
+                  }
                 </div>
               </div>
             </div>
@@ -80,7 +82,7 @@
 
 
     <div class="flex justify-between items-center">
-      @if (showAddButton()) {
+      @if (showAddButton() && !disabled()) {
         <p-button
           icon="pi pi-plus"
           rounded
