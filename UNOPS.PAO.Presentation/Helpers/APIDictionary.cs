@@ -79,4 +79,10 @@ public class APIDictionary
 
     // User Data
     public const string CurrentUserData = APIPrefix + "current-user-data";
+
+    //Gmail Addon
+    public const string GmailAddonInteraction = "api/gmail-addon/interactions";
+    //public const string GmailAddonAuth = "api/gmail-addon/auth";
+    //public const string GmailAddonRefresh = "api/gmail-addon/refresh";
+    //public const string GmailAddonRevoke = "api/gmail-addon/revoke";
 }

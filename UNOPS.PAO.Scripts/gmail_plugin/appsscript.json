@@ -1,0 +1,59 @@
+{
+    "timeZone": "Europe/Berlin",
+    "exceptionLogging": "STACKDRIVER",
+    "runtimeVersion": "V8",
+    "dependencies": {
+      "enabledAdvancedServices": [
+        {
+          "userSymbol": "Gmail",
+          "serviceId": "gmail",
+          "version": "v1"
+        }
+      ],
+      "libraries": [
+        {
+          "userSymbol": "OAuth2",
+          "libraryId": "1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF",
+          "version": "43"
+        }
+      ]
+    },
+    "oauthScopes": [
+      "https://www.googleapis.com/auth/script.locale",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
+      "https://www.googleapis.com/auth/gmail.addons.current.message.action",
+      "https://www.googleapis.com/auth/gmail.addons.current.message.metadata",
+      "https://www.googleapis.com/auth/gmail.addons.execute",
+      "https://www.googleapis.com/auth/script.external_request"
+    ],
+    "urlFetchWhitelist": [
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      "https://6a46-70-31-169-225.ngrok-free.app/api/auth/google",
+      "https://6a46-70-31-169-225.ngrok-free.app/api/gmail-addon/interactions"
+    ],
+    "addOns": {
+      "common": {
+        "name": "Opportunity+",
+        "logoUrl": "https://cdn.pixabay.com/photo/2013/07/12/18/01/mail-152814_1280.png",
+        "layoutProperties": {
+          "primaryColor": "#005073",
+          "secondaryColor": "#73c3e6"
+        },
+        "useLocaleFromApp": true,
+        "homepageTrigger": {
+          "runFunction": "onHomePageOpen",
+          "enabled": true
+        }
+      },
+      "gmail": {
+        "contextualTriggers": [
+          {
+            "unconditional": {},
+            "onTriggerFunction": "onGmailMessageOpen"
+          }
+        ]
+      }
+    }
+  }

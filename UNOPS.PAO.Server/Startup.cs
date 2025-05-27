@@ -25,6 +25,11 @@ using UNOPS.PAO.Presentation.ContextPermissionHandlers;
 using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Google.Api.Gax;
+using Google.Cloud.SecretManager.V1;
 
 namespace UNOPS.PAO.Server;
 
@@ -118,20 +123,49 @@ public class Startup
         services.AddScoped<SystemConfigurationManager>();
         services.AddScoped(typeof(UserResolverService<int>));
 
-        services.AddAuthentication(IdentityConstants.ApplicationScheme)
-            .AddCookie(IdentityConstants.ApplicationScheme,
-                opt => {
-                    opt.Events.OnRedirectToLogin = (context) =>
-                    {
-                        context.Response.StatusCode = 401;
-                        return Task.CompletedTask;
-                    };
-                    opt.Events.OnRedirectToAccessDenied = context =>
-                    {
-                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        return Task.CompletedTask;
-                    };
-                });
+        // Register IAuthService
+        services.AddScoped<UNOPS.PAO.Identity.Services.IAuthService, UNOPS.PAO.Identity.Services.AuthService>();
+
+        // Get JWT secret from Secret Manager
+        var projectId = Configuration["AppConfig:ProjectId"];
+        var secretManager = SecretManagerServiceClient.Create();
+        var secretName = $"projects/{projectId}/secrets/QA_Gmail_Plugin_Secret/versions/latest";
+        var secret = secretManager.AccessSecretVersion(secretName);
+        var jwtSecret = secret.Payload.Data.ToStringUtf8();
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme; // Default to cookie
+            options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+            options.DefaultScheme = IdentityConstants.ApplicationScheme;
+        })
+        .AddCookie(IdentityConstants.ApplicationScheme, opt => {
+            opt.Events.OnRedirectToLogin = (context) =>
+            {
+                context.Response.StatusCode = 401;
+                return Task.CompletedTask;
+            };
+            opt.Events.OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            };
+        })
+        .AddJwtBearer("Bearer", options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = Configuration["JWTSettings:validIssuer"],
+                ValidAudience = Configuration["JWTSettings:validAudience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))
+            };
+        });
+
+        services.AddAuthorization();
 
         services.AddIdentityCore<PAOIdentityUser>()
             .AddRoles<PAOIdentityRole>()
@@ -167,7 +201,7 @@ public class Startup
     {
         var serviceTypes = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(s => s.GetLoadableTypes())
-            .Where(t => t.GetInterfaces().Any(i => i == typeof(IApplicationService)))
+            .Where(i => i.GetInterfaces().Any(i => i == typeof(IApplicationService)))
             .ToList();
 
         foreach (var type in serviceTypes)
