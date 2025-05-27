@@ -43,6 +43,11 @@ public class InteractionModel
     public virtual OrganizationHierarchyModel? OrgUnit { get; set; }
     public int? OrgUnitId { get; set; }
     public List<DocumentModel>? Documents { get; set; }
+
+    /// <summary>
+    /// Permissions for this specific partner
+    /// </summary>
+    public EntityPermissionsModel? Permissions { get; set; }
 }
 
 public class InteractionContactModel

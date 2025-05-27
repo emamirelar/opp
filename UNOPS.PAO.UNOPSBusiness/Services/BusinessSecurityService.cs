@@ -85,8 +85,10 @@ public class BusinessSecurityService : IBusinessSecurityService
             return true;
         }
 
-        // If action is not read and user has only UNOPS_GEN_USER role, deny access
-        if (action.ToLower() != "read")
+        var entityName = GetEntityName<T>();
+
+        // If action is not read and user has only UNOPS_GEN_USER role, deny access for non-interaction entities
+        if (action.ToLower() != "read" && entityName != "Interaction" && entityName != "UNOPSInteraction")
         {
             var userRoles = user.Claims
                 .Where(c => c.Type == ClaimTypes.Role)
@@ -100,7 +102,6 @@ public class BusinessSecurityService : IBusinessSecurityService
             }
         }
 
-        var entityName = GetEntityName<T>();
         var userOrgUnit = await GetUserOrgUnitAsync(user);
         var currentUserId = GetCurrentUserId(user);
 
@@ -110,6 +111,8 @@ public class BusinessSecurityService : IBusinessSecurityService
             "UNOPSContact" => await CanAccessContactCommon(entity as Contact, user, userOrgUnit, currentUserId, action),
             "Partner" => await CanAccessPartnerCommon(entity as Partner, user, userOrgUnit, currentUserId, action),
             "UNOPSPartner" => await CanAccessPartnerCommon(entity as Partner, user, userOrgUnit, currentUserId, action),
+            "Interaction" => await CanAccessInteractionCommon(entity as Interaction, user, userOrgUnit, currentUserId, action),
+            "UNOPSInteraction" => await CanAccessInteractionCommon(entity as Interaction, user, userOrgUnit, currentUserId, action),
             _ => true // Default to allow if no specific rule
         };
     }
@@ -236,6 +239,79 @@ public class BusinessSecurityService : IBusinessSecurityService
     }
     #endregion
 
+    #region Interaction Filters
+    private async Task<bool> CanAccessInteractionCommon(Interaction? interaction, ClaimsPrincipal user, string? userOrgUnit, int currentUserId, string action)
+    {
+        if (interaction == null) return false;
+
+        if (action.ToLower() == "read")
+        {
+            return true;
+        }
+
+        // Get user roles
+        var userRoles = user.Claims
+            .Where(c => c.Type == ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
+
+        // Apply role-specific rules
+        if (userRoles.Contains("PARTNER_GLOB_ADMIN") || (!userRoles.Contains("UNOPS_GEN_USER") && action.ToLower() == "create"))
+        {
+            return true;
+        }
+
+        // Cast to UNOPSInteraction if needed for access to properties
+        var unopsInteraction = interaction as UNOPSInteraction;
+        if (unopsInteraction == null) return false;
+
+        // Load interaction details if needed
+        if (unopsInteraction.OrgUnit == null && unopsInteraction.OrgUnitId.HasValue)
+        {
+            unopsInteraction.OrgUnit = await _context.OrganizationHierarchies
+                .FirstOrDefaultAsync(o => o.Id == unopsInteraction.OrgUnitId.Value);
+        }
+
+        // Load interaction users if needed for user-based access
+        var interactionUsers = await _context.InteractionUsers
+            .Where(iu => iu.InteractionId == unopsInteraction.Id)
+            .ToListAsync();
+
+        // Check if current user is in the interaction users
+        bool isUserInInteraction = interactionUsers.Any(iu => iu.UserId == currentUserId);
+
+        // Check if interaction org unit matches user's org unit
+        bool orgUnitMatches = !string.IsNullOrEmpty(userOrgUnit) && 
+                             unopsInteraction.OrgUnit?.Code == userOrgUnit;
+
+        // Apply role-specific rules
+        if (userRoles.Contains("UNOPS_GEN_USER"))
+        {
+            if (action.ToLower() == "update")
+            {
+                // Can edit when interaction org unit = user's org unit OR user is in InteractionUsers
+                return orgUnitMatches || isUserInInteraction;
+            }
+        }
+        else
+        {
+            if (action.ToLower() == "update")
+            {
+                // Can update when interaction org unit = user's org unit OR user is in InteractionUsers
+                return orgUnitMatches || isUserInInteraction;
+            }
+            else if (action.ToLower() == "delete")
+            {
+                // Can delete when interaction org unit = user's org unit
+                return orgUnitMatches;
+            }
+        }
+
+        // Default deny for other roles or actions
+        return false;
+    }
+    #endregion
+
     private int GetCurrentUserId(ClaimsPrincipal user)
     {
         var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
@@ -267,6 +343,8 @@ public class BusinessSecurityService : IBusinessSecurityService
             "unopscontact" => await CanUserAccessContactByIdAsync(user, entityId, action),
             "partner" => await CanUserAccessPartnerByIdAsync(user, entityId, action),
             "unopspartner" => await CanUserAccessPartnerByIdAsync(user, entityId, action),
+            "interaction" => await CanUserAccessInteractionByIdAsync(user, entityId, action),
+            "unopsinteraction" => await CanUserAccessInteractionByIdAsync(user, entityId, action),
             _ => true // Default to allow if no specific rule
         };
     }
@@ -287,6 +365,8 @@ public class BusinessSecurityService : IBusinessSecurityService
             "unopscontact" => await GetContactPermissionsAsync(user, userOrgUnit),
             "partner" => await GetPartnerPermissionsAsync(user, userOrgUnit),
             "unopspartner" => await GetPartnerPermissionsAsync(user, userOrgUnit),
+            "interaction" => await GetInteractionPermissionsAsync(user, userOrgUnit),
+            "unopsinteraction" => await GetInteractionPermissionsAsync(user, userOrgUnit),
             _ => new EntityPermissionsModel { CanRead = true, CanCreate = false, CanUpdate = false, CanDelete = false }
         };
     }
@@ -313,6 +393,19 @@ public class BusinessSecurityService : IBusinessSecurityService
         if (partner == null) return false;
 
         return await CanAccessPartnerCommon(partner, user, await GetUserOrgUnitAsync(user), GetCurrentUserId(user), action);
+    }
+
+    private async Task<bool> CanUserAccessInteractionByIdAsync(ClaimsPrincipal user, int interactionId, string action)
+    {
+        var interaction = await _context.Interactions.OfType<UNOPSInteraction>()
+            .Include(i => i.Contact)
+                .ThenInclude(c => c.Partner)
+                    .ThenInclude(p => p.PartnerOffice)
+            .FirstOrDefaultAsync(i => i.Id == interactionId);
+
+        if (interaction == null) return false;
+
+        return await CanAccessInteractionCommon(interaction, user, await GetUserOrgUnitAsync(user), GetCurrentUserId(user), action);
     }
 
     private async Task<EntityPermissionsModel> GetEntityPermissionsFromDatabaseAsync(ClaimsPrincipal user, string entityName)
@@ -362,6 +455,13 @@ public class BusinessSecurityService : IBusinessSecurityService
         // Note: Row-level filtering (org unit checking) is still applied in the 
         // ApplyPartnerFilters and CanAccessPartner methods
         return await GetEntityPermissionsFromDatabaseAsync(user, "Partner");
+    }
+
+    private async Task<EntityPermissionsModel> GetInteractionPermissionsAsync(ClaimsPrincipal user, string? userOrgUnit)
+    {
+        // Note: Row-level filtering (org unit checking) is still applied in the 
+        // ApplyInteractionFilters and CanAccessInteraction methods
+        return await GetEntityPermissionsFromDatabaseAsync(user, "Interaction");
     }
     #endregion
 } 

@@ -294,11 +294,11 @@ INSERT INTO public."EntityPermissions" (
     'Interaction',
     'UNOPS_GEN_USER',
     true,
+    false,
     true,
-    true,
-    true,
+    false,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrgUnitId == @orgUnitId", "CanDelete": "OrgUnitId == @orgUnitId"}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrgUnitId == @orgUnitId", "CanDelete": ""}'
 );
 
 -- Partnership Global Admin role permissions for Interaction
