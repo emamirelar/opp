@@ -18,9 +18,9 @@ namespace UNOPS.PAO.Presentation.Controllers
     {
         private readonly IInteractionManager _interactionManager;
 
-        public GmailAddonController(IInteractionManager interactionManager)
+        public GmailAddonController(IManagerWrapper manager)
         {
-            _interactionManager = interactionManager;
+            _interactionManager = manager.InteractionManager;
         }
 
         [HttpPost(APIDictionary.GmailAddonInteraction)]
