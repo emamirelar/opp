@@ -59,6 +59,10 @@ export class PermissionUtilityService {
       this.permissionService.getEntityPermissions(currentPath)
         .subscribe({
           next: (permissions) => {
+            if (!permissions.hasAccess) {
+              console.log(`[PERMISSION-UTILITY] No access to ${entityName} for route ${currentPath}`);
+              this.router.navigate(['/access-denied']);
+            }
             console.log(`[PERMISSION-UTILITY] Loaded ${entityName} permissions for route ${currentPath}:`, permissions);
             entityPermissions.set(permissions);
             permissionsLoading.set(false);

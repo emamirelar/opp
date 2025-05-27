@@ -113,6 +113,7 @@ public class BusinessSecurityService : IBusinessSecurityService
             "UNOPSPartner" => await CanAccessPartnerCommon(entity as Partner, user, userOrgUnit, currentUserId, action),
             "Interaction" => await CanAccessInteractionCommon(entity as Interaction, user, userOrgUnit, currentUserId, action),
             "UNOPSInteraction" => await CanAccessInteractionCommon(entity as Interaction, user, userOrgUnit, currentUserId, action),
+            "PartnerTree" => await CanUserAccessPartnerTreeAsync(user, action),
             _ => true // Default to allow if no specific rule
         };
     }
@@ -345,6 +346,7 @@ public class BusinessSecurityService : IBusinessSecurityService
             "unopspartner" => await CanUserAccessPartnerByIdAsync(user, entityId, action),
             "interaction" => await CanUserAccessInteractionByIdAsync(user, entityId, action),
             "unopsinteraction" => await CanUserAccessInteractionByIdAsync(user, entityId, action),
+            "partnertree" => await CanUserAccessPartnerTreeAsync(user, action),
             _ => true // Default to allow if no specific rule
         };
     }
@@ -367,6 +369,7 @@ public class BusinessSecurityService : IBusinessSecurityService
             "unopspartner" => await GetPartnerPermissionsAsync(user, userOrgUnit),
             "interaction" => await GetInteractionPermissionsAsync(user, userOrgUnit),
             "unopsinteraction" => await GetInteractionPermissionsAsync(user, userOrgUnit),
+            "partnertree" => await GetPartnerTreePermissionsAsync(user, userOrgUnit),
             _ => new EntityPermissionsModel { CanRead = true, CanCreate = false, CanUpdate = false, CanDelete = false }
         };
     }
@@ -462,6 +465,27 @@ public class BusinessSecurityService : IBusinessSecurityService
         // Note: Row-level filtering (org unit checking) is still applied in the 
         // ApplyInteractionFilters and CanAccessInteraction methods
         return await GetEntityPermissionsFromDatabaseAsync(user, "Interaction");
+    }
+
+    private async Task<EntityPermissionsModel> GetPartnerTreePermissionsAsync(ClaimsPrincipal user, string? userOrgUnit)
+    {
+        // PartnerTree permissions are purely role-based from database, no row-level filtering needed
+        return await GetEntityPermissionsFromDatabaseAsync(user, "PartnerTree");
+    }
+
+    private async Task<bool> CanUserAccessPartnerTreeAsync(ClaimsPrincipal user, string action)
+    {
+        // Get permissions from database
+        var permissions = await GetPartnerTreePermissionsAsync(user, null);
+        
+        return action.ToLower() switch
+        {
+            "read" => permissions.CanRead,
+            "create" => permissions.CanCreate,
+            "update" => permissions.CanUpdate,
+            "delete" => permissions.CanDelete,
+            _ => false
+        };
     }
     #endregion
 } 

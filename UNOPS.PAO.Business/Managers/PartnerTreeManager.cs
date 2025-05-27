@@ -12,6 +12,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using System.Security.Claims;
 
 public class PartnerTreeManager : IPartnerTreeManager
 {
@@ -180,5 +181,36 @@ public class PartnerTreeManager : IPartnerTreeManager
                 CollectGroups(node.Children, groupList);
             }
         }
+    }
+
+    // Secure methods with ClaimsPrincipal - implemented in UNOPSPartnerTreeManager
+    public Task<PartnerTreeModel> CreatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task<IEnumerable<PartnerTreeModel>> GetPartnerTreesAsync(ClaimsPrincipal user, string sortBy = "Name", bool ascending = true)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task<PartnerTreeModel?> GetPartnerTreeAsync(ClaimsPrincipal user, int id)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task<PartnerTreeModel?> UpdatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task DeletePartnerTreeAsync(ClaimsPrincipal user, int id)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
+    }
+
+    public Task<IEnumerable<object>> GetCategoryAndGroupStructureAsync(ClaimsPrincipal user)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerTreeManager for UNOPS-specific implementation");
     }
 }

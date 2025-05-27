@@ -3,6 +3,8 @@ import { ButtonModule } from 'primeng/button';
 import { TranslateModule } from '@ngx-translate/core';
 import { CommonModule } from '@angular/common';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { EntityPermissions } from '../../../../../essentials/services/permission.service';
 
 @Component({
   selector: 'app-partner-tree-item-footer',
@@ -10,22 +12,24 @@ import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
   imports: [ButtonModule, TranslateModule, CommonModule],
   template: `
     <div class="flex gap-2 mt-4 ">
-      <p-button 
-        icon="pi pi-trash" 
-        outlined="" 
-        *ngIf="record?.status === 'Active' && record?.id !== null" 
-        severity="warn" 
-        [label]="'button.inactive' | translate" 
-        (onClick)="onDelete()"
-      />
-      <p-button 
-        icon="pi pi-trash" 
-        outlined="" 
-        *ngIf="record?.status === 'Inactive' && record?.id !== null" 
-        severity="warn" 
-        [label]="'button.active' | translate" 
-        (onClick)="onActivate()"
-      />
+      @if(canDelete()) {
+        <p-button 
+          icon="pi pi-trash" 
+          outlined="" 
+          *ngIf="record?.status === 'Active' && record?.id !== null" 
+          severity="warn" 
+          [label]="'button.inactive' | translate" 
+          (onClick)="onDelete()"
+        />
+        <p-button 
+          icon="pi pi-trash" 
+          outlined="" 
+          *ngIf="record?.status === 'Inactive' && record?.id !== null" 
+          severity="warn" 
+          [label]="'button.active' | translate" 
+          (onClick)="onActivate()"
+        />
+      }
       <div class="grow"></div>
       <p-button 
         icon="pi pi-times" 
@@ -33,13 +37,15 @@ import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
         (onClick)="onCancel()" 
         severity="secondary"
       />
-      <p-button 
-        icon="pi pi-check" 
-        severity="success" 
-        [label]="'button.save' | translate" 
-        (onClick)="onSave()" 
-        [disabled]="isFormInvalid()"
-      />
+      @if(canSave()) {
+        <p-button 
+          icon="pi pi-check" 
+          severity="success" 
+          [label]="'button.save' | translate" 
+          (onClick)="onSave()" 
+          [disabled]="isFormInvalid()"
+        />
+      }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,10 +62,28 @@ export class PartnerTreeItemFooterComponent implements OnInit {
 
   record: any;
   isFormInvalid!: Signal<boolean>;
+  recordPermissions!: Signal<EntityPermissions>;
+  permissionUtilityService!: PermissionUtilityService;
 
   ngOnInit() {
     this.record = this.config.data?.record;
     this.isFormInvalid = this.config.data?.isFormInvalid;
+    this.recordPermissions = this.config.data?.recordPermissions;
+    this.permissionUtilityService = this.config.data?.permissionUtilityService;
+  }
+
+  canSave(): boolean {
+    if (!this.recordPermissions || !this.permissionUtilityService) return true;
+    
+    const isNewRecord = !this.record?.id;
+    return isNewRecord 
+      ? this.permissionUtilityService.canCreate(this.recordPermissions())
+      : this.permissionUtilityService.canUpdate(this.recordPermissions());
+  }
+
+  canDelete(): boolean {
+    if (!this.recordPermissions || !this.permissionUtilityService) return true;
+    return this.permissionUtilityService.canDelete(this.recordPermissions());
   }
 
   onDelete(): void {

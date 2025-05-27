@@ -43,6 +43,8 @@ import { ListViewColumn } from '../../../../../common/pages/components/listview/
 import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
 import { PartnerTreeItemComponent } from '../item/partner-tree-item.component';
 import { PartnerTreeItemFooterComponent } from '../item/partner-tree-item-footer.component';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+
 @Component({
   selector: 'app-partner-tree-view',
   imports: [
@@ -83,9 +85,15 @@ export class PartnerTreeViewComponent implements OnInit {
   activatedRoute = inject(ActivatedRoute);
   documentService = inject(DocumentService);
   dialogService = inject(DialogService);
+  cdr = inject(ChangeDetectorRef);
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
+
+  // RBAC permissions
+  permissionUtilityService = inject(PermissionUtilityService);
+  recordPermissionsData = this.permissionUtilityService.createInstancePermissions('PartnerTree');
+  recordPermissions = this.recordPermissionsData.recordPermissions;
 
   partnerTreeId = signal<number>(0);
   partnerTree = signal<PartnerTree | null>(null);
@@ -100,6 +108,18 @@ export class PartnerTreeViewComponent implements OnInit {
       if (data['partnerTreeData']) {
         this.partnerTree.set(data['partnerTreeData'].data);
         this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
+        
+        // Extract permissions from response if available
+        if (data['partnerTreeData'].permissions) {
+          this.recordPermissions.set({
+            entity: 'PartnerTree',
+            hasAccess: true,
+            permissions: data['partnerTreeData'].permissions
+          });
+        } else if (this.partnerTree()?.id) {
+          // Load permissions for the partner tree
+          this.recordPermissionsData.loadPermissions(this.partnerTree()!.id!.toString(), this.cdr);
+        }
       }
     });
   }
@@ -121,6 +141,14 @@ export class PartnerTreeViewComponent implements OnInit {
   ];
 
   handleEditClick() {
+    // Check permission before opening modal
+    if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'You do not have permission to edit this partner tree' 
+      });
+      return;
+    }
+
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
       header: 'Edit Partner Level',
       width: '50rem',

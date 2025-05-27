@@ -14,6 +14,7 @@ import { DialogModule } from 'primeng/dialog';
 import { PartnerTree } from '../../../models/partner-tree.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { PartnerTreeItemFooterComponent } from './partner-tree-item-footer.component';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 interface PartnerTreeFormControls {
   id: AbstractControl<number | null>;
@@ -54,6 +55,12 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
 
   partnerTreeService = inject(PartnerTreeService);
   feedbackDialogService = inject(FeedbackDialogService);
+  
+  // RBAC permissions
+  permissionUtilityService = inject(PermissionUtilityService);
+  recordPermissionsData = this.permissionUtilityService.createInstancePermissions('PartnerTree');
+  recordPermissions = this.recordPermissionsData.recordPermissions;
+
   formGroup = new FormGroup<PartnerTreeFormControls>({
     id: new FormControl<number | null>(null),
     name: new FormControl<string | null>('', {
@@ -96,7 +103,9 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
       handleActivate: () => this.handleActivate(),
       handleSave: () => this.handleSave(),
       record: this.record,
-      isFormInvalid: this.isFormInvalid
+      isFormInvalid: this.isFormInvalid,
+      recordPermissions: this.recordPermissions,
+      permissionUtilityService: this.permissionUtilityService
     };
   }
 
@@ -107,7 +116,46 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
       if (parentCode) {
         this.parent = this.parentOptions.find(p => p.code === parentCode);
       }
+
+      // Extract permissions from record if available
+      if (this.record.permissions) {
+        this.recordPermissions.set({
+          entity: 'PartnerTree',
+          hasAccess: true,
+          permissions: this.record.permissions
+        });
+      } else if (this.record.id) {
+        // Load permissions for existing record
+        this.recordPermissionsData.loadPermissions(this.record.id.toString());
+      } else {
+        // For new records without ID, set default permissions that allow creation
+        // The list component already checked entity-level permissions before opening this modal
+        this.recordPermissions.set({
+          entity: 'PartnerTree',
+          hasAccess: true,
+          permissions: {
+            canRead: true,
+            canCreate: true,
+            canUpdate: true,
+            canDelete: false
+          }
+        });
+      }
+    } else {
+      // For completely new records, set default permissions that allow creation
+      // The list component already checked entity-level permissions before opening this modal
+      this.recordPermissions.set({
+        entity: 'PartnerTree',
+        hasAccess: true,
+        permissions: {
+          canRead: true,
+          canCreate: true,
+          canUpdate: true,
+          canDelete: false
+        }
+      });
     }
+    
     this.updateFormValidity();
 
     // Subscribe to form status changes
@@ -124,6 +172,14 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   }
 
   handleDelete() {
+    // Check permission before deleting
+    if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'You do not have permission to delete this partner tree' 
+      });
+      return;
+    }
+
     if (!this.record?.id) return;
 
     const recordToDelete = { ...this.record, status: '0' };
@@ -174,6 +230,24 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   }
 
   handleSave() {
+    // Check permission before saving
+    const isNewRecord = !this.record?.id;
+    const requiredPermission = isNewRecord ? 'canCreate' : 'canUpdate';
+    
+    if (isNewRecord && !this.permissionUtilityService.canCreate(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'You do not have permission to create partner trees' 
+      });
+      return;
+    }
+    
+    if (!isNewRecord && !this.permissionUtilityService.canUpdate(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'You do not have permission to update this partner tree' 
+      });
+      return;
+    }
+
     if (this.formGroup.valid) {
       const formValue = this.formGroup.value;
       // Find parent object from parentOptions using the parent code

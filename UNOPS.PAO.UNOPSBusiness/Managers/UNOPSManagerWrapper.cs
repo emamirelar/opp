@@ -41,7 +41,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
         contactManager = new UNOPSContactManager(mapper, opsContext, configuration, securityService);
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, securityService);
-        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, partnerTreeService);
+        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, partnerTreeService, securityService);
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, securityService);
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
         linkManager = new LinkManager(mapper, opsContext);
