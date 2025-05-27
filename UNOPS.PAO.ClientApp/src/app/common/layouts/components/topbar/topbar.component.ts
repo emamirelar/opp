@@ -143,6 +143,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         
         this.authService.user().subscribe({
           next: (claims) => {
+            debugger;
             const emailClaim = claims.find(c => c.type === 'email' || 
                                          c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
             

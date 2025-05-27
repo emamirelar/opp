@@ -365,7 +365,7 @@ export class AuthService {
 
   public isAdmin(): Observable<boolean> {
     return this.getUserRoles().pipe(
-      map(roles => roles.includes('PARTNER_GLOB_ADMIN') || roles.includes('ORG_ADMIN')),
+      map(roles => roles.includes('PARTNER_GLOB_ADMIN') || roles.includes('ORG_UNIT_ADMIN')),
       catchError(() => of(false))
     );
   }

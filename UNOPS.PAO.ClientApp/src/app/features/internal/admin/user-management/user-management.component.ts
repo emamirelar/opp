@@ -22,6 +22,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { UserManagementService } from './user-management.service';
 import { PermissionService, EntityPermissions } from '../../../../essentials/services/permission.service';
+import { AuthService } from '../../../../essentials/services/auth.service';
 
 interface UserManagementModel {
   userId: number;
@@ -91,6 +92,7 @@ export class UserManagementComponent implements OnInit {
   private permissionService = inject(PermissionService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService);
 
   // Permission signals
   entityPermissions = signal<EntityPermissions>({
@@ -137,6 +139,17 @@ export class UserManagementComponent implements OnInit {
   canUpdate = computed(() => this.entityPermissions().permissions.canUpdate);
   hasAccess = computed(() => this.entityPermissions().hasAccess);
 
+  // Current user role signals
+  currentUserRoles = signal<string[]>([]);
+  
+  // Computed values for role-based UI logic
+  isOrgUnitAdmin = computed(() => 
+    this.currentUserRoles().includes('ORG_UNIT_ADMIN') && 
+    !this.currentUserRoles().includes('PARTNER_GLOB_ADMIN')
+  );
+  
+  isOrgUnitFilterDisabled = computed(() => this.isOrgUnitAdmin());
+
   ngOnInit() {
     this.loadPermissions();
   }
@@ -165,6 +178,7 @@ export class UserManagementComponent implements OnInit {
           
           // Load data only after permissions are confirmed
           if (permissions.hasAccess) {
+            this.loadCurrentUserRoles();
             this.loadAvailableRoles();
             this.loadUsers();
           }
@@ -182,6 +196,25 @@ export class UserManagementComponent implements OnInit {
           this.cdr.detectChanges();
         }
       });
+  }
+
+  private loadCurrentUserRoles() {
+    this.authService.getUserRoles().subscribe({
+      next: (roles) => {
+        this.currentUserRoles.set(roles);
+        
+        // If user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), automatically enable org unit filtering
+        if (this.isOrgUnitAdmin()) {
+          this.showMyOrgUnitOnly.set(true);
+          console.log('[IMPERSONATE-ROLES] ORG_UNIT_ADMIN detected - automatically enabling org unit filtering');
+        }
+        
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading current user roles:', error);
+      }
+    });
   }
 
   async loadUsers() {
@@ -252,7 +285,12 @@ export class UserManagementComponent implements OnInit {
   clearFilters() {
     this.searchTerm.set('');
     this.roleFilter.set('');
-    this.showMyOrgUnitOnly.set(false);
+    
+    // Only reset org unit filter if user is not ORG_UNIT_ADMIN
+    if (!this.isOrgUnitAdmin()) {
+      this.showMyOrgUnitOnly.set(false);
+    }
+    
     this.orgUnitFilter.set('');
     this.first.set(0);
     this.loadUsers();

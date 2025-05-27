@@ -160,7 +160,7 @@ const internalRoutes: Routes = [
             path: 'user-management',
             component: UserManagementComponent,
             data: { 
-              breadcrumb: 'Impersonate Roles'
+              breadcrumb: 'Manage User Permissions'
             }
           },
           {
