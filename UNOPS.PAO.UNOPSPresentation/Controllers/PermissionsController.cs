@@ -264,7 +264,15 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
                 {
                     return "Agreement";
                 }
-                // Add more special cases as needed
+                if (entityPlural.ToLower() == "partner-tree")
+                {
+                    return "PartnerTree";
+                }
+                // For other hyphenated entities, convert to PascalCase
+                // Split by dash, singularize each part, then join in PascalCase
+                var parts = entityPlural.Split('-');
+                var pascalParts = parts.Select(part => part.Singularize(inputIsKnownToBePlural: true).Pascalize());
+                return string.Join("", pascalParts);
             }
 
             // Use Humanizer to convert plural to singular
