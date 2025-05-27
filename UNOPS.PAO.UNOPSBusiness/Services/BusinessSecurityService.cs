@@ -8,6 +8,9 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using UNOPS.PAO.Identity.Entities;
 
 public interface IBusinessSecurityService
 {
@@ -25,11 +28,13 @@ public class BusinessSecurityService : IBusinessSecurityService
 {
     private readonly UNOPSAppDbContext _context;
     private readonly ILogger<BusinessSecurityService> _logger;
+    private readonly UserManager<PAOIdentityUser> _userManager;
 
-    public BusinessSecurityService(UNOPSAppDbContext context, ILogger<BusinessSecurityService> logger)
+    public BusinessSecurityService(UNOPSAppDbContext context, ILogger<BusinessSecurityService> logger, UserManager<PAOIdentityUser> userManager)
     {
         _context = context;
         _logger = logger;
+        _userManager = userManager;
     }
 
     public async Task<string?> GetUserOrgUnitAsync(ClaimsPrincipal user)
@@ -455,7 +460,7 @@ public class BusinessSecurityService : IBusinessSecurityService
     {
         _logger.LogInformation("DEBUG - GetEntityPermissionsFromDatabaseAsync called for entity: {EntityName}", entityName);
         
-        // Get user roles
+        // Get user roles from claims first
         var userRoles = user.Claims
             .Where(c => c.Type == ClaimTypes.Role)
             .Select(c => c.Value)
@@ -463,10 +468,53 @@ public class BusinessSecurityService : IBusinessSecurityService
 
         _logger.LogInformation("DEBUG - User roles from claims: {Roles}", string.Join(", ", userRoles));
 
-        // If no roles found, return no permissions
+        // FALLBACK: If no roles found in claims, get them directly from the database
         if (!userRoles.Any())
         {
-            _logger.LogWarning("DEBUG - No roles found for user, returning no permissions");
+            _logger.LogWarning("DEBUG - No roles found in claims, attempting to get roles from database");
+            
+            var userEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? user.FindFirst("email")?.Value;
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            _logger.LogInformation("DEBUG - Fallback lookup using Email: {Email}, UserId: {UserId}", userEmail, userId);
+            
+            try
+            {
+                PAOIdentityUser dbUser = null;
+                
+                // Try to find user by ID first, then by email
+                if (!string.IsNullOrEmpty(userId) && int.TryParse(userId, out var userIdInt))
+                {
+                    dbUser = await _userManager.FindByIdAsync(userId);
+                    _logger.LogInformation("DEBUG - User found by ID: {UserFound}", dbUser != null);
+                }
+                
+                if (dbUser == null && !string.IsNullOrEmpty(userEmail))
+                {
+                    dbUser = await _userManager.FindByEmailAsync(userEmail);
+                    _logger.LogInformation("DEBUG - User found by email: {UserFound}", dbUser != null);
+                }
+                
+                if (dbUser != null)
+                {
+                    userRoles = (await _userManager.GetRolesAsync(dbUser)).ToList();
+                    _logger.LogInformation("DEBUG - Roles from database: {Roles}", string.Join(", ", userRoles));
+                }
+                else
+                {
+                    _logger.LogWarning("DEBUG - User not found in database with email {Email} or ID {UserId}", userEmail, userId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DEBUG - Error during fallback role lookup for user {Email}/{UserId}", userEmail, userId);
+            }
+        }
+
+        // If still no roles found, return no permissions
+        if (!userRoles.Any())
+        {
+            _logger.LogWarning("DEBUG - No roles found for user even after database fallback, returning no permissions");
             return new EntityPermissionsModel { CanRead = false, CanCreate = false, CanUpdate = false, CanDelete = false };
         }
 

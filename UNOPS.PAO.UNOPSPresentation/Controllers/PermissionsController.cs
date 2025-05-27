@@ -75,25 +75,6 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
                 userId, userEmail, userNameIdentifier);
             _logger.LogInformation("DEBUG - All User Claims: {@Claims}", allClaims);
 
-            // DEBUG: Check if user exists in database
-            PAOIdentityUser dbUser = null;
-            if (!string.IsNullOrEmpty(userId))
-            {
-                dbUser = await _userManager.FindByIdAsync(userId);
-                _logger.LogInformation("DEBUG - User found in database: {UserFound}, UserName: {UserName}", 
-                    dbUser != null, dbUser?.UserName);
-                
-                if (dbUser != null)
-                {
-                    var userRoles = await _userManager.GetRolesAsync(dbUser);
-                    _logger.LogInformation("DEBUG - User roles from database: {Roles}", string.Join(", ", userRoles));
-                }
-            }
-            else
-            {
-                _logger.LogWarning("DEBUG - No UserId found in claims");
-            }
-
             // Extract entity name and ID from route
             var (entityName, entityId) = ExtractEntityInfoFromRoute(route);
             
