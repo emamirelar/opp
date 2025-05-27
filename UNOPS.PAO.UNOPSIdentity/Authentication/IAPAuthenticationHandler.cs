@@ -49,7 +49,6 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         // Skip authentication on the dev-login page
         if (Request.Path.StartsWithSegments("/dev-login"))
         {
-            _logger.LogDebug("Skipping authentication on dev-login page");
             return AuthenticateResult.NoResult();
         }
         
@@ -57,7 +56,6 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         if (Context.User?.Identity?.IsAuthenticated == true && 
             Context.User.HasClaim(c => c.Type == "iap-jwt-verified" && c.Value == "true"))
         {
-            _logger.LogDebug("Using existing JWT-verified identity from middleware");
             return AuthenticateResult.Success(new AuthenticationTicket(Context.User, Scheme.Name));
         }
         
@@ -84,7 +82,6 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                     if (!string.IsNullOrEmpty(email))
                     {
                         userEmail = email;
-                        _logger.LogInformation("Using JWT-verified email: {Email}", userEmail);
                         goto ProcessUser; // Skip the header check
                     }
                 }
@@ -92,15 +89,12 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             catch
             {
                 // JWT verification failed, continue to header-based auth
-                _logger.LogDebug("JWT validation failed, falling back to header-based auth");
             }
         }
         
         // Extract IAP headers if JWT verification failed or was skipped
         if (!Request.Headers.TryGetValue("X-Goog-Authenticated-User-Email", out var userEmailValues))
         {
-            _logger.LogDebug("No IAP email header found");
-            
             // Check if we're in development mode and should use cookie auth as fallback
             var env = Context.RequestServices.GetService(typeof(IWebHostEnvironment)) as IWebHostEnvironment;
             var config = Context.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
@@ -111,7 +105,6 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                 // Look for dev auth cookie
                 if (Request.Cookies.TryGetValue("DevIAPAuth", out var emailFromCookie) && !string.IsNullOrEmpty(emailFromCookie))
                 {
-                    _logger.LogInformation("Using dev auth cookie for authentication: {Email}", emailFromCookie);
                     userEmailValues = new Microsoft.Extensions.Primitives.StringValues(emailFromCookie);
                 }
                 else
@@ -131,7 +124,6 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         {
             userEmail = userEmail.Split(':').Last();
         }
-        _logger.LogInformation("IAP email header found: {Email}", userEmail);
         
     ProcessUser:
         // Find or create user based on Google identity
@@ -141,7 +133,6 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             // Auto-provision user if enabled
             if (Options.AutoProvisionUsers)
             {
-                _logger.LogInformation("Auto-provisioning new user: {Email}", userEmail);
                 user = new PAOIdentityUser
                 {
                     UserName = userEmail,
@@ -158,6 +149,15 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                         string.Join(", ", result.Errors.Select(e => e.Description)));
                     return AuthenticateResult.Fail("Failed to create user account");
                 }
+                
+                // Ensure UNOPS_GEN_USER role exists
+                if (!await _roleManager.RoleExistsAsync("UNOPS_GEN_USER"))
+                {
+                    await _roleManager.CreateAsync(new PAOIdentityRole { Name = "UNOPS_GEN_USER" });
+                }
+                
+                // Assign UNOPS_GEN_USER role
+                await _userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
                 
                 // Assign default role if needed
                 if (!string.IsNullOrEmpty(Options.DefaultRole))
@@ -179,6 +179,19 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                 return AuthenticateResult.Fail("User not found");
             }
         }
+        else
+        {
+            // For existing users, ensure they have UNOPS_GEN_USER role
+            if (!await _roleManager.RoleExistsAsync("UNOPS_GEN_USER"))
+            {
+                await _roleManager.CreateAsync(new PAOIdentityRole { Name = "UNOPS_GEN_USER" });
+            }
+            
+            if (!await _userManager.IsInRoleAsync(user, "UNOPS_GEN_USER"))
+            {
+                await _userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+            }
+        }
 
         // Process IAP groups if available
         await ProcessGroupsAsync(user);
@@ -187,11 +200,10 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         var roles = await _userManager.GetRolesAsync(user);
         var claims = await _userManager.GetClaimsAsync(user);
         
-        // Create identity with explicit authentication type - ensure it's not null or empty
+        // Create identity with explicit authentication type
         var identity = new ClaimsIdentity(claims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
         
         // Make sure all essential claims are present
-        _logger.LogInformation("Setting NameIdentifier in AuthenticationHandler line 194");
         if (!identity.HasClaim(c => c.Type == ClaimTypes.NameIdentifier))
             identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
         
@@ -239,10 +251,6 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                 Expires = DateTimeOffset.Now.AddHours(8)
             });
         }
-        
-        // Log the authentication state
-        _logger.LogInformation("IAP Authentication successful: {Email}, IsAuthenticated={IsAuthenticated}", 
-            user.Email, identity.IsAuthenticated);
         
         var principal = new ClaimsPrincipal(identity);
         return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));

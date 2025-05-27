@@ -110,6 +110,8 @@ public static class PAOUserEndpointRouteBuilderExtensions
                 userClaims.Add(new Claim(ClaimTypes.Role, role));
             }
 
+            userClaims.Add(new Claim("userId", user.Id.ToString()));
+
             // Add essential claims
             userClaims.Add(new Claim(ClaimTypes.Name, user.UserName));
             userClaims.Add(new Claim(ClaimTypes.Email, user.Email));
@@ -123,13 +125,6 @@ public static class PAOUserEndpointRouteBuilderExtensions
         {
             var userPermissions = executionContext.UserPermissions.Select(p => p.Name).ToList();
             return userPermissions.Distinct().ToList();
-        }).RequireAuthorization();
-
-        routeGroup.MapPost("/logout", async Task<Results<Ok, BadRequest>>
-            (HttpContext context) =>
-        {
-            await context.SignOutAsync();
-            return TypedResults.Ok();
         }).RequireAuthorization();
 
         return new PAOUserEndpointConventionBuilder(routeGroup);

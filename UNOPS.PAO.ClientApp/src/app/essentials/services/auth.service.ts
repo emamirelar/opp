@@ -208,9 +208,9 @@ export class AuthService {
 
   public user(): Observable<UserClaim[]> {
     // If we have a dev cookie, don't even try the API - just use synthetic claims
-    if (this.hasDevCookie()) {
+    /*if (this.hasDevCookie()) {
       return of(this.createSyntheticClaimsFromCookie());
-    }
+    }*/
     
     // Otherwise try the API with fallback to synthetic claims
     return this.http.get<UserClaim[]>('/user/claims').pipe(
@@ -224,10 +224,6 @@ export class AuthService {
         return of([]);
       })
     );
-  }
-
-  public isInternal() {
-    return this.http.get<boolean>('/user/isInternal');
   }
 
   // Check if user has a specific role
@@ -369,7 +365,7 @@ export class AuthService {
 
   public isAdmin(): Observable<boolean> {
     return this.getUserRoles().pipe(
-      map(roles => roles.includes('Administrator')),
+      map(roles => roles.includes('PARTNER_GLOB_ADMIN') || roles.includes('ORG_UNIT_ADMIN')),
       catchError(() => of(false))
     );
   }
@@ -377,19 +373,11 @@ export class AuthService {
   public getUserRoles(): Observable<string[]> {
     return this.user().pipe(
       map(claims => {
-        const roleClaims = claims.filter(claim => claim.type === 'role');
-        return roleClaims.map(claim => claim.value);
+        const roleClaims = claims.filter(claim => claim.type === 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role');
+        return roleClaims.map(claim => claim.value.toUpperCase());
       }),
       catchError(() => of([]))
     );
-  }
-
-  public logOut() {
-    // Reset cache on logout
-    this.iapAuthenticationChecked = false;
-    this.iapAuthenticationStatus = false;
-    this.redirectCounter = 0;
-    return this.http.post('/user/logout', {});
   }
 }
 

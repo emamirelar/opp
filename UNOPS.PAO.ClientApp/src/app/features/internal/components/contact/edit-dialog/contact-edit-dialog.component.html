@@ -1,4 +1,9 @@
-<p-blockui [blocked]="contactService.isLoading()" />
+<p-blockui [blocked]="contactService.isLoading() || isLoading() || cachedDataService.isLoading()">
+  <div class="flex flex-col items-center justify-center gap-3">
+    <p-progressSpinner strokeWidth="4" [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
+    <span class="text-lg font-medium">Loading contact data...</span>
+  </div>
+</p-blockui>
 
 <div class="flex flex-col h-full gap-4">
     @if( showValidationFailedError() === true ){

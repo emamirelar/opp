@@ -1,21 +1,21 @@
 <form class="grid sm:grid-cols-2 gap-4" [formGroup]="formGroup">
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.name" | translate }} <span>*</span></label>
-    <input pInputText fluid="true" formControlName="name" (blur)="onNameBlur()" />
+    <input pInputText fluid="true" formControlName="name" (blur)="onNameBlur()" [disabled]="!permissionUtilityService.canUpdate(recordPermissions())" />
     <small *ngIf="formGroup.get('name')?.invalid && formGroup.get('name')?.touched" class="p-error">
       {{ "validation.required" | translate }}
     </small>
   </div>
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.code" | translate }} <span>*</span></label>
-    <input pInputText fluid="true" formControlName="code" [readonly]="record?.id !== null"/>
+    <input pInputText fluid="true" formControlName="code" [readonly]="record?.id !== null" [disabled]="!permissionUtilityService.canUpdate(recordPermissions())"/>
     <small *ngIf="formGroup.get('code')?.invalid && formGroup.get('code')?.touched" class="p-error">
       {{ "validation.required" | translate }}
     </small>
   </div>
   <div class="flex flex-col gap-2 col-span-2">
     <label>{{ "label.partnerTree.description" | translate }} <span>*</span></label>
-    <textarea rows="5" cols="30" pTextarea fluid="true" formControlName="description" ></textarea>
+    <textarea rows="5" cols="30" pTextarea fluid="true" formControlName="description" [disabled]="!permissionUtilityService.canUpdate(recordPermissions())"></textarea>
     <small *ngIf="formGroup.get('description')?.invalid && formGroup.get('description')?.touched" class="p-error">
       {{ "validation.required" | translate }}
     </small>
@@ -24,7 +24,7 @@
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.partnerCategory" | translate }}</label>
     <p-select
-    [disabled]="record?.partnerCategoryEditable !== true"
+    [disabled]="record?.partnerCategoryEditable !== true || !permissionUtilityService.canUpdate(recordPermissions())"
     [options]="parentOptions" formControlName="partnerCategoryCode" optionLabel="name" valueField="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Category" class="w-full" [appendTo]="'body'">
       <ng-template let-item pTemplate="item">
         <div>{{ item.name }}</div>
@@ -35,7 +35,7 @@
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.partnerGroup" | translate }}</label>
     <p-select [options]="filteredPartnerGroupOptions"
-    [disabled]="record?.partnerGroupEditable !== true"
+    [disabled]="record?.partnerGroupEditable !== true || !permissionUtilityService.canUpdate(recordPermissions())"
     formControlName="partnerGroupCode" optionLabel="name" valueField="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Group" class="w-full" [appendTo]="'body'">
       <ng-template let-item pTemplate="item">
         <div>{{ item.name }}</div>

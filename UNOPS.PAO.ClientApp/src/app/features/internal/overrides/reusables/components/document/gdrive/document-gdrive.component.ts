@@ -17,6 +17,7 @@ export class GDriveDocumentComponent {
   entityId = input<string>('');
   appDocumentRef = input<any>(null);
   acceptedMIMETypes = input<string>('');
+  disabled = input<boolean>(false);
   showAddLinkDialog: boolean = false;
 
   handleOnSelectDriveBtnClick() {

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, signal, ViewChild, WritableSignal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal, ViewChild, WritableSignal, ChangeDetectorRef, OnInit, OnDestroy} from '@angular/core';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
 import { NgIf} from '@angular/common';
@@ -10,6 +10,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 import { DialogService } from 'primeng/dynamicdialog';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 
 @Component({
   selector: 'app-interaction-list',
@@ -26,11 +28,23 @@ import { DialogService } from 'primeng/dynamicdialog';
   templateUrl: './interaction-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class InteractionListComponent {
+export class InteractionListComponent implements OnInit, OnDestroy {
   selectedInteraction: WritableSignal<Interaction | undefined> = signal(undefined);
 
   @ViewChild("listviewComponent")
   listviewComponent?: ListviewComponent;
+
+  // Inject services
+  router = inject(Router);
+  route = inject(ActivatedRoute);
+  permissionUtilityService = inject(PermissionUtilityService);
+  feedbackDialogService = inject(FeedbackDialogService);
+  cdr = inject(ChangeDetectorRef);
+
+  // Permission handling
+  private permissionUtils = this.permissionUtilityService.createEntityPermissions('Interaction');
+  entityPermissions = this.permissionUtils.entityPermissions;
+  permissionsLoading = this.permissionUtils.permissionsLoading;
 
   columns: ListViewColumn[] = [
     {
@@ -70,11 +84,18 @@ export class InteractionListComponent {
 
   constructor(
     private interactionService: InteractionService,
-    private router: Router,
-    private route: ActivatedRoute,
   ) {
     this.openModalFromRoute();
     this.setInteractionFromHistoryState();
+  }
+
+  ngOnInit() {
+    // Load permissions using utility service
+    this.permissionUtils.loadPermissions(this.router, this.cdr);
+  }
+
+  ngOnDestroy() {
+    // No need to clear caches manually - utility service handles this
   }
 
   private setInteractionFromHistoryState() {
@@ -105,10 +126,28 @@ export class InteractionListComponent {
   }
 
   openNewInteractionModal(): void {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to create interactions',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     this.openInteractionModal();
   }
 
   openEditInteractionModal(item: any): void {
+    // Check if user has update permission
+    if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to edit interactions',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     this.interactionService.getById(item.id).subscribe({
       next: (response) => {
         if (response.body) {

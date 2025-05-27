@@ -9,11 +9,13 @@ using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using System.Security.Claims;
 
 public class UNOPSPartnerTreeManager : IPartnerTreeManager
 {
     private IMapper mapper;
     private readonly PartnerTreeService partnerTreeService;
+    private readonly IBusinessSecurityService? _securityService;
 
     private async Task<PartnerTreeModel> MapEntityToModel(UNOPSPartnerTree entity, IMapper mapper)
     {
@@ -64,10 +66,11 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         return result;
     }
 
-    public UNOPSPartnerTreeManager(IMapper mapper, UNOPSAppDbContext context, PartnerTreeService partnerTreeService)
+    public UNOPSPartnerTreeManager(IMapper mapper, UNOPSAppDbContext context, PartnerTreeService partnerTreeService, IBusinessSecurityService? securityService)
     {
         this.mapper = mapper;
         this.partnerTreeService = partnerTreeService;
+        this._securityService = securityService;
     }
 
     public async Task<PartnerTreeModel> CreatePartnerTreeAsync(PartnerTreeDataModel model)
@@ -256,7 +259,6 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
     public async Task<PartnerTreeModel?> GetPartnerTreeByCode(int userId, string code)
     {
         var item = await partnerTreeService.GetPartnerTreeByCodeAsync(code);
-
         if (item == null)
         {
             return default;
@@ -265,4 +267,123 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         return await MapEntityToModel((UNOPSPartnerTree)item, mapper);
     }
     
+    // Secure methods with ClaimsPrincipal for RBAC
+    
+    private async Task<PartnerTreeModel> MapEntityToModelWithPermissionsAsync(UNOPSPartnerTree entity, IMapper mapper, ClaimsPrincipal user)
+    {
+        var result = await MapEntityToModel(entity, mapper);
+        
+        // Add permissions if security service is available
+        if (_securityService != null)
+        {
+            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = ((dynamic)permissions).canRead,
+                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
+                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
+            };
+        }
+        
+        return result;
+    }
+
+    public async Task<PartnerTreeModel> CreatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
+    {
+        var entity = mapper.Map<UNOPSPartnerTree>(model);
+        
+        var result = await partnerTreeService.CreatePartnerTreeAsync(entity);
+
+        return await MapEntityToModelWithPermissionsAsync((UNOPSPartnerTree)result, mapper, user);
+    }
+
+    public async Task<IEnumerable<PartnerTreeModel>> GetPartnerTreesAsync(ClaimsPrincipal user, string sortBy = "Name", bool ascending = true)
+    {
+        var allTrees = await partnerTreeService.GetAllPartnerTreesAsync();
+
+        // Apply row-level filtering if security service is available
+        if (_securityService != null)
+        {
+            var filteredQuery = await _securityService.ApplyRowFiltersAsync(allTrees.AsQueryable(), user, "read");
+            allTrees = filteredQuery.ToList();
+        }
+
+        // Convert entities to models with permissions
+        var treeModels = new List<PartnerTreeModel>();
+        foreach (var tree in allTrees)
+        {
+            var modelWithPermissions = await MapEntityToModelWithPermissionsAsync((UNOPSPartnerTree)tree, mapper, user);
+            treeModels.Add(modelWithPermissions);
+        }
+
+        // Create a lookup by parent code for hierarchy building
+        var lookup = treeModels.ToLookup(x => x.Data.Parent);
+        
+        // Return the hierarchical structure
+        return BuildHierarchy(lookup, string.Empty).ToList();
+    }
+
+    public async Task<PartnerTreeModel?> GetPartnerTreeAsync(ClaimsPrincipal user, int id)
+    {
+        var item = await partnerTreeService.GetPartnerTreeByIdAsync(id);
+        if (item == null) return null;
+
+        // Check if user can access this specific partner tree
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(item, user, "read"))
+        {
+            return null; // User cannot access this partner tree
+        }
+
+        return await MapEntityToModelWithPermissionsAsync((UNOPSPartnerTree)item, mapper, user);
+    }
+
+    public async Task<PartnerTreeModel?> UpdatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
+    {
+        var entity = await partnerTreeService.GetPartnerTreeByIdAsync(model.Id);
+
+        if (entity == null)
+        {
+            throw new BusinessException($"Partner Level {model.Id} does not exist.");
+        }
+
+        // Check if user can update this partner tree
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "update"))
+        {
+            throw new UnauthorizedAccessException("You don't have permission to update this partner tree");
+        }
+
+        mapper.Map(model, entity);
+        await partnerTreeService.UpdatePartnerTreeAsync(entity);
+
+        return await MapEntityToModelWithPermissionsAsync((UNOPSPartnerTree)entity, mapper, user);
+    }
+
+    public async Task DeletePartnerTreeAsync(ClaimsPrincipal user, int id)
+    {
+        var entity = await partnerTreeService.GetPartnerTreeByIdAsync(id);
+        if (entity == null) return;
+
+        // Check if user can delete this partner tree
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "delete"))
+        {
+            throw new UnauthorizedAccessException("You don't have permission to delete this partner tree");
+        }
+
+        await partnerTreeService.DeletePartnerTreeAsync(entity.Code);
+    }
+
+    public async Task<IEnumerable<object>> GetCategoryAndGroupStructureAsync(ClaimsPrincipal user)
+    {
+        // Use the secure method that includes row filtering and permissions
+        var partnerTreeStructure = (await GetPartnerTreesAsync(user)).ToList();
+        
+        // Create a list to store categories
+        var categories = new List<object>();
+        
+        // Process all levels of the tree, not just top-level items
+        ProcessAllLevelsForCategories(partnerTreeStructure, categories);
+        
+        return categories;
+    }
 }

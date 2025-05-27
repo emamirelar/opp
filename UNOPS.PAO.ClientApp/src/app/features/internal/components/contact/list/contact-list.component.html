@@ -6,29 +6,31 @@
       {{ 'title.contacts' | translate }}
     </div>
     <div class="ml-auto flex gap-2 flex-wrap">
-      <p-button
-        icon="pi pi-file-import"
-        [label]="'button.import' | translate"
-        (click)="openImportDialog()"
-        severity="secondary"
-      />
-      <p-button
-        icon="pi pi-camera"
-        [label]="'title.scanBusinessCard' | translate"
-        (onClick)="openBusinessCardScanner()"
-      />
-      <p-button
-        icon="pi pi-plus"
-        [label]="'button.new' | translate"
-        (onClick)="openContactEditDialog()"
-      />
+      <ng-container *ngIf="entityPermissions().permissions.canCreate">
+        <p-button
+          icon="pi pi-file-import"
+          [label]="'button.import' | translate"
+          (click)="openImportDialog()"
+          severity="secondary"
+        />
+        <p-button
+          icon="pi pi-camera"
+          [label]="'title.scanBusinessCard' | translate"
+          (onClick)="openBusinessCardScanner()"
+        />
+        <p-button
+          icon="pi pi-plus"
+          [label]="'button.new' | translate"
+          (onClick)="openContactEditDialog()"
+        />
+      </ng-container>
     </div>
   </div>
 
   <app-listview
     [dataUrl]="contactService.getUrl()"
     [columns]="contactColumns"
-    [config]="listviewConfig"
+    [config]="listviewConfig()"
     (rowClick)="onRowClick($event)"
     (searchChange)="onSearchChange($event)"
   >

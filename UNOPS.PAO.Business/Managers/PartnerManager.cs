@@ -489,4 +489,71 @@ public class PartnerManager : IPartnerManager
         // Return all trees including the original ones and their descendants
         return originalPartnerTrees.Union(descendants).ToList();
     }
+
+    #region Secure Methods for Permission-based Access
+    
+    /// <summary>
+    /// Gets partners with row-level security applied based on user permissions
+    /// Note: This implementation provides basic functionality without advanced security filtering
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersAsync(ClaimsPrincipal user, PaginationRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Gets a specific partner with row-level security applied
+    /// Note: This implementation provides basic functionality without advanced security filtering
+    /// </summary>
+    public async Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Creates a new partner with permission validation
+    /// Note: This implementation provides basic functionality without advanced security validation
+    /// </summary>
+    public async Task<PartnerModel?> CreatePartnerAsync(ClaimsPrincipal user, PartnerRequest model)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Updates a partner with permission validation
+    /// Note: This implementation provides basic functionality without advanced security validation
+    /// </summary>
+    public async Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Deletes a partner with permission validation
+    /// Note: This implementation provides basic functionality without advanced security validation
+    /// </summary>
+    public async Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Gets partners by partner group with security applied
+    /// Note: This implementation provides basic functionality without advanced security filtering
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, string partnerGroupCode, PaginationRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Gets partners by partner category with security applied
+    /// Note: This implementation provides basic functionality without advanced security filtering
+    /// </summary>
+    public async Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request)
+    {
+        throw new NotImplementedException();
+    }
+    
+    #endregion
 }

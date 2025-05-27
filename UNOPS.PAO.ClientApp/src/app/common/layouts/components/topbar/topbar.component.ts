@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ViewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
@@ -27,6 +27,8 @@ import { RippleModule } from 'primeng/ripple';
 import { InputTextModule } from 'primeng/inputtext';
 import { AvatarModule } from 'primeng/avatar';
 import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.component';
+import { RoleService } from '../../../../essentials/services/role.service';
+import { RoleDialogComponent } from './role-dialog/role-dialog.component';
 
 interface UserInfo {
   userId: number;
@@ -54,7 +56,8 @@ interface UserInfo {
     RippleModule,
     InputTextModule,
     AvatarModule,
-    GlobalSearchBarComponent
+    GlobalSearchBarComponent,
+    RoleDialogComponent
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -63,6 +66,8 @@ interface UserInfo {
   providers: [MessageService, ConfirmationService]
 })
 export class TopbarComponent implements OnInit, OnDestroy {
+  @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
+
   items!: MenuItem[];
   notifications: Notification[] = [];
   unreadCount: number = 0;
@@ -75,10 +80,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   private confirmationService = inject(ConfirmationService);
   private notificationInterval: any;
   private http = inject(HttpClient);
+  private roleService = inject(RoleService);
   
   menuActive: boolean = false;
   userInfo: UserInfo | null = null;
   profileMenuItems: MenuItem[] = [];
+  userRoles: string[] = [];
+  roleMenuItems: MenuItem[] = [];
 
   constructor(
     public layoutService: LayoutService,
@@ -108,12 +116,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.authService.user().subscribe({
       next: (claims) => {
-        const userIdClaim = claims.find(c => c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier');
+        const userIdClaim = claims.find(c => c.type === 'userId');
         if (userIdClaim) {
           this.userId = userIdClaim.value;
-          this.loadUserInfo();
+          this.loadUserRoles();
           this.startNotificationPolling();
         }
+        this.loadUserInfo();
       },
       error: (error) => {
         // Error getting user claims
@@ -121,36 +130,29 @@ export class TopbarComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.profileMenuItems = [
-      {
-        label: 'Logout',
-        icon: 'pi pi-sign-out',
-        command: () => this.logout()
-      }
-    ];
+    this.profileMenuItems = [];
   }
 
   private loadUserInfo() {
-    this.http.get<UserInfo>(`/api/user-info`).subscribe({
+    this.http.get<UserInfo>(`/api/user-info/current`).subscribe({
       next: (data) => {
         this.userInfo = data;
-        this.loadNotifications();
       },
       error: (err) => {
         console.error('Error loading user info:', err);
         
-        // Try to find the user using their email
         this.authService.user().subscribe({
           next: (claims) => {
+            debugger;
             const emailClaim = claims.find(c => c.type === 'email' || 
                                          c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
             
             if (emailClaim?.value) {
-              // Call the user info endpoint with email parameter
               this.http.get<UserInfo>(`/api/user-info?email=${encodeURIComponent(emailClaim.value)}`).subscribe({
                 next: (userData) => {
                   this.userInfo = userData;
                   this.loadNotifications();
+                  this.loadUserRoles();
                 },
                 error: (userLookupErr) => {
                   console.error('Error looking up user by email:', userLookupErr);
@@ -158,12 +160,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
                 }
               });
             } else {
-              // No email claim found, use fallback
               this.createFallbackUserInfo(claims);
             }
           },
           error: () => {
-            // Error getting claims, use fallback
             if (err.status === 401) {
               setTimeout(() => this.loadUserInfo(), 1000);
             }
@@ -437,5 +437,21 @@ export class TopbarComponent implements OnInit, OnDestroy {
   
   navigateToDebug() {
     window.open('https://localhost:7123/api/dev/debug', '_blank');
+  }
+
+  private loadUserRoles() {
+    this.roleService.getUserRoles().subscribe({
+      next: (userRoles) => {
+        this.userRoles = userRoles.roles;
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error loading user roles:', error);
+      }
+    });
+  }
+
+  showRoleDialog() {
+    this.roleDialog.show();
   }
 }

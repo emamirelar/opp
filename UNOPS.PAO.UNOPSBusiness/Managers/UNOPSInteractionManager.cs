@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Business.Repositories.Generic;
+using System.Security.Claims;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 public class UNOPSInteractionManager : IInteractionManager
 {
@@ -21,10 +23,31 @@ public class UNOPSInteractionManager : IInteractionManager
     private readonly BaseRepository<UNOPSInteraction> interactionRepository;
     private readonly BaseRepository<UNOPSContact> contactRepository;
     private readonly UNOPSAppDbContext context;
+    private readonly IBusinessSecurityService _securityService;
 
     private static InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
         return mapper.Map<UNOPSInteraction, InteractionModel>(entity);
+    }
+
+    private async Task<InteractionModel> MapEntityToModelWithPermissionsAsync(UNOPSInteraction entity, IMapper mapper, ClaimsPrincipal user)
+    {
+        var result = MapEntityToModel(entity, mapper);
+        
+        // Add permissions if security service is available
+        if (_securityService != null)
+        {
+            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = ((dynamic)permissions).canRead,
+                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
+                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
+            };
+        }
+        
+        return result;
     }
 
     private UNOPSInteraction MapModelToEntity(InteractionRequest model, UNOPSInteraction entity)
@@ -49,12 +72,13 @@ public class UNOPSInteractionManager : IInteractionManager
         return entity;
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
     {
         this.mapper = mapper;
         this.context = context;
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
+        _securityService = securityService;
     }
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
@@ -317,5 +341,130 @@ public class UNOPSInteractionManager : IInteractionManager
             x => mapper.Map<InteractionModel>(x),
             pagination
         );
+    }
+
+    public IEnumerable<ExternalInteractionModel> GetPostedInteractions()
+    {
+        // Implementation for external interactions if needed
+        return new List<ExternalInteractionModel>();
+    }
+
+    public async Task<ExternalInteractionModel?> GetPostedInteraction(int id)
+    {
+        // Implementation for external interaction by id if needed
+        return null;
+    }
+
+    public async Task<InteractionModel> UpdateInteractionAsync(int id, InteractionRequest request)
+    {
+        var entity = await interactionRepository.GetByIdAsync(id);
+        if (entity == null)
+        {
+            throw new BusinessException($"Interaction {id} does not exist.");
+        }
+
+        entity = MapModelToEntity(request, entity);
+        await interactionRepository.UpdateAsync(entity);
+
+        return MapEntityToModel(entity, mapper);
+    }
+
+    // New secure methods with row-level filtering and permissions
+    public async Task<PaginationResponse<InteractionModel>> GetInteractionsAsync(ClaimsPrincipal user, PaginationRequest request)
+    {
+        var query = interactionRepository
+            .GetAll(["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"])
+            .AsQueryable();
+
+        // Apply row-level security filters
+        if (_securityService != null)
+        {
+            query = await _securityService.ApplyRowFiltersAsync(query, user, "read");
+        }
+
+        // Apply pagination with permissions
+        var pagedResults = query.Paginate(
+            x => MapEntityToModel(x, mapper),
+            request
+        );
+
+        // Add permissions to each interaction
+        if (_securityService != null)
+        {
+            var interactionsWithPermissions = new List<InteractionModel>();
+            foreach (var interaction in pagedResults.Records)
+            {
+                var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+                if (entity != null)
+                {
+                    var interactionWithPermissions = await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
+                    interactionsWithPermissions.Add(interactionWithPermissions);
+                }
+            }
+            
+            return new PaginationResponse<InteractionModel>
+            {
+                Records = interactionsWithPermissions,
+                TotalCount = pagedResults.TotalCount
+            };
+        }
+
+        return pagedResults;
+    }
+
+    public async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
+    {
+        var item = await interactionRepository.GetByIdAsync(id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+        if (item == null) return null;
+
+        // Check if user can access this specific interaction
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(item, user, "read"))
+        {
+            return null; // User cannot access this interaction
+        }
+
+        return await MapEntityToModelWithPermissionsAsync(item, mapper, user);
+    }
+
+    public async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
+    {
+        var entity = await interactionRepository.GetByIdAsync(model.Id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+        if (entity == null)
+        {
+            throw new BusinessException($"Interaction {model.Id} does not exist.");
+        }
+
+        // Check if user can update this interaction
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "update"))
+        {
+            throw new UnauthorizedAccessException("You don't have permission to update this interaction");
+        }
+
+        entity = MapModelToEntity(model, entity);
+
+        // Update emails/phones
+        entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
+        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
+
+        // Update junction tables
+        await ProcessJunctionTables(entity, model);
+
+        await interactionRepository.UpdateAsync(entity);
+
+        return await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
+    }
+
+    public async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
+    {
+        var entity = await interactionRepository.GetByIdAsync(id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+        if (entity == null) return;
+
+        // Check if user can delete this interaction
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "delete"))
+        {
+            throw new UnauthorizedAccessException("You don't have permission to delete this interaction");
+        }
+
+        await interactionRepository.Delete(entity);
     }
 } 

@@ -70,15 +70,11 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 if (header.Key.Contains("authenticated-user-email", StringComparison.OrdinalIgnoreCase))
                 {
                     foundIapEmailHeader = true;
-                    _logger.LogInformation("Found IAP email header with key: {Key}, value: {Value}", 
-                        header.Key, header.Value);
                 }
                 
                 if (header.Key.Contains("iap-jwt", StringComparison.OrdinalIgnoreCase))
                 {
                     foundIapJwtHeader = true;
-                    _logger.LogInformation("Found IAP JWT header with key: {Key}, length: {Length}", 
-                        header.Key, header.Value.ToString().Length);
                 }
             }
             
@@ -262,26 +258,17 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                     var roles = await userManager.GetRolesAsync(user);
                                     if (!roles.Any())
                                     {
-                                        // Ensure Administrator role exists
-                                        if (!await roleManager.RoleExistsAsync("Administrator"))
+                                        // Ensure UNOPS_GEN_USER role exists
+                                        if (!await roleManager.RoleExistsAsync("UNOPS_GEN_USER"))
                                         {
-                                            await roleManager.CreateAsync(new PAOIdentityRole { Name = "Administrator" });
-                                            _logger.LogInformation("IAPVerificationMiddleware - Created Administrator role");
+                                            await roleManager.CreateAsync(new PAOIdentityRole { Name = "UNOPS_GEN_USER" });
+                                            _logger.LogInformation("IAPVerificationMiddleware - Created UNOPS_GEN_USER role");
                                         }
 
-                                        // Add Administrator role
-                                        await userManager.AddToRoleAsync(user, "Administrator");
-                                        claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
-                                        _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user");
-                                    }
-                                    else
-                                    {
-                                        // Add existing roles as claims
-                                        foreach (var role in roles)
-                                        {
-                                            claims.Add(new Claim(ClaimTypes.Role, role));
-                                        }
-                                        _logger.LogInformation("IAPVerificationMiddleware - Added existing roles: {Roles}", string.Join(", ", roles));
+                                        // Add UNOPS_GEN_USER role
+                                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                                        _logger.LogInformation("IAPVerificationMiddleware - Added UNOPS_GEN_USER role to user");
                                     }
                                 }
                                 else if (!long.TryParse(extractedEmail, out _))
@@ -630,26 +617,17 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         var roles = await userManager.GetRolesAsync(user);
                         if (!roles.Any())
                         {
-                            // Ensure Administrator role exists
-                            if (!await roleManager.RoleExistsAsync("Administrator"))
+                            // Ensure UNOPS_GEN_USER role exists
+                            if (!await roleManager.RoleExistsAsync("UNOPS_GEN_USER"))
                             {
-                                await roleManager.CreateAsync(new PAOIdentityRole { Name = "Administrator" });
-                                _logger.LogInformation("IAPVerificationMiddleware - Created Administrator role");
+                                await roleManager.CreateAsync(new PAOIdentityRole { Name = "UNOPS_GEN_USER" });
+                                _logger.LogInformation("IAPVerificationMiddleware - Created UNOPS_GEN_USER role");
                             }
 
-                            // Add Administrator role
-                            await userManager.AddToRoleAsync(user, "Administrator");
-                            identity.AddClaim(new Claim(ClaimTypes.Role, "Administrator"));
-                            _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user");
-                        }
-                        else
-                        {
-                            // Add existing roles as claims
-                            foreach (var role in roles)
-                            {
-                                identity.AddClaim(new Claim(ClaimTypes.Role, role));
-                            }
-                            _logger.LogInformation("IAPVerificationMiddleware - Added existing roles: {Roles}", string.Join(", ", roles));
+                            // Add UNOPS_GEN_USER role
+                            await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                            identity.AddClaim(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                            _logger.LogInformation("IAPVerificationMiddleware - Added UNOPS_GEN_USER role to user");
                         }
                     }
                     else
@@ -849,82 +827,58 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
             try
             {
-                // Get the user manager from the service provider
-                var userManager = context.RequestServices.GetService<UserManager<PAOIdentityUser>>();
+                // Get user from database to get their ID
+                var userManager = context.RequestServices.GetRequiredService<UserManager<PAOIdentityUser>>();
+                var roleManager = context.RequestServices.GetRequiredService<RoleManager<PAOIdentityRole>>();
+                var user = await userManager.FindByEmailAsync(email);
                 
-                if (userManager != null)
+                // Ensure all required roles exist
+                var requiredRoles = new[] { "UNOPS_GEN_USER", "PARTNER_GLOB_ADMIN", "PARTNER_USER", "ORG_UNIT_ADMIN" };
+                foreach (var roleName in requiredRoles)
                 {
-                    // Find the user in the database
-                    var user = await userManager.FindByEmailAsync(email);
-                    if (user != null)
+                    if (!await roleManager.RoleExistsAsync(roleName))
                     {
-                        // Use the actual user ID from the database
-                        claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
-                        _logger.LogInformation("IAPVerificationMiddleware - Added numeric NameIdentifier claim from database in dev mode: {Id}", user.Id);
-                        
-                        // Check if user has any roles
-                        var roles = await userManager.GetRolesAsync(user);
-                        if (!roles.Any())
-                        {
-                            // Add Administrator role if no roles exist
-                            await userManager.AddToRoleAsync(user, "Administrator");
-                            claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
-                            _logger.LogInformation("IAPVerificationMiddleware - Added Administrator role to user with no roles");
-                        }
-                        else
-                        {
-                            // Add existing roles as claims
-                            foreach (var role in roles)
-                            {
-                                claims.Add(new Claim(ClaimTypes.Role, role));
-                            }
-                            _logger.LogInformation("IAPVerificationMiddleware - Added existing roles: {Roles}", string.Join(", ", roles));
-                        }
+                        await roleManager.CreateAsync(new PAOIdentityRole { Name = roleName });
                     }
-                    else
+                }
+                
+                if (user != null)
+                {
+                    // Use the actual user ID from the database
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
+                    _logger.LogInformation("IAPVerificationMiddleware - Using database NameIdentifier claim: {Id}", user.Id);
+                    
+                    // Add user's actual roles
+                    var roles = await userManager.GetRolesAsync(user);
+                    foreach (var role in roles)
                     {
-                        // If user not found, use a default numeric ID based on the email
-                        var numericId = Math.Abs(email.GetHashCode()).ToString();
-                        claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
-                        _logger.LogInformation("IAPVerificationMiddleware - User not found in database, using default numeric NameIdentifier claim in dev mode: {Id}", numericId);
-                        
-                        // Add default roles
-                        if (email.EndsWith("@unops.org"))
-                        {
-                            claims.Add(new Claim(ClaimTypes.Role, "Internal"));
-                            if (email.ToLower().Contains("admin"))
-                            {
-                                claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
-                            }
-                        }
-                        else
-                        {
-                            claims.Add(new Claim(ClaimTypes.Role, "External"));
-                        }
-                        claims.Add(new Claim(ClaimTypes.Role, "User"));
+                        claims.Add(new Claim(ClaimTypes.Role, role));
                     }
                 }
                 else
                 {
-                    // If user manager is not available, use default numeric ID
-                    var numericId = Math.Abs(email.GetHashCode()).ToString();
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
-                    _logger.LogInformation("IAPVerificationMiddleware - User manager not available, using default numeric NameIdentifier claim in dev mode: {Id}", numericId);
-                    
-                    // Add default roles
-                    if (email.EndsWith("@unops.org"))
+                    // If user doesn't exist, create a test user
+                    var testUser = new PAOIdentityUser
                     {
-                        claims.Add(new Claim(ClaimTypes.Role, "Internal"));
-                        if (email.ToLower().Contains("admin"))
+                        UserName = email,
+                        Email = email,
+                        EmailConfirmed = true
+                    };
+                    
+                    var result = await userManager.CreateAsync(testUser);
+                    if (result.Succeeded)
+                    {
+                        // Use the newly created user's ID
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, testUser.Id.ToString()));
+                        _logger.LogInformation("IAPVerificationMiddleware - Using new test user NameIdentifier claim: {Id}", testUser.Id);
+                        
+                        // Add roles based on email
+                        if (!string.IsNullOrEmpty(email))
                         {
-                            claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
+                            await userManager.AddToRoleAsync(testUser, "UNOPS_GEN_USER");
+                            claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
                         }
                     }
-                    else
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, "External"));
-                    }
-                    claims.Add(new Claim(ClaimTypes.Role, "User"));
                 }
             }
             catch (Exception ex)
@@ -934,24 +888,15 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 var numericId = Math.Abs(email.GetHashCode()).ToString();
                 claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
                 _logger.LogInformation("IAPVerificationMiddleware - Using fallback numeric NameIdentifier claim due to error: {Id}", numericId);
-                
-                // Add default roles
-                if (email.EndsWith("@unops.org"))
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, "Internal"));
-                    if (email.ToLower().Contains("admin"))
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, "Administrator"));
-                    }
-                }
-                else
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, "External"));
-                }
-                claims.Add(new Claim(ClaimTypes.Role, "User"));
+                claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
             }
             
-            var identity = new ClaimsIdentity(claims, "Development-IAP");
+            // Ensure IsInternal is set correctly based on email domain
+            var isInternal = email.EndsWith("@unops.org");
+            claims.RemoveAll(c => c.Type == "IsInternal");
+            claims.Add(new Claim("IsInternal", isInternal.ToString()));
+            
+            var identity = new ClaimsIdentity(claims, "Development-IAP", ClaimTypes.Name, ClaimTypes.Role);
             context.User = new ClaimsPrincipal(identity);
             
             // Store the development authentication in a cookie for session persistence

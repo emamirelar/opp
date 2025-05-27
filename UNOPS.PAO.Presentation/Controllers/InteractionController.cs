@@ -9,22 +9,27 @@ using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
     [Route("/")]
+    [Authorize(AuthenticationSchemes = "IAP")]
     public class InteractionController : BaseController
     {
         private readonly IInteractionManager _manager;
+        private readonly IBusinessSecurityService _businessSecurityService;
 
         public InteractionController(
             IManagerWrapper manager, 
             UserResolverService<int> userResolverService, 
             IAuthorizationService authorizationService,
+            IBusinessSecurityService businessSecurityService,
             ILogger<InteractionController> logger)
             : base(logger, authorizationService, userResolverService)
         {
             _manager = manager.InteractionManager;
+            _businessSecurityService = businessSecurityService;
         }
 
         [HttpPost(APIDictionary.Interaction)]
@@ -42,9 +47,9 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
 
         [HttpGet(APIDictionary.Interaction)]
-        public ActionResult GetAll([FromQuery] InteractionFilterRequest request)
+        public async Task<ActionResult> GetAll([FromQuery] InteractionFilterRequest request)
         {
-            try
+            return await HandleOperationAsync(async () =>
             {
                 var specification = new InteractionCompositeSpecification(
                     contactId: request.ContactId,
@@ -53,23 +58,34 @@ namespace UNOPS.PAO.Presentation.Controllers
                     toDate: request.ToDate,
                     searchText: request.SearchText);
                 
-                return Ok(_manager.GetInteractionsWithSpecification(CurrentUserId, specification, request));
-            }
-            catch (BusinessException ex)
-            {
-                _logger.LogWarning(ex, "Business exception occurred: {Message}", ex.Message);
-                return BadRequest(new { error = ex.Message });
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                _logger.LogWarning(ex, "Unauthorized access: {Message}", ex.Message);
-                return Forbid();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while processing the request");
-                return StatusCode(500, new { error = "An error occurred while processing your request" });
-            }
+                var result = _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
+                
+                // Apply RBAC filtering to the results
+                if (result.Records?.Any() == true)
+                {
+                    var filteredData = new List<InteractionModel>();
+                    foreach (var interaction in result.Records)
+                    {
+                        // Create a minimal interaction entity for permission checking
+                        var interactionEntity = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSInteraction
+                        {
+                            Id = interaction.Id,
+                            ContactId = interaction.ContactId,
+                            Contact = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSContact { Id = interaction.ContactId }
+                        };
+                        
+                        if (await _businessSecurityService.CanUserAccessEntityAsync(interactionEntity, User, "read"))
+                        {
+                            filteredData.Add(interaction);
+                        }
+                    }
+                    
+                    result.Records = filteredData;
+                    result.TotalCount = filteredData.Count;
+                }
+                
+                return result;
+            });
         }
 
         [HttpGet(APIDictionary.Interaction + "/{id}")]
@@ -77,11 +93,13 @@ namespace UNOPS.PAO.Presentation.Controllers
         {
             return await HandleOperationAsync(async () =>
             {
-                var interaction = await _manager.GetInteraction(CurrentUserId, id);
+                // Use the secure method that includes permissions in the interaction model
+                var interaction = await _manager.GetInteractionAsync(User, id);
                 if (interaction == null)
                 {
                     throw new BusinessException($"Interaction with ID {id} not found");
                 }
+
                 return interaction;
             });
         }
@@ -114,7 +132,16 @@ namespace UNOPS.PAO.Presentation.Controllers
                 {
                     throw new BusinessException($"Interaction with ID {id} not found");
                 }
-                return await GetEntityPermissionsAsync(interaction);
+
+                // Create entity for permission checking
+                var interactionEntity = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSInteraction
+                {
+                    Id = interaction.Id,
+                    ContactId = interaction.ContactId,
+                    Contact = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSContact { Id = interaction.ContactId }
+                };
+
+                return await _businessSecurityService.GetEntityPermissionsAsync(interactionEntity, User);
             });
         }
     }

@@ -1,7 +1,12 @@
 <div class="flex flex-col gap-8 w-full">
   <div class="flex items-center gap-4 flex-wrap">
     <div class="text-2xl font-semibold">Interactions</div>
-    <p-button class="ml-auto" [label]="'title.newInteraction' | translate" icon="pi pi-plus" (click)="openNewInteractionModal()"></p-button>
+    @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
+    <p-button class="ml-auto" 
+              [label]="'title.newInteraction' | translate" 
+              icon="pi pi-plus" 
+              (click)="openNewInteractionModal()"></p-button>
+    }
   </div>
 
   <app-listview

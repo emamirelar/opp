@@ -33,6 +33,8 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
 import { HttpClientModule } from '@angular/common/http';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PanelModule } from 'primeng/panel';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 
 @Component({
   selector: 'app-interaction-modal',
@@ -100,6 +102,10 @@ export class InteractionModalComponent {
   allOrgUnits = this.cachedDataService.allPartnerOffices;
   currentUser = this.cachedDataService.currentUser;
 
+  // Permission management using utility service
+  private permissionUtils: any;
+  recordPermissions: any;
+
   constructor(
     private fb: FormBuilder,
     private interactionService: InteractionService,
@@ -108,6 +114,8 @@ export class InteractionModalComponent {
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private translateService: TranslateService,
+    private permissionUtilityService: PermissionUtilityService,
+    private feedbackDialogService: FeedbackDialogService
   ) {
     this.formGroup = this.fb.group({
       id: [''],
@@ -148,12 +156,17 @@ export class InteractionModalComponent {
     this.dialogConfig.templates = {
       footer: InteractionModalFooterComponent
     };
+
+    // Initialize permission management
+    this.permissionUtils = this.permissionUtilityService.createInstancePermissions('Interaction');
+    this.recordPermissions = this.permissionUtils.recordPermissions;
   }
 
   ngOnInit() {
     this.record = this.dialogConfig.data?.record;
 
     if (this.record) {
+      debugger;
       this.recordId = this.record.id + '';
       this.formGroup.patchValue({
         id: this.record.id,
@@ -175,6 +188,28 @@ export class InteractionModalComponent {
         previousPhones: this.record.phoneNumbers,
         previousUserIds: this.record.userIds
       });
+
+      // Extract permissions from the interaction response if they exist
+      if (this.record.permissions) {
+        this.recordPermissions.set({
+          entity: 'Interaction',
+          hasAccess: true,
+          permissions: this.record.permissions
+        });
+      }
+    } else {
+      // For new interactions, set default permissions that allow creation
+      // The list component already checked canCreate before opening this modal
+      this.recordPermissions.set({
+        entity: 'Interaction',
+        hasAccess: true,
+        permissions: {
+          canRead: true,
+          canCreate: true, // Allow creation for new records
+          canUpdate: true, // Allow editing form fields for new records
+          canDelete: false // New records can't be deleted
+        }
+      });
     }
         
     // Expose the handleSave function to be called from footer
@@ -182,6 +217,7 @@ export class InteractionModalComponent {
       this.dialogConfig.data.handleSave = this.onSubmit.bind(this);
       this.dialogConfig.data.handleDelete = this.deleteInteraction.bind(this);
       this.dialogConfig.data.isSaving = this.isSaving;
+      this.dialogConfig.data.recordPermissions = this.recordPermissions;
     }
   }
 
@@ -209,6 +245,28 @@ export class InteractionModalComponent {
   onSubmit(): void {
     if (this.formGroup.valid) {
       const formValue = this.formGroup.value;
+      
+      // Check permissions before saving
+      if (formValue.id) {
+        // For updates, check if user has update permission
+        if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
+          this.feedbackDialogService.showErrorToast({
+            detail: 'You do not have permission to update this interaction',
+            summary: 'Permission Denied'
+          });
+          return;
+        }
+      } else {
+        // For creates, check if user has create permission
+        if (!this.permissionUtilityService.canCreate(this.recordPermissions())) {
+          this.feedbackDialogService.showErrorToast({
+            detail: 'You do not have permission to create interactions',
+            summary: 'Permission Denied'
+          });
+          return;
+        }
+      }
+
       this.isSaving.set(true);
 
       if (formValue.id) {
@@ -244,6 +302,15 @@ export class InteractionModalComponent {
   }
 
   deleteInteraction(): void {
+    // Check if user has delete permission
+    if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to delete this interaction',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+
     this.confirmationService.confirm({
       message: this.translateService.instant('message.deleteInteractionConfirmation'),
       header: this.translateService.instant('title.confirmation'),

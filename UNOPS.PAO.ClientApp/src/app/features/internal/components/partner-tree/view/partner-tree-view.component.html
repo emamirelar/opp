@@ -15,11 +15,13 @@
                 {{ 'title.partnerTree' | translate }}
               }
             </span>
-            <p-button icon="pi pi-pencil"
-                      [rounded]="true"
-                      [text]="true"
-                      [size]="'small'"
-                      (onClick)="handleEditClick()"></p-button>
+            @if(permissionUtilityService.canUpdate(recordPermissions())) {
+              <p-button icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        [size]="'small'"
+                        (onClick)="handleEditClick()"></p-button>
+            }
           </div>
         </ng-template>
         <div class="text-2xl">

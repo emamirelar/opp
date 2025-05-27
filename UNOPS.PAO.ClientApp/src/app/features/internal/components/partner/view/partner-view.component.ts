@@ -44,6 +44,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
 import { PartnerTabsComponent } from '../tabs/partner-tabs.component';
 import { Partner } from '../../../models/partner.model';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 @Component({
   selector: 'app-partner-view',
@@ -88,7 +89,6 @@ import { Partner } from '../../../models/partner.model';
 export class PartnerViewComponent implements OnInit {
   router = inject(Router);
   activatedRoute = inject(ActivatedRoute);
-  recordPermissions = signal<any>({});
   documentService = inject(DocumentService);
   dialogService = inject(DialogService);
 
@@ -99,6 +99,11 @@ export class PartnerViewComponent implements OnInit {
   translateService = inject(TranslateService);
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
+  permissionService = inject(PermissionUtilityService);
+  
+  // Permission management using utility service
+  private permissionUtils = this.permissionService.createInstancePermissions('Partner');
+  recordPermissions = this.permissionUtils.recordPermissions;
 
   private langChangeSubscription: Subscription = new Subscription();
   onRecordCreationSuccess = output();
@@ -132,13 +137,27 @@ export class PartnerViewComponent implements OnInit {
           // Check if data is already available from the resolver
           this.activatedRoute.parent?.data.subscribe(data => {
             if (data['partnerData']) {
-              this.recordData.set(data['partnerData']);
+              const partnerData = data['partnerData'];
+              this.recordData.set(partnerData);
+              
+              // Extract permissions from the resolver data if they exist
+              if (partnerData.permissions) {
+                this.recordPermissions.set({
+                  entity: 'Partner',
+                  hasAccess: true,
+                  permissions: partnerData.permissions
+                });
+              }
+              
               this.infoLoading.set(false);
             } else {
               // Fallback to loading details directly if resolver data isn't available
               this._loadRecordDetails();
             }
           });
+          
+          // Load permissions for this specific partner
+          // Permissions are now extracted from the partner response directly
           
           this._loadGeminiData();
         }
@@ -162,6 +181,20 @@ export class PartnerViewComponent implements OnInit {
     this.partnerService.getPartnerById(this.recordId).subscribe({
       next: (data: any) => {
         this.recordData.set(data);
+        
+        // Extract permissions from the response if they exist
+        if (data.permissions) {
+          this.recordPermissions.set({
+            entity: 'Partner',
+            hasAccess: true,
+            permissions: data.permissions
+          });
+        }
+        
+        this.infoLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading partner details:', error);
         this.infoLoading.set(false);
       }
     });
@@ -382,6 +415,15 @@ export class PartnerViewComponent implements OnInit {
   }
 
   handleEditClick() {
+    // Check if user has update permission
+    if (!this.permissionService.canUpdate(this.recordPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to edit this partner',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+
     const requestingSaveSignal = signal<boolean>(false);
 
     const ref = this.dialogService.open(PartnerEditDialogComponent, {

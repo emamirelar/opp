@@ -1,4 +1,5 @@
 import { PartnerTree } from "./partner-tree.model";
+import { EntityPermissionSet } from './shared-types';
 
 export interface Partner {
   id?: string | null;
@@ -44,6 +45,9 @@ export interface Partner {
   partnerCategoryId?: number | null;
   partnerCategoryCode?: string | null;
   partnerCategoryName?: string | null;
+  
+  // RBAC permissions
+  permissions?: EntityPermissionSet;
 }
 
 export interface Office {

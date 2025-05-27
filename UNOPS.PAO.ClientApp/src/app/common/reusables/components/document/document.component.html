@@ -1,4 +1,4 @@
-@if (isReadOnly() !== true) {
+@if (isReadOnly() !== true && !disabled()) {
 <div class="mb-2 flex gap-2">
   <!--commenting the upload button functionality as it is not used in the current implementation yet-->
   <!--<p-button icon="pi pi-upload" label="{{ 'button.upload' | translate }}" (onClick)="showUploadFile = true" />-->

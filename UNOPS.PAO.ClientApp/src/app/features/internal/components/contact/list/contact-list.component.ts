@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { NgIf } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { NgIf, AsyncPipe } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
 import { TableModule } from 'primeng/table';
@@ -17,11 +17,12 @@ import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.com
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
 import {ListviewComponent} from '../../../../../common/pages/components/listview/listview.component';
 import {ContactService} from '../../../services/contact.service';
-import {FeedbackDialogService} from '../../../../../common/reusables/services/feedback-dialog.service';
+import {FeedbackDialogService} from '../../../../../common/pages/services/feedback-dialog.service';
 import {ListViewColumn, ListViewConfig, SearchParams} from '../../../../../common/pages/components/listview/listview.model';
 import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 import { SearchField } from '../../../../../common/services/search-parser.service';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 @Component({
   selector: 'app-contact-list',
@@ -37,17 +38,26 @@ import { SearchField } from '../../../../../common/services/search-parser.servic
     ProgressSpinnerModule,
     TranslateModule,
     ListviewComponent,
-    ConfirmDialog
+    ConfirmDialog,
+    NgIf,
+    AsyncPipe
   ],
   providers: [DialogService, ConfirmationService]
 })
-export class ContactListComponent implements OnInit {
+export class ContactListComponent implements OnInit, OnDestroy {
   router = inject(Router);
   route = inject(ActivatedRoute);
   contactService = inject(ContactService);
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
   importDialogService = inject(ImportDialogService);
+  permissionUtilityService = inject(PermissionUtilityService);
+  cdr = inject(ChangeDetectorRef);
+
+  // Permission management using utility service
+  private permissionUtils = this.permissionUtilityService.createEntityPermissions('Contact');
+  entityPermissions = this.permissionUtils.entityPermissions;
+  permissionsLoading = this.permissionUtils.permissionsLoading;
 
   // Define contact columns for the listview
   contactColumns: ListViewColumn[] = [
@@ -84,15 +94,15 @@ export class ContactListComponent implements OnInit {
     { field: 'createdByOfficeName', label: 'label.contact.createdByOffice', type: 'text', sortable: false, width: '15%' },
   ];
 
-  // Configure listview behavior
-  listviewConfig: ListViewConfig = {
+  // Configure listview behavior with computed permissions
+  listviewConfig = computed<ListViewConfig>(() => ({
     enableSelection: true,
     enablePagination: true,
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enableSorting: true,
     enableSearch: true,
-    enableExport: true,
+    enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     entityName: 'Contact',
     scrollable: true,
     scrollHeight: 'flex',
@@ -156,13 +166,16 @@ export class ContactListComponent implements OnInit {
         }
       ] as SearchField[]
     }
-  };
+  }));
 
   // Track current search term
   currentSearchText = '';
 
   ngOnInit() {
-    console.log('Contact list config:', this.listviewConfig);
+    console.log('Contact list config:', this.listviewConfig());
+    
+    // Load permissions using utility service
+    this.permissionUtils.loadPermissions(this.router, this.cdr);
     
     this.route.queryParams
       .subscribe(params => {
@@ -172,6 +185,10 @@ export class ContactListComponent implements OnInit {
           this.openContactEditDialog(state?.data || emptyContact);
         }
       });
+  }
+
+  ngOnDestroy() {
+    // No need to clear caches manually - utility service handles this
   }
 
   handleOnOpenRecordDetails(record: any) {
@@ -187,6 +204,15 @@ export class ContactListComponent implements OnInit {
   }
 
   handleOnRecordDelete(record: Contact) {
+    // Check if user has delete permission
+    if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to delete contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     this.contactService.deleteContactById(record.id).subscribe({
       next: () => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
@@ -215,6 +241,21 @@ export class ContactListComponent implements OnInit {
   }
 
   openContactEditDialog(contactData: Contact = {}) {
+    // Check if user has appropriate permission
+    if (contactData.id && !this.permissionUtilityService.canUpdate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to edit contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    } else if (!contactData.id && !this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to create contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     const ref = this.dialogService.open(ContactEditDialogComponent, {
       header: contactData.id ? 'Edit Contact' : 'New Contact',
       width: '40vw',
@@ -239,6 +280,15 @@ export class ContactListComponent implements OnInit {
   }
 
   openBusinessCardScanner() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to create contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     const ref = this.dialogService.open(BusinessCardScannerComponent, {
       header: 'Scan Business Card',
       width: '95vw',
@@ -254,6 +304,15 @@ export class ContactListComponent implements OnInit {
   }
 
   openImportDialog() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to import contacts',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('contact');
   }

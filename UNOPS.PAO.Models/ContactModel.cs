@@ -35,4 +35,9 @@ public class ContactModel
 
     public string? CreatedByName { get; set; }
     public string? CreatedByOfficeName { get; set; }
+    
+    /// <summary>
+    /// Permissions for this specific contact
+    /// </summary>
+    public EntityPermissionsModel? Permissions { get; set; }
 }
