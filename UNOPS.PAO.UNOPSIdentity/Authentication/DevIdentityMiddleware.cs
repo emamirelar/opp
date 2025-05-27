@@ -129,39 +129,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     // Add NameIdentifier claim
                     claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()));
                     claims.Add(new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier", user.Id.ToString()));
-
-                    // Add roles based on email
-                    if (devEmail == "anushas@unops.org")
-                    {
-                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
-                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                    }
-                    else if (devEmail == "admin@unops.org")
-                    {
-                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
-                        await userManager.AddToRoleAsync(user, "PARTNER_GLOB_ADMIN");
-                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                        claims.Add(new Claim(ClaimTypes.Role, "PARTNER_GLOB_ADMIN"));
-                    }
-                    else if (devEmail == "partner@partner.org")
-                    {
-                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
-                        await userManager.AddToRoleAsync(user, "PARTNER_USER");
-                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                        claims.Add(new Claim(ClaimTypes.Role, "PARTNER_USER"));
-                    }
-                    else if (devEmail == "orgunit@unops.org")
-                    {
-                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
-                        await userManager.AddToRoleAsync(user, "ORG_UNIT_ADMIN");
-                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                        claims.Add(new Claim(ClaimTypes.Role, "ORG_UNIT_ADMIN"));
-                    }
-                    else
-                    {
-                        await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
-                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                    }
+                    await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                    claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
                 }
                 catch (Exception ex)
                 {
@@ -173,10 +142,6 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     
                     // Add default roles
                     claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                    if (devEmail == "admin@unops.org")
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, "PARTNER_GLOB_ADMIN"));
-                    }
                 }
 
                 // Create and set the identity

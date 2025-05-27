@@ -64,7 +64,13 @@ public class PermissionService : IPermissionService
     // Implementation of IPermissionService interface method
     public async Task<bool> CanPerformActionAsync(string entityName, string action, ClaimsPrincipal user, object? entity = null)
     {
-        // Map the action to the appropriate CRUD operation
+        // Special handling for UserManagement - check roles directly
+        if (entityName.Equals("UserManagement", StringComparison.OrdinalIgnoreCase))
+        {
+            return user.IsInRole("PARTNER_GLOB_ADMIN") || user.IsInRole("ORG_UNIT_ADMIN");
+        }
+
+        // Map the action to the appropriate CRUD operation for other entities
         return action.ToLowerInvariant() switch
         {
             "read" => await CheckPermissionAsync(entityName, user, entity, "read"),

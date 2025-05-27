@@ -296,7 +296,9 @@
     "accessDenied": "Access Denied",
     "noAccessPermissions": "You do not have permission to access this page",
     "noUsersFound": "No users found",
-    "selectRolesToAssign": "Select the roles to assign to this user"
+    "selectRolesToAssign": "Select the roles to assign to this user",
+    "loadingPermissions": "Loading permissions...",
+    "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access user management."
   },
   "label.interaction.contact": "Contact",
   "errors": {

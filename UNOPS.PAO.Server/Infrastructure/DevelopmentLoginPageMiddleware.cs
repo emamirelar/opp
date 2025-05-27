@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using System.Text;
 
 namespace UNOPS.PAO.Server.Infrastructure;
@@ -11,15 +12,18 @@ public class DevelopmentLoginPageMiddleware
     private readonly RequestDelegate _next;
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<DevelopmentLoginPageMiddleware> _logger;
+    private readonly IConfiguration _configuration;
 
     public DevelopmentLoginPageMiddleware(
         RequestDelegate next, 
         IWebHostEnvironment environment,
-        ILogger<DevelopmentLoginPageMiddleware> logger)
+        ILogger<DevelopmentLoginPageMiddleware> logger,
+        IConfiguration configuration)
     {
         _next = next;
         _environment = environment;
         _logger = logger;
+        _configuration = configuration;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -134,114 +138,168 @@ public class DevelopmentLoginPageMiddleware
             return;
         }
 
-        // Standard login page HTML with hardcoded test users
-        await context.Response.WriteAsync(@"
+        // Get the configured user email from appsettings.json
+        var configuredUserEmail = _configuration["Development:IAPSimulation:UserEmail"] ?? "anushas@unops.org";
+
+        // Standard login page HTML with textbox for email input
+        var loginPageHtml = $@"
 <!DOCTYPE html>
 <html>
 <head>
     <title>Development Login</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .user-box { border: 1px solid #ddd; padding: 15px; margin: 15px 0; cursor: pointer; border-radius: 4px; }
-        .user-box:hover { background-color: #f5f5f5; }
-        h1 { color: #333; }
-        h3 { margin: 5px 0; color: #0066cc; }
-        .role { display: inline-block; background: #e1ecf4; color: #39739d; padding: 2px 8px; margin: 3px; border-radius: 3px; }
-        button { background: #0095ff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #0077cc; }
-        .info { background: #e1ecf4; padding: 15px; border-radius: 4px; margin: 20px 0; }
-        #error-message { color: red; display: none; }
+        body {{ font-family: Arial, sans-serif; margin: 40px; max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .login-form {{ border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 8px; background: #f9f9f9; }}
+        .form-group {{ margin-bottom: 15px; }}
+        label {{ display: block; margin-bottom: 5px; font-weight: bold; }}
+        input[type='email'] {{ width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px; }}
+        button {{ background: #0095ff; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }}
+        button:hover {{ background: #0077cc; }}
+        button:disabled {{ background: #ccc; cursor: not-allowed; }}
+        .quick-login {{ margin-top: 20px; padding: 15px; background: #e1ecf4; border-radius: 4px; }}
+        .quick-login button {{ background: #28a745; margin-top: 10px; }}
+        .quick-login button:hover {{ background: #218838; }}
+        h1 {{ color: #333; text-align: center; }}
+        .info {{ background: #fff3cd; padding: 15px; border-radius: 4px; margin: 20px 0; border-left: 4px solid #ffc107; }}
+        #error-message {{ color: red; display: none; margin-top: 10px; }}
+        #success-message {{ color: green; display: none; margin-top: 10px; }}
+        .loading {{ display: none; margin-top: 10px; }}
     </style>
     <script>
-        // Function to directly set cookie and redirect
-        function loginAs(email) {
-            console.log('Logging in as:', email);
-            document.getElementById('error-message').style.display = 'none';
+        async function loginWithEmail() {{
+            const emailInput = document.getElementById('email-input');
+            const email = emailInput.value.trim();
+            const loginButton = document.getElementById('login-button');
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            const loadingDiv = document.getElementById('loading');
             
-            try {
+            // Hide previous messages
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!email) {{
+                errorDiv.innerText = 'Please enter an email address';
+                errorDiv.style.display = 'block';
+                return;
+            }}
+            
+            if (!email.includes('@')) {{
+                errorDiv.innerText = 'Please enter a valid email address';
+                errorDiv.style.display = 'block';
+                return;
+            }}
+            
+            // Disable button and show loading
+            loginButton.disabled = true;
+            loadingDiv.style.display = 'block';
+            
+            try {{
+                // First, create/ensure user exists with UNOPS_GEN_USER role
+                const createUserResponse = await fetch('/api/dev/create-user', {{
+                    method: 'POST',
+                    headers: {{
+                        'Content-Type': 'application/json'
+                    }},
+                    body: JSON.stringify({{ email: email }})
+                }});
+                
+                if (createUserResponse.ok) {{
+                    const userData = await createUserResponse.json();
+                    successDiv.innerText = `User ${{userData.status.toLowerCase()}}: ${{email}} with roles: ${{userData.roles.join(', ')}}`;
+                    successDiv.style.display = 'block';
+                    
+                    // Wait a moment to show the success message
+                    setTimeout(() => {{
+                        loginAs(email);
+                    }}, 1000);
+                }} else {{
+                    const errorData = await createUserResponse.json();
+                    errorDiv.innerText = `Failed to create user: ${{errorData.error || 'Unknown error'}}`;
+                    errorDiv.style.display = 'block';
+                    loginButton.disabled = false;
+                    loadingDiv.style.display = 'none';
+                }}
+            }} catch (error) {{
+                console.error('Error creating user:', error);
+                errorDiv.innerText = `Error: ${{error.message}}`;
+                errorDiv.style.display = 'block';
+                loginButton.disabled = false;
+                loadingDiv.style.display = 'none';
+            }}
+        }}
+
+        function loginWithConfiguredUser() {{
+            loginAs('{configuredUserEmail}');
+        }}
+
+        function loginAs(email) {{
+            console.log('Logging in as:', email);
+            
+            try {{
                 // First clear browser storage
                 localStorage.clear();
                 sessionStorage.clear();
                 
                 // Clear all cookies
-                document.cookie.split(';').forEach(function(c) {
+                document.cookie.split(';').forEach(function(c) {{
                     document.cookie = c.trim().split('=')[0] + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
-                });
+                }});
                 
                 // Wait a moment to ensure everything is cleared
-                setTimeout(() => {
+                setTimeout(() => {{
                     // Redirect to login with the selected user
-                    window.location.href = `/dev-login?user=${encodeURIComponent(email)}`;
-                }, 100);
-            } catch (error) {
+                    window.location.href = `/dev-login?user=${{encodeURIComponent(email)}}`;
+                }}, 100);
+            }} catch (error) {{
                 console.error('Login failed:', error);
                 document.getElementById('error-message').style.display = 'block';
-                document.getElementById('error-message').innerText = `Login error: ${error.message}`;
-            }
-        }
+                document.getElementById('error-message').innerText = `Login error: ${{error.message}}`;
+            }}
+        }}
         
-        window.onload = function() {
+        window.onload = function() {{
             // Clear storages on page load
             localStorage.clear();
             sessionStorage.clear();
             
-            // Show the predefined users
-            renderPredefinedUsers();
-        };
-        
-        function renderPredefinedUsers() {
-            const users = [
-                { email: 'anushas@unops.org', roles: ['UNOPS_GEN_USER'] },
-                { email: 'admin@unops.org', roles: ['UNOPS_GEN_USER', 'PARTNER_GLOB_ADMIN'] },
-                { email: 'partner@partner.org', roles: ['UNOPS_GEN_USER', 'PARTNER_USER'] },
-                { email: 'orgunit@unops.org', roles: ['UNOPS_GEN_USER', 'ORG_UNIT_ADMIN'] },
-            ];
-            
-            const container = document.getElementById('users-container');
-            container.innerHTML = '';
-            
-            users.forEach(user => {
-                const div = document.createElement('div');
-                div.className = 'user-box';
-                div.onclick = () => loginAs(user.email);
-                
-                let rolesHtml = '';
-                if (user.roles && user.roles.length) {
-                    rolesHtml = user.roles.map(role => 
-                        `<span class='role'>${role}</span>`).join('');
-                }
-                
-                div.innerHTML = `
-                    <h3>${user.email}</h3>
-                    <div>${rolesHtml}</div>
-                `;
-                container.appendChild(div);
-            });
-        }
+            // Set the configured email as default
+            document.getElementById('email-input').value = '{configuredUserEmail}';
+        }};
+
+        // Allow Enter key to submit
+        function handleKeyPress(event) {{
+            if (event.key === 'Enter') {{
+                loginWithEmail();
+            }}
+        }}
     </script>
 </head>
 <body>
     <h1>Development Login</h1>
-    <div class='info'>
-        <p>Select a test user to login. Each user has specific roles for testing permissions.</p>
-    </div>
-    
-    <div id='error-message'></div>
-    
-    <div id='users-container'>
-        <!-- Test users will be rendered here -->
-    </div>
     
     <div class='info'>
-        <h3>Available Test Users:</h3>
-        <p><strong>admin@unops.org</strong> - Has Administrator role</p>
-        <p><strong>anushas@unops.org</strong> - Has Internal role</p>
-        <p><strong>partner@partner.org</strong> - Has Partner role</p>
-        <p><strong>external@unops.org</strong> - Has External role</p>
-        <p><strong>partnerexternal@unops.org</strong> - Has both Partner and External roles</p>
+        <p><strong>Development Mode:</strong> Enter any valid email address to simulate login. The user will be automatically created with UNOPS_GEN_USER role if they don't exist.</p>
+    </div>
+    
+    <div class='login-form'>
+        <div class='form-group'>
+            <label for='email-input'>Email Address:</label>
+            <input type='email' id='email-input' placeholder='Enter email address' onkeypress='handleKeyPress(event)' />
+        </div>
+        <button id='login-button' onclick='loginWithEmail()'>Login with Email</button>
+        <div class='loading' id='loading'>Creating user and logging in...</div>
+        <div id='success-message'></div>
+        <div id='error-message'></div>
+    </div>
+    
+    <div class='quick-login'>
+        <p><strong>Quick Login:</strong> Use the configured default user from appsettings.json</p>
+        <button onclick='loginWithConfiguredUser()'>Login as {configuredUserEmail}</button>
     </div>
 </body>
-</html>
-        ");
+</html>";
+
+        await context.Response.WriteAsync(loginPageHtml);
     }
 } 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
@@ -25,17 +26,20 @@ public class DevelopmentController : ControllerBase
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly RoleManager<PAOIdentityRole> _roleManager;
     private readonly UNOPSAppDbContext _context;
+    private readonly IConfiguration _configuration;
 
     public DevelopmentController(
         IWebHostEnvironment environment,
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
-        UNOPSAppDbContext context)
+        UNOPSAppDbContext context,
+        IConfiguration configuration)
     {
         _environment = environment;
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
+        _configuration = configuration;
     }
 
     [HttpGet("users")]
@@ -117,13 +121,13 @@ public class DevelopmentController : ControllerBase
             }
         }
             
-        // Define our specific test users and roles
+        // Get the configured user email from appsettings.json
+        var configuredEmail = _configuration["Development:IAPSimulation:UserEmail"] ?? "anushas@unops.org";
+        
+        // Define our specific test users and roles using configured email
         var devUsers = new[]
         {
-            new { Email = "admin@unops.org", Password = "Admin123!", Roles = new[] { "Administrator" }, IsInternal = true },
-            new { Email = "anushas@unops.org", Password = "Password123!", Roles = new[] { "Internal" }, IsInternal = true },
-            new { Email = "devuser@example.com", Password = "Password123!", Roles = new[] { "External" }, IsInternal = false },
-            new { Email = "devuser@partner.com", Password = "Password123!", Roles = new[] { "Partner" }, IsInternal = false }
+            new { Email = configuredEmail, Password = "Password123!", Roles = new[] { "UNOPS_GEN_USER" }, IsInternal = configuredEmail.EndsWith("@unops.org") },
         };
         
         // Ensure roles exist
@@ -730,17 +734,17 @@ public class DevelopmentController : ControllerBase
         };
         
         // Add permissions to the database
-        foreach (var permission in permissions)
+       /* foreach (var permission in permissions)
         {
             _context.EntityPermissions.Add(new UNOPS.PAO.UNOPSDomain.Authorization.EntityPermission
             {
-                EntityName = permission.EntityName,
-                Action = permission.Action,
-                RoleName = permission.RoleName,
-                PropertyName = permission.PropertyName,
+                Entity = permission.Entity,
+                //Action = permission.Action,
+                Role = permission.Role,
+                PropertyFilter = permission.PropertyFilter,
                 FilterExpression = permission.FilterExpression
             });
-        }
+        }*/
         
         await _context.SaveChangesAsync();
         
@@ -749,6 +753,100 @@ public class DevelopmentController : ControllerBase
             Success = true,
             Message = "Row-level filtering permissions configured successfully",
             PermissionsCount = permissions.Length
+        });
+    }
+
+    [HttpPost("create-user")]
+    public async Task<IActionResult> CreateUserWithDefaultRole([FromBody] CreateUserRequest request)
+    {
+        if (!_environment.IsDevelopment())
+            return NotFound();
+
+        if (string.IsNullOrEmpty(request.Email))
+        {
+            return BadRequest("Email is required");
+        }
+
+        try
+        {
+            // Ensure UNOPS_GEN_USER role exists
+            if (!await _roleManager.RoleExistsAsync("UNOPS_GEN_USER"))
+            {
+                await _roleManager.CreateAsync(new PAOIdentityRole { Name = "UNOPS_GEN_USER" });
+            }
+
+            // Check if user already exists
+            var existingUser = await _userManager.FindByEmailAsync(request.Email);
+            
+            if (existingUser == null)
+            {
+                // Create new user
+                var user = new PAOIdentityUser
+                {
+                    Email = request.Email,
+                    UserName = request.Email,
+                    EmailConfirmed = true,
+                    IsInternal = request.Email.EndsWith("@unops.org")
+                };
+
+                var createResult = await _userManager.CreateAsync(user, "DevPassword123!");
+
+                if (createResult.Succeeded)
+                {
+                    // Add UNOPS_GEN_USER role by default
+                    await _userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+                    
+                    return Ok(new { 
+                        Email = user.Email, 
+                        Status = "Created", 
+                        Roles = new[] { "UNOPS_GEN_USER" },
+                        IsInternal = user.IsInternal
+                    });
+                }
+                else
+                {
+                    return BadRequest(new { 
+                        Email = request.Email, 
+                        Status = "Failed", 
+                        Errors = createResult.Errors.Select(e => e.Description) 
+                    });
+                }
+            }
+            else
+            {
+                // User exists, ensure they have UNOPS_GEN_USER role
+                var currentRoles = await _userManager.GetRolesAsync(existingUser);
+                
+                if (!currentRoles.Contains("UNOPS_GEN_USER"))
+                {
+                    await _userManager.AddToRoleAsync(existingUser, "UNOPS_GEN_USER");
+                }
+
+                return Ok(new { 
+                    Email = existingUser.Email, 
+                    Status = "Already exists", 
+                    Roles = await _userManager.GetRolesAsync(existingUser),
+                    IsInternal = existingUser.IsInternal
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Error = ex.Message });
+        }
+    }
+
+    [HttpGet("configured-user")]
+    public IActionResult GetConfiguredUser()
+    {
+        if (!_environment.IsDevelopment())
+            return NotFound();
+
+        var configuredEmail = _configuration["Development:IAPSimulation:UserEmail"] ?? "anushas@unops.org";
+        
+        return Ok(new { 
+            Email = configuredEmail,
+            Source = "appsettings.json Development:IAPSimulation:UserEmail"
         });
     }
 
@@ -761,4 +859,10 @@ public class TestEntity
     public string Name { get; set; } = string.Empty;
     public bool IsPublic { get; set; }
     public string CreatedBy { get; set; } = string.Empty;
+}
+
+// Request model for creating users in development mode
+public class CreateUserRequest
+{
+    public string Email { get; set; } = string.Empty;
 } 

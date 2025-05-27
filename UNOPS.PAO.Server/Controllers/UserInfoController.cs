@@ -4,6 +4,7 @@ using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Presentation.Helpers;
+using System.Security.Claims;
 
 namespace UNOPS.PAO.Server.Controllers;
 
@@ -24,10 +25,15 @@ public class UserInfoController : ControllerBase
     [HttpGet(APIDictionary.CurrentUserInfo)]
     public async Task<ActionResult<UserInfo>> GetCurrentUserInfo()
     {
-        var currentEmail = _userResolverService.GetUserEmail();
-        if (currentEmail == null)
+            // Try multiple ways to get the current user's email, similar to other working controllers
+        var currentEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? 
+                          User.FindFirst("email")?.Value ?? 
+                          User.Identity?.Name ?? 
+                          _userResolverService.GetUserEmail();
+        
+        if (string.IsNullOrEmpty(currentEmail))
         {
-            return Unauthorized("User not authenticated");
+            return Unauthorized("User not authenticated - email not found in claims");
         }
 
         var userInfo = await _userInfoService.GetUserInfoByEmailAsync(currentEmail);

@@ -748,35 +748,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         _logger.LogInformation("IAPVerificationMiddleware - Using new test user NameIdentifier claim: {Id}", testUser.Id);
                         
                         // Add roles based on email
-                        if (email == "anushas@unops.org")
+                        if (!string.IsNullOrEmpty(email))
                         {
-                            await userManager.AddToRoleAsync(testUser, "UNOPS_GEN_USER");
-                            claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                        }
-                        else if (email == "admin@unops.org")
-                        {
-                            await userManager.AddToRoleAsync(testUser, "UNOPS_GEN_USER");
-                            await userManager.AddToRoleAsync(testUser, "PARTNER_GLOB_ADMIN");
-                            claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                            claims.Add(new Claim(ClaimTypes.Role, "PARTNER_GLOB_ADMIN"));
-                        }
-                        else if (email == "partner@partner.org")
-                        {
-                            await userManager.AddToRoleAsync(testUser, "UNOPS_GEN_USER");
-                            await userManager.AddToRoleAsync(testUser, "PARTNER_USER");
-                            claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                            claims.Add(new Claim(ClaimTypes.Role, "PARTNER_USER"));
-                        }
-                        else if (email == "orgunit@unops.org")
-                        {
-                            await userManager.AddToRoleAsync(testUser, "UNOPS_GEN_USER");
-                            await userManager.AddToRoleAsync(testUser, "ORG_UNIT_ADMIN");
-                            claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                            claims.Add(new Claim(ClaimTypes.Role, "ORG_UNIT_ADMIN"));
-                        }
-                        else
-                        {
-                            // Default role for any other user
                             await userManager.AddToRoleAsync(testUser, "UNOPS_GEN_USER");
                             claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
                         }
@@ -790,32 +763,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 var numericId = Math.Abs(email.GetHashCode()).ToString();
                 claims.Add(new Claim(ClaimTypes.NameIdentifier, numericId));
                 _logger.LogInformation("IAPVerificationMiddleware - Using fallback numeric NameIdentifier claim due to error: {Id}", numericId);
-                
-                // Add default roles based on email
-                if (email == "anushas@unops.org")
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                }
-                else if (email == "admin@unops.org")
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                    claims.Add(new Claim(ClaimTypes.Role, "PARTNER_GLOB_ADMIN"));
-                }
-                else if (email == "partner@partner.org")
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                    claims.Add(new Claim(ClaimTypes.Role, "PARTNER_USER"));
-                }
-                else if (email == "orgunit@unops.org")
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                    claims.Add(new Claim(ClaimTypes.Role, "ORG_UNIT_ADMIN"));
-                }
-                else
-                {
-                    // Default role for any other user
-                    claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
-                }
+                claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
             }
             
             // Ensure IsInternal is set correctly based on email domain

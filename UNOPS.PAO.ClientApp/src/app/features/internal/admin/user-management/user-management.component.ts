@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 
 // PrimeNG imports
 import { TableModule } from 'primeng/table';
@@ -20,6 +21,7 @@ import { TooltipModule } from 'primeng/tooltip';
 
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { UserManagementService } from './user-management.service';
+import { PermissionService, EntityPermissions } from '../../../../essentials/services/permission.service';
 
 interface UserManagementModel {
   userId: number;
@@ -86,6 +88,22 @@ export class UserManagementComponent implements OnInit {
   private userManagementService = inject(UserManagementService);
   private messageService = inject(MessageService);
   private confirmationService = inject(ConfirmationService);
+  private permissionService = inject(PermissionService);
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
+
+  // Permission signals
+  entityPermissions = signal<EntityPermissions>({
+    entity: 'UserManagement',
+    hasAccess: false,
+    permissions: {
+      canRead: false,
+      canCreate: false,
+      canUpdate: false,
+      canDelete: false
+    }
+  });
+  permissionsLoading = signal<boolean>(true);
 
   // Signals for reactive state management
   users = signal<UserManagementModel[]>([]);
@@ -114,9 +132,56 @@ export class UserManagementComponent implements OnInit {
     this.availableRoles().map(role => ({ label: role.name, value: role.name }))
   );
 
+  // Permission computed values
+  canRead = computed(() => this.entityPermissions().permissions.canRead);
+  canUpdate = computed(() => this.entityPermissions().permissions.canUpdate);
+  hasAccess = computed(() => this.entityPermissions().hasAccess);
+
   ngOnInit() {
-    this.loadAvailableRoles();
-    this.loadUsers();
+    this.loadPermissions();
+  }
+
+  private loadPermissions() {
+    this.permissionsLoading.set(true);
+    
+    // Clear cache before loading to ensure fresh permissions
+    this.permissionService.clearPermissionCaches();
+    
+    // Get current route path for permission checking
+    const currentPath = this.router.url;
+    
+    // Load from server (cache was cleared above)
+    this.permissionService.getEntityPermissions(currentPath)
+      .subscribe({
+        next: (permissions) => {
+          if (!permissions.hasAccess) {
+            console.log(`[USER-MANAGEMENT] No access to user management for route ${currentPath}`);
+            this.router.navigate(['/access-denied']);
+            return;
+          }
+          console.log(`[USER-MANAGEMENT] Loaded user management permissions for route ${currentPath}:`, permissions);
+          this.entityPermissions.set(permissions);
+          this.permissionsLoading.set(false);
+          
+          // Load data only after permissions are confirmed
+          if (permissions.hasAccess) {
+            this.loadAvailableRoles();
+            this.loadUsers();
+          }
+          
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error loading user management permissions:', error);
+          this.permissionsLoading.set(false);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Access Error',
+            detail: 'Unable to verify permissions for user management'
+          });
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   async loadUsers() {

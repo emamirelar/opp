@@ -133,6 +133,18 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
                 return true;
             }
 
+            if (route.Contains("/admin/user-management") || route.Contains("user-management"))
+            {
+                // User management requires specific admin roles
+                return User.IsInRole("PARTNER_GLOB_ADMIN") || User.IsInRole("ORG_UNIT_ADMIN");
+            }
+
+            if (route.Contains("/admin"))
+            {
+                // Other admin routes require admin roles
+                return User.IsInRole("PARTNER_GLOB_ADMIN") || User.IsInRole("ORG_UNIT_ADMIN") || User.IsInRole("Administrator");
+            }
+
             // Default to allowing access for authenticated users
             // This is a simplification - you may want a more restrictive default
             return true;

@@ -6,6 +6,7 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Controllers;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.UNOPSPresentation.Helpers;
+using UNOPS.PAO.UNOPSBusiness.Authorization;
 
 namespace UNOPS.PAO.UNOPSPresentation.Controllers;
 
@@ -15,15 +16,18 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers;
 public class UserManagementController : BaseController
 {
     private readonly IUserManagementManager _manager;
+    private readonly IPermissionService _permissionService;
 
     public UserManagementController(
         IManagerWrapper managerWrapper,
         ILogger<UserManagementController> logger,
         IAuthorizationService authorizationService,
-        UserResolverService<int> userResolverService)
+        UserResolverService<int> userResolverService,
+        IPermissionService permissionService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = managerWrapper.UserManagementManager;
+        _permissionService = permissionService;
     }
 
     /// <summary>
@@ -32,11 +36,18 @@ public class UserManagementController : BaseController
     /// <param name="request">User management request with pagination and filters</param>
     /// <returns>Paginated list of users</returns>
     [HttpPost(APIDictionary.UserManagementUsers)]
-    [Authorize(Roles = "PARTNER_GLOB_ADMIN,ORG_UNIT_ADMIN")]
     public async Task<ActionResult<PaginationResponse<UserManagementModel>>> GetUsers([FromBody] UserManagementRequest request)
     {
         try
         {
+            // Check permissions using PermissionService
+            var hasAccess = await _permissionService.CanPerformActionAsync("UserManagement", "read", User);
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {User} denied access to user management", User.Identity?.Name);
+                return Forbid("Access denied. Only Partnership Global Admins and Org Unit Admins can access user management.");
+            }
+
             var result = await _manager.GetUsersAsync(User, request);
             return Ok(result);
         }
@@ -58,11 +69,18 @@ public class UserManagementController : BaseController
     /// <param name="userId">User ID</param>
     /// <returns>User details</returns>
     [HttpGet(APIDictionary.UserManagementUsers + "/{userId}")]
-    [Authorize(Roles = "PARTNER_GLOB_ADMIN,ORG_UNIT_ADMIN")]
     public async Task<ActionResult<UserManagementModel>> GetUser(int userId)
     {
         try
         {
+            // Check permissions using PermissionService
+            var hasAccess = await _permissionService.CanPerformActionAsync("UserManagement", "read", User);
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {User} denied access to user management", User.Identity?.Name);
+                return Forbid("Access denied. Only Partnership Global Admins and Org Unit Admins can access user management.");
+            }
+
             var result = await _manager.GetUserByIdAsync(User, userId);
             if (result == null)
             {
@@ -89,11 +107,18 @@ public class UserManagementController : BaseController
     /// <param name="request">Update roles request</param>
     /// <returns>Updated user details</returns>
     [HttpPut(APIDictionary.UserManagementUsers + "/{userId}/roles")]
-    [Authorize(Roles = "PARTNER_GLOB_ADMIN,ORG_UNIT_ADMIN")]
     public async Task<ActionResult<UserManagementModel>> UpdateUserRoles(int userId, [FromBody] UpdateUserRolesRequest request)
     {
         try
         {
+            // Check permissions using PermissionService
+            var hasAccess = await _permissionService.CanPerformActionAsync("UserManagement", "update", User);
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {User} denied access to update user roles", User.Identity?.Name);
+                return Forbid("Access denied. Only Partnership Global Admins and Org Unit Admins can update user roles.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -135,11 +160,18 @@ public class UserManagementController : BaseController
     /// </summary>
     /// <returns>List of available roles</returns>
     [HttpGet(APIDictionary.UserManagementRoles)]
-    [Authorize(Roles = "PARTNER_GLOB_ADMIN,ORG_UNIT_ADMIN")]
     public async Task<ActionResult<IEnumerable<RoleModel>>> GetAvailableRoles()
     {
         try
         {
+            // Check permissions using PermissionService
+            var hasAccess = await _permissionService.CanPerformActionAsync("UserManagement", "read", User);
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {User} denied access to user management roles", User.Identity?.Name);
+                return Forbid("Access denied. Only Partnership Global Admins and Org Unit Admins can access user management.");
+            }
+
             var result = await _manager.GetAvailableRolesAsync(User);
             return Ok(result);
         }
@@ -160,11 +192,18 @@ public class UserManagementController : BaseController
     /// </summary>
     /// <returns>Current user's org unit</returns>
     [HttpGet(APIDictionary.UserManagementCurrentUserOrgUnit)]
-    [Authorize(Roles = "PARTNER_GLOB_ADMIN,ORG_UNIT_ADMIN")]
     public async Task<ActionResult<string>> GetCurrentUserOrgUnit()
     {
         try
         {
+            // Check permissions using PermissionService
+            var hasAccess = await _permissionService.CanPerformActionAsync("UserManagement", "read", User);
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {User} denied access to user management", User.Identity?.Name);
+                return Forbid("Access denied. Only Partnership Global Admins and Org Unit Admins can access user management.");
+            }
+
             // This would typically come from a service that gets user info
             var userEmail = User.Identity?.Name;
             if (string.IsNullOrEmpty(userEmail))
