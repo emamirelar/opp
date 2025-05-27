@@ -203,8 +203,55 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                 extractedEmail = context.Request.Headers["x-goog-authenticated-user-email"].ToString().Split(':').Last();
                                 _logger.LogInformation("IAPVerificationMiddleware - Looking up user by email: {Email}", extractedEmail);
 
-                                // Find the user in the database
-                                var user = await userManager.FindByEmailAsync(extractedEmail);
+                                // Check if the extracted value is a numeric ID instead of an email
+                                PAOIdentityUser user = null;
+                                if (long.TryParse(extractedEmail, out _))
+                                {
+                                    // This is a numeric user ID, not an email
+                                    _logger.LogInformation("IAPVerificationMiddleware - Detected numeric user ID: {UserId}", extractedEmail);
+                                    
+                                    // For numeric IDs, we need to create a user with a placeholder email
+                                    // since we don't have the actual email from the header
+                                    var placeholderEmail = $"user{extractedEmail}@iap.google.com";
+                                    user = await userManager.FindByEmailAsync(placeholderEmail);
+                                    
+                                    if (user == null)
+                                    {
+                                        // Create new user with placeholder email
+                                        _logger.LogInformation("IAPVerificationMiddleware - Creating new user for numeric ID: {UserId}", extractedEmail);
+                                        
+                                        var newUser = new PAOIdentityUser
+                                        {
+                                            UserName = placeholderEmail,
+                                            Email = placeholderEmail,
+                                            EmailConfirmed = true // Since this comes from IAP, we trust it
+                                        };
+
+                                        var createResult = await userManager.CreateAsync(newUser);
+                                        if (createResult.Succeeded)
+                                        {
+                                            user = newUser;
+                                            _logger.LogInformation("IAPVerificationMiddleware - Successfully created new user for numeric ID: {UserId} with email: {Email} and database ID: {Id}", 
+                                                extractedEmail, placeholderEmail, newUser.Id);
+                                        }
+                                        else
+                                        {
+                                            _logger.LogError("IAPVerificationMiddleware - Failed to create user for numeric ID: {UserId}. Errors: {Errors}", 
+                                                extractedEmail, string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                                        }
+                                    }
+                                    else
+                                    {
+                                        _logger.LogInformation("IAPVerificationMiddleware - Found existing user for numeric ID: {UserId} with database ID: {Id}", 
+                                            extractedEmail, user.Id);
+                                    }
+                                }
+                                else
+                                {
+                                    // This is an email address
+                                    user = await userManager.FindByEmailAsync(extractedEmail);
+                                }
+
                                 if (user != null)
                                 {
                                     // Use the database ID as NameIdentifier
@@ -237,9 +284,45 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                         _logger.LogInformation("IAPVerificationMiddleware - Added existing roles: {Roles}", string.Join(", ", roles));
                                     }
                                 }
-                                else
+                                else if (!long.TryParse(extractedEmail, out _))
                                 {
-                                    _logger.LogWarning("IAPVerificationMiddleware - User not found in database for email: {Email}", extractedEmail);
+                                    // Only try to create a user if it's an email (not a numeric ID that failed to create)
+                                    // User not found - create new user
+                                    _logger.LogInformation("IAPVerificationMiddleware - User not found in database for email: {Email}. Creating new user.", extractedEmail);
+                                    
+                                    var newUser = new PAOIdentityUser
+                                    {
+                                        UserName = extractedEmail,
+                                        Email = extractedEmail,
+                                        EmailConfirmed = true // Since this comes from IAP, we trust the email is verified
+                                    };
+
+                                    var createResult = await userManager.CreateAsync(newUser);
+                                    if (createResult.Succeeded)
+                                    {
+                                        _logger.LogInformation("IAPVerificationMiddleware - Successfully created new user: {Email} with ID: {Id}", extractedEmail, newUser.Id);
+                                        
+                                        // Use the new database ID as NameIdentifier
+                                        claims.Add(new Claim(ClaimTypes.NameIdentifier, newUser.Id.ToString()));
+                                        
+                                        // Ensure UNOPS_GEN_USER role exists
+                                        if (!await roleManager.RoleExistsAsync("UNOPS_GEN_USER"))
+                                        {
+                                            await roleManager.CreateAsync(new PAOIdentityRole { Name = "UNOPS_GEN_USER" });
+                                            _logger.LogInformation("IAPVerificationMiddleware - Created UNOPS_GEN_USER role");
+                                        }
+
+                                        // Add UNOPS_GEN_USER role to new user
+                                        await userManager.AddToRoleAsync(newUser, "UNOPS_GEN_USER");
+                                        claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                                        _logger.LogInformation("IAPVerificationMiddleware - Added UNOPS_GEN_USER role to new user");
+                                    }
+                                    else
+                                    {
+                                        _logger.LogError("IAPVerificationMiddleware - Failed to create user for email: {Email}. Errors: {Errors}", 
+                                            extractedEmail, string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                                        // Continue without database ID - will use the original IAP ID
+                                    }
                                 }
                             }
                             catch (Exception ex)
@@ -571,7 +654,49 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     }
                     else
                     {
-                        _logger.LogWarning("IAPVerificationMiddleware - User not found in database for JWT email: {Email}", userEmail);
+                        // User not found - create new user
+                        _logger.LogInformation("IAPVerificationMiddleware - User not found in database for JWT email: {Email}. Creating new user.", userEmail);
+                        
+                        var newUser = new PAOIdentityUser
+                        {
+                            UserName = userEmail,
+                            Email = userEmail,
+                            EmailConfirmed = true // Since this comes from IAP, we trust the email is verified
+                        };
+
+                        var createResult = await userManager.CreateAsync(newUser);
+                        if (createResult.Succeeded)
+                        {
+                            _logger.LogInformation("IAPVerificationMiddleware - Successfully created new user from JWT: {Email} with ID: {Id}", userEmail, newUser.Id);
+                            
+                            // Remove any existing NameIdentifier claim
+                            var existingNameId = identity.FindFirst(ClaimTypes.NameIdentifier);
+                            if (existingNameId != null)
+                            {
+                                identity.RemoveClaim(existingNameId);
+                            }
+                            
+                            // Use the new database ID as NameIdentifier
+                            identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, newUser.Id.ToString()));
+                            
+                            // Ensure UNOPS_GEN_USER role exists
+                            if (!await roleManager.RoleExistsAsync("UNOPS_GEN_USER"))
+                            {
+                                await roleManager.CreateAsync(new PAOIdentityRole { Name = "UNOPS_GEN_USER" });
+                                _logger.LogInformation("IAPVerificationMiddleware - Created UNOPS_GEN_USER role");
+                            }
+
+                            // Add UNOPS_GEN_USER role to new user
+                            await userManager.AddToRoleAsync(newUser, "UNOPS_GEN_USER");
+                            identity.AddClaim(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
+                            _logger.LogInformation("IAPVerificationMiddleware - Added UNOPS_GEN_USER role to new user from JWT");
+                        }
+                        else
+                        {
+                            _logger.LogError("IAPVerificationMiddleware - Failed to create user from JWT for email: {Email}. Errors: {Errors}", 
+                                userEmail, string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                            // Continue without database ID - will use the original JWT subject
+                        }
                     }
                 }
                 catch (Exception ex)
