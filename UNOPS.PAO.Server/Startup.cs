@@ -133,9 +133,6 @@ public class Startup
         
         app.UseAuthorization();
         
-        // Add shared permission middleware to enforce permissions from JSON config AFTER authorization
-        app.UseMiddleware<SharedPermissionMiddleware>();
-        
         app.UseHttpsRedirection();
         app.UseExceptionHandler();
 
@@ -204,24 +201,6 @@ public class Startup
         
         // Add memory cache for permission caching
         services.AddMemoryCache();
-        
-        // Register shared permission configuration and service
-        var permissionFilePath = Path.Combine(CurrentEnvironment.ContentRootPath, "permissions.json");
-        services.AddSingleton(sp => 
-        {
-            var logger = sp.GetRequiredService<ILogger<PermissionConfiguration>>();
-            var config = new PermissionConfiguration(logger);
-            
-            // Load permissions asynchronously but block until loaded
-            // In production, this would likely be done during startup in a better way
-            config.LoadFromFileAsync(permissionFilePath).GetAwaiter().GetResult();
-            
-            return config;
-        });
-        
-        // Register the shared permission service
-        services.AddScoped<SharedPermissionService>();
-        services.AddScoped<IPermissionService>(sp => sp.GetRequiredService<SharedPermissionService>());
         
         // Register EntityPermissionHelper
         services.AddScoped<EntityPermissionHelper>();
@@ -321,6 +300,9 @@ public class Startup
         // RBAC Services
         services.AddScoped<IPermissionService, PermissionService>();
         
+        // Add Business Security Service for row-level filtering
+        services.AddScoped<IBusinessSecurityService, BusinessSecurityService>();
+        
         // Configure authorization
         services.AddAuthorization(options =>
         {
@@ -329,18 +311,6 @@ public class Startup
                 .AddAuthenticationSchemes("IAP")
                 .RequireAuthenticatedUser()
                 .Build();
-                
-            // Default policies for basic roles
-            options.AddPolicy("RequireAdministratorRole", policy => 
-                policy.RequireRole("Administrator"));
-            
-            options.AddPolicy("RequireInternalRole", policy => 
-                policy.RequireRole("Internal", "InternalStaff"));
-            
-            options.AddPolicy("RequirePartnerRole", policy => 
-                policy.RequireRole("Partner"));
-            
-            // Add other policies as needed
         });
 
         // Register authorization handlers and policy providers
@@ -487,14 +457,6 @@ public class Startup
 
     private void ConfigureAuthorization(ServiceRegistry services)
     {
-        services.AddAuthorizationBuilder()
-            .AddPolicy("RequireAdministratorRole", policy => 
-                policy.RequireRole("Administrator"))
-            .AddPolicy("RequireInternalRole", policy => 
-                policy.RequireRole("Administrator", "Internal"))
-            .AddPolicy("RequirePartnerRole", policy => 
-                policy.RequireRole("Administrator", "Internal", "Partner"));
-        
         // Add the entity permission authorization handler
         services.AddScoped<IAuthorizationHandler, EntityPermissionHandler>();
         

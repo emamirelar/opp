@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -15,6 +15,8 @@ import { PartnerEditDialogComponent } from './edit-dialog/partner-edit-dialog.co
 import { DialogService } from 'primeng/dynamicdialog';
 import { ImportDialogService } from '../../../../common/reusables/components/import/dialog/import-dialog.service';
 import { SearchField } from '../../../../common/services/search-parser.service';
+import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
+import { EntityPermissions } from '../../../../essentials/services/permission.service';
 
 @Component({
   selector: 'app-partner',
@@ -37,17 +39,23 @@ export class PartnerComponent implements OnDestroy, OnInit {
   feedbackDialogService = inject(FeedbackDialogService);
   dialogService = inject(DialogService);
   importDialogService = inject(ImportDialogService);
+  permissionUtilityService = inject(PermissionUtilityService);
 
   newPartnerData = signal<Partner|null>(null);
 
-  // Listview configuration
-  listviewConfig: ListViewConfig = {
+  // Permission management using utility service
+  private permissionUtils = this.permissionUtilityService.createEntityPermissions('Partner');
+  entityPermissions = this.permissionUtils.entityPermissions;
+  permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Computed listview configuration that respects permissions
+  listviewConfig = computed<ListViewConfig>(() => ({
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
     enablePagination: true,
     enableSorting: true,
     enableSearch: true,
-    enableExport: true,
+    enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
     scrollable: true,
     scrollHeight: 'flex',
     entityName: 'Partner',
@@ -99,7 +107,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
         }
       ] as SearchField[]
     }
-  };
+  }));
 
   columns: ListViewColumn[] = [
     {
@@ -153,13 +161,16 @@ export class PartnerComponent implements OnDestroy, OnInit {
 
   constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) {
     console.log('Partner component constructor');
-    console.log('Initial listview config:', this.listviewConfig);
+    console.log('Initial listview config:', this.listviewConfig());
     this.setNewPartnerFromAIAssistant();
   }
 
   ngOnInit() {
     console.log('Partner component ngOnInit');
-    console.log('Searchable fields:', this.listviewConfig.searchConfig?.searchableFields);
+    console.log('Searchable fields:', this.listviewConfig().searchConfig?.searchableFields);
+    
+    // Load permissions using utility service
+    this.permissionUtils.loadPermissions(this.router, this.cdr);
     
     this.activatedRoute.queryParams
       .subscribe(params => {

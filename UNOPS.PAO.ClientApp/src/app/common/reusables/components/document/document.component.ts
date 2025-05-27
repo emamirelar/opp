@@ -17,6 +17,7 @@ import { AuthService } from '../../../../essentials/services/auth.service';
 
 @Component({
   selector: 'app-document',
+  standalone: true,
   imports: [
     TableModule,
     ButtonModule,
@@ -42,6 +43,7 @@ export class DocumentComponent implements OnInit {
   canPreview = input<boolean>(true);
   canDownload = input<boolean>(true);
   canDelete = input<boolean>(true);
+  disabled = input<boolean>(false);
   isLoading = this.documentService.isLoading;
 
   showUploadFile: boolean = false;

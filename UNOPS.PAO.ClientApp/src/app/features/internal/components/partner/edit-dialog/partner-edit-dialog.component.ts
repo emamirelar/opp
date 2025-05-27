@@ -35,6 +35,7 @@ import { Partner } from '../../../models/partner.model';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -58,7 +59,8 @@ import { PartnerTreeService } from '../../../services/partner-tree.service';
     MarkdownPipe,
     LinkListComponent,
     AiTranscribeComponent,
-    JsonPipe
+    JsonPipe,
+    ProgressSpinnerModule
   ],
   templateUrl: './partner-edit-dialog.component.html',
   standalone: true,
@@ -137,6 +139,7 @@ export class PartnerEditDialogComponent implements OnInit {
   partnerTreeService = inject(PartnerTreeService);
 
   showValidationFailedError = signal<boolean>(false);
+  isLoading = signal<boolean>(false);
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
   allYesNoData = this.cachedDataService.allYesNo;
@@ -167,11 +170,19 @@ export class PartnerEditDialogComponent implements OnInit {
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
         if (this.recordId != '') {
+          this.isLoading.set(true);
           this._loadRecordDetails();
         } else {
+          // Data is passed directly via dialog config
+          this.isLoading.set(true);
           this.record = this.dialogConfig.data?.record;
           this.recordData.set(this.dialogConfig.data.record);
           this.formGroup.patchValue(this.dialogConfig.data.record);
+          
+          // Set loading to false after a short delay to ensure form is properly initialized
+          setTimeout(() => {
+            this.isLoading.set(false);
+          }, 100);
         }
       }
     });
@@ -252,6 +263,11 @@ export class PartnerEditDialogComponent implements OnInit {
       next: (data: any) => {
         this.recordData.set(data);
         this.formGroup.patchValue(data);
+        this.isLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading partner details:', error);
+        this.isLoading.set(false);
       }
     });
   }

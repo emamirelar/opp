@@ -4,25 +4,27 @@
       <p class="text-2xl font-semibold"> {{ 'title.partners' | translate }} </p>
     </div>
     <div class="ml-auto flex gap-2">
-      <p-button
-        icon="pi pi-file-import"
-        [label]="'button.import' | translate"
-        (click)="openImportDialog()"
-        severity="secondary"
-      />
-      <p-button 
-        icon="pi pi-plus" 
-        label="New" 
-        title="New Partner"
-        (onClick)="openPartnerEditDialog()"
-      />
+      @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
+        <p-button
+          icon="pi pi-file-import"
+          [label]="'button.import' | translate"
+          (click)="openImportDialog()"
+          severity="secondary"
+        />
+        <p-button 
+          icon="pi pi-plus" 
+          label="New" 
+          title="New Partner"
+          (onClick)="openPartnerEditDialog()"
+        />
+      }
     </div>
   </div>
 
   <app-listview
     [dataUrl]="'/api/partner'"
     [columns]="columns"
-    [config]="listviewConfig"
+    [config]="listviewConfig()"
     (rowClick)="handleOnOpenRecordDetails($event)"
     (searchChange)="onSearchChange($event)"
   >

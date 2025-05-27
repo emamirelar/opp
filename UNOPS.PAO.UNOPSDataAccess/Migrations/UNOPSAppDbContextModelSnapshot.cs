@@ -1371,22 +1371,30 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Action")
+                    b.Property<bool>("CanCreate")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanDelete")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("CanUpdate")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Entity")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("EntityName")
+                    b.Property<string>("PropertyFilter")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("FilterExpression")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PropertyName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RoleName")
-                        .IsRequired()
+                    b.Property<string>("RowFilter")
                         .HasColumnType("text");
 
                     b.HasKey("Id");

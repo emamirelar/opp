@@ -18,8 +18,10 @@ using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Presentation;
+using UNOPS.PAO.UNOPSBusiness.Authorization;
 
 [Route("/")]
+[Authorize(AuthenticationSchemes = "IAP")]
 public class ContactController : BaseController
 {
     private readonly IContactManager _manager;
@@ -27,17 +29,21 @@ public class ContactController : BaseController
     public ContactController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
+        ILogger<ContactController> logger,
         IAuthorizationService authorizationService,
-        ILogger<ContactController> logger)
-        : base(logger, authorizationService, userResolverService)
+        IPermissionService permissionService)
+        : base(logger, authorizationService, userResolverService, permissionService)
     {
         _manager = manager.ContactManager;
     }
 
     [HttpPost(APIDictionary.Contact)]
-    [AutoAuthorize]
     public async Task<ActionResult> Create([FromBody] ContactRequest req)
     {
+        // Check permission to create contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "create");
+        if (permissionResult != null) return permissionResult;
+        
         var result = await _manager.CreateContactAsync(req);
         if (result == null)
         {
@@ -47,59 +53,67 @@ public class ContactController : BaseController
     }
 
     [HttpGet(APIDictionary.Contact)]
-    [AutoAuthorize]
-    public ActionResult<PaginationResponse<ContactModel>> GetAll([FromQuery] ContactFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
+    public async Task<ActionResult> Get([FromQuery] PaginationRequest request)
     {
-        if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
-        {
-            Debug.WriteLine($"SEARCH CRITERIA RAW: {searchCriteria}");
-            
-            // Log all the parameters that came in 
-            Debug.WriteLine("Query Parameters:");
-            foreach (var param in HttpContext.Request.Query)
-            {
-                Debug.WriteLine($"  {param.Key}: {param.Value}");
-            }
-            
-            try
-            {
-                Debug.WriteLine($"Advanced search requested with criteria: {searchCriteria}");
-                var newRequest = AdvancedSearchHelper.MapAdvancedSearchCriteria<ContactFilterRequest>(searchCriteria);
-                
-                // Copy over any properties that weren't in the search criteria but were in the original request
-                foreach (var prop in typeof(ContactFilterRequest).GetProperties())
-                {
-                    if (prop.GetValue(newRequest) == null)
-                    {
-                        prop.SetValue(newRequest, prop.GetValue(request));
-                    }
-                }
-                
-                // Debug the processed request
-                Debug.WriteLine($"Processed advanced search request:");
-                foreach (var prop in typeof(ContactFilterRequest).GetProperties())
-                {
-                    Debug.WriteLine($"  {prop.Name}: {prop.GetValue(newRequest)}");
-                }
-                
-                request = newRequest;
-            }
-            catch (ArgumentException ex)
-            {
-                throw new BusinessException(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                throw new BusinessException($"Failed to process advanced search criteria: {ex.Message}");
-            }
-        }
-
-        Debug.WriteLine($"Creating specification with AdvancedSearch={request.AdvancedSearch}, SearchCriteria={(request.SearchCriteria ?? "null")}");
-        var specification = new ContactCompositeSpecification(request);
-        return _manager.GetContactsWithSpecification(CurrentUserId, specification, request);
+        // Check permission to read contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
+        if (permissionResult != null) return permissionResult;
+        
+        // Use the new secure method that includes row filtering and permissions
+        var result = await _manager.GetContactsAsync(User, request);
+        return Ok(result);
     }
-    
-    
+
+    [HttpGet(APIDictionary.Contact + "/{id}")]
+    public async Task<ActionResult> Get(int id)
+    {
+        // Check permission to read contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
+        if (permissionResult != null) return permissionResult;
+        
+        // Use the new secure method that checks entity-level access
+        var contact = await _manager.GetContactAsync(User, id);
+        if (contact == null)
+        {
+            return NotFound();
+        }
+        return Ok(contact);
+    }
+
+    [HttpPut(APIDictionary.Contact)]
+    public async Task<ActionResult> Update([FromBody] UpdateContactRequest req)
+    {
+        // Check permission to update contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "update");
+        if (permissionResult != null) return permissionResult;
+        
+        // Use the new secure method that checks entity-level permissions
+        var result = await _manager.UpdateContactAsync(User, req);
+        return Ok(result);
+    }
+
+    [HttpDelete(APIDictionary.Contact + "/{id}")]
+    public async Task<ActionResult> Delete(int id)
+    {
+        // Check permission to delete contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "delete");
+        if (permissionResult != null) return permissionResult;
+        
+        // Use the new secure method that checks entity-level permissions
+        await _manager.DeleteContactAsync(User, id);
+        return NoContent();
+    }
+
+    [HttpGet(APIDictionary.PartnerContacts)]
+    public async Task<ActionResult> PartnerContacts(int partnerId)
+    {
+        // Check permission to read contacts
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
+        if (permissionResult != null) return permissionResult;
+        
+        return Ok(_manager.GetPartnerContacts(partnerId));
+    }
+
     [HttpGet(APIDictionary.Contact + "/classic-search")]
     public ActionResult GetAll([FromQuery] ContactFilterRequest request)
     {
@@ -125,45 +139,7 @@ public class ContactController : BaseController
     }
 
 
-    [HttpGet(APIDictionary.Contact + "/{id}")]
-    [AutoAuthorize]
-    public async Task<ActionResult> Get(int id)
-    {
-        var contact = await _manager.GetContact(CurrentUserId, id);
-        if (contact == null)
-        {
-            return NotFound();
-        }
-        
-        // Return contact data directly using JsonResult
-        return new JsonResult(contact);
-    }
-
-    [HttpPut(APIDictionary.Contact)]
-    [AutoAuthorize]
-    public async Task<ActionResult> Update([FromBody] UpdateContactRequest req)
-    {
-        await _manager.UpdateContactAsync(CurrentUserId, req);
-        return NoContent();
-    }
-
-    [HttpDelete(APIDictionary.Contact + "/{id}")]
-    [AutoAuthorize]
-    public async Task<ActionResult> Delete(int id)
-    {
-        await _manager.DeleteContactAsync(CurrentUserId, id);
-        return NoContent();
-    }
-
-    [HttpGet(APIDictionary.PartnerContacts)]
-    [AutoAuthorize]
-    public ActionResult PartnerContacts(int partnerId)
-    {
-        return Ok(_manager.GetPartnerContacts(partnerId));
-    }
-
     [HttpGet(APIDictionary.Contact + "/{id}/permissions")]
-    [AutoAuthorize]
     public async Task<ActionResult> PermissionsGet(int id)
     {
         var contact = await _manager.GetContact(CurrentUserId, id);
@@ -172,13 +148,26 @@ public class ContactController : BaseController
             return NotFound(new { error = $"Contact with ID {id} not found" });
         }
         
-        return Ok(await GetEntityPermissionsAsync(contact));
+        // Return permissions for this contact
+        var permissions = await GetEntityPermissionsAsync("Contact", contact);
+        
+        return Ok(permissions);
     }
 
     [HttpPost(APIDictionary.Contact + "/{id}/profile-picture")]
-    [AutoAuthorize]
     public async Task<ActionResult> UploadProfilePicture(int id, IFormFile file)
     {
+        // Get the contact to check permissions on it
+        var contact = await _manager.GetContact(CurrentUserId, id);
+        if (contact == null)
+        {
+            return NotFound();
+        }
+        
+        // Check update permission for this specific contact
+        var permissionResult = await CheckEntityPermissionAsync("Contact", "update", contact);
+        if (permissionResult != null) return permissionResult;
+        
         if (file == null || file.Length == 0)
         {
             throw new BusinessException("No file was uploaded");

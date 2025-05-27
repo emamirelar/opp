@@ -30,12 +30,12 @@ import {GroupedInteraction, InteractionViewModel} from './interaction-view.model
   providers: [DialogService]
 })
 export class ContactViewInteractionsComponent implements OnInit {
-  @Input()
-  contactId?: string;
+  @Input() contactId!: string;
+  @Input() disabled: boolean = false;
 
-  dialogRef: DynamicDialogRef | undefined;
-  isLoading = signal<boolean>(false);
+  private dialogRef: DynamicDialogRef | null = null;
   interactions: InteractionViewModel[] = [];
+  isLoading = signal<boolean>(false);
 
   constructor(
     private dialogService: DialogService,

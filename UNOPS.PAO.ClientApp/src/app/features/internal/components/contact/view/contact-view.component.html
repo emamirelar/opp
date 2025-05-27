@@ -7,13 +7,15 @@
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
             <span class="font-semibold">Personal Information</span>
-            <p-button
-              icon="pi pi-pencil"
-              [rounded]="true"
-              [text]="true"
-              [size]="'small'"
-              (onClick)="handleEditClick()"
-            ></p-button>
+            @if(recordPermissions().permissions.canUpdate){
+              <p-button
+                icon="pi pi-pencil"
+                [rounded]="true"
+                [text]="true"
+                [size]="'small'"
+                (onClick)="handleEditClick()"
+              ></p-button>
+            }
           </div>
         </ng-template>
 
@@ -22,9 +24,9 @@
           <div class="flex gap-4">
             <app-picture
               [imageUrl]="recordData().profilePictureUrl!"
-              [uploadUrl]="getUploadProfilePictureUrl()"
               [altText]="'Profile picture'"
               [size]="'medium'"
+              [disabled]="!recordPermissions().permissions.canUpdate"
               (imageChanged)="_loadRecordDetails()"
             />
             <div class="flex flex-col gap-1">
@@ -37,7 +39,7 @@
                   - {{recordData().department}}
                 }
               </div>
-              <a [routerLink]="['/partner', recordData().partner?.id]" class="text-primary hover:underline font-semibold">
+              <a [routerLink]="['/partnerships/partners', recordData().partner?.id]" class="text-primary hover:underline font-semibold">
                 {{recordData().partner?.name}}
               </a>
             </div>
@@ -106,8 +108,6 @@
               </div>
             }
 
-
-
             <!-- Additional Info -->
             @if(recordData().description){
               <div class="flex flex-col gap-2">
@@ -137,6 +137,7 @@
         <app-link-list
           [entityType]="entityTypeContact"
           [entityId]="+recordId"
+          [disabled]="!recordPermissions().permissions.canUpdate"
         />
       </p-panel>
 
@@ -151,18 +152,22 @@
 
       <app-contact-view-interactions
         [contactId]="recordId"
+        [disabled]="!recordPermissions().permissions.canUpdate"
       />
 
       <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
         <app-document #appDocument
                       [entityId]="recordId"
                       [entityName]="'contact'"
-                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                      [disabled]="!recordPermissions().permissions.canUpdate">
           <div ngProjectAs="document-toolbar">
-            <app-document-gdrive [entityId]="recordId"
+            @if(recordPermissions().permissions.canUpdate){
+              <app-document-gdrive [entityId]="recordId"
                                  [entityName]="'contact'"
                                  [appDocumentRef]="appDocument"
                                  [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+            }
           </div>
         </app-document>
       </p-panel>
@@ -209,12 +214,11 @@
       </p-panel>
 
     </div>
-
-
   </div>
+  
   <div class="flex justify-end gap-2 w-full">
     <p-button label="{{'button.back' | translate}}" icon="pi pi-arrow-left" [styleClass]="'p-button-text'"
               rounded
-              (onClick)="handleOnCancelClick($event)" />
+              (onClick)="router.navigate(['partnerships/contacts'])" />
   </div>
 </div>

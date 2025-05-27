@@ -63,24 +63,6 @@ const socialAuthConfigFactory = (configService: ConfigurationService) => {
   };
 };
 
-/**
- * Role-Based Access Control (RBAC) Implementation
- * 
- * The application uses a centralized permission configuration in permissions.json 
- * that is shared between frontend and backend.
- * 
- * The roles in the system are:
- * - Administrator: Can access all sections and features (admin@unops.org)
- * - Internal: UNOPS staff with access to Partnerships and Initiatives (anushas@unops.org)
- * - Partner: External partners with access to Partnerships (devuser@partner.com)
- * - External: External users with access only to Leads (devuser@example.com)
- * 
- * Access control is implemented at both levels:
- * 1. Both frontend and backend check the same permission configuration
- * 2. Backend enforces permissions at the API level
- * 3. Frontend adapts UI based on permissions
- */
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(

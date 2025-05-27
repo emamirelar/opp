@@ -34,31 +34,26 @@ public interface IContactManager
     Task<ContactModel?> GetContactAsync(int id);
     
     Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file);
+
+    // New secure methods with ClaimsPrincipal for row-level security
     
     /// <summary>
-    /// Checks if the user has permission to perform the specified operation on the contact
+    /// Gets contacts with row-level filtering and entity permissions applied
     /// </summary>
-    /// <param name="userId">ID of the user</param>
-    /// <param name="contactId">ID of the contact</param>
-    /// <param name="operation">Operation to check (e.g., "Read", "Update", "Delete")</param>
-    /// <returns>True if the user has permission, false otherwise</returns>
-    Task<bool> HasPermissionAsync(int userId, int contactId, string operation);
+    Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request);
     
     /// <summary>
-    /// Checks if the user has permission to perform the specified operation on the contact
+    /// Gets a specific contact with entity-level access check and permissions
     /// </summary>
-    /// <param name="user">ClaimsPrincipal of the user</param>
-    /// <param name="contactId">ID of the contact</param>
-    /// <param name="operation">Operation to check (e.g., "Read", "Update", "Delete")</param>
-    /// <returns>True if the user has permission, false otherwise</returns>
-    Task<bool> HasPermissionAsync(ClaimsPrincipal user, int contactId, string operation);
+    Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id);
     
     /// <summary>
-    /// Checks if the user has permission to perform the specified operation on the contact
+    /// Updates a contact with entity-level access check
     /// </summary>
-    /// <param name="user">ClaimsPrincipal of the user</param>
-    /// <param name="contact">Contact entity</param>
-    /// <param name="operation">Operation to check (e.g., "Read", "Update", "Delete")</param>
-    /// <returns>True if the user has permission, false otherwise</returns>
-    Task<bool> HasPermissionAsync(ClaimsPrincipal user, Contact contact, string operation);
+    Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model);
+    
+    /// <summary>
+    /// Deletes a contact with entity-level access check
+    /// </summary>
+    Task DeleteContactAsync(ClaimsPrincipal user, int id);
 }

@@ -47,4 +47,8 @@ public class PartnerModel
     public string? PartnerCategoryName { get; set; }
     public int? PartnerCategoryId { get; set; }
     
+    /// <summary>
+    /// Permissions for this specific partner
+    /// </summary>
+    public EntityPermissionsModel? Permissions { get; set; }
 }   

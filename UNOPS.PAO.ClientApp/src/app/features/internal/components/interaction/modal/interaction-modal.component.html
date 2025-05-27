@@ -1,11 +1,13 @@
 <p-confirmDialog></p-confirmDialog>
 
 <form [formGroup]="formGroup" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+  @if(recordPermissions()?.permissions?.canUpdate) {
   <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
     <app-ai-transcribe transcribeType="interaction_action"
                        (transcriptionCompleted)="onTranscriptionCompleted($event)">
     </app-ai-transcribe>
   </div>
+  }
   @if( showValidationFailedError() === true ){
   <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
   }
@@ -15,6 +17,7 @@
               [options]="typeOptions"
               [appendTo]="'body'"
               formControlName="type"
+              [disabled]="!recordPermissions()?.permissions?.canUpdate"
               [placeholder]="'label.interaction.selectType' | translate"
               optionLabel="translateKey"
               optionValue="value"
@@ -32,6 +35,7 @@
     <label for="emails" class="block">{{ 'label.interaction.emailAddresses' | translate }}</label>
     <p-autocomplete id="emails"
                     formControlName="emailAddresses"
+                    [disabled]="!recordPermissions()?.permissions?.canUpdate"
                     multiple
                     fluid
                     [typeahead]="false" />
@@ -42,6 +46,7 @@
     <label for="phones" class="block">{{ 'label.interaction.phoneNumbers' | translate }}</label>
     <p-autocomplete id="phones"
                     formControlName="phoneNumbers"
+                    [disabled]="!recordPermissions()?.permissions?.canUpdate"
                     multiple
                     fluid
                     [typeahead]="false" />
@@ -53,6 +58,7 @@
     <p-multiselect id="contacts"
                    formControlName="contactIds"
                    [options]="allContacts()"
+                   [disabled]="!recordPermissions()?.permissions?.canUpdate"
                    optionLabel="name"
                    optionValue="id"
                    display="chip"
@@ -98,6 +104,7 @@
     <p-multiselect id="users"
                    formControlName="userIds"
                    [options]="allUsers()"
+                   [disabled]="!recordPermissions()?.permissions?.canUpdate"
                    optionLabel="name"
                    optionValue="id"
                    display="chip"
@@ -115,17 +122,29 @@
 
   <div class="flex flex-col gap-2">
     <label for="location">{{ 'label.interaction.location' | translate }}</label>
-    <input pInputText fluid="true" formControlName="location" id="location" />
+    <input pInputText 
+           fluid="true" 
+           formControlName="location" 
+           [disabled]="!recordPermissions()?.permissions?.canUpdate"
+           id="location" />
   </div>
 
   <div class="flex flex-col gap-2">
     <label for="date">{{ 'label.interaction.date' | translate }}</label>
-    <p-calendar id="date" formControlName="date" [showTime]="true" class="w-full"></p-calendar>
+    <p-calendar id="date" 
+                formControlName="date" 
+                [disabled]="!recordPermissions()?.permissions?.canUpdate"
+                [showTime]="true" 
+                class="w-full"></p-calendar>
   </div>
 
   <div class="flex flex-col gap-2">
     <label for="subject">{{ 'label.interaction.subject' | translate }} *</label>
-    <input pInputText fluid="true" formControlName="subject" id="subject" />
+    <input pInputText 
+           fluid="true" 
+           formControlName="subject" 
+           [disabled]="!recordPermissions()?.permissions?.canUpdate"
+           id="subject" />
     @if( formGroup.get("subject")?.invalid && showValidationFailedError() ) {
     <p-message severity="error" variant="simple">Subject must be entered.</p-message>
     }
@@ -133,7 +152,13 @@
 
   <div class="flex flex-col gap-2">
     <label for="data">{{ 'label.interaction.description' | translate }}</label>
-    <textarea id="data" pTextarea formControlName="data" class="w-full" rows="6" [autoResize]="true"></textarea>
+    <textarea id="data" 
+              pTextarea 
+              formControlName="data" 
+              [disabled]="!recordPermissions()?.permissions?.canUpdate"
+              class="w-full" 
+              rows="6" 
+              [autoResize]="true"></textarea>
   </div>
 
   <div class="flex flex-col gap-2">
@@ -141,6 +166,7 @@
     <p-select id="createdBy"
               formControlName="createdBy"
               [options]="allUsers()"
+              [disabled]="!recordPermissions()?.permissions?.canUpdate"
               optionLabel="name"
               optionValue="id"
               [filter]="true"
@@ -157,6 +183,7 @@
     <p-select id="orgUnit"
               formControlName="orgUnitId"
               [options]="allOrgUnits()"
+              [disabled]="!recordPermissions()?.permissions?.canUpdate"
               optionLabel="name"
               optionValue="id"
               [filter]="true"
@@ -173,11 +200,13 @@
     <app-document #appDocument
                   [entityId]="recordId"
                   [entityName]="'interaction'"
+                  [disabled]="!recordPermissions()?.permissions?.canUpdate"
                   [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
       <div ngProjectAs="document-toolbar">
         <app-document-gdrive [entityId]="recordId"
                              [entityName]="'interaction'"
                              [appDocumentRef]="appDocument"
+                             [disabled]="!recordPermissions()?.permissions?.canUpdate"
                              [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
       </div>
     </app-document>
@@ -189,6 +218,7 @@
     <p-select id="contact"
               formControlName="contactId"
               [options]="allContacts()"
+              [disabled]="!recordPermissions()?.permissions?.canUpdate"
               optionLabel="firstName"
               optionValue="id"
               [filter]="true"

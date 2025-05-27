@@ -1,4 +1,5 @@
 import {Partner} from './partner.model';
+import { EntityPermissionSet } from './shared-types';
 
 export interface Contact {
   id?: string | null;
@@ -49,4 +50,7 @@ export interface Contact {
   isImportEdit?: boolean;
   _updated?: boolean;
   _importRowId?: string;
+  
+  // RBAC permissions
+  permissions?: EntityPermissionSet;
 }

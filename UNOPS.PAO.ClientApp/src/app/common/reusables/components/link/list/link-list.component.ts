@@ -33,6 +33,7 @@ export class LinkListComponent {
   title = input<string>('');
   showAddButton = input<boolean>(true);
   pageSize = input<number>(20);
+  disabled = input<boolean>(false);
 
   // Outputs
   onAddClick = output<void>();
@@ -70,24 +71,28 @@ export class LinkListComponent {
 
   // Drag and drop handlers
   onDragEnter(event: DragEvent) {
+    if (this.disabled()) return;
     event.preventDefault();
     event.stopPropagation();
     this.isDragging.set(true);
   }
 
   onDragOver(event: DragEvent) {
+    if (this.disabled()) return;
     event.preventDefault();
     event.stopPropagation();
     this.isDragging.set(true);
   }
 
   onDragLeave(event: DragEvent) {
+    if (this.disabled()) return;
     event.preventDefault();
     event.stopPropagation();
     this.isDragging.set(false);
   }
 
   onDrop(event: DragEvent) {
+    if (this.disabled()) return;
     event.preventDefault();
     event.stopPropagation();
     this.isDragging.set(false);

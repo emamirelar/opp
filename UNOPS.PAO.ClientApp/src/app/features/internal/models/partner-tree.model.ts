@@ -1,3 +1,5 @@
+import { EntityPermissionSet } from './shared-types';
+
 export interface PartnerTree {
   id?: number;
   description?: string;
@@ -12,4 +14,5 @@ export interface PartnerTree {
   status?: string;
   partnerCategoryEditable?: boolean;
   partnerGroupEditable?: boolean;
+  permissions?: EntityPermissionSet;
 }

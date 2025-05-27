@@ -24,6 +24,7 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 public class UNOPSContactManager : IContactManager
 {
@@ -33,6 +34,7 @@ public class UNOPSContactManager : IContactManager
     private BaseRepository<UserInfo> userInfoRepository;
     private BaseRepository<OrganizationHierarchy> organizationHierarchyRepository;
     private GoogleCloudStorageService googleCloudStorageService;
+    private readonly IBusinessSecurityService _securityService;
 
     private CommonEntityRepository commonRepository;
 
@@ -91,6 +93,27 @@ public class UNOPSContactManager : IContactManager
         return result;
     }
 
+    
+    private async Task<ContactModel> MapEntityToModelWithPermissionsAsync(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
+    {
+        var result = MapEntityToModel(entity, mapper);
+        
+        // Add permissions if security service is available
+        if (_securityService != null)
+        {
+            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = ((dynamic)permissions).canRead,
+                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
+                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
+            };
+        }
+        
+        return result;
+    }
+    
     private ExternalContactModel MapEntityToExternalModel(UNOPSContact entity, IMapper mapper)
     {
         var result = mapper.Map<UNOPSContact, ExternalContactModel>(entity);
@@ -110,7 +133,7 @@ public class UNOPSContactManager : IContactManager
         return MapModelToEntity(model, new UNOPSContact());
     }
 
-    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
+    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
     {
         this.mapper = mapper;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
@@ -119,6 +142,7 @@ public class UNOPSContactManager : IContactManager
         organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
         commonRepository = new CommonEntityRepository(context);
         googleCloudStorageService = new GoogleCloudStorageService(configuration);
+        _securityService = securityService;
     }
 
     public async Task<ContactModel> CreateContactAsync(ContactRequest model)
@@ -130,6 +154,7 @@ public class UNOPSContactManager : IContactManager
         return mapper.Map<ContactModel>(entity);
     }
 
+    // Original methods (kept for backward compatibility)
     public PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request)
     {
         var query = contactRepository
@@ -175,6 +200,97 @@ public class UNOPSContactManager : IContactManager
             Records = mappedItems,
             TotalCount = totalCount
         };
+    }
+
+    // New secure methods with row-level filtering and permissions
+    public async Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request)
+    {
+        var query = contactRepository
+            .GetAll(["Partner", "Partner.PartnerOffice"])
+            .AsQueryable();
+
+        // Apply row-level security filters
+        if (_securityService != null)
+        {
+            query = await _securityService.ApplyRowFiltersAsync(query, user, "read");
+        }
+
+        // Apply pagination with permissions
+        var pagedResults = query.Paginate(
+            x => MapEntityToModel(x, mapper),
+            request
+        );
+
+        // Add permissions to each contact
+        if (_securityService != null)
+        {
+            var contactsWithPermissions = new List<ContactModel>();
+            foreach (var contact in pagedResults.Records)
+            {
+                var entity = await contactRepository.GetByIdAsync(contact.Id, ["Partner", "Partner.PartnerOffice"]);
+                if (entity != null)
+                {
+                    var contactWithPermissions = await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
+                    contactsWithPermissions.Add(contactWithPermissions);
+                }
+            }
+            
+            return new PaginationResponse<ContactModel>
+            {
+                Records = contactsWithPermissions,
+                TotalCount = pagedResults.TotalCount
+            };
+        }
+
+        return pagedResults;
+    }
+
+    public async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
+    {
+        var item = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice"]);
+        if (item == null) return null;
+
+        // Check if user can access this specific contact
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(item, user, "read"))
+        {
+            return null; // User cannot access this contact
+        }
+
+        return await MapEntityToModelWithPermissionsAsync(item, mapper, user);
+    }
+
+    public async Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model)
+    {
+        var entity = await contactRepository.GetByIdAsync(model.Id, ["Partner", "Partner.PartnerOffice"]);
+        if (entity == null)
+        {
+            throw new BusinessException($"Contact {model.Id} does not exist.");
+        }
+
+        // Check if user can update this contact
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "update"))
+        {
+            throw new UnauthorizedAccessException("You don't have permission to update this contact");
+        }
+
+        entity = MapModelToEntity(model, entity);
+        await contactRepository.UpdateAsync(entity);
+
+        return await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
+    }
+
+    public async Task DeleteContactAsync(ClaimsPrincipal user, int id)
+    {
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice"]);
+        if (entity == null) return;
+
+        // Check if user can delete this contact
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "delete"))
+        {
+            throw new UnauthorizedAccessException("You don't have permission to delete this contact");
+        }
+
+        await contactRepository.Delete(entity);
     }
 
     public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
@@ -256,55 +372,12 @@ public class UNOPSContactManager : IContactManager
         return MapEntityToExternalModel(item, mapper);
     }
 
-    public async Task<ContactModel?> UpdateContactAsync(int userId, UpdateContactRequest model)
-    {
-        var entity = await contactRepository.GetByIdAsync(model.Id);
-
-        if (entity == null)
-        {
-            throw new BusinessException($"Contact {model.Id} does not exist.");
-        }
-
-        entity = MapModelToEntity(model, entity);
-
-        await contactRepository.UpdateAsync(entity);
-
-        return MapEntityToModel(entity, mapper);
-    }
-
-    public async Task DeleteContactAsync(int userId, int id)
-    {
-        var entity = await contactRepository.GetByIdAsync(id);
-
-        if (entity != null)
-        {
-            await contactRepository.Delete(entity);
-        }
-    }
-
     public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
     {
         return contactRepository
             .GetAll()
             .Where(x => x.PartnerId == partnerId)
             .Select(x => MapEntityToModel(x, mapper));
-    }
-    public async Task<ContactModel?> GetContactAsync(int id)
-    {
-        string[] includes = ["Documents"];
-
-        var item = await contactRepository.GetByIdAsync(id, includes);
-
-        if (item == null)
-        {
-            return default;
-        }
-
-        var result = mapper.Map<ContactModel>(item);
-
-        //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
-
-        return result;
     }
 
     public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
@@ -335,96 +408,45 @@ public class UNOPSContactManager : IContactManager
         }
     }
 
-    /// <summary>
-    /// Checks if the user has permission to perform the specified operation on the contact
-    /// </summary>
-    public async Task<bool> HasPermissionAsync(int userId, int contactId, string operation)
+    // Legacy interface methods (kept for backward compatibility)
+    public async Task<ContactModel?> GetContactAsync(int id)
     {
-        // Get the contact entity
-        var entity = await contactRepository.GetByIdAsync(contactId);
+        string[] includes = ["Documents", "Partner", "Partner.PartnerOffice"];
+
+        var item = await contactRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        var result = mapper.Map<ContactModel>(item);
+        return result;
+    }
+
+    public async Task<ContactModel?> UpdateContactAsync(int userId, UpdateContactRequest model)
+    {
+        var entity = await contactRepository.GetByIdAsync(model.Id);
+
         if (entity == null)
         {
-            return false;
+            throw new BusinessException($"Contact {model.Id} does not exist.");
         }
-        
-        // Basic permission rules:
-        // 1. Administrator can do anything
-        // 2. Creator of the contact can do anything with their own contacts
-        // 3. For Read operations, any Internal or Partner role can access
-        // 4. For Update/Delete, only creator or admin can perform
-        
-        // Check if user is the creator
-        bool isCreator = entity.CreatedBy == userId;
-        
-        // If user is creator, they have full access
-        if (isCreator)
-        {
-            return true;
-        }
-        
-        // For Read operations, allow access to Partner users
-        if (operation == "Read")
-        {
-            // Partner users should be able to view contacts
-            return true;
-        }
-        
-        // For other operations (Update, Delete), only allow if user is creator
-        // In a real implementation, you would check if the user has Administrator role
-        return false;
+
+        entity = MapModelToEntity(model, entity);
+
+        await contactRepository.UpdateAsync(entity);
+
+        return MapEntityToModel(entity, mapper);
     }
-    
-    /// <summary>
-    /// Checks if the user has permission to perform the specified operation on the contact
-    /// </summary>
-    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, int contactId, string operation)
+
+    public async Task DeleteContactAsync(int userId, int id)
     {
-        // Get user ID from claims
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        var entity = await contactRepository.GetByIdAsync(id);
+
+        if (entity != null)
         {
-            return false;
+            await contactRepository.Delete(entity);
         }
-        
-        // Use the existing method
-        return await HasPermissionAsync(userId, contactId, operation);
-    }
-    
-    /// <summary>
-    /// Checks if the user has permission to perform the specified operation on the contact
-    /// </summary>
-    public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, Contact contact, string operation)
-    {
-        // Get user ID from claims
-        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            return false;
-        }
-        
-        // Check if user is the creator
-        bool isCreator = contact.CreatedBy == userId;
-        
-        // If user is creator, they have full access
-        if (isCreator)
-        {
-            return true;
-        }
-        
-        // Check if user is administrator
-        bool isAdmin = user.IsInRole("Administrator");
-        if (isAdmin)
-        {
-            return true;
-        }
-        
-        // For Read operations, allow access to all users with Partner role or higher
-        if (operation == "Read")
-        {
-            return user.IsInRole("Partner") || user.IsInRole("Internal");
-        }
-        
-        // For other operations (Update, Delete), only allow if user is creator or has admin privileges
-        return false;
     }
 }

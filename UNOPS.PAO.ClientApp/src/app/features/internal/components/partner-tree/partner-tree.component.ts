@@ -18,6 +18,8 @@ import { Router, RouterModule } from '@angular/router';
 import { PartnerTree } from '../../models/partner-tree.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
+import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
+import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
 
 @Component({
   selector: 'app-partner-tree',
@@ -52,11 +54,21 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   loading = false;
   private dialogService = inject(DialogService);
 
+  // RBAC permissions
+  permissionUtilityService = inject(PermissionUtilityService);
+  override feedbackDialogService = inject(FeedbackDialogService);
+  entityPermissionsData = this.permissionUtilityService.createEntityPermissions('PartnerTree');
+  entityPermissions = this.entityPermissionsData.entityPermissions;
+  permissionsLoading = this.entityPermissionsData.permissionsLoading;
+
   constructor(public override router: Router) {
     super();
   }
 
   override ngOnInit() {
+    super.ngOnInit();
+    // Load entity permissions
+    this.entityPermissionsData.loadPermissions(this.router, this.cdr);
     this.setNewPartnerFromAIAssistant();
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
@@ -218,6 +230,14 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   }
 
   onCreateNewPartnerLevel() {
+    // Check permission before opening modal
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'You do not have permission to create partner trees' 
+      });
+      return;
+    }
+
     let level = 'Level_1';
     this.changeRecord = {
       type: level,
@@ -323,6 +343,14 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   }
 
   openPartnerDialog(rowData: any) {
+    // Check permission before opening modal
+    if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'You do not have permission to edit partner trees' 
+      });
+      return;
+    }
+
     const ref = this.dialogService.open(PartnerTreeItemComponent, {
       header: 'View Partner Level',
       width: '50rem',

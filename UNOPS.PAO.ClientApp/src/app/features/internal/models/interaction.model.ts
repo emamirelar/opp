@@ -1,4 +1,5 @@
 import { InteractionType } from './interaction-type.enum';
+import { EntityPermissionSet } from './shared-types';
 
 export interface Interaction {
   id: number;
@@ -18,4 +19,5 @@ export interface Interaction {
   subject: string;
   orgUnitId: number;
   createdBy: number;
+  permissions?: EntityPermissionSet;
 }

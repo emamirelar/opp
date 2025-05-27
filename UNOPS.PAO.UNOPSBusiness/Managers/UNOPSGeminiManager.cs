@@ -65,7 +65,7 @@ public class UNOPSGeminiManager : IGeminiManager
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
         _credentials = GetCredentials()
-                        .CreateScoped("https://www.googleapis.com/auth/spreadsheets.readonly");//.CreateWithUser("anushas@unops.org");;
+                        .CreateScoped("https://www.googleapis.com/auth/spreadsheets.readonly");
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
         _textExtractionService = new TextExtractionService();
         _gcsService = new GoogleCloudStorageService(configuration);

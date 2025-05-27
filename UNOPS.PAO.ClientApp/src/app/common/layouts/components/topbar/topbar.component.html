@@ -17,7 +17,18 @@
   <app-global-search-bar></app-global-search-bar>
 
 	<div class="flex items-center justify-end">
-      <!--				<app-theme-toggler></app-theme-toggler>-->
+      <!-- User Roles Button -->
+      <div class="flex gap-2 mr-4 items-center" *ngIf="userRoles.length > 0">
+        <button type="button"
+                class="p-button p-button-outlined p-button-primary layout-topbar-action cursor-pointer hover:bg-primary-50 transition-colors border-2 border-primary"
+                (click)="showRoleDialog()"
+                title="Impersonate Roles"
+                pTooltip="Impersonate Roles"
+                tooltipPosition="bottom">
+          <i class="pi pi-users text-primary mr-2"></i>
+          <span class="text-sm font-bold text-primary">Impersonate Roles</span>
+        </button>
+      </div>
 
       <!-- Dev Login link - only visible in development mode -->
       <button *ngIf="isDevelopment" 
@@ -99,8 +110,8 @@
           </div>
         </div>
       </p-overlayPanel>
-      <div class="layout-topbar-menu">
-        <div class="flex align-items-center gap-2">
+      <div class="ml-auto">
+        <div class="flex items-center gap-2">
           <button type="button"
                 class="p-button-text layout-topbar-action cursor-pointer"
                 (click)="menu.toggle($event)">
@@ -112,3 +123,4 @@
 	</div>
 </div>
 <p-toast position="bottom-right"></p-toast>
+<app-role-dialog></app-role-dialog>

@@ -4,6 +4,9 @@ public class PartnerTreeModel
 {
     public PartnerTreeDataModel Data { get; set; } = new PartnerTreeDataModel();
     public List<PartnerTreeModel> Children { get; set; } = new List<PartnerTreeModel>();
+    
+    // RBAC permissions
+    public EntityPermissionsModel? Permissions { get; set; }
 }
 
 public class PartnerTreeDataModel

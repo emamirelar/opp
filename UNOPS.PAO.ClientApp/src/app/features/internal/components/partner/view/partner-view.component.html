@@ -16,11 +16,13 @@
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
             <span class="font-semibold">Partner Information</span>
-            <p-button icon="pi pi-pencil"
-                      [rounded]="true"
-                      [text]="true"
-                      [size]="'small'"
-                      (onClick)="handleEditClick()"></p-button>
+            @if (recordPermissions().permissions.canUpdate) {
+              <p-button icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        [size]="'small'"
+                        (onClick)="handleEditClick()"></p-button>
+            }
           </div>
         </ng-template>
 
@@ -32,6 +34,7 @@
               [uploadUrl]="getUploadLogoUrl()"
               [altText]="'Partner logo'"
               [size]="'medium'"
+              [disabled]="!recordPermissions().permissions.canUpdate"
               (imageChanged)="_loadRecordDetails()"
             />
             <div class="flex flex-col gap-1">
@@ -166,19 +169,23 @@
 
       <p-panel header="{{ 'title.links' | translate }}">
         <app-link-list [entityType]="entityTypePartner"
-                       [entityId]="+recordId" />
+                       [entityId]="+recordId"
+                       [disabled]="!recordPermissions().permissions.canUpdate" />
       </p-panel>
 
       <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
         <app-document #appDocument
                       [entityId]="recordId"
                       [entityName]="'partner'"
-                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'">
+                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                      [disabled]="!recordPermissions().permissions.canUpdate">
           <div ngProjectAs="document-toolbar">
-            <app-document-gdrive [entityId]="recordId"
-                                 [entityName]="'partner'"
-                                 [appDocumentRef]="appDocument"
-                                 [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+            @if(recordPermissions().permissions.canUpdate){
+              <app-document-gdrive [entityId]="recordId"
+                                   [entityName]="'partner'"
+                                   [appDocumentRef]="appDocument"
+                                   [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+            }
           </div>
         </app-document>
       </p-panel>
