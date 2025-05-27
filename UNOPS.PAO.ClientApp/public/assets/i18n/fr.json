@@ -132,6 +132,7 @@
             "firstName": "Prénom",
             "middleName": "Deuxième prénom",
             "lastName": "Nom",
+            "fullName": "Nom complet",
             "suffix": "Suffixe",
             "email": "Email",
             "mobile": "Mobile",
@@ -155,7 +156,8 @@
             "mailingStateProvince": "État/Province d'envoi",
             "mailingPostalCode": "Code postal d'envoi",
             "mailingCountry": "Pays d'envoi",
-            "contactViaAssistant": "Contacter via l'assistant"
+            "contactViaAssistant": "Contacter via l'assistant",
+            "createdByOffice": "Créé par Bureau"
         },
         "pictureEditor": {
             "dropImageHere": "Déposez une image ici ou utilisez le bouton ci-dessous",

@@ -125,6 +125,7 @@
             "firstName": "Nome",
             "middleName": "Nome do meio",
             "lastName": "Sobrenome",
+            "fullName": "Nome completo",
             "suffix": "Sufixo",
             "email": "Email",
             "mobile": "Celular",
@@ -148,7 +149,8 @@
             "mailingStateProvince": "Estado/Província de envio",
             "mailingPostalCode": "Código postal de envio",
             "mailingCountry": "País de envio",
-            "contactViaAssistant": "Contatar através do assistente"
+            "contactViaAssistant": "Contatar através do assistente",
+            "createdByOffice": "Criado por Escritório"
         }
     },
     "message": {

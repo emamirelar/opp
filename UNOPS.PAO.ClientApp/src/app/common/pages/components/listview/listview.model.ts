@@ -14,8 +14,9 @@ export interface ListViewColumn {
    * - 'avatar': Display an image URL as an avatar using p-avatar component
    * - 'email': Display as clickable email with mailto link
    * - 'multiple-avatars': Display multiple avatars from an array of objects
+   * - 'template': Use a custom template function to render the column content
    */
-  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars';
+  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template';
   sortable: boolean;
   width?: string;
   /**
@@ -38,6 +39,13 @@ export interface ListViewColumn {
    * Used primarily with 'multiple-avatars' type
    */
   firstLetterFallbackField?: string;
+  /**
+   * Custom template function for rendering column content
+   * Used with 'template' type to combine multiple fields or create custom displays
+   * @param rowData The row data object
+   * @returns HTML string or plain text to display
+   */
+  templateFn?: (rowData: any) => string;
 }
 
 export interface ListViewConfig {

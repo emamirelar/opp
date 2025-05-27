@@ -63,7 +63,9 @@
               </span>
             }
             @case ('avatar') {
-              <p-avatar [image]="getAvatarUrl(rowData, column.field)" shape="circle" [style]="{'margin': '0 auto', 'display': 'block'}" imageAlt="Avatar"></p-avatar>
+              @if (rowData[column.field]) {
+                <p-avatar [image]="getAvatarUrl(rowData, column.field)" shape="circle" [style]="{'margin': '0 auto', 'display': 'block'}" imageAlt="Avatar"></p-avatar>
+              }
             }
             @case ('email') {
               <a href="mailto:{{ rowData[column.field] }}" (click)="$event.stopPropagation()" class="text-primary hover:underline" [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? rowData[column.field] : ''">{{ rowData[column.field] }}</a>
@@ -100,6 +102,9 @@
                   </div>
                 }
               </div>
+            }
+            @case ('template') {
+              <span [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? getTemplateValue(rowData, column) : ''" [innerHTML]="getTemplateValue(rowData, column)"></span>
             }
             @default {
               <span [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? rowData[column.field] : ''">
