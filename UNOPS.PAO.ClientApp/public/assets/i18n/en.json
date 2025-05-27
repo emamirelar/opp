@@ -40,6 +40,8 @@
     "initiatives": "Initiatives",
     "admin": "Administration",
     "aiPromptsAdmin": "AI Prompts Admin",
+    "userManagement": "Manage User Permissions",
+    "editUserRoles": "Edit User Roles",
     "manageOffice": "Manage my Office",
     "translationWorkbench": "Translation Workbench",
     "partnerTitles": {
@@ -96,7 +98,10 @@
     "capture": "Capture",
     "remove": "Remove",
     "updateImportData": "Update Import Data",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "refresh": "Refresh",
+    "clearFilters": "Clear Filters",
+    "editRoles": "Edit Roles"
   },
   "label": {
     "actions": "Actions",
@@ -256,7 +261,15 @@
       "croppedImage": "Cropped image",
       "uploadProgress": "Progress: {{progress}}%"
     },
-    "scanBusinessCard": "Scan Business Card"
+    "scanBusinessCard": "Scan Business Card",
+    "search": "Search",
+    "filterByRole": "Filter by Role",
+    "orgUnit": "Organization Unit",
+    "showMyOrgUnitOnly": "Show My Org Unit Only",
+    "email": "Email",
+    "roles": "Roles",
+    "lastModified": "Last Modified",
+    "assignRoles": "Assign Roles"
   },
   "message": {
     "entityMeetEligibleEntitiesRequired": "'Meet eligible entities' required",
@@ -281,7 +294,9 @@
     "comingSoon": "Coming Soon",
     "stayTuned": "This feature is currently in development. Stay tuned for updates!",
     "accessDenied": "Access Denied",
-    "noAccessPermissions": "You do not have permission to access this page"
+    "noAccessPermissions": "You do not have permission to access this page",
+    "noUsersFound": "No users found",
+    "selectRolesToAssign": "Select the roles to assign to this user"
   },
   "label.interaction.contact": "Contact",
   "errors": {
@@ -311,7 +326,11 @@
   },
   "placeholder": {
     "enterUrl": "Enter URL",
-    "enterName": "Enter name"
+    "enterName": "Enter name",
+    "searchByNameOrEmail": "Search by name or email",
+    "selectRole": "Select a role",
+    "filterByOrgUnit": "Filter by organization unit",
+    "selectRoles": "Select roles"
   },
   "table": {
     "noRecords": "No records found"
@@ -335,6 +354,14 @@
     "showAllResults": "Show All Results",
     "seeAllResults": "See all results",
     "contact": "Contact",
-    "partner": "Partner"
+    "partner": "Partner",
+    "filterByRole": "Filter by Role",
+    "orgUnit": "Organization Unit",
+    "showMyOrgUnitOnly": "Show My Org Unit Only",
+    "name": "Name",
+    "email": "Email",
+    "roles": "Roles",
+    "lastModified": "Last Modified",
+    "assignRoles": "Assign Roles"
   }
 }

@@ -16,6 +16,7 @@ import { SearchResultComponent } from './components/search-result/search-result.
 import { PartnerTreeViewComponent } from './components/partner-tree/view/partner-tree-view.component';
 import { PartnerDataResolver } from './resolvers/partner-data.resolver';
 import { PartnerTreeDataResolver } from './resolvers/partner-tree-data.resolver';
+import { UserManagementComponent } from './admin/user-management/user-management.component';
 
 const internalRoutes: Routes = [
   {
@@ -153,6 +154,13 @@ const internalRoutes: Routes = [
             data: { 
               breadcrumb: 'AI Prompts Admin',
               featureName: 'AI Prompts Admin'
+            }
+          },
+          {
+            path: 'user-management',
+            component: UserManagementComponent,
+            data: { 
+              breadcrumb: 'Manage User Permissions'
             }
           },
           {

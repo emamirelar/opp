@@ -98,6 +98,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
             routerLink: ['/admin/ai-prompts']
           },
           {
+            label: 'title.userManagement',
+            icon: 'person',
+            routerLink: ['/admin/user-management']
+          },
+          {
             label: 'title.manageOffice',
             icon: 'business',
             routerLink: ['/admin/office-management']
