@@ -258,4 +258,14 @@ export class ListviewCardComponent<T = any> {
     
     return '';
   }
+  
+  /**
+   * Get template value using the templateFn function
+   */
+  getTemplateValue(item: T, column: ListViewColumn): string {
+    if (column.templateFn) {
+      return column.templateFn(item);
+    }
+    return this.getFieldValue(item, column.field) || '';
+  }
 }

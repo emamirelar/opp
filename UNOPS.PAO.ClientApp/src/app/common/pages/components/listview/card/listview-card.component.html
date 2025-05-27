@@ -112,6 +112,8 @@
                                 }
                               </div>
                             </div>
+                          } @else if (column.type === 'template') {
+                            <span [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? getTemplateValue(item, column) : ''" [innerHTML]="getTemplateValue(item, column)"></span>
                           } @else if (column.type !== 'avatar') {
                             <span [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? formatValue(item, column) : ''">{{ formatValue(item, column) }}</span>
                           }

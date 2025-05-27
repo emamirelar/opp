@@ -160,4 +160,14 @@ export class ListviewTableComponent<T = any> {
     
     return '';
   }
+  
+  /**
+   * Get template value using the templateFn function
+   */
+  getTemplateValue(rowData: any, column: ListViewColumn): string {
+    if (column.templateFn) {
+      return column.templateFn(rowData);
+    }
+    return rowData[column.field] || '';
+  }
 }

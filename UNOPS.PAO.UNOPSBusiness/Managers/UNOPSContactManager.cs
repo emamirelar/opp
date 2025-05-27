@@ -1,4 +1,5 @@
 using UNOPS.PAO.Domain.Specifications;
+using System.Linq;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -30,6 +31,8 @@ public class UNOPSContactManager : IContactManager
     private IMapper mapper;
     private BaseRepository<UNOPSContact> contactRepository;
     private BaseRepository<UNOPSPartner> partnerRepository;
+    private BaseRepository<UserInfo> userInfoRepository;
+    private BaseRepository<OrganizationHierarchy> organizationHierarchyRepository;
     private GoogleCloudStorageService googleCloudStorageService;
     private readonly IBusinessSecurityService _securityService;
 
@@ -41,8 +44,55 @@ public class UNOPSContactManager : IContactManager
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
         result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
+        
+        // Map CreatedBy user ID to user name and office
+        if (entity.CreatedBy > 0)
+        {
+            var userInfo = userInfoRepository.GetAll()
+                .FirstOrDefault(u => u.UserId == entity.CreatedBy);
+            
+            if (userInfo != null)
+            {
+                result.CreatedByName = userInfo.Name;
+                
+                // Get office name from OrganizationHierarchy where Code = userInfo.OrgUnit
+                if (!string.IsNullOrEmpty(userInfo.OrgUnit))
+                {
+                    var orgHierarchy = organizationHierarchyRepository.GetAll()
+                        .Where(o => !string.IsNullOrEmpty(o.Code))
+                        .FirstOrDefault(o => o.Code == userInfo.OrgUnit);
+                    if (orgHierarchy != null)
+                    {
+                        result.CreatedByOfficeName = orgHierarchy.Name;
+                    }
+                }
+            }
+        }
+        
         return result;
     }
+    
+    private ContactModel MapEntityToModelWithUserInfo(UNOPSContact entity, IMapper mapper, Dictionary<int, UserInfo> userInfoLookup, Dictionary<string, OrganizationHierarchy> orgHierarchyLookup)
+    {
+        var result = mapper.Map<UNOPSContact, ContactModel>(entity);
+        result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
+        
+        // Map CreatedBy user ID to user name and office
+        if (entity.CreatedBy > 0 && userInfoLookup.TryGetValue(entity.CreatedBy, out var userInfo))
+        {
+            result.CreatedByName = userInfo.Name;
+            
+            // Get office name from OrganizationHierarchy where Code = userInfo.OrgUnit
+            if (!string.IsNullOrEmpty(userInfo.OrgUnit) && 
+                orgHierarchyLookup.TryGetValue(userInfo.OrgUnit, out var orgHierarchy))
+            {
+                result.CreatedByOfficeName = orgHierarchy.Name;
+            }
+        }
+        
+        return result;
+    }
+
     
     private async Task<ContactModel> MapEntityToModelWithPermissionsAsync(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
     {
@@ -88,6 +138,8 @@ public class UNOPSContactManager : IContactManager
         this.mapper = mapper;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
+        userInfoRepository = new BaseRepository<UserInfo>(context, configuration);
+        organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
         commonRepository = new CommonEntityRepository(context);
         googleCloudStorageService = new GoogleCloudStorageService(configuration);
         _securityService = securityService;
@@ -109,10 +161,45 @@ public class UNOPSContactManager : IContactManager
             .GetAll(["Partner"])
             .AsQueryable();
 
-        return query.Paginate(
-            x => MapEntityToModel(x, mapper),
-            request
-        );
+        // Custom pagination with efficient user lookup
+        var totalCount = query.Count();
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        var items = query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToList();
+
+        // Get all unique user IDs from the contacts
+        var userIds = items.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
+        
+        // Batch lookup all user info at once
+        var userInfoLookup = userInfoRepository.GetAll()
+            .Where(u => userIds.Contains(u.UserId))
+            .ToDictionary(u => u.UserId, u => u);
+
+        // Get all unique org unit codes from the user info
+        var orgUnitCodes = userInfoLookup.Values
+            .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+            .Select(u => u.OrgUnit)
+            .Distinct()
+            .ToList();
+
+        // Batch lookup all organization hierarchy at once
+        var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+            .GroupBy(o => o.Code)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // Map entities to models with efficient user and org lookup
+        var mappedItems = items.Select(x => MapEntityToModelWithUserInfo(x, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
+
+        return new PaginationResponse<ContactModel>
+        {
+            Records = mappedItems,
+            TotalCount = totalCount
+        };
     }
 
     // New secure methods with row-level filtering and permissions
@@ -209,14 +296,49 @@ public class UNOPSContactManager : IContactManager
     public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
     {
         // Apply the specification to the query
-        var query = contactRepository.GetAll().AsQueryable();
+        var query = contactRepository.GetAll(["Partner"]).AsQueryable();
         var filteredQuery = query.ApplySpecification(specification);
         
-        // Apply pagination
-        return filteredQuery.Paginate(
-            x => mapper.Map<ContactModel>(x),
-            pagination
-        );
+        // Custom pagination with efficient user lookup
+        var totalCount = filteredQuery.Count();
+        var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+        var excludedRows = (pageIndex - 1) * pagination.PageSize;
+        
+        var items = filteredQuery
+            .Skip(excludedRows)
+            .Take(pagination.PageSize)
+            .Cast<UNOPSContact>()
+            .ToList();
+
+        // Get all unique user IDs from the contacts
+        var userIds = items.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
+        
+        // Batch lookup all user info at once
+        var userInfoLookup = userInfoRepository.GetAll()
+            .Where(u => userIds.Contains(u.UserId))
+            .ToDictionary(u => u.UserId, u => u);
+
+        // Get all unique org unit codes from the user info
+        var orgUnitCodes = userInfoLookup.Values
+            .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+            .Select(u => u.OrgUnit)
+            .Distinct()
+            .ToList();
+
+        // Batch lookup all organization hierarchy at once
+        var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+            .GroupBy(o => o.Code)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // Map entities to models with efficient user and org lookup
+        var mappedItems = items.Select(x => MapEntityToModelWithUserInfo(x, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
+
+        return new PaginationResponse<ContactModel>
+        {
+            Records = mappedItems,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<ContactModel?> GetContact(int userId, int id)

@@ -32,6 +32,9 @@ public class ContactModel
     public int? PartnerId { get; set; }
     public string? PartnerName { get; set; }
     public List<DocumentModel>? Documents { get; set; }
+
+    public string? CreatedByName { get; set; }
+    public string? CreatedByOfficeName { get; set; }
     
     /// <summary>
     /// Permissions for this specific contact

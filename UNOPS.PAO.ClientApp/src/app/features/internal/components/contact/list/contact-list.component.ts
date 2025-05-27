@@ -62,10 +62,36 @@ export class ContactListComponent implements OnInit, OnDestroy {
   // Define contact columns for the listview
   contactColumns: ListViewColumn[] = [
     { field: 'profilePictureUrl', label: '', type: 'avatar', sortable: false, width: '5%' },
-    { field: 'firstName', label: 'label.contact.firstName', type: 'text', sortable: true, width: '15%' },
-    { field: 'lastName', label: 'label.contact.lastName', type: 'text', sortable: true, width: '15%' },
-    { field: 'email', label: 'label.contact.email', type: 'email', sortable: true, width: '25%' },
-    { field: 'mobile', label: 'label.contact.mobile', type: 'text', sortable: true, width: '15%' }
+    {
+      field: 'partnerName',
+      label: 'label.partner.partner',
+      type: 'text',
+      sortable: false,
+      width: '15%',
+      ellipsis: true
+    },
+    { 
+      field: 'fullName', 
+      label: 'label.contact.fullName', 
+      type: 'template', 
+      sortable: false, 
+      width: '20%',
+      templateFn: (contact: any) => {
+        const firstName = contact.firstName || '';
+        const lastName = contact.lastName || '';
+        const middleName = contact.middleName || '';
+        return `${firstName} ${middleName} ${lastName}`.trim();
+      }
+    },
+    { field: 'title', label: 'label.contact.title', type: 'text', sortable: true, width: '15%' },
+    { 
+      field: 'createdByName',
+      label: 'label.audit.createdBy',
+      type: 'text',
+      sortable: false,
+      width: '15%',
+    },
+    { field: 'createdByOfficeName', label: 'label.contact.createdByOffice', type: 'text', sortable: false, width: '15%' },
   ];
 
   // Configure listview behavior with computed permissions
