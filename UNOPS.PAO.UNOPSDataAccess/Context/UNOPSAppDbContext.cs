@@ -61,6 +61,11 @@ public class UNOPSAppDbContext : AppDbContext
         modelBuilder
             .Entity<UNOPSLink>();
 
+        // Complete discriminator configuration for PartnerTree inheritance hierarchy
+        modelBuilder
+            .Entity<UNOPSPartnerTree>()
+            .HasDiscriminator().HasValue("UNOPSPartnerTree");
+
         modelBuilder
             .Entity<OrganizationHierarchy>()
             .HasOne(e => e.Parent)
