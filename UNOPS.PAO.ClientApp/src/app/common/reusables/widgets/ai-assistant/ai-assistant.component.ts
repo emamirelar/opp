@@ -44,6 +44,7 @@ export class AiAssistantComponent implements OnInit {
   isProcessingFile = signal(false);
   isDragging = signal(false);
   loading = signal(false);
+  isFullscreen = signal(false);
   layoutService = inject(LayoutService);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
@@ -51,6 +52,13 @@ export class AiAssistantComponent implements OnInit {
   private audioChunks: Blob[] = [];
   isRecording = signal(false);
   audioBlob = signal<Blob | null>(null);
+  
+  // Example prompts for welcome message
+  examplePrompts = [
+    { text: 'aiAssistant.examplePrompt1', icon: 'pi pi-search' },
+    { text: 'aiAssistant.examplePrompt2', icon: 'pi pi-file-edit' },
+    { text: 'aiAssistant.examplePrompt3', icon: 'pi pi-chart-line' }
+  ];
 
   constructor(
     public aiAssistantData: AiAssistantData
@@ -70,12 +78,43 @@ export class AiAssistantComponent implements OnInit {
     // Initialize with default empty value to avoid undefined
     this.message.set('');
     
+    // Load fullscreen state from localStorage instead of cookies
+    this.loadFullscreenState();
+    
     if (this.viewContainerRef) {
       this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
     }
     
     // Ensure change detection runs
     this.cdr.detectChanges();
+  }
+
+  // Fullscreen state management using localStorage
+  private loadFullscreenState(): void {
+    const fullscreen = localStorage.getItem('aiAssistantFullscreen');
+    this.isFullscreen.set(fullscreen === 'true');
+  }
+
+  private saveFullscreenState(): void {
+    localStorage.setItem('aiAssistantFullscreen', this.isFullscreen().toString());
+  }
+
+  // Toggle fullscreen state
+  toggleFullscreen(): void {
+    this.isFullscreen.set(!this.isFullscreen());
+    this.saveFullscreenState();
+  }
+
+  // Handle example prompt click
+  selectExamplePrompt(promptKey: string): void {
+    // You can customize this based on the actual prompt text you want to send
+    const promptTexts: { [key: string]: string } = {
+      'aiAssistant.examplePrompt1': 'Help me analyze this partner data',
+      'aiAssistant.examplePrompt2': 'Draft a partnership proposal',
+      'aiAssistant.examplePrompt3': 'Generate insights from recent interactions'
+    };
+    
+    this.message.set(promptTexts[promptKey] || '');
   }
 
   // Safe method to update message that won't trigger ExpressionChangedAfterItHasBeenCheckedError
@@ -107,11 +146,7 @@ export class AiAssistantComponent implements OnInit {
       const contents = await Promise.all(files.map(file => this.readFileAsBase64(file)));
 
       // Replace any existing files with the new one
-      this.selectedFiles.set([{
-        file: files[0],
-        name: files[0].name,
-        content: contents[0]
-      }]);
+      this.selectedFiles.set([{ file: files[0], name: files[0].name, content: '' }]);
     } catch (error) {
       console.error('Error processing files:', error);
     } finally {
@@ -182,7 +217,7 @@ export class AiAssistantComponent implements OnInit {
       const chatFiles = currentFiles.map(f => ({
         file: f.file,
         name: f.name,
-        content: f.content
+        content: ''
       }));
 
       this.aiAssistantData.sendMessage(currentMessage, chatFiles).subscribe({
@@ -272,11 +307,7 @@ export class AiAssistantComponent implements OnInit {
       const base64Audio = await this.blobToBase64(audioBlob);
 
       // Replace any existing files with the audio file
-      this.selectedFiles.set([{
-        file: new File([audioBlob], 'audio-message.mp3', { type: 'audio/mpeg' }),
-        name: 'audio-message.mp3',
-        content: base64Audio
-      }]);
+      this.selectedFiles.set([{ file: new File([audioBlob], 'audio-message.mp3', { type: 'audio/mpeg' }), name: 'audio-message.mp3', content: '' }]);
     } catch (error) {
       console.error('Error processing audio message:', error);
     }
