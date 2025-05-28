@@ -364,6 +364,50 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrgUnitId == @orgUnitId", "CanDelete": "OrgUnitId == @orgUnitId"}'
 );
 
+-- UserManagement Entity Permissions
+
+-- Partnership Global Admin role permissions for UserManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'UserManagement',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    null
+);
+
+-- Org Unit Admin role permissions for UserManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'UserManagement',
+    'ORG_UNIT_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "OrgUnit == @orgUnit", "CanCreate": "OrgUnit == @orgUnit", "CanUpdate": "OrgUnit == @orgUnit", "CanDelete": "OrgUnit == @orgUnit"}'
+);
+
 -- Assign UNOPS_GEN_USER role to all existing users
 INSERT INTO public."AspNetUserRoles" ("UserId", "RoleId")
 SELECT u."Id", r."Id"

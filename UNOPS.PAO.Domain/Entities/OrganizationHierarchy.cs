@@ -10,6 +10,7 @@ public class OrganizationHierarchy : ModifiableDeletableEntity
     public OrganizationUnitType Type { get; set; }
     public string Description { get; set; }
     public int? ParentId { get; set; }
+    public bool IsSelfManagementEnabled { get; set; } = false;
     public virtual OrganizationHierarchy Parent { get; set; }
     public virtual ICollection<OrganizationHierarchy> Children { get; set; }
 

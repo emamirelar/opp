@@ -10,7 +10,10 @@ interface UserInfo {
   name: string;
   userEmail: string;
   orgUnit: string;
+  orgUnitDescription?: string;
   supervisorId: number;
+  supervisorName?: string;
+  supervisorEmail?: string;
 }
 
 @Component({
@@ -42,7 +45,18 @@ interface UserInfo {
         </div>
         <div class="field">
           <label class="font-semibold">Organization Unit</label>
-          <div class="mt-2">{{userInfo?.orgUnit || 'N/A'}}</div>
+          <div class="mt-2">
+            <div>{{userInfo?.orgUnit || 'N/A'}}</div>
+            <div *ngIf="userInfo?.orgUnitDescription" class="text-sm text-gray-600 mt-1">{{userInfo?.orgUnitDescription}}</div>
+          </div>
+        </div>
+        <div class="field" *ngIf="userInfo?.supervisorName || userInfo?.supervisorEmail">
+          <label class="font-semibold">Supervisor</label>
+          <div class="mt-2">
+            <div *ngIf="userInfo?.supervisorName">{{userInfo?.supervisorName}}</div>
+            <div *ngIf="userInfo?.supervisorEmail" class="text-sm text-gray-600">{{userInfo?.supervisorEmail}}</div>
+            <div *ngIf="!userInfo?.supervisorName && !userInfo?.supervisorEmail">N/A</div>
+          </div>
         </div>
       </div>
       <ng-template pTemplate="footer">

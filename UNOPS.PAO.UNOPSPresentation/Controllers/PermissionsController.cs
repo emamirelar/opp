@@ -332,6 +332,10 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
                 {
                     return "PartnerTree";
                 }
+                if (entityPlural.ToLower() == "user-management")
+                {
+                    return "UserManagement";
+                }
                 // For other hyphenated entities, convert to PascalCase
                 // Split by dash, singularize each part, then join in PascalCase
                 var parts = entityPlural.Split('-');

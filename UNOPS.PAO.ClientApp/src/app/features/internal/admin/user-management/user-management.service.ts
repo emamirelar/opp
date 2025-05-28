@@ -34,6 +34,10 @@ interface UpdateUserRolesRequest {
   roles: string[];
 }
 
+interface UpdateOrgUnitSelfManagementRequest {
+  isSelfManagementEnabled: boolean;
+}
+
 interface PaginationResponse<T> {
   records: T[];
   totalCount: number;
@@ -82,5 +86,18 @@ export class UserManagementService {
       this.http.get<string>(`${this.baseUrl}/current-user-org-unit`)
     );
     return response;
+  }
+
+  async updateOrgUnitSelfManagement(orgUnitCode: string, request: UpdateOrgUnitSelfManagementRequest): Promise<void> {
+    await firstValueFrom(
+      this.http.put<void>(`${this.baseUrl}/org-units/${orgUnitCode}/self-management`, request)
+    );
+  }
+
+  async getOrgUnitSelfManagementStatus(orgUnitCode: string): Promise<boolean> {
+    const response = await firstValueFrom(
+      this.http.get<{ isSelfManagementEnabled: boolean }>(`${this.baseUrl}/org-units/${orgUnitCode}/self-management`)
+    );
+    return response.isSelfManagementEnabled;
   }
 } 
