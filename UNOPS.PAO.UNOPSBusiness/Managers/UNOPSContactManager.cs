@@ -215,34 +215,82 @@ public class UNOPSContactManager : IContactManager
             query = await _securityService.ApplyRowFiltersAsync(query, user, "read");
         }
 
-        // Apply pagination with permissions
-        var pagedResults = query.Paginate(
-            x => MapEntityToModel(x, mapper),
-            request
-        );
+        // Get page index and calculate offset
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
 
-        // Add permissions to each contact
-        if (_securityService != null)
+        // Apply ordering if specified
+        if (request.OrderBy != null)
         {
-            var contactsWithPermissions = new List<ContactModel>();
-            foreach (var contact in pagedResults.Records)
-            {
-                var entity = await contactRepository.GetByIdAsync(contact.Id, ["Partner", "Partner.PartnerOffice"]);
-                if (entity != null)
-                {
-                    var contactWithPermissions = await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
-                    contactsWithPermissions.Add(contactWithPermissions);
-                }
-            }
-            
-            return new PaginationResponse<ContactModel>
-            {
-                Records = contactsWithPermissions,
-                TotalCount = pagedResults.TotalCount
-            };
+            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
         }
 
-        return pagedResults;
+        // Get total count first
+        var totalCount = query.Count();
+        
+        // Materialize the entities to avoid concurrent database operations
+        var entities = query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToList();
+
+        // Get all unique user IDs from the contacts for efficient lookup
+        var userIds = entities.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
+        
+        // Batch lookup all user info at once
+        var userInfoLookup = new Dictionary<int, UserInfo>();
+        if (userIds.Any())
+        {
+            userInfoLookup = userInfoRepository.GetAll()
+                .Where(u => userIds.Contains(u.UserId))
+                .ToDictionary(u => u.UserId, u => u);
+        }
+
+        // Get all unique org unit codes from the user info
+        var orgUnitCodes = userInfoLookup.Values
+            .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+            .Select(u => u.OrgUnit)
+            .Distinct()
+            .ToList();
+
+        // Batch lookup all organization hierarchy at once
+        var orgHierarchyLookup = new Dictionary<string, OrganizationHierarchy>();
+        if (orgUnitCodes.Any())
+        {
+            orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+                .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+                .GroupBy(o => o.Code)
+                .ToDictionary(g => g.Key, g => g.First());
+        }
+
+        // Map entities to models with efficient user and org lookup
+        var contactsWithPermissions = new List<ContactModel>();
+        
+        foreach (var entity in entities)
+        {
+            var contact = MapEntityToModelWithUserInfo(entity, mapper, userInfoLookup, orgHierarchyLookup);
+            
+            // Add permissions if security service is available
+            if (_securityService != null)
+            {
+                var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
+                contact.Permissions = new EntityPermissionsModel
+                {
+                    CanRead = ((dynamic)permissions).canRead,
+                    CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                    CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
+                    CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
+                };
+            }
+            
+            contactsWithPermissions.Add(contact);
+        }
+
+        return new PaginationResponse<ContactModel>
+        {
+            Records = contactsWithPermissions,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
