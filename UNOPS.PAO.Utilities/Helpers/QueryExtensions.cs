@@ -70,14 +70,19 @@ public static class QueryExtensions
             query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
         }
 
+        // Get the total count first
+        var totalCount = query.Count();
+        
+        // Materialize the query results to avoid concurrent database operations
+        var queryResults = query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToList();
+
         return new PaginationResponse<TSource>
         {
-            TotalCount = query.Count(),
-            Records = query
-                .Skip(excludedRows)
-                .Take(request.PageSize)
-                .Select(transform)
-                .ToList()
+            TotalCount = totalCount,
+            Records = queryResults.Select(transform).ToList()
         };
     }
 
@@ -94,6 +99,10 @@ public static class QueryExtensions
             query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
         }
 
+        // Get the total count first
+        var totalCount = await query.CountAsync();
+        
+        // Materialize the query results to avoid concurrent database operations
         var records = await query
             .Skip(excludedRows)
             .Take(request.PageSize)
@@ -101,7 +110,7 @@ public static class QueryExtensions
 
         return new PaginationResponse<TSource>
         {
-            TotalCount = await query.CountAsync(),
+            TotalCount = totalCount,
             Records = records.Select(transform).ToList()
         };
     }
@@ -148,14 +157,19 @@ public static class QueryExtensions
             filteredQuery = filteredQuery.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
         }
         
+        // Get the total count first
+        var totalCount = filteredQuery.Count();
+        
+        // Materialize the query results to avoid concurrent database operations
+        var queryResults = filteredQuery
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToList();
+        
         return new PaginationResponse<TSource>
         {
-            TotalCount = filteredQuery.Count(),
-            Records = filteredQuery
-                .Skip(excludedRows)
-                .Take(request.PageSize)
-                .Select(transform)
-                .ToList()
+            TotalCount = totalCount,
+            Records = queryResults.Select(transform).ToList()
         };
     }
 
@@ -174,6 +188,10 @@ public static class QueryExtensions
             filteredQuery = filteredQuery.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
         }
         
+        // Get the total count first
+        var totalCount = await filteredQuery.CountAsync();
+        
+        // Materialize the query results to avoid concurrent database operations
         var records = await filteredQuery
             .Skip(excludedRows)
             .Take(request.PageSize)
@@ -181,7 +199,7 @@ public static class QueryExtensions
         
         return new PaginationResponse<TSource>
         {
-            TotalCount = await filteredQuery.CountAsync(),
+            TotalCount = totalCount,
             Records = records.Select(transform).ToList()
         };
     }
