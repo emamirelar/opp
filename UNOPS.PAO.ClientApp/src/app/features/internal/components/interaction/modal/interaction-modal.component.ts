@@ -166,7 +166,6 @@ export class InteractionModalComponent {
     this.record = this.dialogConfig.data?.record;
 
     if (this.record) {
-      debugger;
       this.recordId = this.record.id + '';
       this.formGroup.patchValue({
         id: this.record.id,

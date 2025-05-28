@@ -59,7 +59,7 @@ public class PartnerManager : IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerCategory", "Contacts"])
+            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
             .Where(x => !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
             .AsQueryable();
 
@@ -237,7 +237,7 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory", "Contacts"];
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
 
         var item = await PartnerRepository
             .GetAll(includes)
