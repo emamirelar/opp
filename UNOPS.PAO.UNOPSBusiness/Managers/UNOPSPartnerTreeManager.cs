@@ -79,7 +79,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         
         var result = await partnerTreeService.CreatePartnerTreeAsync(entity);
 
-        return await MapEntityToModel((UNOPSPartnerTree)result, mapper);
+        return await MapEntityToModel(result, mapper);
     }
 
     public IEnumerable<PartnerTreeModel> GetPartnerTreesAsync(int userId, string sortBy = "Name", bool ascending = true)
@@ -90,7 +90,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         var treeModels = new List<PartnerTreeModel>();
         foreach (var tree in allTrees)
         {
-            treeModels.Add(MapEntityToModel((UNOPSPartnerTree)tree, mapper).Result);
+            treeModels.Add(MapEntityToModel(tree, mapper).Result);
         }
 
         // Create a lookup by parent code for hierarchy building
@@ -123,13 +123,13 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
             return default;
         }
 
-        return await MapEntityToModel((UNOPSPartnerTree)item, mapper);
+        return await MapEntityToModel(item, mapper);
     }
 
     public IEnumerable<ExternalPartnerTreeModel> GetPostedPartnerTrees()
     {
         return partnerTreeService.GetAllPartnerTreesAsync().Result
-            .Select(x => MapEntityToExternalModel((UNOPSPartnerTree)x, mapper));
+            .Select(x => MapEntityToExternalModel(x, mapper));
     }
 
     public async Task<ExternalPartnerTreeModel?> GetPostedPartnerTree(int id)
@@ -141,7 +141,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
             throw new BusinessException($"Partner Level {id} does not exist.");
         }
 
-        return MapEntityToExternalModel((UNOPSPartnerTree)item, mapper);
+        return MapEntityToExternalModel(item, mapper);
     }
 
     public async Task<PartnerTreeModel?> UpdatePartnerTreeAsync(int userId, PartnerTreeDataModel model)
@@ -157,7 +157,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
 
         await partnerTreeService.UpdatePartnerTreeAsync(entity);
 
-        return await MapEntityToModel((UNOPSPartnerTree)entity, mapper);
+        return await MapEntityToModel(entity, mapper);
     }
 
     public async Task DeletePartnerTreeAsync(int userId, int id)
@@ -264,7 +264,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
             return default;
         }
 
-        return await MapEntityToModel((UNOPSPartnerTree)item, mapper);
+        return await MapEntityToModel(item, mapper);
     }
     
     // Secure methods with ClaimsPrincipal for RBAC
@@ -295,7 +295,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         
         var result = await partnerTreeService.CreatePartnerTreeAsync(entity);
 
-        return await MapEntityToModelWithPermissionsAsync((UNOPSPartnerTree)result, mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(result, mapper, user);
     }
 
     public async Task<IEnumerable<PartnerTreeModel>> GetPartnerTreesAsync(ClaimsPrincipal user, string sortBy = "Name", bool ascending = true)
@@ -313,7 +313,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         var treeModels = new List<PartnerTreeModel>();
         foreach (var tree in allTrees)
         {
-            var modelWithPermissions = await MapEntityToModelWithPermissionsAsync((UNOPSPartnerTree)tree, mapper, user);
+            var modelWithPermissions = await MapEntityToModelWithPermissionsAsync(tree, mapper, user);
             treeModels.Add(modelWithPermissions);
         }
 
@@ -335,7 +335,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
             return null; // User cannot access this partner tree
         }
 
-        return await MapEntityToModelWithPermissionsAsync((UNOPSPartnerTree)item, mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(item, mapper, user);
     }
 
     public async Task<PartnerTreeModel?> UpdatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
@@ -356,7 +356,7 @@ public class UNOPSPartnerTreeManager : IPartnerTreeManager
         mapper.Map(model, entity);
         await partnerTreeService.UpdatePartnerTreeAsync(entity);
 
-        return await MapEntityToModelWithPermissionsAsync((UNOPSPartnerTree)entity, mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
     }
 
     public async Task DeletePartnerTreeAsync(ClaimsPrincipal user, int id)
