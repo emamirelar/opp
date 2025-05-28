@@ -194,7 +194,19 @@
         "typeMessage": "Tapez votre message...",
         "takePhoto": "Prendre une photo",
         "attachFile": "Joindre un fichier",
-        "recordAudio": "Enregistrer un message vocal"
+        "recordAudio": "Enregistrer un message vocal",
+        "textToSpeech": "Synthèse vocale",
+        "collapse": "Réduire l'Assistant IA",
+        "expand": "Développer l'Assistant IA",
+        "fullscreen": "Mode plein écran",
+        "exitFullscreen": "Quitter le plein écran",
+        "welcomeTitle": "Bienvenue dans l'Assistant IA",
+        "welcomeMessage": "Je suis là pour vous aider avec la gestion des partenaires, la rédaction de propositions, l'analyse de données, et plus encore. Comment puis-je vous aider aujourd'hui ?",
+        "examplePromptsTitle": "Essayez de me demander :",
+        "examplePrompt1": "Analyser les données des partenaires et générer des insights",
+        "examplePrompt2": "Aider à rédiger une proposition de partenariat",
+        "examplePrompt3": "Résumer les interactions récentes avec les partenaires",
+        "learnMore": "En savoir plus sur ce que vous pouvez utiliser l'Assistant IA pour"
     },
     "common": {
         "cancel": "Annuler",

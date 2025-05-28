@@ -1,15 +1,30 @@
-<div class="fixed top-16 sm:m-4 right-0 w-[27rem] bottom-0 z-50
-            transition-all duration-300 ease-in-out transform origin-top-right bg-[var(--surface-overlay)] p-4
-            sm:border-2 border-blue-50 border-solid sm:rounded-3xl flex flex-col gap-2"
+<div class="fixed transition-all duration-300 ease-in-out transform origin-top-right bg-[var(--surface-overlay)] flex flex-col"
      [ngClass]="{
         'scale-100 opacity-100 translate-x-0': layoutService.layoutState().aiAssistantActive,
-        'opacity-0 translate-x-10 pointer-events-none': !layoutService.layoutState().aiAssistantActive
-     }">
+        'opacity-0 translate-x-10 pointer-events-none': !layoutService.layoutState().aiAssistantActive,
+        'ai-assistant-fullscreen': isFullscreen(),
+        'top-16 sm:m-4 right-0 w-[27rem] bottom-0 sm:border-2 border-blue-50 border-solid sm:rounded-3xl p-4 gap-2 z-50': !isFullscreen()
+     }"
+     [style.z-index]="isFullscreen() ? '9999' : '50'">
 
-  <div class="flex items-center w-full gap-2 ">
+  <!-- Header with fullscreen functionality only -->
+  <div class="flex items-center w-full gap-2 flex-shrink-0 sticky top-0 z-10 bg-inherit"
+       [ngClass]="{
+         'mb-4 pb-4 border-b border-gray-200': isFullscreen(),
+         'mb-0': !isFullscreen()
+       }">
     <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6 mx-2" />
     <span class="text-xl font-light">{{ 'aiAssistant.dialogHeader' | translate }}</span>
-    <div class="flex gap-2 ml-auto items-center">
+    <div class="flex gap-2 ml-auto items-center relative z-10">
+      <!-- Fullscreen toggle button -->
+      <p-button 
+        [icon]="isFullscreen() ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
+        [text]="true"
+        [rounded]="true"
+        pTooltip="{{ isFullscreen() ? 'aiAssistant.exitFullscreen' : 'aiAssistant.fullscreen' | translate }}"
+        (onClick)="toggleFullscreen()"
+        tooltipPosition="left">
+      </p-button>
 
       <p-button [icon]="aiAssistantData.textToSpeech() ? 'pi pi-volume-up' : 'pi pi-volume-off'"
         [text]="true"
@@ -29,22 +44,26 @@
       </p-button>
       <p-button
         icon="pi pi-times"
-        (onClick)="layoutService.onAIAssistantToggle()"
+        (onClick)="closeAiAssistant()"
         [text]="true"
         [rounded]="true">
       </p-button>
     </div>
   </div>
 
+  <!-- Content section -->
+  <div class="transition-all duration-300 ease-in-out overflow-hidden flex-1 flex flex-col min-h-0">
+
     <div #chatContainer
-         class="flex flex-col flex-1 p-4 space-y-4 relative flex-grow overflow-y-auto transition-all duration-300 ease-in-out"
-         (dragover)="onDragOver($event)"
-         (dragleave)="onDragLeave($event)"
-         (drop)="onDrop($event)"
+         class="flex flex-col flex-1 p-4 space-y-4 relative overflow-y-auto transition-all duration-300 ease-in-out min-h-0"
          [ngClass]="{
            'bg-blue-50/10 border-2 border-dashed border-blue-300': isDragging(),
-           'bg-transparent': !isDragging()
-         }">
+           'bg-transparent': !isDragging(),
+           'fullscreen-chat': isFullscreen()
+         }"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave($event)"
+         (drop)="onDrop($event)">
 
       <!-- Loading state -->
       <div *ngIf="aiAssistantData.isLoading()"
@@ -60,16 +79,15 @@
         <div class="text-blue-600 flex flex-col items-center gap-4">
           <i class="pi pi-upload text-4xl"></i>
           <span class="text-lg font-medium">{{ 'aiAssistant.dropFilesHere' | translate }}</span>
-<!--          <span class="text-sm text-blue-500">{{ 'aiAssistant.supportedFormats' | translate }}</span>-->
         </div>
       </div>
 
       <!-- Chat messages -->
       <div *ngFor="let message of aiAssistantData.chatHistory()"
-           class="flex flex-col"
+           class="flex flex-col animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
            [ngClass]="message.isUser ? 'items-end' : ''">
 
-        <div class="py-3 rounded-2xl rounded-tr-sm break-words animate-fade-in"
+        <div class="py-3 rounded-2xl rounded-tr-sm break-words"
              [ngClass]="message.isUser ? 'p-3 bg-blue-50 shadow-sm text-gray-800  max-w-[85%]' : ''">
           <div style="white-space: pre-line;">{{ message.text }}</div>
           <!-- Display files if any -->
@@ -109,118 +127,168 @@
         </div>
       </div>
 
-      <!-- Empty state -->
-      <div *ngIf="aiAssistantData.chatHistory().length === 0" class="text-center text-gray-500 p-5">
-        <p class="text-lg font-light">{{ 'aiAssistant.assistPrompt' | translate }}</p>
-        <p class="mt-2 text-sm text-blue-500">
+      <!-- Welcome message with example prompts -->
+      <div *ngIf="aiAssistantData.chatHistory().length === 0" class="text-center p-5">
+        <!-- Animated welcome message -->
+        <div class="mb-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+          <div class="flex justify-center mb-4">
+            <img src="images/AI_visual_64.svg" 
+                 alt="AI Assistant" 
+                 class="size-16 animate-float" />
+          </div>
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">
+            {{ 'aiAssistant.welcomeTitle' | translate }}
+          </h3>
+          <p class="text-gray-600 mb-4">
+            {{ 'aiAssistant.welcomeMessage' | translate }}
+          </p>
+        </div>
+
+        <!-- Example prompts -->
+        <div class="space-y-3 mb-6">
+          <p class="text-sm font-medium text-gray-700 mb-3">
+            {{ 'aiAssistant.examplePromptsTitle' | translate }}
+          </p>
+          <div *ngFor="let prompt of examplePrompts; let i = index" 
+               class="animate-in fade-in-0 slide-in-from-left-2 duration-300 cursor-pointer group"
+               [style.animation-delay]="(i * 100) + 'ms'"
+               (click)="selectExamplePrompt(prompt.text)">
+            <div class="flex items-center gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all duration-200 group-hover:shadow-md group-hover:scale-[1.02]">
+              <i [class]="prompt.icon + ' text-blue-600'"></i>
+              <span class="text-sm text-gray-700 group-hover:text-gray-900">
+                {{ prompt.text | translate }}
+              </span>
+              <i class="pi pi-arrow-right text-blue-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Learn more link -->
+        <div class="border-t border-gray-200 pt-4 animate-in fade-in-0 duration-700">
+          <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2">
+            <i class="pi pi-external-link text-xs"></i>
+            {{ 'aiAssistant.learnMore' | translate }}
+          </a>
+        </div>
+
+        <!-- Drag and drop info -->
+        <p class="mt-4 text-xs text-blue-500 animate-in fade-in-0 duration-1000">
           <i class="pi pi-info-circle mr-1"></i>
           {{ 'aiAssistant.dragDropInfo' | translate }}
         </p>
       </div>
-  </div>
-  <div class="flex-col flex w-full gap-2 mt-2 self-end shrink">
-    <div *ngIf="selectedFiles().length > 0 && !isWaitingResponse()"
-         class="mt-2 p-2 bg-gray-50 rounded-xl animate-[slideIn_0.3s_ease-out]">
-      <div class="text-sm font-medium mb-2 text-gray-700 flex items-center gap-2">
-        <i class="pi pi-paperclip text-blue-500"></i>
-        {{ 'aiAssistant.filesToSend' | translate }}
-      </div>
-      <div class="max-h-24">
-        <div *ngFor="let fileData of selectedFiles(); let i = index"
-             class="flex items-center gap-2 justify-between py-2 hover:bg-gray-100 rounded-lg px-3 transition-colors duration-200">
-          <div class="flex items-center gap-2">
-            @if (fileData.file.type.startsWith('image/')) {
-              <div class="size-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-                <img [src]="fileData.file | safeUrl" class="w-full h-full object-cover" alt="thumbnail" />
-              </div>
-              <span class="truncate max-w-[180px] text-sm">{{ fileData.name }}</span>
-            } @else if (fileData.file.type.startsWith('audio/')) {
-              <div class="flex items-center max-w-[270px] gap-2">
-                <audio controls class="h-8">
-                  <source [src]="fileData.file | safeUrl" [type]="fileData.file.type">
-                </audio>
-              </div>
-            } @else {
-              <div class="flex items-center gap-2">
-                <i class="pi pi-file text-blue-500"></i>
+    </div>
+
+    <!-- Input section -->
+    <div class="flex-col flex w-full gap-2 flex-shrink-0">
+      <div *ngIf="selectedFiles().length > 0 && !isWaitingResponse()"
+           class="p-2 bg-gray-50 rounded-xl animate-in slide-in-from-top-2 duration-300">
+        <div class="text-sm font-medium mb-2 text-gray-700 flex items-center gap-2">
+          <i class="pi pi-paperclip text-blue-500"></i>
+          {{ 'aiAssistant.filesToSend' | translate }}
+        </div>
+        <div class="max-h-24">
+          <div *ngFor="let fileData of selectedFiles(); let i = index"
+               class="flex items-center gap-2 justify-between py-2 hover:bg-gray-100 rounded-lg px-3 transition-colors duration-200">
+            <div class="flex items-center gap-2">
+              @if (fileData.file.type.startsWith('image/')) {
+                <div class="size-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                  <img [src]="fileData.file | safeUrl" class="w-full h-full object-cover" alt="thumbnail" />
+                </div>
                 <span class="truncate max-w-[180px] text-sm">{{ fileData.name }}</span>
-              </div>
-            }
+              } @else if (fileData.file.type.startsWith('audio/')) {
+                <div class="flex items-center max-w-[270px] gap-2">
+                  <audio controls class="h-8">
+                    <source [src]="fileData.file | safeUrl" [type]="fileData.file.type">
+                  </audio>
+                </div>
+              } @else {
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-file text-blue-500"></i>
+                  <span class="truncate max-w-[180px] text-sm">{{ fileData.name }}</span>
+                </div>
+              }
+            </div>
+            <div class="flex gap-2">
+              <p-button
+                icon="pi pi-times"
+                rounded="true"
+                outlined="true"
+                severity="secondary"
+                (click)="removeFile(i)">
+              </p-button>
+            </div>
           </div>
-          <div class="flex gap-2">
+        </div>
+      </div>
+      <div class="w-full flex flex-col gap-2 bg-gray-50 p-3 rounded-xl">
+        <textarea
+          pTextarea
+          [ngModel]="message()"
+          (ngModelChange)="updateMessage($event)"
+          placeholder="{{ 'aiAssistant.typeMessage' | translate }}"
+          [rows]="1"
+          [autoResize]="true"
+          class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent text-sm"
+          (keydown.enter)="$event.preventDefault(); sendMessage()">
+        </textarea>
+
+        <div class="flex justify-between items-center">
+          <div class="flex gap-1">
             <p-button
-              icon="pi pi-times"
-              rounded="true"
-              outlined="true"
-              severity="secondary"
-              (click)="removeFile(i)">
+              icon="pi pi-camera"
+              (onClick)="startCamera()"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              pTooltip="{{ 'aiAssistant.takePhoto' | translate }}"
+              [disabled]="isWaitingResponse()">
+            </p-button>
+            <input
+              #fileInput
+              type="file"
+              class="hidden"
+              (change)="onFileSelect($event)"
+              [accept]="'image/*,application/pdf,text/*,audio/*'"
+              [multiple]="false">
+            <p-button
+              icon="pi pi-paperclip"
+              (onClick)="fileInput.click()"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              pTooltip="{{ 'aiAssistant.attachFile' | translate }}"
+              [disabled]="isProcessingFile()">
             </p-button>
           </div>
-        </div>
-      </div>
-    </div>
-    <div class="w-full flex flex-col gap-2 bg-gray-50 p-2 rounded-xl">
-      <textarea
-        pTextarea
-        [ngModel]="message()"
-        (ngModelChange)="updateMessage($event)"
-        placeholder="{{ 'aiAssistant.typeMessage' | translate }}"
-        [rows]="1"
-        [autoResize]="true"
-        class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent"
-        (keydown.enter)="$event.preventDefault(); sendMessage()">
-      </textarea>
+          <div class="flex gap-1">
+            <div class="flex justify-center items-center relative">
+              <p-button
+              icon="pi pi-microphone"
+              (mousedown)="startRecording()"
+              (mouseup)="stopRecording()"
+              (mouseleave)="stopRecording()"
+              [text]="!isRecording()"
+              [rounded]="true"
+              size="small"
+              [ngClass]="{'recording': isRecording()}"
+              pTooltip="{{ 'aiAssistant.recordAudio' | translate }}"
+              [disabled]="isWaitingResponse()">
 
-      <div class="flex justify-between items-center">
-        <div class="flex gap-2">
-          <p-button
-            icon="pi pi-camera"
-            (onClick)="startCamera()"
-            [text]="true"
-            [rounded]="true"
-            pTooltip="{{ 'aiAssistant.takePhoto' | translate }}"
-            [disabled]="isWaitingResponse()">
-          </p-button>
-          <input
-            #fileInput
-            type="file"
-            class="hidden"
-            (change)="onFileSelect($event)"
-            [accept]="'image/*,application/pdf,text/*,audio/*'"
-            [multiple]="false">
-          <p-button
-            icon="pi pi-paperclip"
-            (onClick)="fileInput.click()"
-            [text]="true"
-            [rounded]="true"
-            pTooltip="{{ 'aiAssistant.attachFile' | translate }}"
-            [disabled]="isProcessingFile()">
-          </p-button>
-        </div>
-        <div class="flex gap-2">
-          <div class="flex justify-center items-center relative">
+            </p-button>
+            <div *ngIf="isRecording()" class="voice-activity">
+            </div>
+            </div>
+
             <p-button
-            icon="pi pi-microphone"
-            (mousedown)="startRecording()"
-            (mouseup)="stopRecording()"
-            (mouseleave)="stopRecording()"
-            [text]="!isRecording()"
-            [rounded]="true"
-            [ngClass]="{'recording': isRecording()}"
-            pTooltip="{{ 'aiAssistant.recordAudio' | translate }}"
-            [disabled]="isWaitingResponse()">
-
-          </p-button>
-          <div *ngIf="isRecording()" class="voice-activity">
+              icon="pi pi-send"
+              (onClick)="sendMessage()"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              [disabled]="!message().trim() && selectedFiles().length === 0">
+            </p-button>
           </div>
-          </div>
-
-          <p-button
-            icon="pi pi-send"
-            (onClick)="sendMessage()"
-            [text]="true"
-            [disabled]="!message().trim() && selectedFiles().length === 0">
-          </p-button>
         </div>
       </div>
     </div>
