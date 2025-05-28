@@ -7,6 +7,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
+using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -328,7 +329,7 @@ public class UNOPSUserManagementManager : IUserManagementManager
 
         // Find the organization unit
         var orgUnit = await _context.OrganizationHierarchies
-            .Where(o => o.Code == orgUnitCode && !o.IsDeleted)
+            .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
             .FirstOrDefaultAsync();
 
         if (orgUnit == null)
@@ -359,7 +360,7 @@ public class UNOPSUserManagementManager : IUserManagementManager
 
         // Find the organization unit
         var orgUnit = await _context.OrganizationHierarchies
-            .Where(o => o.Code == orgUnitCode && !o.IsDeleted)
+            .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
             .FirstOrDefaultAsync();
 
         if (orgUnit == null)

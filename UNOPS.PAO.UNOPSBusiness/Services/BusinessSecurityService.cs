@@ -11,6 +11,7 @@ using UNOPS.PAO.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.Domain.Enums;
 
 public interface IBusinessSecurityService
 {
@@ -282,7 +283,7 @@ public class BusinessSecurityService : IBusinessSecurityService
         if (unopsPartner.PartnerOffice == null && unopsPartner.PartnerOfficeId.HasValue)
         {
             unopsPartner.PartnerOffice = await _context.OrganizationHierarchies
-                .FirstOrDefaultAsync(o => o.Id == unopsPartner.PartnerOfficeId.Value);
+                .FirstOrDefaultAsync(o => o.Id == unopsPartner.PartnerOfficeId.Value && o.Type == OrganizationUnitType.OrgUnit);
         }
 
         // Check if partner office matches user's org unit
@@ -323,7 +324,7 @@ public class BusinessSecurityService : IBusinessSecurityService
         if (unopsInteraction.OrgUnit == null && unopsInteraction.OrgUnitId.HasValue)
         {
             unopsInteraction.OrgUnit = await _context.OrganizationHierarchies
-                .FirstOrDefaultAsync(o => o.Id == unopsInteraction.OrgUnitId.Value);
+                .FirstOrDefaultAsync(o => o.Id == unopsInteraction.OrgUnitId.Value && o.Type == OrganizationUnitType.OrgUnit);
         }
 
         // Load interaction users if needed for user-based access

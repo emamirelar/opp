@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.DataAccess.Services;
 
@@ -26,7 +27,7 @@ public class UserInfoService : IUserInfoService
         // Convert both the input email and database email to lowercase for case-insensitive comparison
         var result = await _context.UserInfos
             .Where(u => u.UserEmail.ToLower() == email.ToLower())
-            .Join(_context.OrganizationHierarchies,
+            .Join(_context.OrganizationHierarchies.Where(oh => oh.Type == OrganizationUnitType.OrgUnit),
                 userInfo => userInfo.OrgUnit,
                 orgHierarchy => orgHierarchy.Code,
                 (userInfo, orgHierarchy) => new { userInfo, orgHierarchy })

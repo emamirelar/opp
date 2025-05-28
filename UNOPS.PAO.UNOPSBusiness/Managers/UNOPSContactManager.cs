@@ -1,5 +1,6 @@
 using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
+using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -14,7 +15,6 @@ using Newtonsoft.Json.Linq;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Models;
@@ -59,7 +59,7 @@ public class UNOPSContactManager : IContactManager
                 if (!string.IsNullOrEmpty(userInfo.OrgUnit))
                 {
                     var orgHierarchy = organizationHierarchyRepository.GetAll()
-                        .Where(o => !string.IsNullOrEmpty(o.Code))
+                        .Where(o => !string.IsNullOrEmpty(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
                         .FirstOrDefault(o => o.Code == userInfo.OrgUnit);
                     if (orgHierarchy != null)
                     {
@@ -188,7 +188,7 @@ public class UNOPSContactManager : IContactManager
 
         // Batch lookup all organization hierarchy at once
         var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
-            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
             .GroupBy(o => o.Code)
             .ToDictionary(g => g.Key, g => g.First());
 
@@ -375,7 +375,7 @@ public class UNOPSContactManager : IContactManager
 
         // Batch lookup all organization hierarchy at once
         var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
-            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
             .GroupBy(o => o.Code)
             .ToDictionary(g => g.Key, g => g.First());
 
