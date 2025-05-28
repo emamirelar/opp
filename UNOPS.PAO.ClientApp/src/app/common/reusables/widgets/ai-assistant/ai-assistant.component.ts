@@ -105,6 +105,16 @@ export class AiAssistantComponent implements OnInit {
     this.saveFullscreenState();
   }
 
+  // Handle closing the AI Assistant - reset to small screen
+  closeAiAssistant(): void {
+    // Reset to small screen mode
+    this.isFullscreen.set(false);
+    this.saveFullscreenState();
+    
+    // Close the AI Assistant
+    this.layoutService.onAIAssistantToggle();
+  }
+
   // Handle example prompt click
   selectExamplePrompt(promptKey: string): void {
     // You can customize this based on the actual prompt text you want to send
