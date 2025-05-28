@@ -28,6 +28,7 @@ import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MarkdownPipe } from '../../../pipes/markdown.pipe';
 import { LinkListComponent } from "../../../../../common/reusables/components/link/list/link-list.component";
@@ -73,7 +74,8 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
     PartnerViewContactsComponent,
     ListviewComponent,
     RouterModule,
-    JsonPipe
+    JsonPipe,
+    ProgressSpinnerModule
   ],
   templateUrl: './partner-tree-view.component.html',
   standalone: true,
@@ -101,25 +103,44 @@ export class PartnerTreeViewComponent implements OnInit {
 
   childrenPartnerGroups = signal<PartnerGroup[]>([]);
 
+  // Loading state
+  isLoading = signal<boolean>(false);
+
   isPartnerCategory = computed(() => this.partnerTree()?.partnerCategoryCode !== null);
 
+  partnersUrl = computed(() => {
+    if (!this.partnerTree()?.partnerGroupCode) {
+      return 'api/partner/by-partner-category-code/' + this.partnerTree()?.partnerCategoryCode;
+    } else {
+      return 'api/partner/by-partner-group-code/' + this.partnerTree()?.partnerGroupCode;
+    }
+  });
+
   ngOnInit() {
-    this.activatedRoute.data.subscribe((data: {[key: string]: any}) => {
-      if (data['partnerTreeData']) {
-        this.partnerTree.set(data['partnerTreeData'].data);
-        this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
-        
-        // Extract permissions from response if available
-        if (data['partnerTreeData'].permissions) {
-          this.recordPermissions.set({
-            entity: 'PartnerTree',
-            hasAccess: true,
-            permissions: data['partnerTreeData'].permissions
-          });
-        } else if (this.partnerTree()?.id) {
-          // Load permissions for the partner tree
-          this.recordPermissionsData.loadPermissions(this.partnerTree()!.id!.toString(), this.cdr);
+    this.activatedRoute.data.subscribe({
+      next: (data: {[key: string]: any}) => {
+        if (data['partnerTreeData']) {
+          this.partnerTree.set(data['partnerTreeData'].data);
+          this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
+          
+          // Extract permissions from response if available
+          if (data['partnerTreeData'].permissions) {
+            this.recordPermissions.set({
+              entity: 'PartnerTree',
+              hasAccess: true,
+              permissions: data['partnerTreeData'].permissions
+            });
+          } else if (this.partnerTree()?.id) {
+            // Load permissions for the partner tree
+            this.recordPermissionsData.loadPermissions(this.partnerTree()!.id!.toString(), this.cdr);
+          }
         }
+      },
+      error: (error) => {
+        console.error('Error loading partner tree data:', error);
+        this.feedbackDialogService.showErrorToast({ 
+          detail: 'Failed to load partner tree data' 
+        });
       }
     });
   }
@@ -160,12 +181,18 @@ export class PartnerTreeViewComponent implements OnInit {
 
     ref.onClose.subscribe((result: PartnerTree) => {
       if (result) {
+        this.isLoading.set(true);
         // Reload the tree data after successful edit
         this.cachedDataService.partnerTreeService.getPartnerTreeDataById(result.id!.toString()).subscribe({
           next: (data: any) => {
             this.partnerTree.set(data.data);
             this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
             this.feedbackDialogService.showSuccessToast({ detail: 'Partner tree updated successfully!' });
+            this.isLoading.set(false);
+          },
+          error: (error) => {
+            this.feedbackDialogService.showErrorToast({ detail: 'Failed to update partner tree' });
+            this.isLoading.set(false);
           }
         });
       }
@@ -173,14 +200,8 @@ export class PartnerTreeViewComponent implements OnInit {
   }
 
   navigateToPartner($event: any) {
-    this.router.navigate(['/partnerships/partners/' + $event.id]);
-  }
-
-  getPartnersUrl() : string {
-    if (this.isPartnerCategory()) {
-      return 'api/partner/by-partner-category-code/' + this.partnerTree()?.partnerCategoryCode;
-    } else {
-      return 'api/partner/by-partner-group-code/' + this.partnerTree()?.partnerGroupCode;
+    if ($event?.id) {
+      this.router.navigate(['/partnerships/partners/' + $event.id]);
     }
   }
 

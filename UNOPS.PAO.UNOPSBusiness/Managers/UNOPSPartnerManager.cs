@@ -155,7 +155,7 @@ public class UNOPSPartnerManager : IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerCategory", "Contacts"])
+            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
@@ -337,7 +337,7 @@ public class UNOPSPartnerManager : IPartnerManager
     
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory", "Contacts"];
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -467,7 +467,7 @@ public class UNOPSPartnerManager : IPartnerManager
         
         // Get all partners with the matching codes
         var query = PartnerRepository
-            .GetAll()
+            .GetAll(["PartnerOffice", "PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
@@ -672,7 +672,7 @@ public class UNOPSPartnerManager : IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartnersAsync(ClaimsPrincipal user, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerCategory"])
+            .GetAll(["PartnerOffice", "PartnerGroup"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
@@ -836,7 +836,7 @@ public class UNOPSPartnerManager : IPartnerManager
         var partnerTreesByGroupWithChildrenCodes = GetAllDescendantPartnerTrees(partnerTreesByGroupCodes).Select(pt => pt.Code).ToList();
         
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerCategory"])
+            .GetAll(["PartnerOffice", "PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupWithChildrenCodes.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
@@ -884,7 +884,7 @@ public class UNOPSPartnerManager : IPartnerManager
         var partnerTreesByGroupInCategoryCode = GetAllDescendantPartnerTrees(partnerTreesByCategoryCodes).Select(pt => pt.Code).ToList();
         
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerCategory"])
+            .GetAll(["PartnerOffice", "PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
             .AsQueryable();
 

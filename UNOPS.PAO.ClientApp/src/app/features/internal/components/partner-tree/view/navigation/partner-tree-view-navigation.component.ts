@@ -49,33 +49,19 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
 
       const isTherePartnerCategory = categories && categories.length > 0;
 
+      if (isTherePartnerCategory && partnerTree?.partnerCategoryCode) {
+        // Always set the partner category since we'll always have a partnerCategoryCode
+        this.selectedPartnerCategory = categories.find(category => category.partnerCategoryCode === partnerTree.partnerCategoryCode);
+        this.partnerGroupOptions.set(this.cachedDataService.getParterGroupByCategoryCode(partnerTree.partnerCategoryCode));
 
-      if (isTherePartnerCategory) {
-
-        const isThereCategoryCode = partnerTree && partnerTree.partnerCategoryCode;
-
-        if (isThereCategoryCode) {
-          this.selectedPartnerCategory = categories.find(category => category.partnerCategoryCode === partnerTree.partnerCategoryCode);
-          this.selectedPartnerGroup = undefined;
-          this.partnerGroupOptions.set(this.cachedDataService.getParterGroupByCategoryCode(partnerTree.partnerCategoryCode));
-        } else if (this.partnerTree()?.partnerGroupCode) {
-          const partnerGroupCode = this.partnerTree()?.partnerGroupCode;
-
-          // Find which category contains this group
-          const categoryWithGroup = categories.find(category =>
-            category.children.some(group => group.partnerGroupCode === partnerGroupCode)
+        // If we also have a partnerGroupCode, set the selected group
+        if (partnerTree.partnerGroupCode) {
+          this.selectedPartnerGroup = this.partnerGroupOptions().find(
+            group => group.partnerGroupCode === partnerTree.partnerGroupCode
           );
-
-          if (categoryWithGroup) {
-            this.selectedPartnerCategory = categoryWithGroup;
-            this.partnerGroupOptions.set(categoryWithGroup.children);
-            this.selectedPartnerGroup = categoryWithGroup.children.find(
-              group => group.partnerGroupCode === partnerGroupCode
-            );
-          }
+        } else {
+          this.selectedPartnerGroup = undefined;
         }
-
-
       }
     });
   }
@@ -94,7 +80,15 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
   }
 
   onPartnerGroupChange(event: any) {
-    const id = event.value.partnerGroupId;
-    this.router.navigate(['/admin/partner-tree', id]);
+    if (event.value) {
+      const id = event.value.partnerGroupId;
+      this.router.navigate(['/admin/partner-tree', id]);
+    } else {
+      // When partner group is deselected, navigate to the selected partner category
+      if (this.selectedPartnerCategory) {
+        const id = this.selectedPartnerCategory.partnerCategoryId;
+        this.router.navigate(['/admin/partner-tree', id]);
+      }
+    }
   }
 }
