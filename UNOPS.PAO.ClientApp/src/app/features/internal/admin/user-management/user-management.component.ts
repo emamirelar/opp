@@ -29,6 +29,7 @@ interface UserManagementModel {
   name: string;
   email: string;
   orgUnit: string;
+  orgUnitCode?: string;
   roles: string[];
   rolesDisplay: string;
   lastModifiedDate?: Date;
@@ -116,7 +117,8 @@ export class UserManagementComponent implements OnInit {
   // Dialog state
   editDialogVisible = signal<boolean>(false);
   selectedUser = signal<UserManagementModel | null>(null);
-  selectedUserRoles = signal<string[]>([]);
+  isPartnerUser = signal<boolean>(false);
+  isSelfManagementEnabled = signal<boolean>(false);
 
   // Filter and pagination state
   searchTerm = signal<string>('');
@@ -133,6 +135,13 @@ export class UserManagementComponent implements OnInit {
   roleOptions = computed(() => 
     this.availableRoles().map(role => ({ label: role.name, value: role.name }))
   );
+
+  // Computed value for other roles (excluding PARTNER_USER)
+  otherUserRoles = computed(() => {
+    const user = this.selectedUser();
+    if (!user) return [];
+    return user.roles.filter(role => role !== 'PARTNER_USER');
+  });
 
   // Permission computed values
   canRead = computed(() => this.entityPermissions().permissions.canRead);
@@ -173,14 +182,18 @@ export class UserManagementComponent implements OnInit {
             return;
           }
           console.log(`[IMPERSONATE-ROLES] Loaded role impersonation permissions for route ${currentPath}:`, permissions);
+          console.log(`[IMPERSONATE-ROLES] canUpdate: ${permissions.permissions.canUpdate}, canRead: ${permissions.permissions.canRead}`);
           this.entityPermissions.set(permissions);
           this.permissionsLoading.set(false);
           
           // Load data only after permissions are confirmed
           if (permissions.hasAccess) {
-            this.loadCurrentUserRoles();
-            this.loadAvailableRoles();
-            this.loadUsers();
+            // Load current user roles first, then load other data
+            this.loadCurrentUserRoles().then(() => {
+              // After roles are loaded, load the rest of the data
+              this.loadAvailableRoles();
+              this.loadUsers(); // This will now use the correct showMyOrgUnitOnly setting
+            });
           }
           
           this.cdr.detectChanges();
@@ -198,22 +211,26 @@ export class UserManagementComponent implements OnInit {
       });
   }
 
-  private loadCurrentUserRoles() {
-    this.authService.getUserRoles().subscribe({
-      next: (roles) => {
-        this.currentUserRoles.set(roles);
-        
-        // If user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), automatically enable org unit filtering
-        if (this.isOrgUnitAdmin()) {
-          this.showMyOrgUnitOnly.set(true);
-          console.log('[IMPERSONATE-ROLES] ORG_UNIT_ADMIN detected - automatically enabling org unit filtering');
+  private async loadCurrentUserRoles(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.authService.getUserRoles().subscribe({
+        next: (roles) => {
+          this.currentUserRoles.set(roles);
+          
+          // If user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), automatically enable org unit filtering
+          if (this.isOrgUnitAdmin()) {
+            this.showMyOrgUnitOnly.set(true);
+            console.log('[IMPERSONATE-ROLES] ORG_UNIT_ADMIN detected - automatically enabling org unit filtering');
+          }
+          
+          this.cdr.detectChanges();
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error loading current user roles:', error);
+          reject(error);
         }
-        
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error loading current user roles:', error);
-      }
+      });
     });
   }
 
@@ -298,8 +315,25 @@ export class UserManagementComponent implements OnInit {
 
   editUser(user: UserManagementModel) {
     this.selectedUser.set(user);
-    this.selectedUserRoles.set([...user.roles]);
+    this.isPartnerUser.set(user.roles.includes('PARTNER_USER'));
+    this.loadOrgUnitSelfManagementStatus(user.orgUnitCode || user.orgUnit);
     this.editDialogVisible.set(true);
+  }
+
+  private async loadOrgUnitSelfManagementStatus(orgUnitCode: string) {
+    // ORG_UNIT_ADMIN users cannot modify organization self-management settings
+    if (this.isOrgUnitAdmin()) {
+      this.isSelfManagementEnabled.set(false);
+      return;
+    }
+    
+    try {
+      const status = await this.userManagementService.getOrgUnitSelfManagementStatus(orgUnitCode);
+      this.isSelfManagementEnabled.set(status);
+    } catch (error) {
+      console.error('Error loading org unit self-management status:', error);
+      this.isSelfManagementEnabled.set(false);
+    }
   }
 
   async saveUserRoles() {
@@ -307,11 +341,30 @@ export class UserManagementComponent implements OnInit {
     if (!user) return;
 
     try {
+      // Get current roles excluding PARTNER_USER
+      const otherRoles = user.roles.filter(role => role !== 'PARTNER_USER');
+      
+      // Build new roles array: keep other roles and add PARTNER_USER if checked
+      const newRoles = this.isPartnerUser() 
+        ? [...otherRoles, 'PARTNER_USER']
+        : otherRoles;
+
       const request = {
-        roles: this.selectedUserRoles()
+        roles: newRoles
       };
 
+      // Update user roles
       const updatedUser: UserManagementModel = await this.userManagementService.updateUserRoles(user.userId, request);
+      
+      // Update organization unit self-management setting only for PARTNER_GLOB_ADMIN users
+      if (!this.isOrgUnitAdmin()) {
+        const orgUnitCode = user.orgUnitCode || user.orgUnit;
+        if (orgUnitCode) {
+          await this.userManagementService.updateOrgUnitSelfManagement(orgUnitCode, {
+            isSelfManagementEnabled: this.isSelfManagementEnabled()
+          });
+        }
+      }
       
       // Update the user in the list
       const currentUsers = this.users();
@@ -322,10 +375,15 @@ export class UserManagementComponent implements OnInit {
       }
 
       this.editDialogVisible.set(false);
+      
+      const successMessage = this.isOrgUnitAdmin() 
+        ? 'User partnership access updated successfully'
+        : 'User permissions and organization settings updated successfully';
+        
       this.messageService.add({
         severity: 'success',
         summary: 'Success',
-        detail: 'User roles updated successfully'
+        detail: successMessage
       });
     } catch (error) {
       console.error('Error updating user roles:', error);
@@ -340,7 +398,8 @@ export class UserManagementComponent implements OnInit {
   cancelEdit() {
     this.editDialogVisible.set(false);
     this.selectedUser.set(null);
-    this.selectedUserRoles.set([]);
+    this.isPartnerUser.set(false);
+    this.isSelfManagementEnabled.set(false);
   }
 
   getRoleSeverity(role: string): string {

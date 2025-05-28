@@ -29,13 +29,17 @@ import { AvatarModule } from 'primeng/avatar';
 import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.component';
 import { RoleService } from '../../../../essentials/services/role.service';
 import { RoleDialogComponent } from './role-dialog/role-dialog.component';
+import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
 
 interface UserInfo {
   userId: number;
   name: string;
   userEmail: string;
   orgUnit: string;
+  orgUnitDescription?: string;
   supervisorId: number;
+  supervisorName?: string;
+  supervisorEmail?: string;
 }
 
 @Component({
@@ -57,7 +61,8 @@ interface UserInfo {
     InputTextModule,
     AvatarModule,
     GlobalSearchBarComponent,
-    RoleDialogComponent
+    RoleDialogComponent,
+    ProfileDialogComponent
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -67,6 +72,7 @@ interface UserInfo {
 })
 export class TopbarComponent implements OnInit, OnDestroy {
   @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
+  @ViewChild(ProfileDialogComponent) profileDialog!: ProfileDialogComponent;
 
   items!: MenuItem[];
   notifications: Notification[] = [];
@@ -131,72 +137,55 @@ export class TopbarComponent implements OnInit, OnDestroy {
     });
 
     this.profileMenuItems = [];
+    this.setupProfileMenu();
+  }
+
+  private setupProfileMenu() {
+    this.profileMenuItems = [
+      {
+        label: 'View Profile',
+        icon: 'pi pi-user',
+        command: () => this.showProfile()
+      }
+    ];
   }
 
   private loadUserInfo() {
-    this.http.get<UserInfo>(`/api/user-info/current`).subscribe({
-      next: (data) => {
-        this.userInfo = data;
-      },
-      error: (err) => {
-        console.error('Error loading user info:', err);
+    // Get email from claims to pass as parameter
+    this.authService.user().subscribe({
+      next: (claims) => {
+        const emailClaim = claims.find(c => c.type === 'email' || 
+                                     c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
         
-        this.authService.user().subscribe({
-          next: (claims) => {
-            debugger;
-            const emailClaim = claims.find(c => c.type === 'email' || 
-                                         c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
-            
-            if (emailClaim?.value) {
-              this.http.get<UserInfo>(`/api/user-info?email=${encodeURIComponent(emailClaim.value)}`).subscribe({
-                next: (userData) => {
-                  this.userInfo = userData;
-                  this.loadNotifications();
-                  this.loadUserRoles();
-                },
-                error: (userLookupErr) => {
-                  console.error('Error looking up user by email:', userLookupErr);
-                  this.createFallbackUserInfo(claims);
-                }
-              });
-            } else {
-              this.createFallbackUserInfo(claims);
-            }
+        const email = emailClaim?.value;
+        const apiUrl = email ? `/api/user-info/current?email=${encodeURIComponent(email)}` : '/api/user-info/current';
+        
+        this.http.get<any>(apiUrl).subscribe({
+          next: (response) => {
+            // Extract user info from the nested response structure
+            const userInfoData = response.userInfoWithOrgSettings || response;
+            this.userInfo = {
+              userId: userInfoData.userId,
+              name: userInfoData.name,
+              userEmail: userInfoData.userEmail,
+              orgUnit: userInfoData.orgUnit,
+              orgUnitDescription: userInfoData.orgUnitDescription,
+              supervisorId: userInfoData.supervisorId,
+              supervisorName: userInfoData.supervisorName,
+              supervisorEmail: userInfoData.supervisorEmail
+            };
+            this.loadNotifications();
+            this.loadUserRoles();
           },
-          error: () => {
-            if (err.status === 401) {
-              setTimeout(() => this.loadUserInfo(), 1000);
-            }
+          error: (err) => {
+            console.error('Error loading user info:', err);
           }
         });
+      },
+      error: (error) => {
+        console.error('Error getting user claims:', error);
       }
     });
-  }
-  
-  /**
-   * Create a fallback user info object from claims when API methods fail
-   */
-  private createFallbackUserInfo(claims: any[]) {
-    const nameClaim = claims.find(c => c.type === 'name');
-    const emailClaim = claims.find(c => c.type === 'email' || 
-                                 c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
-    const userIdClaim = claims.find(c => c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier');
-    
-    // Create a simple userInfo object from claims
-    this.userInfo = {
-      userId: userIdClaim ? parseInt(userIdClaim.value, 10) : 0,
-      name: nameClaim?.value || emailClaim?.value?.split('@')[0] || 'User',
-      userEmail: emailClaim?.value || '',
-      orgUnit: '',
-      supervisorId: 0
-    };
-    
-    // If we have a userId from claims, we can still load notifications
-    if (userIdClaim) {
-      this.loadNotifications();
-    }
-    
-    this.cdr.markForCheck();
   }
 
   ngOnDestroy() {
@@ -427,10 +416,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
     });
   }
 
-  logout() {
-    this.router.navigate(['/login']);
-  }
-
   navigateToDevLogin() {
     window.open('https://localhost:7123/dev-login', '_blank');
   }
@@ -453,5 +438,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   showRoleDialog() {
     this.roleDialog.show();
+  }
+
+  showProfile() {
+    if (this.userInfo) {
+      this.profileDialog.show(this.userInfo);
+    }
   }
 }

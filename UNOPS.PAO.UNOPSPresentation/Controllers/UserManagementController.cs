@@ -220,4 +220,90 @@ public class UserManagementController : BaseController
             return StatusCode(500, "An error occurred while retrieving org unit information");
         }
     }
+
+    /// <summary>
+    /// Get organization unit self-management setting
+    /// </summary>
+    /// <param name="orgUnitCode">Organization unit code</param>
+    /// <returns>Self-management setting</returns>
+    [HttpGet(APIDictionary.UserManagement + "/org-units/{orgUnitCode}/self-management")]
+    public async Task<ActionResult> GetOrgUnitSelfManagement(string orgUnitCode)
+    {
+        try
+        {
+            // Check permissions using PermissionService
+            var hasAccess = await _permissionService.CanPerformActionAsync("UserManagement", "read", User);
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {User} denied access to view org unit self-management", User.Identity?.Name);
+                return Forbid("Access denied. Only Partnership Global Admins and Org Unit Admins can view organization settings.");
+            }
+
+            var result = await _manager.GetOrgUnitSelfManagementAsync(User, orgUnitCode);
+            return Ok(new { isSelfManagementEnabled = result });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning("Unauthorized access attempt: {Message}", ex.Message);
+            return Forbid(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("Invalid request: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving org unit self-management for {OrgUnitCode}", orgUnitCode);
+            return StatusCode(500, "An error occurred while retrieving organization settings");
+        }
+    }
+
+    /// <summary>
+    /// Update organization unit self-management setting
+    /// </summary>
+    /// <param name="orgUnitCode">Organization unit code</param>
+    /// <param name="request">Self-management setting request</param>
+    /// <returns>Success response</returns>
+    [HttpPut(APIDictionary.UserManagement + "/org-units/{orgUnitCode}/self-management")]
+    public async Task<ActionResult> UpdateOrgUnitSelfManagement(string orgUnitCode, [FromBody] UpdateOrgUnitSelfManagementRequest request)
+    {
+        try
+        {
+            // Check permissions using PermissionService
+            var hasAccess = await _permissionService.CanPerformActionAsync("UserManagement", "update", User);
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {User} denied access to update org unit self-management", User.Identity?.Name);
+                return Forbid("Access denied. Only Partnership Global Admins and Org Unit Admins can update organization settings.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _manager.UpdateOrgUnitSelfManagementAsync(User, orgUnitCode, request);
+
+            _logger.LogInformation("Organization unit {OrgUnitCode} self-management updated to {IsSelfManagementEnabled} by {CurrentUserId}", 
+                orgUnitCode, request.IsSelfManagementEnabled, CurrentUserId);
+            
+            return Ok(new { message = "Organization self-management setting updated successfully" });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning("Unauthorized access attempt: {Message}", ex.Message);
+            return Forbid(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("Invalid request: {Message}", ex.Message);
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating org unit self-management for {OrgUnitCode}", orgUnitCode);
+            return StatusCode(500, "An error occurred while updating organization settings");
+        }
+    }
 } 

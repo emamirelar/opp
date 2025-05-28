@@ -43,6 +43,7 @@
     "userManagement": "Manage User Permissions",
     "impersonateRoles": "Impersonate Roles",
     "editUserRoles": "Assign Roles for Impersonation",
+    "editPartnershipUserAccess": "Edit Partnership User Access",
     "manageOffice": "Manage my Office",
     "translationWorkbench": "Translation Workbench",
     "partnerTitles": {
@@ -102,7 +103,8 @@
     "backToHome": "Back to Home",
     "refresh": "Refresh",
     "clearFilters": "Clear Filters",
-    "editRoles": "Assign Roles"
+    "editRoles": "Assign Roles",
+    "editPartnershipAccess": "Edit Partnership Access"
   },
   "label": {
     "actions": "Actions",
@@ -210,6 +212,12 @@
     "linkDriveFile": "Link Drive File",
     "linkFromDrive": "Link documents from drive.",
     "name": "Name",
+    "partnershipUserRole": "Partnership User Role",
+    "partnerUser": "Partnership User",
+    "otherRoles": "Other Roles",
+    "readOnly": "Read Only",
+    "organizationSelfManagement": "Organization Self-Management",
+    "enableSelfManagement": "Enable Self-Management for this Organization Unit",
     "no": "No",
     "postedDate": "Posted Date",
     "sdgs": "SDGs",
@@ -300,6 +308,9 @@
     "noAccessPermissions": "You do not have permission to access this page",
     "noUsersFound": "No users found",
     "selectRolesToAssign": "Select the roles to assign to this user",
+    "partnerUserRoleDescription": "Grant or remove Partnership User access for this user",
+    "otherRolesReadOnly": "These roles can only be modified by system administrators",
+    "selfManagementDescription": "Allow users in this organization unit to manage their own partnership access",
     "loadingPermissions": "Loading permissions...",
     "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access role impersonation."
   },

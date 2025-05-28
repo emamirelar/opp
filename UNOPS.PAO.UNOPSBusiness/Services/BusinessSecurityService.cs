@@ -53,19 +53,7 @@ public class BusinessSecurityService : IBusinessSecurityService
         }
 
         try
-        {
-            // Look up user's organization unit based on email domain or other logic
-            // This is a simplified implementation - you may need to adjust based on your business logic
-            
-            // For UNOPS users, extract org unit from email or database lookup
-            if (userEmail.EndsWith("@unops.org"))
-            {
-                _logger.LogInformation("DEBUG - User is UNOPS internal user");
-                // You might want to look this up from a user profile table
-                // For now, return a default org unit for UNOPS users
-                return "UNOPS";
-            }
-            
+        {   
             // For external users, look up their assigned org unit
             // This would typically involve a database lookup
             _logger.LogInformation("DEBUG - User is external, looking up org unit in database");
@@ -135,6 +123,35 @@ public class BusinessSecurityService : IBusinessSecurityService
             if (userRoles.Count == 1 && userRoles.Contains("UNOPS_GEN_USER"))
             {
                 return false;
+            }
+        }
+        if (action.ToLower() != "read")
+        {
+            if (entityName != "Interaction" && entityName != "UNOPSInteraction")
+            {
+                var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+                // Check if user has only UNOPS_GEN_USER role (and no other roles)
+                if (userRoles.Count == 1 && userRoles.Contains("UNOPS_GEN_USER"))
+                {
+                    return false;
+                }
+            }
+            else if (entityName == "UserManagement")
+            {
+                // For UserManagement, get permissions directly from database without org unit checks
+                var permissions = await GetEntityPermissionsFromDatabaseAsync(user, entityName);
+                return action.ToLower() switch
+                {
+                    "read" => permissions.CanRead,
+                    "create" => permissions.CanCreate,
+                    "update" => permissions.CanUpdate,
+                    "delete" => permissions.CanDelete,
+                    _ => false
+                };
             }
         }
 
@@ -410,6 +427,7 @@ public class BusinessSecurityService : IBusinessSecurityService
             "interaction" => await GetInteractionPermissionsAsync(user, userOrgUnit),
             "unopsinteraction" => await GetInteractionPermissionsAsync(user, userOrgUnit),
             "partnertree" => await GetPartnerTreePermissionsAsync(user, userOrgUnit),
+            "usermanagement" => await GetEntityPermissionsFromDatabaseAsync(user, "UserManagement"),
             _ => new EntityPermissionsModel { CanRead = true, CanCreate = false, CanUpdate = false, CanDelete = false }
         };
         
