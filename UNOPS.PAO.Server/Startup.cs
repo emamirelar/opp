@@ -125,12 +125,6 @@ public class Startup
         // Standard authentication processing
         app.UseAuthentication();
         
-        // Add dev identity middleware after authentication but before authorization
-        if (env.IsDevelopment())
-        {
-            app.UseMiddleware<DevIdentityMiddleware>(); // Force identity for development
-        }
-        
         app.UseAuthorization();
         
         app.UseHttpsRedirection();
@@ -181,7 +175,6 @@ public class Startup
         
         // Register dev middleware
         services.AddScoped<DevelopmentIAPAuthHandler>();
-        services.AddTransient<DevIdentityMiddleware>();
 
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
