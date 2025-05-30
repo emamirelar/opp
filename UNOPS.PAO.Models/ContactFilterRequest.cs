@@ -1,35 +1,110 @@
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Domain.Specifications.Interfaces;
 
+namespace UNOPS.PAO.Models;
+
+/// <summary>
+/// Simplified request model for contact advanced search with pagination support
+/// </summary>
 public class ContactFilterRequest : PaginationRequest, IContactSearchFilter
 {
-    public int? Id { get; set; }
-    public int? PartnerId { get; set; }
-    public string? Status { get; set; }
-    public string? FirstName { get; set; }
-    public string? MiddleName { get; set; }
-    public string? LastName { get; set; }
-    public string? Email { get; set; }
-    public string? Salutation { get; set; }
-    public string? Title { get; set; }
-    public string? Department { get; set; }
-    public string? Phone { get; set; }
-    public string? Mobile { get; set; }
-    public string? Assistant { get; set; }
-    public string? AssistantEmail { get; set; }
-    public string? AssistantPhone { get; set; }
-    public string? MailingCity { get; set; }
-    public string? MailingStateProvince { get; set; }
-    public string? MailingPostalCode { get; set; }
-    public string? MailingCountry { get; set; }
+    /// <summary>
+    /// General search text to search across all contact fields
+    /// </summary>
     public string? SearchText { get; set; }
     
-    // Partner search properties
-    public string? PartnerName { get; set; }
-    public string? PartnerStatus { get; set; }
-    public string? PartnerShortName { get; set; }
+    /// <summary>
+    /// Contact ID for filtering
+    /// </summary>
+    public int? Id { get; set; }
     
-    // Advanced search properties
+    /// <summary>
+    /// First name filter
+    /// </summary>
+    public string? FirstName { get; set; }
+    
+    /// <summary>
+    /// Last name filter
+    /// </summary>
+    public string? LastName { get; set; }
+    
+    /// <summary>
+    /// Email filter
+    /// </summary>
+    public string? Email { get; set; }
+    
+    /// <summary>
+    /// Title filter
+    /// </summary>
+    public string? Title { get; set; }
+    
+    /// <summary>
+    /// Department filter
+    /// </summary>
+    public string? Department { get; set; }
+    
+    /// <summary>
+    /// Phone filter
+    /// </summary>
+    public string? Phone { get; set; }
+    
+    /// <summary>
+    /// Mobile filter
+    /// </summary>
+    public string? Mobile { get; set; }
+    
+    /// <summary>
+    /// Assistant filter
+    /// </summary>
+    public string? Assistant { get; set; }
+    
+    /// <summary>
+    /// Assistant email filter
+    /// </summary>
+    public string? AssistantEmail { get; set; }
+    
+    /// <summary>
+    /// Assistant phone filter
+    /// </summary>
+    public string? AssistantPhone { get; set; }
+    
+    /// <summary>
+    /// Mailing city filter
+    /// </summary>
+    public string? MailingCity { get; set; }
+    
+    /// <summary>
+    /// Mailing state/province filter
+    /// </summary>
+    public string? MailingStateProvince { get; set; }
+    
+    /// <summary>
+    /// Mailing postal code filter
+    /// </summary>
+    public string? MailingPostalCode { get; set; }
+    
+    /// <summary>
+    /// Mailing country filter
+    /// </summary>
+    public string? MailingCountry { get; set; }
+    
+    /// <summary>
+    /// Partner ID filter
+    /// </summary>
+    public int? PartnerId { get; set; }
+    
+    /// <summary>
+    /// Partner name filter
+    /// </summary>
+    public string? PartnerName { get; set; }
+    
+    /// <summary>
+    /// Indicates if advanced search is enabled
+    /// </summary>
     public bool AdvancedSearch { get; set; }
+    
+    /// <summary>
+    /// JSON string containing the search criteria
+    /// </summary>
     public string? SearchCriteria { get; set; }
 } 

@@ -1,5 +1,10 @@
 import { SearchField } from '../../../services/search-parser.service';
 
+/**
+ * Supported entity types for saved filters and advanced search functionality
+ */
+export type EntityType = 'Partner' | 'Interaction' | 'Contact';
+
 export interface ListViewColumn {
   label: string;
   field: string;
@@ -158,6 +163,9 @@ export interface SearchCriteria {
   label: string;
   operator: string;  // The comparison operator (is, like, >, etc.)
   logicalOperator?: 'AND' | 'OR';  // The logical operator connecting this criterion with the next one
+  // Support for date range filters (like "between")
+  secondValue?: string;  // For "between" operator, this holds the end date
+  fieldType?: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template';  // Field type to determine input type
 }
 
 export interface SearchParams {

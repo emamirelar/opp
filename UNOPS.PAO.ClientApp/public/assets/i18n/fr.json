@@ -210,7 +210,9 @@
     },
     "common": {
         "cancel": "Annuler",
-        "capture": "Capturer"
+        "capture": "Capturer",
+        "save": "Enregistrer",
+        "update": "Modifier"
     },
     "action": {
         "search": "Rechercher"
@@ -242,6 +244,48 @@
         "contact": "Contact",
         "partner": "Partenaire",
         "typeContact": "Contact",
-        "typePartner": "Partenaire"
+        "typePartner": "Partenaire",
+        "advanced": "Recherche avancée",
+        "backToSimple": "Retour à la recherche simple",
+        "searchEverywhere": "Rechercher partout",
+        "searchIn": "Rechercher dans",
+        "noFilters": "Aucun filtre",
+        "clearAllFilters": "Effacer tous les filtres",
+        "selectField": "Sélectionner un champ",
+        "operator": "Opérateur",
+        "logic": "Logique",
+        "addFilter": "Ajouter un filtre",
+        "enterField": "Saisir {{field}}...",
+        "operators": {
+            "equals": "égal à",
+            "notEquals": "différent de",
+            "contains": "contient",
+            "notContains": "ne contient pas",
+            "greaterThan": "supérieur à",
+            "lessThan": "inférieur à",
+            "greaterThanOrEqual": "supérieur ou égal à",
+            "lessThanOrEqual": "inférieur ou égal à",
+            "after": "après",
+            "before": "avant",
+            "between": "entre"
+        },
+        "logicalOperators": {
+            "and": "ET",
+            "or": "OU"
+        },
+        "selectDate": "Sélectionner une date",
+        "selectEndDate": "Sélectionner la date de fin",
+        "and": "et"
+    },
+    "savedFilters": {
+        "selectFilter": "Sélectionner un filtre",
+        "save": "Sauvegarder",
+        "saveNew": "Nouveau Filtre",
+        "saveCurrentFilter": "Sauvegarder le filtre actuel",
+        "updateFilter": "Modifier le filtre",
+        "deleteFilter": "Supprimer le filtre",
+        "saveFilter": "Sauvegarder le filtre",
+        "filterName": "Nom du filtre",
+        "enterFilterName": "Saisir le nom du filtre"
     }
 }

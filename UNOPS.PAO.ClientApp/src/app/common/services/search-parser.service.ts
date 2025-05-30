@@ -23,7 +23,7 @@ export interface SearchField {
   providedIn: 'root'
 })
 export class SearchParserService {
-  private readonly operators = ['is', 'is not', 'like', 'not like', '>', '<', '>=', '<=', 'in'];
+  private readonly operators = ['is', 'is not', 'like', 'not like', '>', '<', '>=', '<=', 'after', 'before', 'between', 'in'];
   private readonly logicalOperators = ['AND', 'OR'];
 
   constructor() {}

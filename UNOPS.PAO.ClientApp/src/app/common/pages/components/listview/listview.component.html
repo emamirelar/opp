@@ -4,48 +4,49 @@
   
   <!-- Search bar -->
   @if (config.enableSearch) {
-    <!-- Simple Search Input -->
-    @if (!config.searchConfig?.useAdvancedSearch) {
-      <div class="w-full">
-        <p-iconfield iconPosition="left" class="w-full">
+    <!-- Autocomplete Search Input (default mode) -->
+    @if (!isAdvancedSearch()) {
+      <div class="w-full flex gap-2 items-center">
+        <p-iconfield iconPosition="left">
           <p-inputicon class="pi pi-search" />
           <input pInputText type="text"
+            [(ngModel)]="searchValue"
             [placeholder]="searchPlaceholder()"
-            [(ngModel)]="searchText"
-            (input)="onSearchInput(searchText)"
             (keyup.enter)="onSearch()"
-            class="w-full h-10"
+            class="w-64"
           />
-          @if (searchText.length > 0) {
+          @if (searchValue && searchValue.length > 0) {
             <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
           }
         </p-iconfield>
+        
+        <!-- Advanced Search Button -->
+        @if (config.searchConfig?.useAdvancedSearch) {
+          <div class="flex justify-start">
+            <p-button
+              [label]="'search.advanced' | translate"
+              icon="pi pi-filter"
+              text
+              (onClick)="switchToAdvancedSearch()"
+            ></p-button>
+          </div>
+        }
       </div>
     }
     
     <!-- Advanced Search -->
-    @if (config.searchConfig?.useAdvancedSearch) {
-      <div class="w-full bg-gray-50 rounded-lg p-3 shadow-sm">
-        <div class="flex justify-between items-center mb-2">
-          <div class="text-md font-medium text-gray-700">Advanced Search</div>
-          @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
-            <p-button
-              [label]="config.exportOptions?.buttonLabel ?? 'Export'"
-              icon="pi pi-file-export"
-              severity="secondary"
-              (onClick)="exportData()"
-              [disabled]="isLoading()"
-              class="text-gray-700 hover:bg-gray-100"
-            ></p-button>
-          }
-        </div>
-        
-        <app-advanced-search
-          [searchableFields]="searchableFields"
-          (searchChange)="onAdvancedSearchChange($event)"
-          [advancedSearchEnabled]="isAdvancedSearch()">
-        </app-advanced-search>
-      </div>
+    @if (isAdvancedSearch()) {
+      <app-listview-advanced-search
+        [config]="config"
+        [isLoading]="isLoading()"
+        [searchCriteria]="searchCriteria"
+        [entityType]="entityType"
+        (search)="onAdvancedSearch($event)"
+        (removeCriterion)="onRemoveSearchCriterion($event)"
+        (clearSearch)="onClearAdvancedSearch()"
+        (exportData)="exportData()"
+        (switchToSimple)="switchToSimpleSearch()">
+      </app-listview-advanced-search>
     }
   }
 
