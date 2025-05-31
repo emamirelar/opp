@@ -40,7 +40,7 @@ INSERT INTO public."EntityPermissions" (
     false,
     false,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnership Global Admin role permissions for Partner
@@ -61,7 +61,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnerships User role permissions for Partner
@@ -82,7 +82,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     false,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerOfficeId == @orgUnitId", "CanDelete": ""}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerOffice != null && PartnerOffice.Code == @userOrgUnit", "CanDelete": ""}'
 );
 
 -- Org Unit Admin role permissions for Partner
@@ -103,7 +103,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     false,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerOfficeId == @orgUnitId", "CanDelete": ""}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerOffice != null && PartnerOffice.Code == @userOrgUnit", "CanDelete": ""}'
 );
 
 -- Contact Entity Permissions
@@ -126,7 +126,7 @@ INSERT INTO public."EntityPermissions" (
     false,
     false,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnership Global Admin role permissions for Contact
@@ -147,7 +147,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnerships User role permissions for Contact
@@ -168,7 +168,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "PartnerOfficeId == @orgUnitId", "CanUpdate": "PartnerOfficeId == @orgUnitId", "CanDelete": "PartnerOfficeId == @orgUnitId"}'
+    '{"CanRead": "", "CanCreate": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit", "CanUpdate": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit", "CanDelete": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit"}'
 );
 
 -- Org Unit Admin role permissions for Contact
@@ -189,7 +189,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "PartnerOfficeId == @orgUnitId", "CanUpdate": "PartnerOfficeId == @orgUnitId", "CanDelete": "PartnerOfficeId == @orgUnitId"}'
+    '{"CanRead": "", "CanCreate": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit", "CanUpdate": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit", "CanDelete": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit"}'
 );
 
 -- PartnerTree Entity Permissions
@@ -212,7 +212,7 @@ INSERT INTO public."EntityPermissions" (
     false,
     false,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnership Global Admin role permissions for PartnerTree
@@ -233,7 +233,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnerships User role permissions for PartnerTree
@@ -254,7 +254,7 @@ INSERT INTO public."EntityPermissions" (
     false,
     false,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Org Unit Admin role permissions for PartnerTree
@@ -275,7 +275,7 @@ INSERT INTO public."EntityPermissions" (
     false,
     false,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Interaction Entity Permissions
@@ -298,7 +298,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     false,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrgUnitId == @orgUnitId", "CanDelete": ""}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "(OrgUnit != null && OrgUnit.Code == @userOrgUnit) || InteractionUsers.Any(iu => iu.UserId == @currentUserId)", "CanDelete": ""}'
 );
 
 -- Partnership Global Admin role permissions for Interaction
@@ -319,7 +319,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnerships User role permissions for Interaction
@@ -340,7 +340,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrgUnitId == @orgUnitId", "CanDelete": "OrgUnitId == @orgUnitId"}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "(OrgUnit != null && OrgUnit.Code == @userOrgUnit) || InteractionUsers.Any(iu => iu.UserId == @currentUserId)", "CanDelete": "OrgUnit != null && OrgUnit.Code == @userOrgUnit"}'
 );
 
 -- Org Unit Admin role permissions for Interaction
@@ -361,7 +361,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "OrgUnitId == @orgUnitId", "CanDelete": "OrgUnitId == @orgUnitId"}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "(OrgUnit != null && OrgUnit.Code == @userOrgUnit) || InteractionUsers.Any(iu => iu.UserId == @currentUserId)", "CanDelete": "OrgUnit != null && OrgUnit.Code == @userOrgUnit"}'
 );
 
 -- UserManagement Entity Permissions
@@ -384,7 +384,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Org Unit Admin role permissions for UserManagement
@@ -405,7 +405,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "OrgUnit == @orgUnit", "CanCreate": "OrgUnit == @orgUnit", "CanUpdate": "OrgUnit == @orgUnit", "CanDelete": "OrgUnit == @orgUnit"}'
+    '{"CanRead": "OrgUnit == @userOrgUnit", "CanCreate": "OrgUnit == @userOrgUnit", "CanUpdate": "OrgUnit == @userOrgUnit", "CanDelete": "OrgUnit == @userOrgUnit"}'
 );
 
 -- Assign UNOPS_GEN_USER role to all existing users

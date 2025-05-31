@@ -296,6 +296,9 @@ public class Startup
         // Add Business Security Service for row-level filtering
         services.AddScoped<IBusinessSecurityService, BusinessSecurityService>();
         
+        // Add Generic Row Filter Service
+        services.AddScoped<IGenericRowFilterService, GenericRowFilterService>();
+        
         // Configure authorization
         services.AddAuthorization(options =>
         {
