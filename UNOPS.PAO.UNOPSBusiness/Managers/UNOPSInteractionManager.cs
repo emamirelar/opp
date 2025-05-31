@@ -217,10 +217,10 @@ public class UNOPSInteractionManager : IInteractionManager
                         ? query.OrderBy(x => x.Date)
                         : query.OrderByDescending(x => x.Date);
                     break;
-                case "data":
+                case "description":
                     query = request.Ascending ?? true
-                        ? query.OrderBy(x => x.Data)
-                        : query.OrderByDescending(x => x.Data);
+                        ? query.OrderBy(x => x.Description)
+                        : query.OrderByDescending(x => x.Description);
                     break;
                 default:
                     query = query.OrderByDescending(x => x.Date);

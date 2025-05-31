@@ -12,6 +12,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Mvc.Filters;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
+using System.Text.Json;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -474,6 +475,67 @@ namespace UNOPS.PAO.Presentation.Controllers
             
             // If both authorization checks pass, proceed with normal operation handling
             return await HandleOperationAsync(operation, successStatusCode);
+        }
+
+        /// <summary>
+        /// Validates pagination parameters and returns a BadRequest result if invalid
+        /// </summary>
+        /// <param name="pageIndex">The page index to validate</param>
+        /// <param name="pageSize">The page size to validate</param>
+        /// <param name="maxPageSize">Maximum allowed page size (default: 100)</param>
+        /// <returns>BadRequest ActionResult if invalid, null if valid</returns>
+        protected ActionResult? ValidatePaginationParameters(int pageIndex, int pageSize, int maxPageSize = 100)
+        {
+            if (pageIndex < 1)
+            {
+                return BadRequest(new { error = "Page index must be greater than 0" });
+            }
+            
+            if (pageSize < 1 || pageSize > maxPageSize)
+            {
+                return BadRequest(new { error = $"Page size must be between 1 and {maxPageSize}" });
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// Handles search operations with proper error handling and logging
+        /// </summary>
+        /// <typeparam name="T">Return type of the search operation</typeparam>
+        /// <param name="searchOperation">The search operation to execute</param>
+        /// <param name="searchDescription">Description of the search for logging</param>
+        /// <returns>An ActionResult containing the search result or an error response</returns>
+        protected async Task<ActionResult> HandleSearchOperationAsync<T>(
+            Func<Task<T>> searchOperation,
+            string searchDescription = "search operation")
+        {
+            try
+            {
+                _logger.LogInformation("Executing {SearchDescription}", searchDescription);
+                var result = await searchOperation();
+                return Ok(result);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Invalid JSON format in {SearchDescription}", searchDescription);
+                return BadRequest(new { error = "Invalid search criteria format", details = ex.Message });
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "Invalid search criteria in {SearchDescription}", searchDescription);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (BusinessException ex)
+            {
+                _logger.LogWarning(ex, "Business exception in {SearchDescription}: {Message}", searchDescription, ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during {SearchDescription}", searchDescription);
+                return StatusCode(500, new { error = $"An error occurred during {searchDescription}" });
+            }
         }
     }
 } 

@@ -13,7 +13,10 @@
     #listviewComponent
     [dataUrl]="'/api/interactions'"
     [columns]="columns"
+    [entityType]="'Interaction'"
+    [config]="listviewConfig()"
     (rowClick)="openEditInteractionModal($event)"
+    (searchChange)="onSearchChange($event)"
   >
   </app-listview>
 </div>

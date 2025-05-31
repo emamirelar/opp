@@ -18,7 +18,7 @@ export class PartnerService {
   constructor() { }
 
   getClassicSearchUrl(): string {
-    return `${this.apiUrl}/classic-search`;
+    return `${this.apiUrl}`;
   }
 
   getAllPartners() {
