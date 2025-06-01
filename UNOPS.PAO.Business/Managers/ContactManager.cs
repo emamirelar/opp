@@ -42,27 +42,12 @@ public class ContactManager : IContactManager
 
     public PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request)
     {
-        var query = ContactRepository
-            .GetAll()
-            .AsQueryable();
-
-        return query.Paginate(
-            x => mapper.Map<ContactModel>(x),
-            request
-        );
+        throw new NotImplementedException();
     }
 
     public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
     {
-        // Apply the specification to the query
-        var query = ContactRepository.GetAll().AsQueryable();
-        var filteredQuery = query.ApplySpecification(specification);
-        
-        // Apply pagination
-        return filteredQuery.Paginate(
-            x => mapper.Map<ContactModel>(x),
-            pagination
-        );
+        throw new NotImplementedException();
     }
 
     public async Task<ContactModel?> GetContact(int userId, int id)

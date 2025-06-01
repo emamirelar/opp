@@ -1,9 +1,9 @@
 import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, ViewChild, AfterViewInit, computed, inject, effect, OnDestroy, signal, Signal } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
-import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { TranslateModule } from '@ngx-translate/core';
-import { ListViewColumn, ListViewConfig, SearchCriteria, SearchParams } from './listview.model';
+import { ListViewColumn, ListViewConfig, SearchCriteria, SearchParams, EntityType } from './listview.model';
 import { ListviewDataLoaderService } from './listview-data-loader.service';
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,12 +17,15 @@ import { ConfirmationService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
 import { ChipModule } from 'primeng/chip';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
-import { ListviewAdvencedSearchComponent } from './advenced-search/listview-advenced-search.component';
 import { ListviewTableComponent } from './table/listview-table.component';
 import { ListviewCardComponent } from './card/listview-card.component';
 import { TooltipModule } from 'primeng/tooltip';
 import { SearchField, SearchCriterion } from '../../../services/search-parser.service';
-import { AdvancedSearchComponent } from '../../../components/advanced-search/advanced-search.component';
+import { ListviewAdvancedSearchComponent } from './advanced-search/listview-advanced-search.component';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { TranslateService } from '@ngx-translate/core';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 
 @Component({
   selector: 'app-listview',
@@ -30,9 +33,6 @@ import { AdvancedSearchComponent } from '../../../components/advanced-search/adv
   imports: [
     CommonModule,
     TranslateModule,
-    DatePipe,
-    DecimalPipe,
-    CurrencyPipe,
     TableModule,
     FormsModule,
     InputTextModule,
@@ -43,11 +43,13 @@ import { AdvancedSearchComponent } from '../../../components/advanced-search/adv
     DropdownModule,
     ChipModule,
     OverlayPanelModule,
-    ListviewAdvencedSearchComponent,
     ListviewTableComponent,
     ListviewCardComponent,
     TooltipModule,
-    AdvancedSearchComponent
+    ListviewAdvancedSearchComponent,
+    AutoCompleteModule,
+    IconFieldModule,
+    InputIconModule,
   ],
   providers: [ListviewDataLoaderService, ConfirmationService],
   standalone: true
@@ -60,6 +62,11 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   private elRef = inject(ElementRef);
   private resizeObserver: ResizeObserver | null = null;
   private userSelectedViewMode: 'table' | 'card' | null = null;
+  private translateService = inject(TranslateService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  @Input() entityType?: EntityType;
 
   // Listen for refresh events
   @HostListener('window:refresh-listview')
@@ -165,13 +172,14 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     { label: 'OR', value: 'OR' }
   ];
   
+  // Autocomplete and search mode state
+  isAdvancedSearchMode = signal<boolean>(false);
+  autocompleteSuggestions: any[] = [];
+  searchValue: any = '';
+  
   // Computed properties
   isAdvancedSearch = computed(() => {
-    console.log('Computing isAdvancedSearch, config:', this.config);
-    console.log('searchConfig exists:', !!this.config.searchConfig);
-    console.log('useAdvancedSearch value:', this.config.searchConfig?.useAdvancedSearch);
-    
-    return !!this.config.searchConfig?.useAdvancedSearch;
+    return this.isAdvancedSearchMode();
   });
   searchableFields: SearchField[] = [];
   
@@ -193,6 +201,80 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   constructor() {
     this.rows = this.config.pageSize || 50;
     this.setupSearchDebounce();
+    
+    // Initialize searchable fields if available
+    setTimeout(() => this.initializeSearchableFields(), 0);
+  }
+
+  /**
+   * Sync search criteria to URL parameters
+   */
+  private syncSearchCriteriaToUrl(): void {
+    const queryParams: any = { ...this.route.snapshot.queryParams };
+    
+    if (this.searchCriteria.length > 0) {
+      // Encode search criteria as JSON in URL
+      queryParams.searchCriteria = JSON.stringify(this.searchCriteria);
+      queryParams.advancedSearch = 'true';
+    } else {
+      // Remove search criteria from URL when cleared
+      delete queryParams.searchCriteria;
+      delete queryParams.advancedSearch;
+    }
+    
+    // Update URL without triggering navigation
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      replaceUrl: true
+    });
+  }
+
+  /**
+   * Load search criteria from URL parameters
+   */
+  private loadSearchCriteriaFromUrl(): void {
+    const queryParams = this.route.snapshot.queryParams;
+    
+    if (queryParams['advancedSearch'] === 'true' && queryParams['searchCriteria']) {
+      try {
+        const criteria = JSON.parse(queryParams['searchCriteria']) as SearchCriteria[];
+        
+        // Validate that the criteria are valid
+        if (Array.isArray(criteria) && criteria.length > 0) {
+          this.searchCriteria = criteria;
+          
+          // Set advanced search mode
+          this.isAdvancedSearchMode.set(true);
+          this.dataLoader.setAdvancedSearchEnabled(true);
+          
+          // Set criteria in data loader
+          this.dataLoader.setSearchCriteria(criteria);
+          
+          console.log('Loaded search criteria from URL:', criteria);
+        }
+      } catch (error) {
+        console.warn('Failed to parse search criteria from URL:', error);
+        // Clear invalid parameters
+        this.clearSearchCriteriaFromUrl();
+      }
+    }
+  }
+
+  /**
+   * Clear search criteria from URL parameters
+   */
+  private clearSearchCriteriaFromUrl(): void {
+    const queryParams: any = { ...this.route.snapshot.queryParams };
+    delete queryParams.searchCriteria;
+    delete queryParams.advancedSearch;
+    
+    // Don't use queryParamsHandling: 'merge' as it prevents deletion of parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      replaceUrl: true
+    });
   }
 
   ngAfterViewInit(): void {
@@ -201,6 +283,14 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     
     // Check initial component width
     this.checkComponentWidth();
+    
+    // Load search criteria from URL if present
+    this.loadSearchCriteriaFromUrl();
+    
+    // Load data after URL criteria are loaded
+    if (this._dataUrl) {
+      this.loadData();
+    }
   }
 
   ngOnDestroy(): void {
@@ -315,6 +405,9 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     // Add to data loader
     this.dataLoader.addSearchCriterion(criterion);
     
+    // Sync to URL
+    this.syncSearchCriteriaToUrl();
+    
     // Execute search with the updated criteria
     this.executeAdvancedSearch();
   }
@@ -324,13 +417,14 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    */
   onRemoveSearchCriterion(index: number): void {
     if (index >= 0 && index < this.searchCriteria.length) {
-      const criterion = this.searchCriteria[index];
-      
-      // Remove from data loader
-      this.dataLoader.removeSearchCriterion(criterion.field);
+      // Remove from data loader by index
+      this.dataLoader.removeSearchCriterionByIndex(index);
       
       // Remove from local list
       this.searchCriteria = this.searchCriteria.filter((_, i) => i !== index);
+      
+      // Sync to URL
+      this.syncSearchCriteriaToUrl();
       
       // Execute search with the updated criteria
       this.executeAdvancedSearch();
@@ -401,10 +495,16 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    * Handle search event (for backward compatibility with enter key)
    */
   onSearch(): void {
-    if (!this.config.searchConfig?.useAdvancedSearch) {
-      const trimmedValue = this.searchText.trim();
-      this.searchText = trimmedValue; // Update the input with trimmed value
-      this.executeSearch(trimmedValue);
+    if (!this.isAdvancedSearch()) {
+      let searchTerm = '';
+      if (typeof this.searchValue === 'string') {
+        searchTerm = this.searchValue.trim();
+      } else if (this.searchValue && this.searchValue.value) {
+        searchTerm = this.searchValue.value.trim();
+      }
+      
+      this.searchText = searchTerm; // Keep searchText in sync
+      this.executeSearch(searchTerm);
     }
   }
 
@@ -412,13 +512,32 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    * Clear all search criteria
    */
   clearSearch(): void {
-    if (this.config.searchConfig?.useAdvancedSearch) {
+    if (this.isAdvancedSearchMode()) {
       this.searchCriteria = [];
       this.dataLoader.clearSearchCriteria();
+      // Clear from URL
+      this.clearSearchCriteriaFromUrl();
     } else {
       this.searchText = '';
+      this.searchValue = '';
       this.dataLoader.setSearchText('');
     }
+    
+    const searchParams = this.dataLoader.getSearchParams();
+    this.searchChange.emit(searchParams);
+    
+    this.loadData();
+  }
+
+  /**
+   * Clear all advanced search criteria
+   */
+  onClearAdvancedSearch(): void {
+    this.searchCriteria = [];
+    this.dataLoader.clearSearchCriteria();
+    
+    // Clear from URL
+    this.clearSearchCriteriaFromUrl();
     
     const searchParams = this.dataLoader.getSearchParams();
     this.searchChange.emit(searchParams);
@@ -528,16 +647,17 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     }
 
     // Fallback to using columns if no searchable fields in config
-    this.searchableFields = this.columns.map(column => {
-      const result = {
-        field: column.field,
-        label: column.label,
-        type: this.getFieldType(column),
-        operators: this.getOperatorsForType(this.getFieldType(column))
-      };
-      console.log(`Mapped column ${column.field}:`, result);
-      return result;
-    });
+    if (this.columns && this.columns.length > 0) {
+      this.searchableFields = this.columns.map(column => {
+        const result = {
+          field: column.field,
+          label: column.label,
+          type: this.getFieldType(column),
+          operators: this.getOperatorsForType(this.getFieldType(column))
+        };
+        return result;
+      });
+    }
   }
 
   private getFieldType(column: ListViewColumn): 'string' | 'number' | 'date' {
@@ -560,7 +680,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       case 'number':
         return ['is', 'is not', '>', '<', '>=', '<='];
       case 'date':
-        return ['is', 'is not', '>', '<', '>=', '<='];
+        return ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<='];
       default:
         // Boolean values and any other types use basic operators
         return ['is', 'is not'];
@@ -585,5 +705,77 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     
     // Trigger search
     this.onSearch();
+  }
+
+  /**
+   * Handle autocomplete search input
+   */
+  onAutocompleteSearch(event: any): void {
+    const query = event.query?.toLowerCase() || '';
+    
+    // Create suggestions based on searchable fields
+    this.autocompleteSuggestions = [];
+    
+    if (query.length > 0) {
+      // Add general search suggestion first (using translation)
+      const searchEverywhere = this.translateService?.instant('search.searchEverywhere') || 'Search everywhere';
+      this.autocompleteSuggestions.push({
+        label: `${searchEverywhere}: "${event.query}"`,
+        value: event.query,
+        field: null,
+        type: 'general'
+      });
+      
+      // Add field-based suggestions
+      const searchIn = this.translateService?.instant('search.searchIn') || 'Search in';
+      this.searchableFields.forEach(field => {
+        if (field.label.toLowerCase().includes(query) || field.field.toLowerCase().includes(query)) {
+          this.autocompleteSuggestions.push({
+            label: `${searchIn} ${field.label}: "${event.query}"`,
+            value: event.query,
+            field: field.field,
+            type: 'field'
+          });
+        }
+      });
+    }
+  }
+
+  /**
+   * Handle autocomplete selection
+   */
+  onAutocompleteSelect(event: any): void {
+    // Perform the search
+    this.searchText = event.value;
+    this.searchValue = event.value;
+    this.executeSearch(event.value);
+  }
+
+  /**
+   * Switch to advanced search mode
+   */
+  switchToAdvancedSearch(): void {
+    this.isAdvancedSearchMode.set(true);
+    this.dataLoader.setAdvancedSearchEnabled(true);
+    // Clear all simple search values
+    this.searchValue = '';
+    this.searchText = '';
+    // Clear any existing simple search from data loader
+    this.dataLoader.setSearchText('');
+  }
+
+  /**
+   * Switch back to simple search mode
+   */
+  switchToSimpleSearch(): void {
+    this.isAdvancedSearchMode.set(false);
+    this.dataLoader.setAdvancedSearchEnabled(false);
+    this.searchCriteria = [];
+    this.dataLoader.clearSearchCriteria();
+    
+    // Clear search criteria from URL when switching to simple search
+    this.clearSearchCriteriaFromUrl();
+    
+    this.loadData();
   }
 }

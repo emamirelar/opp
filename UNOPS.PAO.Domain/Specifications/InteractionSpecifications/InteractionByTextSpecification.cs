@@ -2,18 +2,17 @@ namespace UNOPS.PAO.Domain.Specifications.InteractionSpecifications;
 
 using System;
 using System.Linq.Expressions;
-using System.Text;
 using UNOPS.PAO.Domain.Entities;
 
 /// <summary>
-/// Specification that filters interactions by text contained in the Data property
+/// Specification that filters interactions by text contained in the Description property
 /// </summary>
 public class InteractionByTextSpecification : BaseSpecification<Interaction>
 {
     /// <summary>
     /// Creates a specification that filters interactions by text search
     /// </summary>
-    /// <param name="searchText">The text to search for in the interaction data</param>
+    /// <param name="searchText">The text to search for in the interaction description</param>
     public InteractionByTextSpecification(string searchText)
         : base(BuildSearchExpression(searchText))
     {
@@ -36,6 +35,6 @@ public class InteractionByTextSpecification : BaseSpecification<Interaction>
         
         // Always perform case-insensitive search
         string lowerSearchText = searchText.ToLower();
-        return i => i.Data != null && Encoding.UTF8.GetString(i.Data).ToLower().Contains(lowerSearchText);
+        return i => i.Description != null && i.Description.ToLower().Contains(lowerSearchText);
     }
 } 

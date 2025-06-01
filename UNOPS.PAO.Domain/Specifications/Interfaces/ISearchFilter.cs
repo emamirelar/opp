@@ -9,6 +9,34 @@ public interface ISearchFilter
 }
 
 /// <summary>
+/// Interface for contact-related search functionality
+/// </summary>
+public interface IContactSearchFilter : ISearchFilter
+{
+    int? Id { get; set; }
+    string? FirstName { get; set; }
+    string? LastName { get; set; }
+    string? Email { get; set; }
+    string? Title { get; set; }
+    string? Department { get; set; }
+    string? Phone { get; set; }
+    string? Mobile { get; set; }
+    string? Assistant { get; set; }
+    string? AssistantEmail { get; set; }
+    string? AssistantPhone { get; set; }
+    string? MailingCity { get; set; }
+    string? MailingStateProvince { get; set; }
+    string? MailingPostalCode { get; set; }
+    string? MailingCountry { get; set; }
+    int? PartnerId { get; set; }
+    string? PartnerName { get; set; }
+    
+    // Advanced search properties
+    bool AdvancedSearch { get; set; }
+    string? SearchCriteria { get; set; }
+}
+
+/// <summary>
 /// Interface for partner-related search functionality
 /// </summary>
 public interface IPartnerSearchFilter : ISearchFilter
@@ -31,30 +59,21 @@ public interface IPartnerSearchFilter : ISearchFilter
 }
 
 /// <summary>
-/// Interface for contact-related search functionality
+/// Interface for interaction-related search functionality
 /// </summary>
-public interface IContactSearchFilter : ISearchFilter
+public interface IInteractionSearchFilter : ISearchFilter
 {
     int? Id { get; set; }
-    int? PartnerId { get; set; }
-    string? Status { get; set; }
-    string? Salutation { get; set; }
-    string? FirstName { get; set; }
-    string? LastName { get; set; }
-    string? MiddleName { get; set; }
-    string? Title { get; set; }
-    string? Email { get; set; }
-    string? Department { get; set; }
-    string? Phone { get; set; }
-    string? Mobile { get; set; }
-    string? Assistant { get; set; }
-    string? AssistantEmail { get; set; }
-    string? AssistantPhone { get; set; }
-    string? MailingCity { get; set; }
-    string? MailingStateProvince { get; set; }
-    string? MailingPostalCode { get; set; }
-    string? MailingCountry { get; set; }
-    string? PartnerName { get; set; }
-    string? PartnerStatus { get; set; }
-    string? PartnerShortName { get; set; }
+    int? ContactId { get; set; }
+    string? ContactName { get; set; }
+    string? Type { get; set; }
+    DateTime? FromDate { get; set; }
+    DateTime? ToDate { get; set; }
+    DateTime? Date { get; set; }
+    string? Description { get; set; }
+    string? Subject { get; set; }
+    
+    // Advanced search properties
+    bool AdvancedSearch { get; set; }
+    string? SearchCriteria { get; set; }
 } 

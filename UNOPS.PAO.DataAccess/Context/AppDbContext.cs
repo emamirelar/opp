@@ -47,6 +47,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<UserInfo> UserInfos { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<SavedFilter> SavedFilters { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

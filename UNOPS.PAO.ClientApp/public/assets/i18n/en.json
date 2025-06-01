@@ -348,6 +348,7 @@
     "cancel": "Cancel",
     "capture": "Capture",
     "save": "Save",
+    "update": "Update",
     "edit": "Edit",
     "delete": "Delete",
     "search": "Search",
@@ -394,7 +395,49 @@
     "email": "Email",
     "roles": "Roles",
     "lastModified": "Last Modified",
-    "assignRoles": "Assign Roles"
+    "assignRoles": "Assign Roles",
+    "advanced": "Advanced Search",
+    "backToSimple": "Back to Simple Search",
+    "searchEverywhere": "Search everywhere",
+    "searchIn": "Search in",
+    "noFilters": "No filters",
+    "clearAllFilters": "Clear all filters",
+    "selectField": "Select field",
+    "operator": "Operator",
+    "logic": "Logic",
+    "addFilter": "Add Filter",
+    "enterField": "Enter {{field}}...",
+    "operators": {
+      "equals": "equals",
+      "notEquals": "does not equal",
+      "contains": "contains",
+      "notContains": "does not contain",
+      "greaterThan": "greater than",
+      "lessThan": "less than",
+      "greaterThanOrEqual": "greater than or equal",
+      "lessThanOrEqual": "less than or equal",
+      "after": "after",
+      "before": "before",
+      "between": "between"
+    },
+    "logicalOperators": {
+      "and": "AND",
+      "or": "OR"
+    },
+    "selectDate": "Select date",
+    "selectEndDate": "Select end date",
+    "and": "and"
+  },
+  "savedFilters": {
+    "selectFilter": "Select filter",
+    "save": "Save",
+    "saveNew": "Save New",
+    "saveCurrentFilter": "Save current filter",
+    "updateFilter": "Update filter", 
+    "deleteFilter": "Delete filter",
+    "saveFilter": "Save filter",
+    "filterName": "Filter name",
+    "enterFilterName": "Enter filter name"
   },
   "aiPrompt": {
     "title": "AI Prompts Management",

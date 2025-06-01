@@ -1,6 +1,5 @@
 using UNOPS.PAO.Domain.Enums;
 using System.Text.Json.Serialization;
-using System.Text;
 
 namespace UNOPS.PAO.Models;
 
@@ -10,15 +9,7 @@ public class InteractionRequest : ExtensibleModel
     public InteractionType Type { get; set; }
     public DateTime Date { get; set; }
     
-    [JsonPropertyName("data")]
-    public string? TextData 
-    { 
-        get => Data != null ? Encoding.UTF8.GetString(Data) : null;
-        set => Data = value != null ? Encoding.UTF8.GetBytes(value) : null;
-    }
-    
-    [JsonIgnore]
-    public byte[]? Data { get; private set; }
+    public string? Description { get; set; }
     
     public int ContactId { get; set; }
     public List<string>? EmailAddresses { get; set; } = new List<string>();
