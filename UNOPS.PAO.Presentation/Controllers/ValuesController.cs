@@ -108,4 +108,44 @@ public class ValuesController : BaseController
     {
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetUsers()));
     }
+
+    [HttpGet(APIDictionary.GeminiModels)]
+    public async Task<ActionResult> GetGeminiModels()
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            var models = Enum.GetValues<GeminiModel>()
+                .Select(model => new
+                {
+                    Value = GetGeminiModelValue(model),
+                    Label = GetGeminiModelDisplayName(model)
+                })
+                .ToList();
+
+            return await Task.FromResult(models);
+        });
+    }
+
+    private static string GetGeminiModelValue(GeminiModel model)
+    {
+        return model switch
+        {
+            GeminiModel.Gemini_2_0_Flash_001 => "gemini-2.0-flash-001",
+            _ => model.ToString().ToLowerInvariant()
+        };
+    }
+
+    private static string GetGeminiModelDisplayName(GeminiModel model)
+    {
+        return model switch
+        {
+            GeminiModel.Gemini_2_0_Flash_001 => "Gemini 2.0 Flash (001)",
+            _ => model.ToString()
+        };
+    }
+}
+
+public enum GeminiModel
+{
+    Gemini_2_0_Flash_001
 }

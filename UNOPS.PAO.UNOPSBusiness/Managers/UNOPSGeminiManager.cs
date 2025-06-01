@@ -82,7 +82,7 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Get prompt data by type
-    public async Task<IEnumerable<AiPromptModel>> GetPromptData(string type)
+    public async Task<IEnumerable<AiPrompt>> GetPromptData(string type)
     {
         return await _aiService.GetPromptData(type);
     }
@@ -187,13 +187,13 @@ public class UNOPSGeminiManager : IGeminiManager
     }
 
     // Updated FetchResultFromGemini to use CallGeminiApi
-    public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
     {
-        return await _aiService.FetchResultFromGemini((AiPromptModel)promptData, relatedJsonData);
+        return await _aiService.FetchResultFromGemini((AiPrompt)promptData, relatedJsonData);
     }
 
     // Updated callGemini to use CallGeminiApi
-    public async Task<string> callGemini(string prompt, AiPromptModel promptData)
+    public async Task<string> callGemini(string prompt, AiPrompt promptData)
     {
         var promptList = new
         {
@@ -237,16 +237,91 @@ public class UNOPSGeminiManager : IGeminiManager
         AiPrompt promptModel = MapModelToEntity(req);
 
         // Call the GetPromptData method and get the first prompt
-        var promptData = (await GetPromptData(promptModel.Type)).FirstOrDefault();
+        AiPrompt promptData = (await GetPromptData(promptModel.Type)).FirstOrDefault();
 
         if (promptData == null)
         {
             return "";
         }
 
-        // Query the AiScreenMapping table based on Type
-        var screenMappings = (await _aiService.GetScreenMappingsByType(promptData.Type)).ToArray();
-        relatedMessage = await _aiService.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+        // Check if promptFunction is available (new approach)
+        if (!string.IsNullOrEmpty(promptData.PromptFunction))
+        {
+            try
+            {
+                // Determine the correct manager based on entity type
+                string managerTypeName = $"UNOPS.PAO.UNOPSBusiness.Managers.UNOPS{promptData.Name.TrimEnd('s')}Manager";
+                System.Type managerType = System.Type.GetType(managerTypeName);
+                
+                if (managerType == null)
+                {
+                    throw new InvalidOperationException($"Manager type not found for entity: {promptData.Name}");
+                }
+                
+                // Get constructor parameters that the manager needs
+                var constructors = managerType.GetConstructors();
+                var constructor = constructors.FirstOrDefault();
+                
+                if (constructor == null)
+                {
+                    throw new InvalidOperationException($"No suitable constructor found for {managerType.Name}");
+                }
+                
+                // Prepare constructor arguments (common ones that most managers need)
+                var parameterTypes = constructor.GetParameters().Select(p => p.ParameterType).ToArray();
+                var args = new List<object>();
+                
+                foreach (var paramType in parameterTypes)
+                {
+                    if (paramType == typeof(IMapper))
+                        args.Add(_mapper);
+                    else if (paramType == typeof(UNOPSAppDbContext))
+                        args.Add(_context);
+                    else if (paramType == typeof(IConfiguration))
+                        args.Add(_configuration);
+                    else
+                        args.Add(null); // Pass null for other dependencies we don't have
+                }
+                
+                // Create instance of the manager
+                var managerInstance = Activator.CreateInstance(managerType, args.ToArray());
+                
+                // Check if it's a BaseUNOPSManager that has CallFunctionByNameAsync
+                var callFunctionMethod = managerType.GetMethod("CallFunctionByNameAsync");
+                if (callFunctionMethod != null)
+                {
+                    // Use the BaseUNOPSManager's CallFunctionByNameAsync method which handles parameter matching
+                    var task = (Task<object>)callFunctionMethod.Invoke(managerInstance, new object[] { promptData.PromptFunction, req.Id, null });
+                    var entityData = await task;
+                    
+                    if (entityData != null)
+                    {
+                        // Serialize the entity data to JSON for AI processing
+                        relatedMessage = JsonConvert.SerializeObject(entityData, Formatting.Indented);
+                    }
+                    else
+                    {
+                        return "Entity not found or function returned null.";
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Manager {managerType.Name} does not inherit from BaseUNOPSManager or does not have CallFunctionByNameAsync method");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error and fallback to empty response
+                Console.WriteLine($"Error calling function {promptData.PromptFunction}: {ex.Message}");
+                return $"Error retrieving data: {ex.Message}";
+            }
+        }
+        else
+        {
+            // Fallback to old screen mapping approach for backward compatibility
+            var screenMappings = (await _aiService.GetScreenMappingsByType(promptData.Type)).ToArray();
+            relatedMessage = await _aiService.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
+        }
 
         // Fetch result from Gemini
         return await FetchResultFromGemini(promptData, relatedMessage);
@@ -805,11 +880,5 @@ public class UNOPSGeminiManager : IGeminiManager
         };
 
         return JsonConvert.SerializeObject(result, Formatting.Indented);
-    }
-
-
-    IEnumerable<AiPromptModel> IGeminiManager.GetPromptData(string type)
-    {
-        throw new NotImplementedException();
     }
 }

@@ -179,6 +179,29 @@ public class ContactManager : IContactManager
         return result;
     }
 
+    /// <summary>
+    /// Gets a contact with its interactions included
+    /// </summary>
+    public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
+    {
+        string[] includes = ["Documents", "Partner", "Interactions"];
+
+        var item = await ContactRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        // Now you can access interactions directly from the contact entity
+        // Examples:
+        // var recentInteractions = item.Interactions?.OrderByDescending(i => i.Date).Take(5).ToList();
+        // var interactionCount = item.Interactions?.Count ?? 0;
+
+        var result = mapper.Map<ContactModel>(item);
+        return result;
+    }
+
     public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
     {
         return null;

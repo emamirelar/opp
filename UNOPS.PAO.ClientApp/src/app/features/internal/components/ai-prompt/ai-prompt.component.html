@@ -1,0 +1,596 @@
+<div class="flex flex-col gap-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">{{ 'aiPrompt.title' | translate }}</h1>
+    @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
+      <p-button 
+        [label]="'aiPrompt.createNew' | translate"
+        icon="pi pi-plus"
+        (onClick)="openEditDialog()"
+        class="px-4 py-2">
+      </p-button>
+    }
+  </div>
+
+  <!-- Search Section -->
+  <div class="w-full">
+    <div class="flex gap-2">
+      <p-iconfield iconPosition="left" class="flex-1">
+        <p-inputicon class="pi pi-search" />
+        <input pInputText type="text"
+          [placeholder]="'aiPrompt.search' | translate"
+          [(ngModel)]="searchText"
+          (input)="onSearch()"
+          (keydown.enter)="onSearchEnter()"
+          class="w-full h-10">
+        @if (searchText.length > 0) {
+          <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
+        }
+      </p-iconfield>
+      <p-button 
+        icon="pi pi-search"
+        [label]="'common.search' | translate"
+        severity="secondary"
+        (onClick)="onSearchEnter()"
+        [disabled]="!searchText?.trim()"
+        class="h-10">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="p-1 rounded-xl bg-surface-50" [class.opacity-20]="loading()">
+    <p-table 
+      [value]="prompts()" 
+      [loading]="loading()"
+      [paginator]="true"
+      [rows]="pageSize()"
+      [totalRecords]="totalRecords()"
+      [lazy]="true"
+      (onLazyLoad)="onLazyLoad($event)"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} records"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      responsiveLayout="scroll"
+      [sortField]="'type'"
+      [sortOrder]="1"
+      styleClass="p-datatable-sm custom-table">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="type">
+            {{ 'aiPrompt.type' | translate }}
+            <p-sortIcon field="type"></p-sortIcon>
+          </th>
+          <th pSortableColumn="model">
+            {{ 'aiPrompt.model' | translate }}
+            <p-sortIcon field="model"></p-sortIcon>
+          </th>
+          <th pSortableColumn="project">
+            {{ 'aiPrompt.project' | translate }}
+            <p-sortIcon field="project"></p-sortIcon>
+          </th>
+          <th pSortableColumn="location">
+            {{ 'aiPrompt.location' | translate }}
+            <p-sortIcon field="location"></p-sortIcon>
+          </th>
+          <th pSortableColumn="createdAt">
+            {{ 'aiPrompt.createdAt' | translate }}
+            <p-sortIcon field="createdAt"></p-sortIcon>
+          </th>
+          <th class="w-12">{{ 'common.actions' | translate }}</th>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="body" let-prompt>
+        <tr (click)="openEditDialog(prompt)" class="cursor-pointer">
+          <td>{{ prompt.type }}</td>
+          <td>{{ prompt.model }}</td>
+          <td>{{ prompt.project }}</td>
+          <td>{{ prompt.location }}</td>
+          <td>{{ prompt.createdAt | date:'medium' }}</td>
+          <td>
+            <div class="flex gap-2">
+              @if (!permissionsLoading() && entityPermissions().permissions.canUpdate) {
+                <p-button 
+                  icon="pi pi-pencil" 
+                  (onClick)="$event.stopPropagation(); openEditDialog(prompt)"
+                  [pTooltip]="'common.edit' | translate"
+                  severity="info"
+                  size="small">
+                </p-button>
+              }
+              @if (!permissionsLoading() && entityPermissions().permissions.canDelete) {
+                <p-button 
+                  icon="pi pi-trash" 
+                  (onClick)="$event.stopPropagation(); confirmDelete(prompt)"
+                  [pTooltip]="'common.delete' | translate"
+                  severity="danger"
+                  size="small">
+                </p-button>
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6" class="text-center p-4">
+            @if (loading()) {
+              <div class="flex justify-center items-center p-4">
+                <i class="pi pi-spin pi-spinner text-2xl"></i>
+              </div>
+            } @else {
+              <div>{{ 'aiPrompt.noRecords' | translate }}</div>
+            }
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <!-- Edit/Create Dialog -->
+  <p-dialog
+    [(visible)]="displayDialog"
+    [modal]="true"
+    [header]="dialogTitle()"
+    class="ai-prompt-dialog"
+    [style]="{ 'min-width': '95vw', 'max-width': '1600px', 'height': '90vh' }"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="overflow-hidden">
+
+    <div class="h-full flex flex-col">
+      <!-- Main Content Area - Scrollable -->
+      <div class="flex-1 overflow-hidden">
+        <form [formGroup]="promptForm" class="h-full">
+          <!-- Grid Container for Split Layout -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+            <!-- Left Side - Main Form (2/3 width) -->
+            <div class="lg:col-span-2 flex flex-col overflow-y-auto space-y-6 pr-6">
+              <!-- Basic Information -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-shrink-0">
+                <div class="space-y-2">
+                  <label for="type" class="block text-sm font-semibold text-gray-700">
+                    {{ 'aiPrompt.type' | translate }} *
+                  </label>
+                  <input 
+                    id="type"
+                    pInputText 
+                    formControlName="type" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    [class.border-red-500]="promptForm.get('type')?.invalid && promptForm.get('type')?.touched"
+                    [class.ring-red-200]="promptForm.get('type')?.invalid && promptForm.get('type')?.touched">
+                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('type')?.invalid && promptForm.get('type')?.touched">
+                    {{ 'aiPrompt.typeRequired' | translate }}
+                  </small>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="promptFunction" class="block text-sm font-semibold text-gray-700">
+                    {{ 'aiPrompt.promptFunction' | translate }}
+                  </label>
+                  <input 
+                    id="promptFunction"
+                    pInputText 
+                    formControlName="promptFunction" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    [class.border-red-500]="promptForm.get('promptFunction')?.invalid && promptForm.get('promptFunction')?.touched"
+                    [class.ring-red-200]="promptForm.get('promptFunction')?.invalid && promptForm.get('promptFunction')?.touched">
+                  <small class="text-gray-600 text-xs">
+                    {{ 'aiPrompt.promptFunctionHelper' | translate }}
+                  </small>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="model" class="block text-sm font-semibold text-gray-700">
+                    {{ 'aiPrompt.model' | translate }} *
+                  </label>
+                  <p-dropdown 
+                    id="model"
+                    formControlName="model"
+                    [options]="geminiModels()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [readonly]="isEditMode()"
+                    class="w-full"
+                    [placeholder]="'aiPrompt.selectModel' | translate">
+                  </p-dropdown>
+                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('model')?.invalid && promptForm.get('model')?.touched">
+                    {{ 'aiPrompt.modelRequired' | translate }}
+                  </small>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="block text-sm font-semibold text-gray-700">
+                    {{ 'aiPrompt.project' | translate }} *
+                  </label>
+                  @if (isEditMode()) {
+                    <div class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
+                      {{ promptForm.get('project')?.value }}
+                    </div>
+                  } @else {
+                    <input 
+                      id="project"
+                      pInputText 
+                      formControlName="project" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      [class.border-red-500]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched"
+                      [class.ring-red-200]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched">
+                  }
+                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('project')?.invalid && promptForm.get('project')?.touched">
+                    {{ 'aiPrompt.projectRequired' | translate }}
+                  </small>
+                </div>
+
+                <div class="space-y-2">
+                  <label class="block text-sm font-semibold text-gray-700">
+                    {{ 'aiPrompt.location' | translate }} *
+                  </label>
+                  @if (isEditMode()) {
+                    <div class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
+                      {{ promptForm.get('location')?.value }}
+                    </div>
+                  } @else {
+                    <input 
+                      id="location"
+                      pInputText 
+                      formControlName="location" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      [class.border-red-500]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched"
+                      [class.ring-red-200]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched">
+                  }
+                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('location')?.invalid && promptForm.get('location')?.touched">
+                    {{ 'aiPrompt.locationRequired' | translate }}
+                  </small>
+                </div>
+              </div>
+
+              <!-- Configuration Sections (moved from right side) -->
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-shrink-0">
+                <!-- Generation Configuration -->
+                <div class="space-y-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2">
+                    {{ 'aiPrompt.generationSettings' | translate }}
+                  </h3>
+                  
+                  <div class="space-y-4">
+                    <!-- Temperature -->
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                          {{ 'aiPrompt.temperature' | translate }}
+                        </label>
+                        <i class="pi pi-question-circle text-gray-400 cursor-help" 
+                           [pTooltip]="'aiPrompt.temperatureHelp' | translate"
+                           tooltipPosition="top"></i>
+                      </div>
+                      <div class="px-2">
+                        <p-slider 
+                          formControlName="temperature"
+                          [min]="0" 
+                          [max]="2" 
+                          [step]="0.1"
+                          class="w-full">
+                        </p-slider>
+                      </div>
+                      <div class="flex justify-between text-xs text-gray-500">
+                        <span>0</span>
+                        <span class="font-semibold text-gray-700">{{ (promptForm.get('temperature')?.value ?? 1) | number:'1.1-1' }}</span>
+                        <span>2</span>
+                      </div>
+                    </div>
+
+                    <!-- Top P -->
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                          {{ 'aiPrompt.topP' | translate }}
+                        </label>
+                        <i class="pi pi-question-circle text-gray-400 cursor-help" 
+                           [pTooltip]="'aiPrompt.topPHelp' | translate"
+                           tooltipPosition="top"></i>
+                      </div>
+                      <div class="px-2">
+                        <p-slider 
+                          formControlName="topP"
+                          [min]="0" 
+                          [max]="1" 
+                          [step]="0.1"
+                          class="w-full">
+                        </p-slider>
+                      </div>
+                      <div class="flex justify-between text-xs text-gray-500">
+                        <span>0</span>
+                        <span class="font-semibold text-gray-700">{{ (promptForm.get('topP')?.value ?? 0.2) | number:'1.1-1' }}</span>
+                        <span>1</span>
+                      </div>
+                    </div>
+
+                    <!-- Max Output Tokens -->
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                          {{ 'aiPrompt.maxOutputTokens' | translate }}
+                        </label>
+                        <i class="pi pi-question-circle text-gray-400 cursor-help" 
+                           [pTooltip]="'aiPrompt.maxOutputTokensHelp' | translate"
+                           tooltipPosition="top"></i>
+                      </div>
+                      <div class="px-2">
+                        <p-slider 
+                          formControlName="maxOutputTokens"
+                          [min]="0" 
+                          [max]="8192" 
+                          [step]="1"
+                          class="w-full">
+                        </p-slider>
+                      </div>
+                      <div class="flex justify-between text-xs text-gray-500">
+                        <span>0</span>
+                        <span class="font-semibold text-gray-700">{{ (promptForm.get('maxOutputTokens')?.value ?? 8192) | number:'1.0-0' }}</span>
+                        <span>8192</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tools and Advanced Configuration -->
+                <div class="space-y-4">
+                  <!-- Tools Configuration -->
+                  <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
+                      {{ 'aiPrompt.tools' | translate }}
+                    </h3>
+                    <div class="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-200">
+                      <p-toggleSwitch formControlName="googleSearch" class="flex-shrink-0"></p-toggleSwitch>
+                      <label class="text-sm font-medium text-gray-700 flex-grow">
+                        {{ 'aiPrompt.grounding' | translate }}: {{ 'aiPrompt.googleSearch' | translate }}
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Advanced Configuration -->
+                  <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
+                      {{ 'aiPrompt.advancedSettings' | translate }}
+                    </h3>
+                    <div class="space-y-2">
+                      <label for="safetySettings" class="block text-sm font-semibold text-gray-700">
+                        {{ 'aiPrompt.safetySettings' | translate }}
+                      </label>
+                      <textarea 
+                        id="safetySettings"
+                        pInputTextarea 
+                        formControlName="safetySettings" 
+                        [rows]="3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y">
+                      </textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Prompt Content -->
+              <div class="space-y-2 flex-shrink-0">
+                <label for="prompt" class="block text-sm font-semibold text-gray-700">
+                  {{ 'aiPrompt.prompt' | translate }} *
+                </label>
+                <div class="flex flex-col">
+                  <textarea 
+                    id="prompt"
+                    pInputTextarea 
+                    formControlName="prompt" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y min-h-[400px]"
+                    [class.border-red-500]="promptForm.get('prompt')?.invalid && promptForm.get('prompt')?.touched"
+                    [class.ring-red-200]="promptForm.get('prompt')?.invalid && promptForm.get('prompt')?.touched"
+                    [placeholder]="'aiPrompt.promptPlaceholder' | translate">
+                  </textarea>
+                  <small class="text-blue-600 text-xs mt-2">
+                    {{ 'aiPrompt.promptHelper' | translate }}
+                  </small>
+                  <small class="text-red-600 text-xs" *ngIf="promptForm.get('prompt')?.invalid && promptForm.get('prompt')?.touched">
+                    {{ 'aiPrompt.promptDataRequired' | translate }}
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side - Test Section Only (1/3 width) -->
+            <div class="lg:col-span-1 border-l border-gray-200 pl-6 flex flex-col overflow-hidden">
+              <div class="space-y-6 h-full flex flex-col overflow-y-auto">
+                <!-- Test Section -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-shrink-0">
+                  <div class="space-y-4">
+                    <div>
+                      <h4 class="text-md font-semibold text-blue-800">{{ 'aiPrompt.testPrompt' | translate }}</h4>
+                      <p class="text-sm text-blue-600">{{ 'aiPrompt.testPromptDescription' | translate }}</p>
+                    </div>
+
+                    <!-- Test Mode Selection -->
+                    <div class="space-y-3">
+                      <label class="block text-sm font-semibold text-blue-800">
+                        {{ 'aiPrompt.testMode' | translate }} *
+                      </label>
+                      <div class="space-y-2">
+                        <!-- Entity ID option - only show when function is provided -->
+                        <div class="flex items-center gap-3" *ngIf="showEntityIdOption()">
+                          <p-radioButton 
+                            formControlName="testMode" 
+                            value="entityId" 
+                            inputId="testModeEntityId">
+                          </p-radioButton>
+                          <label for="testModeEntityId" class="text-sm font-medium text-blue-700 cursor-pointer">
+                            {{ 'aiPrompt.useEntityId' | translate }}
+                          </label>
+                        </div>
+                        <div class="flex items-center gap-3">
+                          <p-radioButton 
+                            formControlName="testMode" 
+                            value="testData" 
+                            inputId="testModeTestData">
+                          </p-radioButton>
+                          <label for="testModeTestData" class="text-sm font-medium text-blue-700 cursor-pointer">
+                            {{ 'aiPrompt.useTestData' | translate }}
+                          </label>
+                        </div>
+                        <!-- Helper text when Entity ID is not available -->
+                        <div class="text-xs text-blue-600" *ngIf="!showEntityIdOption()">
+                          {{ 'aiPrompt.entityIdRequiresFunction' | translate }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Entity ID Input (shown when Entity ID mode is selected) -->
+                    <div class="space-y-2" *ngIf="promptForm.get('testMode')?.value === 'entityId'">
+                      <label for="entityId" class="block text-sm font-semibold text-blue-800">
+                        {{ 'aiPrompt.entityId' | translate }} *
+                      </label>
+                      <input 
+                        id="entityId"
+                        pInputText 
+                        formControlName="entityId"
+                        type="number"
+                        min="1"
+                        class="w-full px-3 py-2 border border-blue-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        [placeholder]="'aiPrompt.entityIdPlaceholder' | translate">
+                    </div>
+
+                    <!-- Test Data Input (shown when Test Data mode is selected) -->
+                    <div class="space-y-2" *ngIf="promptForm.get('testMode')?.value === 'testData'">
+                      <label for="testData" class="block text-sm font-semibold text-blue-800">
+                        {{ 'aiPrompt.testData' | translate }} *
+                      </label>
+                      <textarea 
+                        id="testData"
+                        pInputTextarea 
+                        formControlName="testData"
+                        [rows]="4"
+                        class="w-full px-3 py-2 border border-blue-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
+                        [placeholder]="'aiPrompt.testDataPlaceholder' | translate">
+                      </textarea>
+                      <small class="text-blue-600 text-xs">
+                        {{ 'aiPrompt.testDataHelper' | translate }}
+                      </small>
+                    </div>
+
+                    <p-button 
+                      [label]="'aiPrompt.test' | translate"
+                      icon="pi pi-play"
+                      severity="info"
+                      [disabled]="!canRunTest()"
+                      [loading]="testing()"
+                      (onClick)="testPrompt()"
+                      class="w-full">
+                    </p-button>
+                    
+                    <!-- Test Results Area -->
+                    <div class="space-y-2">
+                      <label class="block text-sm font-semibold text-blue-800">
+                        {{ 'aiPrompt.testResults' | translate }}
+                      </label>
+                      <div class="bg-white border border-blue-200 rounded-md overflow-hidden">
+                        @if (testResults()) {
+                          <div class="space-y-0">
+                            @if (testResults()?.success) {
+                              <div class="text-sm text-green-700 font-medium p-3 border-b border-blue-100">
+                                <i class="pi pi-check-circle mr-2"></i>{{ 'aiPrompt.testSuccess' | translate }}
+                              </div>
+                              
+                              <!-- Tabs for Success Response -->
+                              <div class="bg-gray-50 border-b border-gray-200">
+                                <nav class="flex" aria-label="Tabs">
+                                  <button 
+                                    type="button"
+                                    class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
+                                    [class.border-blue-500]="activeTab() === 'preview'"
+                                    [class.bg-white]="activeTab() === 'preview'"
+                                    [class.text-blue-700]="activeTab() === 'preview'"
+                                    [class.shadow-sm]="activeTab() === 'preview'"
+                                    [class.border-transparent]="activeTab() !== 'preview'"
+                                    [class.text-gray-600]="activeTab() !== 'preview'"
+                                    [class.hover:text-gray-800]="activeTab() !== 'preview'"
+                                    (click)="setActiveTab('preview')">
+                                    <i class="pi pi-eye mr-2"></i>
+                                    {{ 'aiPrompt.preview' | translate }}
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
+                                    [class.border-blue-500]="activeTab() === 'raw'"
+                                    [class.bg-white]="activeTab() === 'raw'"
+                                    [class.text-blue-700]="activeTab() === 'raw'"
+                                    [class.shadow-sm]="activeTab() === 'raw'"
+                                    [class.border-transparent]="activeTab() !== 'raw'"
+                                    [class.text-gray-600]="activeTab() !== 'raw'"
+                                    [class.hover:text-gray-800]="activeTab() !== 'raw'"
+                                    (click)="setActiveTab('raw')">
+                                    <i class="pi pi-code mr-2"></i>
+                                    {{ 'aiPrompt.rawResponse' | translate }}
+                                  </button>
+                                </nav>
+                              </div>
+                              
+                              <!-- Tab Content -->
+                              <div class="p-3 min-h-[150px] max-h-[300px] overflow-y-auto">
+                                @if (activeTab() === 'preview') {
+                                  <!-- Preview Tab - Clean AI Response -->
+                                  <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ getAiResponseText(testResults()?.response) }}</div>
+                                } @else {
+                                  <!-- Raw Response Tab - Full JSON -->
+                                  <pre class="text-xs text-gray-600 whitespace-pre-wrap font-mono">{{ testResults()?.response }}</pre>
+                                }
+                              </div>
+                            } @else {
+                              <!-- Error Response -->
+                              <div class="p-3">
+                                <div class="text-sm text-red-700 font-medium mb-2">
+                                  <i class="pi pi-times-circle mr-2"></i>{{ 'aiPrompt.testError' | translate }}
+                                </div>
+                                <div class="text-sm text-red-600 whitespace-pre-wrap">{{ testResults()?.error }}</div>
+                              </div>
+                            }
+                          </div>
+                        } @else {
+                          <div class="text-sm text-gray-500 italic p-3">
+                            {{ 'aiPrompt.testResultsPlaceholder' | translate }}
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Fixed Footer with Action Buttons -->
+      <div class="border-t border-gray-200 p-4 flex-shrink-0 mt-4">
+        <div class="flex justify-end gap-2">
+          <p-button 
+            [label]="'aiPrompt.cancel' | translate"
+            severity="secondary"
+            icon="pi pi-times"
+            (onClick)="closeDialog()">
+          </p-button>
+          <p-button 
+            [label]="'aiPrompt.save' | translate"
+            severity="primary"
+            icon="pi pi-check"
+            [loading]="saving()"
+            [disabled]="promptForm.invalid"
+            (onClick)="savePrompt()">
+          </p-button>
+        </div>
+      </div>
+    </div>
+  </p-dialog>
+
+  <!-- Toast and Confirmation Dialog -->
+  <p-toast></p-toast>
+  <p-confirmDialog></p-confirmDialog>
+</div> 

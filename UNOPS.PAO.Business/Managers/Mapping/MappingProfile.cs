@@ -25,7 +25,11 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null));
         CreateMap<ContactModel, Contact>()
             .ForMember(dest => dest.Partner, opt => opt.Ignore());
+        
+        // AI Prompt mappings
+        CreateMap<AiPrompt, AiPromptModel>();
         CreateMap<AiPromptModel, AiPrompt>();
+        
         CreateMap<AiScreenMappingModel, AiScreenMapping>();
         CreateMap<AiChatHistoryModel, AiChatHistory>();
         CreateMap<AiChatSessionModel, AiChatSession>();

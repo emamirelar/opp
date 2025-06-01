@@ -408,6 +408,92 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "OrgUnit == @orgUnit", "CanCreate": "OrgUnit == @orgUnit", "CanUpdate": "OrgUnit == @orgUnit", "CanDelete": "OrgUnit == @orgUnit"}'
 );
 
+-- AiPromptManagement Entity Permissions
+
+-- UNOPS General User role permissions for AiPromptManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'UNOPS_GEN_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    null
+);
+
+-- Partnership Global Admin role permissions for AiPromptManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    null
+);
+
+-- Partnerships User role permissions for AiPromptManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'PARTNER_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    null
+);
+
+-- Org Unit Admin role permissions for AiPromptManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'ORG_UNIT_ADMIN',
+    false,
+    false,
+    false,
+    false,
+    null,
+    null
+);
+
 -- Assign UNOPS_GEN_USER role to all existing users
 INSERT INTO public."AspNetUserRoles" ("UserId", "RoleId")
 SELECT u."Id", r."Id"

@@ -246,4 +246,25 @@ public class PartnerController : BaseController
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Test endpoint to get partner with all related data (contacts and interactions)
+    /// This endpoint includes: Documents, PartnerOffice, PartnerGroup, Contacts, and Contacts.Interactions
+    /// </summary>
+    [HttpGet(APIDictionary.Partner + "/{id}/with-details")]
+    public async Task<IActionResult> GetPartnerWithContactsAndInteractions(int id)
+    {
+        // Check permission to read partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+        if (permissionResult != null) return permissionResult;
+        
+        var partner = await _manager.GetPartnerWithContactsAndInteractionsAsync(id);
+        if (partner == null)
+        {
+            return NotFound($"Partner with ID {id} not found.");
+        }
+
+        // Return partner data with all related information
+        return Ok(partner);
+    }
 }

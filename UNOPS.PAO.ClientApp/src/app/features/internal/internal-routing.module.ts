@@ -149,11 +149,10 @@ const internalRoutes: Routes = [
             ]
           },
           {
-            path: 'ai-prompts',
-            component: ComingSoonComponent,
+            path: 'ai-prompt-management',
+            loadComponent: () => import('./components/ai-prompt/ai-prompt.component').then(m => m.AiPromptComponent),
             data: { 
-              breadcrumb: 'AI Prompts Admin',
-              featureName: 'AI Prompts Admin'
+              breadcrumb: 'AI Prompt Admin'
             }
           },
           {

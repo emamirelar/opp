@@ -411,14 +411,14 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return entityResponse;
         }
 
-        public async Task<IEnumerable<AiPromptModel>> GetPromptData(string type)
+        public async Task<IEnumerable<AiPrompt>> GetPromptData(string type)
         {
             var prompts = await _promptRepository
                 .GetAll()
                 .Where(x => x.Type == type)
                 .ToListAsync();
 
-        return prompts.Select(entity => new AiPromptModel
+        return prompts.Select(entity => new AiPrompt
         {
             Type = entity.Type,
             Prompt = entity.Prompt ?? string.Empty, // Ensure null safety
@@ -428,11 +428,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             SafetySettings = entity.SafetySettings,
             Location = entity.Location,
             Project = entity.Project,
-            Model = entity.Model
+            Model = entity.Model,
+            PromptFunction = entity.PromptFunction,
+            Name = entity.Name
         }).ToList();
     }
 
-    public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
     {
         string promptTemplate = promptData.Prompt;
         string finalPrompt = promptTemplate.Replace("{promptData}", relatedJsonData);
@@ -445,7 +447,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
     }
 
     // Common function to handle Gemini API calls
-    public async Task<string> CallGeminiApi(dynamic prompt, AiPromptModel promptData)
+    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData)
     {
         string accessToken = await GetAccessTokenAsync();
         var requestBody = await GetRequestBody(prompt, promptData);
@@ -490,7 +492,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
         }
 
-        private async Task<string> GetURL(AiPromptModel promptData)
+        private async Task<string> GetURL(AiPrompt promptData)
         {
             return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{promptData.Project}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
         }
@@ -501,12 +503,40 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             await _pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
         }
 
-        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPromptModel promptData)
+        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData)
         {
             dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
             dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
-            dynamic toolsConfig = string.IsNullOrEmpty(promptData.ToolsConfig)
-                            ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
+            
+            // Handle toolsConfig - support both old object format and new array format
+            dynamic toolsConfig;
+            if (string.IsNullOrEmpty(promptData.ToolsConfig))
+            {
+                toolsConfig = new List<ExpandoObject>();
+            }
+            else
+            {
+                try
+                {
+                    // First try to parse as array (new format)
+                    toolsConfig = JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
+                }
+                catch (JsonException)
+                {
+                    try
+                    {
+                        // If that fails, try to parse as object (old format) and convert to array
+                        var toolConfigObject = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ToolsConfig);
+                        toolsConfig = new List<ExpandoObject> { toolConfigObject };
+                    }
+                    catch (JsonException)
+                    {
+                        // If both fail, use empty list
+                        toolsConfig = new List<ExpandoObject>();
+                    }
+                }
+            }
+            
             dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
                             ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
 
@@ -530,7 +560,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return requestBody;
         }
 
-        public async Task<List<dynamic>> ProcessBulkImport(string stringifiedBatchRecords, AiPromptModel promptData, int userId, string entityName, bool isAsync = false)
+        public async Task<List<dynamic>> ProcessBulkImport(string stringifiedBatchRecords, AiPrompt promptData, int userId, string entityName, bool isAsync = false)
         {
             var finalResponse = new List<dynamic>();
 
@@ -608,7 +638,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         // New method with progress tracking
         public async Task<List<dynamic>> ProcessBulkImportWithProgress(
             string stringifiedBatchRecords, 
-            AiPromptModel promptData, 
+            AiPrompt promptData, 
             int userId, 
             string entityName, 
             bool isAsync = false,

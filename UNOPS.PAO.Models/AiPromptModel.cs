@@ -1,15 +1,22 @@
 namespace UNOPS.PAO.Models;
+
 public class AiPromptModel
 {
-    public int Id { get; set; }
-    public string Type { get; set; }
-    public string Prompt { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string GenerationConfig { get; set; }
-    public string ContentConfig { get; set; }
+    public int? Id { get; set; }
+    public string Type { get; set; } = string.Empty;
+    public string PromptFunction { get; set; } = string.Empty;
+    public string? Prompt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string GenerationConfig { get; set; } = string.Empty;
+    public string ContentConfig { get; set; } = string.Empty;
     public string? ToolsConfig { get; set; }
     public string? SafetySettings { get; set; }
-    public string Project { get; set; }
-    public string Location { get; set; }
-    public string Model { get; set; }
+    public string Project { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public string Model { get; set; } = string.Empty;
+}
+
+public class AiPromptFilterRequest : PaginationRequest
+{
+    public string? SearchText { get; set; }
 }
