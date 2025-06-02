@@ -1,4 +1,4 @@
-using UNOPS.PAO.Domain.Entities;
+﻿using UNOPS.PAO.Domain.Entities;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers.Mapping;
 using AutoMapper;
@@ -46,8 +46,6 @@ public class MappingProfile : Profile
         CreateMap<DocumentUploadModel, UNOPSDocument>();
         CreateMap<DocumentLinkModel, UNOPSDocument>();
         CreateMap<UpdateDocumentRequest, UNOPSDocument>();
-        CreateMap<UNOPSOrganizationUnit, OrganizationUnitModel>();
-        CreateMap<OrganizationUnitModel, UNOPSOrganizationUnit>();
         
         CreateMap<PartnerRequest, UNOPSPartner>();
         CreateMap<UpdatePartnerRequest, UNOPSPartner>();

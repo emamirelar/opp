@@ -22,8 +22,6 @@ public class MappingProfile : Profile
         CreateMap<InteractionPartnerModel, InteractionPartner>();
         CreateMap<InteractionUser, InteractionUserModel>();
         CreateMap<InteractionUserModel, InteractionUser>();
-        CreateMap<OrganizationUnit, OrganizationUnitModel>();
-        CreateMap<OrganizationUnitModel, OrganizationUnit>();
         CreateMap<Partner, PartnerValueModel>();
 
         // OrganizationHierarchy mappings
