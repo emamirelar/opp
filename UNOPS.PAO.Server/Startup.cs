@@ -301,6 +301,9 @@ public class Startup
         // Add SavedFilter Service
         services.AddScoped<ISavedFilterService, SavedFilterService>();
         
+        // Add Generic Row Filter Service
+        services.AddScoped<IGenericRowFilterService, GenericRowFilterService>();
+        
         // Configure authorization
         services.AddAuthorization(options =>
         {

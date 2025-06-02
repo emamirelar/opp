@@ -48,8 +48,6 @@ public class MappingProfile : Profile
         CreateMap<DocumentUploadModel, UNOPSDocument>();
         CreateMap<DocumentLinkModel, UNOPSDocument>();
         CreateMap<UpdateDocumentRequest, UNOPSDocument>();
-        CreateMap<UNOPSOrganizationUnit, OrganizationUnitModel>();
-        CreateMap<OrganizationUnitModel, UNOPSOrganizationUnit>();
         
         CreateMap<PartnerRequest, UNOPSPartner>();
         CreateMap<UpdatePartnerRequest, UNOPSPartner>();
