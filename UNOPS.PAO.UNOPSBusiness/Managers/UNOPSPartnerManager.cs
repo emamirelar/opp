@@ -27,7 +27,7 @@ using UNOPS.PAO.Utilities.Helpers;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
 
-public class UNOPSPartnerManager : IPartnerManager
+public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 {
     private readonly IMapper _mapper;
     private readonly UNOPSAppDbContext _context;
@@ -127,6 +127,7 @@ public class UNOPSPartnerManager : IPartnerManager
     }
 
     public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IBusinessSecurityService securityService)
+        : base(mapper, context, configuration)
     {
         _mapper = mapper;
         _context = context;
@@ -357,6 +358,164 @@ public class UNOPSPartnerManager : IPartnerManager
         }
 
         return await MapEntityToModelWithPermissionsAsync(item, _mapper);
+    }
+
+    /// <summary>
+    /// Gets basic partner details without contacts and interactions - designed for AI prompts
+    /// </summary>
+    public async Task<PartnerModel?> GetBasicPartnerDetailsAsync(int id)
+    {
+        string[] includes = ["PartnerOffice", "PartnerGroup"];
+
+        var item = await PartnerRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        // Load partner office if needed
+        if (item.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                item.PartnerOffice = partnerOffice;
+            }
+        }
+
+        return await MapEntityToModelWithPermissionsAsync(item, _mapper);
+    }
+
+    /// <summary>
+    /// Gets a partner with its contacts and their interactions included
+    /// </summary>
+    public async Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id)
+    {
+        // Include contacts and their interactions using standard Entity Framework includes
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts", "Contacts.Interactions"];
+
+        var partner = await PartnerRepository.GetByIdAsync(id, includes);
+
+        if (partner == null)
+        {
+            return default;
+        }
+
+        // Load partner office if needed
+        if (partner.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                partner.PartnerOffice = partnerOffice;
+            }
+        }
+
+        // Now you can use the Partner entity's methods to get interaction data
+        // Examples:
+        // var allInteractions = partner.GetAllInteractions();
+        // var recentInteractions = partner.GetRecentInteractions(5);
+        // var interactionsByContact = partner.GetInteractionsByContact();
+        // var summary = partner.GetSummary();
+
+        return await MapEntityToModelWithPermissionsAsync(partner, _mapper);
+    }
+
+    /// <summary>
+    /// Gets a partner with its associated projects through the many-to-many relationship
+    /// </summary>
+    public async Task<PartnerModel?> GetPartnerWithProjectsAsync(int id)
+    {
+        // Include the projects through the many-to-many relationship
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Projects"];
+
+        var partner = await PartnerRepository.GetByIdAsync(id, includes);
+
+        if (partner == null)
+        {
+            return default;
+        }
+
+        // Load partner office if needed
+        if (partner.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                partner.PartnerOffice = partnerOffice;
+            }
+        }
+
+        var result = await MapEntityToModelWithPermissionsAsync(partner, _mapper);
+
+        // Map the projects to ProjectSummaryModel
+        if (partner.Projects != null && partner.Projects.Any())
+        {
+            result.Projects = partner.Projects.Select(project => new ProjectSummaryModel
+            {
+                Id = project.Id,
+                ProjectNumber = project.ProjectNumber,
+                Name = project.Name,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                Stage = project.Stage,
+                BudgetCheckingLevel = project.BudgetCheckingLevel,
+                BudgetDuration = project.BudgetDuration,
+                BudgetAmount = project.BudgetAmount,
+                ExpenditureAmount = project.ExpenditureAmount
+            }).ToList();
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets partner risk profile with comprehensive details including projects - designed for risk analysis and AI prompts
+    /// </summary>
+    public async Task<PartnerModel?> GetPartnerRiskProfileAsync(int id)
+    {
+        // Include all relevant data for risk assessment: documents, office, group, contacts, interactions, and projects
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts", "Contacts.Interactions", "Projects"];
+
+        var partner = await PartnerRepository.GetByIdAsync(id, includes);
+
+        if (partner == null)
+        {
+            return default;
+        }
+
+        // Load partner office if needed
+        if (partner.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                partner.PartnerOffice = partnerOffice;
+            }
+        }
+
+        var result = await MapEntityToModelWithPermissionsAsync(partner, _mapper);
+
+        // Map the projects to ProjectSummaryModel
+        if (partner.Projects != null && partner.Projects.Any())
+        {
+            result.Projects = partner.Projects.Select(project => new ProjectSummaryModel
+            {
+                Id = project.Id,
+                ProjectNumber = project.ProjectNumber,
+                Name = project.Name,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                Stage = project.Stage,
+                BudgetCheckingLevel = project.BudgetCheckingLevel,
+                BudgetDuration = project.BudgetDuration,
+                BudgetAmount = project.BudgetAmount,
+                ExpenditureAmount = project.ExpenditureAmount
+            }).ToList();
+        }
+
+        return result;
     }
     
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerGroupCode, PaginationRequest request)
@@ -908,4 +1067,12 @@ public class UNOPSPartnerManager : IPartnerManager
     }
     
     #endregion
+
+    /// <summary>
+    /// Implementation of abstract method from BaseUNOPSManager
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        return await GetPartnerAsync(user, entityId);
+    }
 }

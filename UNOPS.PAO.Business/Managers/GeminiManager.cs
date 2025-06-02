@@ -27,15 +27,14 @@ public class GeminiManager : IGeminiManager
         _promptRepository = new DataRepository<AiPrompt>(context);
     }
 
-    public IEnumerable<AiPromptModel> GetPromptData(string type)
+    public async Task<IEnumerable<AiPrompt>> GetPromptData(string type)
     {
-        return _promptRepository
+        return await Task.FromResult(_promptRepository
             .GetAll()
-            .Where(x => x.Type == type)
-            .Select(x => _mapper.Map<AiPrompt, AiPromptModel>(x));
+            .Where(x => x.Type == type));
     }
 
-    public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
     {
         // Implement the logic to fetch result from Gemini
         throw new NotImplementedException();

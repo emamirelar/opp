@@ -17,7 +17,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
 
-public class UNOPSInteractionManager : IInteractionManager
+public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 {
     private readonly IMapper mapper;
     private readonly BaseRepository<UNOPSInteraction> interactionRepository;
@@ -73,6 +73,7 @@ public class UNOPSInteractionManager : IInteractionManager
     }
 
     public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
+        : base(mapper, context, configuration)
     {
         this.mapper = mapper;
         this.context = context;
@@ -466,5 +467,119 @@ public class UNOPSInteractionManager : IInteractionManager
         }
 
         await interactionRepository.Delete(entity);
+    }
+
+    /// <summary>
+    /// Gets comprehensive interaction details for AI prompts including all related entities
+    /// </summary>
+    /// <param name="id">The interaction ID</param>
+    /// <returns>Complete interaction details with all relationships</returns>
+    public async Task<InteractionModel?> GetInteractionDetailsAsync(int id)
+    {
+        var item = await interactionRepository.GetByIdAsync(id,
+            includes: new[]
+            {
+                "Contact",
+                "Contact.Partner",
+                "Contact.Partner.PartnerOffice",
+                "OrgUnit",
+                "InteractionContacts",
+                "InteractionPartners",
+                "InteractionUsers",
+                "InteractionContacts.Contact",
+                "InteractionContacts.Contact.Partner",
+                "InteractionPartners.Partner",
+                "InteractionUsers.User",
+                "Documents"
+            });
+
+        if (item == null)
+        {
+            return null;
+        }
+
+        // Map the entity to model with all relationships
+        var result = MapEntityToModel(item, mapper);
+        
+        // Populate junction table IDs
+        if (item.InteractionContacts != null)
+        {
+            result.ContactIds = item.InteractionContacts.Select(ic => ic.ContactId).ToList();
+        }
+
+        if (item.InteractionPartners != null)
+        {
+            result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
+        }
+
+        if (item.InteractionUsers != null)
+        {
+            result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets comprehensive interaction details with security checks for AI prompts
+    /// </summary>
+    /// <param name="user">Current user claims</param>
+    /// <param name="id">The interaction ID</param>
+    /// <returns>Complete interaction details with all relationships and permissions</returns>
+    public async Task<InteractionModel?> GetInteractionDetailsAsync(ClaimsPrincipal user, int id)
+    {
+        var item = await interactionRepository.GetByIdAsync(id,
+            includes: new[]
+            {
+                "Contact",
+                "Contact.Partner",
+                "Contact.Partner.PartnerOffice",
+                "OrgUnit",
+                "InteractionContacts",
+                "InteractionPartners", 
+                "InteractionUsers",
+                "InteractionContacts.Contact",
+                "InteractionContacts.Contact.Partner",
+                "InteractionPartners.Partner",
+                "InteractionUsers.User",
+                "Documents"
+            });
+
+        if (item == null) return null;
+
+        // Check if user can access this specific interaction
+        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(item, user, "read"))
+        {
+            return null; // User cannot access this interaction
+        }
+
+        // Map the entity to model with permissions
+        var result = await MapEntityToModelWithPermissionsAsync(item, mapper, user);
+        
+        // Populate junction table IDs
+        if (item.InteractionContacts != null)
+        {
+            result.ContactIds = item.InteractionContacts.Select(ic => ic.ContactId).ToList();
+        }
+
+        if (item.InteractionPartners != null)
+        {
+            result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
+        }
+
+        if (item.InteractionUsers != null)
+        {
+            result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Implementation of abstract method from BaseUNOPSManager
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        return await GetInteractionDetailsAsync(entityId);
     }
 } 

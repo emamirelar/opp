@@ -181,6 +181,7 @@ public class BusinessSecurityService : IBusinessSecurityService
             "unopsinteraction" => await GetInteractionPermissionsAsync(user, userOrgUnit),
             "partnertree" => await GetPartnerTreePermissionsAsync(user, userOrgUnit),
             "usermanagement" => await GetEntityPermissionsFromDatabaseAsync(user, "UserManagement"),
+            "aipromptmanagement" => await GetEntityPermissionsFromDatabaseAsync(user, "AiPromptManagement"),
             _ => new EntityPermissionsModel { CanRead = true, CanCreate = false, CanUpdate = false, CanDelete = false }
         };
         

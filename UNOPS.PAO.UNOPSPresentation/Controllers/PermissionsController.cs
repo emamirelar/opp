@@ -324,18 +324,6 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
             // Special case handling for compound names with dashes
             if (entityPlural.Contains("-"))
             {
-                if (entityPlural.ToLower() == "partnership-agreements")
-                {
-                    return "Agreement";
-                }
-                if (entityPlural.ToLower() == "partner-tree")
-                {
-                    return "PartnerTree";
-                }
-                if (entityPlural.ToLower() == "user-management")
-                {
-                    return "UserManagement";
-                }
                 // For other hyphenated entities, convert to PascalCase
                 // Split by dash, singularize each part, then join in PascalCase
                 var parts = entityPlural.Split('-');

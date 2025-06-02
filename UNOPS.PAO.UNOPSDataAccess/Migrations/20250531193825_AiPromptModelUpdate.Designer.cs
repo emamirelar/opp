@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250531193825_AiPromptModelUpdate")]
+    partial class AiPromptModelUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -732,6 +735,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<byte[]>("Data")
+                        .HasColumnType("bytea");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
@@ -740,9 +746,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
 
                     b.Property<string>("Discriminator")
                         .IsRequired()
@@ -1200,71 +1203,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasDiscriminator().HasValue("PartnerTree");
 
                     b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.SavedFilter", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool?>("Ascending")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("CreatedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EntityType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsAdvancedSearch")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LastModifiedBy")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("LastUsedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("OrderByField")
-                        .HasColumnType("text");
-
-                    b.Property<string>("SearchCriteria")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("SearchText")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UsageCount")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SavedFilters", "public");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UserInfo", b =>

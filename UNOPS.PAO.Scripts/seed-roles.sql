@@ -408,6 +408,92 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "OrgUnit == @userOrgUnit", "CanCreate": "OrgUnit == @userOrgUnit", "CanUpdate": "OrgUnit == @userOrgUnit", "CanDelete": "OrgUnit == @userOrgUnit"}'
 );
 
+-- AiPromptManagement Entity Permissions
+
+-- UNOPS General User role permissions for AiPromptManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'UNOPS_GEN_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Partnership Global Admin role permissions for AiPromptManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'PARTNER_GLOB_ADMIN',
+    true,
+    true,
+    true,
+    true,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Partnerships User role permissions for AiPromptManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'PARTNER_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Org Unit Admin role permissions for AiPromptManagement
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'ORG_UNIT_ADMIN',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
 -- Assign UNOPS_GEN_USER role to all existing users
 INSERT INTO public."AspNetUserRoles" ("UserId", "RoleId")
 SELECT u."Id", r."Id"

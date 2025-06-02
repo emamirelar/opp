@@ -41,26 +41,24 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         private readonly string _endpoint;
         private readonly IConfiguration _configuration;
         public readonly UNOPSAppDbContext _context;
-        private readonly DataRepository<AiScreenMapping> _screenMappingRepository;
-        private readonly string _connectionString;
         private readonly DataRepository<AiPrompt> _promptRepository;
         private readonly GoogleCredential _credentials;
         protected readonly PubSubPublisher _pubSubPublisher;
+        private readonly string _connectionString;
 
         public AiContextualService(IConfiguration configuration, UNOPSAppDbContext context, GoogleCredential credentials)
         {
             _configuration = configuration;
-            _screenMappingRepository = new DataRepository<AiScreenMapping>(context);
-            var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
-            var location = _configuration.GetValue<string>("AISettings:Location");
-            var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName");
-            _endpoint = $"projects/{projectId}/locations/{location}/publishers/google/models/{model}";
-            _predictionClient = PredictionServiceClient.Create(); // gRPC Client
             _context = context;
             _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
             _credentials = credentials;
             _promptRepository = new DataRepository<AiPrompt>(context);
             _pubSubPublisher = new PubSubPublisher(configuration);
+            var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
+            var location = _configuration.GetValue<string>("AISettings:Location");
+            var model = _configuration.GetValue<string>("AISettings:EmbeddingModelName");
+            _endpoint = $"projects/{projectId}/locations/{location}/publishers/google/models/{model}";
+            _predictionClient = PredictionServiceClient.Create(); // gRPC Client
         }
 
         public async Task<string> CreateEmbeddingForText(string text)
@@ -119,16 +117,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         public async Task<string> RetrieveContent(string promptType, dynamic entityId)
         {
-            var content = "No content found";
-
-            if (entityId is not int)
-                return content;
-
-            // Query the AiScreenMapping table based on Type
-            var screenMappings = (await GetScreenMappingsByType(promptType)).ToArray();
-            content = await GetDataBasedOnScreenMapping(promptType, (int)entityId, screenMappings);
-
-            return content;
+            // Since screen mappings are no longer used, return a default response
+            return "No content found - screen mappings functionality has been removed";
         }
 
         public async Task<dynamic> RetrieveEntityId(string entityName, string? vectorEmbedding, string? searchText=null, int? limit=5, string? where="1=1")
@@ -193,175 +183,6 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return result;
         }
 
-        public async Task<IEnumerable<AiScreenMapping>> GetScreenMappingsByType(string type)
-        {
-            return await _screenMappingRepository
-                .GetAll()
-                .Where(x => x.Type == type)
-                .OrderBy(x => x.Order)
-                .ToListAsync();
-        }
-
-        public async Task<string> GetDataBasedOnScreenMapping(string type, object recordId, AiScreenMapping[] mappings)
-        {
-            if (mappings == null || mappings.Length == 0)
-            {
-                throw new InvalidOperationException("Screen mappings are missing.");
-            }
-
-            var dbProperties = typeof(UNOPSAppDbContext).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            var selectColumns = BuildSelectColumns(mappings);
-            var joinClauses = BuildJoinClauses(mappings);
-            string baseTableName = mappings[0].Name;
-            string baseTable = $"{_connectionString}.\"{baseTableName}\"";
-            string columnWithQuotes = "\"Id\"";
-            string baseTableKeyCheck = $"{baseTable}.{columnWithQuotes}";
-
-            List<int> recordIds = new List<int>();
-
-            if (recordId is int id)
-            {
-                recordIds = new List<int> { id };
-            }
-            else if (recordId is IEnumerable<int> idList)
-            {
-                recordIds = idList.ToList();
-            }
-
-            string sqlQuery = $@"
-                SELECT ROW_TO_JSON(t)
-                FROM (
-                    SELECT {string.Join(", ", selectColumns)}
-                    FROM {baseTable}
-                    {string.Join(" ", joinClauses)}
-                    WHERE {baseTableKeyCheck} IN ({string.Join(", ", recordIds)})
-                ) t;";
-
-            var result = await ExecuteSqlQuery(sqlQuery);
-            return JsonConvert.SerializeObject(result[0]?["row_to_json"], Formatting.Indented);
-        }
-
-    // Build select columns for SQL query
-        private List<string> BuildSelectColumns(AiScreenMapping[] mappings)
-        {
-            var selectColumns = new List<string>();
-            var aggregates = new List<string>();
-            foreach (var mapping in mappings)
-            {
-                var tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.TableName, StringComparison.OrdinalIgnoreCase));
-                var foreignKeys = tableRecord?.GetForeignKeys()?.ToList();
-                var primaryKey = tableRecord?.FindPrimaryKey();
-
-            string tableWithSchema = $"{_connectionString}.\"{mapping.TableName}\"";
-            var tableProperties = tableRecord?.GetProperties();
-            var tablePropetiesAsList = tableProperties?.ToList();
-            string aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
-
-            if (!selectColumns.Any(col => col.Contains(tableWithSchema)) && (tableRecord?.ClrType != null && !(tablePropetiesAsList.Count == 2 && foreignKeys.Count == 2)))
-            {
-                foreach (var property in tableProperties)
-                {
-                    var commaSeparation = string.Empty;
-                    if (tableProperties.First().Name != property.Name)
-            {
-                        commaSeparation = ",";
-                    }
-                    aggregation = string.Concat(aggregation, $"{commaSeparation} '{property.Name}', ", $"{tableWithSchema}.\"{property.Name}\"");
-        }
-                if (!string.IsNullOrEmpty(aggregation))
-        {
-                    aggregation = string.Concat(aggregation, $")) AS {mapping.TableName}");
-                    selectColumns.Add(aggregation);
-                }
-            }
-
-
-            if (!string.IsNullOrEmpty(mapping.RelatedEntity) && !string.IsNullOrEmpty(mapping.RelatedEntityKey))
-            {
-                aggregation = $"JSON_AGG(DISTINCT JSONB_BUILD_OBJECT(";
-                string relatedTableWithSchema = $"{_connectionString}.\"{mapping.RelatedEntity}\"";
-                tableRecord = _context.Model.GetEntityTypes().FirstOrDefault(e => e.GetTableName().Equals(mapping.RelatedEntity, StringComparison.OrdinalIgnoreCase));
-                tableProperties = tableRecord?.GetProperties();
-                tablePropetiesAsList = tableProperties?.ToList();
-                foreignKeys = tableRecord?.GetForeignKeys()?.ToList();
-                primaryKey = tableRecord?.FindPrimaryKey();
-
-                if (!selectColumns.Any(col => col.Contains(relatedTableWithSchema)) && (tableRecord?.ClrType != null && tablePropetiesAsList.Count != 2 && foreignKeys.Count != 2))
-                    {
-                    foreach (var property in tableProperties)
-                    {
-                        var commaSeparation = string.Empty;
-                        if (tableProperties.First().Name != property.Name)
-                        {
-                            commaSeparation = ",";
-                        }
-                        aggregation = string.Concat(aggregation, $"{commaSeparation} '{property.Name}', ", $"{relatedTableWithSchema}.\"{property.Name}\"");
-                    }
-                    if (!string.IsNullOrEmpty(aggregation))
-                    {
-                        aggregation = string.Concat(aggregation, $")) AS {mapping.RelatedEntity}");
-                        selectColumns.Add(aggregation);
-                    }
-                }
-            }
-        }
-        return selectColumns;
-    }
-
-    // Build join clauses for SQL query
-    private List<string> BuildJoinClauses(AiScreenMapping[] mappings)
-    {
-        var joinClauses = new List<string>();
-        foreach (var mapping in mappings)
-        {
-            if (!string.IsNullOrEmpty(mapping.RelatedEntity) && !string.IsNullOrEmpty(mapping.RelatedEntityKey))
-            {
-                string tableWithSchema = $"{_connectionString}.\"{mapping.TableName}\"";
-                string relatedTableWithSchema = $"{_connectionString}.\"{mapping.RelatedEntity}\"";
-                joinClauses.Add($"LEFT JOIN {relatedTableWithSchema} ON {tableWithSchema}.\"{mapping.ComparisonKey}\" = {relatedTableWithSchema}.\"{mapping.RelatedEntityKey}\"");
-                    }
-                }
-            return joinClauses;
-        }
-
-        private async Task<List<Dictionary<string, object>>> ExecuteSqlQuery(string sqlQuery)
-        {
-            var result = new List<Dictionary<string, object>>();
-            var connection = _context.Database.GetDbConnection();
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync();
-            }
-
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = sqlQuery;
-                command.CommandType = CommandType.Text;
-
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        var row = new Dictionary<string, object>();
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            row[reader.GetName(i)] = reader.GetValue(i);
-                        }
-                        result.Add(row);
-                    }
-                }
-            }
-            return result;
-        }
-
-    // Build nested JSON from result and mappings
-    private object BuildNestedJson(List<Dictionary<string, object>> result, AiScreenMapping[] mappings)
-    {
-        // Implement the logic to build nested JSON from the result and mappings
-        // This is a placeholder implementation
-        return result;
-    }
-
         public async Task<string> ReadFileData(string fileId)
         {
             var service = new SheetsService(new BaseClientService.Initializer
@@ -411,14 +232,14 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return entityResponse;
         }
 
-        public async Task<IEnumerable<AiPromptModel>> GetPromptData(string type)
+        public async Task<IEnumerable<AiPrompt>> GetPromptData(string type)
         {
             var prompts = await _promptRepository
                 .GetAll()
                 .Where(x => x.Type == type)
                 .ToListAsync();
 
-        return prompts.Select(entity => new AiPromptModel
+        return prompts.Select(entity => new AiPrompt
         {
             Type = entity.Type,
             Prompt = entity.Prompt ?? string.Empty, // Ensure null safety
@@ -428,11 +249,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             SafetySettings = entity.SafetySettings,
             Location = entity.Location,
             Project = entity.Project,
-            Model = entity.Model
+            Model = entity.Model,
+            PromptFunction = entity.PromptFunction,
+            Name = entity.Name
         }).ToList();
     }
 
-    public async Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData)
+    public async Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData)
     {
         string promptTemplate = promptData.Prompt;
         string finalPrompt = promptTemplate.Replace("{promptData}", relatedJsonData);
@@ -445,7 +268,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
     }
 
     // Common function to handle Gemini API calls
-    public async Task<string> CallGeminiApi(dynamic prompt, AiPromptModel promptData)
+    public async Task<string> CallGeminiApi(dynamic prompt, AiPrompt promptData)
     {
         string accessToken = await GetAccessTokenAsync();
         var requestBody = await GetRequestBody(prompt, promptData);
@@ -490,7 +313,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return await credential.UnderlyingCredential.GetAccessTokenForRequestAsync();
         }
 
-        private async Task<string> GetURL(AiPromptModel promptData)
+        private async Task<string> GetURL(AiPrompt promptData)
         {
             return $"https://{promptData.Location}-aiplatform.googleapis.com/v1/projects/{promptData.Project}/locations/{promptData.Location}/publishers/google/models/{promptData.Model}:generateContent";
         }
@@ -501,12 +324,40 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             await _pubSubPublisher.PublishMessageAsync(new List<MyPubSubMessage> { message });
         }
 
-        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPromptModel promptData)
+        public async Task<dynamic> GetRequestBody(dynamic prompt, AiPrompt promptData)
         {
             dynamic contentConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ContentConfig);
             dynamic generationConfig = JsonConvert.DeserializeObject<ExpandoObject>(promptData.GenerationConfig);
-            dynamic toolsConfig = string.IsNullOrEmpty(promptData.ToolsConfig)
-                            ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
+            
+            // Handle toolsConfig - support both old object format and new array format
+            dynamic toolsConfig;
+            if (string.IsNullOrEmpty(promptData.ToolsConfig))
+            {
+                toolsConfig = new List<ExpandoObject>();
+            }
+            else
+            {
+                try
+                {
+                    // First try to parse as array (new format)
+                    toolsConfig = JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.ToolsConfig);
+                }
+                catch (JsonException)
+                {
+                    try
+                    {
+                        // If that fails, try to parse as object (old format) and convert to array
+                        var toolConfigObject = JsonConvert.DeserializeObject<ExpandoObject>(promptData.ToolsConfig);
+                        toolsConfig = new List<ExpandoObject> { toolConfigObject };
+                    }
+                    catch (JsonException)
+                    {
+                        // If both fail, use empty list
+                        toolsConfig = new List<ExpandoObject>();
+                    }
+                }
+            }
+            
             dynamic safetySettings = string.IsNullOrEmpty(promptData.SafetySettings)
                             ? new List<ExpandoObject>() : JsonConvert.DeserializeObject<List<ExpandoObject>>(promptData.SafetySettings);
 
@@ -530,7 +381,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return requestBody;
         }
 
-        public async Task<List<dynamic>> ProcessBulkImport(string stringifiedBatchRecords, AiPromptModel promptData, int userId, string entityName, bool isAsync = false)
+        public async Task<List<dynamic>> ProcessBulkImport(string stringifiedBatchRecords, AiPrompt promptData, int userId, string entityName, bool isAsync = false)
         {
             var finalResponse = new List<dynamic>();
 
@@ -608,7 +459,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         // New method with progress tracking
         public async Task<List<dynamic>> ProcessBulkImportWithProgress(
             string stringifiedBatchRecords, 
-            AiPromptModel promptData, 
+            AiPrompt promptData, 
             int userId, 
             string entityName, 
             bool isAsync = false,

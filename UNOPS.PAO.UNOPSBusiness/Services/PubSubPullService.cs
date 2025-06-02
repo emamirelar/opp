@@ -184,7 +184,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                                 if (promptData != null)
                                 {
                                     // Summarize the content using Gemini
-                                    string response = await contextService.FetchResultFromGemini((AiPromptModel)promptData, content);
+                                    string response = await contextService.FetchResultFromGemini(promptData, content);
                                     var responseMessage = contextService.GetDetailsFromGeminiResponse(response)["Message"]?.ToString() ?? string.Empty;
                                     
                                     // Generate embedding with the summarized content

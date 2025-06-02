@@ -12,6 +12,8 @@ public class MappingProfile : Profile
     public MappingProfile()
     {
         CreateMap<Project, ProjectModel>();
+        CreateMap<Project, ProjectSummaryModel>();
+        CreateMap<UNOPSPartner, PartnerSummaryModel>();
         CreateMap<ContactRequest, UNOPSContact>();
         CreateMap<UNOPSContact, ContactModel>()
             .ForMember(dest => dest.Partner, opt => opt.Ignore())

@@ -26,7 +26,7 @@ using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
 
-public class UNOPSContactManager : IContactManager
+public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 {
     private IMapper mapper;
     private BaseRepository<UNOPSContact> contactRepository;
@@ -134,6 +134,7 @@ public class UNOPSContactManager : IContactManager
     }
 
     public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
+        : base(mapper, context, configuration)
     {
         this.mapper = mapper;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
@@ -472,6 +473,29 @@ public class UNOPSContactManager : IContactManager
         return result;
     }
 
+    /// <summary>
+    /// Gets a contact with its interactions included
+    /// </summary>
+    public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
+    {
+        string[] includes = ["Documents", "Partner", "Partner.PartnerOffice", "Interactions"];
+
+        var item = await contactRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        // Now you can access interactions directly from the contact entity
+        // Examples:
+        // var recentInteractions = item.Interactions?.OrderByDescending(i => i.Date).Take(5).ToList();
+        // var interactionCount = item.Interactions?.Count ?? 0;
+
+        var result = mapper.Map<ContactModel>(item);
+        return result;
+    }
+
     public async Task<ContactModel?> UpdateContactAsync(int userId, UpdateContactRequest model)
     {
         var entity = await contactRepository.GetByIdAsync(model.Id);
@@ -496,5 +520,13 @@ public class UNOPSContactManager : IContactManager
         {
             await contactRepository.Delete(entity);
         }
+    }
+
+    /// <summary>
+    /// Implementation of abstract method from BaseUNOPSManager
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        return await GetContactAsync(user, entityId);
     }
 }
