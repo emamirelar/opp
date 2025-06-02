@@ -40,9 +40,9 @@ public class UNOPSAppDbContext : AppDbContext
             .HasMany(x => x.Projects)
             .WithMany(x => x.Partners)
             .UsingEntity("PartnerProjects");
-        //need to make PartnerNumber unique but can not autogenerate as this can conflict with existing data from ERP
-        //making PartnerNumber optional for now
-        //.HasIndex(x => x.PartnerNumber) 
+        //need to make PartnerCode unique but can not autogenerate as this can conflict with existing data from ERP
+        //making PartnerCode optional for now
+        //.HasIndex(x => x.PartnerCode) 
         //.IsUnique();
 
         // Configure Partner to PartnerTree relationship properly with only one foreign key

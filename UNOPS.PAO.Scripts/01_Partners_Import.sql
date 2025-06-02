@@ -694,7 +694,7 @@ WHERE p."Name" IN (
 -- Insert partner records
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -705,7 +705,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -716,7 +716,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -727,7 +727,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -738,7 +738,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -749,7 +749,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -760,7 +760,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -771,7 +771,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -782,7 +782,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -793,7 +793,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -804,7 +804,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -815,7 +815,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -826,7 +826,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -837,7 +837,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -848,7 +848,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -859,7 +859,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -870,7 +870,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -881,7 +881,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -892,7 +892,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -903,7 +903,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -914,7 +914,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -925,7 +925,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -936,7 +936,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -947,7 +947,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -958,7 +958,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -969,7 +969,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -980,7 +980,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -991,7 +991,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1002,7 +1002,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1013,7 +1013,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1024,7 +1024,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1035,7 +1035,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1046,7 +1046,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1057,7 +1057,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1068,7 +1068,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1079,7 +1079,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1090,7 +1090,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1101,7 +1101,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1112,7 +1112,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1123,7 +1123,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1134,7 +1134,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1145,7 +1145,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1156,7 +1156,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1167,7 +1167,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1178,7 +1178,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1189,7 +1189,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1200,7 +1200,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1211,7 +1211,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1222,7 +1222,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1233,7 +1233,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1244,7 +1244,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1255,7 +1255,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1266,7 +1266,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1277,7 +1277,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1288,7 +1288,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1299,7 +1299,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1310,7 +1310,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1321,7 +1321,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1332,7 +1332,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1343,7 +1343,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1354,7 +1354,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1365,7 +1365,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1376,7 +1376,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1387,7 +1387,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1398,7 +1398,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1409,7 +1409,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1420,7 +1420,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1431,7 +1431,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1442,7 +1442,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1453,7 +1453,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1464,7 +1464,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1475,7 +1475,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1486,7 +1486,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1497,7 +1497,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1508,7 +1508,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1519,7 +1519,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1530,7 +1530,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1541,7 +1541,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1552,7 +1552,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1563,7 +1563,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1574,7 +1574,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1585,7 +1585,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1596,7 +1596,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1607,7 +1607,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1618,7 +1618,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1629,7 +1629,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1640,7 +1640,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1651,7 +1651,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1662,7 +1662,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1673,7 +1673,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1684,7 +1684,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1695,7 +1695,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1706,7 +1706,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1717,7 +1717,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1728,7 +1728,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1739,7 +1739,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1750,7 +1750,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1761,7 +1761,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1772,7 +1772,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1783,7 +1783,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1794,7 +1794,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1805,7 +1805,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1816,7 +1816,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1827,7 +1827,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1838,7 +1838,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1849,7 +1849,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1860,7 +1860,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1871,7 +1871,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1882,7 +1882,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1893,7 +1893,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1904,7 +1904,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1915,7 +1915,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1926,7 +1926,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1937,7 +1937,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1948,7 +1948,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1959,7 +1959,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1970,7 +1970,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1981,7 +1981,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -1992,7 +1992,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2003,7 +2003,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2014,7 +2014,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2025,7 +2025,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2036,7 +2036,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2047,7 +2047,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2058,7 +2058,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2069,7 +2069,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2080,7 +2080,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2091,7 +2091,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2102,7 +2102,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2113,7 +2113,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2124,7 +2124,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2135,7 +2135,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2146,7 +2146,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2157,7 +2157,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2168,7 +2168,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2179,7 +2179,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2190,7 +2190,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2201,7 +2201,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2212,7 +2212,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2223,7 +2223,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2234,7 +2234,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2245,7 +2245,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2256,7 +2256,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2267,7 +2267,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2278,7 +2278,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2289,7 +2289,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2300,7 +2300,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2311,7 +2311,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2322,7 +2322,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2333,7 +2333,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2344,7 +2344,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2355,7 +2355,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2366,7 +2366,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2377,7 +2377,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2388,7 +2388,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2399,7 +2399,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2410,7 +2410,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2421,7 +2421,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2432,7 +2432,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2443,7 +2443,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2454,7 +2454,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2465,7 +2465,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2476,7 +2476,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2487,7 +2487,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2498,7 +2498,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2509,7 +2509,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2520,7 +2520,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2531,7 +2531,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2542,7 +2542,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2553,7 +2553,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2564,7 +2564,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2575,7 +2575,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2586,7 +2586,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2597,7 +2597,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2608,7 +2608,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2619,7 +2619,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2630,7 +2630,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2641,7 +2641,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2652,7 +2652,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2663,7 +2663,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2674,7 +2674,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2685,7 +2685,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2696,7 +2696,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2707,7 +2707,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2718,7 +2718,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2729,7 +2729,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2740,7 +2740,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2751,7 +2751,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2762,7 +2762,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2773,7 +2773,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2784,7 +2784,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2795,7 +2795,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2806,7 +2806,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2817,7 +2817,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2828,7 +2828,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2839,7 +2839,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2850,7 +2850,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2861,7 +2861,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2872,7 +2872,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2883,7 +2883,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2894,7 +2894,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2905,7 +2905,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2916,7 +2916,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2927,7 +2927,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2938,7 +2938,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2949,7 +2949,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2960,7 +2960,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2971,7 +2971,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2982,7 +2982,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -2993,7 +2993,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3004,7 +3004,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3015,7 +3015,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3026,7 +3026,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3037,7 +3037,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3048,7 +3048,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3059,7 +3059,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3070,7 +3070,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3081,7 +3081,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3092,7 +3092,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3103,7 +3103,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3114,7 +3114,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3125,7 +3125,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3136,7 +3136,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3147,7 +3147,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3158,7 +3158,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3169,7 +3169,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3180,7 +3180,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3191,7 +3191,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3202,7 +3202,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3213,7 +3213,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3224,7 +3224,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3235,7 +3235,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3246,7 +3246,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3257,7 +3257,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3268,7 +3268,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3279,7 +3279,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3290,7 +3290,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3301,7 +3301,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3312,7 +3312,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3323,7 +3323,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3334,7 +3334,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3345,7 +3345,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3356,7 +3356,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3367,7 +3367,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3378,7 +3378,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3389,7 +3389,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3400,7 +3400,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3411,7 +3411,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3422,7 +3422,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3433,7 +3433,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3444,7 +3444,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3455,7 +3455,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3466,7 +3466,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3477,7 +3477,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3488,7 +3488,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3499,7 +3499,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3510,7 +3510,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3521,7 +3521,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3532,7 +3532,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3543,7 +3543,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3554,7 +3554,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3565,7 +3565,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3576,7 +3576,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3587,7 +3587,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3598,7 +3598,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3609,7 +3609,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3620,7 +3620,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3631,7 +3631,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3642,7 +3642,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3653,7 +3653,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3664,7 +3664,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3675,7 +3675,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3686,7 +3686,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3697,7 +3697,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3708,7 +3708,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3719,7 +3719,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3730,7 +3730,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3741,7 +3741,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3752,7 +3752,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3763,7 +3763,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3774,7 +3774,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3785,7 +3785,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3796,7 +3796,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3807,7 +3807,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3818,7 +3818,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3829,7 +3829,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3840,7 +3840,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3851,7 +3851,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3862,7 +3862,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3873,7 +3873,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3884,7 +3884,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3895,7 +3895,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3906,7 +3906,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3917,7 +3917,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3928,7 +3928,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3939,7 +3939,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3950,7 +3950,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3961,7 +3961,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3972,7 +3972,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3983,7 +3983,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -3994,7 +3994,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4005,7 +4005,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4016,7 +4016,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4027,7 +4027,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4038,7 +4038,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4049,7 +4049,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4060,7 +4060,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4071,7 +4071,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4082,7 +4082,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4093,7 +4093,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4104,7 +4104,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4115,7 +4115,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4126,7 +4126,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4137,7 +4137,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4148,7 +4148,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4159,7 +4159,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4170,7 +4170,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4181,7 +4181,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4192,7 +4192,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4203,7 +4203,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4214,7 +4214,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4225,7 +4225,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4236,7 +4236,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4247,7 +4247,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4258,7 +4258,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4269,7 +4269,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4280,7 +4280,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4291,7 +4291,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4302,7 +4302,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4313,7 +4313,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4324,7 +4324,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4335,7 +4335,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4346,7 +4346,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4357,7 +4357,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4368,7 +4368,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4379,7 +4379,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4390,7 +4390,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4401,7 +4401,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4412,7 +4412,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4423,7 +4423,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4434,7 +4434,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4445,7 +4445,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4456,7 +4456,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4467,7 +4467,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4478,7 +4478,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4489,7 +4489,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4500,7 +4500,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4511,7 +4511,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4522,7 +4522,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4533,7 +4533,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4544,7 +4544,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4555,7 +4555,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4566,7 +4566,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4577,7 +4577,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4588,7 +4588,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4599,7 +4599,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4610,7 +4610,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4621,7 +4621,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4632,7 +4632,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4643,7 +4643,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4654,7 +4654,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4665,7 +4665,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4676,7 +4676,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4687,7 +4687,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4698,7 +4698,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4709,7 +4709,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4720,7 +4720,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4731,7 +4731,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4742,7 +4742,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4753,7 +4753,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4764,7 +4764,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4775,7 +4775,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4786,7 +4786,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4797,7 +4797,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4808,7 +4808,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4819,7 +4819,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4830,7 +4830,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4841,7 +4841,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4852,7 +4852,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4863,7 +4863,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4874,7 +4874,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4885,7 +4885,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4896,7 +4896,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4907,7 +4907,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4918,7 +4918,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4929,7 +4929,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4940,7 +4940,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4951,7 +4951,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4962,7 +4962,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4973,7 +4973,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4984,7 +4984,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -4995,7 +4995,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5006,7 +5006,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5017,7 +5017,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5028,7 +5028,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5039,7 +5039,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5050,7 +5050,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5061,7 +5061,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5072,7 +5072,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5083,7 +5083,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5094,7 +5094,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5105,7 +5105,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5116,7 +5116,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5127,7 +5127,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5138,7 +5138,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5149,7 +5149,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5160,7 +5160,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5171,7 +5171,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5182,7 +5182,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5193,7 +5193,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5204,7 +5204,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5215,7 +5215,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5226,7 +5226,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5237,7 +5237,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5248,7 +5248,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5259,7 +5259,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5270,7 +5270,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5281,7 +5281,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5292,7 +5292,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5303,7 +5303,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5314,7 +5314,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5325,7 +5325,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5336,7 +5336,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5347,7 +5347,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5358,7 +5358,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5369,7 +5369,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5380,7 +5380,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5391,7 +5391,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5402,7 +5402,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5413,7 +5413,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5424,7 +5424,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5435,7 +5435,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5446,7 +5446,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5457,7 +5457,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5468,7 +5468,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5479,7 +5479,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5490,7 +5490,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5501,7 +5501,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5512,7 +5512,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5523,7 +5523,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5534,7 +5534,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5545,7 +5545,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5556,7 +5556,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5567,7 +5567,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5578,7 +5578,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5589,7 +5589,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5600,7 +5600,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5611,7 +5611,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5622,7 +5622,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5633,7 +5633,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5644,7 +5644,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5655,7 +5655,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5666,7 +5666,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5677,7 +5677,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5688,7 +5688,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5699,7 +5699,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5710,7 +5710,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5721,7 +5721,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5732,7 +5732,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5743,7 +5743,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5754,7 +5754,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5765,7 +5765,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5776,7 +5776,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5787,7 +5787,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5798,7 +5798,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5809,7 +5809,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5820,7 +5820,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5831,7 +5831,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5842,7 +5842,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5853,7 +5853,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5864,7 +5864,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5875,7 +5875,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5886,7 +5886,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5897,7 +5897,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5908,7 +5908,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5919,7 +5919,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5930,7 +5930,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5941,7 +5941,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5952,7 +5952,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5963,7 +5963,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5974,7 +5974,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5985,7 +5985,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -5996,7 +5996,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6007,7 +6007,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6018,7 +6018,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6029,7 +6029,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6040,7 +6040,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6051,7 +6051,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6062,7 +6062,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6073,7 +6073,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6084,7 +6084,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6095,7 +6095,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6106,7 +6106,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6117,7 +6117,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6128,7 +6128,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6139,7 +6139,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6150,7 +6150,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6161,7 +6161,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6172,7 +6172,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6183,7 +6183,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6194,7 +6194,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6205,7 +6205,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6216,7 +6216,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6227,7 +6227,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6238,7 +6238,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6249,7 +6249,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6260,7 +6260,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6271,7 +6271,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6282,7 +6282,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6293,7 +6293,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6304,7 +6304,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6315,7 +6315,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6326,7 +6326,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6337,7 +6337,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6348,7 +6348,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6359,7 +6359,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6370,7 +6370,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6381,7 +6381,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6392,7 +6392,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6403,7 +6403,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6414,7 +6414,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6425,7 +6425,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6436,7 +6436,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6447,7 +6447,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6458,7 +6458,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6469,7 +6469,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6480,7 +6480,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6491,7 +6491,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6502,7 +6502,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6513,7 +6513,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6524,7 +6524,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6535,7 +6535,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6546,7 +6546,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6557,7 +6557,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6568,7 +6568,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6579,7 +6579,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6590,7 +6590,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6601,7 +6601,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6612,7 +6612,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6623,7 +6623,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6634,7 +6634,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6645,7 +6645,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6656,7 +6656,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6667,7 +6667,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6678,7 +6678,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6689,7 +6689,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6700,7 +6700,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6711,7 +6711,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6722,7 +6722,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6733,7 +6733,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6744,7 +6744,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6755,7 +6755,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6766,7 +6766,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6777,7 +6777,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6788,7 +6788,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6799,7 +6799,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6810,7 +6810,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6821,7 +6821,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6832,7 +6832,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6843,7 +6843,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6854,7 +6854,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6865,7 +6865,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6876,7 +6876,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6887,7 +6887,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6898,7 +6898,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6909,7 +6909,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6920,7 +6920,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6931,7 +6931,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6942,7 +6942,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6953,7 +6953,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6964,7 +6964,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6975,7 +6975,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6986,7 +6986,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -6997,7 +6997,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7008,7 +7008,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7019,7 +7019,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7030,7 +7030,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7041,7 +7041,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7052,7 +7052,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7063,7 +7063,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7074,7 +7074,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7085,7 +7085,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7096,7 +7096,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7107,7 +7107,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7118,7 +7118,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7129,7 +7129,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7140,7 +7140,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7151,7 +7151,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7162,7 +7162,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7173,7 +7173,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7184,7 +7184,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7195,7 +7195,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7206,7 +7206,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7217,7 +7217,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7228,7 +7228,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7239,7 +7239,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7250,7 +7250,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7261,7 +7261,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7272,7 +7272,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7283,7 +7283,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7294,7 +7294,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7305,7 +7305,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7316,7 +7316,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7327,7 +7327,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7338,7 +7338,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7349,7 +7349,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7360,7 +7360,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7371,7 +7371,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7382,7 +7382,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7393,7 +7393,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7404,7 +7404,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7415,7 +7415,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7426,7 +7426,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7437,7 +7437,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7448,7 +7448,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7459,7 +7459,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7470,7 +7470,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7481,7 +7481,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7492,7 +7492,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7503,7 +7503,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7514,7 +7514,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7525,7 +7525,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7536,7 +7536,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7547,7 +7547,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7558,7 +7558,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7569,7 +7569,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7580,7 +7580,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7591,7 +7591,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7602,7 +7602,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7613,7 +7613,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7624,7 +7624,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7635,7 +7635,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7646,7 +7646,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7657,7 +7657,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7668,7 +7668,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7679,7 +7679,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7690,7 +7690,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7701,7 +7701,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7712,7 +7712,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7723,7 +7723,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7734,7 +7734,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7745,7 +7745,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7756,7 +7756,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7767,7 +7767,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7778,7 +7778,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7789,7 +7789,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7800,7 +7800,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7811,7 +7811,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7822,7 +7822,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7833,7 +7833,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7844,7 +7844,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7855,7 +7855,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7866,7 +7866,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7877,7 +7877,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7888,7 +7888,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7899,7 +7899,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7910,7 +7910,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7921,7 +7921,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7932,7 +7932,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7943,7 +7943,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7954,7 +7954,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7965,7 +7965,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7976,7 +7976,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7987,7 +7987,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -7998,7 +7998,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8009,7 +8009,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8020,7 +8020,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8031,7 +8031,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8042,7 +8042,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8053,7 +8053,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8064,7 +8064,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8075,7 +8075,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8086,7 +8086,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8097,7 +8097,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8108,7 +8108,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8119,7 +8119,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8130,7 +8130,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8141,7 +8141,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8152,7 +8152,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8163,7 +8163,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8174,7 +8174,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8185,7 +8185,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8196,7 +8196,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8207,7 +8207,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8218,7 +8218,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8229,7 +8229,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8240,7 +8240,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8251,7 +8251,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8262,7 +8262,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8273,7 +8273,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8284,7 +8284,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8295,7 +8295,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8306,7 +8306,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8317,7 +8317,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8328,7 +8328,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8339,7 +8339,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8350,7 +8350,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8361,7 +8361,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8372,7 +8372,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8383,7 +8383,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8394,7 +8394,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8405,7 +8405,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8416,7 +8416,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8427,7 +8427,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8438,7 +8438,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8449,7 +8449,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8460,7 +8460,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8471,7 +8471,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8482,7 +8482,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8493,7 +8493,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8504,7 +8504,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8515,7 +8515,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8526,7 +8526,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8537,7 +8537,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8548,7 +8548,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8559,7 +8559,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8570,7 +8570,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8581,7 +8581,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8592,7 +8592,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8603,7 +8603,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8614,7 +8614,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8625,7 +8625,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8636,7 +8636,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8647,7 +8647,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8658,7 +8658,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8669,7 +8669,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8680,7 +8680,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8691,7 +8691,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8702,7 +8702,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8713,7 +8713,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8724,7 +8724,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8735,7 +8735,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8746,7 +8746,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8757,7 +8757,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8768,7 +8768,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8779,7 +8779,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8790,7 +8790,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8801,7 +8801,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8812,7 +8812,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8823,7 +8823,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8834,7 +8834,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8845,7 +8845,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8856,7 +8856,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8867,7 +8867,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8878,7 +8878,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8889,7 +8889,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8900,7 +8900,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8911,7 +8911,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8922,7 +8922,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8933,7 +8933,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8944,7 +8944,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8955,7 +8955,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8966,7 +8966,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8977,7 +8977,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8988,7 +8988,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -8999,7 +8999,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9010,7 +9010,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9021,7 +9021,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9032,7 +9032,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9043,7 +9043,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9054,7 +9054,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9065,7 +9065,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9076,7 +9076,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9087,7 +9087,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9098,7 +9098,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9109,7 +9109,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9120,7 +9120,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9131,7 +9131,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9142,7 +9142,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9153,7 +9153,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9164,7 +9164,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9175,7 +9175,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9186,7 +9186,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9197,7 +9197,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9208,7 +9208,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9219,7 +9219,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9230,7 +9230,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9241,7 +9241,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9252,7 +9252,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9263,7 +9263,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9274,7 +9274,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9285,7 +9285,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9296,7 +9296,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9307,7 +9307,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9318,7 +9318,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9329,7 +9329,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9340,7 +9340,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9351,7 +9351,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9362,7 +9362,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9373,7 +9373,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9384,7 +9384,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9395,7 +9395,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9406,7 +9406,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9417,7 +9417,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9428,7 +9428,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9439,7 +9439,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9450,7 +9450,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9461,7 +9461,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9472,7 +9472,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9483,7 +9483,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9494,7 +9494,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9505,7 +9505,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9516,7 +9516,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9527,7 +9527,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9538,7 +9538,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9549,7 +9549,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9560,7 +9560,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9571,7 +9571,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9582,7 +9582,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9593,7 +9593,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9604,7 +9604,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9615,7 +9615,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9626,7 +9626,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9637,7 +9637,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9648,7 +9648,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9659,7 +9659,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9670,7 +9670,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9681,7 +9681,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9692,7 +9692,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9703,7 +9703,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9714,7 +9714,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9725,7 +9725,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9736,7 +9736,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9747,7 +9747,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9758,7 +9758,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9769,7 +9769,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9780,7 +9780,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9791,7 +9791,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9802,7 +9802,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9813,7 +9813,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9824,7 +9824,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9835,7 +9835,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9846,7 +9846,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9857,7 +9857,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9868,7 +9868,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9879,7 +9879,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9890,7 +9890,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9901,7 +9901,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9912,7 +9912,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9923,7 +9923,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9934,7 +9934,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9945,7 +9945,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9956,7 +9956,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9967,7 +9967,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9978,7 +9978,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -9989,7 +9989,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10000,7 +10000,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10011,7 +10011,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10022,7 +10022,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10033,7 +10033,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10044,7 +10044,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10055,7 +10055,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10066,7 +10066,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10077,7 +10077,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10088,7 +10088,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10099,7 +10099,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10110,7 +10110,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10121,7 +10121,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10132,7 +10132,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10143,7 +10143,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10154,7 +10154,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",
@@ -10165,7 +10165,7 @@ INSERT INTO public."Partners" (
 );
 
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",

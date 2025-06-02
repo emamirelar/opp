@@ -43,7 +43,7 @@ def generate_partner_inserts(csv_file_path, output_sql_path):
             # Prepare values for each field
             values = []
             for field in [
-                'PartnerNumber', 'Name', 'Status', 'NewEngagement', 'Phone', 'Website',
+                'PartnerCode', 'Name', 'Status', 'NewEngagement', 'Phone', 'Website',
                 'Address1Street', 'Address1City', 'Address1StateProvince', 'Address1PostalCode', 'Address1Country',
                 'ShortName', 'PooledFund', 'DDRequired', 'DDEACDone',
                 'EACReference', 'GlobalKeyAccount', 'UNSecretariatEntity', 'LevyPotentiallyApplies', 'ReasonForLevyNotApplying',
@@ -61,7 +61,7 @@ def generate_partner_inserts(csv_file_path, output_sql_path):
             
             sql_output.append(f"""
 INSERT INTO public."Partners" (
-    "PartnerNumber", "Name", "Status", "NewEngagement", "Phone", "Website", 
+    "PartnerCode", "Name", "Status", "NewEngagement", "Phone", "Website", 
     "Address1Street", "Address1City", "Address1StateProvince", "Address1PostalCode", "Address1Country",
     "ShortName", "PooledFund", "DDRequired", "DDEACDone",
     "EACReference", "GlobalKeyAccount", "UNSecretariatEntity", "LevyPotentiallyApplies", "ReasonForLevyNotApplying",

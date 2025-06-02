@@ -14,7 +14,7 @@ import { Partner } from '../../../models/partner.model';
 })
 export class PartnerDataComponent implements OnInit {
   partnerId: string = '';
-  partnerNumber: string = '';
+  partnerCode: string = '';
   dashboardId: string = 'dcf96b62-ae61-4d6c-8614-34b9faf91cd8';
   isLoading = signal(false);
   dashboardUrl: SafeResourceUrl;
@@ -37,7 +37,7 @@ export class PartnerDataComponent implements OnInit {
         this.route.parent?.data.subscribe(data => {
           if (data['partnerData']) {
             const partnerData: Partner = data['partnerData'];
-            this.partnerNumber = partnerData.partnerNumber || '';
+            this.partnerCode = partnerData.partnerCode || '';
             this.createDashboardUrl();
           } else {
             // Fallback to loading details directly if resolver data isn't available
@@ -52,7 +52,7 @@ export class PartnerDataComponent implements OnInit {
     this.isLoading.set(true);
     this.partnerService.getPartnerById(this.partnerId).subscribe({
       next: (data: Partner) => {
-        this.partnerNumber = data.partnerNumber || '';
+        this.partnerCode = data.partnerCode || '';
         this.createDashboardUrl();
         this.isLoading.set(false);
       },
@@ -67,8 +67,8 @@ export class PartnerDataComponent implements OnInit {
     // Create the embed URL with the new dashboard ID and filter format
     const baseUrl = `https://lookerstudio.google.com/embed/reporting/${this.dashboardId}/page/085GF`;
     
-    // Create the filter string with the PartnerNumber
-    const filterValue = `include%EE%80%800%EE%80%80IN%EE%80%80${encodeURIComponent(this.partnerNumber)}`;
+    // Create the filter string with the PartnerCode
+    const filterValue = `include%EE%80%800%EE%80%80IN%EE%80%80${encodeURIComponent(this.partnerCode)}`;
     const filterJson = `{"df30":"${filterValue}"}`;
     const params = encodeURIComponent(filterJson);
     const embedUrl = `${baseUrl}?params=${params}`;
