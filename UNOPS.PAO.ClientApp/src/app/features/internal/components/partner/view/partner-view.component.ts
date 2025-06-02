@@ -112,8 +112,6 @@ export class PartnerViewComponent implements OnInit {
   recordId: string = '';
   recordData = signal<Partner>({});
   showCommentDialog = false;
-  riskProfile = signal<string>('');
-  riskIsLoading = signal<boolean>(true);
   summaryOfInteractionsIsLoading = signal<boolean>(true);
   summaryOfInteractions = signal<string>('');
   partnerNewsIsLoading = signal<boolean>(true);
@@ -206,7 +204,6 @@ export class PartnerViewComponent implements OnInit {
 
   _loadGeminiData() {
     this.summaryOfInteractionsIsLoading.set(true);
-    this.riskIsLoading.set(true);
     this.partnerNewsIsLoading.set(true);
     this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
       next: (summary: string) => {
@@ -216,17 +213,6 @@ export class PartnerViewComponent implements OnInit {
       error: () => {
         this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
         this.summaryOfInteractionsIsLoading.set(false);
-      }
-    });
-
-    this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
-      next: (risk: string) => {
-        this.riskProfile.set(risk);
-        this.riskIsLoading.set(false);
-      },
-      error: () => {
-        this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
-        this.riskIsLoading.set(false);
       }
     });
 
@@ -252,20 +238,6 @@ export class PartnerViewComponent implements OnInit {
       error: () => {
         this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
         this.summaryOfInteractionsIsLoading.set(false);
-      }
-    });
-  }
-
-  refreshRiskProfile() {
-    this.riskIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
-      next: (risk: string) => {
-        this.riskProfile.set(risk);
-        this.riskIsLoading.set(false);
-      },
-      error: () => {
-        this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
-        this.riskIsLoading.set(false);
       }
     });
   }
