@@ -36,7 +36,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
         
         // Create a PartnerTreeService instance
-        var partnerTreeRepository = new DataRepository<PartnerTree>(opsContext);
+        var partnerTreeRepository = new DataRepository<UNOPSPartnerTree>(opsContext);
         var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
         
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);

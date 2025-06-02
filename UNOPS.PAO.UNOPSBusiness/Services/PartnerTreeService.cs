@@ -1,28 +1,29 @@
 using Microsoft.Extensions.Caching.Memory;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDomain.Entities;
 
 
 namespace UNOPS.PAO.UNOPSBusiness.Services
 {
     public class PartnerTreeService
     {
-        private readonly DataRepository<PartnerTree> _partnerTreeRepository;
+        private readonly DataRepository<UNOPSPartnerTree> _partnerTreeRepository;
         private readonly IMemoryCache _memoryCache;
         private const string CACHE_KEY = "PARTNER_TREE_CACHE";
         private const string LEVEL_1 = "Level_1";
         private const string LEVEL_2 = "Level_2";
         
 
-        public PartnerTreeService(DataRepository<PartnerTree> partnerTreeRepository, IMemoryCache memoryCache)
+        public PartnerTreeService(DataRepository<UNOPSPartnerTree> partnerTreeRepository, IMemoryCache memoryCache)
         {
             _partnerTreeRepository = partnerTreeRepository;
             _memoryCache = memoryCache;
         }
 
-        private async Task<IEnumerable<PartnerTree>> LoadPartnerTreesAsync()
+        private async Task<IEnumerable<UNOPSPartnerTree>> LoadPartnerTreesAsync()
         {
-            if (!_memoryCache.TryGetValue(CACHE_KEY, out IEnumerable<PartnerTree>? partnerTrees))
+            if (!_memoryCache.TryGetValue(CACHE_KEY, out IEnumerable<UNOPSPartnerTree>? partnerTrees))
             {
                 partnerTrees = await _partnerTreeRepository.GetAllSortedAsync("Type");
                 
@@ -48,28 +49,28 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
             }
 
-            return partnerTrees ?? new List<PartnerTree>();
+            return partnerTrees ?? new List<UNOPSPartnerTree>();
         }
 
-        public async Task<IEnumerable<PartnerTree>> GetAllPartnerTreesAsync()
+        public async Task<IEnumerable<UNOPSPartnerTree>> GetAllPartnerTreesAsync()
         {
             return await LoadPartnerTreesAsync();
         }
 
-        public async Task<PartnerTree?> GetPartnerTreeByCodeAsync(string code)
+        public async Task<UNOPSPartnerTree?> GetPartnerTreeByCodeAsync(string code)
         {
             var allPartnerTrees = await LoadPartnerTreesAsync();
             return allPartnerTrees.FirstOrDefault(pt => pt.Code == code);
         }
 
-        public async Task<PartnerTree?> GetPartnerCategoryByPartnerGroupCodeAsync(string code)
+        public async Task<UNOPSPartnerTree?> GetPartnerCategoryByPartnerGroupCodeAsync(string code)
         {
             var partnerTrees = await LoadPartnerTreesAsync();
             var partnerTree = await GetPartnerTreeByCodeAsync(code);
             return await GetParentCategory(partnerTree, partnerTrees.ToList());
         }
 
-        private async Task<PartnerTree?> GetParentCategory(PartnerTree partnerTree, List<PartnerTree> partnerTrees)
+        private async Task<UNOPSPartnerTree?> GetParentCategory(UNOPSPartnerTree partnerTree, List<UNOPSPartnerTree> partnerTrees)
         {
             var parent = await GetPartnerTreeByCodeAsync(partnerTree.Parent);
             if (parent == null)
@@ -85,13 +86,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return parent;
         }
 
-        public async Task<PartnerTree?> GetPartnerTreeByIdAsync(int id)
+        public async Task<UNOPSPartnerTree?> GetPartnerTreeByIdAsync(int id)
         {
             var allPartnerTrees = await LoadPartnerTreesAsync();
             return allPartnerTrees.FirstOrDefault(pt => pt.Id == id);
         }
 
-        public async Task<bool> UpdatePartnerTreeAsync(PartnerTree partnerTree)
+        public async Task<bool> UpdatePartnerTreeAsync(UNOPSPartnerTree partnerTree)
         {
             if (partnerTree == null) throw new ArgumentNullException(nameof(partnerTree));
             
@@ -127,11 +128,11 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return true;
         }
 
-        public async Task<PartnerTree?> CreatePartnerTreeAsync(PartnerTree partnerTree)
+        public async Task<UNOPSPartnerTree?> CreatePartnerTreeAsync(UNOPSPartnerTree partnerTree)
         {
             if (partnerTree == null) throw new ArgumentNullException(nameof(partnerTree));
 
-            var newPartnerTree = new PartnerTree
+            var newPartnerTree = new UNOPSPartnerTree
             {
                 Code = partnerTree.Code,
                 Description = partnerTree.Description,
@@ -168,7 +169,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return true;
         }
 
-        private bool CanModifyPartnerCategoryCodeAsync(PartnerTree partnerTree)
+        private bool CanModifyPartnerCategoryCodeAsync(UNOPSPartnerTree partnerTree)
         {
             // Condition 1: Level_1 and not in specialCategoryCodes
             if (partnerTree.Type == LEVEL_1 && !PartnerTree.specialCategoryCodes.Contains(partnerTree.Code))
@@ -185,7 +186,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             return false;
         }
 
-        private bool CanModifyPartnerGroupCodeAsync(PartnerTree partnerTree, List<PartnerTree> partnerTrees)
+        private bool CanModifyPartnerGroupCodeAsync(UNOPSPartnerTree partnerTree, List<UNOPSPartnerTree> partnerTrees)
         {
             // Condition 1: has a parent
             if (string.IsNullOrEmpty(partnerTree.Parent))

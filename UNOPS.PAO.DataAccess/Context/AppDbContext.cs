@@ -47,6 +47,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<UserInfo> UserInfos { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<SavedFilter> SavedFilters { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -152,6 +153,12 @@ public class AppDbContext : AuditableDbContext<int, int>
 
         modelBuilder
             .Entity<PartnerTree>();
+
+        // Add discriminator configuration for PartnerTree inheritance hierarchy
+        modelBuilder
+            .Entity<PartnerTree>()
+            .HasDiscriminator<string>("Discriminator")
+            .HasValue<PartnerTree>("PartnerTree");
 
         modelBuilder
             .Entity<AiPrompt>();

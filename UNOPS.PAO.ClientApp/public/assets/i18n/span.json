@@ -182,7 +182,9 @@
     },
     "common": {
         "cancel": "Cancelar",
-        "capture": "Capturar"
+        "capture": "Capturar",
+        "save": "Guardar",
+        "update": "Actualizar"
     },
     "placeholder": {
         "enterUrl": "Ingrese la URL",
@@ -212,6 +214,48 @@
         "showAllResults": "Mostrar todos los resultados",
         "seeAllResults": "Ver todos los resultados",
         "contact": "Contacto",
-        "partner": "Socio"
+        "partner": "Socio",
+        "advanced": "Búsqueda Avanzada",
+        "backToSimple": "Volver a búsqueda simple",
+        "searchEverywhere": "Buscar en todas partes",
+        "searchIn": "Buscar en",
+        "noFilters": "Sin filtros",
+        "clearAllFilters": "Limpiar todos los filtros",
+        "selectField": "Seleccionar campo",
+        "operator": "Operador",
+        "logic": "Lógica",
+        "addFilter": "Agregar filtro",
+        "enterField": "Ingrese {{field}}...",
+        "operators": {
+            "equals": "igual a",
+            "notEquals": "diferente de",
+            "contains": "contiene",
+            "notContains": "no contiene",
+            "greaterThan": "mayor que",
+            "lessThan": "menor que",
+            "greaterThanOrEqual": "mayor o igual a",
+            "lessThanOrEqual": "menor o igual a",
+            "after": "después de",
+            "before": "antes de",
+            "between": "entre"
+        },
+        "logicalOperators": {
+            "and": "Y",
+            "or": "O"
+        },
+        "selectDate": "Seleccionar fecha",
+        "selectEndDate": "Seleccionar fecha final",
+        "and": "y"
+    },
+    "savedFilters": {
+        "selectFilter": "Seleccionar filtro",
+        "save": "Guardar",
+        "saveNew": "Nuevo Filtro",
+        "saveCurrentFilter": "Guardar filtro actual",
+        "updateFilter": "Actualizar filtro",
+        "deleteFilter": "Eliminar filtro",
+        "saveFilter": "Guardar filtro",
+        "filterName": "Nombre del filtro",
+        "enterFilterName": "Ingrese el nombre del filtro"
     }
 }

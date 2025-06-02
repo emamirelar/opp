@@ -38,7 +38,7 @@ export class ContactService {
   }
 
   getClassicSearchUrl(): string {
-    return `${this.apiUrl}/classic-search`;
+    return `${this.apiUrl}`;
   }
 
   getUploadProfilePictureUrl(contactId: string): string {

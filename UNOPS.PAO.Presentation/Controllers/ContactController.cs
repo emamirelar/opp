@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Http;
 using System.Text.Json;
+using System.Net;
+using UNOPS.PAO.Domain.Specifications;
+using UNOPS.PAO.Presentation.Helpers;
+using UNOPS.PAO.Models;
+using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -8,10 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
-using UNOPS.PAO.Models;
-using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
-using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 using System.Text.Json.Nodes;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
@@ -53,15 +55,53 @@ public class ContactController : BaseController
     }
 
     [HttpGet(APIDictionary.Contact)]
-    public async Task<ActionResult> Get([FromQuery] PaginationRequest request)
+    public async Task<ActionResult> Get(
+        [FromQuery] bool advancedSearch = false, 
+        [FromQuery] string? searchCriteria = null, 
+        [FromQuery] string? searchText = null,
+        [FromQuery] int pageIndex = 1, 
+        [FromQuery] int pageSize = 10, 
+        [FromQuery] string? orderBy = null, 
+        [FromQuery] bool? ascending = null)
     {
         // Check permission to read contacts
         var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
         if (permissionResult != null) return permissionResult;
         
-        // Use the new secure method that includes row filtering and permissions
-        var result = await _manager.GetContactsAsync(User, request);
-        return Ok(result);
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
+        if (validationResult != null) return validationResult;
+        
+        // Create pagination request
+        var paginationRequest = new PaginationRequest(pageIndex, pageSize, orderBy, ascending);
+        
+        // Handle different search scenarios using the new helper methods
+        return await HandleSearchOperationAsync(async () =>
+        {
+            if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
+            {
+                return SearchControllerHelper.ProcessAdvancedSearchSync<ContactFilterRequest, ContactCompositeSpecification, object>(
+                    searchCriteria, searchText, pageIndex, pageSize, orderBy, ascending, paginationRequest,
+                    "Contact",
+                    filterRequest => new ContactCompositeSpecification(filterRequest),
+                    (userId, spec, pagination) => _manager.GetContactsWithSpecification(userId, spec, pagination),
+                    CurrentUserId, _logger);
+            }
+            
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                return SearchControllerHelper.ProcessSimpleTextSearchSync<ContactFilterRequest, ContactCompositeSpecification, object>(
+                    searchText, pageIndex, pageSize, orderBy, ascending, paginationRequest,
+                    "Contact",
+                    filterRequest => new ContactCompositeSpecification(filterRequest),
+                    (userId, spec, pagination) => _manager.GetContactsWithSpecification(userId, spec, pagination),
+                    CurrentUserId, _logger);
+            }
+            
+            // Return all contacts with pagination
+            _logger.LogInformation("Retrieving all contacts with pagination");
+            return _manager.GetContacts(CurrentUserId, paginationRequest);
+        }, "contact search");
     }
 
     [HttpGet(APIDictionary.Contact + "/{id}")]
@@ -113,31 +153,6 @@ public class ContactController : BaseController
         
         return Ok(_manager.GetPartnerContacts(partnerId));
     }
-
-    [HttpGet(APIDictionary.Contact + "/classic-search")]
-    public ActionResult GetAll([FromQuery] ContactFilterRequest request)
-    {
-        var specification = new ClassicContactCompositeSpecification(
-            id: request.Id,
-            partnerId: request.PartnerId,
-            status: request.Status,
-            salutation: request.Salutation,
-            title: request.Title,
-            department: request.Department,
-            phone: request.Phone,
-            mobile: request.Mobile,
-            assistant: request.Assistant,
-            assistantEmail: request.AssistantEmail,
-            assistantPhone: request.AssistantPhone,
-            mailingCity: request.MailingCity,
-            mailingStateProvince: request.MailingStateProvince,
-            mailingPostalCode: request.MailingPostalCode,
-            mailingCountry: request.MailingCountry,
-            searchText: request.SearchText);
-        
-        return Ok(_manager.GetContactsWithSpecification(CurrentUserId, specification, request));
-    }
-
 
     [HttpGet(APIDictionary.Contact + "/{id}/permissions")]
     public async Task<ActionResult> PermissionsGet(int id)

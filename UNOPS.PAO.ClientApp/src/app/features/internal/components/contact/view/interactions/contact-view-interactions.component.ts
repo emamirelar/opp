@@ -150,7 +150,7 @@ export class ContactViewInteractionsComponent implements OnInit {
       id: interaction.id,
       type: interaction.type.toString(),
       date: new Date(interaction.date),
-      description: limitWords(interaction.data || ''),
+      description: limitWords(interaction.description || ''),
       status: interaction.status,
     };
   }
