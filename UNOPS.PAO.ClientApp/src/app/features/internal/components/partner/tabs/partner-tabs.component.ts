@@ -87,11 +87,11 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
     this.tabs = [
       {
         label: 'Partner Details',
-        route: `/admin/partner/${this.recordId}`
+        route: `/partnerships/partners/${this.recordId}`
       },
       {
         label: 'Partner Data',
-        route: `/admin/partner/${this.recordId}/data`
+        route: `/partnerships/partners/${this.recordId}/data`
       }
     ];
     

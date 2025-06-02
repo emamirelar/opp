@@ -3,6 +3,7 @@ import { EntityPermissionSet } from './shared-types';
 
 export interface Partner {
   id?: string | null;
+  partnerNumber?: string | null;
   name?: string | null;
   shortName?: string | null;
   status?: string | null;

@@ -9,12 +9,13 @@ import { Partner } from '../../../models/partner.model';
   selector: 'app-partner-data',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './partner-data.component.html'
+  templateUrl: './partner-data.component.html',
+  styleUrls: ['./partner-data.component.scss']
 })
 export class PartnerDataComponent implements OnInit {
   partnerId: string = '';
-  partnerName: string = '';
-  dashboardId: string = 'e5ec2e1c-db96-4e34-a250-2d28ace5b053';
+  partnerNumber: string = '';
+  dashboardId: string = 'dcf96b62-ae61-4d6c-8614-34b9faf91cd8';
   isLoading = signal(false);
   dashboardUrl: SafeResourceUrl;
 
@@ -36,7 +37,7 @@ export class PartnerDataComponent implements OnInit {
         this.route.parent?.data.subscribe(data => {
           if (data['partnerData']) {
             const partnerData: Partner = data['partnerData'];
-            this.partnerName = partnerData.name || '';
+            this.partnerNumber = partnerData.partnerNumber || '';
             this.createDashboardUrl();
           } else {
             // Fallback to loading details directly if resolver data isn't available
@@ -51,7 +52,7 @@ export class PartnerDataComponent implements OnInit {
     this.isLoading.set(true);
     this.partnerService.getPartnerById(this.partnerId).subscribe({
       next: (data: Partner) => {
-        this.partnerName = data.name || '';
+        this.partnerNumber = data.partnerNumber || '';
         this.createDashboardUrl();
         this.isLoading.set(false);
       },
@@ -63,12 +64,12 @@ export class PartnerDataComponent implements OnInit {
   }
   
   createDashboardUrl() {
-    // Create the embed URL with the appropriate filters using the correct format
-    const baseUrl = `https://lookerstudio.google.com/embed/reporting/${this.dashboardId}/page/t2gSC`;
+    // Create the embed URL with the new dashboard ID and filter format
+    const baseUrl = `https://lookerstudio.google.com/embed/reporting/${this.dashboardId}/page/085GF`;
     
-    // Create the filter string with pre-encoded special characters
-    const filterValue = `include%EE%80%800%EE%80%80IN%EE%80%80${encodeURIComponent(this.partnerName)}`;
-    const filterJson = `{"df166":"${filterValue}"}`;
+    // Create the filter string with the PartnerNumber
+    const filterValue = `include%EE%80%800%EE%80%80IN%EE%80%80${encodeURIComponent(this.partnerNumber)}`;
+    const filterJson = `{"df30":"${filterValue}"}`;
     const params = encodeURIComponent(filterJson);
     const embedUrl = `${baseUrl}?params=${params}`;
     
