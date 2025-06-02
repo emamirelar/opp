@@ -30,7 +30,6 @@ public class MappingProfile : Profile
         CreateMap<AiPrompt, AiPromptModel>();
         CreateMap<AiPromptModel, AiPrompt>();
         
-        CreateMap<AiScreenMappingModel, AiScreenMapping>();
         CreateMap<AiChatHistoryModel, AiChatHistory>();
         CreateMap<AiChatSessionModel, AiChatSession>();
         CreateMap<Document, DocumentModel>();

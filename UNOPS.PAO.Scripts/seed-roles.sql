@@ -428,7 +428,7 @@ INSERT INTO public."EntityPermissions" (
     false,
     false,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnership Global Admin role permissions for AiPromptManagement
@@ -449,7 +449,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Partnerships User role permissions for AiPromptManagement
@@ -470,7 +470,7 @@ INSERT INTO public."EntityPermissions" (
     false,
     false,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Org Unit Admin role permissions for AiPromptManagement
@@ -491,7 +491,7 @@ INSERT INTO public."EntityPermissions" (
     false,
     false,
     null,
-    null
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Assign UNOPS_GEN_USER role to all existing users

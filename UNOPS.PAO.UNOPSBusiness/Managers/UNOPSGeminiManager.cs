@@ -316,12 +316,6 @@ public class UNOPSGeminiManager : IGeminiManager
                 return $"Error retrieving data: {ex.Message}";
             }
         }
-        else
-        {
-            // Fallback to old screen mapping approach for backward compatibility
-            var screenMappings = (await _aiService.GetScreenMappingsByType(promptData.Type)).ToArray();
-            relatedMessage = await _aiService.GetDataBasedOnScreenMapping(promptData.Type, req.Id, screenMappings);
-        }
 
         // Fetch result from Gemini
         return await FetchResultFromGemini(promptData, relatedMessage);

@@ -164,9 +164,6 @@ public class AppDbContext : AuditableDbContext<int, int>
             .Entity<AiPrompt>();
 
         modelBuilder
-            .Entity<AiScreenMapping>();
-
-        modelBuilder
             .Entity<AiChatHistory>()
             .HasOne(a => a.Session)
             .WithMany(a => a.Chats)
