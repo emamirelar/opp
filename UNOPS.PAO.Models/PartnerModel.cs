@@ -6,6 +6,7 @@ namespace UNOPS.PAO.Models;
 public class PartnerModel
 {
     public int Id { get; set; }
+    public string? PartnerCode { get; set; }
     public string Name { get; set; }
     public string Status { get; set; }
     public string NewEngagement { get; set; }
