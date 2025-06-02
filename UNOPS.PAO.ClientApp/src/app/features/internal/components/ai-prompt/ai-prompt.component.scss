@@ -1,75 +1,30 @@
-/* SCSS Variables for better maintainability */
-$border-radius: 0.5rem;
-$gray-50: #f9fafb;
-$gray-100: #f3f4f6;
-$gray-200: #e5e7eb;
-$gray-300: #e2e8f0;
-$slate-50: #f8fafc;
-$slate-700: #1e293b;
-$red-50: #fef2f2;
-$red-200: #fecaca;
-$blue-500: #3b82f6;
-$shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-
 /* Custom styles for PrimeNG components that can't be styled with Tailwind */
 :host {
   ::ng-deep {
-    /* Table customizations */
-    .custom-table {
-      border-radius: $border-radius;
-      overflow: hidden;
-      box-shadow: $shadow-sm;
-
-      .p-datatable-wrapper {
-        border-radius: $border-radius;
-      }
-
-      .p-datatable-tbody {
-        > tr {
-          &:hover {
-            background-color: $gray-50 !important;
-          }
-
-          > td {
-            border-bottom: 1px solid $gray-100;
-          }
-        }
-      }
-
-      .p-paginator {
-        background: $gray-50;
-        border: none;
-        border-top: 1px solid $gray-200;
-        padding: 1rem 1.5rem;
-      }
-    }
-
     /* Dialog customizations */
     .custom-dialog {
       .p-dialog-header {
-        background: $slate-50;
-        border-bottom: 1px solid $gray-300;
-        border-radius: $border-radius $border-radius 0 0;
+        background: var(--surface-50);
+        border-bottom: 1px solid var(--surface-300);
+        border-radius: 0.5rem 0.5rem 0 0;
         padding: 1.25rem 1.5rem;
       }
 
       .p-dialog-title {
         font-size: 1.25rem;
         font-weight: 600;
-        color: $slate-700;
+        color: var(--text-color);
       }
 
       .p-dialog-content {
         padding: 0 1.5rem 1.5rem 1.5rem;
-        background: #ffffff;
+        background: var(--surface-0);
       }
 
       .p-dialog-footer {
-        background: $slate-50;
-        border-top: 1px solid $gray-300;
-        border-radius: 0 0 $border-radius $border-radius;
+        background: var(--surface-50);
+        border-top: 1px solid var(--surface-300);
+        border-radius: 0 0 0.5rem 0.5rem;
         padding: 1rem 1.5rem;
         margin: 0;
       }
@@ -78,8 +33,8 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
     /* Confirmation dialog */
     .custom-confirm-dialog {
       .p-dialog-header {
-        background: $red-50;
-        border-bottom: 1px solid $red-200;
+        background: #fef2f2; /* red-50 equivalent */
+        border-bottom: 1px solid #fecaca; /* red-200 equivalent */
       }
 
       .p-dialog-content {
@@ -93,7 +48,7 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
 
       &:hover {
         transform: translateY(-1px);
-        box-shadow: $shadow-md;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       }
     }
 
@@ -102,7 +57,7 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
       transition: all 0.2s ease-in-out;
 
       &:focus {
-        box-shadow: 0 0 0 3px rgba($blue-500, 0.1);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); /* blue-500 with opacity */
         outline: none;
       }
     }
@@ -119,8 +74,8 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
     .p-toast {
       .p-toast-message {
         margin: 0 0 1rem 0;
-        box-shadow: $shadow-lg;
-        border-radius: $border-radius;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-radius: 0.5rem;
       }
     }
   }
@@ -129,14 +84,6 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
 /* Responsive design */
 @media (max-width: 768px) {
   :host ::ng-deep {
-    .custom-table {
-      .p-datatable-thead > tr > th,
-      .p-datatable-tbody > tr > td {
-        padding: 0.5rem;
-        font-size: 0.875rem;
-      }
-    }
-    
     .custom-dialog {
       width: 95vw !important;
       margin: 1rem;
@@ -162,10 +109,6 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
 
 /* Additional utility styles */
 :host ::ng-deep {
-  .custom-table {
-    animation: fadeInUp 0.3s ease-out;
-  }
-
   .p-dialog {
     animation: fadeInUp 0.2s ease-out;
   }
@@ -178,7 +121,7 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
   }
   
   .p-dialog-header {
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--surface-300);
   }
 }
 
@@ -189,25 +132,14 @@ $shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.
   flex-direction: column;
 }
 
-// Custom table styling
-.custom-table {
-  .p-datatable-tbody > tr:hover {
-    background-color: #f3f4f6;
-  }
-  
-  .p-datatable-tbody > tr {
-    cursor: pointer;
-  }
-}
-
 // Ensure sliders work properly
 .p-slider {
   .p-slider-handle {
-    background-color: #3b82f6;
-    border-color: #3b82f6;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
   }
   
   .p-slider-range {
-    background-color: #3b82f6;
+    background-color: var(--primary-color);
   }
 } 
