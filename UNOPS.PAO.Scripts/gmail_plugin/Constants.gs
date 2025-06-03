@@ -1,9 +1,12 @@
 const homePageMsg = "<font-family='Open sans normal'> 1. Open an email in Gmail. \n2. The extracted email contents can be seen in the add-on.</font>";
 
+
 // API Endpoints
-const API_BASE_URL = 'https://6a46-70-31-169-225.ngrok-free.app/api'; //temp url
+const API_BASE_URL = 'https://swift-legible-raven.ngrok-free.app/api'; //temp url
 const AUTH_ENDPOINT = `${API_BASE_URL}/auth/google`;
 const CONTACT_ENDPOINT = `${API_BASE_URL}/api/contact`;
+const INTERACTION_API_ENDPOINT = `${API_BASE_URL}/gmail-addon/interactions`;
+const OPPORTUNITY_PLUS_ENDPOINT = `https://localhost:44426/`;
   
 // Manifest document : https://developers.google.com/apps-script/manifest
 // https://developers.google.com/apps-script/manifest/allowlist-url

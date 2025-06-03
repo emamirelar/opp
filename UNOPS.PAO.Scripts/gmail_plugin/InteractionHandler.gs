@@ -3,7 +3,7 @@
  */
 
 // API endpoint for Interactions
-const INTERACTION_API_ENDPOINT = `${API_BASE_URL}/gmail-addon/interactions`;
+//const INTERACTION_API_ENDPOINT = `${API_BASE_URL}/gmail-addon/interactions`;
 
 /**
  * Cleans the email body to remove headers and HTML formatting
@@ -100,6 +100,7 @@ function createOrUpdateInteraction(messageData) {
   try {
     // Log the incoming data for debugging
     Logger.log('Message Data: ' + JSON.stringify(messageData));
+    const threadId = messageData.threadId;
 
     // Extract all email addresses
     const allEmails = [
@@ -120,24 +121,24 @@ function createOrUpdateInteraction(messageData) {
       EmailAddresses: allEmails,
       ContactId: 0,
       Location: 'Email',
-      /*documents: messageData.attachments?.filter(attachment => attachment && attachment.name)?.map(attachment => ({
-        name: attachment.name,
-        url: attachment.url,
-        type: attachment.type
-      })) || []*/
+      GmailThreadId: threadId
     };
 
     Logger.log('Final interaction data: ' + JSON.stringify(interactionData));
 
     // Check if interaction already exists
-    const existingInteraction = findExistingInteraction(messageData.messageId);
+    //const existingInteraction = findExistingInteraction(threadId);
     
-    if (existingInteraction) {
+    if (messageData.existingInteraction) {
       // Update existing interaction
-      return updateInteraction(existingInteraction.id, interactionData);
+      //return updateInteraction(messageData.existingInteraction.id, interactionData);
+      const interactionCard = buildRelatedRecords(interactionData, true);
+      return interactionCard;
     } else {
       // Create new interaction
-      return createInteraction(interactionData);
+      //return createInteraction(interactionData);
+      const interactionCard = buildRelatedRecords(interactionData, false);
+      return interactionCard;
     }
   } catch (error) {
     Logger.log('Error creating/updating interaction: ' + error);
@@ -147,23 +148,56 @@ function createOrUpdateInteraction(messageData) {
 
 /**
  * Finds an existing interaction by source ID
- * @param {string} sourceId - The email message ID
+ * @param {string} threadId - The email thread ID
  * @returns {Object|null} The existing interaction or null
  */
-function findExistingInteraction(sourceId) {
+function findExistingInteraction(threadId) {
   try {
-    const response = UrlFetchApp.fetch(`${INTERACTION_API_ENDPOINT}?sourceId=${sourceId}`, {
-      method: 'GET',
+
+    const findRequestData = {
+      GmailThreadId: threadId
+    };
+
+    const response = UrlFetchApp.fetch(`${INTERACTION_API_ENDPOINT}/find`, {
+      method: 'POST',
       headers: {
         'Authorization': `Bearer ${getAccessToken()}`,
         'Content-Type': 'application/json'
-      }
+      },
+      payload: JSON.stringify(findRequestData)
     });
-    
-    const result = JSON.parse(response.getContentText());
-    return result.data && result.data.length > 0 ? result.data[0] : null;
+
+    return JSON.parse(response.getContentText());
   } catch (error) {
     Logger.log('Error finding existing interaction: ' + error);
+    return null;
+  }
+}
+
+/**
+ * Finds an existing related records
+ * @param {string[]} EmailAddresses - The list of email addresses
+ * @returns {Object|null} The existing related records or null
+ */
+function findRelatedRecords(emailAddresses) {
+  try {
+
+    const findRequestData = {
+      EmailAddresses: emailAddresses
+    };
+
+    const response = UrlFetchApp.fetch(`${INTERACTION_API_ENDPOINT}/find-related-records`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getAccessToken()}`,
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify(findRequestData)
+    });
+
+    return JSON.parse(response.getContentText());
+  } catch (error) {
+    Logger.log('Error finding related records: ' + error);
     return null;
   }
 }
@@ -199,7 +233,9 @@ function createInteraction(interactionData) {
  */
 function updateInteraction(interactionId, interactionData) {
   try {
-    const response = UrlFetchApp.fetch(`${INTERACTION_API_ENDPOINT}/${interactionId}`, {
+
+    interactionData.Id = interactionId;
+    const response = UrlFetchApp.fetch(`${INTERACTION_API_ENDPOINT}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${getAccessToken()}`,

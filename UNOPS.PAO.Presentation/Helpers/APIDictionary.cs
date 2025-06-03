@@ -84,6 +84,8 @@ public class APIDictionary
 
     //Gmail Addon
     public const string GmailAddonInteraction = "api/gmail-addon/interactions";
+    public const string GmailAddonFindInteraction = "api/gmail-addon/interactions/find";
+    public const string GmailAddonFindRelatedRecords = "api/gmail-addon/interactions/find-related-records";
     //public const string GmailAddonAuth = "api/gmail-addon/auth";
     //public const string GmailAddonRefresh = "api/gmail-addon/refresh";
     //public const string GmailAddonRevoke = "api/gmail-addon/revoke";

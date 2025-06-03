@@ -202,4 +202,18 @@ public class InteractionManager : IInteractionManager
         
         await DeleteInteractionAsync(userId, id);
     }
+
+    public virtual async Task<InteractionModel?> FindGmailInteractionAsync(GmailInteractionRequest model)
+    {
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
+    }
+
+    public virtual async Task<InteractionModel?> CreateGmailInteractionAsync(InteractionRequest model)
+    {
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
+    }
+    public virtual async Task<InteractionModel?> UpdateGmailInteractionAsync(UpdateInteractionRequest model)
+    {
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
+    }
 }

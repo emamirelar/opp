@@ -25,6 +25,8 @@ using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.Business.Managers;
+using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 
 public class UNOPSContactManager : IContactManager
 {
@@ -448,5 +450,23 @@ public class UNOPSContactManager : IContactManager
         {
             await contactRepository.Delete(entity);
         }
+    }
+
+    public async Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input)
+    {
+        // Create a specification that matches any of the email addresses
+        var specification = new ClassicContactCompositeSpecification(
+            searchText: string.Join(" ", input.EmailAddresses) // This will search in email field
+        );
+
+        // Get contacts using the repository directly
+        var contacts = contactRepository
+            .GetAll(["Partner"])
+            .AsQueryable()
+            .Cast<UNOPSContact>()
+            .ToList();
+        
+        // Map to models
+        return contacts.Select(c => mapper.Map<ContactModel>(c)).ToList();
     }
 }

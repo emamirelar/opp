@@ -31,7 +31,8 @@
     "urlFetchWhitelist": [
       "https://www.googleapis.com/oauth2/v3/userinfo",
       "https://6a46-70-31-169-225.ngrok-free.app/api/auth/google",
-      "https://6a46-70-31-169-225.ngrok-free.app/api/gmail-addon/interactions"
+      "https://6a46-70-31-169-225.ngrok-free.app/api/gmail-addon/interactions",
+      "https://6a46-70-31-169-225.ngrok-free.app/api/gmail-addon/interactions/*"
     ],
     "addOns": {
       "common": {

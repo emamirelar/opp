@@ -29,7 +29,7 @@ public class AuthService : IAuthService
         _configuration = configuration;
         _googleClientId = _configuration["GoogleAuthSettings:clientId"];
         _jwtIssuer = _configuration["JWTSettings:validIssuer"];
-        _jwtAudience = _configuration["JWTSettings:validAudience"];
+        _jwtAudience = _configuration["JWTSettings:validAudienceDev"];
         _userManager = userManager;
         _secretManager = SecretManagerServiceClient.Create();
         
@@ -50,7 +50,6 @@ public class AuthService : IAuthService
             }*/
 
             string email;
-            string name;
             string subject;
 
             if (!string.IsNullOrEmpty(request.Email))
@@ -60,7 +59,7 @@ public class AuthService : IAuthService
                 
                 // For Gmail plugin requests, we'll use the email as both the name and subject
                 // since we can't get additional user info without OAuth
-                name = email.Split('@')[0]; // Use the part before @ as the name
+                //name = email.Split('@')[0]; // Use the part before @ as the name
                 subject = email; // Use email as the subject
             }
             else
@@ -73,7 +72,7 @@ public class AuthService : IAuthService
 
                 var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
                 email = payload.Email;
-                name = payload.Name;
+                //name = payload.Name;
                 subject = payload.Subject;
             }
             
@@ -106,7 +105,8 @@ public class AuthService : IAuthService
             
             // 3. Get user roles and other information
             var roles = await _userManager.GetRolesAsync(user);
-            
+            string name = Convert.ToString(user?.Id);
+
             var token = GenerateJwtToken(subject, email, name);
             var refreshToken = GenerateRefreshToken();
 

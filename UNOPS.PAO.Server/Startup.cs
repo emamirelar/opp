@@ -212,7 +212,17 @@ public class Startup
         
         // Register authorization handlers
         ConfigureAuthorization(services);
-        
+
+        // Register IAuthService
+        services.AddScoped<UNOPS.PAO.Identity.Services.IAuthService, UNOPS.PAO.Identity.Services.AuthService>();
+
+        // Get JWT secret from Secret Manager
+        var projectId = Configuration["AppConfig:ProjectId"];
+        var secretManager = SecretManagerServiceClient.Create();
+        var secretName = $"projects/{projectId}/secrets/QA_Gmail_Plugin_Secret/versions/latest";
+        var secret = secretManager.AccessSecretVersion(secretName);
+        var jwtSecret = secret.Payload.Data.ToStringUtf8();
+
         // Configure authentication with support for both IAP and cookies
         services.AddAuthentication(options =>
             {
@@ -237,6 +247,20 @@ public class Startup
                         return Task.CompletedTask;
                     };
                 })
+            //Add JWT Bearer authentication for API requests
+            .AddJwtBearer("Bearer", options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = Configuration["JWTSettings:validIssuer"],
+                    ValidAudience = Configuration["JWTSettings:validAudience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))
+                };
+            })
             // Add IAP authentication handler
             .AddScheme<IAPAuthenticationOptions, IAPAuthenticationHandler>("IAP", options => 
             {
@@ -290,6 +314,8 @@ public class Startup
                 }
             });
 
+        services.AddAuthorization();
+
         services.AddIdentityCore<PAOIdentityUser>()
             .AddRoles<PAOIdentityRole>()
             .AddEntityFrameworkStores<PAOIdentityDbContext>()
@@ -339,6 +365,8 @@ public class Startup
 
         //services.AddScoped<IManagerWrapper, ManagerWrapper>();
         services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();
+
+
 
         AddServices(services);
         services.AddScoped<IGoogleDriveDocumentManager, GoogleDriveDocumentManager>();

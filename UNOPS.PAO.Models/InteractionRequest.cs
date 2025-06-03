@@ -29,4 +29,5 @@ public class InteractionRequest : ExtensibleModel
     public string? Location { get; set; }
     public string Subject { get; set; }
     public int? OrgUnitId { get; set; }
+    public string? GmailThreadId { get; set; }
 } 

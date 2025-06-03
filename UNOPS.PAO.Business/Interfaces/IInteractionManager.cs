@@ -50,4 +50,9 @@ public interface IInteractionManager
     /// Deletes an interaction with entity-level access check
     /// </summary>
     Task DeleteInteractionAsync(ClaimsPrincipal user, int id);
+
+    Task<InteractionModel?> FindGmailInteractionAsync(GmailInteractionRequest model);
+
+    Task<InteractionModel> CreateGmailInteractionAsync(InteractionRequest model);
+    Task<InteractionModel?> UpdateGmailInteractionAsync(UpdateInteractionRequest model);
 } 

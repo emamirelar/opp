@@ -14,8 +14,25 @@ function createCard(e) {
   const currentPage = parseInt(userProps.getProperty('currentPage')) || 1;
 
   const messageData = getMessageData(e);
-  const card = buildMessageCard(messageData, currentPage);
-  return [card];
+  
+  const existingInteraction = findExistingInteraction(messageData.threadId);
+  messageData.existingInteraction = existingInteraction;
+
+  // Extract all email addresses
+  const allEmails = [
+      extractEmailAddress(messageData.sender), // Extract email from sender
+      ...extractEmailAddresses(messageData.to),
+      ...extractEmailAddresses(messageData.cc),
+      ...extractEmailAddresses(messageData.bcc)
+    ].filter(email => email); // Remove null/undefined
+
+  const relatedRecords = findRelatedRecords(allEmails);
+
+  const relatedRecordsCard = buildRelatedRecords(relatedRecords, messageData, false);
+  return relatedRecordsCard;
+
+  //const card = buildMessageCard(messageData, currentPage);
+  //return [card];
 }
 
 function getMessageData(eventObj) {
@@ -63,15 +80,18 @@ function getMessageData(eventObj) {
         const cc = msg.getCc();
         const bcc = msg.getBcc();
 
-        fullConversationContent += `<b>From:</b> ${sender}<br><b>To:</b> ${to}<br><b>cc:</b> ${cc}<br><b>bcc:</b> ${bcc}<br><b>Date:</b> ${date}<br><b>Subject:</b> ${subject}<br><br>${body.replace(/\n/g, '<br>')}<br><hr><br>`;
+        /*fullConversationContent += `<b>From:</b> ${sender}<br><b>To:</b> ${to}<br><b>cc:</b> ${cc}<br><b>bcc:</b> ${bcc}<br><b>Date:</b> ${date}<br><b>Subject:</b> ${subject}<br><br>${body.replace(/\n/g, '<br>')}<br><hr><br>`;*/
+
+        fullConversationContent += `${body.replace(/\n/g, '<br>')}<br><hr><br>`;
 
       } catch (err) {
         console.error(`Error processing message #${i}: `, err);
       }
     }
 
+    // const firstMessage = threadMessages[0];
+
     return {
-      messageId: messageId,
       sender: threadMessages[0].getFrom(),
       subject: threadMessages[0].getSubject(),
       to: threadMessages[0].getTo(),
@@ -79,13 +99,14 @@ function getMessageData(eventObj) {
       bcc: threadMessages[0].getBcc() || "",
       date: Utilities.formatDate(threadMessages[0].getDate(), Session.getScriptTimeZone(), 'dd-MMM-yyyy HH:mm'),
       body: fullConversationContent,
-      attachments: attachmentNames.length > 0 ? attachmentNames : ["None"]
+      attachments: attachmentNames.length > 0 ? attachmentNames : ["None"],
+      threadId: threadId,
+      messageId: messageId
     };
 
   } catch (error) {
     Logger.log("Error retrieving Gmail data: " + error);
     return {
-      messageId: "",
       sender: "Unavailable",
       subject: "Error retrieving message",
       to: "",
@@ -99,6 +120,7 @@ function getMessageData(eventObj) {
 }
 
 function buildMessageCard(data, currentPage) {
+  const buttonText = data.existingInteraction ? "Update Interaction" : "Create Interaction";  
   const header = CardService.newCardHeader()
     .setTitle("📥 Extracted Email Content")
     .setSubtitle(`Page ${currentPage}`)
@@ -144,14 +166,14 @@ function buildMessageCard(data, currentPage) {
     .setWrapText(true);
 
   const createInteractionButton = CardService.newTextButton()
-    .setText("Create/Update Interaction")
+    .setText(buttonText)
     .setOnClickAction(CardService.newAction()
-      .setFunctionName("handleCreateInteraction")
-      .setParameters({ messageData: JSON.stringify(data) }));
+    .setFunctionName("handleCreateUpdateInteraction")
+    .setParameters({ messageData: JSON.stringify(data) }));
 
-  const interactionSection = CardService.newCardSection()
-    .setHeader("🔄 PAO Integration")
-    .addWidget(CardService.newTextParagraph().setText("Create or update an Interaction in PAO based on this email"))
+ const interactionSection = CardService.newCardSection()
+    .setHeader("🔄 Opportunity+ Integration")
+    .addWidget(CardService.newTextParagraph().setText("Create or update an Interaction in Opportunity+ based on this email"))
     .addWidget(createInteractionButton);
 
   const prevButton = CardService.newTextButton()
@@ -166,9 +188,9 @@ function buildMessageCard(data, currentPage) {
     .addButton(prevButton)
     .addButton(nextButton);
 
-  const navigationSection = CardService.newCardSection()
+  /*const navigationSection = CardService.newCardSection()
     .addWidget(CardService.newTextParagraph().setText("<b>Navigation</b>"))
-    .addWidget(buttonSet);
+    .addWidget(buttonSet);*/
 
   const card = CardService.newCardBuilder()
     .setHeader(header)
@@ -190,27 +212,29 @@ function buildMessageCard(data, currentPage) {
       .addWidget(bodyWidget)
       .setCollapsible(true))
     .addSection(interactionSection)
-    .addSection(navigationSection)
+    //.addSection(navigationSection)
     .build();
 
   return card;
 }
 
-function handleCreateInteraction(e) {
+function handleCreateUpdateInteraction(e) {
   try {
     const messageData = JSON.parse(e.parameters.messageData);
     const result = createOrUpdateInteraction(messageData);
-    
-    return CardService.newCardBuilder()
+
+    return result;
+    /*return CardService.newCardBuilder()
       .addSection(CardService.newCardSection()
-        .addWidget(CardService.newTextParagraph()
-          .setText(`✅ Interaction ${result.id ? 'updated' : 'created'} successfully!`)))
-      .build();
+      .addWidget(CardService.newTextParagraph()
+      .setText(`✅ Interaction ${messageData.existingInteraction ? 'updated' : 'created'} successfully!`)))
+      .build();*/
+
   } catch (error) {
     return CardService.newCardBuilder()
       .addSection(CardService.newCardSection()
-        .addWidget(CardService.newTextParagraph()
-          .setText(`❌ Error: ${error.message}`)))
+      .addWidget(CardService.newTextParagraph()
+      .setText(`❌ Error: ${error.message}`)))
       .build();
   }
 }

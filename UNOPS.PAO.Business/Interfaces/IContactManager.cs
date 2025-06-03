@@ -56,4 +56,6 @@ public interface IContactManager
     /// Deletes a contact with entity-level access check
     /// </summary>
     Task DeleteContactAsync(ClaimsPrincipal user, int id);
+
+    Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input);
 }
