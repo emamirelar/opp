@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -45,6 +45,7 @@ import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.c
 import { PartnerTabsComponent } from '../tabs/partner-tabs.component';
 import { Partner } from '../../../models/partner.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
 
 @Component({
   selector: 'app-partner-view',
@@ -73,6 +74,7 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
     PartnerViewContactsComponent,
     PartnerTabsComponent,
     TooltipModule,
+    AiPanelComponent,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
@@ -112,17 +114,23 @@ export class PartnerViewComponent implements OnInit {
   recordId: string = '';
   recordData = signal<Partner>({});
   showCommentDialog = false;
-  riskProfile = signal<string>('');
-  riskIsLoading = signal<boolean>(true);
-  summaryOfInteractionsIsLoading = signal<boolean>(true);
-  summaryOfInteractions = signal<string>('');
-  partnerNewsIsLoading = signal<boolean>(true);
-  partnerNews = signal<string>('');
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
 
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
+  
+  // See More functionality for Partner Information
+  showFullContent = signal<boolean>(false);
+  
+  // Computed values for See More functionality
+  shouldShowSeeMoreButton = computed(() => {
+    return this.showAdditionalInfo() && !this.showFullContent();
+  });
+  
+  shouldShowSeeLessButton = computed(() => {
+    return this.showAdditionalInfo() && this.showFullContent();
+  });
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();
@@ -158,8 +166,6 @@ export class PartnerViewComponent implements OnInit {
           
           // Load permissions for this specific partner
           // Permissions are now extracted from the partner response directly
-          
-          this._loadGeminiData();
         }
       }
     });
@@ -204,138 +210,30 @@ export class PartnerViewComponent implements OnInit {
     this.router.navigate(['partners']);
   }
 
-  _loadGeminiData() {
-    this.summaryOfInteractionsIsLoading.set(true);
-    this.riskIsLoading.set(true);
-    this.partnerNewsIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
-      next: (summary: string) => {
-        this.summaryOfInteractions.set(summary);
-        this.summaryOfInteractionsIsLoading.set(false);
-      },
-      error: () => {
-        this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
-        this.summaryOfInteractionsIsLoading.set(false);
-      }
-    });
-
-    this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
-      next: (risk: string) => {
-        this.riskProfile.set(risk);
-        this.riskIsLoading.set(false);
-      },
-      error: () => {
-        this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
-        this.riskIsLoading.set(false);
-      }
-    });
-
-    this.geminiService.get(this.recordId, 'partner_news').subscribe({
-      next: (news: string) => {
-        this.partnerNews.set(news);
-        this.partnerNewsIsLoading.set(false);
-      },
-      error: () => {
-        this.partnerNews.set(this.translateService.instant('errors.failedToLoad'));
-        this.partnerNewsIsLoading.set(false);
-      }
-    });
+  // AI Panel Event Handlers
+  onSummaryRefresh() {
+    console.log('Summary refresh requested');
   }
 
-  refreshSummaryOfInteractions() {
-    this.summaryOfInteractionsIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_interactions_summary').subscribe({
-      next: (summary: string) => {
-        this.summaryOfInteractions.set(summary);
-        this.summaryOfInteractionsIsLoading.set(false);
-      },
-      error: () => {
-        this.summaryOfInteractions.set(this.translateService.instant('errors.failedToLoad'));
-        this.summaryOfInteractionsIsLoading.set(false);
-      }
-    });
+  onSummaryLoaded(data: string) {
+    console.log('Summary loaded:', data);
   }
 
-  refreshRiskProfile() {
-    this.riskIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_risk_profile').subscribe({
-      next: (risk: string) => {
-        this.riskProfile.set(risk);
-        this.riskIsLoading.set(false);
-      },
-      error: () => {
-        this.riskProfile.set(this.translateService.instant('errors.failedToLoad'));
-        this.riskIsLoading.set(false);
-      }
-    });
+  onSummaryError(error: Error) {
+    console.error('Summary error:', error);
   }
 
-  refreshPartnerNews() {
-    this.partnerNewsIsLoading.set(true);
-    this.geminiService.get(this.recordId, 'partner_news').subscribe({
-      next: (news: string) => {
-        this.partnerNews.set(news);
-        this.partnerNewsIsLoading.set(false);
-      },
-      error: () => {
-        this.partnerNews.set(this.translateService.instant('errors.failedToLoad'));
-        this.partnerNewsIsLoading.set(false);
-      }
-    });
+  onNewsRefresh() {
+    console.log('News refresh requested');
   }
 
-    /*handleOnCancelClick(event: MouseEvent) {
-      this.router.navigate(['partners']);
-    }
+  onNewsLoaded(data: string) {
+    console.log('News loaded:', data);
+  }
 
-    handleOnSaveClick(event: MouseEvent) {
-      this._validate()
-
-      this.partnerService.updatePartnerById(this._getRequestPayload()).subscribe({
-        next: (data: any) => {
-          this._loadRecordDetails();
-          this.feedbackDialogService.showSuccessToast({ detail: 'Changes saved successfully!' });
-        }
-      });
-    }*/
-
-    /*_validate(){
-      let result = true;
-
-      if( this.formGroup.invalid )
-      {
-        this.showValidationFailedError.set( false );
-
-        if( this.formGroup.get("firstName")?.invalid )
-        {
-          this.formGroup.get("firstName")?.markAsDirty();
-        }
-        result = false;
-      }
-
-      return result;
-    }
-
-    _getRequestPayload() {
-      let valueObj = this.formGroup.value,
-      requestJsonObj: any = {};
-
-      for (let key in valueObj) {
-        if (valueObj.hasOwnProperty(key)) {
-          let indexValue = (valueObj as any)[key];
-
-          switch (key) {
-            default:
-              requestJsonObj[key] = indexValue;
-              break;
-          }
-        }
-      }
-
-      requestJsonObj['id'] = this.recordId;
-
-      return requestJsonObj;
-    }*/
+  onNewsError(error: Error) {
+    console.error('News error:', error);
+  }
 
   _handleOnViewContacts() {
     this.showCommentDialog = true;
@@ -498,4 +396,8 @@ export class PartnerViewComponent implements OnInit {
       }
     });
   }*/
+
+  toggleFullContent() {
+    this.showFullContent.set(!this.showFullContent());
+  }
 }

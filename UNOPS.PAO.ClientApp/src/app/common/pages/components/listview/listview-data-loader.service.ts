@@ -107,6 +107,15 @@ export class ListviewDataLoaderService {
   }
   
   /**
+   * Remove a search criterion by index
+   */
+  removeSearchCriterionByIndex(index: number): void {
+    if (index >= 0 && index < this.searchCriteria.length) {
+      this.searchCriteria = this.searchCriteria.filter((_, i) => i !== index);
+    }
+  }
+  
+  /**
    * Clear all search criteria
    */
   clearSearchCriteria(): void {
@@ -204,11 +213,7 @@ export class ListviewDataLoaderService {
       const trimmedSearchText = this.searchText.trim();
       if (trimmedSearchText) {
         // Set the general search text
-        params = params.set('SearchText', trimmedSearchText);
-        
-        // Also set FirstName and LastName to support field-specific search
-        params = params.set('FirstName', trimmedSearchText)
-                      .set('LastName', trimmedSearchText);
+        params = params.set('searchText', trimmedSearchText);
         
         console.log('Set search parameters:', params.toString());
       }

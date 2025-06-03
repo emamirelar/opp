@@ -26,6 +26,7 @@ public class ManagerWrapper : IManagerWrapper
     private ILinkManager linkManager;
     private IUserDataManager userDataManager;
     private IUserManagementManager userManagementManager;
+    private IAiPromptManager aiPromptManager;
     
     public ManagerWrapper(IMapper mapper, AppDbContext context,
                           UserManager<PAOIdentityUser> userManager, 
@@ -50,6 +51,7 @@ public class ManagerWrapper : IManagerWrapper
         
         // Default implementation - will be overridden in UNOPSManagerWrapper
         userManagementManager = null;
+        aiPromptManager = null; // Will be overridden in UNOPSManagerWrapper
     }
 
     public virtual ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -71,4 +73,5 @@ public class ManagerWrapper : IManagerWrapper
     public virtual ILinkManager LinkManager => linkManager;
     public virtual IUserDataManager UserDataManager => userDataManager;
     public virtual IUserManagementManager UserManagementManager => userManagementManager;
+    public virtual IAiPromptManager AiPromptManager => aiPromptManager;
 }

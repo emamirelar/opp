@@ -9,23 +9,23 @@ def generate_partner_projects_insert(csv_file):
         # Prepare the VALUES part of the SQL statement
         values_list = []
         for row in reader:
-            partner_number = row[0]  # PartnerNumber
+            partner_code = row[0]  # PartnerCode
             project_number = row[1]  # ProjectNumber
 
-            # Add the PartnerNumber and ProjectNumber to the VALUES list
-            values_list.append(f"('{partner_number}', '{project_number}')")
+            # Add the PartnerCode and ProjectNumber to the VALUES list
+            values_list.append(f"('{partner_code}', '{project_number}')")
 
         # Create a temporary table and insert the CSV data
         temp_table_sql = """
         CREATE TEMP TABLE "temp_partner_projects" (
-            "PartnerNumber" VARCHAR(50),
+            "PartnerCode" VARCHAR(50),
             "ProjectNumber" VARCHAR(50)
         );
         """
 
         # Insert the CSV data into the temporary table
         insert_temp_table_sql = f"""
-        INSERT INTO "temp_partner_projects" ("PartnerNumber", "ProjectNumber")
+        INSERT INTO "temp_partner_projects" ("PartnerCode", "ProjectNumber")
         VALUES
         {',\n'.join(values_list)};
         """
@@ -35,7 +35,7 @@ def generate_partner_projects_insert(csv_file):
         INSERT INTO public."PartnerProjects" ("PartnersId", "ProjectsId")
         SELECT p."Id", pr."Id"
         FROM "temp_partner_projects" t
-        JOIN public."Partners" p ON t."PartnerNumber" = p."PartnerNumber"
+        JOIN public."Partners" p ON t."PartnerCode" = p."PartnerCode"
         JOIN public."Projects" pr ON t."ProjectNumber" = pr."ProjectNumber";
 
         DROP TABLE "temp_partner_projects";

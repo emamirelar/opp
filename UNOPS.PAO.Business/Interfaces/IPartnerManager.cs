@@ -31,6 +31,10 @@ public interface IPartnerManager
 
     Task DeletePartnerAsync(int userId, int id);
     Task<PartnerModel?> GetPartnerAsync(int id);
+    /// <summary>
+    /// Gets a partner with its contacts and their interactions included
+    /// </summary>
+    Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id);
     Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request);
     Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request);
     Task<string?> UpdatePartnerLogoAsync(int partnerId, IFormFile file);

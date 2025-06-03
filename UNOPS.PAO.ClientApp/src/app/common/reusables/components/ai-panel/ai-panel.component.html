@@ -1,0 +1,49 @@
+<p-panel>
+  <ng-template #header>
+    <div class="flex gap-2 items-center w-full justify-between">
+      <div class="font-semibold">{{ title() | translate }}</div>
+      <div class="flex gap-2 items-center">
+        @if (showRefreshButton()) {
+          <p-button 
+            icon="pi pi-refresh" 
+            [text]="true" 
+            [rounded]="true" 
+            [size]="'small'" 
+            (onClick)="refresh()"
+            [disabled]="isLoading()"
+             />
+        }
+        @if (showAiIcon()) {
+          <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
+        }
+      </div>
+    </div>
+  </ng-template>
+
+  @if (shouldShowSpinner()) {
+    <div class="w-full flex justify-center h-24 items-center">
+      <i class="pi pi-spin pi-spinner"></i>
+    </div>
+  } @else if (shouldShowContent()) {
+    <div class="flex flex-col gap-4">
+      <div [innerHTML]="displayContent() | markdown" [class]="customStyles()"></div>
+      
+      @if (showSeeMoreButton()) {
+        <div class="flex justify-center">
+          <p-button
+            label="{{ 'button.seeMore' | translate }}"
+            icon="pi pi-chevron-down"
+            [rounded]="true"
+            [size]="'small'"
+            [text]="true"
+            (onClick)="toggleFullContent()"
+          />
+        </div>
+      }
+    </div>
+  } @else if (shouldShowError()) {
+    <div class="text-red-500">
+      {{ content() }}
+    </div>
+  }
+</p-panel>

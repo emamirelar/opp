@@ -47,18 +47,52 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
 
         [HttpGet(APIDictionary.Interaction)]
-        public async Task<ActionResult> GetAll([FromQuery] InteractionFilterRequest request)
+        public async Task<ActionResult> GetAll(
+            [FromQuery] InteractionFilterRequest request,
+            [FromQuery] bool advancedSearch = false,
+            [FromQuery] string? searchCriteria = null,
+            [FromQuery] string? searchText = null)
         {
             return await HandleOperationAsync(async () =>
             {
-                var specification = new InteractionCompositeSpecification(
-                    contactId: request.ContactId,
-                    type: request.Type,
-                    fromDate: request.FromDate,
-                    toDate: request.ToDate,
-                    searchText: request.SearchText);
+                // Validate pagination parameters
+                var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+                if (validationResult != null) 
+                {
+                    throw new BusinessException("Invalid pagination parameters");
+                }
                 
-                var result = _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
+                PaginationResponse<InteractionModel> result;
+                
+                // Handle different search scenarios
+                if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
+                {
+                    result = SearchControllerHelper.ProcessAdvancedSearchSync<InteractionFilterRequest, InteractionCompositeSpecification, PaginationResponse<InteractionModel>>(
+                        searchCriteria, searchText ?? request.SearchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                        request,
+                        "Interaction",
+                        filterRequest => new InteractionCompositeSpecification(filterRequest),
+                        (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
+                        CurrentUserId, _logger);
+                }
+                else if (!string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(request.SearchText))
+                {
+                    var textToSearch = searchText ?? request.SearchText;
+                    result = SearchControllerHelper.ProcessSimpleTextSearchSync<InteractionFilterRequest, InteractionCompositeSpecification, PaginationResponse<InteractionModel>>(
+                        textToSearch!, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                        request,
+                        "Interaction",
+                        filterRequest => new InteractionCompositeSpecification(filterRequest),
+                        (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
+                        CurrentUserId, _logger);
+                }
+                else
+                {
+                    // For no search parameters, return all interactions with pagination
+                    _logger.LogInformation("Retrieving all interactions with pagination");
+                    var specification = new InteractionCompositeSpecification(request);
+                    result = _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
+                }
                 
                 // Apply RBAC filtering to the results
                 if (result.Records?.Any() == true)

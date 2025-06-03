@@ -8,8 +8,8 @@ namespace UNOPS.PAO.Business.Interfaces;
 public interface IGeminiManager
 {
     AiPrompt MapModelToEntity(GeminiProcessDataRequest req);
-    IEnumerable<AiPromptModel> GetPromptData(string type);
-    Task<string> FetchResultFromGemini(AiPromptModel promptData, string relatedJsonData);
+    Task<IEnumerable<AiPrompt>> GetPromptData(string type);
+    Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData);
     IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId);
     Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId);
     IEnumerable<AiChatSession> GetUserSessions(int userId);

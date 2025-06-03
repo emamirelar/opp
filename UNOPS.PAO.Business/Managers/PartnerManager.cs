@@ -59,7 +59,7 @@ public class PartnerManager : IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerCategory", "Contacts"])
+            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
             .Where(x => !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
             .AsQueryable();
 
@@ -237,7 +237,7 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerCategory", "Contacts"];
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
 
         var item = await PartnerRepository
             .GetAll(includes)
@@ -250,6 +250,34 @@ public class PartnerManager : IPartnerManager
         }
 
         return mapper.Map<PartnerModel>(item);
+    }
+
+    /// <summary>
+    /// Gets a partner with its contacts and their interactions included
+    /// </summary>
+    public async Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id)
+    {
+        // Include contacts and their interactions using standard Entity Framework includes
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts", "Contacts.Interactions"];
+
+        var partner = await PartnerRepository
+            .GetAll(includes)
+            .Where(x => x.Id == id && !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
+            .FirstOrDefaultAsync();
+
+        if (partner == null)
+        {
+            return default;
+        }
+
+        // Now you can use the Partner entity's methods to get interaction data
+        // Examples:
+        // var allInteractions = partner.GetAllInteractions();
+        // var recentInteractions = partner.GetRecentInteractions(5);
+        // var interactionsByContact = partner.GetInteractionsByContact();
+        // var summary = partner.GetSummary();
+
+        return mapper.Map<PartnerModel>(partner);
     }
 
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroup(int userId, string partnerTreeId, PaginationRequest request)

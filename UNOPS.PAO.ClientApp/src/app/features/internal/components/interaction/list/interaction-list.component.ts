@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, inject, signal, ViewChild, WritableSignal, ChangeDetectorRef, OnInit, OnDestroy} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, signal, ViewChild, WritableSignal, ChangeDetectorRef, OnInit, OnDestroy, computed} from '@angular/core';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
 import { NgIf} from '@angular/common';
@@ -8,10 +8,11 @@ import { InteractionModalComponent } from '../modal/interaction-modal.component'
 import { INTERACTION_TYPE_TRANSLATION_KEYS, InteractionType } from '../../../models/interaction-type.enum';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ListviewComponent } from '../../../../../common/pages/components/listview/listview.component';
-import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
+import { ListViewColumn, ListViewConfig, SearchParams } from '../../../../../common/pages/components/listview/listview.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
+import { SearchField } from '../../../../../common/services/search-parser.service';
 
 @Component({
   selector: 'app-interaction-list',
@@ -72,12 +73,71 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       type: 'text'
     },
     {
-      field: 'data',
+      field: 'description',
       label: 'label.interaction.description',
       sortable: false,
       type: 'text'
     }
   ];
+
+  // Configure listview behavior with computed permissions
+  listviewConfig = computed<ListViewConfig>(() => ({
+    enableSelection: true,
+    enablePagination: true,
+    pageSize: 20,
+    pageSizeOptions: [20, 50, 100],
+    enableSorting: true,
+    enableSearch: true,
+    enableExport: this.entityPermissions().permissions.canCreate || this.entityPermissions().permissions.canUpdate,
+    entityName: 'Interaction',
+    scrollable: true,
+    scrollHeight: 'flex',
+    searchConfig: {
+      useAdvancedSearch: true,
+      placeholder: 'Search interactions...',
+      searchableFields: [
+        { 
+          field: 'type', 
+          label: 'Type', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'subject', 
+          label: 'Subject', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'description', 
+          label: 'Description', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'date', 
+          label: 'Date', 
+          type: 'date',
+          operators: ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<=']
+        },
+        { 
+          field: 'contactName', 
+          label: 'Contact Name', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        },
+        { 
+          field: 'partner.name', 
+          label: 'Partner', 
+          type: 'string',
+          operators: ['is', 'is not', 'like', 'not like']
+        }
+      ] as SearchField[]
+    }
+  }));
+
+  // Track current search term
+  currentSearchText = '';
 
   private dialogService = inject(DialogService);
   private translateService = inject(TranslateService);
@@ -90,6 +150,8 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    console.log('Interaction list config:', this.listviewConfig());
+    
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
   }
@@ -177,5 +239,13 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       // Navigate back to interactions list without the id param
       this.router.navigate(['/interactions'], { replaceUrl: true });
     });
+  }
+
+  /**
+   * Store the current search text when search is performed
+   * @param searchParams Current search parameters
+   */
+  onSearchChange(searchParams: SearchParams) {
+    this.currentSearchText = searchParams.generalSearch || '';
   }
 }

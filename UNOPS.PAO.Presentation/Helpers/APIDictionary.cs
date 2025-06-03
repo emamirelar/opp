@@ -39,6 +39,7 @@ public class APIDictionary
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
     public const string Contacts = APIPrefix + "values/contacts";
     public const string Users = APIPrefix + "values/users";
+    public const string GeminiModels = APIPrefix + "values/gemini-models";
 
     // Workflow
     public const string Workflow = APIPrefix + "workflow";
@@ -92,4 +93,14 @@ public class APIDictionary
 
     public const string UserInfo = APIPrefix + "user-info/by-email";
     public const string CurrentUserInfo = APIPrefix + "user-info/current";
+
+    // AI Prompts
+    public const string AiPrompts = APIPrefix + "ai-prompt-management";
+    public const string AiPromptsTypes = AiPrompts + "/types";
+    public const string AiPromptsModels = AiPrompts + "/models";
+    public const string AiPromptsProjects = AiPrompts + "/projects";
+    public const string AiPromptsLocations = AiPrompts + "/locations";
+    public const string AiPromptsByType = AiPrompts + "/type";
+    public const string AiPromptsList = AiPrompts + "/list";
+    public const string AiPromptsTest = AiPrompts + "/test";
 }

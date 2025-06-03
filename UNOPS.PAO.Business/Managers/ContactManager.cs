@@ -42,27 +42,12 @@ public class ContactManager : IContactManager
 
     public PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request)
     {
-        var query = ContactRepository
-            .GetAll()
-            .AsQueryable();
-
-        return query.Paginate(
-            x => mapper.Map<ContactModel>(x),
-            request
-        );
+        throw new NotImplementedException();
     }
 
     public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
     {
-        // Apply the specification to the query
-        var query = ContactRepository.GetAll().AsQueryable();
-        var filteredQuery = query.ApplySpecification(specification);
-        
-        // Apply pagination
-        return filteredQuery.Paginate(
-            x => mapper.Map<ContactModel>(x),
-            pagination
-        );
+        throw new NotImplementedException();
     }
 
     public async Task<ContactModel?> GetContact(int userId, int id)
@@ -176,6 +161,29 @@ public class ContactManager : IContactManager
 
         //result.ApplicationType = applicationTypeManager.GetApplicationTypeByCode(item.ApplicationTypeCode);
 
+        return result;
+    }
+
+    /// <summary>
+    /// Gets a contact with its interactions included
+    /// </summary>
+    public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
+    {
+        string[] includes = ["Documents", "Partner", "Interactions"];
+
+        var item = await ContactRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        // Now you can access interactions directly from the contact entity
+        // Examples:
+        // var recentInteractions = item.Interactions?.OrderByDescending(i => i.Date).Take(5).ToList();
+        // var interactionCount = item.Interactions?.Count ?? 0;
+
+        var result = mapper.Map<ContactModel>(item);
         return result;
     }
 

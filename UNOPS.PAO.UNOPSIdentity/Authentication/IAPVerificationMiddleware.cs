@@ -256,6 +256,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
                                     // Check if user has any roles
                                     var roles = await userManager.GetRolesAsync(user);
+                                    _logger.LogInformation("IAPVerificationMiddleware - User {Email} has {RoleCount} roles: {Roles}", extractedEmail, roles.Count, string.Join(", ", roles));
+                                    
                                     if (!roles.Any())
                                     {
                                         // Ensure UNOPS_GEN_USER role exists
@@ -269,6 +271,15 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                                         await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
                                         claims.Add(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
                                         _logger.LogInformation("IAPVerificationMiddleware - Added UNOPS_GEN_USER role to user");
+                                    }
+                                    else
+                                    {
+                                        // Add existing roles as claims
+                                        foreach (var role in roles)
+                                        {
+                                            claims.Add(new Claim(ClaimTypes.Role, role));
+                                            _logger.LogInformation("IAPVerificationMiddleware - Added existing role claim: {Role}", role);
+                                        }
                                     }
                                 }
                                 else if (!long.TryParse(extractedEmail, out _))
@@ -325,6 +336,15 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
                     var identity = new ClaimsIdentity(claims, "IAP", ClaimTypes.Name, ClaimTypes.Role);
                     context.User = new ClaimsPrincipal(identity);
+                    
+                    // DEBUG: Log all final claims
+                    _logger.LogInformation("IAPVerificationMiddleware - Final claims for user {Email}:", extractedEmail);
+                    foreach (var claim in claims)
+                    {
+                        _logger.LogInformation("  Claim: {Type} = {Value}", claim.Type, claim.Value);
+                    }
+
+                    _logger.LogInformation("IAPVerificationMiddleware - Successfully authenticated user via header: {Email}", extractedEmail);
                     await _next(context);
                     return;
                 }
@@ -347,7 +367,17 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
             // If we got here with jwtVerified true, use the JWT principal
             if (jwtVerified && jwtPrincipal != null)
             {
+                // Set the validated principal as the current user
                 context.User = jwtPrincipal;
+                
+                // DEBUG: Log all final claims from JWT
+                _logger.LogInformation("IAPVerificationMiddleware - Final claims from JWT for user {Email}:", verifiedEmail);
+                foreach (var claim in jwtPrincipal.Claims)
+                {
+                    _logger.LogInformation("  Claim: {Type} = {Value}", claim.Type, claim.Value);
+                }
+                
+                _logger.LogInformation("IAPVerificationMiddleware - Successfully authenticated user via JWT: {Email}", verifiedEmail);
                 await _next(context);
                 return;
             }
@@ -615,6 +645,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
 
                         // Check if user has any roles
                         var roles = await userManager.GetRolesAsync(user);
+                        _logger.LogInformation("IAPVerificationMiddleware - User {Email} has {RoleCount} roles: {Roles}", userEmail, roles.Count, string.Join(", ", roles));
+                        
                         if (!roles.Any())
                         {
                             // Ensure UNOPS_GEN_USER role exists
@@ -628,6 +660,15 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                             await userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
                             identity.AddClaim(new Claim(ClaimTypes.Role, "UNOPS_GEN_USER"));
                             _logger.LogInformation("IAPVerificationMiddleware - Added UNOPS_GEN_USER role to user");
+                        }
+                        else
+                        {
+                            // Add existing roles as claims
+                            foreach (var role in roles)
+                            {
+                                identity.AddClaim(new Claim(ClaimTypes.Role, role));
+                                _logger.LogInformation("IAPVerificationMiddleware - Added existing role claim: {Role}", role);
+                            }
                         }
                     }
                     else

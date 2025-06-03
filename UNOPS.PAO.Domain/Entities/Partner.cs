@@ -52,5 +52,79 @@ public class Partner : ModifiableDeletableEntity
     [NotMapped]
     public IEnumerable<Contact> First5ContactsByDate => 
         Contacts?.OrderByDescending(c => c.CreatedDate).Take(5) ?? Enumerable.Empty<Contact>();
+
+    /// <summary>
+    /// Gets all interactions related to this partner through its contacts
+    /// </summary>
+    public IEnumerable<Interaction> GetAllInteractions()
+    {
+        if (Contacts == null || !Contacts.Any())
+            return Enumerable.Empty<Interaction>();
+
+        return Contacts
+            .Where(c => c.Interactions != null)
+            .SelectMany(c => c.Interactions)
+            .OrderByDescending(i => i.Date);
+    }
+
+    /// <summary>
+    /// Gets recent interactions (last 10) for this partner
+    /// </summary>
+    public IEnumerable<Interaction> GetRecentInteractions(int count = 10)
+    {
+        return GetAllInteractions().Take(count);
+    }
+
+    /// <summary>
+    /// Gets interactions grouped by contact for this partner
+    /// </summary>
+    public Dictionary<Contact, IEnumerable<Interaction>> GetInteractionsByContact()
+    {
+        if (Contacts == null || !Contacts.Any())
+            return new Dictionary<Contact, IEnumerable<Interaction>>();
+
+        return Contacts
+            .Where(c => c.Interactions != null && c.Interactions.Any())
+            .ToDictionary(
+                contact => contact,
+                contact => (IEnumerable<Interaction>)contact.Interactions.OrderByDescending(i => i.Date)
+            );
+    }
+
+    /// <summary>
+    /// Gets the count of all interactions for this partner
+    /// </summary>
+    public int GetTotalInteractionsCount()
+    {
+        return Contacts?.Sum(c => c.Interactions?.Count ?? 0) ?? 0;
+    }
+
+    /// <summary>
+    /// Gets the date of the most recent interaction for this partner
+    /// </summary>
+    public DateTime? GetLastInteractionDate()
+    {
+        return GetAllInteractions().FirstOrDefault()?.Date;
+    }
+
+    /// <summary>
+    /// Gets interactions by type for this partner
+    /// </summary>
+    public IEnumerable<Interaction> GetInteractionsByType(Domain.Enums.InteractionType type)
+    {
+        return GetAllInteractions().Where(i => i.Type == type);
+    }
+
+    /// <summary>
+    /// Gets contact and interaction summary information
+    /// </summary>
+    public (int ContactsCount, int InteractionsCount, DateTime? LastInteractionDate) GetSummary()
+    {
+        var contactsCount = Contacts?.Count ?? 0;
+        var interactionsCount = GetTotalInteractionsCount();
+        var lastInteractionDate = GetLastInteractionDate();
+
+        return (contactsCount, interactionsCount, lastInteractionDate);
+    }
 }
 

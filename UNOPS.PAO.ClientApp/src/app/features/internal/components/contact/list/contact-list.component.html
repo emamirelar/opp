@@ -30,6 +30,7 @@
   <app-listview
     [dataUrl]="contactService.getUrl()"
     [columns]="contactColumns"
+    [entityType]="'Contact'"
     [config]="listviewConfig()"
     (rowClick)="onRowClick($event)"
     (searchChange)="onSearchChange($event)"

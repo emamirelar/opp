@@ -38,6 +38,8 @@ using UNOPS.PAO.UNOPSDataAccess.Seed;
 using UNOPS.PAO.UNOPSPresentation.Middleware;
 using System.IO;
 using UNOPS.PAO.Presentation.Security;
+using UNOPS.PAO.Business.Interfaces;
+using UNOPS.PAO.Business.Services;
 
 namespace UNOPS.PAO.Server;
 
@@ -130,12 +132,6 @@ public class Startup
         // Standard authentication processing
         app.UseAuthentication();
         
-        // Add dev identity middleware after authentication but before authorization
-        if (env.IsDevelopment())
-        {
-            app.UseMiddleware<DevIdentityMiddleware>(); // Force identity for development
-        }
-        
         app.UseAuthorization();
         
         app.UseHttpsRedirection();
@@ -186,7 +182,6 @@ public class Startup
         
         // Register dev middleware
         services.AddScoped<DevelopmentIAPAuthHandler>();
-        services.AddTransient<DevIdentityMiddleware>();
 
         services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
@@ -333,6 +328,12 @@ public class Startup
         
         // Add Business Security Service for row-level filtering
         services.AddScoped<IBusinessSecurityService, BusinessSecurityService>();
+        
+        // Add SavedFilter Service
+        services.AddScoped<ISavedFilterService, SavedFilterService>();
+        
+        // Add Generic Row Filter Service
+        services.AddScoped<IGenericRowFilterService, GenericRowFilterService>();
         
         // Configure authorization
         services.AddAuthorization(options =>

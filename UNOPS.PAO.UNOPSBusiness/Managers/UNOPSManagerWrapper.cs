@@ -27,6 +27,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSGeminiManager geminiManager;
     private readonly LinkManager linkManager;
     private readonly UNOPSUserManagementManager userManagementManager;
+    private readonly UNOPSAiPromptManager aiPromptManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
                                UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, 
@@ -36,7 +37,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
         
         // Create a PartnerTreeService instance
-        var partnerTreeRepository = new DataRepository<PartnerTree>(opsContext);
+        var partnerTreeRepository = new DataRepository<UNOPSPartnerTree>(opsContext);
         var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
         
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
@@ -47,6 +48,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(opsContext, userManager, roleManager, securityService);
+        aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, this);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -57,4 +59,5 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override IGeminiManager GeminiManager => geminiManager;
     public override ILinkManager LinkManager => linkManager;
     public override IUserManagementManager UserManagementManager => userManagementManager;
+    public override IAiPromptManager AiPromptManager => aiPromptManager;
 }

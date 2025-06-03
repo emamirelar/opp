@@ -8,6 +8,7 @@ public class UserManagementModel
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string OrgUnit { get; set; } = string.Empty;
+    public string? OrgUnitCode { get; set; }
     public List<string> Roles { get; set; } = new();
     public string RolesDisplay => string.Join(", ", Roles);
     public DateTime? LastModifiedDate { get; set; }
@@ -28,6 +29,12 @@ public class UpdateUserRolesRequest
 {
     [Required]
     public List<string> Roles { get; set; } = new();
+}
+
+public class UpdateOrgUnitSelfManagementRequest
+{
+    [Required]
+    public bool IsSelfManagementEnabled { get; set; }
 }
 
 public class RoleModel

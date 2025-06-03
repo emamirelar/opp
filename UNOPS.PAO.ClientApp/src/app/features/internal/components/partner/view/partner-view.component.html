@@ -33,7 +33,7 @@
               [imageUrl]="recordData().logoUrl || ''"
               [uploadUrl]="getUploadLogoUrl()"
               [altText]="'Partner logo'"
-              [size]="'medium'"
+              [size]="'small'"
               [disabled]="!recordPermissions().permissions.canUpdate"
               (imageChanged)="_loadRecordDetails()"
             />
@@ -86,7 +86,7 @@
           </div>
           }
 
-          @if(showAdditionalInfo()) {
+          @if(showAdditionalInfo() && showFullContent()) {
           <!-- Additional Info -->
             <div class="font-semibold">Additional Information</div>
             @if(recordData().id){
@@ -164,6 +164,33 @@
               <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
             </div>
           }
+          
+          <!-- See More / See Less Button -->
+          @if (shouldShowSeeMoreButton()) {
+            <div class="flex justify-center mt-4">
+              <p-button
+                label="{{ 'button.seeMore' | translate }}"
+                icon="pi pi-chevron-down"
+                [rounded]="true"
+                [size]="'small'"
+                [text]="true"
+                (onClick)="toggleFullContent()"
+              />
+            </div>
+          }
+          
+          @if (shouldShowSeeLessButton()) {
+            <div class="flex justify-center mt-4">
+              <p-button
+                label="{{ 'button.seeLess' | translate }}"
+                icon="pi pi-chevron-up"
+                [rounded]="true"
+                [size]="'small'"
+                [text]="true"
+                (onClick)="toggleFullContent()"
+              />
+            </div>
+          }
         </div>
       </p-panel>
 
@@ -201,67 +228,25 @@
       </p-panel>
     </div>
     <div class="md:w-1/2 flex flex-col gap-8">
-      <p-panel>
-        <ng-template #header>
-          <div class="flex gap-2 items-center w-full justify-between">
-            <div class="font-semibold">{{'label.partner.summaryOfInteractions' | translate}}</div>
-            <div class="flex gap-2 items-center">
-              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('summary')"></p-button-->
-              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshSummaryOfInteractions()" [loading]="summaryOfInteractionsIsLoading()"></p-button>
-              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
-            </div>
-          </div>
-        </ng-template>
+      <app-ai-panel
+        [title]="'label.partner.summaryOfInteractions'"
+        [entityId]="recordId"
+        [promptType]="'partner_interactions_summary'"
+        [aiService]="geminiService"
+        (onRefresh)="onSummaryRefresh()"
+        (onDataLoaded)="onSummaryLoaded($event)"
+        (onError)="onSummaryError($event)"
+      />
 
-        @if (summaryOfInteractionsIsLoading()) {
-        <div class="w-full flex justify-center h-24 items-center">
-          <i class="pi pi-spin pi-spinner"></i>
-        </div>
-        } @else {
-        <div [innerHTML]="summaryOfInteractions() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
-        }
-      </p-panel>
-
-      <p-panel>
-        <ng-template #header>
-          <div class="flex gap-2 items-center w-full justify-between">
-            <div class="font-semibold">{{'label.partner.riskProfile' | translate}}</div>
-            <div class="flex gap-2 items-center">
-              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('risk')"></p-button-->
-              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshRiskProfile()" [loading]="riskIsLoading()"></p-button>
-              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
-            </div>
-          </div>
-        </ng-template>
-
-        @if (riskIsLoading()) {
-        <div class="w-full flex justify-center h-24 items-center">
-          <i class="pi pi-spin pi-spinner"></i>
-        </div>
-        } @else {
-        <div [innerHTML]="riskProfile() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
-        }
-      </p-panel>
-
-      <p-panel>
-        <ng-template #header>
-          <div class="flex gap-2 items-center w-full justify-between">
-            <div class="font-semibold">{{'label.partner.partnerNews' | translate}}</div>
-            <div class="flex gap-2 items-center">
-              <!--p-button icon="pi pi-sitemap" [text]="true" [rounded]="true" [size]="'small'" pTooltip="Select Organizational Structure" (onClick)="selectOrganizationalStructure('news')"></p-button-->
-              <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" [size]="'small'" (onClick)="refreshPartnerNews()" [loading]="partnerNewsIsLoading()"></p-button>
-              <img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
-            </div>
-          </div>
-        </ng-template>
-        @if (partnerNewsIsLoading()) {
-        <div class="w-full flex justify-center h-24 items-center">
-          <i class="pi pi-spin pi-spinner"></i>
-        </div>
-        } @else {
-        <div [innerHTML]="partnerNews() | markdown" class="background-animate bg-gradient-to-r from-zinc-700 via-purple-500 to-pink-500 bg-clip-text text-transparent"></div>
-        }
-      </p-panel>
+      <app-ai-panel
+        [title]="'label.partner.partnerNews'"
+        [entityId]="recordId"
+        [promptType]="'partner_news'"
+        [aiService]="geminiService"
+        (onRefresh)="onNewsRefresh()"
+        (onDataLoaded)="onNewsLoaded($event)"
+        (onError)="onNewsError($event)"
+      />
 
       <p-panel header="Partner Funding Opportunities">
       </p-panel>

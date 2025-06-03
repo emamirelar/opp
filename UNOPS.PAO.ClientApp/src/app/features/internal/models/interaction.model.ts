@@ -5,10 +5,9 @@ export interface Interaction {
   id: number;
   type: InteractionType;
   date: string;
-  data?: string;
+  description?: string;
   contactId: number;
   contactName?: string;
-  description?: string;
   status: string;
   contactIds: number[];
   partnerIds: number[];

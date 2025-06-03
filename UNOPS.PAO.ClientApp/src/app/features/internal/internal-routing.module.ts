@@ -14,6 +14,8 @@ import { PartnerTabsComponent } from './components/partner/tabs/partner-tabs.com
 import { ComingSoonComponent } from '../../common/pages/components/coming-soon/coming-soon.component';
 import { SearchResultComponent } from './components/search-result/search-result.component';
 import { PartnerTreeViewComponent } from './components/partner-tree/view/partner-tree-view.component';
+import { PartnerTreeDetailsComponent } from './components/partner-tree/view/details/partner-tree-details.component';
+import { PartnerTreeDataComponent } from './components/partner-tree/view/data/partner-tree-data.component';
 import { PartnerDataResolver } from './resolvers/partner-data.resolver';
 import { PartnerTreeDataResolver } from './resolvers/partner-tree-data.resolver';
 import { UserManagementComponent } from './admin/user-management/user-management.component';
@@ -144,16 +146,27 @@ const internalRoutes: Routes = [
                 data: { breadcrumb: 'Partner Tree View' },
                 resolve: {
                   partnerTreeData: PartnerTreeDataResolver
-                }
+                },
+                children: [
+                  { 
+                    path: '', 
+                    component: PartnerTreeDetailsComponent,
+                    data: { breadcrumb: 'Details' }
+                  },
+                  {
+                    path: 'data',
+                    component: PartnerTreeDataComponent,
+                    data: { breadcrumb: 'Data' }
+                  }
+                ]
               }
             ]
           },
           {
-            path: 'ai-prompts',
-            component: ComingSoonComponent,
+            path: 'ai-prompt-management',
+            loadComponent: () => import('./components/ai-prompt/ai-prompt.component').then(m => m.AiPromptComponent),
             data: { 
-              breadcrumb: 'AI Prompts Admin',
-              featureName: 'AI Prompts Admin'
+              breadcrumb: 'AI Prompt Admin'
             }
           },
           {

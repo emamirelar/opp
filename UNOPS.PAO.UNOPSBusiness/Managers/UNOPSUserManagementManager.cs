@@ -7,6 +7,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
+using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -120,6 +121,7 @@ public class UNOPSUserManagementManager : IUserManagementManager
                 Name = userInfo.Name ?? "N/A",
                 Email = userInfo.UserEmail ?? "N/A",
                 OrgUnit = userInfo.OrgUnit ?? "N/A",
+                OrgUnitCode = userInfo.OrgUnit,
                 Roles = roles,
                 LastModifiedDate = userInfo.LastModifiedDate,
                 IsActive = isActive
@@ -177,6 +179,7 @@ public class UNOPSUserManagementManager : IUserManagementManager
             Name = userInfo.Name ?? "N/A",
             Email = userInfo.UserEmail ?? "N/A",
             OrgUnit = userInfo.OrgUnit ?? "N/A",
+            OrgUnitCode = userInfo.OrgUnit,
             Roles = roles.ToList(),
             LastModifiedDate = userInfo.LastModifiedDate,
             IsActive = !aspNetUser.LockoutEnabled || 
@@ -314,5 +317,72 @@ public class UNOPSUserManagementManager : IUserManagementManager
             Name = r.Name ?? string.Empty,
             Description = r.Description ?? string.Empty
         }).OrderBy(r => r.Name);
+    }
+
+    public async Task<bool> GetOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode)
+    {
+        // Security check
+        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
+        {
+            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can view organization settings.");
+        }
+
+        // Find the organization unit
+        var orgUnit = await _context.OrganizationHierarchies
+            .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
+            .FirstOrDefaultAsync();
+
+        if (orgUnit == null)
+        {
+            throw new ArgumentException($"Organization unit with code '{orgUnitCode}' not found.");
+        }
+
+        // Check org unit access for ORG_UNIT_ADMIN
+        if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
+        {
+            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            if (orgUnit.Code != currentUserOrgUnit)
+            {
+                throw new UnauthorizedAccessException("Access denied. You can only view settings for your organization unit.");
+            }
+        }
+
+        return orgUnit.IsSelfManagementEnabled;
+    }
+
+    public async Task UpdateOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode, UpdateOrgUnitSelfManagementRequest request)
+    {
+        // Security check
+        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
+        {
+            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can update organization settings.");
+        }
+
+        // Find the organization unit
+        var orgUnit = await _context.OrganizationHierarchies
+            .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
+            .FirstOrDefaultAsync();
+
+        if (orgUnit == null)
+        {
+            throw new ArgumentException($"Organization unit with code '{orgUnitCode}' not found.");
+        }
+
+        // Check org unit access for ORG_UNIT_ADMIN
+        if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
+        {
+            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            if (orgUnit.Code != currentUserOrgUnit)
+            {
+                throw new UnauthorizedAccessException("Access denied. You can only update settings for your organization unit.");
+            }
+        }
+
+        // Update the self-management setting
+        orgUnit.IsSelfManagementEnabled = request.IsSelfManagementEnabled;
+        orgUnit.LastModifiedDate = DateTime.UtcNow;
+        orgUnit.LastModifiedBy = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+        await _context.SaveChangesAsync();
     }
 } 

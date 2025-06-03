@@ -65,52 +65,104 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
             _logger.LogDebug("Checking access for route {Route}", route);
             var normalizedRoute = NormalizeRoutePath(route);
 
+            // DEBUG: Log user information
+            var userId = _userManager.GetUserId(User);
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? User.FindFirst("email")?.Value;
+            var userNameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var allClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            
+            _logger.LogInformation("DEBUG - User Info: UserId={UserId}, Email={Email}, NameIdentifier={NameIdentifier}", 
+                userId, userEmail, userNameIdentifier);
+            _logger.LogInformation("DEBUG - All User Claims: {@Claims}", allClaims);
+
             // Extract entity name and ID from route
             var (entityName, entityId) = ExtractEntityInfoFromRoute(route);
+            
+            _logger.LogInformation("DEBUG - Extracted from route: EntityName={EntityName}, EntityId={EntityId}", 
+                entityName, entityId);
             
             if (!string.IsNullOrEmpty(entityName))
             {
                 _logger.LogInformation("Checking {Entity} entity permissions for route: {Route}", entityName, normalizedRoute);
 
-                // Get entity-level permissions using BusinessSecurityService
-                var entityPermissions = await _businessSecurityService.GetEntityPermissionsAsync(User, entityName);
-
-                // If checking a specific instance, apply row-level filtering
-                bool hasInstanceAccess = true;
-                if (!string.IsNullOrEmpty(entityId) && int.TryParse(entityId, out int id))
+                try
                 {
-                    hasInstanceAccess = await _businessSecurityService.CanUserAccessEntityAsync(User, entityName, id);
-                    _logger.LogInformation("Instance access check for {Entity} ID {Id}: {HasAccess}", 
-                        entityName, id, hasInstanceAccess);
-                }
+                    // DEBUG: Log before calling BusinessSecurityService
+                    _logger.LogInformation("DEBUG - Calling GetEntityPermissionsAsync for entity: {EntityName}", entityName);
+                    
+                    // Get entity-level permissions using BusinessSecurityService
+                    var entityPermissions = await _businessSecurityService.GetEntityPermissionsAsync(User, entityName);
+                    
+                    _logger.LogInformation("DEBUG - EntityPermissions result: CanRead={CanRead}, CanCreate={CanCreate}, CanUpdate={CanUpdate}, CanDelete={CanDelete}", 
+                        entityPermissions.CanRead, entityPermissions.CanCreate, entityPermissions.CanUpdate, entityPermissions.CanDelete);
 
-                // Combine entity permissions with instance access
-                var canRead = entityPermissions.CanRead && hasInstanceAccess;
-                var canCreate = entityPermissions.CanCreate;
-                var canUpdate = entityPermissions.CanUpdate && hasInstanceAccess;
-                var canDelete = entityPermissions.CanDelete && hasInstanceAccess;
-
-                // Log the results
-                _logger.LogInformation("{Entity} permissions: CanRead={CanRead}, CanCreate={CanCreate}, CanUpdate={CanUpdate}, CanDelete={CanDelete}",
-                    entityName, canRead, canCreate, canUpdate, canDelete);
-
-                return Ok(new
-                {
-                    route = normalizedRoute,
-                    hasAccess = canRead,
-                    entity = entityName,
-                    permissions = new
+                    // If checking a specific instance, apply row-level filtering
+                    bool hasInstanceAccess = true;
+                    if (!string.IsNullOrEmpty(entityId) && int.TryParse(entityId, out int id))
                     {
-                        canRead,
-                        canCreate,
-                        canUpdate,
-                        canDelete
+                        _logger.LogInformation("DEBUG - Checking instance access for {EntityName} ID {Id}", entityName, id);
+                        hasInstanceAccess = await _businessSecurityService.CanUserAccessEntityAsync(User, entityName, id);
+                        _logger.LogInformation("Instance access check for {Entity} ID {Id}: {HasAccess}", 
+                            entityName, id, hasInstanceAccess);
                     }
-                });
+                    else
+                    {
+                        _logger.LogInformation("DEBUG - No specific entity ID, skipping instance access check");
+                    }
+
+                    // Combine entity permissions with instance access
+                    var canRead = entityPermissions.CanRead && hasInstanceAccess;
+                    var canCreate = entityPermissions.CanCreate;
+                    var canUpdate = entityPermissions.CanUpdate && hasInstanceAccess;
+                    var canDelete = entityPermissions.CanDelete && hasInstanceAccess;
+
+                    // Log the results
+                    _logger.LogInformation("{Entity} permissions: CanRead={CanRead}, CanCreate={CanCreate}, CanUpdate={CanUpdate}, CanDelete={CanDelete}",
+                        entityName, canRead, canCreate, canUpdate, canDelete);
+                    
+                    _logger.LogInformation("DEBUG - Final hasAccess value: {HasAccess} (based on canRead)", canRead);
+
+                    return Ok(new
+                    {
+                        route = normalizedRoute,
+                        hasAccess = canRead,
+                        entity = entityName,
+                        permissions = new
+                        {
+                            canRead,
+                            canCreate,
+                            canUpdate,
+                            canDelete
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "DEBUG - Error checking entity permissions for {EntityName}: {ErrorMessage}", 
+                        entityName, ex.Message);
+                    
+                    // Return false access on error
+                    return Ok(new
+                    {
+                        route = normalizedRoute,
+                        hasAccess = false,
+                        entity = entityName,
+                        error = ex.Message,
+                        permissions = new
+                        {
+                            canRead = false,
+                            canCreate = false,
+                            canUpdate = false,
+                            canDelete = false
+                        }
+                    });
+                }
             }
 
             // For other routes, we check basic access
+            _logger.LogInformation("DEBUG - No entity found in route, checking basic route access");
             bool hasAccess = await CheckBasicRouteAccess(normalizedRoute);
+            _logger.LogInformation("DEBUG - Basic route access result: {HasAccess}", hasAccess);
 
             return Ok(new { route = normalizedRoute, hasAccess });
         }
@@ -272,14 +324,6 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
             // Special case handling for compound names with dashes
             if (entityPlural.Contains("-"))
             {
-                if (entityPlural.ToLower() == "partnership-agreements")
-                {
-                    return "Agreement";
-                }
-                if (entityPlural.ToLower() == "partner-tree")
-                {
-                    return "PartnerTree";
-                }
                 // For other hyphenated entities, convert to PascalCase
                 // Split by dash, singularize each part, then join in PascalCase
                 var parts = entityPlural.Split('-');

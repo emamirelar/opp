@@ -18,6 +18,8 @@
         "why": "Por quê",
         "confirmation": "Confirmação",
         "contacts": "Contatos",
+        "partners": "Parceiros",
+        "partnerTree": "Árvore de Parceiros",
         "interactions": "Interações",
         "newInteraction": "Nova Interação",
         "editInteraction": "Editar Interação",
@@ -29,7 +31,10 @@
             "contactInformation": "Informações Pessoais",
             "addresses": "Endereços",
             "systemInformation": "Informações do Sistema"
-        }
+        },
+        "partnerDetails": "Detalhes do Parceiro",
+        "partnerDashboard": "Painel do Parceiro",
+        "admin": "Administração"
     },
     "button": {
         "back": "Voltar",
@@ -185,7 +190,9 @@
     },
     "common": {
         "cancel": "Cancelar",
-        "capture": "Capturar"
+        "capture": "Capturar",
+        "save": "Salvar",
+        "update": "Atualizar"
     },
     "placeholder": {
         "enterUrl": "Digite a URL",
@@ -216,6 +223,54 @@
         "showAllResults": "Mostrar todos os resultados",
         "seeAllResults": "Ver todos os resultados",
         "contact": "Contato",
-        "partner": "Parceiro"
+        "partner": "Parceiro",
+        "advanced": "Pesquisa Avançada",
+        "backToSimple": "Voltar à pesquisa simples",
+        "searchEverywhere": "Pesquisar em todos os lugares",
+        "searchIn": "Pesquisar em",
+        "noFilters": "Nenhum filtro",
+        "clearAllFilters": "Limpar todos os filtros",
+        "selectField": "Selecionar campo",
+        "operator": "Operador",
+        "logic": "Lógica",
+        "addFilter": "Adicionar filtro",
+        "enterField": "Digite {{field}}...",
+        "operators": {
+            "equals": "igual a",
+            "notEquals": "diferente de",
+            "contains": "contém",
+            "notContains": "não contém",
+            "greaterThan": "maior que",
+            "lessThan": "menor que",
+            "greaterThanOrEqual": "maior ou igual a",
+            "lessThanOrEqual": "menor ou igual a",
+            "after": "depois de",
+            "before": "antes de",
+            "between": "entre"
+        },
+        "logicalOperators": {
+            "and": "E",
+            "or": "OU"
+        },
+        "selectDate": "Selecionar data",
+        "selectEndDate": "Selecionar data final",
+        "and": "e"
+    },
+    "savedFilters": {
+        "selectFilter": "Selecionar filtro",
+        "save": "Salvar",
+        "saveNew": "Novo Filtro",
+        "saveCurrentFilter": "Salvar filtro atual",
+        "updateFilter": "Atualizar filtro",
+        "deleteFilter": "Excluir filtro",
+        "saveFilter": "Salvar filtro",
+        "filterName": "Nome do filtro",
+        "enterFilterName": "Digite o nome do filtro"
+    },
+    "partner": {
+        "summaryOfInteractions": "Resumo IA de Interações",
+        "categoryNews": "Notícias da Categoria",
+        "partnerNews": "Notícias do Parceiro", 
+        "categorySummary": "Resumo da Categoria"
     }
 }

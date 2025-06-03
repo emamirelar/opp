@@ -151,10 +151,10 @@
   </div>
 
   <div class="flex flex-col gap-2">
-    <label for="data">{{ 'label.interaction.description' | translate }}</label>
-    <textarea id="data" 
+    <label for="description">{{ 'label.interaction.description' | translate }}</label>
+    <textarea id="description" 
               pTextarea 
-              formControlName="data" 
+              formControlName="description" 
               [disabled]="!recordPermissions()?.permissions?.canUpdate"
               class="w-full" 
               rows="6" 

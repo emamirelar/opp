@@ -47,7 +47,7 @@ interface TabItem {
                 [value]="tab.route" 
                 [routerLink]="tab.route" 
                 class="flex items-center !gap-2 text-inherit">
-            <span>{{ tab.label }}</span>
+            <span>{{ tab.label | translate }}</span>
           </p-tab>
         </p-tablist>
       </p-tabs>
@@ -86,12 +86,12 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
     // Create tabs based on recordId
     this.tabs = [
       {
-        label: 'Partner Details',
-        route: `/admin/partner/${this.recordId}`
+        label: 'title.partnerDetails',
+        route: `/partnerships/partners/${this.recordId}`
       },
       {
-        label: 'Partner Data',
-        route: `/admin/partner/${this.recordId}/data`
+        label: 'title.partnerDashboard',
+        route: `/partnerships/partners/${this.recordId}/data`
       }
     ];
     

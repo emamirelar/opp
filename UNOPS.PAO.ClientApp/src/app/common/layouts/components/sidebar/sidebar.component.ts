@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, signal } from '@angular/core';
+import { Component, OnInit, ElementRef, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, signal, inject } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { MenuComponent } from '../menu/menu.component';
 import { AuthService } from '../../../../essentials/services/auth.service';
@@ -6,16 +6,19 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../../../services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { CommonModule } from '@angular/common';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [MenuComponent, CommonModule],
+  imports: [MenuComponent, CommonModule, HttpClientModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent implements OnInit, OnDestroy {
+  private http = inject(HttpClient);
+
   constructor(
     public el: ElementRef,
     private authService: AuthService,
@@ -37,7 +40,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   restrictedRoleSignal = signal<boolean>(false);
   
   // Initialize menu items in ngOnInit after signals are available
-  private initializeMenuItems(isAdmin: boolean) {
+  private initializeMenuItems(isAdmin: boolean, userRoles: string[] = [], canManageOffice: boolean = false) {
     this.menuItems = [
       {
         label: 'title.home',
@@ -82,39 +85,74 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     ];
 
-    this.adminMenuItems = !isAdmin ? [] : [
+    if (!isAdmin) {
+      this.adminMenuItems = [];
+      return;
+    }
+
+    // Check user roles to determine which admin items to show
+    const isPartnerGlobAdmin = userRoles.includes('PARTNER_GLOB_ADMIN');
+    const isOrgUnitAdmin = userRoles.includes('ORG_UNIT_ADMIN');
+
+    let adminItems: MenuItem[] = [];
+
+    // Check if user is PARTNER_GLOB_ADMIN, if yes, add all
+    if (isPartnerGlobAdmin) {
+      adminItems = [
+        {
+          label: 'title.partnerTree',
+          icon: 'account_tree',
+          routerLink: ['/admin/partner-tree']
+        },
+        {
+          label: 'title.aiPromptsAdmin',
+          icon: 'psychology',
+          routerLink: ['/admin/ai-prompt-management']
+        },
+        {
+          label: 'title.userManagement',
+          icon: 'person',
+          routerLink: ['/admin/user-management']
+        },
+        {
+          label: 'title.manageOffice',
+          icon: 'business',
+          routerLink: ['/admin/office-management']
+        },
+        {
+          label: 'title.translationWorkbench',
+          icon: 'translate',
+          routerLink: ['/admin/translations']
+        }
+      ];
+    }
+    // Check if user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), if yes, add only usermanagement and conditionally office management
+    else if (isOrgUnitAdmin) {
+      adminItems = [
+        {
+          label: 'title.userManagement',
+          icon: 'person',
+          routerLink: ['/admin/user-management']
+        }
+      ];
+
+      // Add office management if self-management is enabled
+      if (canManageOffice) {
+        adminItems.push({
+          label: 'title.manageOffice',
+          icon: 'business',
+          routerLink: ['/admin/office-management']
+        });
+      }
+    }
+
+    this.adminMenuItems = adminItems.length > 0 ? [
       {
         label: 'title.admin',
         icon: 'admin_panel_settings',
-        items: [
-          {
-            label: 'title.partnerTree',
-            icon: 'account_tree',
-            routerLink: ['/admin/partner-tree']
-          },
-          {
-            label: 'title.aiPromptsAdmin',
-            icon: 'psychology',
-            routerLink: ['/admin/ai-prompts']
-          },
-          {
-            label: 'title.userManagement',
-            icon: 'person',
-            routerLink: ['/admin/user-management']
-          },
-          {
-            label: 'title.manageOffice',
-            icon: 'business',
-            routerLink: ['/admin/office-management']
-          },
-          {
-            label: 'title.translationWorkbench',
-            icon: 'translate',
-            routerLink: ['/admin/translations']
-          }
-        ]
+        items: adminItems
       }
-    ];
+    ] : [];
   }
 
   get combinedMenuItems(): MenuItem[] {
@@ -123,8 +161,42 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.authService.isAdmin().subscribe((isAdmin: boolean) => {
-      this.initializeMenuItems(isAdmin);
-      this.cdr.detectChanges();
+      if (isAdmin) {
+        // Get user roles and canManageOffice status for admin users
+        this.authService.user().subscribe({
+          next: (claims) => {
+            const emailClaim = claims.find(c => c.type === 'email' || 
+                                         c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
+            
+            const email = emailClaim?.value;
+            const apiUrl = email ? `/api/user-info/current?email=${encodeURIComponent(email)}` : '/api/user-info/current';
+            
+            this.http.get<any>(apiUrl).subscribe({
+              next: (response) => {
+                const userRoles = response.roles || [];
+                const canManageOffice = response.canManageOffice || false;
+                this.initializeMenuItems(isAdmin, userRoles, canManageOffice);
+                this.cdr.detectChanges();
+              },
+              error: (err) => {
+                console.error('Error loading user info for sidebar:', err);
+                // Fallback to basic admin menu
+                this.initializeMenuItems(isAdmin, [], false);
+                this.cdr.detectChanges();
+              }
+            });
+          },
+          error: (claimsErr) => {
+            console.error('Error getting user claims for sidebar:', claimsErr);
+            // Fallback to basic admin menu
+            this.initializeMenuItems(isAdmin, [], false);
+            this.cdr.detectChanges();
+          }
+        });
+      } else {
+        this.initializeMenuItems(isAdmin);
+        this.cdr.detectChanges();
+      }
     });
 
     this.langChangeSubscription = this.translateService.onLangChange.subscribe(() => {

@@ -50,68 +50,53 @@ public class PartnerController : BaseController
     }
 
     [HttpGet(APIDictionary.Partner)]
-    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll([FromQuery] PartnerFilterRequest request, [FromQuery] bool advancedSearch = false, [FromQuery] string searchCriteria = null)
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll(
+        [FromQuery] PartnerFilterRequest request, 
+        [FromQuery] bool advancedSearch = false, 
+        [FromQuery] string? searchCriteria = null,
+        [FromQuery] string? searchText = null)
     {
         // Check permission to read partners
         var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
         if (permissionResult != null) return permissionResult;
         
-        if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        if (validationResult != null) return validationResult;
+        
+        // Handle search using the new helper methods
+        return await HandleSearchOperationAsync(async () =>
         {
-            try
+            if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
             {
-                var newRequest = AdvancedSearchHelper.MapAdvancedSearchCriteria<PartnerFilterRequest>(searchCriteria);
-                // Copy over any properties that weren't in the search criteria but were in the original request
-                foreach (var prop in typeof(PartnerFilterRequest).GetProperties())
-                {
-                    if (prop.GetValue(newRequest) == null)
-                    {
-                        prop.SetValue(newRequest, prop.GetValue(request));
-                    }
-                }
-                request = newRequest;
+                return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
+                    searchCriteria, searchText ?? request.SearchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
+                    request, // Use request as pagination request since PartnerFilterRequest extends PaginationRequest
+                    "Partner",
+                    filterRequest => new PartnerCompositeSpecification(filterRequest),
+                    async (userId, spec, pagination) => await _manager.GetPartnersWithSpecification(userId, spec, (PartnerFilterRequest)pagination),
+                    CurrentUserId, _logger);
             }
-            catch (ArgumentException ex)
+            
+            // Handle simple text search
+            if (!string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(request.SearchText))
             {
-                throw new BusinessException(ex.Message);
+                var textToSearch = searchText ?? request.SearchText;
+                return await SearchControllerHelper.ProcessSimpleTextSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
+                    textToSearch!, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                    request,
+                    "Partner",
+                    filterRequest => new PartnerCompositeSpecification(filterRequest),
+                    async (userId, spec, pagination) => await _manager.GetPartnersWithSpecification(userId, spec, (PartnerFilterRequest)pagination),
+                    CurrentUserId, _logger);
             }
-            catch (Exception ex)
-            {
-                throw new BusinessException($"Failed to process advanced search criteria: {ex.Message}");
-            }
-        }
-
-        var specification = new PartnerCompositeSpecification(request);
-        return Ok(await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
+            
+            // For no search parameters, return all partners with pagination
+            _logger.LogInformation("Retrieving all partners with pagination");
+            var specification = new PartnerCompositeSpecification(request);
+            return await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request);
+        }, "partner search");
     }
-    
-    [HttpGet(APIDictionary.Partner + "/classic-search" )]
-    // Internal call: get Partners created by logged-in user
-    public async Task<ActionResult> GetAllClassicSearch([FromQuery] PartnerFilterRequest request)
-    {
-        // Check permission to read partners
-        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
-        if (permissionResult != null) return permissionResult;
-        
-        var specification = new PartnerCompositeClassicSearchSpecification(
-            id: request.Id,
-            name: request.Name,
-            status: request.Status,
-            newEngagement: request.NewEngagement,
-            phone: request.Phone,
-            website: request.Website,
-            shortName: request.ShortName,
-            partnerOfficeId: request.PartnerOfficeId,
-            partnerCategoryId: request.PartnerCategoryId,
-            addressCity: request.AddressCity,
-            addressStateProvince: request.AddressStateProvince,
-            addressPostalCode: request.AddressPostalCode,
-            addressCountry: request.AddressCountry,
-            searchText: request.SearchText);
-
-        return Ok(await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request));
-    }
-
 
     [HttpGet(APIDictionary.Partner + "/{id}")]
     public async Task<IActionResult> Get(int id)
@@ -245,5 +230,26 @@ public class PartnerController : BaseController
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Test endpoint to get partner with all related data (contacts and interactions)
+    /// This endpoint includes: Documents, PartnerOffice, PartnerGroup, Contacts, and Contacts.Interactions
+    /// </summary>
+    [HttpGet(APIDictionary.Partner + "/{id}/with-details")]
+    public async Task<IActionResult> GetPartnerWithContactsAndInteractions(int id)
+    {
+        // Check permission to read partners
+        var permissionResult = await CheckEntityPermissionAsync("Partner", "read");
+        if (permissionResult != null) return permissionResult;
+        
+        var partner = await _manager.GetPartnerWithContactsAndInteractionsAsync(id);
+        if (partner == null)
+        {
+            return NotFound($"Partner with ID {id} not found.");
+        }
+
+        // Return partner data with all related information
+        return Ok(partner);
     }
 }

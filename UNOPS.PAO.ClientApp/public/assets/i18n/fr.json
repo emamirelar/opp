@@ -16,6 +16,7 @@
         "why": "Pourquoi",
         "contacts": "Contacts",
         "partners": "Partners",
+        "partnerTree": "Arbre des Partenaires",
         "interactions": "Interactions",
         "newInteraction": "Nouvelle Interaction",
         "editInteraction": "Éditer une Interaction",
@@ -30,6 +31,8 @@
             "addresses": "Adresses",
             "systemInformation": "Informations Système"
         },
+        "partnerDetails": "Détails du Partenaire",
+        "partnerDashboard": "Tableau de Bord du Partenaire",
         "admin": "Administration",
         "aiPromptsAdmin": "Admin des prompts IA",
         "manageOffice": "Gérer mon bureau",
@@ -77,6 +80,12 @@
             "actions": "Actions",
             "partnerCategory": "Catégorie de Partenaire",
             "partnerGroup": "Groupe de Partenaire"
+        },
+        "partner": {
+            "summaryOfInteractions": "Résumé IA des Interactions",
+            "categoryNews": "Actualités de Catégorie",
+            "partnerNews": "Actualités du Partenaire",
+            "categorySummary": "Résumé de Catégorie"
         },
         "clarificationDeadline": "Date Limite de Clarification",
         "document": {
@@ -194,11 +203,25 @@
         "typeMessage": "Tapez votre message...",
         "takePhoto": "Prendre une photo",
         "attachFile": "Joindre un fichier",
-        "recordAudio": "Enregistrer un message vocal"
+        "recordAudio": "Enregistrer un message vocal",
+        "textToSpeech": "Synthèse vocale",
+        "collapse": "Réduire l'Assistant IA",
+        "expand": "Développer l'Assistant IA",
+        "fullscreen": "Mode plein écran",
+        "exitFullscreen": "Quitter le plein écran",
+        "welcomeTitle": "Bienvenue dans l'Assistant IA",
+        "welcomeMessage": "Je suis là pour vous aider avec la gestion des partenaires, la rédaction de propositions, l'analyse de données, et plus encore. Comment puis-je vous aider aujourd'hui ?",
+        "examplePromptsTitle": "Essayez de me demander :",
+        "examplePrompt1": "Analyser les données des partenaires et générer des insights",
+        "examplePrompt2": "Aider à rédiger une proposition de partenariat",
+        "examplePrompt3": "Résumer les interactions récentes avec les partenaires",
+        "learnMore": "En savoir plus sur ce que vous pouvez utiliser l'Assistant IA pour"
     },
     "common": {
         "cancel": "Annuler",
-        "capture": "Capturer"
+        "capture": "Capturer",
+        "save": "Enregistrer",
+        "update": "Modifier"
     },
     "action": {
         "search": "Rechercher"
@@ -230,6 +253,48 @@
         "contact": "Contact",
         "partner": "Partenaire",
         "typeContact": "Contact",
-        "typePartner": "Partenaire"
+        "typePartner": "Partenaire",
+        "advanced": "Recherche avancée",
+        "backToSimple": "Retour à la recherche simple",
+        "searchEverywhere": "Rechercher partout",
+        "searchIn": "Rechercher dans",
+        "noFilters": "Aucun filtre",
+        "clearAllFilters": "Effacer tous les filtres",
+        "selectField": "Sélectionner un champ",
+        "operator": "Opérateur",
+        "logic": "Logique",
+        "addFilter": "Ajouter un filtre",
+        "enterField": "Saisir {{field}}...",
+        "operators": {
+            "equals": "égal à",
+            "notEquals": "différent de",
+            "contains": "contient",
+            "notContains": "ne contient pas",
+            "greaterThan": "supérieur à",
+            "lessThan": "inférieur à",
+            "greaterThanOrEqual": "supérieur ou égal à",
+            "lessThanOrEqual": "inférieur ou égal à",
+            "after": "après",
+            "before": "avant",
+            "between": "entre"
+        },
+        "logicalOperators": {
+            "and": "ET",
+            "or": "OU"
+        },
+        "selectDate": "Sélectionner une date",
+        "selectEndDate": "Sélectionner la date de fin",
+        "and": "et"
+    },
+    "savedFilters": {
+        "selectFilter": "Sélectionner un filtre",
+        "save": "Sauvegarder",
+        "saveNew": "Nouveau Filtre",
+        "saveCurrentFilter": "Sauvegarder le filtre actuel",
+        "updateFilter": "Modifier le filtre",
+        "deleteFilter": "Supprimer le filtre",
+        "saveFilter": "Sauvegarder le filtre",
+        "filterName": "Nom du filtre",
+        "enterFilterName": "Saisir le nom du filtre"
     }
 }

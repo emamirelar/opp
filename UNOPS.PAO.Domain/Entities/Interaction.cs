@@ -15,7 +15,7 @@ namespace UNOPS.PAO.Domain.Entities
         
         public DateTime Date { get; set; }
         
-        public byte[]? Data { get; set; }
+        public string? Description { get; set; }
 
         public required int ContactId { get; set; }
         [JsonIgnore]  // Prevents circular reference in serialization

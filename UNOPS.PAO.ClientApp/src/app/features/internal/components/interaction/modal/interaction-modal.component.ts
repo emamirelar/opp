@@ -121,7 +121,7 @@ export class InteractionModalComponent {
       id: [''],
       type: ['', Validators.required],
       date: [new Date(), Validators.required],
-      data: [''],
+      description: [''],
       contactId: ['', Validators.required],
       contactIds: [[]],
       partnerIds: [[]],
@@ -166,13 +166,12 @@ export class InteractionModalComponent {
     this.record = this.dialogConfig.data?.record;
 
     if (this.record) {
-      debugger;
       this.recordId = this.record.id + '';
       this.formGroup.patchValue({
         id: this.record.id,
         type: this.record.type,
         date: new Date(this.record.date),
-        data: this.record.data,
+        description: this.record.description,
         contactId: this.record.contactId,
         contactIds: this.record.contactIds,
         partnerIds: this.record.partnerIds,
@@ -587,7 +586,7 @@ export class InteractionModalComponent {
       this.formGroup.patchValue({
         type: data.type || this.formGroup.get('type')?.value,
         date: data.date ? new Date(data.date) : this.formGroup.get('date')?.value,
-        data: data.data || this.formGroup.get('data')?.value,
+        description: data.description || this.formGroup.get('description')?.value,
         contactId: data.contactId || this.formGroup.get('contactId')?.value
       });
     }

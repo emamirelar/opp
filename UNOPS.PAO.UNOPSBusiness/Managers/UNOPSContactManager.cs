@@ -1,5 +1,6 @@
 using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
+using UNOPS.PAO.Domain.Enums;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -14,7 +15,6 @@ using Newtonsoft.Json.Linq;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
-using UNOPS.PAO.Domain.Enums;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Models;
@@ -28,7 +28,7 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Business.Managers;
 using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 
-public class UNOPSContactManager : IContactManager
+public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 {
     private IMapper mapper;
     private BaseRepository<UNOPSContact> contactRepository;
@@ -61,7 +61,7 @@ public class UNOPSContactManager : IContactManager
                 if (!string.IsNullOrEmpty(userInfo.OrgUnit))
                 {
                     var orgHierarchy = organizationHierarchyRepository.GetAll()
-                        .Where(o => !string.IsNullOrEmpty(o.Code))
+                        .Where(o => !string.IsNullOrEmpty(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
                         .FirstOrDefault(o => o.Code == userInfo.OrgUnit);
                     if (orgHierarchy != null)
                     {
@@ -136,6 +136,7 @@ public class UNOPSContactManager : IContactManager
     }
 
     public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
+        : base(mapper, context, configuration)
     {
         this.mapper = mapper;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
@@ -190,7 +191,7 @@ public class UNOPSContactManager : IContactManager
 
         // Batch lookup all organization hierarchy at once
         var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
-            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
             .GroupBy(o => o.Code)
             .ToDictionary(g => g.Key, g => g.First());
 
@@ -217,34 +218,82 @@ public class UNOPSContactManager : IContactManager
             query = await _securityService.ApplyRowFiltersAsync(query, user, "read");
         }
 
-        // Apply pagination with permissions
-        var pagedResults = query.Paginate(
-            x => MapEntityToModel(x, mapper),
-            request
-        );
+        // Get page index and calculate offset
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
 
-        // Add permissions to each contact
-        if (_securityService != null)
+        // Apply ordering if specified
+        if (request.OrderBy != null)
         {
-            var contactsWithPermissions = new List<ContactModel>();
-            foreach (var contact in pagedResults.Records)
-            {
-                var entity = await contactRepository.GetByIdAsync(contact.Id, ["Partner", "Partner.PartnerOffice"]);
-                if (entity != null)
-                {
-                    var contactWithPermissions = await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
-                    contactsWithPermissions.Add(contactWithPermissions);
-                }
-            }
-            
-            return new PaginationResponse<ContactModel>
-            {
-                Records = contactsWithPermissions,
-                TotalCount = pagedResults.TotalCount
-            };
+            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
         }
 
-        return pagedResults;
+        // Get total count first
+        var totalCount = query.Count();
+        
+        // Materialize the entities to avoid concurrent database operations
+        var entities = query
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToList();
+
+        // Get all unique user IDs from the contacts for efficient lookup
+        var userIds = entities.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
+        
+        // Batch lookup all user info at once
+        var userInfoLookup = new Dictionary<int, UserInfo>();
+        if (userIds.Any())
+        {
+            userInfoLookup = userInfoRepository.GetAll()
+                .Where(u => userIds.Contains(u.UserId))
+                .ToDictionary(u => u.UserId, u => u);
+        }
+
+        // Get all unique org unit codes from the user info
+        var orgUnitCodes = userInfoLookup.Values
+            .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+            .Select(u => u.OrgUnit)
+            .Distinct()
+            .ToList();
+
+        // Batch lookup all organization hierarchy at once
+        var orgHierarchyLookup = new Dictionary<string, OrganizationHierarchy>();
+        if (orgUnitCodes.Any())
+        {
+            orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+                .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+                .GroupBy(o => o.Code)
+                .ToDictionary(g => g.Key, g => g.First());
+        }
+
+        // Map entities to models with efficient user and org lookup
+        var contactsWithPermissions = new List<ContactModel>();
+        
+        foreach (var entity in entities)
+        {
+            var contact = MapEntityToModelWithUserInfo(entity, mapper, userInfoLookup, orgHierarchyLookup);
+            
+            // Add permissions if security service is available
+            if (_securityService != null)
+            {
+                var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
+                contact.Permissions = new EntityPermissionsModel
+                {
+                    CanRead = ((dynamic)permissions).canRead,
+                    CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                    CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
+                    CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
+                };
+            }
+            
+            contactsWithPermissions.Add(contact);
+        }
+
+        return new PaginationResponse<ContactModel>
+        {
+            Records = contactsWithPermissions,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
@@ -329,7 +378,7 @@ public class UNOPSContactManager : IContactManager
 
         // Batch lookup all organization hierarchy at once
         var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
-            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code))
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
             .GroupBy(o => o.Code)
             .ToDictionary(g => g.Key, g => g.First());
 
@@ -426,6 +475,29 @@ public class UNOPSContactManager : IContactManager
         return result;
     }
 
+    /// <summary>
+    /// Gets a contact with its interactions included
+    /// </summary>
+    public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
+    {
+        string[] includes = ["Documents", "Partner", "Partner.PartnerOffice", "Interactions"];
+
+        var item = await contactRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        // Now you can access interactions directly from the contact entity
+        // Examples:
+        // var recentInteractions = item.Interactions?.OrderByDescending(i => i.Date).Take(5).ToList();
+        // var interactionCount = item.Interactions?.Count ?? 0;
+
+        var result = mapper.Map<ContactModel>(item);
+        return result;
+    }
+
     public async Task<ContactModel?> UpdateContactAsync(int userId, UpdateContactRequest model)
     {
         var entity = await contactRepository.GetByIdAsync(model.Id);
@@ -452,16 +524,21 @@ public class UNOPSContactManager : IContactManager
         }
     }
 
+    /// <summary>
+    /// Implementation of abstract method from BaseUNOPSManager
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        return await GetContactAsync(user, entityId);
+    }
+
     public async Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input)
     {
-        // Create a specification that matches any of the email addresses
-        var specification = new ClassicContactCompositeSpecification(
-            searchText: string.Join(" ", input.EmailAddresses) // This will search in email field
-        );
-
+        
         // Get contacts using the repository directly
         var contacts = contactRepository
             .GetAll(["Partner"])
+            .Where(c => (c.Email != null && input.EmailAddresses.Contains(c.Email)))
             .AsQueryable()
             .Cast<UNOPSContact>()
             .ToList();

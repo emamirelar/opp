@@ -1,0 +1,145 @@
+/* Custom styles for PrimeNG components that can't be styled with Tailwind */
+:host {
+  ::ng-deep {
+    /* Dialog customizations */
+    .custom-dialog {
+      .p-dialog-header {
+        background: var(--surface-50);
+        border-bottom: 1px solid var(--surface-300);
+        border-radius: 0.5rem 0.5rem 0 0;
+        padding: 1.25rem 1.5rem;
+      }
+
+      .p-dialog-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+      }
+
+      .p-dialog-content {
+        padding: 0 1.5rem 1.5rem 1.5rem;
+        background: var(--surface-0);
+      }
+
+      .p-dialog-footer {
+        background: var(--surface-50);
+        border-top: 1px solid var(--surface-300);
+        border-radius: 0 0 0.5rem 0.5rem;
+        padding: 1rem 1.5rem;
+        margin: 0;
+      }
+    }
+
+    /* Confirmation dialog */
+    .custom-confirm-dialog {
+      .p-dialog-header {
+        background: #fef2f2; /* red-50 equivalent */
+        border-bottom: 1px solid #fecaca; /* red-200 equivalent */
+      }
+
+      .p-dialog-content {
+        padding: 1.5rem;
+      }
+    }
+
+    /* Interactive element styles */
+    .p-button {
+      transition: all 0.2s ease-in-out;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+    }
+
+    .p-inputtext,
+    .p-inputtextarea {
+      transition: all 0.2s ease-in-out;
+
+      &:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); /* blue-500 with opacity */
+        outline: none;
+      }
+    }
+
+    /* Loading and overlay effects */
+    .p-datatable {
+      .p-datatable-loading-overlay {
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(2px);
+      }
+    }
+
+    /* Toast styling */
+    .p-toast {
+      .p-toast-message {
+        margin: 0 0 1rem 0;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border-radius: 0.5rem;
+      }
+    }
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  :host ::ng-deep {
+    .custom-dialog {
+      width: 95vw !important;
+      margin: 1rem;
+
+      .p-dialog-content {
+        padding: 1rem;
+      }
+    }
+  }
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Additional utility styles */
+:host ::ng-deep {
+  .p-dialog {
+    animation: fadeInUp 0.2s ease-out;
+  }
+}
+
+.ai-prompt-dialog {
+  .p-dialog-content {
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+  
+  .p-dialog-header {
+    border-bottom: 1px solid var(--surface-300);
+  }
+}
+
+// Ensure proper scrolling in the dialog
+.ai-prompt-dialog .p-dialog-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+// Ensure sliders work properly
+.p-slider {
+  .p-slider-handle {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  .p-slider-range {
+    background-color: var(--primary-color);
+  }
+} 
