@@ -1,18 +1,7 @@
-<div class="partner-data-container relative">
-
-  @if(isLoading()) {
-    <div class="absolute inset-0 bg-white bg-opacity-70 flex justify-center items-center z-20">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-solid border-blue-500 z-30"></div>
-    </div>
-  }
-
-  <!-- Responsive iframe container -->
-  <div class="responsive-iframe-container relative w-full overflow-hidden rounded-lg shadow-lg">
-    <iframe 
-      [src]="dashboardUrl" 
-      frameborder="0" 
-      allowfullscreen
-      class="absolute top-0 left-0 w-full h-full">
-    </iframe>
-  </div>
+<div class="flex flex-col gap-8 w-full">
+  <app-lookerstudio 
+    [dashboardId]="dashboardId"
+    [partnerCode]="partnerCode"
+    [isLoading]="isLoading()">
+  </app-lookerstudio>
 </div>

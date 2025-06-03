@@ -52,6 +52,8 @@
       "address1": "Address 1",
       "additionalInformation": "Additional Information"
     },
+    "partnerDetails": "Partner Details",
+    "partnerDashboard": "Partner Dashboard",
     "links": "Links",
     "editLink": "Edit Link",
     "addLink": "Add Link",
@@ -192,6 +194,8 @@
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",
       "partnerNews": "Partner News",
+      "categoryNews": "Category News",
+      "categorySummary": "Category Summary",
       "partnerOffice": "Partner Office",
       "partnerCategory": "Partner Category",
       "partnerTeam": "Partner Team"

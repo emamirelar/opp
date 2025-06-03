@@ -18,6 +18,8 @@
         "why": "Por quê",
         "confirmation": "Confirmação",
         "contacts": "Contatos",
+        "partners": "Parceiros",
+        "partnerTree": "Árvore de Parceiros",
         "interactions": "Interações",
         "newInteraction": "Nova Interação",
         "editInteraction": "Editar Interação",
@@ -29,7 +31,10 @@
             "contactInformation": "Informações Pessoais",
             "addresses": "Endereços",
             "systemInformation": "Informações do Sistema"
-        }
+        },
+        "partnerDetails": "Detalhes do Parceiro",
+        "partnerDashboard": "Painel do Parceiro",
+        "admin": "Administração"
     },
     "button": {
         "back": "Voltar",
@@ -261,5 +266,11 @@
         "saveFilter": "Salvar filtro",
         "filterName": "Nome do filtro",
         "enterFilterName": "Digite o nome do filtro"
+    },
+    "partner": {
+        "summaryOfInteractions": "Resumo IA de Interações",
+        "categoryNews": "Notícias da Categoria",
+        "partnerNews": "Notícias do Parceiro", 
+        "categorySummary": "Resumo da Categoria"
     }
 }

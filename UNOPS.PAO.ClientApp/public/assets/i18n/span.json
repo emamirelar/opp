@@ -15,6 +15,8 @@
         "who": "Quién",
         "why": "Por qué",
         "contacts": "Contactos",
+        "partners": "Socios",
+        "partnerTree": "Árbol de Socios",
         "interactions": "Interacciones",
         "newInteraction": "Nueva Interacción",
         "editInteraction": "Editar Interacción",
@@ -27,6 +29,15 @@
             "contactInformation": "Información Personal",
             "addresses": "Direcciones",
             "systemInformation": "Información del Sistema"
+        },
+        "partnerDetails": "Detalles del Socio",
+        "partnerDashboard": "Panel del Socio",
+        "admin": "Administración",
+        "partner": {
+            "summaryOfInteractions": "Resumen IA de Interacciones",
+            "categoryNews": "Noticias de Categoría",
+            "partnerNews": "Noticias del Socio",
+            "categorySummary": "Resumen de Categoría"
         }
     },
     "button": {

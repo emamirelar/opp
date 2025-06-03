@@ -1,9 +1,8 @@
-.partner-data-container {
+.lookerstudio-container {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: calc(100vh - 300px); /* Adjust based on your header/navigation height */
 }
 
 .responsive-iframe-container {
@@ -22,7 +21,7 @@
 }
 
 /* Loading state improvements */
-.partner-data-container {
+.lookerstudio-container {
   .animate-spin {
     animation: spin 1s linear infinite;
   }
