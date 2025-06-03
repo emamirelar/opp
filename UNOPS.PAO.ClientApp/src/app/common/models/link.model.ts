@@ -1,6 +1,7 @@
 export enum EntityType {
   Contact = 'Contact',
   Partner = 'Partner',
+  PartnerTree = 'PartnerTree',
 }
 
 export interface Link {

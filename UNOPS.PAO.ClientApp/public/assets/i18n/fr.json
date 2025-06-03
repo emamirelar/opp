@@ -16,6 +16,7 @@
         "why": "Pourquoi",
         "contacts": "Contacts",
         "partners": "Partners",
+        "partnerTree": "Arbre des Partenaires",
         "interactions": "Interactions",
         "newInteraction": "Nouvelle Interaction",
         "editInteraction": "Éditer une Interaction",
@@ -30,6 +31,8 @@
             "addresses": "Adresses",
             "systemInformation": "Informations Système"
         },
+        "partnerDetails": "Détails du Partenaire",
+        "partnerDashboard": "Tableau de Bord du Partenaire",
         "admin": "Administration",
         "aiPromptsAdmin": "Admin des prompts IA",
         "manageOffice": "Gérer mon bureau",
@@ -77,6 +80,12 @@
             "actions": "Actions",
             "partnerCategory": "Catégorie de Partenaire",
             "partnerGroup": "Groupe de Partenaire"
+        },
+        "partner": {
+            "summaryOfInteractions": "Résumé IA des Interactions",
+            "categoryNews": "Actualités de Catégorie",
+            "partnerNews": "Actualités du Partenaire",
+            "categorySummary": "Résumé de Catégorie"
         },
         "clarificationDeadline": "Date Limite de Clarification",
         "document": {

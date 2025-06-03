@@ -27,6 +27,7 @@ public class UNOPSDocumentManager : IDocumentManager
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly BaseRepository<UNOPSContact> _contactRepository;
     private readonly BaseRepository<UNOPSPartner> _partnerRepository;
+    private readonly BaseRepository<UNOPSPartnerTree> _partnerTreeRepository;
     //private readonly DataRepository<Project> _projectManager;
 
     public UNOPSDocumentManager(
@@ -46,6 +47,7 @@ public class UNOPSDocumentManager : IDocumentManager
         //_projectManager = new DataRepository<Project>(context); ;
         _contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
         _partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
+        _partnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
     }
 
     private DocumentModel MapDocumentModel(UNOPSDocument entity)
@@ -134,6 +136,18 @@ public class UNOPSDocumentManager : IDocumentManager
 
                 return contactFolder;
 
+            case "PartnerTree":
+                var partnerTreeDriveId = _driveConfig.GetSection("Drive").Value;
+                if (string.IsNullOrEmpty(partnerTreeDriveId))
+                {
+                    throw new Exception("Please provide root location in appsettings.");
+                }
+
+                var partnerTreeFolder = await _driveManager.CreateFolderAsync(folderName, partnerTreeDriveId);
+                await EnsureFolderDocument(partnerTreeFolder["id"], partnerTreeFolder["webViewLink"], folderName, entityType, entityId);
+
+                return partnerTreeFolder;
+
             default:
                 throw new Exception("Invalid entity type.");
         }
@@ -192,6 +206,14 @@ public class UNOPSDocumentManager : IDocumentManager
                     throw new Exception("Partner not found.");
                 }
                 return partner.Name;
+
+            case "PartnerTree":
+                var partnerTree = await _partnerTreeRepository.GetByIdAsync(entityId);
+                if (partnerTree == null)
+                {
+                    throw new Exception("PartnerTree not found.");
+                }
+                return partnerTree.Name;
 
             default:
                 throw new Exception("Invalid entity type.");
