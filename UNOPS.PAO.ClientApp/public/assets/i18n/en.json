@@ -63,6 +63,7 @@
     "uploadImage": "Upload Image",
     "uploadAudio": "Upload Audio",
     "seeMore": "See More",
+    "seeLess": "See Less",
     "preFill": "AI Transcribe",
     "preFillOptions": "AI Transcribe",
     "preFillFrom": "Transcribe Data"
@@ -93,6 +94,7 @@
     "new": "New",
     "uploadImage": "Upload Image",
     "seeMore": "See More",
+    "seeLess": "See Less",
     "chooseImage": "Choose Image",
     "uploadAudio": "Upload Audio",
     "preFillOptions": "AI Transcribe",
@@ -196,6 +198,7 @@
       "partnerNews": "Partner News",
       "categoryNews": "Category News",
       "categorySummary": "Category Summary",
+      "groupSummary": "Group Summary",
       "partnerOffice": "Partner Office",
       "partnerCategory": "Partner Category",
       "partnerTeam": "Partner Team"
@@ -320,7 +323,9 @@
   },
   "label.interaction.contact": "Contact",
   "errors": {
-    "failedToLoad": "Error al cargar"
+    "failedToLoad": "Error al cargar",
+    "errorLoadingData": "Error loading data. Please try again later.",
+    "noDataAvailable": "No data available"
   },
   "aiAssistant": {
     "openButton": "Open AI Assistant",

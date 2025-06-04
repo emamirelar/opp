@@ -34,12 +34,14 @@ import { EntityType } from "../../../../../../common/models/link.model";
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerContactsComponent} from "../../../partner/contacts/partner-contacts.component";
 import { PartnerTree } from '../../../../models/partner-tree.model';
-import { PartnerCategoryGroup, PartnerGroup } from '../../../../models/partner-category-group.model';    
+import { PartnerCategoryGroup, PartnerGroup } from '../../../../models/partner-category-group.model';
 import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '../../../../services/partner-tree.service';
 import { PartnerTreeItemComponent } from '../../item/partner-tree-item.component';
 import { PermissionUtilityService } from '../../../../../../essentials/services/permission-utility.service';
 import { Observable, of, delay } from 'rxjs';
+import { ListViewColumn } from '../../../../../../common/pages/components/listview/listview.model';
+import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
 
 // Mock AI service for partner tree AI panels
 class MockPartnerTreeAiService implements AiDataService {
@@ -57,7 +59,7 @@ Recent activities with partners in this category show strong engagement across m
 - **Geographic Distribution:** Partners across 23 countries
 
 `,
-      
+
       'category-news': `
 
 **This is mocked data.**
@@ -71,7 +73,7 @@ Latest developments in this partner category:
 - **Regulatory Updates:** New compliance requirements effective Q2 2024
 
 `,
-      
+
       'partner-news': `
 
 **This is mocked data.**
@@ -85,7 +87,7 @@ Recent news and updates from partners in this network:
 - **Partnership Opportunities:** 12 new collaboration proposals under review
 
 `,
-      
+
       'category-summary': `
 
 **This is mocked data.**
@@ -98,6 +100,22 @@ This partner category demonstrates strong performance metrics:
 - **Project Success Rate:** 91% completion rate
 - **Innovation Index:** High adoption of emerging technologies
 - **Growth Potential:** Projected 25% expansion in next fiscal year
+
+`,
+
+      'group-summary': `
+
+**This is mocked data.**
+
+
+This partner group shows excellent collaboration outcomes:
+
+- **Active Members:** 12 organizations within this group
+- **Collaboration Frequency:** Weekly coordination meetings
+- **Joint Projects:** 6 active multi-partner initiatives
+- **Resource Sharing:** 78% efficiency in shared resource utilization
+- **Knowledge Exchange:** Regular best practices sharing sessions
+- **Success Stories:** 4 major breakthrough projects this quarter
 
 `
     };
@@ -142,7 +160,8 @@ This is a placeholder response while the AI service is being implemented.
     RouterModule,
     JsonPipe,
     ProgressSpinnerModule,
-    AiPanelComponent
+    AiPanelComponent,
+    ListviewComponent
   ],
   templateUrl: './partner-tree-details.component.html',
   standalone: true,
@@ -185,7 +204,7 @@ export class PartnerTreeDetailsComponent implements OnInit {
 
   // Properties for app-link-list component
   entityTypePartner = EntityType.PartnerTree; // Entity type for link list component
-  
+
   // Properties for app-document component
   recordId = computed(() => {
     return this.partnerTree()?.id?.toString() || '';
@@ -200,7 +219,7 @@ export class PartnerTreeDetailsComponent implements OnInit {
         if (data['partnerTreeData']) {
           this.partnerTree.set(data['partnerTreeData'].data);
           this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
-          
+
           // Extract permissions from response if available
           if (data['partnerTreeData'].permissions) {
             this.recordPermissions.set({
@@ -216,18 +235,33 @@ export class PartnerTreeDetailsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading partner tree data:', error);
-        this.feedbackDialogService.showErrorToast({ 
-          detail: 'Failed to load partner tree data' 
+        this.feedbackDialogService.showErrorToast({
+          detail: 'Failed to load partner tree data'
         });
       }
     });
   }
 
+  partnerColumns: ListViewColumn[] = [
+    {
+      field: 'name',
+      label: 'label.name',
+      sortable: false,
+      type: 'text'
+    }
+  ];
+
+  navigateToPartner($event: any) {
+    if ($event?.id) {
+      this.router.navigate(['/partnerships/partners/' + $event.id]);
+    }
+  }
+
   handleEditClick() {
     // Check permission before opening modal
     if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
-      this.feedbackDialogService.showErrorToast({ 
-        detail: 'You do not have permission to edit this partner tree' 
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to edit this partner tree'
       });
       return;
     }
@@ -260,4 +294,4 @@ export class PartnerTreeDetailsComponent implements OnInit {
       }
     });
   }
-} 
+}

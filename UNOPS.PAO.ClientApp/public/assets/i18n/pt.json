@@ -52,7 +52,8 @@
         "delete": "Excluir",
         "uploadImage": "Enviar Imagem",
         "addLink": "Adicionar Link",
-        "seeMore": "Ver mais"
+        "seeMore": "Ver mais",
+        "seeLess": "Ver menos"
     },
     "label": {
         "actions": "Ações",
@@ -172,7 +173,9 @@
     },
     "label.interaction.contact": "Contato",
     "errors": {
-        "failedToLoad": "Falha ao carregar"
+        "failedToLoad": "Erro ao carregar",
+        "errorLoadingData": "Erro ao carregar dados. Tente novamente mais tarde.",
+        "noDataAvailable": "Nenhum dado disponível"
     },
     "aiAssistant": {
         "openButton": "Abrir Assistente de IA",
@@ -271,6 +274,7 @@
         "summaryOfInteractions": "Resumo IA de Interações",
         "categoryNews": "Notícias da Categoria",
         "partnerNews": "Notícias do Parceiro", 
-        "categorySummary": "Resumo da Categoria"
+        "categorySummary": "Resumo da Categoria",
+        "groupSummary": "Resumo do Grupo"
     }
 }
