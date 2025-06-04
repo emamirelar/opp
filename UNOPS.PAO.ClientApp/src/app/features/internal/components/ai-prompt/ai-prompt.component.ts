@@ -136,6 +136,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   // Track prompt function value for reactivity
   promptFunctionValue = signal<string>('');
   
+  // Track selected model for reactivity
+  selectedModelValue = signal<string>('');
+  
   // Computed values
   dialogTitle = computed(() => 
     this.currentPrompt() ? 'Edit AI Prompt' : 'Create AI Prompt'
@@ -151,6 +154,17 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
   // Auto-switch to test data mode when function is not available
   shouldUseTestData = computed(() => !this.showEntityIdOption());
+
+  // Get max tokens for the selected model
+  selectedModelMaxTokens = computed(() => {
+    const modelValue = this.selectedModelValue();
+    const models = this.geminiModels();
+    if (modelValue && models.length > 0) {
+      const selectedModel = models.find(m => m.value === modelValue);
+      return selectedModel?.maxTokens || 8192;
+    }
+    return 8192;
+  });
 
   // Form
   promptForm: FormGroup;
@@ -238,6 +252,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       type: ['', Validators.required],
       promptFunction: [''], // Not required, but when provided enables entity ID mode
       prompt: ['', [Validators.required, promptDataValidator]],
+      description: [''], // Add description field
       contentConfig: [defaultContentConfig], // Hidden field with default value
       project: ['', Validators.required],
       location: ['', Validators.required],
@@ -270,9 +285,47 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
+    // Watch for model changes to update location and max tokens
+    const modelSub = form.get('model')?.valueChanges.subscribe(modelValue => {
+      if (modelValue) {
+        // Update the signal for reactive computation
+        this.selectedModelValue.set(modelValue);
+        
+        const selectedModel = this.geminiModels().find(m => m.value === modelValue);
+        if (selectedModel) {
+          // Auto-set location based on model
+          form.get('location')?.setValue(selectedModel.location);
+          
+          // Update max tokens validation and value
+          const maxTokensControl = form.get('maxOutputTokens');
+          if (maxTokensControl) {
+            // Update validators with new max value
+            maxTokensControl.setValidators([
+              Validators.min(0), 
+              Validators.max(selectedModel.maxTokens)
+            ]);
+            maxTokensControl.updateValueAndValidity();
+            
+            maxTokensControl.setValue(selectedModel.maxTokens);
+            
+            // Force trigger change detection and update computed signals
+            setTimeout(() => {
+              this.cdr.detectChanges();
+            }, 0);
+          }
+        }
+      } else {
+        // Reset signal when no model selected
+        this.selectedModelValue.set('');
+      }
+    });
+
     // Add to subscriptions for cleanup
     if (promptFunctionSub) {
       this.subscriptions.add(promptFunctionSub);
+    }
+    if (modelSub) {
+      this.subscriptions.add(modelSub);
     }
 
     return form;
@@ -451,6 +504,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         type: prompt.type,
         promptFunction: prompt.promptFunction,
         prompt: prompt.prompt,
+        description: prompt.description,
         project: prompt.project,
         location: prompt.location,
         model: prompt.model,
@@ -461,8 +515,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         safetySettings: prompt.safetySettings
       });
       
-      // Update the signal for reactivity
+      // Update the signals for reactivity
       this.promptFunctionValue.set(prompt.promptFunction || '');
+      this.selectedModelValue.set(prompt.model || '');
     } else {
       this.promptForm.reset();
       // Set default values for new prompt
@@ -477,6 +532,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       
       // Reset the signal for new prompts
       this.promptFunctionValue.set('');
+      this.selectedModelValue.set('');
     }
     
     // Clear test results and reset active tab
@@ -507,6 +563,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     
     // Reset the prompt function signal
     this.promptFunctionValue.set('');
+    this.selectedModelValue.set('');
     
     // Reset form with default values including test mode
     const defaultContentConfig = JSON.stringify({
@@ -522,6 +579,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       type: '',
       promptFunction: '',
       prompt: '',
+      description: '',
       contentConfig: defaultContentConfig,
       project: '',
       location: '',
@@ -567,6 +625,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       type: formValue.type,
       promptFunction: formValue.promptFunction,
       prompt: formValue.prompt,
+      description: formValue.description,
       generationConfig: JSON.stringify(generationConfig),
       contentConfig: formValue.contentConfig,
       toolsConfig: JSON.stringify(toolsConfigArray),
@@ -714,9 +773,15 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const featureName = prompt.name || 'Unknown';
+    
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete the AI prompt "${prompt.type}"? Be extra cautious while deleting as there could be several dependencies within the application.`,
-      header: 'Confirm Delete',
+      message: `Are you sure you want to delete the AI prompt "${prompt.type}"? 
+
+⚠️ This prompt is currently being used by the ${featureName} feature. Deleting it will affect the functionality of this feature.
+
+Be extra cautious while deleting as there could be several dependencies within the application.`,
+      header: 'Confirm Delete - Feature Impact Warning',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.deletePrompt(prompt);
@@ -754,7 +819,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     });
   }
 
-  truncateText(text: string | null | undefined, maxLength: number): string {
+  truncateText(text: string | undefined, maxLength: number): string {
     if (!text) return '';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   }
