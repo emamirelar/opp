@@ -136,6 +136,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   // Track prompt function value for reactivity
   promptFunctionValue = signal<string>('');
   
+  // Track selected model for reactivity
+  selectedModelValue = signal<string>('');
+  
   // Computed values
   dialogTitle = computed(() => 
     this.currentPrompt() ? 'Edit AI Prompt' : 'Create AI Prompt'
@@ -154,9 +157,10 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
   // Get max tokens for the selected model
   selectedModelMaxTokens = computed(() => {
-    const modelValue = this.promptForm?.get('model')?.value;
-    if (modelValue) {
-      const selectedModel = this.geminiModels().find(m => m.value === modelValue);
+    const modelValue = this.selectedModelValue();
+    const models = this.geminiModels();
+    if (modelValue && models.length > 0) {
+      const selectedModel = models.find(m => m.value === modelValue);
       return selectedModel?.maxTokens || 8192;
     }
     return 8192;
@@ -284,6 +288,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     // Watch for model changes to update location and max tokens
     const modelSub = form.get('model')?.valueChanges.subscribe(modelValue => {
       if (modelValue) {
+        // Update the signal for reactive computation
+        this.selectedModelValue.set(modelValue);
+        
         const selectedModel = this.geminiModels().find(m => m.value === modelValue);
         if (selectedModel) {
           // Auto-set location based on model
@@ -298,12 +305,18 @@ export class AiPromptComponent implements OnInit, OnDestroy {
               Validators.max(selectedModel.maxTokens)
             ]);
             maxTokensControl.updateValueAndValidity();
+            
             maxTokensControl.setValue(selectedModel.maxTokens);
             
-            // Trigger change detection to update the UI
-            this.cdr.detectChanges();
+            // Force trigger change detection and update computed signals
+            setTimeout(() => {
+              this.cdr.detectChanges();
+            }, 0);
           }
         }
+      } else {
+        // Reset signal when no model selected
+        this.selectedModelValue.set('');
       }
     });
 
@@ -502,8 +515,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         safetySettings: prompt.safetySettings
       });
       
-      // Update the signal for reactivity
+      // Update the signals for reactivity
       this.promptFunctionValue.set(prompt.promptFunction || '');
+      this.selectedModelValue.set(prompt.model || '');
     } else {
       this.promptForm.reset();
       // Set default values for new prompt
@@ -518,6 +532,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       
       // Reset the signal for new prompts
       this.promptFunctionValue.set('');
+      this.selectedModelValue.set('');
     }
     
     // Clear test results and reset active tab
@@ -548,6 +563,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     
     // Reset the prompt function signal
     this.promptFunctionValue.set('');
+    this.selectedModelValue.set('');
     
     // Reset form with default values including test mode
     const defaultContentConfig = JSON.stringify({

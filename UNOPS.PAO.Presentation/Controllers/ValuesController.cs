@@ -135,7 +135,7 @@ public class ValuesController : BaseController
             GeminiModel.Gemini_2_0_Flash_001 => "gemini-2.0-flash-001",
             GeminiModel.Gemini_2_5_Flash_Preview_04_17 => "gemini-2.5-flash-preview-04-17",
             GeminiModel.Gemini_2_5_Pro_Preview_05_06 => "gemini-2.5-pro-preview-05-06",
-            GeminiModel.Gemini_2_5_Flash_Preview_05_20 => "gemini-2.5-flash-preview-05.20",
+            GeminiModel.Gemini_2_5_Flash_Preview_05_20 => "gemini-2.5-flash-preview-05-20",
             _ => model.ToString().ToLowerInvariant()
         };
     }
