@@ -447,6 +447,8 @@
     "title": "AI Prompts Management",
     "addNew": "Add New Prompt",
     "search": "Search prompts...",
+    "description": "Description",
+    "descriptionHelper": "Enter a description for the prompt",
     "type": "Type",
     "model": "Model",
     "project": "Project",

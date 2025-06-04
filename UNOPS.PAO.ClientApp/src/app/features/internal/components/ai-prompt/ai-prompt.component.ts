@@ -152,6 +152,16 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   // Auto-switch to test data mode when function is not available
   shouldUseTestData = computed(() => !this.showEntityIdOption());
 
+  // Get max tokens for the selected model
+  selectedModelMaxTokens = computed(() => {
+    const modelValue = this.promptForm?.get('model')?.value;
+    if (modelValue) {
+      const selectedModel = this.geminiModels().find(m => m.value === modelValue);
+      return selectedModel?.maxTokens || 8192;
+    }
+    return 8192;
+  });
+
   // Form
   promptForm: FormGroup;
   
@@ -238,6 +248,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       type: ['', Validators.required],
       promptFunction: [''], // Not required, but when provided enables entity ID mode
       prompt: ['', [Validators.required, promptDataValidator]],
+      description: [''], // Add description field
       contentConfig: [defaultContentConfig], // Hidden field with default value
       project: ['', Validators.required],
       location: ['', Validators.required],
@@ -270,9 +281,38 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
+    // Watch for model changes to update location and max tokens
+    const modelSub = form.get('model')?.valueChanges.subscribe(modelValue => {
+      if (modelValue) {
+        const selectedModel = this.geminiModels().find(m => m.value === modelValue);
+        if (selectedModel) {
+          // Auto-set location based on model
+          form.get('location')?.setValue(selectedModel.location);
+          
+          // Update max tokens validation and value
+          const maxTokensControl = form.get('maxOutputTokens');
+          if (maxTokensControl) {
+            // Update validators with new max value
+            maxTokensControl.setValidators([
+              Validators.min(0), 
+              Validators.max(selectedModel.maxTokens)
+            ]);
+            maxTokensControl.updateValueAndValidity();
+            maxTokensControl.setValue(selectedModel.maxTokens);
+            
+            // Trigger change detection to update the UI
+            this.cdr.detectChanges();
+          }
+        }
+      }
+    });
+
     // Add to subscriptions for cleanup
     if (promptFunctionSub) {
       this.subscriptions.add(promptFunctionSub);
+    }
+    if (modelSub) {
+      this.subscriptions.add(modelSub);
     }
 
     return form;
@@ -451,6 +491,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         type: prompt.type,
         promptFunction: prompt.promptFunction,
         prompt: prompt.prompt,
+        description: prompt.description,
         project: prompt.project,
         location: prompt.location,
         model: prompt.model,
@@ -522,6 +563,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       type: '',
       promptFunction: '',
       prompt: '',
+      description: '',
       contentConfig: defaultContentConfig,
       project: '',
       location: '',
@@ -567,6 +609,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       type: formValue.type,
       promptFunction: formValue.promptFunction,
       prompt: formValue.prompt,
+      description: formValue.description,
       generationConfig: JSON.stringify(generationConfig),
       contentConfig: formValue.contentConfig,
       toolsConfig: JSON.stringify(toolsConfigArray),
@@ -714,9 +757,15 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const featureName = prompt.name || 'Unknown';
+    
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete the AI prompt "${prompt.type}"? Be extra cautious while deleting as there could be several dependencies within the application.`,
-      header: 'Confirm Delete',
+      message: `Are you sure you want to delete the AI prompt "${prompt.type}"? 
+
+⚠️ This prompt is currently being used by the ${featureName} feature. Deleting it will affect the functionality of this feature.
+
+Be extra cautious while deleting as there could be several dependencies within the application.`,
+      header: 'Confirm Delete - Feature Impact Warning',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.deletePrompt(prompt);
@@ -754,7 +803,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     });
   }
 
-  truncateText(text: string | null | undefined, maxLength: number): string {
+  truncateText(text: string | undefined, maxLength: number): string {
     if (!text) return '';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   }

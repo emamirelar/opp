@@ -62,6 +62,10 @@
             {{ 'aiPrompt.type' | translate }}
             <p-sortIcon field="type"></p-sortIcon>
           </th>
+          <th pSortableColumn="description">
+            {{ 'aiPrompt.description' | translate }}
+            <p-sortIcon field="description"></p-sortIcon>
+          </th>
           <th pSortableColumn="model">
             {{ 'aiPrompt.model' | translate }}
             <p-sortIcon field="model"></p-sortIcon>
@@ -85,6 +89,7 @@
       <ng-template pTemplate="body" let-prompt>
         <tr (click)="openEditDialog(prompt)" class="cursor-pointer">
           <td>{{ prompt.type }}</td>
+          <td>{{ truncateText(prompt.description, 50) }}</td>
           <td>{{ prompt.model }}</td>
           <td>{{ prompt.project }}</td>
           <td>{{ prompt.location }}</td>
@@ -116,7 +121,7 @@
       
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="6" class="text-center p-4">
+          <td colspan="7" class="text-center p-4">
             @if (loading()) {
               <div class="flex justify-center items-center p-4">
                 <i class="pi pi-spin pi-spinner text-2xl"></i>
@@ -143,6 +148,18 @@
     styleClass="overflow-hidden">
 
     <div class="h-full flex flex-col">
+      <!-- Feature Usage Header -->
+      @if (currentPrompt()) {
+        <div class="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-md">
+          <div class="flex items-center">
+            <i class="pi pi-info-circle text-blue-600 mr-2"></i>
+            <span class="text-sm text-blue-800 font-medium">
+              This prompt is being used by the <strong>{{ currentPrompt()?.name || 'Unknown' }}</strong> feature
+            </span>
+          </div>
+        </div>
+      }
+
       <!-- Main Content Area - Scrollable -->
       <div class="flex-1 overflow-hidden">
         <form [formGroup]="promptForm" class="h-full">
@@ -184,6 +201,23 @@
                   </small>
                 </div>
 
+                <div class="space-y-2 md:col-span-2">
+                  <label for="description" class="block text-sm font-semibold text-gray-700">
+                    {{ 'aiPrompt.description' | translate }}
+                  </label>
+                  <textarea 
+                    id="description"
+                    pInputTextarea 
+                    formControlName="description" 
+                    [rows]="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
+                    [placeholder]="'aiPrompt.descriptionPlaceholder' | translate">
+                  </textarea>
+                  <small class="text-gray-600 text-xs">
+                    {{ 'aiPrompt.descriptionHelper' | translate }}
+                  </small>
+                </div>
+
                 <div class="space-y-2">
                   <label for="model" class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.model' | translate }} *
@@ -194,7 +228,6 @@
                     [options]="geminiModels()"
                     optionLabel="label"
                     optionValue="value"
-                    [readonly]="isEditMode()"
                     class="w-full"
                     [placeholder]="'aiPrompt.selectModel' | translate">
                   </p-dropdown>
@@ -207,19 +240,14 @@
                   <label class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.project' | translate }} *
                   </label>
-                  @if (isEditMode()) {
-                    <div class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
-                      {{ promptForm.get('project')?.value }}
-                    </div>
-                  } @else {
-                    <input 
-                      id="project"
-                      pInputText 
-                      formControlName="project" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      [class.border-red-500]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched"
-                      [class.ring-red-200]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched">
-                  }
+                  <input 
+                    id="project"
+                    pInputText 
+                    formControlName="project" 
+                    [readonly]="true"
+                    class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
+                    [class.border-red-500]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched"
+                    [class.ring-red-200]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched">
                   <small class="text-red-600 text-xs" *ngIf="promptForm.get('project')?.invalid && promptForm.get('project')?.touched">
                     {{ 'aiPrompt.projectRequired' | translate }}
                   </small>
@@ -229,19 +257,14 @@
                   <label class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.location' | translate }} *
                   </label>
-                  @if (isEditMode()) {
-                    <div class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
-                      {{ promptForm.get('location')?.value }}
-                    </div>
-                  } @else {
-                    <input 
-                      id="location"
-                      pInputText 
-                      formControlName="location" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                      [class.border-red-500]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched"
-                      [class.ring-red-200]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched">
-                  }
+                  <input 
+                    id="location"
+                    pInputText 
+                    formControlName="location" 
+                    [readonly]="true"
+                    class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
+                    [class.border-red-500]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched"
+                    [class.ring-red-200]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched">
                   <small class="text-red-600 text-xs" *ngIf="promptForm.get('location')?.invalid && promptForm.get('location')?.touched">
                     {{ 'aiPrompt.locationRequired' | translate }}
                   </small>
@@ -323,15 +346,15 @@
                         <p-slider 
                           formControlName="maxOutputTokens"
                           [min]="0" 
-                          [max]="8192" 
+                          [max]="selectedModelMaxTokens()" 
                           [step]="1"
                           class="w-full">
                         </p-slider>
                       </div>
                       <div class="flex justify-between text-xs text-gray-500">
                         <span>0</span>
-                        <span class="font-semibold text-gray-700">{{ (promptForm.get('maxOutputTokens')?.value ?? 8192) | number:'1.0-0' }}</span>
-                        <span>8192</span>
+                        <span class="font-semibold text-gray-700">{{ (promptForm.get('maxOutputTokens')?.value ?? selectedModelMaxTokens()) | number:'1.0-0' }}</span>
+                        <span>{{ selectedModelMaxTokens() | number:'1.0-0' }}</span>
                       </div>
                     </div>
                   </div>

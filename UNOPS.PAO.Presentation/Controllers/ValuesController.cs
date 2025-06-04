@@ -118,7 +118,9 @@ public class ValuesController : BaseController
                 .Select(model => new
                 {
                     Value = GetGeminiModelValue(model),
-                    Label = GetGeminiModelDisplayName(model)
+                    Label = GetGeminiModelDisplayName(model),
+                    Location = GetGeminiModelLocation(model),
+                    MaxTokens = GetGeminiModelMaxTokens(model)
                 })
                 .ToList();
 
@@ -131,6 +133,9 @@ public class ValuesController : BaseController
         return model switch
         {
             GeminiModel.Gemini_2_0_Flash_001 => "gemini-2.0-flash-001",
+            GeminiModel.Gemini_2_5_Flash_Preview_04_17 => "gemini-2.5-flash-preview-04-17",
+            GeminiModel.Gemini_2_5_Pro_Preview_05_06 => "gemini-2.5-pro-preview-05-06",
+            GeminiModel.Gemini_2_5_Flash_Preview_05_20 => "gemini-2.5-flash-preview-05.20",
             _ => model.ToString().ToLowerInvariant()
         };
     }
@@ -140,12 +145,42 @@ public class ValuesController : BaseController
         return model switch
         {
             GeminiModel.Gemini_2_0_Flash_001 => "Gemini 2.0 Flash (001)",
+            GeminiModel.Gemini_2_5_Flash_Preview_04_17 => "Gemini 2.5 Flash Preview (04-17)",
+            GeminiModel.Gemini_2_5_Pro_Preview_05_06 => "Gemini 2.5 Pro Preview (05-06)", 
+            GeminiModel.Gemini_2_5_Flash_Preview_05_20 => "Gemini 2.5 Flash Preview (05-20)",
             _ => model.ToString()
+        };
+    }
+
+    private static string GetGeminiModelLocation(GeminiModel model)
+    {
+        return model switch
+        {
+            GeminiModel.Gemini_2_0_Flash_001 => "europe-west4",
+            GeminiModel.Gemini_2_5_Flash_Preview_04_17 => "global",
+            GeminiModel.Gemini_2_5_Pro_Preview_05_06 => "global",
+            GeminiModel.Gemini_2_5_Flash_Preview_05_20 => "global",
+            _ => "europe-west4"
+        };
+    }
+
+    private static int GetGeminiModelMaxTokens(GeminiModel model)
+    {
+        return model switch
+        {
+            GeminiModel.Gemini_2_0_Flash_001 => 8192,
+            GeminiModel.Gemini_2_5_Flash_Preview_04_17 => 65535,
+            GeminiModel.Gemini_2_5_Pro_Preview_05_06 => 65535,
+            GeminiModel.Gemini_2_5_Flash_Preview_05_20 => 65535,
+            _ => 8192
         };
     }
 }
 
 public enum GeminiModel
 {
-    Gemini_2_0_Flash_001
+    Gemini_2_0_Flash_001,
+    Gemini_2_5_Flash_Preview_04_17,
+    Gemini_2_5_Pro_Preview_05_06,
+    Gemini_2_5_Flash_Preview_05_20
 }

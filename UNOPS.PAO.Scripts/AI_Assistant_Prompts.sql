@@ -1,6 +1,6 @@
 TRUNCATE TABLE public."AiPrompt";
 
-INSERT INTO public."AiPrompt"("Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", "GenerationConfig", "Location", "Model", "Project", "ToolsConfig", "SafetySettings", "PromptFunction") VALUES
+INSERT INTO public."AiPrompt"("Type", "Prompt", "CreatedAt", "Name", "Status", "ContentConfig", "GenerationConfig", "Location", "Model", "Project", "ToolsConfig", "SafetySettings", "PromptFunction", "Description") VALUES
 ('contacts_summary', 'I am providing an array of objects containing contact information, partner information and interaction history. Each object will have the contact details, partner detail and interaction detail in a flat structure. I need you to generate a summary in Markdown format, using the following template:
 
 ## Contact Summary
@@ -10,37 +10,21 @@ INSERT INTO public."AiPrompt"("Type", "Prompt", "CreatedAt", "Name", "Status", "
 
 **Key Interactions:**
 
-*   **[Date of Interaction] - [Type of Interaction]:** [A brief summary of the interaction. 1-2 sentences.]
+*   **[Date of Interaction] - [Type of Interaction]:** [Brief description of interaction]
+*   **[Date of Interaction] - [Type of Interaction]:** [Brief description of interaction]
 
-**Key Information about Partners**
-* Partner Name
+**Partner Information:**
 
-**Overall Summary:**
+*   **Organization:** [Partner Name]
+*   **Status:** [Partner Status]
 
-[A detailed paragraph providing an overview of the contact based on the interactions and partners, highlighting key themes, and sentiment.]
+**Additional Notes:**
 
-Instructions:
+*   [Any other relevant information about the contact or their interactions]
 
-Extract the contacts name from the field Contacts_Name in the object. Similarly, all the Contact related fields will be prefixed with Contacts_. Partner related fields will be prefixed with Partners_ and Interaction related ones with Interactions_. .  
+Please format the response as clean Markdown without code blocks or backticks. If any information is missing, simply omit that section.
 
-Extract the Date and use it for [Date of Interaction]. Format the timestamp in a human readable format.  
-Determine the [Type of Interaction] based on the Type field. Use the following mapping:  
-3: """"Note""""  
-Decode the Base64 encoded Data field in the Interactions data.  
-Create a brief 1-2 sentence summary of the interaction using the decoded Data and populate the [A brief summary of the interaction. 1-2 sentences.] field.  
-Overall Summary: Based on all the interactions, create a 6-15 sentence paragraph providing an overall summary of the contact. Include key themes, sentiment (if discernible from the interaction data), and any potential needs or concerns that emerge from the interactions.  
-Markdown Formatting: Ensure the entire summary is correctly formatted in Markdown.  
-Focus: The primary focus of the summary should be to understand the general topics discussed and the tone of any interactions.  
-If there are more than one contact or interaction, mention about it.  
-Also, mention some details about the partner.
-
-JSON Data:
-
-{promptData}
-
-STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. If any detail that you are instructed to provide is unavailable, mention that this detail is unavailable. Please do not include "```markdown\n" in the response."""',
-NOW(), 'Contact', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+Data: {promptData}', NOW(), 'Contact', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }', 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetContactWithInteractionsAsync', 'Generates a comprehensive summary of contact information including partner details and interaction history in a structured format.'),
 ('partner_interactions_summary', 'I am providing a JSON object containing partner information, contact information and interaction history. The Each object will have the contact details with the property "contacts", partner detail with the property "partners" and interaction detail in "interactions" in a flat structure. I need you to generate a summary in Markdown format, using the following template:
 
 
@@ -74,7 +58,7 @@ JSON Data:
 
 STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. The final response from you should give me a quick summary of the partner. Do not assume any detail. Please do not include "```markdown\n" in the response.', NOW(), 'Partner'
 , 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetPartnerWithContactsAndInteractionsAsync'),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetPartnerWithContactsAndInteractionsAsync', 'Creates detailed partner interaction summaries with contact details, interaction history, and overall partnership assessment in structured Markdown format.'),
 ('partner_risk_profile', 'I need to determine the risk profile of a partner based on their involvement in one or more projects. I will provide a JSON object containing partner details in the partners array and project details in the projects array. A partner may be involved in multiple projects, linked by the partner field in the projects array matching the Id field in the partners array.
 
 **Risk Factors to Consider:**
@@ -109,11 +93,11 @@ Now, here is the JSON data:
 
 STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail. Please do not include "```markdown\n" in the response. Just give the final result without making it a conversation.'
 , NOW(), 'Partner', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetPartnerRiskProfileAsync'),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetPartnerRiskProfileAsync', 'Determines the risk profile of a partner based on their involvement in projects and provides a summary of the risk assessment.'),
 ('general_information', 'Strictly return the response in JSON format as below - 
 
-{Category: "General", ResponseType: "INFORMATION", Message: "Add your response here"}', NOW(), 'General', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+{Category: "General", ResponseType: "INFORMATION", Message: "Add your response here"}', NOW(), 'AiAssistant', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Returns a general response in JSON format.'),
 ('entity_intent_detection', '"Your name is UNOPS Bot. You are an AI assistant for the ""Partners and Opportunities"" project at UNOPS, designed to assist users with:
 
 * Answering basic questions about the Partners and Opportunities project.
@@ -354,8 +338,8 @@ In your response, remember to add line breaks (\n) appropriately.
 ENSURE TO ALWAYS LOOK AT THE PREVIOUS CONVERSATIONS TO UNDERSTAND THE CONTEXT. YOU might not have to retrieve the information every time as your previous conversations would already have the relevant data. Always keep this in mind.
 With the above instruction and examples, following is the prompt from the user:
 
-Prompt from the user: {promptData}', NOW(), 'EntityDetection', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+Prompt from the user: {promptData}', NOW(), 'AiAssistant', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Analyzes user messages to detect entity types (Contact, Partner, PartnerTree, Interaction, General) and intents (Action, Information) for the UNOPS Partners and Opportunities AI assistant.'),
 ('contact_action', 'I am sending you some data/information in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Make sure to refer to the complete conversation to understand the current context. Send the response in the Message property of the JSON (look at the given format below)
 
 Example:
@@ -390,7 +374,7 @@ The prompt could be an extracted text from an audio or an image OR could be a su
 
 Prompt: 
 {promptData}', NOW(), 'Contact', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Extracts contact information from raw data or conversation summaries and formats it into structured JSON for contact creation or updates.'),
 ('partner_action', 'I am sending you partner data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
 
 JSON format:
@@ -418,7 +402,7 @@ The prompt could be an extracted text from an audio or an image OR could be a su
 
 Prompt: 
 {promptData}', NOW(), 'Partner', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Extracts partner information from raw data or conversation summaries and formats it into structured JSON for partner creation or updates with validation of acceptable values.'),
 ('partnertree_action', 'I am sending you partner tree (level) data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
 
 JSON format:
@@ -438,7 +422,7 @@ The prompt could be an extracted text from an audio or an image OR could be a su
 Prompt: 
 {promptData}
 ', NOW(), 'PartnerTree', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Extracts partner tree (level) information from raw data and formats it into structured JSON with auto-generated codes and hierarchical type determination.'),
 ('interaction_action', 'I am sending you interaction data in raw format. Determine where each data point fits in the JSON format provided below and return the formatted JSON. Strictly return a JSON even if you cannot find any data. The user could just be trying to have a normal conversation. Send the response in the Message property of the JSON (look at the given format below)
 
 JSON format:
@@ -461,7 +445,7 @@ The prompt could be an extracted text from an audio or an image OR could be a su
 Prompt: 
 {promptData}
 ', NOW(), 'Interaction', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetInteractionDetailsAsync'),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetInteractionDetailsAsync', 'Retrieves and summarizes interaction information in bullet points for easy understanding and reference.'),
 ('partner_news', 'I am providing a JSON object containing partner information. 
 Identify the name of the partner from that JSON data and find 5 latest news articles on the partner and provide an indication of the current focus areas.
 
@@ -502,7 +486,7 @@ Identify the name of the partner from that JSON data and find 5 latest news arti
 JSON Data:
 {promptData}
 
-STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail. Please do not include "```markdown\n" in the response.', 'NOW()', 'Partner', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }', 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', '[{ "googleSearch": {} }]', '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]', 'GetBasicPartnerDetailsAsync'),
+STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown summary based on these instructions. Add additional line space after each detail. If any detail that you are instructed to provide is unavailable, do not include that in the response. Do not assume any detail. Please do not include "```markdown\n" in the response.', 'NOW()', 'Partner', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }', 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', '[{ "googleSearch": {} }]', '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]', 'GetBasicPartnerDetailsAsync', 'Searches for and summarizes the latest news articles about a partner organization, identifying current focus areas and trends from recent developments.'),
 ('retrieve_contact_information', '
 I am giving you some details about a contact. It could be in JSON/Regular RAG format. Review the details and summarize it in bullet points for easier understanding. In your response, always ask the user if they want to navigate to this contact, only if they have not specifically mentioned that they want to. If they have mentioned to go, make sure to send the URL in the respone with ResponseType as Action. Strictly return the response in markdown format and in the following JSON format :
 
@@ -538,7 +522,7 @@ Another example where there were no contact found -
 **STRICTLY do not use the word "markdown" when you convert the final result to Markdown. Please provide the generated Markdown. If any detail that you are instructed to provide is unavailable, mention that this detail is unavailable. Please do not include "```markdown\n" in the response."""
 
 Prompt from the user: {promptData}', NOW(), 'Contact', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetContactWithInteractionsAsync'),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetContactWithInteractionsAsync', 'Retrieves and summarizes contact information in bullet points, offering navigation options to the contact details page for further actions.'),
 ('retrieve_partner_information', '
 I am giving you some details about a partner in JSON format. Review the details and summarize it in bullet points for easier understanding. In your response, always ask the user if they want to navigate to this partner. Strictly return the response in markdown format and in the following JSON format :
 
@@ -555,21 +539,21 @@ Example:
 }
 
 Prompt from the user: {promptData}', NOW(), 'Partner', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetPartnerWithContactsAndInteractionsAsync'),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetPartnerWithContactsAndInteractionsAsync', 'Retrieves and summarizes partner information in bullet points, offering navigation options to the partner details page for further actions.'),
 ('retrieve_partnertree_information', '
 I am giving you some details about a Partner Level in JSON format. Review the details and summarize it in bullet points for easier understanding. Strictly return the response in markdown format and in the following JSON format :
 
 { Category: ''PartnerTrees'', ResponseType: ''Information'', Message: <your response> }
 
 Prompt from the user: {promptData}', NOW(), 'PartnerTree', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Retrieves and summarizes partner level (tree) information in bullet points for easy understanding and reference.'),
 ('retrieve_interaction_information', '
 I am giving you some details about an Interaction in JSON format. Review the details and summarize it in bullet points for easier understanding. Strictly return the response in markdown format and in the following JSON format :
 
 { Category: ''Interactions'', ResponseType: ''Information'', Message: <your response> }
 
 Prompt from the user: {promptData}', NOW(), 'Interaction', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetInteractionDetailsAsync'),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, 'GetInteractionDetailsAsync', 'Retrieves and summarizes interaction information in bullet points for easy understanding and reference.'),
 ('bulk_contact_action', 'You are an AI assistant. You will receive contact data as an array of arrays (with optional header) or an array of objects. 
 The first row could optionally be headers. Convert each item into the exact JSON structure shown. Only include non-empty fields. Required: lastName, email, phone. Map "partner" or related terms to partnerId, else leave blank. If you find a number, return partnerId as a number (integer). Always include "dependents":["partnerId"] as-is. DONOT replace it with the partnerId value in the dependents but just "partnerId". It could also be a text extracted from an audio or an image representing contact details.
 You should use your knowledge and expertise to detect that and find out the contact details. 
@@ -588,7 +572,7 @@ Return the response in compact single-line JSON without line breaks or unnecessa
 
 Input data: {promptData}
 ', NOW(), 'Contact', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Processes bulk contact data from arrays or objects, converting them into structured JSON format with automatic name parsing and partner linking.'),
 ('bulk_partner_action', 'You are an AI assistant. You will receive partner data as an array of arrays (with optional header) or an array of objects. The first row could optionally be headers. Convert each item into the exact JSON structure shown. Include *all* fields present in the input data in the output JSON, unless a field is explicitly specified to be excluded. Only include non-empty fields. Map "partner category" or related terms to partnerCategoryId, else leave blank. If you find a number, return partnerCategoryId as a number (integer). Map "partner office" or related terms to partnerOfficeId, else leave blank. If you find a number, return partnerOfficeId as a number (integer). Always include "dependents":["partnerCategoryId", "partnerOfficeId"] as-is. Do NOT replace it with the partnerId value in the dependents but just "partnerId". It could also be a text extracted from an audio or an image representing partner details. You should use your knowledge and expertise to detect that and find out the partner details.
 
 Partner format: {address1City: null, address1Country: null, address1PostalCode: null,address1StateProvince: null, address1Street: null, address1Street2: null, ddRequired: "Yes/No", ddeacDone: "Yes/No", eacReference: null, globalKeyAccount: true/flase, id: null, levyPotentiallyApplies: "Potentially does not apply/Does not apply/Potentially applies", levyTreatment: "Please consult funding source/UNOPS administers/Funding source administers directly (no changes required to the partner agreement)/N/A", name: null, newEngagement: "Allowed/Not Allowed", logoUrl: null, partnerCategoryId: null, partnerOfficeId: null, phone: null, pooledFund: "Yes/No", reasonForLevyNotApplying: "3a) Vertical Fund/3d) International Financial Institution/3c) Programme Country/4) Pooled Fund/3b) Funds from UN entity/3a / 4) Vertical Fund / Pooled Fund/6) Thematic Fund", shortName: null, status: "Inactive/Active/Locked", unSecretariatEntity: true/false, website: null, dependents: ["partnerCategoryId", "partnerOfficeId"], validationError: ""}
@@ -603,7 +587,7 @@ Return the response in a compact, single-line JSON format without line breaks or
 
 Input data: {promptData}
 ', NOW(), 'Partner', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Processes bulk partner data from arrays or objects, converting them into structured JSON format with validation of acceptable values and automatic field mapping.'),
 ('summarize_information', '
 You will receive entity details in JSON format. Summarize the content into clear, concise bullet points that highlight the most important and unique characteristics of the entity. This summary will be used to create a semantic embedding for similarity search. Do not include IDs, timestamps, or internal references.
 
@@ -612,5 +596,35 @@ Return the response as JSON in the following format:
 { "Message": "Response in bullet points" }
 
 Prompt from the user:
-{promptData}', NOW(), 'Summarize', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '');
+{promptData}', NOW(), 'AiAssistant', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Summarizes entity details into concise bullet points highlighting key characteristics for semantic embedding and similarity search purposes.'),
+('bulk_interaction_action', 'You are an AI assistant that processes interaction data for bulk import. You will receive interaction data as an array of arrays (with optional header) or an array of objects, or text extracted from audio/image.
+
+Convert each item into the exact JSON structure shown below. Only include non-empty fields.
+
+**Required fields:** type, date, subject
+**Validation rules:**
+- Map contact names to contactIds (keep as text if name, number if ID)
+- Map partner names to partnerIds (keep as text if name, number if ID)
+- Map user names to userIds (keep as text if name, number if ID)
+- Format date as ISO 8601 timestamp (YYYY-MM-DDTHH:mm:ss.sssZ)
+- Default status to "Active"
+- Parse comma-separated emails into emailAddresses array
+- Parse comma-separated phones into phoneNumbers array
+- Include dependents for all ID fields that are text names
+- Based on the context of the message, auto-detect the date.
+- IDs starting with B-s are Org units.
+- Send the dependents as-is (with the strings and not replace with the Ids). Don''t work on this property at all.
+- Put one of the contactIds into contactId
+
+**Interaction types:** "Email", "Chat", "Phone", "VideoMeeting", "InPersonMeeting", "Other"
+
+**Interaction JSON format:**
+{"id": null, "type": "", "date": "", "subject": "", "description": "", "status": "Active", "contactId": '''', "contactIds": [], "partnerIds": [], "userIds": [], "emailAddresses": [], "phoneNumbers": [], "location": "", "orgUnitId": null, "dependents": ["contactId", "contactIds", "partnerIds", "userIds", "orgUnitId"], "validationError": ""}
+
+**Response format:** {"Message":"Action completed successfully.", "Category":"Interaction", "ResponseType":"Action", "records":[...]}
+
+Return compact single-line JSON. If more input needed, set ResponseType to "Information".
+
+Input data: {promptData}', NOW(), 'Interaction', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
+'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Processes bulk interaction data from arrays or objects, converting them into structured JSON format with automatic date parsing, field mapping, and validation of interaction types.');
