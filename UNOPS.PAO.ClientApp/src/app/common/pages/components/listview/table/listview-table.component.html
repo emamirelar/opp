@@ -6,7 +6,7 @@
   [loading]="loading"
   [first]="first"
   [lazy]="true"
-  [paginator]="config.enablePagination && data.length > 0"
+  [paginator]="config.enablePagination && data.length > 0 && totalRecords > rows"
   [rows]="rows"
   [totalRecords]="totalRecords"
   [rowsPerPageOptions]="config.pageSizeOptions"

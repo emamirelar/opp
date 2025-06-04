@@ -110,7 +110,7 @@ export class ListviewCardComponent<T = any> {
   // Combined column class
   columnClass = computed(() => {
     const sizes = this.columnSizes();
-    return `${sizes.xs} ${sizes.sm} ${sizes.md} ${sizes.lg} ${sizes.xl} mb-3`;
+    return `${sizes.xs} ${sizes.sm} ${sizes.md} ${sizes.lg} ${sizes.xl}`;
   });
   
   /**

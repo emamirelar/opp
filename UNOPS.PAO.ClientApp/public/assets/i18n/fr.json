@@ -55,6 +55,7 @@
         "uploadImage": "Télécharger l'image",
         "addLink": "Ajouter un lien",
         "seeMore": "Voir plus",
+        "seeLess": "Voir moins",
         "chooseImage": "Choisir une image"
     },
     "label": {
@@ -85,7 +86,8 @@
             "summaryOfInteractions": "Résumé IA des Interactions",
             "categoryNews": "Actualités de Catégorie",
             "partnerNews": "Actualités du Partenaire",
-            "categorySummary": "Résumé de Catégorie"
+            "categorySummary": "Résumé de Catégorie",
+            "groupSummary": "Résumé de Groupe"
         },
         "clarificationDeadline": "Date Limite de Clarification",
         "document": {
@@ -189,7 +191,9 @@
         "comingSoon": "Bientôt Disponible"
     },
     "errors": {
-        "failedToLoad": "Échec du chargement"
+        "failedToLoad": "Erreur lors du chargement",
+        "errorLoadingData": "Erreur lors du chargement des données. Veuillez réessayer plus tard.",
+        "noDataAvailable": "Aucune donnée disponible"
     },
     "aiAssistant": {
         "openButton": "Ouvrir l'Assistant IA",

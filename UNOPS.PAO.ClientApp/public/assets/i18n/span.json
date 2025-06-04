@@ -37,7 +37,8 @@
             "summaryOfInteractions": "Resumen IA de Interacciones",
             "categoryNews": "Noticias de Categoría",
             "partnerNews": "Noticias del Socio",
-            "categorySummary": "Resumen de Categoría"
+            "categorySummary": "Resumen de Categoría",
+            "groupSummary": "Resumen de Grupo"
         }
     },
     "button": {
@@ -56,7 +57,8 @@
         "delete": "Eliminar",
         "uploadImage": "Subir Imagen",
         "addLink": "Agregar Enlace",
-        "seeMore": "Ver más"
+        "seeMore": "Ver más",
+        "seeLess": "Ver menos"
     },
     "label": {
         "actions": "Acciones",
@@ -175,7 +177,9 @@
         "comingSoon": "Próximamente"
     },
     "errors": {
-        "failedToLoad": "Error al cargar"
+        "failedToLoad": "Error al cargar",
+        "errorLoadingData": "Error al cargar datos. Inténtelo de nuevo más tarde.",
+        "noDataAvailable": "No hay datos disponibles"
     },
     "aiAssistant": {
         "openButton": "Abrir Asistente de IA",
