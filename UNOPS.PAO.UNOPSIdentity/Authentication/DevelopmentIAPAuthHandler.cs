@@ -86,8 +86,18 @@ public class DevelopmentIAPAuthHandler : IMiddleware
                 context.Request.Path.Value?.EndsWith(".css") == true ||
                 context.Request.Path.Value?.EndsWith(".png") == true ||
                 context.Request.Path.Value?.EndsWith(".jpg") == true ||
+                context.Request.Path.Value?.EndsWith(".jpeg") == true ||
+                context.Request.Path.Value?.EndsWith(".gif") == true ||
                 context.Request.Path.Value?.EndsWith(".svg") == true ||
-                context.Request.Path.Value?.EndsWith(".ico") == true)
+                context.Request.Path.Value?.EndsWith(".ico") == true ||
+                context.Request.Path.Value?.EndsWith(".webmanifest") == true ||
+                context.Request.Path.Value?.EndsWith(".woff") == true ||
+                context.Request.Path.Value?.EndsWith(".woff2") == true ||
+                context.Request.Path.Value?.EndsWith(".ttf") == true ||
+                context.Request.Path.Value?.EndsWith(".eot") == true ||
+                context.Request.Path.Value?.EndsWith(".map") == true ||
+                context.Request.Path.Value?.StartsWith("/assets/") == true ||
+                context.Request.Path.Value?.StartsWith("/favicon") == true)
             {
                 await next(context);
                 return;
