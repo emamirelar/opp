@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
@@ -9,6 +9,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PartnerCategoryGroup, PartnerGroup } from '../../../../models/partner-category-group.model';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
+import { combineLatest, of } from 'rxjs';
+
 @Component({
   selector: 'app-partner-tree-view-navigation',
   standalone: true,
@@ -30,10 +32,17 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
 
   partnerTree = signal<PartnerTree | null>(null);
   partnerCategorieOptions = signal<PartnerCategoryGroup[]>([]);
-  partnerGroupOptions = signal<PartnerGroup[]>([]);
 
-  selectedPartnerCategory?: PartnerCategoryGroup;
-  selectedPartnerGroup?: PartnerGroup;
+  // Use signals for selected values instead of regular properties
+  selectedPartnerCategory = signal<PartnerCategoryGroup | undefined>(undefined);
+  selectedPartnerGroup = signal<PartnerGroup | undefined>(undefined);
+
+  // Computed partner group options based on selected category
+  partnerGroupOptions = computed(() => {
+    const tree = this.partnerTree();
+    if (!tree?.partnerCategoryCode) return [];
+    return this.cachedDataService.getParterGroupByCategoryCode(tree.partnerCategoryCode);
+  });
 
   constructor() {
     effect(() => {
@@ -51,25 +60,40 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
 
       if (isTherePartnerCategory && partnerTree?.partnerCategoryCode) {
         // Always set the partner category since we'll always have a partnerCategoryCode
-        this.selectedPartnerCategory = categories.find(category => category.partnerCategoryCode === partnerTree.partnerCategoryCode);
-        this.partnerGroupOptions.set(this.cachedDataService.getParterGroupByCategoryCode(partnerTree.partnerCategoryCode));
+        const foundCategory = categories.find(category => category.partnerCategoryCode === partnerTree.partnerCategoryCode);
+        this.selectedPartnerCategory.set(foundCategory);
 
         // If we also have a partnerGroupCode, set the selected group
         if (partnerTree.partnerGroupCode) {
-          this.selectedPartnerGroup = this.partnerGroupOptions().find(
+          const partnerGroups = this.cachedDataService.getParterGroupByCategoryCode(partnerTree.partnerCategoryCode);
+          const foundGroup = partnerGroups.find(
             group => group.partnerGroupCode === partnerTree.partnerGroupCode
           );
+          this.selectedPartnerGroup.set(foundGroup);
         } else {
-          this.selectedPartnerGroup = undefined;
+          this.selectedPartnerGroup.set(undefined);
         }
+      } else {
+        this.selectedPartnerCategory.set(undefined);
+        this.selectedPartnerGroup.set(undefined);
       }
     });
   }
 
   ngOnInit() {
-    this.activatedRoute.data.subscribe((data: {[key: string]: any}) => {
-      if (data['partnerTreeData']) {
-        this.partnerTree.set(data['partnerTreeData'].data);
+    // Combine both route data and parameter changes for reactive updates
+    combineLatest([
+      this.activatedRoute.data || of({}),
+      this.activatedRoute.paramMap || of(null)
+    ]).subscribe(([data, params]) => {
+      const recordId = params?.get('recordId');
+      
+      if (data && (data as any)['partnerTreeData']) {
+        this.partnerTree.set((data as any)['partnerTreeData'].data);
+      } else if (recordId && (!this.partnerTree() || recordId !== this.partnerTree()?.id?.toString())) {
+        // Clear selections temporarily when navigating to a different partner tree
+        this.selectedPartnerCategory.set(undefined);
+        this.selectedPartnerGroup.set(undefined);
       }
     });
   }
@@ -85,8 +109,9 @@ export class PartnerTreeViewNavigationComponent implements OnInit {
       this.router.navigate(['/admin/partner-tree', id]);
     } else {
       // When partner group is deselected, navigate to the selected partner category
-      if (this.selectedPartnerCategory) {
-        const id = this.selectedPartnerCategory.partnerCategoryId;
+      const selectedCategory = this.selectedPartnerCategory();
+      if (selectedCategory) {
+        const id = selectedCategory.partnerCategoryId;
         this.router.navigate(['/admin/partner-tree', id]);
       }
     }

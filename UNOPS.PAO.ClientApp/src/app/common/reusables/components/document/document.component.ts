@@ -1,4 +1,4 @@
-import { Component, inject, input, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnInit, signal, effect } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 //NGPrime
@@ -54,13 +54,31 @@ export class DocumentComponent implements OnInit {
     return this.documents().length > 0 ? 'flex' : undefined;
   }
 
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {
+    // Effect to watch for changes in entityName and entityId
+    effect(() => {
+      const entityName = this.entityName();
+      const entityId = this.entityId();
+      
+      // Only load if both entityName and entityId are provided
+      if (entityName && entityId) {
+        this.load();
+      }
+    });
+  }
 
   ngOnInit(): void {
-    this.load();
+    // Initial load will be handled by the effect
+    // this.load(); - removed as it's now handled by the effect
   }
 
   load() {
+    // Only proceed if we have the required parameters
+    if (!this.entityName() || !this.entityId()) {
+      this.documents.set([]);
+      return;
+    }
+
     this.documentService.getDocuments(this.entityName(), this.entityId()).subscribe({
       next: (data: any) => {
         this.documents.set(data);
