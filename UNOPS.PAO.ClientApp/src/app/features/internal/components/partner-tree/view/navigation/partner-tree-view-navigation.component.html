@@ -25,7 +25,7 @@
             filterBy="partnerGroupName"
             [showClear]="true"
             (onChange)="onPartnerGroupChange($event)"
-            [disabled]="!selectedPartnerCategory?.children?.length"
+            [disabled]="!selectedPartnerCategory()?.children?.length"
             styleClass="breadcrumb-select w-1/2 lg:w-1/4">
     <ng-template pTemplate="item" let-item>
       <div>{{ item.partnerGroupName }}</div>

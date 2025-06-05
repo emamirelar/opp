@@ -63,6 +63,7 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
   tabs: TabItem[] = [];
   recordData: PartnerTree = {} as PartnerTree;
   private routerSubscription: Subscription | null = null;
+  private paramSubscription: Subscription | null = null;
 
   constructor(
     private router: Router,
@@ -70,24 +71,19 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.recordId = this.activatedRoute.snapshot.paramMap.get('recordId') || '';
+    // Listen to parameter changes instead of using snapshot
+    this.paramSubscription = this.activatedRoute.paramMap.subscribe(params => {
+      const newRecordId = params.get('recordId') || '';
+      if (newRecordId !== this.recordId) {
+        this.recordId = newRecordId;
+        this.updateTabs();
+      }
+    });
     
     // Get the resolved data from the route
     this.activatedRoute.data.subscribe(data => {
       this.recordData = data['partnerTreeData']?.data || {};
     });
-    
-    // Create tabs based on recordId
-    this.tabs = [
-      {
-        label: 'Details',
-        route: `/admin/partner-tree/${this.recordId}`
-      },
-      {
-        label: 'Dashboard',
-        route: `/admin/partner-tree/${this.recordId}/data`
-      }
-    ];
     
     // Set initial active tab
     this.updateActiveTab();
@@ -104,11 +100,28 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
+    if (this.paramSubscription) {
+      this.paramSubscription.unsubscribe();
+    }
+  }
+
+  private updateTabs(): void {
+    // Create tabs based on recordId
+    this.tabs = [
+      {
+        label: 'Details',
+        route: `/admin/partner-tree/${this.recordId}`
+      },
+      {
+        label: 'Dashboard',
+        route: `/admin/partner-tree/${this.recordId}/data`
+      }
+    ];
   }
   
   private updateActiveTab(): void {
     const currentUrl = this.router.url;
     const activeTabIndex = currentUrl.includes('/data') ? 1 : 0;
-    this.activeRoute = this.tabs[activeTabIndex].route;
+    this.activeRoute = this.tabs[activeTabIndex]?.route || '';
   }
 }

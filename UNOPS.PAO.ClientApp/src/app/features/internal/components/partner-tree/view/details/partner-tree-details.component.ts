@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CachedDataService } from '../../../../../../common/services/cached-data.service';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { combineLatest, Observable, of, delay } from 'rxjs';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
@@ -39,7 +40,6 @@ import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '../../../../services/partner-tree.service';
 import { PartnerTreeItemComponent } from '../../item/partner-tree-item.component';
 import { PermissionUtilityService } from '../../../../../../essentials/services/permission-utility.service';
-import { Observable, of, delay } from 'rxjs';
 import { ListViewColumn } from '../../../../../../common/pages/components/listview/listview.model';
 import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
 
@@ -173,7 +173,6 @@ export class PartnerTreeDetailsComponent implements OnInit {
   activatedRoute = inject(ActivatedRoute);
   documentService = inject(DocumentService);
   dialogService = inject(DialogService);
-  cdr = inject(ChangeDetectorRef);
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
@@ -187,7 +186,12 @@ export class PartnerTreeDetailsComponent implements OnInit {
   partnerTree = signal<PartnerTree | null>(null);
   partnerTreeChildren = signal<PartnerTree[]>([]);
 
-  childrenPartnerGroups = signal<PartnerGroup[]>([]);
+  // Computed children partner groups that updates automatically when partnerTree changes
+  childrenPartnerGroups = computed(() => {
+    const tree = this.partnerTree();
+    if (!tree?.partnerCategoryCode) return [];
+    return this.cachedDataService.getParterGroupByCategoryCode(tree.partnerCategoryCode);
+  });
 
   // Loading state
   isLoading = signal<boolean>(false);
@@ -214,23 +218,24 @@ export class PartnerTreeDetailsComponent implements OnInit {
   acceptedMiMIETypesForgDrive = 'application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet,application/vnd.google-apps.presentation';
 
   ngOnInit() {
-    this.activatedRoute.parent?.data.subscribe({
-      next: (data: {[key: string]: any}) => {
-        if (data['partnerTreeData']) {
-          this.partnerTree.set(data['partnerTreeData'].data);
-          this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
-
-          // Extract permissions from response if available
-          if (data['partnerTreeData'].permissions) {
-            this.recordPermissions.set({
-              entity: 'PartnerTree',
-              hasAccess: true,
-              permissions: data['partnerTreeData'].permissions
-            });
-          } else if (this.partnerTree()?.id) {
-            // Load permissions for the partner tree
-            this.recordPermissionsData.loadPermissions(this.partnerTree()!.id!.toString(), this.cdr);
+    // Combine both parent route data and parameter changes for reactive updates
+    combineLatest([
+      this.activatedRoute.parent?.data || of({}),
+      this.activatedRoute.parent?.paramMap || of(null)
+    ]).subscribe({
+      next: ([data, params]) => {
+        const recordId = params?.get('recordId');
+        
+        if (data && (data as any)['partnerTreeData']) {
+          const newPartnerTree = (data as any)['partnerTreeData'].data;
+          
+          // Only update if it's actually a different record or if partnerTree is null
+          if (!this.partnerTree() || newPartnerTree?.id?.toString() !== this.partnerTree()?.id?.toString()) {
+            this.updatePartnerTreeData((data as any)['partnerTreeData']);
           }
+        } else if (recordId && (!this.partnerTree() || recordId !== this.partnerTree()?.id?.toString())) {
+          // Handle case where we have a recordId but no data yet (loading state)
+          this.isLoading.set(true);
         }
       },
       error: (error) => {
@@ -238,8 +243,27 @@ export class PartnerTreeDetailsComponent implements OnInit {
         this.feedbackDialogService.showErrorToast({
           detail: 'Failed to load partner tree data'
         });
+        this.isLoading.set(false);
       }
     });
+  }
+
+  private updatePartnerTreeData(partnerTreeData: any): void {
+    this.partnerTree.set(partnerTreeData.data);
+
+    // Extract permissions from response if available
+    if (partnerTreeData.permissions) {
+      this.recordPermissions.set({
+        entity: 'PartnerTree',
+        hasAccess: true,
+        permissions: partnerTreeData.permissions
+      });
+    } else if (this.partnerTree()?.id) {
+      // Load permissions for the partner tree without ChangeDetectorRef
+      this.recordPermissionsData.loadPermissions(this.partnerTree()!.id!.toString());
+    }
+
+    this.isLoading.set(false);
   }
 
   partnerColumns: ListViewColumn[] = [
@@ -282,7 +306,6 @@ export class PartnerTreeDetailsComponent implements OnInit {
         this.cachedDataService.partnerTreeService.getPartnerTreeDataById(result.id!.toString()).subscribe({
           next: (data: any) => {
             this.partnerTree.set(data.data);
-            this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
             this.feedbackDialogService.showSuccessToast({ detail: 'Partner tree updated successfully!' });
             this.isLoading.set(false);
           },
@@ -295,3 +318,4 @@ export class PartnerTreeDetailsComponent implements OnInit {
     });
   }
 }
+

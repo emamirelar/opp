@@ -1,4 +1,4 @@
-import { Component, inject, input, output, ViewChild, OnInit } from '@angular/core';
+import { Component, inject, input, output, ViewChild, OnInit, effect } from '@angular/core';
 
 //NGPrime
 import { TableModule } from 'primeng/table';
@@ -19,7 +19,7 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './upload-document.component.html',
   styleUrl: './upload-document.component.scss',
 })
-export class UploadDocumentComponent implements OnInit {
+export class UploadDocumentComponent {
   entityName = input<string>('');
   entityId = input<string>('');
   multiple = input<boolean>(false);
@@ -36,9 +36,25 @@ export class UploadDocumentComponent implements OnInit {
     return this.files.length > 0 ? 'flex' : undefined;
   }
 
-  constructor() {}
+  constructor() {
+    // Effect to watch for changes in entityName
+    effect(() => {
+      const entityName = this.entityName();
+      
+      // Only load document types if entityName is provided
+      if (entityName) {
+        this.loadDocumentTypes();
+      }
+    });
+  }
 
-  ngOnInit(): void {
+
+  private loadDocumentTypes() {
+    if (!this.entityName()) {
+      this.documentTypes = [];
+      return;
+    }
+
     this.documentService.getDocumentTypesByEntityName(this.entityName()).subscribe({
       next: (data: any) => {
         this.documentTypes = data.records;
