@@ -172,7 +172,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   currentSearchText = '';
 
   ngOnInit() {
-    console.log('Contact list config:', this.listviewConfig());
+    
     
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
@@ -196,7 +196,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       record = record.data;
     }
     if (record && record.id !== undefined && record.id !== null) {
-      console.log('Navigating to contact:', record.id);
+      
       this.router.navigate(['partnerships/contacts', record.id.toString()]);
     } else {
       console.error('Cannot navigate: record or record.id is undefined', record);
@@ -233,7 +233,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       // Refresh the list before navigating to show the new contact
       window.dispatchEvent(new CustomEvent('refresh-listview'));
       // Navigate to the new contact details
-      console.log('Navigating to newly created contact:', newRecordData.id);
+      
       this.router.navigate(['partnerships/contacts', newRecordData.id.toString()]);
     } else {
       console.error('Cannot navigate to created contact: id is undefined', newRecordData);

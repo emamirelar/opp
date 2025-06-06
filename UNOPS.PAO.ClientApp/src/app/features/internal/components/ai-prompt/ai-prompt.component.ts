@@ -211,11 +211,11 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (permissions) => {
           if (!permissions.hasAccess) {
-            console.log(`[AI-PROMPT] No access to ${entityName}`);
+            
             this.router.navigate(['/access-denied']);
             return;
           }
-          console.log(`[AI-PROMPT] Loaded ${entityName} permissions:`, permissions);
+          
           this.entityPermissions.set(permissions);
           this.permissionsLoading.set(false);
           this.cdr.detectChanges();

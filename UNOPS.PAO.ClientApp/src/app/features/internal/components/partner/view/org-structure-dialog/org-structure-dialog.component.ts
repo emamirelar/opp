@@ -37,7 +37,7 @@ export class OrgStructureDialogComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    console.log('OrgStructureDialogComponent initialized with ultra simple approach');
+    
 
     // Always use hard-coded test data for now until we resolve the display issues
     this.createUltraSimpleTestData();
@@ -81,12 +81,12 @@ export class OrgStructureDialogComponent implements OnInit {
   // Select a node from the grid view
   selectNode(node: TreeNode) {
     this.selectedNode = node;
-    console.log('Selected node:', node);
+    
   }
 
   // Get a limited subset of data for testing
   getLimitedData(limit: number = 5): TreeNode[] {
-    console.log(this.data);
+    
     if (this.data.length === 0) {
       return [];
     }
@@ -103,18 +103,18 @@ export class OrgStructureDialogComponent implements OnInit {
   }
 
   loadOrganizationHierarchy() {
-    console.log('Component: Loading organization hierarchy from API...');
+    
     this.organizationService.getOrganizationHierarchy().subscribe({
       next: (response: any) => {
-        console.log('Component: API response received:', response);
+        
 
         // Log data to console for debugging
         if (response && response.length > 0) {
-          console.log('Component: First node in response:', response[0]);
+          
 
           // Check for data properties
           if (response[0].data) {
-            console.log('Component: Node data properties:', Object.keys(response[0].data));
+            
             console.log('Component: Sample values:',
               'id=', response[0].data.id,
               'name=', response[0].data.name,
@@ -132,19 +132,19 @@ export class OrgStructureDialogComponent implements OnInit {
         // Set the data
         this.data = response;
         this.filteredData = [...response];
-        console.log('Component: Data loaded:', this.data.length, 'nodes');
+        
 
         // Find main root node
         this.findMainRootNode(); // This will set this.mainRootNode
         if (this.mainRootNode) {
-          console.log('Main organization found:', this.mainRootNode.data.name);
+          
         } else {
           console.warn('No main organization node found with type 0 and code OPS');
         }
 
         // Get limited data for testing
         this.limitedData = this.getLimitedData(5);
-        console.log('Limited data for testing:', this.limitedData.length, 'nodes');
+        
       },
       error: (error: Error) => {
         console.error('Component: Error loading organization hierarchy:', error);
@@ -220,7 +220,7 @@ export class OrgStructureDialogComponent implements OnInit {
       }
 
       const nodeData = item.data;
-      console.log('Processing node:', nodeData.code, nodeData);
+      
 
       const node: TreeNode = {
         expanded: true,
@@ -250,7 +250,7 @@ export class OrgStructureDialogComponent implements OnInit {
     let rootNode = Array.from(nodeMap.values()).find(n => n.data.type === 0 && n.data.code === 'OPS');
 
     if (!rootNode) {
-      console.log('Creating virtual root node');
+      
       // Create a virtual root node if none exists
       rootNode = {
         expanded: true,
@@ -389,7 +389,7 @@ export class OrgStructureDialogComponent implements OnInit {
 
   // Method to load sample test data
   loadTestData() {
-    console.log('Loading test data...');
+    
     // Create sample test data
     const testData: TreeNode[] = [
       {
@@ -484,14 +484,14 @@ export class OrgStructureDialogComponent implements OnInit {
     // Set the data
     this.data = testData;
     this.filteredData = [...testData];
-    console.log('Test data loaded:', this.data);
+    
 
     // Find the main root node
     this.findMainRootNode();
 
     // Log the debug info that should appear in the UI
-    console.log('Nodes loaded:', this.getTotalNodeCount());
-    console.log('Root nodes:', this.data.length);
+    
+    
 
     if (this.data.length > 0 && this.data[0].data) {
       console.log('Sample node data:',
@@ -506,7 +506,7 @@ export class OrgStructureDialogComponent implements OnInit {
 
   // Create the most basic possible test data
   createUltraSimpleTestData() {
-    console.log('Creating ultra-simple test data with direct approach');
+    
 
     // Create ultra simple test data with exact PrimeNG TreeNode format
     this.data = [
@@ -544,6 +544,6 @@ export class OrgStructureDialogComponent implements OnInit {
     this.limitedData = [...this.data];
 
     // Log the actual data structure for debugging
-    console.log('Ultra-simple test data:', JSON.stringify(this.data, null, 2));
+    
   }
 }

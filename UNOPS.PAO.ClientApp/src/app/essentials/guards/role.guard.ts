@@ -10,7 +10,7 @@ import { HttpClient } from '@angular/common/http';
  */
 export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
   return (route, state) => {
-    console.log(`[ROLE-GUARD] Checking roles for route: ${state.url}`);
+    
     
     const router = inject(Router);
     const auth = inject(AuthService);
@@ -23,7 +23,7 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
     
     // If the special value 'ALL' is included, everyone is allowed
     if (allowedRoles.includes('ALL')) {
-      console.log('[ROLE-GUARD] ALL role specified, allowing access');
+      
       return true;
     }
     
@@ -44,21 +44,21 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
         const hasAccess = response.hasAccess;
         
         if (!hasAccess) {
-          console.log(`[ROLE-GUARD] Backend denied access to ${state.url}, redirecting to home`);
+          
           router.navigate(['/']);
           return false;
         }
         
         // Log the detailed permissions for debugging
         if (response.entity && response.permissions) {
-          console.log(`[ROLE-GUARD] ${response.entity} permissions:`, response.permissions);
+          
         }
         
         return true;
       }),
       catchError(() => {
         // Fall back to local role checking if backend is not available
-        console.log('[ROLE-GUARD] Error checking permissions from backend, falling back to local checks');
+        
         
         // Fast path: For dev environment we can check cookies directly
         if (auth.hasDevCookie()) {
@@ -87,10 +87,10 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
               hasRequiredRole = true;
             }
             
-            console.log(`[ROLE-GUARD] Dev user ${email} access to ${state.url}: ${hasRequiredRole}`);
+            
             
             if (!hasRequiredRole) {
-              console.log(`[ROLE-GUARD] User ${email} doesn't have required roles, redirecting to home`);
+              
               router.navigate(['/']);
               return of(false);
             }
@@ -111,7 +111,7 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
             const hasRole = allowedRoles.some(role => userRoles.includes(role));
             
             if (!hasRole) {
-              console.log(`[ROLE-GUARD] User doesn't have required roles (${allowedRoles.join(', ')}), redirecting to home`);
+              
               router.navigate(['/']);
               return false;
             }

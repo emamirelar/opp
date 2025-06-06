@@ -160,14 +160,14 @@ export class PartnerComponent implements OnDestroy, OnInit {
   ];
 
   constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) {
-    console.log('Partner component constructor');
-    console.log('Initial listview config:', this.listviewConfig());
+    
+    
     this.setNewPartnerFromAIAssistant();
   }
 
   ngOnInit() {
-    console.log('Partner component ngOnInit');
-    console.log('Searchable fields:', this.listviewConfig().searchConfig?.searchableFields);
+    
+    
     
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
@@ -204,7 +204,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
 
   handleOnOpenRecordDetails(record: any) {
     if (record && record.id !== undefined && record.id !== null) {
-      console.log('Navigating to partner:', record.id);
+      
       this.router.navigate(['partnerships/partners', record.id.toString()]);
     } else {
       console.error('Cannot navigate: record or record.id is undefined', record);
@@ -229,7 +229,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
 
   _handleOnRecordCreation(newRecordData: any) {
     if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
-      console.log('Navigating to newly created partner:', newRecordData.id);
+      
       this.router.navigate(['partnerships/partners', newRecordData.id.toString()]);
     } else {
       console.error('Cannot navigate to created record: id is undefined', newRecordData);

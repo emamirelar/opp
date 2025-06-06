@@ -39,7 +39,7 @@
   </div>
 
   <!-- Data Table -->
-  <div class="p-1 rounded-xl bg-surface-50" [class.opacity-20]="loading()">
+  <div [class.opacity-20]="loading()">
     <p-table 
       [value]="prompts()" 
       [loading]="loading()"
