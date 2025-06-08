@@ -34,7 +34,8 @@
         },
         "partnerDetails": "Detalhes do Parceiro",
         "partnerDashboard": "Painel do Parceiro",
-        "admin": "Administração"
+        "admin": "Administração",
+        "managerEntities": "Gerenciador de Entidades"
     },
     "button": {
         "back": "Voltar",

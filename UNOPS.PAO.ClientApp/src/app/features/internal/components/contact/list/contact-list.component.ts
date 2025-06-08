@@ -23,6 +23,7 @@ import {Contact} from '../../../models/contact.model';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 import { SearchField } from '../../../../../common/services/search-parser.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 
 @Component({
   selector: 'app-contact-list',
@@ -52,6 +53,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   dialogService = inject(DialogService);
   importDialogService = inject(ImportDialogService);
   permissionUtilityService = inject(PermissionUtilityService);
+  entityConfigurationService = inject(EntityConfigurationService);
   cdr = inject(ChangeDetectorRef);
 
   // Permission management using utility service
@@ -59,40 +61,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
 
-  // Define contact columns for the listview
-  contactColumns: ListViewColumn[] = [
-    { field: 'profilePictureUrl', label: '', type: 'avatar', sortable: false, width: '5%' },
-    {
-      field: 'partnerName',
-      label: 'label.partner.partner',
-      type: 'text',
-      sortable: false,
-      width: '15%',
-      ellipsis: true
-    },
-    { 
-      field: 'fullName', 
-      label: 'label.contact.fullName', 
-      type: 'template', 
-      sortable: false, 
-      width: '20%',
-      templateFn: (contact: any) => {
-        const firstName = contact.firstName || '';
-        const lastName = contact.lastName || '';
-        const middleName = contact.middleName || '';
-        return `${firstName} ${middleName} ${lastName}`.trim();
-      }
-    },
-    { field: 'title', label: 'label.contact.title', type: 'text', sortable: true, width: '15%' },
-    { 
-      field: 'createdByName',
-      label: 'label.audit.createdBy',
-      type: 'text',
-      sortable: false,
-      width: '15%',
-    },
-    { field: 'createdByOfficeName', label: 'label.contact.createdByOffice', type: 'text', sortable: false, width: '15%' },
-  ];
+  // Dynamic contact columns loaded from API
+  contactColumns = signal<ListViewColumn[]>([]);
+  columnsLoading = signal(true);
 
   // Configure listview behavior with computed permissions
   listviewConfig = computed<ListViewConfig>(() => ({
@@ -177,6 +148,9 @@ export class ContactListComponent implements OnInit, OnDestroy {
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
     
+    // Load dynamic columns from API
+    this.loadContactColumns();
+    
     this.route.queryParams
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
@@ -185,6 +159,106 @@ export class ContactListComponent implements OnInit, OnDestroy {
           this.openContactEditDialog(state?.data || emptyContact);
         }
       });
+  }
+
+  private loadContactColumns() {
+    this.columnsLoading.set(true);
+    this.entityConfigurationService.getEntityListViewConfiguration('Contact')
+      .subscribe({
+        next: (columns) => {
+          // Convert backend columns to frontend format and add template functions
+          const processedColumns = columns.map(col => this.processColumn(col));
+          this.contactColumns.set(processedColumns);
+          this.columnsLoading.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Failed to load contact columns:', error);
+          // Fallback to default columns if API fails
+          this.setFallbackColumns();
+          this.columnsLoading.set(false);
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private processColumn(column: any): ListViewColumn {
+    const processedColumn: ListViewColumn = {
+      field: column.field,
+      label: column.label,
+      type: column.type,
+      sortable: column.sortable,
+      width: column.width,
+      ellipsis: column.ellipsis
+    };
+
+    // Add template function for template type columns
+    if (column.type === 'template' && column.templatePattern) {
+      processedColumn.templateFn = this.createTemplateFunction(column.templatePattern);
+    }
+
+    return processedColumn;
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      let result = templatePattern;
+      
+      // Replace field placeholders like {firstName}, {lastName} with actual values
+      const fieldMatches = templatePattern.match(/\{([^}]+)\}/g);
+      if (fieldMatches) {
+        fieldMatches.forEach(match => {
+          const fieldName = match.replace(/[{}]/g, '');
+          const fieldValue = this.getNestedProperty(rowData, fieldName) || '';
+          result = result.replace(match, fieldValue);
+        });
+      }
+      
+      return result.trim();
+    };
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((o, p) => o?.[p], obj);
+  }
+
+  private setFallbackColumns() {
+    // Fallback to original hardcoded columns if API fails
+    const fallbackColumns: ListViewColumn[] = [
+      { field: 'profilePictureUrl', label: '', type: 'avatar', sortable: false, width: '5%' },
+      {
+        field: 'partnerName',
+        label: 'label.partner.partner',
+        type: 'text',
+        sortable: false,
+        width: '15%',
+        ellipsis: true
+      },
+      { 
+        field: 'fullName', 
+        label: 'label.contact.fullName', 
+        type: 'template', 
+        sortable: false, 
+        width: '20%',
+        templateFn: (contact: any) => {
+          const firstName = contact.firstName || '';
+          const lastName = contact.lastName || '';
+          const middleName = contact.middleName || '';
+          return `${firstName} ${middleName} ${lastName}`.trim();
+        }
+      },
+      { field: 'title', label: 'label.contact.title', type: 'text', sortable: true, width: '15%' },
+      { 
+        field: 'createdByName',
+        label: 'label.audit.createdBy',
+        type: 'text',
+        sortable: false,
+        width: '15%',
+      },
+      { field: 'createdByOfficeName', label: 'label.contact.createdByOffice', type: 'text', sortable: false, width: '15%' },
+    ];
+    
+    this.contactColumns.set(fallbackColumns);
   }
 
   ngOnDestroy() {

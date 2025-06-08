@@ -182,6 +182,7 @@ public class BusinessSecurityService : IBusinessSecurityService
             "partnertree" => await GetPartnerTreePermissionsAsync(user, userOrgUnit),
             "usermanagement" => await GetEntityPermissionsFromDatabaseAsync(user, "UserManagement"),
             "aipromptmanagement" => await GetEntityPermissionsFromDatabaseAsync(user, "AiPromptManagement"),
+            "entitymanager" => await GetEntityPermissionsFromDatabaseAsync(user, "EntityManager"),
             _ => new EntityPermissionsModel { CanRead = true, CanCreate = false, CanUpdate = false, CanDelete = false }
         };
         

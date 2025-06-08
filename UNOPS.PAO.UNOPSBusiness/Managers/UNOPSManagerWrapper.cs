@@ -16,6 +16,8 @@ using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Authorization;
 
 public class UNOPSManagerWrapper : ManagerWrapper
 {
@@ -28,10 +30,11 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly LinkManager linkManager;
     private readonly UNOPSUserManagementManager userManagementManager;
     private readonly UNOPSAiPromptManager aiPromptManager;
+    private readonly UNOPSEntityConfigurationManager entityConfigurationManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
                                UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, 
-                               IBusinessSecurityService securityService = null) : base(mapper, context, userManager, httpContextAccessor)
+                               IBusinessSecurityService securityService = null, IPermissionService permissionService = null) : base(mapper, context, userManager, httpContextAccessor)
     {
         // Create a MemoryCache instance for services that need it
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -49,6 +52,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(opsContext, userManager, roleManager, securityService);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, this);
+        entityConfigurationManager = new UNOPSEntityConfigurationManager(mapper, opsContext, configuration, permissionService);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -60,4 +64,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override ILinkManager LinkManager => linkManager;
     public override IUserManagementManager UserManagementManager => userManagementManager;
     public override IAiPromptManager AiPromptManager => aiPromptManager;
+    
+    // UNOPS-specific managers
+    public IUNOPSEntityConfigurationManager EntityConfigurationManager => entityConfigurationManager;
 }

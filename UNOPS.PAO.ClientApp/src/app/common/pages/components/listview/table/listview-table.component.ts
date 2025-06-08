@@ -4,6 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { TableModule } from 'primeng/table';
 import { DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { AvatarModule } from 'primeng/avatar';
+import { TagModule } from 'primeng/tag';
 
 import { ListViewColumn, ListViewConfig } from '../listview.model';
 
@@ -17,7 +18,8 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
     DatePipe,
     DecimalPipe,
     CurrencyPipe,
-    AvatarModule
+    AvatarModule,
+    TagModule
   ],
   templateUrl: './listview-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -169,5 +171,124 @@ export class ListviewTableComponent<T = any> {
       return column.templateFn(rowData);
     }
     return rowData[column.field] || '';
+  }
+
+  /**
+   * Get badge color for badge type columns
+   */
+  getBadgeColor(rowData: any, column: ListViewColumn): "success" | "info" | "warn" | "secondary" | "contrast" | "danger" | undefined {
+    if (column.badgeColorFn) {
+      return column.badgeColorFn(rowData[column.field]) as "success" | "info" | "warn" | "secondary" | "contrast" | "danger" | undefined;
+    }
+    if (column.badgeColor) {
+      return column.badgeColor as "success" | "info" | "warn" | "secondary" | "contrast" | "danger" | undefined;
+    }
+    
+    // Default color mapping for common values
+    const value = String(rowData[column.field]).toLowerCase();
+    if (value.includes('active') || value.includes('success') || value.includes('approved')) {
+      return 'success';
+    } else if (value.includes('inactive') || value.includes('disabled') || value.includes('rejected')) {
+      return 'danger';
+    } else if (value.includes('pending') || value.includes('draft')) {
+      return 'warn';
+    } else {
+      return 'info';
+    }
+  }
+
+  /**
+   * Get icon class for icon type columns
+   */
+  getIconClass(rowData: any, column: ListViewColumn): string {
+    if (column.iconClassFn) {
+      return column.iconClassFn(rowData[column.field]);
+    }
+    if (column.iconClass) {
+      return column.iconClass;
+    }
+    
+    // Default icon mapping for common values
+    const value = String(rowData[column.field]).toLowerCase();
+    if (value.includes('active') || value.includes('success') || value.includes('approved')) {
+      return 'pi pi-check-circle';
+    } else if (value.includes('inactive') || value.includes('disabled') || value.includes('rejected')) {
+      return 'pi pi-times-circle';
+    } else if (value.includes('pending') || value.includes('draft')) {
+      return 'pi pi-clock';
+    } else {
+      return 'pi pi-info-circle';
+    }
+  }
+
+  /**
+   * Get icon color for icon type columns
+   */
+  getIconColor(rowData: any, column: ListViewColumn): string {
+    if (column.iconColorFn) {
+      return column.iconColorFn(rowData[column.field]);
+    }
+    
+    // Default color mapping for common values
+    const value = String(rowData[column.field]).toLowerCase();
+    if (value.includes('active') || value.includes('success') || value.includes('approved')) {
+      return '#22c55e'; // green
+    } else if (value.includes('inactive') || value.includes('disabled') || value.includes('rejected')) {
+      return '#ef4444'; // red
+    } else if (value.includes('pending') || value.includes('draft')) {
+      return '#f59e0b'; // amber
+    } else {
+      return '#6b7280'; // gray
+    }
+  }
+
+  /**
+   * Enlarge image when clicked (opens in a simple modal/dialog)
+   */
+  enlargeImage(imageUrl: string, event: Event): void {
+    event.stopPropagation();
+    
+    // Create a simple modal overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      cursor: pointer;
+    `;
+    
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.style.cssText = `
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    `;
+    
+    overlay.appendChild(img);
+    document.body.appendChild(overlay);
+    
+    // Close on click
+    overlay.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
+    
+    // Close on Escape key
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        document.body.removeChild(overlay);
+        document.removeEventListener('keydown', handleKeydown);
+      }
+    };
+    document.addEventListener('keydown', handleKeydown);
   }
 }

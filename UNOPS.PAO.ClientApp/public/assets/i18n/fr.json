@@ -35,8 +35,13 @@
         "partnerDashboard": "Tableau de Bord du Partenaire",
         "admin": "Administration",
         "aiPromptsAdmin": "Admin des prompts IA",
+        "userManagement": "Gérer les autorisations utilisateur",
+        "impersonateRoles": "Imiter les rôles",
+        "editUserRoles": "Attribuer des rôles pour l'usurpation",
+        "editPartnershipUserAccess": "Modifier l'accès des utilisateurs de partenariat",
         "manageOffice": "Gérer mon bureau",
-        "translationWorkbench": "Atelier de traduction"
+        "managerEntities": "Gestionnaire d'entités",
+        "translationWorkbench": "Table de traduction"
     },
     "button": {
         "back": "Retour",

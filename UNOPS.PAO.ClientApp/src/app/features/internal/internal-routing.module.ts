@@ -19,6 +19,7 @@ import { PartnerTreeDataComponent } from './components/partner-tree/view/data/pa
 import { PartnerDataResolver } from './resolvers/partner-data.resolver';
 import { PartnerTreeDataResolver } from './resolvers/partner-tree-data.resolver';
 import { UserManagementComponent } from './admin/user-management/user-management.component';
+import { EntityManagerComponent } from './admin/entity-manager/entity-manager.component';
 
 const internalRoutes: Routes = [
   {
@@ -182,6 +183,13 @@ const internalRoutes: Routes = [
             data: { 
               breadcrumb: 'Manage my Office',
               featureName: 'Manage my Office'
+            }
+          },
+          {
+            path: 'entity-manager',
+            component: EntityManagerComponent,
+            data: { 
+              breadcrumb: 'Manage Entities'
             }
           },
           {
