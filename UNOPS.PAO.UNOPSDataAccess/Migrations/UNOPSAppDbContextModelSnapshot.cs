@@ -1635,6 +1635,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("CanManage")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("CreatedBy")
                         .HasColumnType("integer");
 
@@ -1734,6 +1737,10 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("FirstLetterFallbackField")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("HelperText")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");

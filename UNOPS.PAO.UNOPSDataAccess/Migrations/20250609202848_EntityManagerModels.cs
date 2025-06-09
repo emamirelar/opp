@@ -13,7 +13,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
+            /*migrationBuilder.CreateTable(
                 name: "Entities",
                 schema: "public",
                 columns: table => new
@@ -22,6 +22,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     EntityName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CanManage = table.Column<bool>(type: "boolean", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<int>(type: "integer", nullable: false),
@@ -89,6 +90,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     ListViewEllipsis = table.Column<bool>(type: "boolean", nullable: true),
                     ListViewSortable = table.Column<bool>(type: "boolean", nullable: true),
                     FirstLetterFallbackField = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    HelperText = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     EntityManagerId = table.Column<int>(type: "integer", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
@@ -130,7 +132,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 schema: "public",
                 table: "EntityManagers",
                 column: "EntityName",
-                unique: true);
+                unique: true);*/
 
             // Execute SQL scripts for seeding data using the utility class
             MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
