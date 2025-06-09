@@ -123,18 +123,23 @@ INSERT INTO public."EntityFieldManagers" (
     (3, 'OrgUnit', 'OrganizationHierarchy', 'Organization hierarchy for managing office structure and geographic locations', false, true, NULL, NULL, 8, false, NULL, 'name', 'orgUnit.name', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'OrgUnit', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- ================================================================
--- PARTNERTREE ENTITY FIELDS (6 fields)
+-- PARTNERTREE ENTITY FIELDS (8 fields)
 -- ================================================================
 INSERT INTO public."EntityFieldManagers" (
     "EntityManagerId", "FieldName", "DataType", "Description", "IsRequired", "IsActive", "DefaultValue", "MaxLength", "DisplayOrder", "ShowInListView", "ListViewOrder", "RelatedDisplayProperty", "DisplayFieldPath", "DisplayTemplate", "ListViewLabel", "ListViewType", "ListViewWidth", "ListViewEllipsis", "ListViewSortable", "FirstLetterFallbackField", "HelperText",
     "Name", "Status", "CreatedBy", "CreatedDate", "LastModifiedBy", "LastModifiedDate", "IsDeleted", "DeletedBy", "DeletedDate"
 ) VALUES 
-    (4, 'Code', 'string', 'Unique code identifier for the partner tree node', true, true, NULL, 50, 1, true, 1, NULL, 'code', NULL, 'Code', 'text', '15%', false, true, NULL, NULL, 'Code', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (4, 'Description', 'string', 'Description of the partner tree node', true, true, NULL, 500, 2, true, 2, NULL, 'description', NULL, 'Description', 'text', '30%', true, true, NULL, NULL, 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (4, 'Type', 'string', 'Type of partner tree node', true, true, NULL, 100, 3, true, 3, NULL, 'type', NULL, 'Type', 'text', '15%', false, true, NULL, NULL, 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (4, 'Parent', 'PartnerTree', 'Partner Tree entity for managing partner hierarchy and categories', false, true, NULL, NULL, 4, true, 4, 'code,description', 'partnerTree.code,partnerTree.description', '{code} - {description}', 'Parent', 'template', '25%', true, true, NULL, NULL, 'Parent', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (4, 'PartnerCategoryCode', 'string', 'Partner category code', false, true, NULL, 50, 5, false, NULL, NULL, 'partnerCategoryCode', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'PartnerCategoryCode', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (4, 'PartnerGroupCode', 'string', 'Partner group code', false, true, NULL, 50, 6, false, NULL, NULL, 'partnerGroupCode', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'PartnerGroupCode', 0, 1, NOW(), 0, NULL, false, 0, NULL);
+    -- Core PartnerTree Fields (List View) - Note: Actions are hardcoded in HTML template
+    (4, 'Name', 'string', 'Name of the partner tree node', true, true, NULL, 300, 1, true, 1, NULL, 'name', NULL, 'Name', 'text', '25%', true, true, NULL, 'The display name for this partner tree level or category', 'Name', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (4, 'Description', 'string', 'Description of the partner tree node', true, true, NULL, 500, 2, true, 2, NULL, 'description', NULL, 'Description', 'text', '30%', true, true, NULL, 'Detailed description of what this partner tree level represents', 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (4, 'Type', 'string', 'Type/Level of partner tree node (Level_1, Level_2, Level_3)', true, true, NULL, 100, 3, true, 3, NULL, 'type', NULL, 'Level', 'text', '10%', false, true, NULL, 'Hierarchical level in the partner tree structure', 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (4, 'PartnerCategoryName', 'string', 'Partner category display name', false, true, NULL, 200, 4, true, 4, NULL, 'partnerCategoryName', NULL, 'Partner Category', 'text', '20%', true, true, NULL, 'The category this partner tree node belongs to', 'PartnerCategoryName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (4, 'PartnerGroupName', 'string', 'Partner group display name', false, true, NULL, 200, 5, true, 5, NULL, 'partnerGroupName', NULL, 'Partner Group', 'text', '20%', true, true, NULL, 'The group classification for this partner tree node', 'PartnerGroupName', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    
+    -- Additional PartnerTree Fields (Non-List View)
+    (4, 'Code', 'string', 'Unique code identifier for the partner tree node', true, true, NULL, 50, 6, false, NULL, NULL, 'code', NULL, NULL, 'text', NULL, false, true, NULL, 'System-generated unique identifier for this partner tree node', 'Code', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (4, 'PartnerCategoryCode', 'string', 'Partner category code', false, true, NULL, 50, 7, false, NULL, NULL, 'partnerCategoryCode', NULL, NULL, 'text', NULL, false, true, NULL, 'Internal code for the partner category', 'PartnerCategoryCode', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (4, 'PartnerGroupCode', 'string', 'Partner group code', false, true, NULL, 50, 8, false, NULL, NULL, 'partnerGroupCode', NULL, NULL, 'text', NULL, false, true, NULL, 'Internal code for the partner group', 'PartnerGroupCode', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- ================================================================
 -- ORGANIZATIONHIERARCHY ENTITY FIELDS (5 fields)
