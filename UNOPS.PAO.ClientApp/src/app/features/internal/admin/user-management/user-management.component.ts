@@ -177,12 +177,12 @@ export class UserManagementComponent implements OnInit {
       .subscribe({
         next: (permissions) => {
           if (!permissions.hasAccess) {
-            console.log(`[IMPERSONATE-ROLES] No access to role impersonation for route ${currentPath}`);
+            
             this.router.navigate(['/access-denied']);
             return;
           }
-          console.log(`[IMPERSONATE-ROLES] Loaded role impersonation permissions for route ${currentPath}:`, permissions);
-          console.log(`[IMPERSONATE-ROLES] canUpdate: ${permissions.permissions.canUpdate}, canRead: ${permissions.permissions.canRead}`);
+          
+          
           this.entityPermissions.set(permissions);
           this.permissionsLoading.set(false);
           
@@ -220,7 +220,7 @@ export class UserManagementComponent implements OnInit {
           // If user is ORG_UNIT_ADMIN (but not PARTNER_GLOB_ADMIN), automatically enable org unit filtering
           if (this.isOrgUnitAdmin()) {
             this.showMyOrgUnitOnly.set(true);
-            console.log('[IMPERSONATE-ROLES] ORG_UNIT_ADMIN detected - automatically enabling org unit filtering');
+            
           }
           
           this.cdr.detectChanges();

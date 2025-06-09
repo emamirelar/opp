@@ -247,15 +247,15 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   onFileSelected(event: any) {
-    console.log('Files selected:', event);
+    
   }
 
   onFileRemoved(event: any) {
-    console.log('File removed:', event);
+    
   }
 
   onFilesCleared() {
-    console.log('All files cleared');
+    
   }
 
   get acceptedMiMIETypesForgDrive() {

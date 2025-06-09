@@ -196,7 +196,7 @@ export class ImportDialogComponent implements OnInit {
   checkAndProcessData(): void {
     // Use the explicitly set import type from the service
     const entityType = this.importDialogService.getImportType();
-    console.log('Using explicitly set import type:', entityType);
+    
     
     // Update columns for the current entity type
     this.updateColumnsForEntityType();
@@ -462,11 +462,11 @@ export class ImportDialogComponent implements OnInit {
     // Flag to tell the component not to save to the server
     rowCopy.skipServerSave = true;
     
-    console.log('Row data being passed to edit dialog:', rowCopy);
+    
     
     // Get the entity type
     const entityType = this.importDialogService.getImportType().toLowerCase();
-    console.log('Current import type:', entityType);
+    
     
     // Store a reference to the current row in a temporary map for later access
     // We'll use the importRowId to identify this row when it's updated
@@ -477,7 +477,7 @@ export class ImportDialogComponent implements OnInit {
     
     // First letter should be capitalized for the component name lookup
     const componentName = entityType.charAt(0).toUpperCase() + entityType.slice(1);
-    console.log('Using component resolver with name:', componentName);
+    
     
     try {
       // Create a modified special version of the record for dialog compatibility
@@ -499,7 +499,7 @@ export class ImportDialogComponent implements OnInit {
       }
       
       // Log the prepared record
-      console.log('Prepared dialog record:', dialogRecord);
+      
       
       // Use the resolver method with additional parameters to identify this as a custom dialog
       // Define our custom behavior through the dialogRecord object
@@ -530,10 +530,10 @@ export class ImportDialogComponent implements OnInit {
       
       // Handle dialog close event to update the row in the table
       dialogRef.onClose.subscribe(result => {
-        console.log('Dialog closed with result:', result);
+        
         
         if (result && (result._updated || typeof result === 'object')) {
-          console.log('Row was updated in the edit dialog');
+          
           
           // Find the row in the data array
           const allData = this.importDialogService.data();
@@ -571,7 +571,7 @@ export class ImportDialogComponent implements OnInit {
         window.dispatchEvent(new CustomEvent('refresh-listview'));
       });
       
-      console.log('Dialog opened through component resolver');
+      
     } catch (error) {
       console.error('Error opening edit dialog:', error);
       this.feedbackDialogService.showErrorToast({ 

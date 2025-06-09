@@ -9,5 +9,6 @@
 }
 
 :host ::ng-deep .p-breadcrumb {
-  @apply p-0;
+  padding: 0 !important;
+  overflow-y: hidden !important;
 }

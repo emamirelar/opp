@@ -150,7 +150,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    console.log('Interaction list config:', this.listviewConfig());
+    
     
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);

@@ -91,7 +91,7 @@ export class AiAssistantService {
         mergeMap((error, count) => {
           // Only retry on 401 errors
           if (error instanceof HttpErrorResponse && error.status === 401 && count < this.maxRetries) {
-            console.log(`[AI-ASSISTANT] Retrying API call after 401 error (attempt ${count + 1}/${this.maxRetries})`);
+            
             // Exponential backoff
             return timer(1000 * Math.pow(2, count));
           }

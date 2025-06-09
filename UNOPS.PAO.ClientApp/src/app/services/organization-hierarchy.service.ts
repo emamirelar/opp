@@ -14,39 +14,39 @@ export class OrganizationHierarchyService {
 
   // Get organization hierarchy data optimized for PrimeNG
   getOrganizationHierarchy(): Observable<TreeNode[]> {
-    console.log('Calling API endpoint:', this.apiUrl);
+    
     
     return this.http.get<PrimeOrgChartNode[]>(this.apiUrl).pipe(
       catchError((error: HttpErrorResponse) => {
         console.error('Error fetching organization hierarchy:', error);
-        console.log('Falling back to legacy endpoint');
+        
         
         // If the optimized endpoint fails, try the legacy endpoint
         return this.http.get<any[]>(`${this.apiUrl}/legacy`).pipe(
           catchError((legacyError: HttpErrorResponse) => {
             console.error('Error fetching from legacy endpoint:', legacyError);
-            console.log('Using test data as fallback');
+            
             
             // If both API calls fail, return test data as fallback
             return of(this.getTestData());
           }),
           map(legacyResponse => {
-            console.log('Legacy API response:', legacyResponse);
+            
             return this.transformToPrimeNgFormat(legacyResponse);
           })
         );
       }),
       map(response => {
-        console.log('Raw API response:', response);
+        
         
         // If the API already returns data in the correct format, return it directly
         if (response && response.length > 0 && 'expanded' in response[0]) {
-          console.log('API returned data in PrimeNG format, using directly');
+          
           return response as TreeNode[];
         }
         
         // Otherwise, transform the data to match the required format
-        console.log('Transforming API response to PrimeNG format');
+        
         return this.transformToPrimeNgFormat(response);
       })
     );
@@ -54,7 +54,7 @@ export class OrganizationHierarchyService {
   
   // Get test data for fallback
   private getTestData(): TreeNode[] {
-    console.log('Returning test data');
+    
     return [
       {
         expanded: true,
@@ -136,7 +136,7 @@ export class OrganizationHierarchyService {
       result.push(node);
     });
     
-    console.log('Transformed data:', result);
+    
     return result;
   }
   

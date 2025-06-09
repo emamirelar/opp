@@ -123,7 +123,7 @@ export class SearchParserService {
 
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
-      console.log('Processing token:', token);
+      
 
       switch (token.type) {
         case 'field': {
@@ -160,7 +160,7 @@ export class SearchParserService {
       criteria.push({ ...currentCriterion as SearchCriterion, logicalOperator: lastLogicalOperator });
     }
 
-    console.log('Parsed criteria:', criteria);
+    
     return criteria;
   }
 

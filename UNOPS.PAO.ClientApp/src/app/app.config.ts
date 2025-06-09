@@ -74,13 +74,13 @@ export const appConfig: ApplicationConfig = {
     // Config loading initializer only - removed IAP check to prevent repeated calls
     provideAppInitializer(async () => {
       await inject(ConfigurationService).loadConfig();
-      console.log('[DEBUG-INIT] Config loaded');
+      
       
       // Also load permissions during initialization
       try {
         const permissionService = inject(PermissionService);
         await firstValueFrom(permissionService.loadConfig());
-        console.log('[DEBUG-INIT] Permissions loaded');
+        
       } catch (error) {
         console.error('[DEBUG-INIT] Error loading permissions', error);
       }

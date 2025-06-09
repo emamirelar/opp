@@ -236,6 +236,6 @@ const internalRoutes: Routes = [
 })
 export class InternalRoutingModule {
   constructor() {
-    console.log('[ROUTES] InternalRoutingModule constructor called');
+    
   }
 }

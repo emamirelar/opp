@@ -212,11 +212,11 @@ export class PartnerViewComponent implements OnInit {
 
   // AI Panel Event Handlers
   onSummaryRefresh() {
-    console.log('Summary refresh requested');
+    
   }
 
   onSummaryLoaded(data: string) {
-    console.log('Summary loaded:', data);
+    
   }
 
   onSummaryError(error: Error) {
@@ -224,11 +224,11 @@ export class PartnerViewComponent implements OnInit {
   }
 
   onNewsRefresh() {
-    console.log('News refresh requested');
+    
   }
 
   onNewsLoaded(data: string) {
-    console.log('News loaded:', data);
+    
   }
 
   onNewsError(error: Error) {
@@ -301,15 +301,15 @@ export class PartnerViewComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    console.log('Files selected:', event);
+    
   }
 
   onFileRemoved(event: any) {
-    console.log('File removed:', event);
+    
   }
 
   onFilesCleared() {
-    console.log('All files cleared');
+    
   }
 
   handleEditClick() {
@@ -351,7 +351,7 @@ export class PartnerViewComponent implements OnInit {
   }
 
   /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
-    console.log('Opening org structure dialog for type:', type);
+    
     
     const ref = this.dialogService.open(OrgStructureDialogComponent, {
       header: 'Select Organizational Structure',
@@ -380,7 +380,7 @@ export class PartnerViewComponent implements OnInit {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Selected organization:', result);
+        
         // Refresh the corresponding panel based on type
         switch (type) {
           case 'summary':
