@@ -28,5 +28,6 @@ public interface IUNOPSEntityConfigurationManager
     
     // Related entity field options
     Task<IEnumerable<RelatedFieldOptionDto>> GetRelatedEntityFieldsAsync(ClaimsPrincipal user, string entityType);
+    Task<IEnumerable<RelatedFieldOptionDto>> GetFieldOptionsForDataTypeAsync(ClaimsPrincipal user, string dataType, string contextEntityName);
     Task<IEnumerable<ListViewColumnDto>> GetEntityListViewConfigurationAsync(ClaimsPrincipal user, string entityName);
 } 

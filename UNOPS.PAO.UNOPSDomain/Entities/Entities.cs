@@ -10,4 +10,6 @@ public class Entities : ModifiableDeletableEntity
     public string EntityName { get; set; } = string.Empty;
     
     public bool IsActive { get; set; } = true;
+    
+    public bool CanManage { get; set; } = false;
 } 

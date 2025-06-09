@@ -92,6 +92,9 @@ public class CreateEntityFieldRequest
     
     [StringLength(200)]
     public string? FirstLetterFallbackField { get; set; }
+    
+    [StringLength(1000)]
+    public string? HelperText { get; set; }
 }
 
 public class UpdateEntityFieldRequest
@@ -152,6 +155,9 @@ public class UpdateEntityFieldRequest
     
     [StringLength(200)]
     public string? FirstLetterFallbackField { get; set; }
+    
+    [StringLength(1000)]
+    public string? HelperText { get; set; }
 }
 
 public class SaveEntityConfigurationRequest
@@ -220,6 +226,9 @@ public class EntityFieldConfigurationDto
     
     [StringLength(200)]
     public string? FirstLetterFallbackField { get; set; }
+    
+    [StringLength(1000)]
+    public string? HelperText { get; set; }
 }
 
 public class EntityConfigurationDetailsResponse
@@ -252,4 +261,5 @@ public class ListViewColumnDto
     public string? TemplatePattern { get; set; }
     public string? DisplayFieldPath { get; set; }
     public string? FirstLetterFallbackField { get; set; }
+    public string? HelperText { get; set; }
 } 

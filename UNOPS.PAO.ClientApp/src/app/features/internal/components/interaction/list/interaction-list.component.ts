@@ -13,6 +13,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 import { SearchField } from '../../../../../common/services/search-parser.service';
+import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 
 @Component({
   selector: 'app-interaction-list',
@@ -40,6 +41,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   route = inject(ActivatedRoute);
   permissionUtilityService = inject(PermissionUtilityService);
   feedbackDialogService = inject(FeedbackDialogService);
+  entityConfigurationService = inject(EntityConfigurationService);
   cdr = inject(ChangeDetectorRef);
 
   // Permission handling
@@ -47,38 +49,9 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
 
-  columns: ListViewColumn[] = [
-    {
-      field: 'type',
-      label: 'label.interaction.type',
-      sortable: true,
-      type: 'text'
-    },
-    /*{
-      field: 'contactName',
-      label: 'label.interaction.contactName',
-      sortable: false,
-      type: 'text'
-    },*/
-    {
-      field: 'date',
-      label: 'label.interaction.date',
-      sortable: true,
-      type: 'date'
-    },
-    {
-      field: 'subject',
-      label: 'label.interaction.subject',
-      sortable: false,
-      type: 'text'
-    },
-    {
-      field: 'description',
-      label: 'label.interaction.description',
-      sortable: false,
-      type: 'text'
-    }
-  ];
+  // Dynamic interaction columns loaded from API
+  columns = signal<ListViewColumn[]>([]);
+  columnsLoading = signal(true);
 
   // Configure listview behavior with computed permissions
   listviewConfig = computed<ListViewConfig>(() => ({
@@ -154,6 +127,110 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
+    
+    // Load dynamic columns from API
+    this.loadInteractionColumns();
+  }
+
+  private loadInteractionColumns() {
+    this.columnsLoading.set(true);
+    this.entityConfigurationService.getEntityListViewConfiguration('Interaction')
+      .subscribe({
+        next: (columns) => {
+          // Convert backend columns to frontend format and add template functions
+          const processedColumns = columns.map(col => this.processColumn(col));
+          this.columns.set(processedColumns);
+          this.columnsLoading.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Failed to load interaction columns:', error);
+          // Fallback to default columns if API fails
+          this.setFallbackColumns();
+          this.columnsLoading.set(false);
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private processColumn(column: any): ListViewColumn {
+    const processedColumn: ListViewColumn = {
+      field: column.field,
+      label: column.label,
+      type: column.type,
+      sortable: column.sortable,
+      width: column.width,
+      ellipsis: column.ellipsis,
+      helperText: column.helperText
+    };
+
+    // Handle nested field paths (fields with dots) by adding a template function
+    if (column.field && column.field.includes('.') && column.type !== 'template') {
+      // Keep the original field for identification but add a template function to access nested data
+      processedColumn.templateFn = (rowData: any) => {
+        const value = this.getNestedProperty(rowData, column.field);
+        return value !== undefined && value !== null ? String(value) : '';
+      };
+      // Change type to template since we're now using a template function
+      processedColumn.type = 'template';
+    }
+
+    // Add template function for template type columns
+    // Check for both camelCase (templatePattern) and PascalCase (TemplatePattern) from backend
+    const templatePattern = column.templatePattern || column.TemplatePattern;
+    if (column.type === 'template' && templatePattern) {
+      processedColumn.templateFn = this.createTemplateFunction(templatePattern);
+    }
+
+    return processedColumn;
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      return templatePattern.replace(/\{([^}]+)\}/g, (match, expression) => {
+        try {
+          const value = this.getNestedProperty(rowData, expression.trim());
+          return value !== null && value !== undefined ? String(value) : '';
+        } catch (error) {
+          console.warn(`Template expression error: ${expression}`, error);
+          return '';
+        }
+      });
+    };
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((current, prop) => current?.[prop], obj);
+  }
+
+  private setFallbackColumns() {
+    const fallbackColumns: ListViewColumn[] = [
+      {
+        field: 'type',
+        label: 'label.interaction.type',
+        sortable: true,
+        type: 'text'
+      },
+      {
+        field: 'date',
+        label: 'label.interaction.date',
+        sortable: true,
+        type: 'date'
+      },
+      {
+        field: 'subject',
+        label: 'label.interaction.subject',
+        sortable: false,
+        type: 'text'
+      },
+      {
+        field: 'description',
+        label: 'label.interaction.description',
+        sortable: false,
+        type: 'text'
+      }
+    ];
+    this.columns.set(fallbackColumns);
   }
 
   ngOnDestroy() {
@@ -200,6 +277,53 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     this.openInteractionModal();
   }
 
+  handleOnOpenRecordDetails(record: any) {
+    if (record && record.id !== undefined && record.id !== null) {
+      console.log('Navigating to interaction:', record.id);
+      this.router.navigate(['partnerships/interactions', record.id.toString()]);
+    } else {
+      console.error('Cannot navigate: record or record.id is undefined', record);
+    }
+  }
+
+  handleOnRecordDelete(record: Interaction) {
+    // Check if user has delete permission
+    if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to delete interactions',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+
+    this.interactionService.delete(record.id!).subscribe({
+      next: () => {
+        this.feedbackDialogService.showSuccessToast({ detail: 'Interaction deleted successfully!' });
+        // Refresh the listview
+        const listviewElement = document.querySelector('app-listview');
+        if (listviewElement) {
+          listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
+        }
+      },
+      error: (error: any) => {
+        this.feedbackDialogService.showErrorToast({
+          detail: 'Failed to delete interaction',
+          summary: 'Error'
+        });
+        console.error('Error deleting interaction:', error);
+      }
+    });
+  }
+
+  _handleOnRecordCreation(newRecordData: Interaction) {
+    if (newRecordData && newRecordData.id !== undefined && newRecordData.id !== null) {
+      console.log('Navigating to newly created interaction:', newRecordData.id);
+      this.router.navigate(['partnerships/interactions', newRecordData.id.toString()]);
+    } else {
+      console.error('Cannot navigate to created record: id is undefined', newRecordData);
+    }
+  }
+
   openEditInteractionModal(item: any): void {
     // Check if user has update permission
     if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {
@@ -209,43 +333,61 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
-    this.interactionService.getById(item.id).subscribe({
-      next: (response) => {
-        if (response.body) {
-          this.selectedInteraction.set(response.body);
-          this.openInteractionModal(response.body);
+
+    const ref = this.dialogService.open(InteractionModalComponent, {
+      header: 'Edit Interaction',
+      width: '90%',
+      height: '90%',
+      modal: true,
+      data: {
+        id: item.id,
+        initialData: item
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        console.log('Interaction updated:', result);
+        // Refresh the listview
+        const listviewElement = document.querySelector('app-listview');
+        if (listviewElement) {
+          listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
         }
-      },
-      error: (error) => console.error('Error fetching interaction details', error)
+      }
     });
   }
 
   private openInteractionModal(record?: Interaction): void {
-    const dialogRef = this.dialogService.open(InteractionModalComponent, {
-      header: this.translateService.instant(record?.id ? 'title.editInteraction' : 'title.newInteraction'),
-      width: '50rem',
-      breakpoints: { '1199px': '95vw' },
+    const ref = this.dialogService.open(InteractionModalComponent, {
+      header: record ? 'Edit Interaction' : 'New Interaction',
+      width: '90%',
+      height: '90%',
+      modal: true,
       data: {
-        record: record
+        id: record?.id,
+        initialData: record || {}
       }
     });
 
-    dialogRef.onClose.subscribe(result => {
+    ref.onClose.subscribe((result) => {
       if (result) {
-        this.listviewComponent?.refreshData();
+        console.log('Interaction saved:', result);
+        if (record) {
+          // Update existing interaction
+          const listviewElement = document.querySelector('app-listview');
+          if (listviewElement) {
+            listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
+          }
+        } else {
+          // New interaction created
+          this._handleOnRecordCreation(result);
+        }
       }
-      
-      // Navigate back to interactions list without the id param
-      this.router.navigate(['/interactions'], { replaceUrl: true });
     });
   }
 
-  /**
-   * Store the current search text when search is performed
-   * @param searchParams Current search parameters
-   */
   onSearchChange(searchParams: SearchParams) {
     this.currentSearchText = searchParams.generalSearch || '';
+    console.log('Search changed:', searchParams);
   }
 }

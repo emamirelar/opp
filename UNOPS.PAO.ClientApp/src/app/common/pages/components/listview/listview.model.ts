@@ -58,6 +58,12 @@ export interface ListViewColumn {
   templateFn?: (rowData: any) => string;
   
   /**
+   * Helper text to show in column header tooltip
+   * Displayed when user hovers over the help icon next to column header
+   */
+  helperText?: string;
+  
+  /**
    * Custom properties for enhanced column types
    */
   

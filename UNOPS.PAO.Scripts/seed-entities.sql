@@ -12,6 +12,7 @@ INSERT INTO public."Entities" (
     "Name", 
     "Status", 
     "IsActive", 
+    "CanManage",
     "CreatedBy", 
     "CreatedDate",
 	"LastModifiedBy",
@@ -20,10 +21,11 @@ INSERT INTO public."Entities" (
 	"DeletedBy",
 	"DeletedDate"
 ) VALUES 
-    ('Contact', 'Contact', 0, true, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('Partner', 'Partner', 0, true, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('Interaction', 'Interaction', 0, true, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('PartnerTree', 'PartnerTree', 0, true, 1, NOW(), 0, NULL, false, 0, NULL);
+    ('Contact', 'Contact', 0, true, true, 1, NOW(), 0, NULL, false, 0, NULL),
+    ('Partner', 'Partner', 0, true, true, 1, NOW(), 0, NULL, false, 0, NULL),
+    ('Interaction', 'Interaction', 0, true, true, 1, NOW(), 0, NULL, false, 0, NULL),
+    ('PartnerTree', 'PartnerTree', 0, true, true, 1, NOW(), 0, NULL, false, 0, NULL),
+    ('OrganizationHierarchy', 'OrganizationHierarchy', 0, true, false, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- Select to verify the data
 SELECT * FROM public."Entities" ORDER BY "Id"; 

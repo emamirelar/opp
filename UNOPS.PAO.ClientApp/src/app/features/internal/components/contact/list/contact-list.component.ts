@@ -189,8 +189,20 @@ export class ContactListComponent implements OnInit, OnDestroy {
       type: column.type,
       sortable: column.sortable,
       width: column.width,
-      ellipsis: column.ellipsis
+      ellipsis: column.ellipsis,
+      helperText: column.helperText
     };
+
+    // Handle nested field paths (fields with dots) by adding a template function
+    if (column.field && column.field.includes('.') && column.type !== 'template') {
+      // Keep the original field for identification but add a template function to access nested data
+      processedColumn.templateFn = (rowData: any) => {
+        const value = this.getNestedProperty(rowData, column.field);
+        return value !== undefined && value !== null ? String(value) : '';
+      };
+      // Change type to template since we're now using a template function
+      processedColumn.type = 'template';
+    }
 
     // Add template function for template type columns
     if (column.type === 'template' && column.templatePattern) {

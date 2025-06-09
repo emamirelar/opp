@@ -345,6 +345,32 @@ public class EntityConfigurationController : BaseController
     }
 
     /// <summary>
+    /// Get field options for a specific data type in the context of an entity
+    /// </summary>
+    [HttpGet(APIDictionary.EntityConfiguration + "/field-options/{dataType}/{contextEntityName}")]
+    public async Task<ActionResult> GetFieldOptionsForDataType(string dataType, string contextEntityName)
+    {
+        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "read");
+        if (permissionResult != null) return permissionResult;
+
+        try
+        {
+            var fields = await _manager.GetFieldOptionsForDataTypeAsync(User, dataType, contextEntityName);
+            return Ok(fields);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogWarning(ex, "Access denied for retrieving field options: {DataType} in {ContextEntity}", dataType, contextEntityName);
+            return Forbid();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving field options for data type: {DataType} in {ContextEntity}", dataType, contextEntityName);
+            return StatusCode(500, new { error = "Failed to retrieve field options" });
+        }
+    }
+
+    /// <summary>
     /// Get list view configuration for an entity (for dynamic column generation)
     /// </summary>
     [HttpGet(APIDictionary.EntityConfiguration + "/{entityName}/list-view")]

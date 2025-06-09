@@ -243,6 +243,45 @@
           <textarea pInputTextarea [(ngModel)]="editingField()!.description" rows="3" class="w-full" [disabled]="canViewOnly()"></textarea>
         </div>
 
+        <!-- Display Field Path -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Display Field Path</label>
+          <p-dropdown 
+            [options]="(getRelatedDisplayOptions(editingField()!.dataType) | async) ?? []"
+            [(ngModel)]="editingField()!.displayFieldPath"
+            (onChange)="onDisplayFieldPathChange(editingField()!.id, $event.value)"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select field path"
+            styleClass="w-full"
+            [disabled]="canViewOnly()"
+            [showClear]="true">
+          </p-dropdown>
+          <small class="text-gray-500 mt-1 block">Choose which field to display in list views</small>
+        </div>
+
+        <!-- Column Type -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Column Type</label>
+          <p-dropdown 
+            [options]="getColumnTypeOptions()" 
+            [(ngModel)]="editingField()!.listViewType"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select column type"
+            styleClass="w-full"
+            [disabled]="canViewOnly()">
+          </p-dropdown>
+          <small class="text-gray-500 mt-1 block">Type of display for this field in list views</small>
+        </div>
+
+        <!-- Helper Text -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Helper Text</label>
+          <textarea pInputTextarea [(ngModel)]="editingField()!.helperText" rows="2" class="w-full" placeholder="Optional helper text to guide users..." [disabled]="canViewOnly()"></textarea>
+          <small class="text-gray-500 mt-1 block">Provide additional guidance to help users complete this field</small>
+        </div>
+
         <!-- Flags -->
         <div class="space-y-2">
           <div class="flex items-center">
@@ -289,23 +328,6 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Width</label>
           <input type="text" pInputText [(ngModel)]="editingField()!.listViewWidth" placeholder="auto" class="w-full" [disabled]="canViewOnly()">
-        </div>
-
-        <!-- Display Field Path -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Display Field Path</label>
-          <p-dropdown 
-            [options]="(getRelatedDisplayOptions(editingField()!.dataType) | async) ?? []"
-            [(ngModel)]="editingField()!.displayFieldPath"
-            (onChange)="onDisplayFieldPathChange(editingField()!.id, $event.value)"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Select field path"
-            styleClass="w-full"
-            [disabled]="canViewOnly()"
-            [showClear]="true">
-          </p-dropdown>
-          <small class="text-gray-500 mt-1 block">Choose which field to display in list views</small>
         </div>
 
         <!-- Template Pattern (for template type) -->

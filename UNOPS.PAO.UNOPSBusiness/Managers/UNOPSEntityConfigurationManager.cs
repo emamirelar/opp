@@ -28,7 +28,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     public async Task<IEnumerable<Entities>> GetAllEntitiesAsync()
     {
         return await _context.Entities
-            .Where(e => e.IsActive && !e.IsDeleted)
+            .Where(e => e.IsActive && !e.IsDeleted && e.CanManage)
             .OrderBy(e => e.EntityName)
             .ToListAsync();
     }
@@ -221,6 +221,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             ListViewEllipsis = request.ListViewEllipsis ?? false,
             ListViewSortable = request.ListViewSortable ?? true,
             FirstLetterFallbackField = request.FirstLetterFallbackField,
+            HelperText = request.HelperText,
             Name = request.FieldName,
             Status = Domain.Entities.EntityStatus.Active
         };
@@ -278,6 +279,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         field.ListViewEllipsis = request.ListViewEllipsis ?? false;
         field.ListViewSortable = request.ListViewSortable ?? true;
         field.FirstLetterFallbackField = request.FirstLetterFallbackField;
+        field.HelperText = request.HelperText;
         field.Name = request.FieldName;
 
         // Set audit data
@@ -357,7 +359,8 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                     ListViewWidth = f.ListViewWidth,
                     ListViewEllipsis = f.ListViewEllipsis,
                     ListViewSortable = f.ListViewSortable,
-                    FirstLetterFallbackField = f.FirstLetterFallbackField
+                    FirstLetterFallbackField = f.FirstLetterFallbackField,
+                    HelperText = f.HelperText
                 })
                 .ToList()
         };
@@ -439,6 +442,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                     existingField.ListViewEllipsis = fieldDto.ListViewEllipsis ?? false;
                     existingField.ListViewSortable = fieldDto.ListViewSortable ?? true;
                     existingField.FirstLetterFallbackField = fieldDto.FirstLetterFallbackField;
+                    existingField.HelperText = fieldDto.HelperText;
                     existingField.Name = fieldDto.FieldName;
                     existingField.SetUpdateAuditData(userId);
                 }
@@ -470,6 +474,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                     ListViewEllipsis = fieldDto.ListViewEllipsis ?? false,
                     ListViewSortable = fieldDto.ListViewSortable ?? true,
                     FirstLetterFallbackField = fieldDto.FirstLetterFallbackField,
+                    HelperText = fieldDto.HelperText,
                     Name = fieldDto.FieldName,
                     Status = Domain.Entities.EntityStatus.Active
                 };
@@ -520,6 +525,53 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         return basicFields.Concat(templateFields);
     }
 
+    /// <summary>
+    /// Get field options for a data type, considering the actual property name in the context entity
+    /// </summary>
+    public async Task<IEnumerable<RelatedFieldOptionDto>> GetFieldOptionsForDataTypeAsync(ClaimsPrincipal user, string dataType, string contextEntityName)
+    {
+        await EnsurePermissionAsync(user, "EntityManager", "read");
+        
+        // Map data type to actual entity property name based on context
+        var propertyName = GetPropertyNameForDataType(dataType, contextEntityName);
+        
+        // Get the target entity type (remove array notation if present)
+        var targetEntityType = dataType.Replace("[]", "");
+        
+        // Get fields for the target entity type
+        var fieldOptions = await GetRelatedEntityFieldsAsync(user, targetEntityType);
+        
+        // Update field paths to use the actual property name
+        return fieldOptions.Select(option => new RelatedFieldOptionDto
+        {
+            Value = option.Value,
+            Label = option.Label,
+            IsTemplate = option.IsTemplate,
+            TemplatePattern = option.TemplatePattern,
+            FieldPath = propertyName != null 
+                ? option.FieldPath?.Replace($"{targetEntityType.ToLowerInvariant()}.", $"{propertyName}.") 
+                : option.FieldPath
+        });
+    }
+
+    /// <summary>
+    /// Map data type to actual property name in the context entity
+    /// </summary>
+    private string GetPropertyNameForDataType(string dataType, string contextEntityName)
+    {
+        var baseDataType = dataType.Replace("[]", "");
+        
+        return (contextEntityName.ToLowerInvariant(), baseDataType.ToLowerInvariant()) switch
+        {
+            ("partner", "organizationhierarchy") => "partnerOffice",
+            ("partner", "partnertree") => "partnerGroup",
+            ("contact", "partner") => "partner",
+            ("interaction", "contact") => "contact",
+            ("interaction", "partner") => "partner",
+            _ => baseDataType.ToLowerInvariant()
+        };
+    }
+
     private bool IsDisplayableDataType(string dataType)
     {
         var displayableTypes = new[] { "string", "int", "datetime", "boolean", "enum" };
@@ -548,7 +600,8 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             },
             "organizationhierarchy" => new[]
             {
-                new RelatedFieldOptionDto { Value = "name,code", Label = "Name (Code)", IsTemplate = true, TemplatePattern = "{name} ({code})", FieldPath = "organizationHierarchy.name,organizationHierarchy.code" }
+                new RelatedFieldOptionDto { Value = "name,code", Label = "Name (Code)", IsTemplate = true, TemplatePattern = "{name} ({code})", FieldPath = "organizationHierarchy.name,organizationHierarchy.code" },
+                new RelatedFieldOptionDto { Value = "code,description", Label = "Code - Description", IsTemplate = true, TemplatePattern = "{code} - {description}", FieldPath = "organizationHierarchy.code,organizationHierarchy.description" }
             },
             "interaction" => new[]
             {
@@ -600,7 +653,8 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                 Ellipsis = f.ListViewEllipsis ?? false,
                 TemplatePattern = f.DisplayTemplate,
                 DisplayFieldPath = f.DisplayFieldPath,
-                FirstLetterFallbackField = f.FirstLetterFallbackField
+                FirstLetterFallbackField = f.FirstLetterFallbackField,
+                HelperText = f.HelperText
             })
             .ToList();
     }

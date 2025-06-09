@@ -146,6 +146,16 @@ export class EntityManagerComponent implements OnInit {
     { label: 'String[]', value: 'string[]' }
   ];
 
+  // Column type options for dropdown
+  getColumnTypeOptions() {
+    return [
+      { label: 'Text', value: 'text' },
+      { label: 'Avatar', value: 'avatar' },
+      { label: 'Template', value: 'template' },
+      { label: 'Multiple Avatars', value: 'multiple-avatars' }
+    ];
+  }
+
   // Computed values
   hasAccessToManage = computed(() => this.permissions().canUpdate);
   canViewOnly = computed(() => this.permissions().canRead && !this.permissions().canUpdate);
@@ -484,17 +494,18 @@ export class EntityManagerComponent implements OnInit {
 
   // Helper method to get dropdown options for display field path (for ALL field types)
   getRelatedDisplayOptions(dataType: string): Observable<any[]> {
-    if (this.isRelationshipField(dataType)) {
-      const baseEntityType = dataType.replace('[]', '');
-      return this.getEntityFieldOptions(baseEntityType);
-    }
-    
     const currentEntityName = this.selectedEntityName();
-    if (currentEntityName) {
+    if (!currentEntityName) {
+      return of([]);
+    }
+
+    if (this.isRelationshipField(dataType)) {
+      // For relationship fields, use the context-aware method
+      return this.getEntityFieldOptionsForDataType(dataType, currentEntityName);
+    } else {
+      // For simple fields, use the current entity's fields
       return this.getEntityFieldOptions(currentEntityName, true);
     }
-    
-    return of([]);
   }
 
   // Get field options for a specific entity
@@ -515,6 +526,27 @@ export class EntityManagerComponent implements OnInit {
           value: fieldPath
         };
       })),
+      catchError(() => of([])),
+      startWith([]),
+      shareReplay(1)
+    );
+    
+    this.relatedFieldsCache.set(cacheKey, options$);
+    return options$;
+  }
+
+  // Get field options for a specific data type in context of an entity
+  private getEntityFieldOptionsForDataType(dataType: string, contextEntityName: string): Observable<any[]> {
+    const cacheKey = `datatype_${dataType}_${contextEntityName}`;
+    if (this.relatedFieldsCache.has(cacheKey)) {
+      return this.relatedFieldsCache.get(cacheKey)! as Observable<any[]>;
+    }
+    
+    const options$ = this.entityConfigService.getFieldOptionsForDataType(dataType, contextEntityName).pipe(
+      map(options => options.map(opt => ({
+        label: `${dataType} - ${opt.label}`,
+        value: opt.fieldPath
+      }))),
       catchError(() => of([])),
       startWith([]),
       shareReplay(1)
@@ -844,7 +876,8 @@ export class EntityManagerComponent implements OnInit {
       listViewWidth: f.listViewWidth,
       listViewEllipsis: f.listViewEllipsis || false,
       listViewSortable: f.listViewSortable !== false,
-      firstLetterFallbackField: f.firstLetterFallbackField
+      firstLetterFallbackField: f.firstLetterFallbackField,
+      helperText: f.helperText
     }));
 
     // Prepare the field for API request
@@ -868,7 +901,8 @@ export class EntityManagerComponent implements OnInit {
       listViewWidth: field.listViewWidth,
       listViewEllipsis: field.listViewEllipsis || false,
       listViewSortable: field.listViewSortable !== false,
-      firstLetterFallbackField: field.firstLetterFallbackField
+      firstLetterFallbackField: field.firstLetterFallbackField,
+      helperText: field.helperText
     };
 
     // Find and update existing field or add new one

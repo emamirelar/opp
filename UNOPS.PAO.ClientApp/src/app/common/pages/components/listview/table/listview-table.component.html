@@ -22,11 +22,29 @@
       @for (column of columns; track column) {
         @if (column.sortable && config.enableSorting) {
           <th [pSortableColumn]="column.field" [ngStyle]="{'width': column.width || 'auto'}">
-            {{ column.label | translate }}
+            <div class="flex items-center gap-1">
+              <span>{{ column.label | translate }}</span>
+              @if (column.helperText) {
+                <i class="pi pi-question-circle text-xs text-gray-400 cursor-help" 
+                   [pTooltip]="column.helperText" 
+                   tooltipPosition="top"
+                   [tooltipOptions]="{showDelay: 300, hideDelay: 100}"></i>
+              }
+            </div>
             <p-sortIcon [field]="column.field"></p-sortIcon>
           </th>
         } @else {
-          <th [ngStyle]="{'width': column.width || 'auto'}">{{ column.label | translate }}</th>
+          <th [ngStyle]="{'width': column.width || 'auto'}">
+            <div class="flex items-center gap-1">
+              <span>{{ column.label | translate }}</span>
+              @if (column.helperText) {
+                <i class="pi pi-question-circle text-xs text-gray-400 cursor-help" 
+                   [pTooltip]="column.helperText" 
+                   tooltipPosition="top"
+                   [tooltipOptions]="{showDelay: 300, hideDelay: 100}"></i>
+              }
+            </div>
+          </th>
         }
       }
       <!-- Add actions column header if actions template exists -->

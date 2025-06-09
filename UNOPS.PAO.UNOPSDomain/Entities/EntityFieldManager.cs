@@ -89,6 +89,12 @@ public class EntityFieldManager : ModifiableDeletableEntity
     [StringLength(200)]
     public string? FirstLetterFallbackField { get; set; }
     
+    /// <summary>
+    /// Helper text to assist users with field completion. Displayed as additional guidance in forms.
+    /// </summary>
+    [StringLength(1000)]
+    public string? HelperText { get; set; }
+    
     // Foreign key to EntityManager
     public int EntityManagerId { get; set; }
     

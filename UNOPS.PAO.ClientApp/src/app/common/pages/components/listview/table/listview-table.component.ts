@@ -5,6 +5,7 @@ import { TableModule } from 'primeng/table';
 import { DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { AvatarModule } from 'primeng/avatar';
 import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { ListViewColumn, ListViewConfig } from '../listview.model';
 
@@ -19,7 +20,8 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
     DecimalPipe,
     CurrencyPipe,
     AvatarModule,
-    TagModule
+    TagModule,
+    TooltipModule
   ],
   templateUrl: './listview-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

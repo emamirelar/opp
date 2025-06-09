@@ -30,6 +30,7 @@ export interface EntityFieldConfigurationDto {
   listViewEllipsis?: boolean; // Whether to show ellipsis for long text
   listViewSortable?: boolean; // Whether the column is sortable
   firstLetterFallbackField?: string; // Field for avatar initials fallback
+  helperText?: string; // Helper text to assist users with field completion
 }
 
 export interface EntityConfigurationDetailsResponse {
@@ -67,6 +68,7 @@ export interface UpdateEntityFieldRequest {
   listViewWidth?: string;
   listViewEllipsis?: boolean;
   listViewSortable?: boolean;
+  helperText?: string;
 }
 
 export interface SaveEntityConfigurationRequest {
@@ -101,6 +103,7 @@ export interface ListViewColumn {
   templatePattern?: string; // Template pattern for 'template' type
   displayFieldPath?: string; // Field path for accessing data
   firstLetterFallbackField?: string; // Field for avatar initials fallback
+  helperText?: string;     // Helper text to show in column header tooltip
 }
 
 @Injectable({
@@ -191,6 +194,15 @@ export class EntityConfigurationService {
    */
   getRelatedEntityFields(entityType: string): Observable<RelatedFieldOption[]> {
     return this.http.get<RelatedFieldOption[]>(`${this.apiUrl}/related-fields/${encodeURIComponent(entityType)}`, {
+      headers: this.getHeaders()
+    });
+  }
+
+  /**
+   * Get field options for a specific data type in the context of an entity
+   */
+  getFieldOptionsForDataType(dataType: string, contextEntityName: string): Observable<RelatedFieldOption[]> {
+    return this.http.get<RelatedFieldOption[]>(`${this.apiUrl}/field-options/${encodeURIComponent(dataType)}/${encodeURIComponent(contextEntityName)}`, {
       headers: this.getHeaders()
     });
   }
