@@ -13,7 +13,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            /*migrationBuilder.CreateTable(
+            migrationBuilder.CreateTable(
                 name: "Entities",
                 schema: "public",
                 columns: table => new
@@ -132,7 +132,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 schema: "public",
                 table: "EntityManagers",
                 column: "EntityName",
-                unique: true);*/
+                unique: true);
 
             // Execute SQL scripts for seeding data using the utility class
             MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
