@@ -28,6 +28,7 @@ import { ConfirmationService } from 'primeng/api';
 import { AiPromptService, AiPrompt, AiPromptFilterRequest, GeminiModel, GenerationConfig, ToolsConfig, TestPromptRequest, TestPromptResponse } from '../../services/ai-prompt.service';
 import { PaginationResponse } from '../../../../common/models/pagination-response.model';
 import { PermissionService, EntityPermissions } from '../../../../essentials/services/permission.service';
+import { ConfigurationService } from '../../../../essentials/services/configuration.service';
 
 interface LocalAiPromptFilterRequest {
   pageIndex: number;
@@ -47,11 +48,32 @@ interface TestResult {
   error?: string;
 }
 
+interface ConfigurationData {
+  projectId?: string;
+  location?: string;
+  defaultModel?: string;
+}
+
 // Custom validator for prompt data
 function promptDataValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
   if (value && !value.includes('{promptData}')) {
     return { promptDataRequired: true };
+  }
+  return null;
+}
+
+// Custom validator for underscore-separated type field
+function underscoreValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  if (!value) return null;
+  
+  // Check if the value contains only lowercase letters, numbers, and underscores
+  // and doesn't start or end with underscore
+  const underscorePattern = /^[a-z0-9]+(_[a-z0-9]+)*$/;
+  
+  if (!underscorePattern.test(value)) {
+    return { underscoreFormat: true };
   }
   return null;
 }
@@ -89,6 +111,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   // Injected services
   private router = inject(Router);
   private permissionService = inject(PermissionService);
+  private configurationService = inject(ConfigurationService);
   private cdr = inject(ChangeDetectorRef);
 
   // Signals for reactive state
@@ -103,6 +126,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   geminiModels = signal<GeminiModel[]>([]);
   testResults = signal<TestResult | null>(null);
   activeTab = signal<'preview' | 'raw'>('preview');
+  configurationData = signal<ConfigurationData>({});
+  showCreateBanner = signal(false);
   
   // Table state management for proper pagination, sorting, and search
   private currentTableState: any = {
@@ -166,6 +191,13 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     return 8192;
   });
 
+  // Filter out preview models (only include production models)
+  productionGeminiModels = computed(() => {
+    return this.geminiModels().filter(model => 
+      !model.label.toLowerCase().includes('preview')
+    );
+  });
+
   // Form
   promptForm: FormGroup;
   
@@ -182,7 +214,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Only load permissions and Gemini models - table will load data via onLazyLoad
+    // Load configuration, permissions and models
+    this.loadConfiguration();
     this.loadPermissions();
     this.loadGeminiModels();
   }
@@ -194,6 +227,26 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
       this.searchTimeout = null;
+    }
+  }
+
+  private loadConfiguration(): void {
+    const config = this.configurationService.getConfig();
+    if (config) {
+      this.configurationData.set({
+        projectId: config.projectId,
+        location: config.location,
+        defaultModel: config.defaultModel
+      });
+      
+      // Recreate form with configuration defaults if form is already created
+      if (this.promptForm) {
+        this.promptForm = this.createForm();
+        this.cdr.detectChanges();
+      }
+    } else {
+      // Set empty configuration data as fallback
+      this.configurationData.set({});
     }
   }
 
@@ -236,99 +289,6 @@ export class AiPromptComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         }
       });
-  }
-
-  private createForm(): FormGroup {
-    const defaultContentConfig = JSON.stringify({
-      "role": "user",
-      "parts": [
-        {
-          "text": "{promptData}"
-        }
-      ]
-    });
-
-    const form = this.fb.group({
-      type: ['', Validators.required],
-      promptFunction: [''], // Not required, but when provided enables entity ID mode
-      prompt: ['', [Validators.required, promptDataValidator]],
-      description: [''], // Add description field
-      contentConfig: [defaultContentConfig], // Hidden field with default value
-      project: ['', Validators.required],
-      location: ['', Validators.required],
-      model: ['', Validators.required],
-      testMode: ['testData', Validators.required], // Default to test data mode
-      entityId: [''], // Validation will be conditional
-      testData: [''], // Validation will be conditional
-      // Generation config controls - with proper default values
-      temperature: [1, [Validators.min(0), Validators.max(2)]],
-      topP: [0.2, [Validators.min(0), Validators.max(1)]],
-      maxOutputTokens: [8192, [Validators.min(0), Validators.max(8192)]],
-      // Tools config controls
-      googleSearch: [false],
-      // Advanced settings
-      safetySettings: ['']
-    });
-
-    // Watch for promptFunction changes to auto-switch test mode
-    const promptFunctionSub = form.get('promptFunction')?.valueChanges.subscribe(value => {
-      const hasFunction = !!(value && value.trim().length > 0);
-      
-      // Update the signal for reactivity
-      this.promptFunctionValue.set(value || '');
-      
-      if (!hasFunction) {
-        // Switch to test data mode when no function is available
-        form.get('testMode')?.setValue('testData');
-      }
-      // Trigger change detection for computed signals
-      this.cdr.detectChanges();
-    });
-
-    // Watch for model changes to update location and max tokens
-    const modelSub = form.get('model')?.valueChanges.subscribe(modelValue => {
-      if (modelValue) {
-        // Update the signal for reactive computation
-        this.selectedModelValue.set(modelValue);
-        
-        const selectedModel = this.geminiModels().find(m => m.value === modelValue);
-        if (selectedModel) {
-          // Auto-set location based on model
-          form.get('location')?.setValue(selectedModel.location);
-          
-          // Update max tokens validation and value
-          const maxTokensControl = form.get('maxOutputTokens');
-          if (maxTokensControl) {
-            // Update validators with new max value
-            maxTokensControl.setValidators([
-              Validators.min(0), 
-              Validators.max(selectedModel.maxTokens)
-            ]);
-            maxTokensControl.updateValueAndValidity();
-            
-            maxTokensControl.setValue(selectedModel.maxTokens);
-            
-            // Force trigger change detection and update computed signals
-            setTimeout(() => {
-              this.cdr.detectChanges();
-            }, 0);
-          }
-        }
-      } else {
-        // Reset signal when no model selected
-        this.selectedModelValue.set('');
-      }
-    });
-
-    // Add to subscriptions for cleanup
-    if (promptFunctionSub) {
-      this.subscriptions.add(promptFunctionSub);
-    }
-    if (modelSub) {
-      this.subscriptions.add(modelSub);
-    }
-
-    return form;
   }
 
   private loadGeminiModels(): void {
@@ -463,6 +423,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
     this.currentPrompt.set(prompt || null);
     
+    // Show banner for new prompt creation
+    this.showCreateBanner.set(!prompt);
+    
     const defaultContentConfig = JSON.stringify({
       "role": "user",
       "parts": [
@@ -518,8 +481,16 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       // Update the signals for reactivity
       this.promptFunctionValue.set(prompt.promptFunction || '');
       this.selectedModelValue.set(prompt.model || '');
+      
+      // Disable type field on edit
+      this.promptForm.get('type')?.disable();
     } else {
+      // Reset form for new prompt
       this.promptForm.reset();
+      
+      // Get configuration data for defaults
+      const config = this.configurationData();
+      
       // Set default values for new prompt
       this.promptForm.patchValue({
         contentConfig: defaultContentConfig,
@@ -527,13 +498,23 @@ export class AiPromptComponent implements OnInit, OnDestroy {
         temperature: 1,
         topP: 0.2,
         maxOutputTokens: 8192,
-        googleSearch: false
+        googleSearch: false,
+        project: config?.projectId || '',
+        location: config?.location || '',
+        model: config?.defaultModel || ''
       });
       
       // Reset the signal for new prompts
       this.promptFunctionValue.set('');
       this.selectedModelValue.set('');
+      
+      // Enable type field for new prompt
+      this.promptForm.get('type')?.enable();
     }
+    
+    // Always disable project and location fields (they should never be editable)
+    this.promptForm.get('project')?.disable();
+    this.promptForm.get('location')?.disable();
     
     // Clear test results and reset active tab
     this.testResults.set(null);
@@ -555,6 +536,13 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   closeDialog(): void {
     this.displayDialog.set(false);
     this.currentPrompt.set(null);
+    this.showCreateBanner.set(false);
+    
+    // Re-enable all form controls before reset
+    this.promptForm.get('type')?.enable();
+    this.promptForm.get('project')?.enable();
+    this.promptForm.get('location')?.enable();
+    
     this.promptForm.reset();
     
     // Clear test-related data
@@ -564,6 +552,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     // Reset the prompt function signal
     this.promptFunctionValue.set('');
     this.selectedModelValue.set('');
+    
+    // Get configuration data for defaults
+    const config = this.configurationData();
     
     // Reset form with default values including test mode
     const defaultContentConfig = JSON.stringify({
@@ -581,9 +572,9 @@ export class AiPromptComponent implements OnInit, OnDestroy {
       prompt: '',
       description: '',
       contentConfig: defaultContentConfig,
-      project: '',
-      location: '',
-      model: '',
+      project: config?.projectId || '',
+      location: config?.location || '',
+      model: config?.defaultModel || '',
       testMode: 'testData', // Reset to test data mode by default
       entityId: '',
       testData: '',
@@ -606,6 +597,11 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
     this.saving.set(true);
     const formValue = this.promptForm.value;
+    
+    // Get raw values for disabled fields (project and location)
+    const projectValue = this.promptForm.get('project')?.value;
+    const locationValue = this.promptForm.get('location')?.value;
+    const typeValue = this.promptForm.get('type')?.value;
 
     // Build generation config
     const generationConfig: GenerationConfig = {
@@ -622,16 +618,17 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
     const promptData: AiPrompt = {
       id: this.currentPrompt()?.id || 0,
-      type: formValue.type,
+      type: typeValue,
       promptFunction: formValue.promptFunction,
       prompt: formValue.prompt,
       description: formValue.description,
+      name: this.currentPrompt()?.name || typeValue, // Preserve original name for existing prompts, use type for new ones
       generationConfig: JSON.stringify(generationConfig),
       contentConfig: formValue.contentConfig,
       toolsConfig: JSON.stringify(toolsConfigArray),
       safetySettings: formValue.safetySettings,
-      project: formValue.project,
-      location: formValue.location,
+      project: projectValue,
+      location: locationValue,
       model: formValue.model,
       createdAt: this.currentPrompt()?.createdAt || new Date()
     };
@@ -879,5 +876,100 @@ Be extra cautious while deleting as there could be several dependencies within t
     }
     
     return false;
+  }
+
+  private createForm(): FormGroup {
+    const defaultContentConfig = JSON.stringify({
+      "role": "user",
+      "parts": [
+        {
+          "text": "{promptData}"
+        }
+      ]
+    });
+
+    const config = this.configurationData();
+    
+    const form = this.fb.group({
+      type: ['', [Validators.required, underscoreValidator]],
+      promptFunction: [''], // Not required, but when provided enables entity ID mode
+      prompt: ['', [Validators.required, promptDataValidator]],
+      description: [''], // Add description field
+      contentConfig: [defaultContentConfig], // Hidden field with default value
+      project: [config.projectId || '', Validators.required],
+      location: [config.location || '', Validators.required],
+      model: [config.defaultModel || '', Validators.required],
+      testMode: ['testData', Validators.required], // Default to test data mode
+      entityId: [''], // Validation will be conditional
+      testData: [''], // Validation will be conditional
+      // Generation config controls - with proper default values
+      temperature: [1, [Validators.min(0), Validators.max(2)]],
+      topP: [0.2, [Validators.min(0), Validators.max(1)]],
+      maxOutputTokens: [8192, [Validators.min(0), Validators.max(8192)]],
+      // Tools config controls
+      googleSearch: [false],
+      // Advanced settings
+      safetySettings: ['']
+    });
+
+    // Watch for promptFunction changes to auto-switch test mode
+    const promptFunctionSub = form.get('promptFunction')?.valueChanges.subscribe(value => {
+      const hasFunction = !!(value && value.trim().length > 0);
+      
+      // Update the signal for reactivity
+      this.promptFunctionValue.set(value || '');
+      
+      if (!hasFunction) {
+        // Switch to test data mode when no function is available
+        form.get('testMode')?.setValue('testData');
+      }
+      // Trigger change detection for computed signals
+      this.cdr.detectChanges();
+    });
+
+    // Watch for model changes to update location and max tokens
+    const modelSub = form.get('model')?.valueChanges.subscribe(modelValue => {
+      if (modelValue) {
+        // Update the signal for reactive computation
+        this.selectedModelValue.set(modelValue);
+        
+        const selectedModel = this.geminiModels().find(m => m.value === modelValue);
+        if (selectedModel) {
+          // Auto-set location based on model
+          form.get('location')?.setValue(selectedModel.location);
+          
+          // Update max tokens validation and value
+          const maxTokensControl = form.get('maxOutputTokens');
+          if (maxTokensControl) {
+            // Update validators with new max value
+            maxTokensControl.setValidators([
+              Validators.min(0), 
+              Validators.max(selectedModel.maxTokens)
+            ]);
+            maxTokensControl.updateValueAndValidity();
+            
+            maxTokensControl.setValue(selectedModel.maxTokens);
+            
+            // Force trigger change detection and update computed signals
+            setTimeout(() => {
+              this.cdr.detectChanges();
+            }, 0);
+          }
+        }
+      } else {
+        // Reset signal when no model selected
+        this.selectedModelValue.set('');
+      }
+    });
+
+    // Add to subscriptions for cleanup
+    if (promptFunctionSub) {
+      this.subscriptions.add(promptFunctionSub);
+    }
+    if (modelSub) {
+      this.subscriptions.add(modelSub);
+    }
+
+    return form;
   }
 } 

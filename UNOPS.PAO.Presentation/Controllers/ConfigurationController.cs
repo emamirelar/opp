@@ -36,11 +36,16 @@ public class ConfigurationController : BaseController
         {
             var googleSettings = _configuration.GetSection("GoogleAuthSettings");
             var appConfig = _configuration.GetSection("AppConfig");
+            var aiSettings = _configuration.GetSection("AISettings");
+            
             return await Task.FromResult(new ConfigurationResponse()
             {
                 GoogleClientId = googleSettings.GetSection("clientId").Value,
                 GoogleApiKey = googleSettings.GetSection("apiKey").Value,
-                Environment = appConfig.GetSection("Environment").Value ?? _environment.EnvironmentName
+                Environment = appConfig.GetSection("Environment").Value ?? _environment.EnvironmentName,
+                ProjectId = aiSettings.GetSection("ProjectId").Value,
+                Location = aiSettings.GetSection("Location").Value,
+                DefaultModel = aiSettings.GetSection("GeminiModelName").Value
             });
         }).Result;
     }

@@ -43,7 +43,7 @@ import { providePrimeNG } from 'primeng/config';
 //  import Aura from '@primeng/themes/aura';
 import UnopsPreset from './common/themes/unops.preset';
 import { routes } from './app.routes';
-import { firstValueFrom } from 'rxjs';
+
 /********************************/
 const httpLoaderFactory: (http: HttpClient) => TranslateHttpLoader = (
   http: HttpClient,
@@ -71,19 +71,10 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }),
       withComponentInputBinding()
     ),
-    // Config loading initializer only - removed IAP check to prevent repeated calls
-    provideAppInitializer(async () => {
-      await inject(ConfigurationService).loadConfig();
-      
-      
-      // Also load permissions during initialization
-      try {
-        const permissionService = inject(PermissionService);
-        await firstValueFrom(permissionService.loadConfig());
-        
-      } catch (error) {
-        console.error('[DEBUG-INIT] Error loading permissions', error);
-      }
+    // Simple config loading initializer
+    provideAppInitializer(() => {
+      const configService = inject(ConfigurationService);
+      return configService.loadConfig();
     }),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient(
