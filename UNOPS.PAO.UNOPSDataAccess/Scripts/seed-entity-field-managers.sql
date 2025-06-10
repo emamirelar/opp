@@ -19,6 +19,7 @@ INSERT INTO public."EntityManagers" (
     "TableName", 
     "Description", 
     "IsActive", 
+    "EnableChangeLog",
     "Name", 
     "Status", 
     "CreatedBy", 
@@ -29,11 +30,11 @@ INSERT INTO public."EntityManagers" (
     "DeletedBy",
     "DeletedDate"
 ) VALUES 
-    ('Contact', 'Contacts', 'Individual contact persons associated with partners', true, 'Contact', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('Partner', 'Partners', 'Organizations and entities that work with UNOPS', true, 'Partner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('Interaction', 'Interactions', 'Communication and interaction records between UNOPS and partners/contacts', true, 'Interaction', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('PartnerTree', 'PartnerTrees', 'Hierarchical structure and classification of partners', true, 'PartnerTree', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    ('OrganizationHierarchy', 'OrganizationHierarchies', 'UNOPS organizational hierarchy and office structure', true, 'OrganizationHierarchy', 0, 1, NOW(), 0, NULL, false, 0, NULL);
+    ('Contact', 'Contacts', 'Individual contact persons associated with partners', true, false, 'Contact', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    ('Partner', 'Partners', 'Organizations and entities that work with UNOPS', true, false, 'Partner', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    ('Interaction', 'Interactions', 'Communication and interaction records between UNOPS and partners/contacts', true, false, 'Interaction', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    ('PartnerTree', 'PartnerTrees', 'Hierarchical structure and classification of partners', true, false, 'PartnerTree', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    ('OrganizationHierarchy', 'OrganizationHierarchies', 'UNOPS organizational hierarchy and office structure', true, false, 'OrganizationHierarchy', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
 -- ================================================================
 -- CONTACT ENTITY FIELDS (25 fields)

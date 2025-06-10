@@ -81,6 +81,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             TableName = request.TableName,
             Description = request.Description,
             IsActive = request.IsActive,
+            EnableChangeLog = request.EnableChangeLog,
             Name = request.EntityName,
             Status = Domain.Entities.EntityStatus.Active
         };
@@ -120,6 +121,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         entity.TableName = request.TableName;
         entity.Description = request.Description;
         entity.IsActive = request.IsActive;
+        entity.EnableChangeLog = request.EnableChangeLog;
         entity.Name = request.EntityName;
 
         // Set audit data
@@ -324,6 +326,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             {
                 EntityName = entityName,
                 IsActive = true,
+                EnableChangeLog = false,
                 Fields = new List<EntityFieldConfigurationDto>()
             };
         }
@@ -335,6 +338,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             TableName = entityConfig.TableName,
             Description = entityConfig.Description,
             IsActive = entityConfig.IsActive,
+            EnableChangeLog = entityConfig.EnableChangeLog,
             Fields = entityConfig.EntityFields
                 .OrderBy(f => f.DisplayOrder)
                 .ThenBy(f => f.FieldName)
@@ -481,6 +485,25 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                 
                 newField.SetCreateAuditData(userId);
                 _context.EntityFieldManagers.Add(newField);
+            }
+        }
+
+        // Ensure ListViewOrder values are sequential for list view fields
+        var listViewFields = request.Fields
+            .Where(f => f.ShowInListView)
+            .OrderBy(f => f.ListViewOrder ?? 0)
+            .ToList();
+
+        for (int i = 0; i < listViewFields.Count; i++)
+        {
+            var fieldDto = listViewFields[i];
+            var field = fieldDto.Id.HasValue 
+                ? entityConfig.EntityFields.FirstOrDefault(f => f.Id == fieldDto.Id.Value)
+                : _context.EntityFieldManagers.Local.FirstOrDefault(f => f.FieldName == fieldDto.FieldName && f.EntityManagerId == entityConfig.Id);
+            
+            if (field != null)
+            {
+                field.ListViewOrder = i + 1; // Ensure sequential ordering starting from 1
             }
         }
 

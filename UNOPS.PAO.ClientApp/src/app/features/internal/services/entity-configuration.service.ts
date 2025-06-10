@@ -39,14 +39,17 @@ export interface EntityConfigurationDetailsResponse {
   tableName: string;
   description?: string;
   isActive: boolean;
+  enableChangeLog: boolean;
   fields: EntityFieldConfigurationDto[];
 }
 
 export interface UpdateEntityConfigurationRequest {
+  id: number;
   entityName: string;
   tableName: string;
   description?: string;
   isActive: boolean;
+  enableChangeLog: boolean;
 }
 
 export interface UpdateEntityFieldRequest {
@@ -141,8 +144,8 @@ export class EntityConfigurationService {
   /**
    * Update entity configuration
    */
-  updateEntityConfiguration(entityName: string, request: UpdateEntityConfigurationRequest): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${encodeURIComponent(entityName)}`, request, {
+  updateEntityConfiguration(id: number, request: UpdateEntityConfigurationRequest): Observable<any> {
+    return this.http.put(`${this.apiUrl}/${id}`, request, {
       headers: this.getHeaders()
     });
   }

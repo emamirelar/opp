@@ -105,9 +105,13 @@ export class EntityManagerComponent implements OnInit {
   // Field editing state
   editingField = signal<EntityFieldConfigurationDto | null>(null);
 
+  // Entity configuration editing state
+  entityConfigForm = signal<UpdateEntityConfigurationRequest | null>(null);
+
   // Dialog states
   showFieldEditDialog = signal<boolean>(false);
   showListViewDialog = signal<boolean>(false);
+  showEntityConfigDialog = signal<boolean>(false);
 
   // Temporary state for list view management (doesn't affect main working fields until saved)
   tempListViewFields = signal<EntityFieldConfigurationDto[]>([]);
@@ -204,10 +208,12 @@ export class EntityManagerComponent implements OnInit {
 
   // Working copies for editing
   workingEntityConfig = signal<UpdateEntityConfigurationRequest>({
+    id: 0,
     entityName: '',
     tableName: '',
     description: '',
-    isActive: true
+    isActive: true,
+    enableChangeLog: false
   });
 
   workingFields = signal<EntityFieldConfigurationDto[]>([]);
@@ -225,6 +231,8 @@ export class EntityManagerComponent implements OnInit {
     this.showFieldEditPanel.set(false);
     this.showFieldEditDialog.set(false);
     this.showListViewDialog.set(false);
+    this.showEntityConfigDialog.set(false);
+    this.entityConfigForm.set(null);
   }
 
   private loadPermissions() {
@@ -303,10 +311,12 @@ export class EntityManagerComponent implements OnInit {
         this.originalEntityConfig.set(JSON.parse(JSON.stringify(config)));
         
         this.workingEntityConfig.set({
+          id: config.id!,
           entityName: config.entityName,
-          tableName: config.tableName,
+          tableName: config.tableName || '',
           description: config.description || '',
-          isActive: config.isActive
+          isActive: config.isActive,
+          enableChangeLog: config.enableChangeLog
         });
         
         const sortedFields = [...config.fields].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -816,7 +826,7 @@ export class EntityManagerComponent implements OnInit {
     this.listViewHasChanges.set(true);
   }
 
-  // Save list view changes to working fields
+  // Save list view changes to working fields and persist to database
   saveListViewChanges() {
     const allFields = [...this.workingFields()];
     const tempListView = this.tempListViewFields();
@@ -834,17 +844,71 @@ export class EntityManagerComponent implements OnInit {
       }
     });
     
+    // Update working fields first
     this.workingFields.set(allFields);
-    this.hasUnsavedChanges.set(true);
-    this.listViewHasChanges.set(false);
     
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'List view configuration saved successfully'
+    // Now persist the changes to the database
+    this.saving.set(true);
+    const entityName = this.selectedEntityName();
+    
+    // Prepare fields for API call
+    const fieldsForApi = allFields.map((f, index) => ({
+      id: f.id,
+      fieldName: f.fieldName,
+      dataType: f.dataType,
+      description: f.description,
+      isRequired: f.isRequired,
+      isActive: f.isActive,
+      defaultValue: f.defaultValue,
+      maxLength: f.maxLength,
+      displayOrder: index + 1,
+      showInListView: f.showInListView,
+      listViewOrder: f.showInListView ? f.listViewOrder : undefined,
+      relatedDisplayProperty: f.relatedDisplayProperty,
+      displayFieldPath: f.displayFieldPath,
+      displayTemplate: f.displayTemplate,
+      listViewLabel: f.listViewLabel,
+      listViewType: f.listViewType || 'text',
+      listViewWidth: f.listViewWidth,
+      listViewEllipsis: f.listViewEllipsis || false,
+      listViewSortable: f.listViewSortable !== false,
+      firstLetterFallbackField: f.firstLetterFallbackField,
+      helperText: f.helperText
+    }));
+
+    const saveRequest = {
+      entityName: entityName,
+      description: this.workingEntityConfig().description,
+      fields: fieldsForApi
+    };
+
+    this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.hasUnsavedChanges.set(false);
+        this.listViewHasChanges.set(false);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'List view configuration saved successfully'
+        });
+        
+        this.closeListViewDialog();
+        
+        // Reload the configuration to get updated data
+        this.loadEntityConfiguration(entityName);
+      },
+      error: (error) => {
+        console.error('Error saving list view changes:', error);
+        this.saving.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to save list view changes'
+        });
+      }
     });
-    
-    this.closeListViewDialog();
   }
 
   // Save field changes directly to API
@@ -984,6 +1048,80 @@ export class EntityManagerComponent implements OnInit {
           severity: 'success',
           summary: 'Success',
           detail: 'Field deleted successfully'
+        });
+      }
+    });
+  }
+
+  // Entity Configuration Dialog Methods
+  openEntityConfigurationDialog() {
+    const currentConfig = this.workingEntityConfig();
+    if (currentConfig) {
+      this.entityConfigForm.set({
+        id: currentConfig.id,
+        entityName: currentConfig.entityName,
+        tableName: currentConfig.tableName,
+        description: currentConfig.description,
+        isActive: currentConfig.isActive,
+        enableChangeLog: currentConfig.enableChangeLog
+      });
+      this.showEntityConfigDialog.set(true);
+    }
+  }
+
+  closeEntityConfigurationDialog() {
+    this.showEntityConfigDialog.set(false);
+    this.entityConfigForm.set(null);
+  }
+
+  isEntityConfigValid(): boolean {
+    const form = this.entityConfigForm();
+    if (!form) return false;
+    
+    return !!(form.entityName?.trim() && form.tableName?.trim());
+  }
+
+  saveEntityConfiguration() {
+    const form = this.entityConfigForm();
+    if (!form || !this.isEntityConfigValid()) return;
+
+    this.saving.set(true);
+
+    this.entityConfigService.updateEntityConfiguration(form.id, form).subscribe({
+      next: (response) => {
+        // Update the working config
+        this.workingEntityConfig.set(form);
+        
+        // Update the current entity config
+        const currentConfig = this.currentEntityConfig();
+        if (currentConfig) {
+          const updatedConfig = {
+            ...currentConfig,
+            tableName: form.tableName,
+            description: form.description,
+            isActive: form.isActive,
+            enableChangeLog: form.enableChangeLog
+          };
+          this.currentEntityConfig.set(updatedConfig);
+        }
+
+        this.saving.set(false);
+        this.showEntityConfigDialog.set(false);
+        this.entityConfigForm.set(null);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Entity configuration updated successfully'
+        });
+      },
+      error: (error) => {
+        console.error('Error updating entity configuration:', error);
+        this.saving.set(false);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to update entity configuration'
         });
       }
     });
