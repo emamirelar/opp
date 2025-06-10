@@ -6,16 +6,17 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UNOPS.PAO.UNOPSDataAccess.Utilities
 {
     /// <summary>
-    /// Utility class for executing SQL scripts from migration files
+    /// Utility class for executing SQL scripts from migration files.
+    /// Scripts are expected to be located in the Scripts folder within the UNOPSDataAccess project.
     /// </summary>
     public static class MigrationSqlScriptExecutor
     {
         /// <summary>
-        /// Executes a SQL script from the UNOPS.PAO.Scripts directory
+        /// Executes a SQL script from the Scripts directory
         /// </summary>
         /// <param name="migrationBuilder">The migration builder instance</param>
         /// <param name="scriptFileName">The name of the SQL script file (e.g., "seed-entities.sql")</param>
-        /// <param name="scriptsSubdirectory">Optional subdirectory within UNOPS.PAO.Scripts (default is root)</param>
+        /// <param name="scriptsSubdirectory">Optional subdirectory within Scripts (default is root)</param>
         /// <exception cref="FileNotFoundException">Thrown when the SQL script file cannot be found</exception>
         /// <exception cref="InvalidOperationException">Thrown when script execution fails</exception>
         public static void ExecuteSqlScript(MigrationBuilder migrationBuilder, string scriptFileName, string scriptsSubdirectory = null)
@@ -38,11 +39,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
         }
 
         /// <summary>
-        /// Executes multiple SQL scripts from the UNOPS.PAO.Scripts directory
+        /// Executes multiple SQL scripts from the Scripts directory
         /// </summary>
         /// <param name="migrationBuilder">The migration builder instance</param>
         /// <param name="scriptFileNames">Array of SQL script file names to execute in order</param>
-        /// <param name="scriptsSubdirectory">Optional subdirectory within UNOPS.PAO.Scripts (default is root)</param>
+        /// <param name="scriptsSubdirectory">Optional subdirectory within Scripts (default is root)</param>
         public static void ExecuteSqlScripts(MigrationBuilder migrationBuilder, string[] scriptFileNames, string scriptsSubdirectory = null)
         {
             if (migrationBuilder == null)
@@ -61,7 +62,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
         /// Reads a SQL script file and returns its content
         /// </summary>
         /// <param name="scriptFileName">The name of the SQL script file</param>
-        /// <param name="scriptsSubdirectory">Optional subdirectory within UNOPS.PAO.Scripts</param>
+        /// <param name="scriptsSubdirectory">Optional subdirectory within Scripts</param>
         /// <returns>The content of the SQL script</returns>
         /// <exception cref="FileNotFoundException">Thrown when the SQL script file cannot be found</exception>
         public static string ReadSqlScript(string scriptFileName, string scriptsSubdirectory = null)
@@ -75,31 +76,14 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
                 var assemblyLocation = Assembly.GetExecutingAssembly().Location;
                 var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
                 
-                // Navigate to the solution root and find the Scripts directory
-                var solutionRoot = FindSolutionRoot(assemblyDirectory);
-                var scriptsDirectory = string.IsNullOrWhiteSpace(scriptsSubdirectory) 
-                    ? Path.Combine(solutionRoot, "UNOPS.PAO.Scripts")
-                    : Path.Combine(solutionRoot, "UNOPS.PAO.Scripts", scriptsSubdirectory);
-                
-                var scriptsPath = Path.Combine(scriptsDirectory, scriptFileName);
-                
-                if (File.Exists(scriptsPath))
+                // Find scripts in the local Scripts folder
+                var scriptPath = FindLocalScript(assemblyDirectory, scriptFileName, scriptsSubdirectory);
+                if (File.Exists(scriptPath))
                 {
-                    return File.ReadAllText(scriptsPath);
+                    return File.ReadAllText(scriptPath);
                 }
                 
-                // Fallback: try relative paths
-                var fallbackPaths = GenerateFallbackPaths(assemblyDirectory, scriptFileName, scriptsSubdirectory);
-                
-                foreach (var fallbackPath in fallbackPaths)
-                {
-                    if (File.Exists(fallbackPath))
-                    {
-                        return File.ReadAllText(fallbackPath);
-                    }
-                }
-                
-                throw new FileNotFoundException($"SQL script not found: {scriptFileName}. Searched in {scriptsPath} and fallback locations.");
+                throw new FileNotFoundException($"SQL script not found: {scriptFileName}. Expected location: {scriptPath}");
             }
             catch (Exception ex) when (!(ex is FileNotFoundException))
             {
@@ -127,70 +111,22 @@ namespace UNOPS.PAO.UNOPSDataAccess.Utilities
         }
 
         /// <summary>
-        /// Finds the solution root directory by looking for the .sln file
-        /// </summary>
-        /// <param name="startDirectory">The directory to start searching from</param>
-        /// <returns>The solution root directory path</returns>
-        /// <exception cref="DirectoryNotFoundException">Thrown when solution root cannot be found</exception>
-        private static string FindSolutionRoot(string startDirectory)
-        {
-            var directory = new DirectoryInfo(startDirectory ?? Directory.GetCurrentDirectory());
-            
-            while (directory != null)
-            {
-                // Look for .sln files
-                if (directory.GetFiles("*.sln").Length > 0)
-                {
-                    return directory.FullName;
-                }
-                
-                // Also look for common solution indicators
-                if (directory.GetDirectories("UNOPS.PAO.Scripts").Length > 0)
-                {
-                    return directory.FullName;
-                }
-                
-                directory = directory.Parent;
-            }
-            
-            throw new DirectoryNotFoundException("Could not find solution root directory. Looked for *.sln files and UNOPS.PAO.Scripts directory.");
-        }
-
-        /// <summary>
-        /// Generates fallback paths to search for SQL scripts
+        /// Finds a SQL script in the local Scripts folder within the UNOPSDataAccess project
         /// </summary>
         /// <param name="assemblyDirectory">The assembly directory</param>
         /// <param name="scriptFileName">The script file name</param>
         /// <param name="scriptsSubdirectory">Optional subdirectory</param>
-        /// <returns>Array of fallback paths to try</returns>
-        private static string[] GenerateFallbackPaths(string assemblyDirectory, string scriptFileName, string scriptsSubdirectory)
+        /// <returns>The full path to the script file</returns>
+        private static string FindLocalScript(string assemblyDirectory, string scriptFileName, string scriptsSubdirectory)
         {
-            var scriptPath = string.IsNullOrWhiteSpace(scriptsSubdirectory) 
-                ? Path.Combine("UNOPS.PAO.Scripts", scriptFileName)
-                : Path.Combine("UNOPS.PAO.Scripts", scriptsSubdirectory, scriptFileName);
+            // Look for Scripts folder relative to the assembly directory
+            var scriptsPath = Path.Combine(assemblyDirectory, "Scripts");
+            
+            var scriptPath = string.IsNullOrWhiteSpace(scriptsSubdirectory)
+                ? Path.Combine(scriptsPath, scriptFileName)
+                : Path.Combine(scriptsPath, scriptsSubdirectory, scriptFileName);
 
-            var fallbackPaths = new[]
-            {
-                // Try different relative paths from assembly directory
-                Path.Combine("..", "..", "..", "..", scriptPath),
-                Path.Combine("..", "..", "..", scriptPath),
-                Path.Combine("..", "..", scriptPath),
-                Path.Combine("..", scriptPath),
-                scriptPath,
-                
-                // Try from current working directory
-                Path.Combine(Directory.GetCurrentDirectory(), scriptPath),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", scriptPath),
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", scriptPath)
-            };
-
-            // Convert to full paths
-            for (int i = 0; i < fallbackPaths.Length; i++)
-            {
-                fallbackPaths[i] = Path.GetFullPath(Path.Combine(assemblyDirectory ?? "", fallbackPaths[i]));
-            }
-
-            return fallbackPaths;
+            return scriptPath;
         }
     }
 } 
