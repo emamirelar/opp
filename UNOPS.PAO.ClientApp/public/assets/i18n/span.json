@@ -162,6 +162,10 @@
             "mailingCountry": "País de envío",
             "contactViaAssistant": "Contactar a través del asistente",
             "createdByOffice": "Creado por Oficina"
+        },
+        "partner": {
+            "partner": "Socio",
+            "selectPartner": "Seleccionar Socio"
         }
     },
     "message": {
