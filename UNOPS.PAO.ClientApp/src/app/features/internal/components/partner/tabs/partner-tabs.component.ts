@@ -18,22 +18,22 @@ interface TabItem {
   standalone: true,
   imports: [CommonModule, RouterModule, TranslateModule, Tabs, TabList, Tab, PartnerTreeViewNavigationComponent, TooltipModule],
   template: `
-  <div class="flex flex-col gap-8"> 
+  <div class="flex flex-col gap-8">
     @if(recordData.partnerCategoryId){
       <div class="flex items-center gap-2 mt-2">
-        <a [routerLink]="['/partner-tree', recordData.partnerCategoryId]"
+        <a [routerLink]="['/admin/partner-tree', recordData.partnerCategoryId]"
         pTooltip="{{recordData.partnerCategoryName}}"
         class="text-lg text-gray-7e00 font-semibold hover:text-gray-500 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis max-w-1/3">
             {{recordData.partnerCategoryName}}
         </a>
 
         @if(recordData.partnerGroupId){
-          
+
         <div class="px-2 text-lg">
           <i class="pi pi-angle-right"></i>
         </div>
 
-        <a [routerLink]="['/partner-tree', recordData.partnerGroupId]"
+        <a [routerLink]="['/admin/partner-tree', recordData.partnerGroupId]"
         pTooltip="{{recordData.partnerGroupName}}"
         class="text-lg text-gray-7e00 font-semibold hover:text-gray-500 cursor-pointer whitespace-nowrap overflow-hidden text-ellipsis max-w-1/3">
             {{recordData.partnerGroupName}}
@@ -43,9 +43,9 @@ interface TabItem {
       }
       <p-tabs [value]="activeRoute">
         <p-tablist>
-          <p-tab *ngFor="let tab of tabs" 
-                [value]="tab.route" 
-                [routerLink]="tab.route" 
+          <p-tab *ngFor="let tab of tabs"
+                [value]="tab.route"
+                [routerLink]="tab.route"
                 class="flex items-center !gap-2 text-inherit">
             <span>{{ tab.label | translate }}</span>
           </p-tab>
@@ -65,7 +65,7 @@ interface TabItem {
 export class PartnerTabsComponent implements OnInit, OnDestroy {
   recordId: string = '';
   activeRoute: string = '';
-  
+
   tabs: TabItem[] = [];
   recordData: Partner = {} as Partner;
   private routerSubscription: Subscription | null = null;
@@ -77,12 +77,12 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.recordId = this.activatedRoute.snapshot.paramMap.get('recordId') || '';
-    
+
     // Get the resolved data from the route
     this.activatedRoute.data.subscribe(data => {
       this.recordData = data['partnerData'];
     });
-    
+
     // Create tabs based on recordId
     this.tabs = [
       {
@@ -94,10 +94,10 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
         route: `/partnerships/partners/${this.recordId}/data`
       }
     ];
-    
+
     // Set initial active tab
     this.updateActiveTab();
-    
+
     // Subscribe to router events to update active tab on navigation
     this.routerSubscription = this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
@@ -105,13 +105,13 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
         this.updateActiveTab();
       });
   }
-  
+
   ngOnDestroy(): void {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
     }
   }
-  
+
   private updateActiveTab(): void {
     const currentUrl = this.router.url;
     const activeTabIndex = currentUrl.includes('/data') ? 1 : 0;

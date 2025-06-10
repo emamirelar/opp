@@ -872,7 +872,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return null;
         }
 
-        var model = MapEntityToModel(item, _mapper);
+        var model = await MapEntityToModelWithPermissionsAsync(item, _mapper);
         
         // Add permissions for this specific partner
         model.Permissions = new EntityPermissionsModel
