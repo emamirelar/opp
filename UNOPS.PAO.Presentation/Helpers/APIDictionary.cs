@@ -95,4 +95,11 @@ public class APIDictionary
     public const string AiPromptsByType = AiPrompts + "/type";
     public const string AiPromptsList = AiPrompts + "/list";
     public const string AiPromptsTest = AiPrompts + "/test";
+
+    // Entity Configuration Management
+    public const string EntityList = APIPrefix + "entities";
+    public const string EntityConfiguration = APIPrefix + "entity-configuration";
+    public const string EntityConfigurationCreate = EntityConfiguration + "/create";
+    public const string EntityField = APIPrefix + "entity-field";
+    public const string EntityFieldCreate = EntityField + "/create";
 }

@@ -329,7 +329,7 @@ public class Startup
 
         // Register OrganizationHierarchy manager
         services.AddScoped<IOrganizationHierarchyManager, OrganizationHierarchyManager>();
-
+        
         // Add data seeding services
         services.AddDataSeeding();
 

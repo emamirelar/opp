@@ -45,6 +45,8 @@
     "editUserRoles": "Assign Roles for Impersonation",
     "editPartnershipUserAccess": "Edit Partnership User Access",
     "manageOffice": "Manage my Office",
+    "managerEntities": "Manage Entities",
+    "entityManager": "Entity Manager",
     "translationWorkbench": "Translation Workbench",
     "partnerTitles": {
       "partnerInformation": "Partner Information",

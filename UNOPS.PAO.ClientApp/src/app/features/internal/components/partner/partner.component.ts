@@ -17,6 +17,7 @@ import { ImportDialogService } from '../../../../common/reusables/components/imp
 import { SearchField } from '../../../../common/services/search-parser.service';
 import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
 import { EntityPermissions } from '../../../../essentials/services/permission.service';
+import { EntityConfigurationService } from '../../services/entity-configuration.service';
 
 @Component({
   selector: 'app-partner',
@@ -40,6 +41,7 @@ export class PartnerComponent implements OnDestroy, OnInit {
   dialogService = inject(DialogService);
   importDialogService = inject(ImportDialogService);
   permissionUtilityService = inject(PermissionUtilityService);
+  entityConfigurationService = inject(EntityConfigurationService);
 
   newPartnerData = signal<Partner|null>(null);
 
@@ -47,6 +49,10 @@ export class PartnerComponent implements OnDestroy, OnInit {
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Partner');
   entityPermissions = this.permissionUtils.entityPermissions;
   permissionsLoading = this.permissionUtils.permissionsLoading;
+
+  // Dynamic partner columns loaded from API
+  columns = signal<ListViewColumn[]>([]);
+  columnsLoading = signal(true);
 
   // Computed listview configuration that respects permissions
   listviewConfig = computed<ListViewConfig>(() => ({
@@ -109,56 +115,6 @@ export class PartnerComponent implements OnDestroy, OnInit {
     }
   }));
 
-  columns: ListViewColumn[] = [
-    {
-      field: 'partnerCategoryName',
-      label: 'label.partnerTree.partnerCategory',
-      sortable: false,
-      type: 'text',
-      width: '15%',
-      ellipsis: true
-    },
-    {
-      field: 'partnerGroupName',
-      label: 'label.partnerTree.partnerGroup',
-      sortable: false,
-      type: 'text',
-      width: '15%',
-      ellipsis: true
-    },
-    {
-      field: 'logoUrl',
-      label: '',
-      sortable: false,
-      type: 'avatar'
-    },
-    {
-      field: 'name',
-      label: 'label.partner.name',
-      sortable: false,
-      type: 'text'
-    },
-      { 
-        field: 'partnerOfficeName',
-        label: 'label.partner.partnerOffice',
-        sortable: false,
-        width: '20%',
-        type: 'template',
-        ellipsis: true,
-        templateFn: (partner: any) => {
-          return partner.partnerOffice?.name || '';
-        }
-      },
-    {
-      field: 'first5ContactsByDate.profilePictureUrl',
-      firstLetterFallbackField: 'first5ContactsByDate.firstName',
-      label: 'label.partner.partnerTeam',
-      sortable: false,
-      type: 'multiple-avatars',
-      width: '10%',
-    }
-  ];
-
   constructor(private languageService: LanguageService, private cdr: ChangeDetectorRef) {
     
     
@@ -171,6 +127,9 @@ export class PartnerComponent implements OnDestroy, OnInit {
     
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
+    
+    // Load dynamic columns from API
+    this.loadPartnerColumns();
     
     this.activatedRoute.queryParams
       .subscribe(params => {
@@ -267,5 +226,139 @@ export class PartnerComponent implements OnDestroy, OnInit {
 
   onSearchChange(searchParams: SearchParams) {
     // Handle search parameters if needed
+  }
+
+  private loadPartnerColumns() {
+    this.columnsLoading.set(true);
+    this.entityConfigurationService.getEntityListViewConfiguration('Partner')
+      .subscribe({
+        next: (columns) => {
+          // Convert backend columns to frontend format and add template functions
+          const processedColumns = columns.map(col => this.processColumn(col));
+          this.columns.set(processedColumns);
+          this.columnsLoading.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Failed to load partner columns:', error);
+          // Fallback to default columns if API fails
+          this.setFallbackColumns();
+          this.columnsLoading.set(false);
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private processColumn(column: any): ListViewColumn {
+    const processedColumn: ListViewColumn = {
+      field: column.field,
+      label: column.label,
+      type: column.type,
+      sortable: column.sortable,
+      width: column.width,
+      ellipsis: column.ellipsis,
+      helperText: column.helperText
+    };
+
+    // Handle nested field paths (fields with dots) by adding a template function
+    if (column.field && column.field.includes('.') && column.type !== 'template') {
+      // Keep the original field for identification but add a template function to access nested data
+      processedColumn.templateFn = (rowData: any) => {
+        const value = this.getNestedProperty(rowData, column.field);
+        return value !== undefined && value !== null ? String(value) : '';
+      };
+      // Change type to template since we're now using a template function
+      processedColumn.type = 'template';
+    }
+
+    // Add template function for template type columns
+    if (column.type === 'template' && column.templatePattern) {
+      processedColumn.templateFn = this.createTemplateFunction(column.templatePattern);
+    }
+
+    // Add special handling for multiple-avatars
+    if (column.type === 'multiple-avatars') {
+      // Use the configured fallback field from the API
+      processedColumn.firstLetterFallbackField = column.firstLetterFallbackField || 'first5ContactsByDate.firstName';
+    }
+
+    return processedColumn;
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      let result = templatePattern;
+      
+      // Replace field placeholders like {name}, {shortName} with actual values
+      const fieldMatches = templatePattern.match(/\{([^}]+)\}/g);
+      if (fieldMatches) {
+        fieldMatches.forEach(match => {
+          const fieldName = match.replace(/[{}]/g, '');
+          const fieldValue = this.getNestedProperty(rowData, fieldName) || '';
+          result = result.replace(match, fieldValue);
+        });
+      }
+      
+      return result.trim();
+    };
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((o, p) => o?.[p], obj);
+  }
+
+  private setFallbackColumns() {
+    // Fallback to original hardcoded columns if API fails
+    const fallbackColumns: ListViewColumn[] = [
+      {
+        field: 'partnerCategoryName',
+        label: 'label.partnerTree.partnerCategory',
+        sortable: false,
+        type: 'text',
+        width: '15%',
+        ellipsis: true
+      },
+      {
+        field: 'partnerGroupName',
+        label: 'label.partnerTree.partnerGroup',
+        sortable: false,
+        type: 'text',
+        width: '15%',
+        ellipsis: true
+      },
+      {
+        field: 'logoUrl',
+        label: '',
+        sortable: false,
+        type: 'avatar'
+      },
+      {
+        field: 'name',
+        label: 'label.partner.name',
+        sortable: false,
+        type: 'text'
+      },
+      { 
+        field: 'partnerOfficeName',
+        label: 'label.partner.partnerOffice',
+        sortable: false,
+        width: '20%',
+        type: 'template',
+        ellipsis: true,
+        templateFn: (partner: any) => {
+          return partner.partnerOffice?.name || '';
+        }
+      },
+      {
+        field: 'first5ContactsByDate.profilePictureUrl',
+        firstLetterFallbackField: 'first5ContactsByDate.firstName',
+        label: 'label.partner.partnerTeam',
+        sortable: false,
+        type: 'multiple-avatars',
+        width: '10%',
+      }
+    ];
+    
+    this.columns.set(fallbackColumns);
   }
 }

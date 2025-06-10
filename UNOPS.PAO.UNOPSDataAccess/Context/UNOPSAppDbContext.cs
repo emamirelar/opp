@@ -72,6 +72,26 @@ public class UNOPSAppDbContext : AppDbContext
             .WithMany(e => e.Children)
             .HasForeignKey(e => e.ParentId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure Entities table
+        modelBuilder
+            .Entity<Entities>()
+            .HasIndex(e => e.EntityName)
+            .IsUnique();
+
+        // Configure EntityManager
+        modelBuilder
+            .Entity<EntityManager>()
+            .HasIndex(e => e.EntityName)
+            .IsUnique();
+
+        // Configure EntityFieldManager relationship
+        modelBuilder
+            .Entity<EntityFieldManager>()
+            .HasOne(e => e.EntityManager)
+            .WithMany(e => e.EntityFields)
+            .HasForeignKey(e => e.EntityManagerId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public DbSet<Project> Projects { get; set; }
@@ -95,4 +115,11 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<InteractionContact> InteractionContacts { get; set; }
     public new DbSet<InteractionUser> InteractionUsers { get; set; }
     public new DbSet<InteractionPartner> InteractionPartners { get; set; }
+    
+    // Entity reference table
+    public DbSet<Entities> Entities { get; set; }
+    
+    // New entity configuration DbSets
+    public DbSet<EntityManager> EntityManagers { get; set; }
+    public DbSet<EntityFieldManager> EntityFieldManagers { get; set; }
 }
