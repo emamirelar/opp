@@ -61,6 +61,11 @@ public class CreateEntityFieldRequest
     
     public bool IsActive { get; set; } = true;
     
+    /// <summary>
+    /// Whether change logging is enabled for this field
+    /// </summary>
+    public bool EnableChangeLog { get; set; } = false;
+    
     [StringLength(255)]
     public string? DefaultValue { get; set; }
     
@@ -123,6 +128,11 @@ public class UpdateEntityFieldRequest
     public bool IsRequired { get; set; } = false;
     
     public bool IsActive { get; set; } = true;
+    
+    /// <summary>
+    /// Whether change logging is enabled for this field
+    /// </summary>
+    public bool EnableChangeLog { get; set; } = false;
     
     [StringLength(255)]
     public string? DefaultValue { get; set; }
@@ -194,6 +204,11 @@ public class EntityFieldConfigurationDto
     public bool IsRequired { get; set; } = false;
     
     public bool IsActive { get; set; } = true;
+    
+    /// <summary>
+    /// Whether change logging is enabled for this field
+    /// </summary>
+    public bool EnableChangeLog { get; set; } = false;
     
     [StringLength(255)]
     public string? DefaultValue { get; set; }

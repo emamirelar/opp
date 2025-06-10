@@ -301,6 +301,10 @@
             <label class="ml-2 text-sm text-gray-700">Active</label>
           </div>
           <div class="flex items-center">
+            <p-checkbox [(ngModel)]="editingField()!.enableChangeLog" binary="true" [disabled]="canViewOnly()" (onChange)="onEnableChangeLogChange($event)"></p-checkbox>
+            <label class="ml-2 text-sm text-gray-700">Enable Change Log</label>
+          </div>
+          <div class="flex items-center">
             <p-checkbox [(ngModel)]="editingField()!.showInListView" binary="true" [disabled]="canViewOnly()"></p-checkbox>
             <label class="ml-2 text-sm text-gray-700">Show in List View</label>
           </div>

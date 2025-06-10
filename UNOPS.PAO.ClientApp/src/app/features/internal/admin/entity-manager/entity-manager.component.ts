@@ -581,6 +581,31 @@ export class EntityManagerComponent implements OnInit {
     }
   }
 
+  // Handle enable change log checkbox change
+  onEnableChangeLogChange(event: any) {
+    const field = this.editingField();
+    if (!field) return;
+
+    // If enabling field change log, automatically enable entity change log
+    if (event.checked && field.enableChangeLog) {
+      const entityConfig = this.workingEntityConfig();
+      if (!entityConfig.enableChangeLog) {
+        this.workingEntityConfig.set({
+          ...entityConfig,
+          enableChangeLog: true
+        });
+        this.hasUnsavedChanges.set(true);
+        
+        // Show a notification to inform the user
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Entity Change Log Enabled',
+          detail: 'Entity change log has been automatically enabled since field change log is now enabled.'
+        });
+      }
+    }
+  }
+
   // Handle template pattern changes from text input
   onTemplatePatternChange(fieldId: number | undefined, value: string) {
     const fields = this.workingFields();
@@ -722,6 +747,7 @@ export class EntityManagerComponent implements OnInit {
       dataType: 'string',
       isRequired: false,
       isActive: true,
+      enableChangeLog: false,
       showInListView: false,
       listViewOrder: undefined,
       description: '',
@@ -859,6 +885,7 @@ export class EntityManagerComponent implements OnInit {
       description: f.description,
       isRequired: f.isRequired,
       isActive: f.isActive,
+      enableChangeLog: f.enableChangeLog || false,
       defaultValue: f.defaultValue,
       maxLength: f.maxLength,
       displayOrder: index + 1,
@@ -927,6 +954,7 @@ export class EntityManagerComponent implements OnInit {
       description: f.description,
       isRequired: f.isRequired,
       isActive: f.isActive,
+      enableChangeLog: f.enableChangeLog || false,
       defaultValue: f.defaultValue,
       maxLength: f.maxLength,
       displayOrder: index + 1,
@@ -952,6 +980,7 @@ export class EntityManagerComponent implements OnInit {
       description: field.description,
       isRequired: field.isRequired,
       isActive: field.isActive,
+      enableChangeLog: field.enableChangeLog || false,
       defaultValue: field.defaultValue,
       maxLength: field.maxLength,
       displayOrder: field.displayOrder,

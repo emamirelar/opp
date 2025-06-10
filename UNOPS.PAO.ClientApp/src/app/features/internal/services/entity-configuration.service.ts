@@ -16,6 +16,7 @@ export interface EntityFieldConfigurationDto {
   description?: string;
   isRequired: boolean;
   isActive: boolean;
+  enableChangeLog: boolean; // Whether change logging is enabled for this field
   defaultValue?: string;
   maxLength?: number;
   displayOrder: number;

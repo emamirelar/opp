@@ -21,6 +21,11 @@ public class EntityFieldManager : ModifiableDeletableEntity
     
     public bool IsActive { get; set; } = true;
     
+    /// <summary>
+    /// Whether change logging is enabled for this field
+    /// </summary>
+    public bool EnableChangeLog { get; set; } = false;
+    
     [StringLength(255)]
     public string? DefaultValue { get; set; }
     
