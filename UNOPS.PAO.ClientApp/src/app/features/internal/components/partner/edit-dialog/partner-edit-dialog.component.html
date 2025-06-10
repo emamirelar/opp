@@ -45,6 +45,10 @@
         <p-select formControlName="partnerOfficeId" [options]="allPartnerOfficesData()"
                   optionLabel="name"
                   optionValue="id"
+                  [filter]="true"
+                  filterBy="name"
+                  [showClear]="true"
+                  placeholder="{{ 'label.partner.selectPartnerOffice' | translate }}"
                   [appendTo]="'body'"
                   fluid="true" id="partnerOfficeId" ariaLabel="Select Partner Office" />
         @if( formGroup.get("partnerOfficeId")?.invalid && showValidationFailedError() ) {
@@ -91,7 +95,10 @@
                   optionLabel="name"
                   optionValue="value"
                   [group]="true"
-                  [filter]="true" filterBy="name"
+                  [filter]="true"
+                  filterBy="name"
+                  [showClear]="true"
+                  placeholder="{{ 'label.partner.selectPartnerGroup' | translate }}"
                   [appendTo]="'body'"
                   fluid="true" id="partnerGroupCode" ariaLabel="Select Partner Group"
                   >

@@ -161,7 +161,9 @@
         },
         "partner": {
             "partner": "Parceiro",
-            "selectPartner": "Selecionar Parceiro"
+            "selectPartner": "Selecionar Parceiro",
+            "selectPartnerOffice": "Selecionar Escritório do Parceiro",
+            "selectPartnerGroup": "Selecionar Grupo de Parceiros"
         }
     },
     "message": {

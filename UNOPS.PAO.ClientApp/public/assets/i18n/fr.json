@@ -90,6 +90,8 @@
         "partner": {
             "partner": "Partenaire",
             "selectPartner": "Sélectionner un Partenaire",
+            "selectPartnerOffice": "Sélectionner un Bureau de Partenaire",
+            "selectPartnerGroup": "Sélectionner un Groupe de Partenaires",
             "summaryOfInteractions": "Résumé IA des Interactions",
             "categoryNews": "Actualités de Catégorie",
             "partnerNews": "Actualités du Partenaire",

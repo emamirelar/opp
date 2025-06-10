@@ -196,6 +196,8 @@
       "levyTreatment": "Levy Treatment",
       "partner": "Partner",
       "selectPartner": "Select Partner",
+      "selectPartnerOffice": "Select Partner Office",
+      "selectPartnerGroup": "Select Partner Group",
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",
       "partnerNews": "Partner News",
