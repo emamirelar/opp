@@ -88,6 +88,8 @@
             "partnerGroup": "Groupe de Partenaire"
         },
         "partner": {
+            "partner": "Partenaire",
+            "selectPartner": "Sélectionner un Partenaire",
             "summaryOfInteractions": "Résumé IA des Interactions",
             "categoryNews": "Actualités de Catégorie",
             "partnerNews": "Actualités du Partenaire",

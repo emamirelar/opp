@@ -158,6 +158,10 @@
             "mailingCountry": "País de envio",
             "contactViaAssistant": "Contatar através do assistente",
             "createdByOffice": "Criado por Escritório"
+        },
+        "partner": {
+            "partner": "Parceiro",
+            "selectPartner": "Selecionar Parceiro"
         }
     },
     "message": {

@@ -12,12 +12,12 @@
 
     <form [formGroup]="formGroup" class="flex flex-col gap-8">
       <div class="flex flex-col mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
-        <app-ai-transcribe 
-          transcribeType="contact_action" 
+        <app-ai-transcribe
+          transcribeType="contact_action"
           (transcriptionCompleted)="onTranscriptionCompleted($event)">
         </app-ai-transcribe>
       </div>
-      
+
       <div class="grid grid-cols-9 gap-4">
 
 
@@ -27,8 +27,12 @@
           <p-select formControlName="partnerId" [options]="allPartners()" optionLabel="name"
                     [appendTo]="'body'"
                     optionValue="id"
+                    [filter]="true"
+                    filterBy="name"
+                    [showClear]="true"
+                    placeholder="{{ 'label.partner.selectPartner' | translate }}"
                     fluid="true" id="partner" ariaLabel="Select Partner" />
-          @if( formGroup.get("partner")?.invalid && showValidationFailedError() ) {
+          @if( formGroup.get("partnerId")?.invalid && showValidationFailedError() ) {
             <p-message severity="error" variant="simple">Partner must be entered.</p-message>
           }
         </div>
