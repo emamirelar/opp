@@ -1,7 +1,7 @@
 <p-panel>
   <ng-template pTemplate="header">
     <div class="flex justify-between items-center w-full">
-      <div class="font-semibold">Interactions</div>
+      <div class="font-semibold">{{ 'interactions.title' | translate }}</div>
       <div>
         <p-button
           icon="pi pi-window-maximize"
@@ -26,7 +26,7 @@
       <!-- Grouped by month view -->
       <div class="flex flex-col bg-white rounded-lg p-4 gap-2">
         @if (interactions.length === 0) {
-          <div class="text-center py-4">No interactions found</div>
+          <div class="text-center py-4">{{ 'interactions.noInteractionsFound' | translate }}</div>
         } @else {
           <!-- Monthly sections -->
           @for (group of groupedInteractions; track group.month + group.year) {

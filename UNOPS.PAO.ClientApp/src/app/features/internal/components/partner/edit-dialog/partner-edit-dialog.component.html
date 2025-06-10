@@ -1,13 +1,13 @@
 <p-blockui [blocked]="partnerService.isLoading() || isLoading() || cachedDataService.isLoading()">
   <div class="flex flex-col items-center justify-center gap-3">
     <p-progressSpinner strokeWidth="4" [style]="{width: '50px', height: '50px'}"></p-progressSpinner>
-    <span class="text-lg font-medium">Loading partner data...</span>
+    <span class="text-lg font-medium">{{ 'loading.partnerData' | translate }}</span>
   </div>
 </p-blockui>
 
 <div class="flex flex-col h-full gap-4">
   @if( showValidationFailedError() === true ){
-  <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">Please fill all the required details.</p-message>
+  <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">{{ 'validation.pleaseFullAllRequired' | translate }}</p-message>
   }
 
   <form [formGroup]="formGroup" class="flex flex-col gap-8">
@@ -35,7 +35,7 @@
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
-                  fluid="true" id="newEngagement" ariaLabel="Select New Engagement" />
+                  fluid="true" id="newEngagement" [ariaLabel]="'aria.selectNewEngagement' | translate" />
         @if( formGroup.get("newEngagement")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">New Engagement is required.</p-message>
         }
@@ -50,7 +50,7 @@
                   [showClear]="true"
                   placeholder="{{ 'label.partner.selectPartnerOffice' | translate }}"
                   [appendTo]="'body'"
-                  fluid="true" id="partnerOfficeId" ariaLabel="Select Partner Office" />
+                  fluid="true" id="partnerOfficeId" [ariaLabel]="'aria.selectPartnerOffice' | translate" />
         @if( formGroup.get("partnerOfficeId")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">Partner Office is required.</p-message>
         }
@@ -100,7 +100,7 @@
                   [showClear]="true"
                   placeholder="{{ 'label.partner.selectPartnerGroup' | translate }}"
                   [appendTo]="'body'"
-                  fluid="true" id="partnerGroupCode" ariaLabel="Select Partner Group"
+                  fluid="true" id="partnerGroupCode" [ariaLabel]="'aria.selectPartnerGroup' | translate"
                   >
                   <ng-template let-group #group>
                     <div class="flex items-center font-bold">
@@ -126,7 +126,7 @@
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
-                  fluid="true" id="pooledFund" ariaLabel="Select Pooled Fund" />
+                  fluid="true" id="pooledFund" [ariaLabel]="'aria.selectPooledFund' | translate" />
         @if( formGroup.get("pooledFund")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">Pooled Fund is required.</p-message>
         }
@@ -137,7 +137,7 @@
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
-                  fluid="true" id="ddRequired" ariaLabel="Select DD Required" />
+                  fluid="true" id="ddRequired" [ariaLabel]="'aria.selectDDRequired' | translate" />
         @if( formGroup.get("ddRequired")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">DD Required is required.</p-message>
         }
@@ -148,7 +148,7 @@
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
-                  fluid="true" id="ddeacDone" ariaLabel="Select DD/EAC Done" />
+                  fluid="true" id="ddeacDone" [ariaLabel]="'aria.selectDDEACDone' | translate" />
         @if( formGroup.get("ddeacDone")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">DD/EAC Done is required.</p-message>
         }
@@ -163,7 +163,7 @@
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
-                  fluid="true" id="levyPotentiallyApplies" ariaLabel="Select Levy Potentially Applies" />
+                  fluid="true" id="levyPotentiallyApplies" [ariaLabel]="'aria.selectLevyPotentiallyApplies' | translate" />
         @if( formGroup.get("levyPotentiallyApplies")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">Levy Potentially Applies is required.</p-message>
         }
@@ -174,7 +174,7 @@
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
-                  fluid="true" id="reasonForLevyNotApplying" ariaLabel="Select Reason For Levy Not Applying" />
+                  fluid="true" id="reasonForLevyNotApplying" [ariaLabel]="'aria.selectReasonForLevyNotApplying' | translate" />
       </div>
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="levyTreatment">{{ 'label.partner.levyTreatment' | translate }}</label>
@@ -182,7 +182,7 @@
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
-                  fluid="true" id="levyTreatment" ariaLabel="Select Levy Treatment" />
+                  fluid="true" id="levyTreatment" [ariaLabel]="'aria.selectLevyTreatment' | translate" />
       </div>
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <p-checkbox [binary]="true"

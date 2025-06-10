@@ -56,10 +56,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
-    MarkdownPipe,
-    LinkListComponent,
     AiTranscribeComponent,
-    JsonPipe,
     ProgressSpinnerModule
   ],
   templateUrl: './partner-edit-dialog.component.html',
@@ -178,7 +175,7 @@ export class PartnerEditDialogComponent implements OnInit {
           this.record = this.dialogConfig.data?.record;
           this.recordData.set(this.dialogConfig.data.record);
           this.formGroup.patchValue(this.dialogConfig.data.record);
-          
+
           // Set loading to false after a short delay to ensure form is properly initialized
           setTimeout(() => {
             this.isLoading.set(false);
@@ -197,20 +194,20 @@ export class PartnerEditDialogComponent implements OnInit {
       this.dialogConfig.data.requestingSaveSignal.set(false);
 
       // Check if this is an import edit
-      const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+      const isImportEdit = this.dialogConfig.data?.isImportEdit ||
                           this.dialogConfig.data?.record?.isImportEdit ||
                           this.dialogConfig.data?.record?.skipServerSave;
-      
+
       if (isImportEdit) {
         // This is an import edit, skipping server save
         // Create a copy of the payload with the _updated flag
-        const updatedRecord = { 
-          ...payload, 
+        const updatedRecord = {
+          ...payload,
           _updated: true,
           isImportEdit: true,
           skipServerSave: true
         };
-        
+
         // For import edits, just return the updated record without saving to server
         this.dialogRef.close(updatedRecord);
         return;
@@ -274,16 +271,16 @@ export class PartnerEditDialogComponent implements OnInit {
 
   handleOnCancelClick(event: MouseEvent) {
     // Check if this is an import edit
-    const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+    const isImportEdit = this.dialogConfig.data?.isImportEdit ||
                         this.dialogConfig.data?.record?.isImportEdit ||
                         this.dialogConfig.data?.record?.skipServerSave;
-    
+
     if (isImportEdit) {
       // Just close the dialog for import edits
       this.dialogRef.close();
       return;
     }
-    
+
     // Standard behavior - navigate to partners page
     this.router.navigate(['partners']);
   }

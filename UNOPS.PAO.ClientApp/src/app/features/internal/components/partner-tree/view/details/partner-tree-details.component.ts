@@ -12,7 +12,6 @@ import { FeedbackDialogService } from '../../../../../../common/pages/services/f
 import { DocumentService } from '../../../../services/document.service';
 import { DocumentComponent } from '../../../../../../common/reusables/components/document/document.component';
 import { GDriveDocumentComponent } from '../../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { PictureComponent } from "../../../../../../common/reusables/components/picture/picture.component";
 import { AiPanelComponent, AiDataService } from '../../../../../../common/reusables/components/ai-panel/ai-panel.component';
 
 import { TranslateModule } from '@ngx-translate/core';
@@ -29,15 +28,10 @@ import { MessageModule } from 'primeng/message';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { MarkdownPipe } from '../../../../pipes/markdown.pipe';
 import { LinkListComponent } from "../../../../../../common/reusables/components/link/list/link-list.component";
 import { EntityType } from "../../../../../../common/models/link.model";
 import { DialogService } from 'primeng/dynamicdialog';
-import { PartnerContactsComponent} from "../../../partner/contacts/partner-contacts.component";
 import { PartnerTree } from '../../../../models/partner-tree.model';
-import { PartnerCategoryGroup, PartnerGroup } from '../../../../models/partner-category-group.model';
-import { JsonPipe } from '@angular/common';
-import { PartnerTreeService } from '../../../../services/partner-tree.service';
 import { PartnerTreeItemComponent } from '../../item/partner-tree-item.component';
 import { PermissionUtilityService } from '../../../../../../essentials/services/permission-utility.service';
 import { ListViewColumn } from '../../../../../../common/pages/components/listview/listview.model';
@@ -153,12 +147,8 @@ This is a placeholder response while the AI service is being implemented.
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
-    MarkdownPipe,
     LinkListComponent,
-    PictureComponent,
-    PartnerContactsComponent,
     RouterModule,
-    JsonPipe,
     ProgressSpinnerModule,
     AiPanelComponent,
     ListviewComponent
@@ -225,10 +215,10 @@ export class PartnerTreeDetailsComponent implements OnInit {
     ]).subscribe({
       next: ([data, params]) => {
         const recordId = params?.get('recordId');
-        
+
         if (data && (data as any)['partnerTreeData']) {
           const newPartnerTree = (data as any)['partnerTreeData'].data;
-          
+
           // Only update if it's actually a different record or if partnerTree is null
           if (!this.partnerTree() || newPartnerTree?.id?.toString() !== this.partnerTree()?.id?.toString()) {
             this.updatePartnerTreeData((data as any)['partnerTreeData']);

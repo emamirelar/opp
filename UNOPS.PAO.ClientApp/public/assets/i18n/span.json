@@ -278,5 +278,46 @@
         "saveFilter": "Guardar filtro",
         "filterName": "Nombre del filtro",
         "enterFilterName": "Ingrese el nombre del filtro"
+    },
+    "validation": {
+        "required": "Este campo es obligatorio",
+        "maxLength": "La longitud máxima es de {{max}} caracteres",
+        "pleaseFullAllRequired": "Por favor, complete todos los detalles requeridos.",
+        "partnerRequired": "El socio debe ser ingresado.",
+        "lastNameRequired": "El apellido debe ser ingresado.",
+        "emailRequired": "El email debe ser ingresado."
+    },
+    "loading": {
+        "contactData": "Cargando datos del contacto...",
+        "partnerData": "Cargando datos del socio..."
+    },
+    "interactions": {
+        "title": "Interacciones",
+        "noInteractionsFound": "No se encontraron interacciones",
+        "tryAdjustingFilters": "Intente ajustar su búsqueda o filtros",
+        "andOthers": "y {{count}} otros"
+    },
+    "personalInformation": "Información Personal",
+    "office": "oficina",
+    "aria": {
+        "selectPartner": "Seleccionar Socio",
+        "selectNewEngagement": "Seleccionar Nuevo Compromiso",
+        "selectPartnerOffice": "Seleccionar Oficina de Socio",
+        "selectPartnerGroup": "Seleccionar Grupo de Socios",
+        "selectPooledFund": "Seleccionar Fondo Común",
+        "selectDDRequired": "Seleccionar DD Requerido",
+        "selectDDEACDone": "Seleccionar DD/EAC Completado",
+        "selectLevyPotentiallyApplies": "Seleccionar Gravamen Potencialmente Aplicable",
+        "selectReasonForLevyNotApplying": "Seleccionar Razón para No Aplicación del Gravamen",
+        "selectLevyTreatment": "Seleccionar Tratamiento del Gravamen"
+    },
+    "fieldLabels": {
+        "email": "Email",
+        "mobile": "Móvil",
+        "phone": "Teléfono",
+        "title": "Título",
+        "city": "Ciudad",
+        "country": "País",
+        "partner": "Socio"
     }
 }

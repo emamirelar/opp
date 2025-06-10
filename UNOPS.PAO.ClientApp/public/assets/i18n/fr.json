@@ -309,5 +309,46 @@
         "saveFilter": "Sauvegarder le filtre",
         "filterName": "Nom du filtre",
         "enterFilterName": "Saisir le nom du filtre"
+    },
+    "validation": {
+        "required": "Ce champ est obligatoire",
+        "maxLength": "La longueur maximale est de {{max}} caractères",
+        "pleaseFullAllRequired": "Veuillez remplir tous les détails requis.",
+        "partnerRequired": "Le partenaire doit être saisi.",
+        "lastNameRequired": "Le nom de famille doit être saisi.",
+        "emailRequired": "L'email doit être saisi."
+    },
+    "loading": {
+        "contactData": "Chargement des données de contact...",
+        "partnerData": "Chargement des données de partenaire..."
+    },
+    "interactions": {
+        "title": "Interactions",
+        "noInteractionsFound": "Aucune interaction trouvée",
+        "tryAdjustingFilters": "Essayez d'ajuster votre recherche ou vos filtres",
+        "andOthers": "et {{count}} autres"
+    },
+    "personalInformation": "Informations Personnelles",
+    "office": "bureau",
+    "aria": {
+        "selectPartner": "Sélectionner un Partenaire",
+        "selectNewEngagement": "Sélectionner un Nouvel Engagement",
+        "selectPartnerOffice": "Sélectionner un Bureau de Partenaire",
+        "selectPartnerGroup": "Sélectionner un Groupe de Partenaires",
+        "selectPooledFund": "Sélectionner un Fonds Commun",
+        "selectDDRequired": "Sélectionner DD Requis",
+        "selectDDEACDone": "Sélectionner DD/EAC Terminé",
+        "selectLevyPotentiallyApplies": "Sélectionner Prélèvement Potentiellement Applicable",
+        "selectReasonForLevyNotApplying": "Sélectionner Raison de Non-Application du Prélèvement",
+        "selectLevyTreatment": "Sélectionner Traitement du Prélèvement"
+    },
+    "fieldLabels": {
+        "email": "Email",
+        "mobile": "Mobile",
+        "phone": "Téléphone",
+        "title": "Titre",
+        "city": "Ville",
+        "country": "Pays",
+        "partner": "Partenaire"
     }
 }

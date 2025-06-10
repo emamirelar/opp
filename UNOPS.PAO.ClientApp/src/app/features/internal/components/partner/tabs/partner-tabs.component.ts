@@ -5,7 +5,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Tab, TabList, Tabs } from 'primeng/tabs';
 import { TooltipModule } from 'primeng/tooltip';
 import { filter, Subscription } from 'rxjs';
-import { PartnerTreeViewNavigationComponent } from "../../partner-tree/view/navigation/partner-tree-view-navigation.component";
 import { Partner } from '../../../models/partner.model';
 
 interface TabItem {
@@ -16,7 +15,7 @@ interface TabItem {
 @Component({
   selector: 'app-partner-tabs',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule, Tabs, TabList, Tab, PartnerTreeViewNavigationComponent, TooltipModule],
+  imports: [CommonModule, RouterModule, TranslateModule, Tabs, TabList, Tab, TooltipModule],
   template: `
   <div class="flex flex-col gap-8">
     @if(recordData.partnerCategoryId){

@@ -9,7 +9,7 @@
 <!--</div>-->
 <div class="flex flex-col gap-8">
 
-  
+
   <div class="flex flex-col xl:flex-row gap-8">
     <div class="xl:w-1/2 flex flex-col gap-8">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}}">
@@ -164,7 +164,7 @@
               <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
             </div>
           }
-          
+
           <!-- See More / See Less Button -->
           @if (shouldShowSeeMoreButton()) {
             <div class="flex justify-center mt-4">
@@ -178,7 +178,7 @@
               />
             </div>
           }
-          
+
           @if (shouldShowSeeLessButton()) {
             <div class="flex justify-center mt-4">
               <p-button
@@ -275,7 +275,7 @@
 
     <app-partner-contacts
       [partnerId]="recordId"
-      [partnerName]="recordData()?.name || ''" />
+      [partnerName]="recordData().name || ''" />
 
     <ng-template pTemplate="footer">
       <p-button
