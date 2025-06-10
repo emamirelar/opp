@@ -13,7 +13,7 @@
 
     @if (item.routerLink) {
         <a (click)="itemClick($event)" [routerLink]="item.routerLink"
-            routerLinkActive="font-bold text-primary bg-sky-400/[0.1]" [routerLinkActiveOptions]="{exact: true}" [attr.tabindex]="0" 
+            routerLinkActive="font-bold text-primary bg-sky-400/[0.1]" [routerLinkActiveOptions]="{exact: false}" [attr.tabindex]="0" 
             class="flex flex-row items-center justify-start gap-2 py-2 rounded-md cursor-pointer text-text-color hover:bg-surface-hover transition-colors duration-200">
 
             <span class="material-symbols-outlined text-xl">{{item.icon}}</span>
