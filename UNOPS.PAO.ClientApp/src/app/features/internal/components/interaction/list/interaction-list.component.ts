@@ -69,39 +69,39 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       useAdvancedSearch: true,
       placeholder: 'Search interactions...',
       searchableFields: [
-        { 
-          field: 'type', 
-          label: 'Type', 
+        {
+          field: 'type',
+          label: 'Type',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'subject', 
-          label: 'Subject', 
+        {
+          field: 'subject',
+          label: 'Subject',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'description', 
-          label: 'Description', 
+        {
+          field: 'description',
+          label: 'Description',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'date', 
-          label: 'Date', 
+        {
+          field: 'date',
+          label: 'Date',
           type: 'date',
           operators: ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<=']
         },
-        { 
-          field: 'contactName', 
-          label: 'Contact Name', 
+        {
+          field: 'contactName',
+          label: 'Contact Name',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'partner.name', 
-          label: 'Partner', 
+        {
+          field: 'partner.name',
+          label: 'Partner',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         }
@@ -123,11 +123,11 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    
-    
+
+
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
-    
+
     // Load dynamic columns from API
     this.loadInteractionColumns();
   }
@@ -273,7 +273,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
+
     this.openInteractionModal();
   }
 
@@ -363,6 +363,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       width: '90%',
       height: '90%',
       modal: true,
+      closable: true,
       data: {
         id: record?.id,
         initialData: record || {}
