@@ -18,6 +18,8 @@ public class EntityManager : ModifiableDeletableEntity
     
     public bool IsActive { get; set; } = true;
     
+    public bool EnableChangeLog { get; set; } = false;
+    
     // Navigation property to entity fields
     public virtual ICollection<EntityFieldManager> EntityFields { get; set; } = new HashSet<EntityFieldManager>();
 } 

@@ -16,6 +16,8 @@ public class CreateEntityConfigurationRequest
     public string? Description { get; set; }
     
     public bool IsActive { get; set; } = true;
+    
+    public bool EnableChangeLog { get; set; } = false;
 }
 
 public class UpdateEntityConfigurationRequest
@@ -35,6 +37,8 @@ public class UpdateEntityConfigurationRequest
     public string? Description { get; set; }
     
     public bool IsActive { get; set; } = true;
+    
+    public bool EnableChangeLog { get; set; } = false;
 }
 
 public class CreateEntityFieldRequest
@@ -238,6 +242,7 @@ public class EntityConfigurationDetailsResponse
     public string? TableName { get; set; }
     public string? Description { get; set; }
     public bool IsActive { get; set; }
+    public bool EnableChangeLog { get; set; }
     public List<EntityFieldConfigurationDto> Fields { get; set; } = new();
 }
 

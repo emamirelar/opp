@@ -42,6 +42,14 @@
           <div class="flex items-center gap-3">
             <!-- Action Buttons -->
             <p-button 
+              icon="pi pi-cog" 
+              label="Edit Entity Configuration"
+              size="small"
+              severity="info"
+              (onClick)="openEntityConfigurationDialog()"
+              [disabled]="canViewOnly()">
+            </p-button>
+            <p-button 
               icon="pi pi-plus" 
               label="Add Field"
               size="small"
@@ -379,8 +387,78 @@
       (onClick)="saveFieldChanges()"
       [disabled]="!isFieldValid() || canViewOnly()">
     </p-button>
-  </ng-template>
+    </ng-template>
 </p-dialog>
+
+<!-- Entity Configuration Dialog -->
+<p-dialog 
+  [(visible)]="showEntityConfigDialog" 
+  [modal]="true" 
+  [style]="{width: '600px'}"
+  header="Edit Entity Configuration"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <div class="space-y-4" *ngIf="entityConfigForm()">
+    <!-- Entity Name -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Entity Name *</label>
+      <input type="text" pInputText [(ngModel)]="entityConfigForm()!.entityName" class="w-full" [disabled]="true">
+      <small class="text-gray-500 mt-1 block">Entity name cannot be changed</small>
+    </div>
+
+    <!-- Table Name -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Table Name *</label>
+      <input type="text" pInputText [(ngModel)]="entityConfigForm()!.tableName" class="w-full" [disabled]="true">
+      <small class="text-gray-500 mt-1 block">Database table name for this entity (read-only)</small>
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+      <textarea 
+        pInputTextarea 
+        [(ngModel)]="entityConfigForm()!.description" 
+        rows="3" 
+        class="w-full" 
+        placeholder="Enter a description for this entity..."
+        [disabled]="canViewOnly()">
+      </textarea>
+      <small class="text-gray-500 mt-1 block">Optional description explaining the purpose of this entity</small>
+    </div>
+
+    <!-- Flags -->
+    <div class="space-y-3">
+      <div class="flex items-center">
+        <p-checkbox [(ngModel)]="entityConfigForm()!.isActive" binary="true" [disabled]="true"></p-checkbox>
+        <label class="ml-2 text-sm text-gray-700">Is Active (disabled for now)</label>
+        <small class="ml-2 text-gray-500">Feature temporarily disabled</small>
+      </div>
+      
+      <div class="flex items-center">
+        <p-checkbox [(ngModel)]="entityConfigForm()!.enableChangeLog" binary="true" [disabled]="canViewOnly()"></p-checkbox>
+        <label class="ml-2 text-sm text-gray-700">Enable Change Log</label>
+        <small class="ml-2 text-gray-500">Track changes made to records of this entity</small>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button 
+      label="Cancel" 
+      severity="secondary"
+      (onClick)="closeEntityConfigurationDialog()">
+    </p-button>
+    <p-button 
+      label="Save" 
+      severity="success"
+      (onClick)="saveEntityConfiguration()"
+      [disabled]="!isEntityConfigValid() || canViewOnly()">
+    </p-button>
+  </ng-template>
+</p-dialog> 
 
 <!-- List View Management Dialog -->
 <p-dialog 
