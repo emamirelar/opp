@@ -511,6 +511,10 @@
     "rawResponse": "Raw Response",
     "promptFunction": "Prompt Function",
     "promptFunctionHelper": "Optional: Function name in the corresponding UNOPSManager class (e.g., GetBasicPartnerDetailsAsync). When provided, enables testing with real entity data.",
-    "entityIdRequiresFunction": "Entity ID testing requires a Prompt Function to be specified. Please provide a function name or use Test Data mode."
+    "entityIdRequiresFunction": "Entity ID testing requires a Prompt Function to be specified. Please provide a function name or use Test Data mode.",
+    "typeUnderscoreFormat": "Type must contain only lowercase letters, numbers, and underscores (e.g., my_prompt_type)",
+    "createPromptNotice": "Important Notice",
+    "createPromptDescription": "Creating a prompt from this screen has no effect on any application feature unless programmatic code is added to invoke this prompt by type. This is an administrative tool for prompt management only.",
+    "descriptionPlaceholder": "Enter a brief description of what this prompt does..."
   }
 }

@@ -148,6 +148,23 @@
     styleClass="overflow-hidden">
 
     <div class="h-full flex flex-col">
+      <!-- Create Prompt Banner -->
+      @if (showCreateBanner()) {
+        <div class="mb-4 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-md">
+          <div class="flex items-start">
+            <i class="pi pi-exclamation-triangle text-amber-600 mr-3 mt-1"></i>
+            <div>
+              <p class="text-sm text-amber-800 font-medium mb-1">
+                {{ 'aiPrompt.createPromptNotice' | translate }}
+              </p>
+              <p class="text-sm text-amber-700">
+                {{ 'aiPrompt.createPromptDescription' | translate }}
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Feature Usage Header -->
       @if (currentPrompt()) {
         <div class="mb-4 p-3 bg-blue-50 border-l-4 border-blue-400 rounded-md">
@@ -181,7 +198,12 @@
                     [class.border-red-500]="promptForm.get('type')?.invalid && promptForm.get('type')?.touched"
                     [class.ring-red-200]="promptForm.get('type')?.invalid && promptForm.get('type')?.touched">
                   <small class="text-red-600 text-xs" *ngIf="promptForm.get('type')?.invalid && promptForm.get('type')?.touched">
-                    {{ 'aiPrompt.typeRequired' | translate }}
+                    <span *ngIf="promptForm.get('type')?.errors?.['required']">
+                      {{ 'aiPrompt.typeRequired' | translate }}
+                    </span>
+                    <span *ngIf="promptForm.get('type')?.errors?.['underscoreFormat']">
+                      {{ 'aiPrompt.typeUnderscoreFormat' | translate }}
+                    </span>
                   </small>
                 </div>
 
@@ -225,7 +247,7 @@
                   <p-dropdown 
                     id="model"
                     formControlName="model"
-                    [options]="geminiModels()"
+                    [options]="productionGeminiModels()"
                     optionLabel="label"
                     optionValue="value"
                     class="w-full"
