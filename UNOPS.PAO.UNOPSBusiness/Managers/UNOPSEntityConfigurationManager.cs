@@ -209,6 +209,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             Description = request.Description,
             IsRequired = request.IsRequired,
             IsActive = request.IsActive,
+            EnableChangeLog = request.EnableChangeLog,
             DefaultValue = request.DefaultValue,
             MaxLength = request.MaxLength,
             DisplayOrder = request.DisplayOrder,
@@ -231,6 +232,13 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         // Set audit data
         var userId = GetCurrentUserId(user);
         field.SetCreateAuditData(userId);
+
+        // Auto-enable entity change log if field change log is enabled
+        if (request.EnableChangeLog && !parentEntity.EnableChangeLog)
+        {
+            parentEntity.EnableChangeLog = true;
+            parentEntity.SetUpdateAuditData(userId);
+        }
 
         _context.EntityFieldManagers.Add(field);
         await _context.SaveChangesAsync();
@@ -267,6 +275,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         field.Description = request.Description;
         field.IsRequired = request.IsRequired;
         field.IsActive = request.IsActive;
+        field.EnableChangeLog = request.EnableChangeLog;
         field.DefaultValue = request.DefaultValue;
         field.MaxLength = request.MaxLength;
         field.DisplayOrder = request.DisplayOrder;
@@ -287,6 +296,13 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         // Set audit data
         var userId = GetCurrentUserId(user);
         field.SetUpdateAuditData(userId);
+
+        // Auto-enable entity change log if field change log is enabled
+        if (request.EnableChangeLog && !field.EntityManager.EnableChangeLog)
+        {
+            field.EntityManager.EnableChangeLog = true;
+            field.EntityManager.SetUpdateAuditData(userId);
+        }
 
         await _context.SaveChangesAsync();
         return field;
@@ -350,6 +366,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                     Description = f.Description,
                     IsRequired = f.IsRequired,
                     IsActive = f.IsActive,
+                    EnableChangeLog = f.EnableChangeLog,
                     DefaultValue = f.DefaultValue,
                     MaxLength = f.MaxLength,
                     DisplayOrder = f.DisplayOrder,
@@ -432,6 +449,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                     existingField.Description = fieldDto.Description;
                     existingField.IsRequired = fieldDto.IsRequired;
                     existingField.IsActive = fieldDto.IsActive;
+                    existingField.EnableChangeLog = fieldDto.EnableChangeLog;
                     existingField.DefaultValue = fieldDto.DefaultValue;
                     existingField.MaxLength = fieldDto.MaxLength;
                     existingField.DisplayOrder = fieldDto.DisplayOrder;
@@ -464,6 +482,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
                     Description = fieldDto.Description,
                     IsRequired = fieldDto.IsRequired,
                     IsActive = fieldDto.IsActive,
+                    EnableChangeLog = fieldDto.EnableChangeLog,
                     DefaultValue = fieldDto.DefaultValue,
                     MaxLength = fieldDto.MaxLength,
                     DisplayOrder = fieldDto.DisplayOrder,
@@ -505,6 +524,14 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             {
                 field.ListViewOrder = i + 1; // Ensure sequential ordering starting from 1
             }
+        }
+
+        // Auto-enable entity change log if any field has change log enabled
+        var hasFieldChangeLogEnabled = request.Fields.Any(f => f.EnableChangeLog);
+        if (hasFieldChangeLogEnabled && !entityConfig.EnableChangeLog)
+        {
+            entityConfig.EnableChangeLog = true;
+            entityConfig.SetUpdateAuditData(userId);
         }
 
         await _context.SaveChangesAsync();
