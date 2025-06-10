@@ -118,12 +118,15 @@ INSERT INTO public."EntityFieldManagers" (
     "EntityManagerId", "FieldName", "DataType", "Description", "IsRequired", "IsActive", "DefaultValue", "MaxLength", "DisplayOrder", "ShowInListView", "ListViewOrder", "RelatedDisplayProperty", "DisplayFieldPath", "DisplayTemplate", "ListViewLabel", "ListViewType", "ListViewWidth", "ListViewEllipsis", "ListViewSortable", "FirstLetterFallbackField", "HelperText",
     "Name", "Status", "CreatedBy", "CreatedDate", "LastModifiedBy", "LastModifiedDate", "IsDeleted", "DeletedBy", "DeletedDate"
 ) VALUES 
-    (3, 'Id', 'int', 'Unique identifier for the interaction', true, true, NULL, NULL, 1, false, NULL, NULL, 'id', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Id', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Type', 'enum', 'Type of interaction (Meeting, Email, Call, etc.)', true, true, NULL, NULL, 2, true, 1, NULL, 'type', NULL, 'Type', 'text', '12%', false, true, NULL, NULL, 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Date', 'datetime', 'Date and time of the interaction', true, true, NULL, NULL, 3, true, 2, NULL, 'date', NULL, 'Date', 'text', '15%', false, true, NULL, NULL, 'Date', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Subject', 'string', 'Subject or title of the interaction', true, true, NULL, 300, 4, true, 3, NULL, 'subject', NULL, 'Subject', 'text', '25%', true, true, NULL, NULL, 'Subject', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Contact', 'Contact', 'Contact entity for managing partner contact information', true, true, NULL, NULL, 5, true, 4, 'firstname,lastname', 'contact.firstName,contact.lastName', '{firstName} {lastName}', 'Contact', 'template', '18%', true, true, NULL, NULL, 'Contact', 0, 1, NOW(), 0, NULL, false, 0, NULL),
-    (3, 'Description', 'string', 'Detailed description of the interaction', false, true, NULL, 2000, 6, false, NULL, NULL, 'description', NULL, NULL, 'text', NULL, true, true, NULL, NULL, 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    -- Primary List View Fields
+    (3, 'Type', 'enum', 'Type of interaction (Meeting, Email, Call, etc.)', true, true, NULL, NULL, 1, true, 1, NULL, 'type', NULL, 'Type', 'text', NULL, false, true, NULL, 'Interaction type classification', 'Type', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Date', 'datetime', 'Date and time of the interaction', true, true, NULL, NULL, 2, true, 2, NULL, 'date', NULL, 'Date', 'date', NULL, false, true, NULL, 'When the interaction occurred', 'Date', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Subject', 'string', 'Subject or title of the interaction', true, true, NULL, 300, 3, true, 3, NULL, 'subject', NULL, 'Subject', 'text', NULL, false, false, NULL, 'Interaction subject or title', 'Subject', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Description', 'string', 'Detailed description of the interaction', false, true, NULL, 2000, 4, true, 4, NULL, 'description', NULL, 'Description', 'text', NULL, false, false, NULL, 'Detailed interaction description', 'Description', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+
+    -- Core Interaction Fields (Non-List View)
+    (3, 'Id', 'int', 'Unique identifier for the interaction', true, true, NULL, NULL, 5, false, NULL, NULL, 'id', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Id', 0, 1, NOW(), 0, NULL, false, 0, NULL),
+    (3, 'Contact', 'Contact', 'Contact entity for managing partner contact information', true, true, NULL, NULL, 6, false, NULL, 'firstname,lastname', 'contact.firstName,contact.lastName', '{firstName} {lastName}', NULL, 'template', NULL, true, true, NULL, NULL, 'Contact', 0, 1, NOW(), 0, NULL, false, 0, NULL),
     (3, 'Location', 'string', 'Location where interaction took place', false, true, NULL, 200, 7, false, NULL, NULL, 'location', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'Location', 0, 1, NOW(), 0, NULL, false, 0, NULL),
     (3, 'OrgUnit', 'OrganizationHierarchy', 'Organization hierarchy for managing office structure and geographic locations', false, true, NULL, NULL, 8, false, NULL, 'name', 'orgUnit.name', NULL, NULL, 'text', NULL, false, true, NULL, NULL, 'OrgUnit', 0, 1, NOW(), 0, NULL, false, 0, NULL);
 
