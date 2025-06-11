@@ -77,12 +77,8 @@ export class PartnerNewComponent implements OnChanges, OnInit {
     newEngagement: new FormControl(null, {
       validators:[Validators.required]
     }),
-    phone: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    website: new FormControl(null, {
-      validators:[Validators.required]
-    }),
+    phone: new FormControl(null),
+    website: new FormControl(null),
     shortName: new FormControl(null, {
       validators:[Validators.required]
     }),
@@ -95,62 +91,30 @@ export class PartnerNewComponent implements OnChanges, OnInit {
     ddeacDone: new FormControl(null, {
       validators:[Validators.required]
     }),
-    eacReference: new FormControl(null, {
-      validators:[Validators.required]
-    }),
+    eacReference: new FormControl(null),
     globalKeyAccount: new FormControl(false),
     unSecretariatEntity: new FormControl(false),
     levyPotentiallyApplies: new FormControl(null, {
       validators:[Validators.required]
     }),
-    reasonForLevyNotApplying: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    levyTreatment: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    address1Street: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    address1Street2: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    address1City: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    address1StateProvince: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    address1PostalCode: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    address1Country: new FormControl(null, {
-      validators:[Validators.required]
-    }),
+    reasonForLevyNotApplying: new FormControl(null),
+    levyTreatment: new FormControl(null),
+    address1Street: new FormControl(null),
+    address1Street2: new FormControl(null),
+    address1City: new FormControl(null),
+    address1StateProvince: new FormControl(null),
+    address1PostalCode: new FormControl(null),
+    address1Country: new FormControl(null),
     discriminator: new FormControl(null, {
       validators: [Validators.required]
     }),
-    createdBy: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    createdDate: new FormControl(new Date(), {
-      validators:[Validators.required]
-    }),
-    lastModifiedBy: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    lastModifiedDate: new FormControl(new Date(), {
-      validators:[Validators.required]
-    }),
-    isDeleted: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    deletedBy: new FormControl(null, {
-      validators:[Validators.required]
-    }),
-    deletedDate: new FormControl(null, {
-      validators:[Validators.required]
-    }),
+    createdBy: new FormControl(null),
+    createdDate: new FormControl(new Date()),
+    lastModifiedBy: new FormControl(null),
+    lastModifiedDate: new FormControl(new Date()),
+    isDeleted: new FormControl(null),
+    deletedBy: new FormControl(null),
+    deletedDate: new FormControl(null),
   });
 
   cachedDataService = inject(CachedDataService);
@@ -222,10 +186,18 @@ export class PartnerNewComponent implements OnChanges, OnInit {
     {
       this.showValidationFailedError.set( true );
 
-      if( this.formGroup.get("name")?.invalid )
-      {
-        this.formGroup.get("name")?.markAsDirty();
-      }
+      // Mark all invalid required fields as dirty to show validation errors
+      const requiredFields = ['name', 'shortName', 'status', 'newEngagement', 
+                            'pooledFund', 'ddRequired', 'ddeacDone', 
+                            'levyPotentiallyApplies'];
+      
+      requiredFields.forEach(fieldName => {
+        const control = this.formGroup.get(fieldName);
+        if (control?.invalid) {
+          control.markAsDirty();
+        }
+      });
+      
       result = false;
     }
 
