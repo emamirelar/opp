@@ -20,8 +20,9 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
     public InteractionCompositeSpecification(IInteractionSearchFilter filter)
         : base(filter)
     {
-        // Include the related contact
-        AddInclude(i => i.Contact);
+        // Include the related contacts through junction table
+        AddInclude(i => i.InteractionContacts);
+        AddInclude("InteractionContacts.Contact");
         
         // Default ordering is by date descending
         ApplyOrderByDescending(i => i.Date);
@@ -44,8 +45,9 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         string? searchText = null)
         : base(CreateLegacyFilter(contactId, type, fromDate, toDate, searchText))
     {
-        // Include the related contact
-        AddInclude(i => i.Contact);
+        // Include the related contacts through junction table
+        AddInclude(i => i.InteractionContacts);
+        AddInclude("InteractionContacts.Contact");
         
         // Default ordering is by date descending
         ApplyOrderByDescending(i => i.Date);

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -392,14 +393,40 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id)
     {
-        // Include contacts and their interactions using standard Entity Framework includes
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts", "Contacts.Interactions"];
+        // Get partner with basic includes first
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
         if (partner == null)
         {
             return default;
+        }
+
+        // Manually load interactions for each contact through the InteractionContacts junction table
+        if (partner.Contacts != null && partner.Contacts.Any())
+        {
+            var contactIds = partner.Contacts.Select(c => c.Id).ToList();
+            
+            // Get interactions through the junction table
+            var interactionContacts = await _context.InteractionContacts
+                .Where(ic => contactIds.Contains(ic.ContactId))
+                .Include(ic => ic.Interaction)
+                .ToListAsync();
+
+            // Group interactions by contact
+            var interactionsByContact = interactionContacts
+                .GroupBy(ic => ic.ContactId)
+                .ToDictionary(g => g.Key, g => g.Select(ic => ic.Interaction).ToList());
+
+            // Assign interactions to each contact
+            foreach (var contact in partner.Contacts)
+            {
+                if (interactionsByContact.TryGetValue(contact.Id, out var interactions))
+                {
+                    contact.Interactions = interactions;
+                }
+            }
         }
 
         // Load partner office if needed

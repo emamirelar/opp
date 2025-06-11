@@ -219,7 +219,7 @@ public class BusinessSecurityService : IBusinessSecurityService
     private async Task<bool> CanUserAccessInteractionByIdAsync(ClaimsPrincipal user, int interactionId, string action)
     {
         var interaction = await _context.Interactions.OfType<UNOPSInteraction>()
-            .Include(i => i.Contact)
+                            .Include(i => i.InteractionContacts).ThenInclude(ic => ic.Contact)
                 .ThenInclude(c => c.Partner)
                     .ThenInclude(p => p.PartnerOffice)
             .FirstOrDefaultAsync(i => i.Id == interactionId);
