@@ -195,8 +195,6 @@ export class PartnerNewComponent implements OnChanges, OnInit {
   _handleOnSaveClick(){
     let canSave = this._validate();
 
-    canSave = true;
-
     if( canSave === true )
     {
       this.isSaving.set(true)
@@ -222,7 +220,7 @@ export class PartnerNewComponent implements OnChanges, OnInit {
 
     if( this.formGroup.invalid )
     {
-      this.showValidationFailedError.set( false );
+      this.showValidationFailedError.set( true );
 
       if( this.formGroup.get("name")?.invalid )
       {
