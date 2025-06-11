@@ -11,7 +11,7 @@ using UNOPS.PAO.Domain.Entities;
 public class PartnerRequest : ExtensibleModel
 {
     public string Name { get; set; }
-    public string Status { get; set; }
+    public string Status { get; set; } = "Active";
     public string NewEngagement { get; set; }
     public string? Phone { get; set; }
     public string? Website { get; set; }
