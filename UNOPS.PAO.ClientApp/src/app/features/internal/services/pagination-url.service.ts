@@ -14,17 +14,23 @@ export class PaginationUrlService {
 
     getCurrentPaginationParams(): Observable<PaginationParams> {
         return this.route.queryParams.pipe(
-            map(params => ({
-                pageIndex: Number(params['pageIndex'] || 1),
-                pageSize: Number(params['pageSize'] || 10),
-                orderBy: params['orderBy'],
-                ascending: params['ascending']?.toString()
-            }))
+            map(params => {
+                const pageIndex = Number(params['pageIndex']);
+                const pageSize = Number(params['pageSize']);
+                
+                return {
+                    pageIndex: isNaN(pageIndex) ? 1 : pageIndex,
+                    pageSize: isNaN(pageSize) ? 10 : pageSize,
+                    orderBy: params['orderBy'],
+                    ascending: params['ascending']?.toString()
+                };
+            })
         );
     }
 
     updatePaginationParams(updates: Partial<PaginationParams>): void {
-      const currentParams = { ...this.router.getCurrentNavigation()?.extractedUrl.queryParams };
+      const navigation = this.router.getCurrentNavigation();
+      const currentParams = navigation?.extractedUrl?.queryParams || {};
       const updatedParams = {
           ...currentParams,
           ...updates
