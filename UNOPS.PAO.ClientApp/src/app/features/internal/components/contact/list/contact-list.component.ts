@@ -95,43 +95,43 @@ export class ContactListComponent implements OnInit, OnDestroy {
         },
         { 
           field: 'email', 
-          label: 'Email', 
+          label: 'fieldLabels.email', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'mobile', 
-          label: 'Mobile', 
+          label: 'fieldLabels.mobile', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'phone', 
-          label: 'Phone', 
+          label: 'fieldLabels.phone', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'title', 
-          label: 'Title', 
+          label: 'fieldLabels.title', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'mailingCity', 
-          label: 'City', 
+          label: 'fieldLabels.city', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
         { 
           field: 'mailingCountry', 
-          label: 'Country', 
+          label: 'fieldLabels.country', 
           type: 'string',
           operators: ['is', 'is not']
         },
         { 
           field: 'partner.name', 
-          label: 'Partner', 
+          label: 'fieldLabels.partner', 
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         }

@@ -392,7 +392,44 @@
   },
   "validation": {
     "required": "This field is required",
-    "maxLength": "Maximum length is {{max}} characters"
+    "maxLength": "Maximum length is {{max}} characters",
+    "pleaseFullAllRequired": "Please fill all the required details.",
+    "partnerRequired": "Partner must be entered.",
+    "lastNameRequired": "Last Name must be entered.",
+    "emailRequired": "Email must be entered."
+  },
+  "loading": {
+    "contactData": "Loading contact data...",
+    "partnerData": "Loading partner data..."
+  },
+  "interactions": {
+    "title": "Interactions",
+    "noInteractionsFound": "No interactions found",
+    "tryAdjustingFilters": "Try adjusting your search or filters",
+    "andOthers": "and {{count}} others"
+  },
+  "personalInformation": "Personal Information",
+  "office": "office",
+  "aria": {
+    "selectPartner": "Select Partner",
+    "selectNewEngagement": "Select New Engagement",
+    "selectPartnerOffice": "Select Partner Office",
+    "selectPartnerGroup": "Select Partner Group",
+    "selectPooledFund": "Select Pooled Fund",
+    "selectDDRequired": "Select DD Required",
+    "selectDDEACDone": "Select DD/EAC Done",
+    "selectLevyPotentiallyApplies": "Select Levy Potentially Applies",
+    "selectReasonForLevyNotApplying": "Select Reason For Levy Not Applying",
+    "selectLevyTreatment": "Select Levy Treatment"
+  },
+  "fieldLabels": {
+    "email": "Email",
+    "mobile": "Mobile",
+    "phone": "Phone",
+    "title": "Title",
+    "city": "City",
+    "country": "Country",
+    "partner": "Partner"
   },
   "search": {
     "placeholder": "Search...",

@@ -13,6 +13,7 @@ import {map} from 'rxjs/operators';
 import {InteractionService} from '../../../../services/interaction.service';
 import {Interaction as InteractionModel} from '../../../../models/interaction.model';
 import {GroupedInteraction, InteractionViewModel} from './interaction-view.model';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
   selector: 'app-contact-view-interactions',
@@ -24,7 +25,8 @@ import {GroupedInteraction, InteractionViewModel} from './interaction-view.model
     ButtonModule,
     TooltipModule,
     DynamicDialogModule,
-    ContactViewInteractionsItemComponent
+    ContactViewInteractionsItemComponent,
+    TranslatePipe
   ],
   templateUrl: './contact-view-interactions.component.html',
   providers: [DialogService]

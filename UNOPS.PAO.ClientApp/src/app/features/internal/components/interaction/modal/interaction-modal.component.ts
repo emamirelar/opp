@@ -14,15 +14,11 @@ import { GDriveDocumentComponent } from '../../../overrides/reusables/components
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ContactService } from '../../../services/contact.service';
 import { PartnerService } from '../../../services/partner.service';
-//import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
 import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { ConfirmDialog } from 'primeng/confirmdialog';
-import {Contact} from '../../../models/contact.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import {Partner} from '../../../models/partner.model';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
@@ -44,7 +40,6 @@ import { FeedbackDialogService } from '../../../../../common/reusables/services/
     ReactiveFormsModule,
     FormsModule,
     CalendarModule,
-    Button,
     InputTextModule,
     Textarea,
     SelectModule,
@@ -55,7 +50,6 @@ import { FeedbackDialogService } from '../../../../../common/reusables/services/
     CommonModule,
     MessageModule,
     ConfirmDialog,
-    NgIf,
     ChipModule,
     AutoCompleteModule,
     HttpClientModule,
@@ -75,7 +69,7 @@ export class InteractionModalComponent {
 
   onChange: any = () => { };
   onTouched: any = () => { };
-  
+
   record?: Interaction;
   isSaving = signal(false);
   recordId: string = '';
@@ -151,7 +145,7 @@ export class InteractionModalComponent {
         this.formGroup.patchValue({ createdBy: userId });
       }
     });
-    
+
     // Set up the footer template
     this.dialogConfig.templates = {
       footer: InteractionModalFooterComponent
@@ -191,7 +185,7 @@ export class InteractionModalComponent {
         }
       });
     }
-        
+
     // Expose the handleSave function to be called from footer
     if (this.dialogConfig.data) {
       this.dialogConfig.data.handleSave = this.onSubmit.bind(this);
@@ -275,7 +269,7 @@ export class InteractionModalComponent {
   onSubmit(): void {
     if (this.formGroup.valid) {
       const formValue = this.formGroup.value;
-      
+
       // Check permissions before saving
       if (formValue.id) {
         // For updates, check if user has update permission
@@ -507,7 +501,7 @@ export class InteractionModalComponent {
         if (invalidAddedEmails.length > 0) {
           // Handle invalid emails
           invalidAddedEmails.forEach(email => this.validateEmail(email));
-          
+
           // Revert to previous valid state
           this.formGroup.get('emailAddresses')?.setValue(previousEmails, { emitEvent: false });
 
