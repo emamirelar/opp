@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
@@ -67,6 +67,7 @@ import { AiPanelComponent } from '../../../../../common/reusables/components/ai-
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
+    FormsModule,
     PartnerContactsComponent,
     MarkdownPipe,
     LinkListComponent,
