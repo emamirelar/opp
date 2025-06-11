@@ -92,7 +92,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
       let label =
         routeSnapshot.data['breadcrumb'] ||
         this.formatLabel(routeSnapshot.routeConfig?.path || '');
-      
+
       // Translate the label
       label = this.translateLabel(label);
 
@@ -146,7 +146,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
       'Contacts': 'title.contacts',
       'Interactions': 'title.interactions',
       'Partner Tree': 'title.partnerTree',
-      'Partner Tree View': 'title.partnerTreeView',
+      'Partner Tree View': 'title.partnerTree',
       'Details': 'title.details',
       'Data': 'title.data',
       'Search': 'title.search',
@@ -164,7 +164,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     if (translationKey) {
       return this.translateService.instant(translationKey);
     }
-    
+
     // Return original label if no translation found
     return label;
   }

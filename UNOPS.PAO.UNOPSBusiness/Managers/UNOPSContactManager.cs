@@ -45,6 +45,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
         result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
         
+        // Convert ProfilePictureUrl to signed URL if it exists and contains Google Cloud Storage path
+        if (!string.IsNullOrEmpty(result.ProfilePictureUrl) && googleCloudStorageService != null)
+        {
+            result.ProfilePictureUrl = googleCloudStorageService.GenerateSignedUrlFromStorageUrl(result.ProfilePictureUrl).Result;
+        }
+        
         // Map CreatedBy user ID to user name and office
         if (entity.CreatedBy > 0)
         {
@@ -76,6 +82,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
         result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
+        
+        // Convert ProfilePictureUrl to signed URL if it exists and contains Google Cloud Storage path
+        if (!string.IsNullOrEmpty(result.ProfilePictureUrl) && googleCloudStorageService != null)
+        {
+            result.ProfilePictureUrl = googleCloudStorageService.GenerateSignedUrlFromStorageUrl(result.ProfilePictureUrl).Result;
+        }
         
         // Map CreatedBy user ID to user name and office
         if (entity.CreatedBy > 0 && userInfoLookup.TryGetValue(entity.CreatedBy, out var userInfo))

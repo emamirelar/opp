@@ -24,6 +24,7 @@
           <div class="flex gap-4">
             <app-picture
               [imageUrl]="recordData().profilePictureUrl!"
+              [uploadUrl]="getUploadProfilePictureUrl()"
               [altText]="'Profile picture'"
               [size]="'medium'"
               [disabled]="!recordPermissions().permissions.canUpdate"
