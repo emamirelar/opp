@@ -212,21 +212,4 @@
     </app-document>
   </p-panel>
   }
-
-  <div class="flex flex-col gap-2">
-    <label for="contact">{{ 'label.interaction.contact' | translate }}</label>
-    <p-select id="contact"
-              formControlName="contactId"
-              [options]="allContacts()"
-              [disabled]="!recordPermissions()?.permissions?.canUpdate"
-              optionLabel="firstName"
-              optionValue="id"
-              [filter]="true"
-              filterBy="name"
-              [appendTo]="'body'"
-              [showClear]="true"
-              placeholder="{{ 'label.interaction.selectContact' | translate }}"
-              class="w-full">
-    </p-select>
-  </div>
 </form>

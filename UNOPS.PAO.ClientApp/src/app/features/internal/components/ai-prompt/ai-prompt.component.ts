@@ -677,7 +677,8 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     this.testResults.set(null);
     this.activeTab.set('preview'); // Reset to preview tab for new test
     
-    const formValue = this.promptForm.value;
+    // Use getRawValue() to include disabled fields like 'type', 'project', 'location'
+    const formValue = this.promptForm.getRawValue();
     
     const testRequest: TestPromptRequest = {
       type: formValue.type,
@@ -724,17 +725,16 @@ export class AiPromptComponent implements OnInit, OnDestroy {
 
   canRunTest(): boolean {
     const form = this.promptForm;
+    if (!form) return false;
     
-    // Check all required left-side fields (excluding promptFunction as it's optional)
-    const leftSideValid = !!(
-      form.get('type')?.valid &&
-      form.get('prompt')?.valid &&
-      form.get('model')?.valid &&
-      form.get('project')?.valid &&
-      form.get('location')?.valid
-    );
+    // First check that required core fields are valid
+    const typeControl = form.get('type');
+    const promptControl = form.get('prompt');
+    const modelControl = form.get('model');
     
-    if (!leftSideValid) {
+    if (!typeControl?.value || typeControl.invalid ||
+        !promptControl?.value || promptControl.invalid ||
+        !modelControl?.value || modelControl.invalid) {
       return false;
     }
     
@@ -962,12 +962,34 @@ Be extra cautious while deleting as there could be several dependencies within t
       }
     });
 
+    // Watch for test mode, entity ID, and test data changes to trigger change detection
+    const testModeSub = form.get('testMode')?.valueChanges.subscribe(() => {
+      this.cdr.detectChanges();
+    });
+
+    const entityIdSub = form.get('entityId')?.valueChanges.subscribe(() => {
+      this.cdr.detectChanges();
+    });
+
+    const testDataSub = form.get('testData')?.valueChanges.subscribe(() => {
+      this.cdr.detectChanges();
+    });
+
     // Add to subscriptions for cleanup
     if (promptFunctionSub) {
       this.subscriptions.add(promptFunctionSub);
     }
     if (modelSub) {
       this.subscriptions.add(modelSub);
+    }
+    if (testModeSub) {
+      this.subscriptions.add(testModeSub);
+    }
+    if (entityIdSub) {
+      this.subscriptions.add(entityIdSub);
+    }
+    if (testDataSub) {
+      this.subscriptions.add(testDataSub);
     }
 
     return form;

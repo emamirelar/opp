@@ -1,6 +1,7 @@
 using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
 using UNOPS.PAO.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -490,7 +491,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     /// </summary>
     public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
     {
-        string[] includes = ["Documents", "Partner", "Partner.PartnerOffice", "Interactions"];
+        string[] includes = ["Documents", "Partner", "Partner.PartnerOffice"];
 
         var item = await contactRepository.GetByIdAsync(id, includes);
 
@@ -499,7 +500,19 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             return default;
         }
 
-        // Now you can access interactions directly from the contact entity
+        // Manually load interactions through the InteractionContacts junction table
+        var interactionContacts = await _context.InteractionContacts
+            .Where(ic => ic.ContactId == id)
+            .Include(ic => ic.Interaction)
+            .ToListAsync();
+
+        // Assign interactions to the contact
+        if (interactionContacts.Any())
+        {
+            item.Interactions = interactionContacts.Select(ic => ic.Interaction).ToList();
+        }
+
+        // Now you can access interactions from the contact entity
         // Examples:
         // var recentInteractions = item.Interactions?.OrderByDescending(i => i.Date).Take(5).ToList();
         // var interactionCount = item.Interactions?.Count ?? 0;

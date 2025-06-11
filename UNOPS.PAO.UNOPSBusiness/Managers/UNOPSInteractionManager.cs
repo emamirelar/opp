@@ -58,11 +58,11 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     private async Task<UNOPSInteraction> MapModelToEntity(InteractionRequest model)
     {
-        var contact = await contactRepository.GetByIdAsync(model.ContactId);
+        // Contact relationships are now handled through InteractionContacts many-to-many table
+        var contactId = model.ContactIds?.FirstOrDefault() ?? 0;
+        
         return MapModelToEntity(model, new UNOPSInteraction() { 
-            ContactId = model.ContactId,
-            Contact = contact ?? throw new BusinessException($"Contact {model.ContactId} not found"),
-            Name = model.ContactId + " - " + model.Date
+            Name = contactId + " - " + model.Date
         });
     }
 
@@ -89,7 +89,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         try
         {
-            entity.Name = model.ContactId + " - " + model.Date;
+            // Use first contact ID for naming, or default to interaction date
+            var contactId = model.ContactIds?.FirstOrDefault() ?? 0;
+            entity.Name = contactId + " - " + model.Date;
 
             await interactionRepository.AddAsync(entity);
             await context.SaveChangesAsync();
@@ -192,7 +194,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var query = interactionRepository
             .GetAll()
             .AsQueryable()
-            .Include(i => i.Contact)
             .Include(i => i.OrgUnit)
             .Include(i => i.InteractionContacts).ThenInclude(ic => ic.Contact)
             .Include(i => i.InteractionPartners).ThenInclude(ip => ip.Partner)
@@ -209,9 +210,10 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                         : query.OrderByDescending(x => x.Type);
                     break;
                 case "contactid":
+                    // Order by first contact name through InteractionContacts
                     query = request.Ascending ?? true
-                        ? query.OrderBy(x => x.Contact.Name)
-                        : query.OrderByDescending(x => x.Contact.Name);
+                        ? query.OrderBy(x => x.InteractionContacts.FirstOrDefault().Contact.Name)
+                        : query.OrderByDescending(x => x.InteractionContacts.FirstOrDefault().Contact.Name);
                     break;
                 case "date":
                     query = request.Ascending ?? true
@@ -244,7 +246,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var item = await interactionRepository.GetByIdAsync(id,
             includes: new[]
             {
-                nameof(Interaction.Contact),
                 nameof(Interaction.OrgUnit),
                 nameof(Interaction.InteractionContacts),
                 nameof(Interaction.InteractionPartners),
@@ -318,8 +319,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public PaginationResponse<InteractionModel> GetContactInteractionsAsync(int contactId, PaginationRequest request)
     {
         var query = interactionRepository
-            .GetAll()
-            .Where(x => x.ContactId == contactId)
+            .GetAll(["InteractionContacts"])
+            .Where(x => x.InteractionContacts.Any(ic => ic.ContactId == contactId))
             .OrderByDescending(x => x.Date)
             .AsQueryable()
             .Where(x => !x.IsDeleted);
@@ -374,7 +375,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task<PaginationResponse<InteractionModel>> GetInteractionsAsync(ClaimsPrincipal user, PaginationRequest request)
     {
         var query = interactionRepository
-            .GetAll(["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"])
+            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"])
             .AsQueryable();
 
         // Apply row-level security filters
@@ -395,7 +396,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             var interactionsWithPermissions = new List<InteractionModel>();
             foreach (var interaction in pagedResults.Records)
             {
-                var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+                var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
                 if (entity != null)
                 {
                     var interactionWithPermissions = await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
@@ -415,7 +416,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     public async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
     {
-        var item = await interactionRepository.GetByIdAsync(id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+        var item = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
         if (item == null) return null;
 
         // Check if user can access this specific interaction
@@ -429,7 +430,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     public async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
     {
-        var entity = await interactionRepository.GetByIdAsync(model.Id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+        var entity = await interactionRepository.GetByIdAsync(model.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
         if (entity == null)
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");
@@ -457,7 +458,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     public async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
     {
-        var entity = await interactionRepository.GetByIdAsync(id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+        var entity = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
         if (entity == null) return;
 
         // Check if user can delete this interaction
@@ -479,15 +480,13 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var item = await interactionRepository.GetByIdAsync(id,
             includes: new[]
             {
-                "Contact",
-                "Contact.Partner",
-                "Contact.Partner.PartnerOffice",
                 "OrgUnit",
                 "InteractionContacts",
                 "InteractionPartners",
                 "InteractionUsers",
                 "InteractionContacts.Contact",
                 "InteractionContacts.Contact.Partner",
+                "InteractionContacts.Contact.Partner.PartnerOffice",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
                 "Documents"
@@ -531,15 +530,13 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var item = await interactionRepository.GetByIdAsync(id,
             includes: new[]
             {
-                "Contact",
-                "Contact.Partner",
-                "Contact.Partner.PartnerOffice",
                 "OrgUnit",
                 "InteractionContacts",
                 "InteractionPartners", 
                 "InteractionUsers",
                 "InteractionContacts.Contact",
                 "InteractionContacts.Contact.Partner",
+                "InteractionContacts.Contact.Partner.PartnerOffice",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
                 "Documents"

@@ -116,7 +116,13 @@ public class UNOPSAiPromptManager : IAiPromptManager
             if (request.Id.HasValue)
             {
                 // Entity ID mode: Get real entity data and send as JSON
-                dataForAI = JsonConvert.SerializeObject(entityData, Formatting.Indented);
+                // Serialize the entity data to JSON for AI processing with enum string conversion
+                var settings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                    Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                };
+                dataForAI = JsonConvert.SerializeObject(entityData, settings);
             }
             else
             {

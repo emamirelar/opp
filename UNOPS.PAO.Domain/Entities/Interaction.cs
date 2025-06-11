@@ -17,9 +17,7 @@ namespace UNOPS.PAO.Domain.Entities
         
         public string? Description { get; set; }
 
-        public required int ContactId { get; set; }
-        [JsonIgnore]  // Prevents circular reference in serialization
-        public required virtual Contact Contact { get; set; } = null!;
+        // Note: Contact relationships are now handled through InteractionContacts many-to-many table
 
         [JsonIgnore]
         public virtual List<string>? EmailAddresses { get; set; } = new List<string>();

@@ -99,10 +99,7 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .HasForeignKey(x => new { x.UserId, x.RoleId });
         });
 
-        modelBuilder.Entity<Interaction>()
-            .HasOne(i => i.Contact)
-            .WithMany(c => c.Interactions)
-            .HasForeignKey(i => i.ContactId);
+
 
         modelBuilder.Entity<Interaction>(entity =>
         {

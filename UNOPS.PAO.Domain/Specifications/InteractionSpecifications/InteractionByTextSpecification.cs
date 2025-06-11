@@ -19,8 +19,9 @@ public class InteractionByTextSpecification : BaseSpecification<Interaction>
         // Default ordering is by date descending
         ApplyOrderByDescending(i => i.Date);
         
-        // Include the related contact
-        AddInclude(i => i.Contact);
+        // Include the related contacts through junction table
+        AddInclude(i => i.InteractionContacts);
+        AddInclude("InteractionContacts.Contact");
     }
     
     /// <summary>
