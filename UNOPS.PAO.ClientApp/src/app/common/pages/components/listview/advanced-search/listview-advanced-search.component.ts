@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, OnInit, OnChanges, SimpleChanges, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, computed, inject, OnInit, OnChanges, SimpleChanges, effect, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { TooltipModule } from 'primeng/tooltip';
 import { CalendarModule } from 'primeng/calendar';
+import { CheckboxModule } from 'primeng/checkbox';
 
 import { ListViewConfig, SearchCriteria, SearchParams, EntityType } from '../listview.model';
 import { SavedFilter } from '../../../../interfaces/saved-filter.interface';
@@ -30,12 +31,16 @@ import { AdvancedSearchSavedFilterComponent } from './saved-filter/advanced-sear
     InputIcon,
     TooltipModule,
     CalendarModule,
+    CheckboxModule,
     AdvancedSearchSavedFilterComponent
   ],
   templateUrl: './listview-advanced-search.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
+  // ViewChild for saved filter component
+  @ViewChild('savedFilterRef') savedFilterComponent?: AdvancedSearchSavedFilterComponent;
+
   // Inputs
   @Input() config!: ListViewConfig;
   @Input() isLoading: boolean = false;
@@ -43,7 +48,8 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   @Input() entityType?: EntityType; // Optional for SavedFilter functionality
   @Input() orderBy?: string; // For SavedFilter functionality
   @Input() ascending: boolean = true; // For SavedFilter functionality
-  
+  @Input() preselectedSavedFilterId: number | null = null; // For URL-based filter selection
+
   // Outputs
   @Output() search = new EventEmitter<SearchCriteria>();
   @Output() removeCriterion = new EventEmitter<number>();
@@ -51,23 +57,27 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   @Output() exportData = new EventEmitter<void>();
   @Output() applySavedFilter = new EventEmitter<SavedFilter>();
   @Output() switchToSimple = new EventEmitter<void>();
-  
+  @Output() myOfficeFilterChanged = new EventEmitter<boolean>();
+
   // UI state
   selectedSearchField: any = null;
   advancedSearchText: string = '';
   selectedComparisonOperator: string = 'like'; // Comparison operator (is, like, >, etc.)
   selectedLogicalOperator: 'AND' | 'OR' = 'AND'; // Logical operator (AND/OR)
-  
+
+  // My Office filter state
+  myOfficeOnly: boolean = false;
+
   // Date-specific UI state
   selectedDate: Date | null = null;
   selectedSecondDate: Date | null = null; // For "between" operator
-  
+
   // Dropdown options
   logicalOperators = [
     { label: 'search.logicalOperators.and', value: 'AND' },
     { label: 'search.logicalOperators.or', value: 'OR' }
   ];
-  
+
   // All available comparison operators by type
   private allOperators = {
     text: [
@@ -77,8 +87,6 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       { label: 'search.operators.notContains', value: 'not like' }
     ],
     date: [
-      { label: 'search.operators.equals', value: 'is' },
-      { label: 'search.operators.notEquals', value: 'is not' },
       { label: 'search.operators.after', value: 'after' },
       { label: 'search.operators.before', value: 'before' },
       { label: 'search.operators.between', value: 'between' },
@@ -92,27 +100,27 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       { label: 'search.operators.lessThanOrEqual', value: '<=' }
     ]
   };
-  
+
   // Computed properties
   searchableFields = computed(() => this.config?.searchConfig?.searchableFields || []);
-  
+
   // Dynamic comparison operators based on selected field type
   comparisonOperators = computed(() => {
     if (!this.selectedSearchField) {
       return this.allOperators.text;
     }
-    
+
     const fieldType = this.getFieldType(this.selectedSearchField);
     return this.allOperators[fieldType] || this.allOperators.text;
   });
-  
+
   /**
    * Check if current field is a date field
    */
   isDateField(): boolean {
     return this.selectedSearchField && this.getFieldType(this.selectedSearchField) === 'date';
   }
-  
+
   /**
    * Check if "between" operator is selected
    */
@@ -127,12 +135,33 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     if (!value || typeof value !== 'string') {
       return false;
     }
-    
+
     // Check if it's a valid ISO date string
     const date = new Date(value);
     return !isNaN(date.getTime()) && value.includes('T') && value.includes(':');
   }
-  
+
+  /**
+   * Get human-readable operator label
+   */
+  getOperatorLabel(operator: string): string {
+    const operatorMap: { [key: string]: string } = {
+      'is': '=',
+      'is not': '≠',
+      'like': '⊃',
+      'not like': '⊅',
+      'after': '>',
+      'before': '<',
+      'between': '↔',
+      '>': '>',
+      '<': '<',
+      '>=': '≥',
+      '<=': '≤'
+    };
+
+    return operatorMap[operator] || operator;
+  }
+
   /**
    * Get available comparison operators for current field
    */
@@ -140,11 +169,11 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     if (!this.selectedSearchField) {
       return this.allOperators.text;
     }
-    
+
     const fieldType = this.getFieldType(this.selectedSearchField);
     return this.allOperators[fieldType] || this.allOperators.text;
   }
-  
+
   constructor() {
     // Effect to automatically select first field when searchable fields change
     effect(() => {
@@ -155,17 +184,17 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       }
     });
   }
-  
+
   ngOnInit(): void {
     this.selectFirstSearchField();
   }
-  
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['config'] && this.config?.searchConfig?.searchableFields) {
       this.selectFirstSearchField();
     }
   }
-  
+
   /**
    * Get field type based on the selected field
    */
@@ -181,17 +210,17 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
           return 'text';
       }
     }
-    
+
     // Fallback: try to infer from field name
     const fieldName = field.field.toLowerCase();
-    if (fieldName.includes('date') || fieldName.includes('time') || 
+    if (fieldName.includes('date') || fieldName.includes('time') ||
         fieldName === 'fromdate' || fieldName === 'todate' || fieldName === 'createdat' || fieldName === 'updatedat') {
       return 'date';
     }
-    
+
     return 'text';
   }
-  
+
   /**
    * Automatically select the first available search field
    */
@@ -199,9 +228,9 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     const fields = this.searchableFields();
     if (fields && fields.length > 0) {
       // Check if current selected field is still valid
-      const isCurrentFieldValid = this.selectedSearchField && 
+      const isCurrentFieldValid = this.selectedSearchField &&
         fields.some(field => field.field === this.selectedSearchField.field);
-      
+
       // Only select first field if no field is selected or current field is invalid
       if (!this.selectedSearchField || !isCurrentFieldValid) {
         this.selectedSearchField = fields[0];
@@ -209,22 +238,22 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       }
     }
   }
-  
+
   /**
    * Handle field selection for advanced search
    */
   onSearchFieldSelect(field: any): void {
     this.selectedSearchField = field;
-    
+
     // Reset values when field changes
     this.advancedSearchText = '';
     this.selectedDate = null;
     this.selectedSecondDate = null;
-    
+
     // Reset operator to appropriate default for field type
     const fieldType = this.getFieldType(field);
     if (fieldType === 'date') {
-      this.selectedComparisonOperator = 'is';
+      this.selectedComparisonOperator = 'after';
     } else if (fieldType === 'number') {
       this.selectedComparisonOperator = 'is';
     } else {
@@ -237,7 +266,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.selectedDate = null;
     this.selectedSecondDate = null;
   }
-  
+
   /**
    * Add a new search criterion when user presses enter in advanced search
    */
@@ -246,7 +275,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       this.addSearchCriterion();
     }
   }
-  
+
   /**
    * Check if we can add a criterion (simplified for template use)
    */
@@ -257,17 +286,20 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       }
       return this.selectedDate != null;
     }
-    
+
     return !!(this.advancedSearchText && this.advancedSearchText.trim().length > 0);
   }
-  
+
   /**
-   * Format date to ISO string for backend compatibility
+   * Format date to simple YYYY-MM-DD format for backend compatibility
    */
   private formatDateValue(date: Date): string {
-    return date.toISOString();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
-  
+
   /**
    * Add the current search criterion
    */
@@ -275,11 +307,11 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     if (!this.canAddCriterion()) {
       return;
     }
-    
+
     const fieldType = this.getFieldType(this.selectedSearchField);
     let value: string;
     let secondValue: string | undefined;
-    
+
     if (fieldType === 'date') {
       if (this.isBetweenOperator()) {
         value = this.formatDateValue(this.selectedDate!);
@@ -290,7 +322,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     } else {
       value = this.advancedSearchText.trim();
     }
-    
+
     const criterion: SearchCriteria = {
       field: this.selectedSearchField.field,
       value: value,
@@ -300,37 +332,47 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
       fieldType: fieldType,
       secondValue: secondValue
     };
-    
+
+    // Clear saved filter dropdown when criteria are modified
+    this.clearSavedFilterSelection();
+
     // Emit the criterion to parent component
     this.search.emit(criterion);
-    
+
     // Clear the input fields
     this.advancedSearchText = '';
     this.selectedDate = null;
     this.selectedSecondDate = null;
-    this.selectedComparisonOperator = fieldType === 'date' ? 'is' : (fieldType === 'number' ? 'is' : 'like');
-    
+    this.selectedComparisonOperator = fieldType === 'date' ? 'after' : (fieldType === 'number' ? 'is' : 'like');
+
     // Automatically select the first search field again for convenience
     this.selectFirstSearchField();
   }
-  
+
   /**
    * Remove a search criterion
    */
   removeSearchCriterion(index: number): void {
+    // Clear saved filter dropdown when criteria are modified
+    this.clearSavedFilterSelection();
+    
     this.removeCriterion.emit(index);
   }
-  
+
   /**
    * Clear all search criteria
    */
   onClearSearch(): void {
     this.clearSearch.emit();
-    
+
+    // Reset My Office filter
+    this.myOfficeOnly = false;
+    this.myOfficeFilterChanged.emit(this.myOfficeOnly);
+
     // Automatically select the first search field again for convenience
     this.selectFirstSearchField();
   }
-  
+
   /**
    * Export data
    */
@@ -345,6 +387,24 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
     this.switchToSimple.emit();
   }
 
+  /**
+   * Handle My Office filter toggle
+   */
+  onMyOfficeFilterChange(): void {
+    // Clear saved filter dropdown when criteria are modified
+    this.clearSavedFilterSelection();
+    
+    this.myOfficeFilterChanged.emit(this.myOfficeOnly);
+  }
+
+  /**
+   * Check if My Office filter is available for the current entity type
+   */
+  isMyOfficeFilterAvailable(): boolean {
+    return false;
+    // return this.entityType === 'Partner' || this.entityType === 'Contact' || this.entityType === 'Interaction';
+  }
+
   // ===== SavedFilter Event Handlers =====
 
   /**
@@ -353,7 +413,7 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   onSavedFilterApplied(filter: SavedFilter): void {
     // First, clear current search criteria
     this.clearSearch.emit();
-    
+
     // Then emit the filter to parent for complete handling
     this.applySavedFilter.emit(filter);
   }
@@ -385,5 +445,14 @@ export class ListviewAdvancedSearchComponent implements OnInit, OnChanges {
   onSavedFilterDeleted(filterId: number): void {
     // Filter was deleted successfully
     // Parent component can handle this if needed
+  }
+
+  /**
+   * Clear the saved filter selection when criteria are modified
+   */
+  private clearSavedFilterSelection(): void {
+    if (this.savedFilterComponent) {
+      this.savedFilterComponent.clearSelectedFilter();
+    }
   }
 }

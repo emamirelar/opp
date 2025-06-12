@@ -297,7 +297,9 @@
         },
         "selectDate": "Sélectionner une date",
         "selectEndDate": "Sélectionner la date de fin",
-        "and": "et"
+        "and": "et",
+        "myOfficeOnly": "Mon Bureau Seulement",
+        "myOfficeTooltip": "Filtrer les résultats pour afficher uniquement les données de votre unité organisationnelle"
     },
     "savedFilters": {
         "selectFilter": "Sélectionner un filtre",

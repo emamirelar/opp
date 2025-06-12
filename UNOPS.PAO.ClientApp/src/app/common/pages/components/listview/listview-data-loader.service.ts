@@ -31,6 +31,7 @@ export class ListviewDataLoaderService {
   private searchText = '';
   private searchCriteria: SearchCriteria[] = [];
   private useAdvancedSearch = false;
+  private myOfficeOnly = false;
   
   /**
    * Set the API endpoint URL
@@ -121,6 +122,21 @@ export class ListviewDataLoaderService {
   clearSearchCriteria(): void {
     this.searchCriteria = [];
     this.searchText = '';
+    this.myOfficeOnly = false;
+  }
+
+  /**
+   * Set My Office filter
+   */
+  setMyOfficeFilter(enabled: boolean): void {
+    this.myOfficeOnly = enabled;
+  }
+
+  /**
+   * Get My Office filter state
+   */
+  getMyOfficeFilter(): boolean {
+    return this.myOfficeOnly;
   }
   
   /**
@@ -129,11 +145,13 @@ export class ListviewDataLoaderService {
   getSearchParams(): SearchParams {
     if (this.useAdvancedSearch) {
       return {
-        fieldSearches: this.searchCriteria
+        fieldSearches: this.searchCriteria,
+        myOfficeOnly: this.myOfficeOnly
       };
     } else {
       return {
-        generalSearch: this.searchText
+        generalSearch: this.searchText,
+        myOfficeOnly: this.myOfficeOnly
       };
     }
   }
@@ -217,6 +235,11 @@ export class ListviewDataLoaderService {
         
         
       }
+    }
+
+    // Add My Office filter parameter
+    if (this.myOfficeOnly) {
+      params = params.set('myOfficeOnly', 'true');
     }
     
     
