@@ -679,7 +679,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<IEnumerable<ListViewColumnDto>> GetEntityListViewConfigurationAsync(ClaimsPrincipal user, string entityName)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "read");
         
         var entityConfig = await _context.EntityManagers
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted && f.IsActive && f.ShowInListView))

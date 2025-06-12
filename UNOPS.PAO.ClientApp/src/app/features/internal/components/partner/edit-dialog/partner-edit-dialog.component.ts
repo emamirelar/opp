@@ -78,7 +78,7 @@ export class PartnerEditDialogComponent implements OnInit {
       name: new FormControl('', {
         validators: [Validators.required]
       }),
-      status: new FormControl(''),
+      status: new FormControl('Active'),
       newEngagement: new FormControl(null, {
         validators: [Validators.required]
       }),
@@ -174,8 +174,15 @@ export class PartnerEditDialogComponent implements OnInit {
           this.isLoading.set(true);
           this.record = this.dialogConfig.data?.record;
           this.recordData.set(this.dialogConfig.data.record);
-          this.formGroup.patchValue(this.dialogConfig.data.record);
-
+          
+          // Preserve the "Active" default if status is null or undefined
+          const formData = { ...this.dialogConfig.data.record };
+          if (!formData.status) {
+            formData.status = 'Active';
+          }
+          
+          this.formGroup.patchValue(formData);
+          
           // Set loading to false after a short delay to ensure form is properly initialized
           setTimeout(() => {
             this.isLoading.set(false);
@@ -259,7 +266,14 @@ export class PartnerEditDialogComponent implements OnInit {
     this.partnerService.getPartnerById(this.recordId).subscribe({
       next: (data: any) => {
         this.recordData.set(data);
-        this.formGroup.patchValue(data);
+        
+        // Preserve the "Active" default if status is null or undefined
+        const formData = { ...data };
+        if (!formData.status) {
+          formData.status = 'Active';
+        }
+        
+        this.formGroup.patchValue(formData);
         this.isLoading.set(false);
       },
       error: (error) => {

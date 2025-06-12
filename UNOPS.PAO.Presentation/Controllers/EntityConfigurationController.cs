@@ -376,9 +376,6 @@ public class EntityConfigurationController : BaseController
     [HttpGet(APIDictionary.EntityConfiguration + "/{entityName}/list-view")]
     public async Task<ActionResult> GetEntityListViewConfiguration(string entityName)
     {
-        /*var permissionResult = await CheckEntityPermissionAsync("EntityManager", "read");
-        if (permissionResult != null) return permissionResult;*/
-
         try
         {
             var listViewConfig = await _manager.GetEntityListViewConfigurationAsync(User, entityName);

@@ -71,7 +71,7 @@ export class PartnerNewComponent implements OnChanges, OnInit {
     name: new FormControl('', {
       validators:[Validators.required]
     }),
-    status: new FormControl(null, {
+    status: new FormControl('Active', {
       validators:[Validators.required]
     }),
     newEngagement: new FormControl(null, {
@@ -153,7 +153,14 @@ export class PartnerNewComponent implements OnChanges, OnInit {
 
   updateForm(data: Partner | null) {
     if (!data) return;
-    this.formGroup.patchValue(data as any);
+    
+    // Preserve the "Active" default if status is null or undefined
+    const formData = { ...data };
+    if (!formData.status) {
+      formData.status = 'Active';
+    }
+    
+    this.formGroup.patchValue(formData as any);
   }
 
   _handleOnSaveClick(){
