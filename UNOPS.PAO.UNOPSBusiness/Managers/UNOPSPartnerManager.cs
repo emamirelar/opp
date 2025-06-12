@@ -51,6 +51,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Use AutoMapper with the updated configuration
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
 
+        // Convert LogoUrl to signed URL if it exists and contains Google Cloud Storage path
+        if (!string.IsNullOrEmpty(result.LogoUrl) && GoogleCloudStorageService != null)
+        {
+            result.LogoUrl = await GoogleCloudStorageService.GenerateSignedUrlFromStorageUrl(result.LogoUrl);
+        }
+
         if (result.PartnerGroupCode != null && PartnerTreeService != null)
         {
             var partnerTreeGroup = await PartnerTreeService.GetPartnerTreeByCodeAsync(result.PartnerGroupCode);
@@ -899,7 +905,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return null;
         }
 
-        var model = MapEntityToModel(item, _mapper);
+        var model = await MapEntityToModelWithPermissionsAsync(item, _mapper);
         
         // Add permissions for this specific partner
         model.Permissions = new EntityPermissionsModel

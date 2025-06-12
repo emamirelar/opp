@@ -20,6 +20,7 @@ import { map } from 'rxjs/operators';
 import { Interaction as InteractionModel } from '../../../../../models/interaction.model';
 import { InteractionType } from '../../../../../models/interaction-type.enum';
 import { InteractionFilterParams } from '../../../../../models/interaction-filter-params.model';
+import {TranslatePipe} from '@ngx-translate/core';
 
 @Component({
   selector: 'app-contact-view-interactions-dialog',
@@ -35,8 +36,8 @@ import { InteractionFilterParams } from '../../../../../models/interaction-filte
     TooltipModule,
     IconFieldModule,
     InputIconModule,
-    DatePipe,
-    ContactViewInteractionsItemComponent
+    ContactViewInteractionsItemComponent,
+    TranslatePipe
   ],
   providers: [DialogService],
   templateUrl: './contact-view-interactions-dialog.component.html'
@@ -78,7 +79,7 @@ export class ContactViewInteractionsDialogComponent implements OnInit {
     effect(() => {
       // Get the current search text value from the signal
       const currentSearchText = this.searchText();
-      
+
       // Trigger search with debounce
       this.debounceSearch(currentSearchText);
     });
@@ -105,10 +106,10 @@ export class ContactViewInteractionsDialogComponent implements OnInit {
       this.loadData();
     }, 500);
   }
-  
+
   loadData(): void {
     if (!this.contactId) return;
-    
+
     this.isLoading.set(true);
     this.currentPage = 0;
     this.hasMoreData = true;
@@ -208,10 +209,10 @@ export class ContactViewInteractionsDialogComponent implements OnInit {
         // Add new interactions to the existing array
         this.interactions = [...this.interactions, ...data.records];
         this.totalCount = data.totalCount;
-        
+
         // Check if we have more data
         this.hasMoreData = this.interactions.length < data.totalCount;
-        
+
         // Update grouped interactions
         this.updateGroupedInteractions();
         this.isLoading.set(false);
@@ -220,14 +221,14 @@ export class ContactViewInteractionsDialogComponent implements OnInit {
 
   private formatDateForApi(date: Date, isEndDate: boolean = false): string {
     if (!date) return '';
-    
+
     const d = new Date(date);
     if (isEndDate) {
       d.setHours(23, 59, 59, 999);
     } else {
       d.setHours(0, 0, 0, 0);
     }
-    
+
     return d.toISOString();
   }
 

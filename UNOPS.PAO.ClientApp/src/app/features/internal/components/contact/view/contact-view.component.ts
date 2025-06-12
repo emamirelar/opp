@@ -261,4 +261,8 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   get acceptedMiMIETypesForgDrive() {
     return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
   }
+
+  getUploadProfilePictureUrl() {
+    return this.contactService.getUploadProfilePictureUrl(this.recordId);
+  }
 }

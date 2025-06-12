@@ -31,7 +31,7 @@ const internalRoutes: Routes = [
         path: '',
         component: HomeComponent,
         // Home is visible to all users - no need for role guard
-        canActivate: [authGuard], 
+        canActivate: [authGuard],
         data: { breadcrumb: 'Home', icon: 'pi pi-home', routeId: 'home-route' },
       },
       {
@@ -47,16 +47,18 @@ const internalRoutes: Routes = [
         children: [
           {
             path: 'contacts',
-            component: ContactListComponent,
             canActivate: [authGuard, routePermissionGuard],
-            data: { breadcrumb: 'Contacts' }
+            data: { breadcrumb: 'Contacts' },
+            children: [
+              { path: '', component: ContactListComponent },
+              {
+                path: ':recordId',
+                data: { breadcrumb: 'Details' },
+                component: ContactViewComponent,
+              },
+            ]
           },
-          {
-            path: 'contacts/:recordId',
-            data: { breadcrumb: 'Contact' },
-            component: ContactViewComponent,
-            canActivate: [authGuard, routePermissionGuard],
-          },
+
           {
             path: 'interactions',
             canActivate: [authGuard, routePermissionGuard],
@@ -87,8 +89,8 @@ const internalRoutes: Routes = [
               partnerData: PartnerDataResolver
             },
             children: [
-              { 
-                path: '', 
+              {
+                path: '',
                 component: PartnerViewComponent,
                 data: { breadcrumb: 'Details' }
               },
@@ -103,7 +105,7 @@ const internalRoutes: Routes = [
             path: 'partnership-agreements',
             component: ComingSoonComponent,
             canActivate: [authGuard, routePermissionGuard],
-            data: { 
+            data: {
               breadcrumb: 'Partnership Agreements',
               featureName: 'Partnership Agreements'
             }
@@ -115,7 +117,7 @@ const internalRoutes: Routes = [
         component: ComingSoonComponent,
         // All authenticated users can access leads (External, Partner, Internal, Admin)
         canActivate: [authGuard, routePermissionGuard],
-        data: { 
+        data: {
           breadcrumb: 'Leads',
           featureName: 'Leads'
         }
@@ -125,7 +127,7 @@ const internalRoutes: Routes = [
         component: ComingSoonComponent,
         // Only Internal and Admin users can access Initiatives
         canActivate: [authGuard, routePermissionGuard],
-        data: { 
+        data: {
           breadcrumb: 'Initiatives',
           featureName: 'Initiatives'
         }
@@ -141,16 +143,16 @@ const internalRoutes: Routes = [
             path: 'partner-tree',
             children: [
               { path: '', component: PartnerTreeComponent, data: { breadcrumb: 'Partner Tree' } },
-              { 
-                path: ':recordId', 
-                component: PartnerTreeViewComponent, 
+              {
+                path: ':recordId',
+                component: PartnerTreeViewComponent,
                 data: { breadcrumb: 'Partner Tree View' },
                 resolve: {
                   partnerTreeData: PartnerTreeDataResolver
                 },
                 children: [
-                  { 
-                    path: '', 
+                  {
+                    path: '',
                     component: PartnerTreeDetailsComponent,
                     data: { breadcrumb: 'Details' }
                   },
@@ -166,21 +168,21 @@ const internalRoutes: Routes = [
           {
             path: 'ai-prompt-management',
             loadComponent: () => import('./components/ai-prompt/ai-prompt.component').then(m => m.AiPromptComponent),
-            data: { 
+            data: {
               breadcrumb: 'AI Prompt Admin'
             }
           },
           {
             path: 'user-management',
             component: UserManagementComponent,
-            data: { 
+            data: {
               breadcrumb: 'Manage User Permissions'
             }
           },
           {
             path: 'office-management',
             component: ComingSoonComponent,
-            data: { 
+            data: {
               breadcrumb: 'Manage my Office',
               featureName: 'Manage my Office'
             }
@@ -188,14 +190,14 @@ const internalRoutes: Routes = [
           {
             path: 'entity-manager',
             component: EntityManagerComponent,
-            data: { 
+            data: {
               breadcrumb: 'Manage Entities'
             }
           },
           {
             path: 'translations',
             component: ComingSoonComponent,
-            data: { 
+            data: {
               breadcrumb: 'Translation Workbench',
               featureName: 'Translation Workbench'
             }
@@ -220,7 +222,7 @@ const internalRoutes: Routes = [
       },
       {
         path: 'partner-tree',
-        
+
         redirectTo: 'partnerships/partner-tree',
         pathMatch: 'full'
       },
@@ -244,6 +246,6 @@ const internalRoutes: Routes = [
 })
 export class InternalRoutingModule {
   constructor() {
-    
+
   }
 }

@@ -9,7 +9,7 @@
 <!--</div>-->
 <div class="flex flex-col gap-8">
 
-  
+
   <div class="flex flex-col xl:flex-row gap-8">
     <div class="xl:w-1/2 flex flex-col gap-8">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}}">
@@ -34,7 +34,6 @@
               [uploadUrl]="getUploadLogoUrl()"
               [altText]="'Partner logo'"
               [size]="'small'"
-              [disabled]="!recordPermissions().permissions.canUpdate"
               (imageChanged)="_loadRecordDetails()"
             />
             <div class="flex flex-col gap-1">
@@ -149,22 +148,22 @@
               <div>{{recordData().levyTreatment}}</div>
             </div>
             }
-            <div class="flex flex-col gap-2">
+            <div class="flex gap-2">
               <p-checkbox [binary]="true"
                           [disabled]="true"
-                          [value]="recordData().globalKeyAccount"
+                          [ngModel]="recordData().globalKeyAccount"
                           inputId="gka" />
               <label for="gka">{{ "label.partner.globalKeyAccount" | translate }}</label>
             </div>
-            <div class="flex flex-col gap-2">
+            <div class="flex gap-2">
               <p-checkbox [binary]="true"
                           [disabled]="true"
-                          [value]="recordData().unSecretariatEntity"
+                          [ngModel]="recordData().unSecretariatEntity"
                           inputId="unse" />
               <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
             </div>
           }
-          
+
           <!-- See More / See Less Button -->
           @if (shouldShowSeeMoreButton()) {
             <div class="flex justify-center mt-4">
@@ -178,7 +177,7 @@
               />
             </div>
           }
-          
+
           @if (shouldShowSeeLessButton()) {
             <div class="flex justify-center mt-4">
               <p-button
@@ -275,7 +274,7 @@
 
     <app-partner-contacts
       [partnerId]="recordId"
-      [partnerName]="recordData()?.name || ''" />
+      [partnerName]="recordData().name || ''" />
 
     <ng-template pTemplate="footer">
       <p-button

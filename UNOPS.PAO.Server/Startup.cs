@@ -338,6 +338,7 @@ public class Startup
 
         AddServices(services);
         services.AddScoped<IGoogleDriveDocumentManager, GoogleDriveDocumentManager>();
+        services.AddScoped<GoogleCloudStorageService>();
         ApplyMigrations(services);
         services.SeedAsync();
         ConfigureRegisters(services);

@@ -257,20 +257,31 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
   restoreSplitterState() {
     const aiAssistantActive = localStorage.getItem('aiAssistantActive');
     
-    if (aiAssistantActive) {
-      const isActive = aiAssistantActive === 'true';
-      this.layoutService.layoutState.update((prev) => ({ ...prev, aiAssistantActive: isActive }));
-      
-      // Clear cache to force recalculation
-      this._lastAiAssistantActive = null;
-      this._splitterSizes = [];
-      this._minSplitterSizes = [];
-      
-      // Trigger change detection after state update
-      setTimeout(() => {
-        this.cdr.markForCheck();
-      });
+    // If no saved state, default to false (closed)
+    const isActive = aiAssistantActive === null ? false : aiAssistantActive === 'true';
+    
+    this.layoutService.layoutState.update((prev) => ({ ...prev, aiAssistantActive: isActive }));
+    
+    // Clear cache to force recalculation
+    this._lastAiAssistantActive = null;
+    this._splitterSizes = [];
+    this._minSplitterSizes = [];
+    
+    // IMPORTANT: Clear splitter's own state if AI assistant should be closed
+    if (!isActive) {
+      sessionStorage.removeItem('ai-assistant-splitter');
+      localStorage.removeItem('ai-assistant-splitter');
     }
+    
+    // Save the default state if it wasn't already saved
+    if (aiAssistantActive === null) {
+      localStorage.setItem('aiAssistantActive', isActive.toString());
+    }
+    
+    // Trigger change detection after state update
+    setTimeout(() => {
+      this.cdr.markForCheck();
+    });
   }
 
   get splitterSizes(): number[] {

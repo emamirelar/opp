@@ -27,10 +27,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import { PartnerTree } from '../../../../models/partner-tree.model';
-import { PartnerCategoryGroup, PartnerGroup } from '../../../../models/partner-category-group.model';    
-import { JsonPipe } from '@angular/common';
 import { ListViewColumn } from '../../../../../../common/pages/components/listview/listview.model';
-import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
 import { PermissionUtilityService } from '../../../../../../essentials/services/permission-utility.service';
 
 @Component({
@@ -51,9 +48,7 @@ import { PermissionUtilityService } from '../../../../../../essentials/services/
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
-    ListviewComponent,
     RouterModule,
-    JsonPipe,
     ProgressSpinnerModule,
     LookerstudioComponent
   ],
@@ -106,10 +101,10 @@ export class PartnerTreeDataComponent implements OnInit {
     ]).subscribe({
       next: ([data, params]) => {
         const recordId = params?.get('recordId');
-        
+
         if (data && (data as any)['partnerTreeData']) {
           const newPartnerTree = (data as any)['partnerTreeData'].data;
-          
+
           // Only update if it's actually a different record or if partnerTree is null
           if (!this.partnerTree() || newPartnerTree?.id?.toString() !== this.partnerTree()?.id?.toString()) {
             this.updatePartnerTreeData((data as any)['partnerTreeData']);
@@ -121,8 +116,8 @@ export class PartnerTreeDataComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading partner tree data:', error);
-        this.feedbackDialogService.showErrorToast({ 
-          detail: 'Failed to load partner tree data' 
+        this.feedbackDialogService.showErrorToast({
+          detail: 'Failed to load partner tree data'
         });
         this.isLoading.set(false);
       }
@@ -131,7 +126,7 @@ export class PartnerTreeDataComponent implements OnInit {
 
   private updatePartnerTreeData(partnerTreeData: any): void {
     this.partnerTree.set(partnerTreeData.data);
-    
+
     // Extract permissions from response if available
     if (partnerTreeData.permissions) {
       this.recordPermissions.set({
@@ -168,4 +163,4 @@ export class PartnerTreeDataComponent implements OnInit {
       this.router.navigate(['/partnerships/partners/' + $event.id]);
     }
   }
-} 
+}
