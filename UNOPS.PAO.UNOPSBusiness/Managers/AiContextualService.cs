@@ -94,14 +94,15 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return vectorString;
         }
 
-        public async Task PersistEmbedding(string entityName, int entityId, string vectorString)
+        public async Task PersistEmbedding(string entityName, int entityId, string text, string vectorString)
         {
-            var sql = "CALL public.\"InsertEntityEmbedding\"(@entityName, @entityId, @embedding)";
+            var sql = "CALL public.\"InsertEntityEmbedding\"(@entityName, @entityId, @text, @embedding)";
 
             var parameters = new[] 
             {
                 new NpgsqlParameter("@entityName", NpgsqlTypes.NpgsqlDbType.Text) { Value = entityName },
                 new NpgsqlParameter("@entityId", NpgsqlTypes.NpgsqlDbType.Integer) { Value = entityId },
+                new NpgsqlParameter("@text", NpgsqlTypes.NpgsqlDbType.Text) { Value = text },
                 new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) { Value = vectorString }
             };
 
@@ -112,7 +113,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         public async Task GenerateEmbeddingAsync(string entityName, int entityId, string text)
         {
             var vectorString = await CreateEmbeddingForText(text);
-            await PersistEmbedding(entityName, entityId, vectorString);
+            await PersistEmbedding(entityName, entityId, text, vectorString);
         }
 
         public async Task<string> RetrieveContent(string promptType, dynamic entityId)
@@ -428,7 +429,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     foreach (var record in records)
                     {
                         var dependents = record["dependents"]?.ToString();
-                        dynamic updatedResponse = await GetDependentDropdownValues(dependents, record);
+                        dynamic updatedResponse = await GetDependentDropdownValues(dependents, record, promptData);
                         finalResponse.Add(updatedResponse);
                     }
                 }
@@ -521,7 +522,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     foreach (var record in records)
                     {
                         var dependents = record["dependents"]?.ToString();
-                        dynamic updatedResponse = await GetDependentDropdownValues(dependents, record);
+                        dynamic updatedResponse = await GetDependentDropdownValues(dependents, record, promptData);
                         finalResponse.Add(updatedResponse);
                     }
                 }
@@ -565,24 +566,67 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return finalResponse;
         }
 
-        public async Task<dynamic> GetDependentDropdownValues(dynamic dependents, dynamic responseObject)
+        public async Task<dynamic> GetDependentDropdownValues(dynamic dependents, dynamic responseObject, AiPrompt promptData)
         {
+            var interactionType = false;
             if (!string.IsNullOrWhiteSpace(dependents))
             {
                 var dependentsList = JsonConvert.DeserializeObject<List<string>>(dependents);
 
                 if (dependentsList.Count > 0)
                 {
+                    if (promptData?.Type?.Contains("interaction", StringComparison.OrdinalIgnoreCase) == true)
+                    {
+                        interactionType = true;
+                    }
                     //var detailedRawMessage = JsonConvert.DeserializeObject(detailedResponse.RawMessage);
                     foreach (var dependent in dependentsList)
                     {
                         var text = responseObject[dependent];
                         if (text != null)
-                        { 
-                            dynamic entityId;
-                            int id;
-                            if (text != null)
+                        {
+                            // Check if the dependent field is already an array of text values
+                            if (text is JArray textArray)
                             {
+                                // Handle array of text values - convert each to ID
+                                var idsArray = new JArray();
+                                
+                                foreach (var textItem in textArray)
+                                {
+                                    var textValue = textItem?.ToString();
+                                    if (!string.IsNullOrEmpty(textValue))
+                                    {
+                                        int id;
+                                        // Check if it's already a numeric value
+                                        if (int.TryParse(textValue, out id))
+                                        {
+                                            idsArray.Add(id);
+                                        }
+                                        else
+                                        {
+                                            // Convert text to entity ID
+                                            var entityId = await GetEntityIdFromText(textValue, dependent);
+                                            if (entityId != null && !(entityId is DBNull))
+                                            {
+                                                idsArray.Add(entityId);
+                                                
+                                                // Handle email lookup for interaction types
+                                                if (interactionType && (dependent == "contactIds" || dependent == "userIds"))
+                                                {
+                                                    await AddEmailToResponse(responseObject, entityId);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                responseObject[dependent] = idsArray;
+                            }
+                            else
+                            {
+                                // Handle single text value (existing behavior)
+                                dynamic entityId;
+                                int id;
                                 if (text?.Value != null)
                                 {
                                     text = text.Value;
@@ -598,19 +642,36 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 {
                                     continue;
                                 }
-                            }
-                           // var embeddingString = await CreateEmbeddingForText(text);
-                            string entityName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(dependent.Replace("Id", ""));
-                            entityName = entityName.Pluralize();
-                            entityId = await RetrieveEntityId(entityName, null, text, 1);
-
-                            if (entityId == null || entityId is DBNull)
-                            {
-                                continue;
-                            }
-                            else
-                            {
-                                responseObject[dependent] = entityId;
+                                
+                                // Convert text to entity ID
+                                entityId = await GetEntityIdFromText(text?.ToString(), dependent);
+                                if (entityId == null || entityId is DBNull)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    // Check if the dependent field is already an array
+                                    if (responseObject[dependent] is JArray existingArray)
+                                    {
+                                        // Handle as array - append if not already present
+                                        if (!existingArray.Any(e => e.ToString() == entityId.ToString()))
+                                        {
+                                            existingArray.Add(entityId);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Handle as single value
+                                        responseObject[dependent] = entityId;
+                                    }
+                                }
+                                
+                                // Handle email lookup for interaction types
+                                if (interactionType && (dependent == "contactId" || dependent == "userId"))
+                                {
+                                    await AddEmailToResponse(responseObject, entityId);
+                                }
                             }
                         }
                     }
@@ -677,6 +738,75 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             {
                 // Log the error but don't fail the operation
                 Console.WriteLine($"Error publishing entity processing messages to PubSub: {ex.Message}");
+            }
+        }
+
+        private async Task<dynamic> GetEntityIdFromText(string text, string dependent)
+        {
+            // Convert dependent to entity name using the same logic as before
+            string entityName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(
+                dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
+                    dependent.Substring(0, dependent.Length - 3) : 
+                    dependent.Replace("Id", "")
+            );
+            
+            string whereCondition = "1=1"; // Default WHERE condition
+            
+            // Special case for Orgunit - should look at OrganizationHierarchies table
+            if (entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "OrganizationHierarchies";
+                whereCondition = "\"Type\" = 'OrgUnit'"; // 3 corresponds to OrgUnit enum value
+            }
+            // Special case for User/UserIds - should look at UserProfile table (which has searchable Name field)
+            else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "UserProfile";
+                // UserProfile can be searched by Name field directly
+                whereCondition = "1=1"; // Allow all UserProfiles to be searched
+            }
+            else
+            {
+                entityName = entityName.Pluralize();
+            }
+            
+            return await RetrieveEntityId(entityName, null, text, 1, whereCondition);
+        }
+        
+        private async Task AddEmailToResponse(dynamic responseObject, dynamic entityId)
+        {
+            // Cast entityId to int to avoid dynamic operation in expression tree
+            int idToSearch = Convert.ToInt32(entityId);
+            string emailId = null;
+            
+            // First, try to find email in Contacts table
+            emailId = await _context.Contacts
+                .Where(c => c.Id == idToSearch)
+                .Select(c => c.Email)
+                .FirstOrDefaultAsync();
+            
+            // If not found in Contacts, try UserInfos table
+            if (string.IsNullOrEmpty(emailId))
+            {
+                emailId = await _context.UserInfos
+                    .Where(u => u.UserId == idToSearch)
+                    .Select(u => u.UserEmail)
+                    .FirstOrDefaultAsync();
+            }
+            
+            if (!string.IsNullOrEmpty(emailId))
+            {
+                // Handle emailAddresses as an array
+                if (responseObject["emailAddresses"] == null)
+                {
+                    responseObject["emailAddresses"] = new JArray();
+                }
+                
+                var emailArray = (JArray)responseObject["emailAddresses"];
+                if (!emailArray.Any(e => e.ToString() == emailId))
+                {
+                    emailArray.Add(emailId);
+                }
             }
         }
     }

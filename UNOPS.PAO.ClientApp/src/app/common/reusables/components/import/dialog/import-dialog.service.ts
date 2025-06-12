@@ -326,6 +326,8 @@ export class ImportDialogService {
     switch (type.toLowerCase()) {
       case 'partner':
         return this.getDefaultPartnerValues();
+      case 'interaction':
+        return this.getDefaultInteractionValues();
       case 'contact':
       default:
         return this.getDefaultContactValues();
@@ -393,6 +395,27 @@ export class ImportDialogService {
       address1StateProvince: '',
       address1PostalCode: '',
       address1Country: ''
+    };
+  }
+
+  /**
+   * Get default values for all Interaction fields
+   */
+  private getDefaultInteractionValues(): Partial<any> {
+    return {
+      id: '',
+      type: '',
+      date: new Date().toISOString(),
+      subject: '',
+      description: '',
+      contactId: '',
+      contactIds: [],
+      partnerIds: [],
+      userIds: [],
+      emailAddresses: [],
+      phoneNumbers: [],
+      location: '',
+      orgUnitId: null
     };
   }
 

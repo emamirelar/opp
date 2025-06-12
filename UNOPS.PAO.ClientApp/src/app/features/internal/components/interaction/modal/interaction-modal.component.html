@@ -195,7 +195,7 @@
     </p-select>
   </div>
 
-  @if( recordId ) {
+  @if( recordId && !isImportEdit ) {
   <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
     <app-document #appDocument
                   [entityId]="recordId"

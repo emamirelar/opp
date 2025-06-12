@@ -568,7 +568,7 @@ Salutation is from the following list - Mr., Ms., Mrs., Dr., Prof. Based on the 
 
 Response format: {"Message":"Action completed successfully.","Category":"Contact","ResponseType":"Action","records":[...]}
 
-Return the response in compact single-line JSON without line breaks or unnecessary whitespace. If more input is needed, set ResponseType to "Information".
+Return compact single-line JSON. If more input needed, set ResponseType to "Information".
 
 Input data: {promptData}
 ', NOW(), 'Contact', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
@@ -582,12 +582,59 @@ Following are the mandatory fields from the above format - partnerOfficeId, part
 Use your knowledge to detect the name and short name. If any other field other than the mandatory field is undetectable, do not send it in the response. If the mandatory fields are missing, strictly send it as null.
 
 Response format: {"Message":"Action completed successfully.","Category":"Partner","ResponseType":"Action","records":[...]}
+Input data: {promptData}', NOW(), 'Contact', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }', 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+('bulk_partner_action', 'You are an AI assistant that processes partner data for bulk import. You will receive partner data as an array of arrays (with optional header) or an array of objects, or text extracted from audio/image.
 
-Return the response in a compact, single-line JSON format without line breaks or unnecessary whitespace. This is critical for successful parsing. If more input is needed, set ResponseType to "Information"."
+Convert each item into the exact JSON structure shown below. Include all fields present in input data.
 
-Input data: {promptData}
-', NOW(), 'Partner', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }',
-'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, '', 'Processes bulk partner data from arrays or objects, converting them into structured JSON format with validation of acceptable values and automatic field mapping.'),
+**Required fields:** name, shortName, status, pooledFund, ddRequired, ddeacDone, levyPotentiallyApplies, partnerOfficeId, partnerCategoryId
+**Validation rules:**
+- Map "partner category" terms to partnerCategoryId (number if ID, text if name)
+- Map "partner office" terms to partnerOfficeId (number if ID, text if name)
+- Default status to "Active" if not specified
+- Include dependents array as-is: ["partnerCategoryId", "partnerOfficeId"]
+
+**Enum values:**
+- status: "Active", "Inactive", "Locked"
+- newEngagement: "Allowed", "Not Allowed"
+- pooledFund/ddRequired/ddeacDone: "Yes", "No"
+- levyPotentiallyApplies: "Potentially does not apply", "Does not apply", "Potentially applies"
+- levyTreatment: "Please consult funding source", "UNOPS administers", "Funding source administers directly (no changes required to the partner agreement)", "N/A"
+- reasonForLevyNotApplying: "3a) Vertical Fund", "3b) Funds from UN entity", "3c) Programme Country", "3d) International Financial Institution", "4) Pooled Fund", "6) Thematic Fund"
+
+**Partner JSON format:**
+{"id": null, "name": null, "shortName": null, "status": "Active", "newEngagement": null, "phone": "", "website": "", "pooledFund": null, "ddRequired": null, "ddeacDone": null, "eacReference": "", "globalKeyAccount": false, "unSecretariatEntity": false, "levyPotentiallyApplies": null, "reasonForLevyNotApplying": null, "levyTreatment": null, "address1Street": "", "address1Street2": "", "address1City": "", "address1StateProvince": "", "address1PostalCode": "", "address1Country": "", "logoUrl": null, "partnerCategoryId": null, "partnerOfficeId": null, "dependents": ["partnerCategoryId", "partnerOfficeId"], "validationError": ""}
+
+**Response format:** {"Message":"Action completed successfully.", "Category":"Partner", "ResponseType":"Action", "records":[...]}
+
+Return compact single-line JSON. If more input needed, set ResponseType to "Information".
+
+Input data: {promptData}', NOW(), 'Partner', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }', 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
+('bulk_interaction_action', 'You are an AI assistant that processes interaction data for bulk import. You will receive interaction data as an array of arrays (with optional header) or an array of objects, or text extracted from audio/image.
+
+Convert each item into the exact JSON structure shown below. Only include non-empty fields.
+
+**Required fields:** type, date, subject
+**Validation rules:**
+- Map contact names to contactIds (keep as text if name, number if ID)
+- Map partner names to partnerIds (keep as text if name, number if ID)
+- Map user names to userIds (keep as text if name, number if ID)
+- Format date as ISO 8601 timestamp (YYYY-MM-DDTHH:mm:ss.sssZ)
+- Default status to "Active"
+- Parse comma-separated emails into emailAddresses array
+- Parse comma-separated phones into phoneNumbers array
+- Include dependents for all ID fields that are text names
+
+**Interaction types:** "Email", "Chat", "Phone", "VideoMeeting", "InPersonMeeting", "Other"
+
+**Interaction JSON format:**
+{"id": null, "type": "", "date": "", "subject": "", "description": "", "status": "Active", "contactIds": [], "partnerIds": [], "userIds": [], "emailAddresses": [], "phoneNumbers": [], "location": "", "orgUnitId": null, "dependents": [], "validationError": ""}
+
+**Response format:** {"Message":"Action completed successfully.", "Category":"Interaction", "ResponseType":"Action", "records":[...]}
+
+Return compact single-line JSON. If more input needed, set ResponseType to "Information".
+
+Input data: {promptData}', NOW(), 'Interaction', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 8192 }', 'europe-west4', 'gemini-2.0-flash-001', 'unops-partneropportunity', NULL, NULL, ''),
 ('summarize_information', '
 You will receive entity details in JSON format. Summarize the content into clear, concise bullet points that highlight the most important and unique characteristics of the entity. This summary will be used to create a semantic embedding for similarity search. Do not include IDs, timestamps, or internal references.
 

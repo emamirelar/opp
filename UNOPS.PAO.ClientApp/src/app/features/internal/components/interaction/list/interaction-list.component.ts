@@ -14,6 +14,7 @@ import { PermissionUtilityService } from '../../../../../essentials/services/per
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 import { SearchField } from '../../../../../common/services/search-parser.service';
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
+import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 
 @Component({
   selector: 'app-interaction-list',
@@ -42,6 +43,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   permissionUtilityService = inject(PermissionUtilityService);
   feedbackDialogService = inject(FeedbackDialogService);
   entityConfigurationService = inject(EntityConfigurationService);
+  importDialogService = inject(ImportDialogService);
   cdr = inject(ChangeDetectorRef);
 
   // Permission handling
@@ -389,6 +391,19 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   onSearchChange(searchParams: SearchParams) {
     this.currentSearchText = searchParams.generalSearch || '';
-    console.log('Search changed:', searchParams);
+  }
+
+  openImportDialog() {
+    // Check if user has create permission
+    if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to import interactions',
+        summary: 'Permission Denied'
+      });
+      return;
+    }
+    
+    // Use the Google Sheet picker directly which will show loading indicators
+    this.importDialogService.openGoogleSheetPicker('interaction');
   }
 }
