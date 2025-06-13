@@ -10,6 +10,7 @@ public class InteractionFilterRequest : PaginationRequest, IInteractionSearchFil
     public int? Id { get; set; }
     public int? ContactId { get; set; }
     public string? ContactName { get; set; }
+    public int? PartnerId { get; set; }
     public InteractionType? Type { get; set; }
     public DateTime? FromDate { get; set; }
     public DateTime? ToDate { get; set; }

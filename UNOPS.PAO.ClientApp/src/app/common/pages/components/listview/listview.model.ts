@@ -113,7 +113,7 @@ export interface ListViewConfig {
   scrollHeight?: string;
   /**
    * Default view mode between 'table' and 'card'
-   * @default 'table'
+   * @default 'card'
    */
   defaultViewMode?: 'table' | 'card';
   /**
@@ -139,6 +139,10 @@ export interface ListViewConfig {
      * Field to use as the card title (defaults to first column)
      */
     titleField?: string;
+    /**
+     * Field to use as the card subtitle (defaults to first text column after title)
+     */
+    subtitleField?: string;
     /**
      * Fields to display in card content (defaults to first 4 columns after title)
      */

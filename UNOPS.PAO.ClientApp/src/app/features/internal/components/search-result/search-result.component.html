@@ -1,6 +1,6 @@
 <div class="flex flex-col h-full gap-4">
-  <h1 class="text-2xl font-medium mb-2">{{ 'label.search.results' | translate }}: "{{ searchQuery() }}"</h1>
-  
+  <h1 class="text-2xl font-medium mb-2">{{ 'search.results' | translate }}: "{{ searchQuery() }}"</h1>
+
   <p-tabs [value]="activeTabValue()">
     <p-tablist class="mb-8">
       <p-tab value="0" (click)="activeTabValue.set('0')">
@@ -19,38 +19,38 @@
 
     <p-tabpanels>
         <p-tabpanel value="0">
-            <app-listview-search-results
+            <app-listview
             [dataUrl]="contactService.getClassicSearchUrl()"
             [columns]="contactColumns"
             (rowClick)="navigateToContact($event)"
             [fullTextSearch]="searchQuery()"
             (totalRecordsChange)="onTotalContactsChange($event)"
         >
-        </app-listview-search-results>
+        </app-listview>
       </p-tabpanel>
 
       <!-- Partners Results -->
       <p-tabpanel value="1">
-        <app-listview-search-results
+        <app-listview
           [dataUrl]="partnerService.getClassicSearchUrl()"
           [columns]="partnerColumns"
           (rowClick)="navigateToPartner($event)"
           [fullTextSearch]="searchQuery()"
           (totalRecordsChange)="onTotalPartnersChange($event)"
         >
-        </app-listview-search-results>
+        </app-listview>
       </p-tabpanel>
 
       <!-- Interactions Results -->
       <!-- <p-tabpanel value="2">
-        <app-listview-search-results
+        <app-listview
           [dataUrl]="interactionService.getClassicSearchUrl()"
           [columns]="interactionColumns"
           (rowClick)="navigateToInteraction($event)"
           [fullTextSearch]="searchQuery()"
           (totalRecordsChange)="onTotalInteractionsChange($event)"
         >
-        </app-listview-search-results>
+        </app-listview>
       </p-tabpanel> -->
     </p-tabpanels>
   </p-tabs>

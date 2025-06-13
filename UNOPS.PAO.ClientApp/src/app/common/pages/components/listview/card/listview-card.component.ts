@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, Output, TemplateRef, computed, ElementRef, HostListener } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, Output, TemplateRef, computed, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
-import { PaginatorModule } from 'primeng/paginator';
 import { DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -17,10 +16,6 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
     CommonModule,
     TranslateModule,
     CardModule,
-    PaginatorModule,
-    DatePipe,
-    DecimalPipe,
-    CurrencyPipe,
     ButtonModule,
     SkeletonModule,
     AvatarModule
@@ -35,7 +30,7 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
       text-overflow: ellipsis;
       width: 100%;
     }
-    
+
     .ellipsis-text:hover {
       cursor: help;
     }
@@ -49,21 +44,24 @@ export class ListviewCardComponent<T = any> {
   @Input() totalRecords: number = 0;
   @Input() loading: boolean = false;
   @Input() error: boolean = false;
-  @Input() first: number = 0;
-  @Input() rows: number = 20;
-  
+  @Input() hasMoreData: boolean = true;
+  @Input() isLoadingMore: boolean = false;
+
   // Events
-  @Output() pageChange = new EventEmitter<{first: number, rows: number}>();
+  @Output() loadMore = new EventEmitter<void>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
   @Output() rowSelect = new EventEmitter<T>();
   @Output() rowClick = new EventEmitter<T>();
-  
+
+  // Scroll detection
+  private elementRef = inject(ElementRef);
+
   // Custom template references
   @ContentChild('cardActionsTemplate') actionsTemplate?: TemplateRef<any>;
-  
+
   // Computed values
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
-  
+
   // Computed property to get title column
   titleColumn = computed(() => {
     const titleField = this.config.cardConfig?.titleField;
@@ -79,56 +77,49 @@ export class ListviewCardComponent<T = any> {
   avatarColumn = computed(() => {
     return this.columns.find(col => col.type === 'avatar');
   });
-  
+
+  // Computed property to get subtitle column
+  subtitleColumn = computed(() => {
+    const subtitleField = this.config.cardConfig?.subtitleField;
+    if (subtitleField) {
+      // Find column that matches the subtitle field
+      return this.columns.find(col => col.field === subtitleField);
+    }
+
+    // Default to the first text column after the title column
+    const titleCol = this.titleColumn();
+    const availableColumns = this.columns.filter(col =>
+      col !== titleCol &&
+      col.type !== 'avatar' &&
+      (col.type === 'text' || col.type === 'email' || col.type === 'template')
+    );
+
+    return availableColumns[0] || null;
+  });
+
   // Computed property to get content columns
   contentColumns = computed(() => {
     const titleCol = this.titleColumn();
+    const subtitleCol = this.subtitleColumn();
     const contentFields = this.config.cardConfig?.contentFields;
-    
+
     if (contentFields && contentFields.length > 0) {
-      // Filter columns that match the specified content fields
-      return this.columns.filter(col => contentFields.includes(col.field));
+      // Filter columns that match the specified content fields, excluding title and subtitle
+      return this.columns.filter(col =>
+        contentFields.includes(col.field) &&
+        col !== titleCol &&
+        col !== subtitleCol
+      );
     }
-    
-    // Default to all columns except the title column, up to 4
-    const otherColumns = this.columns.filter(col => col !== titleCol);
-    return otherColumns.slice(0, 6);
+
+    // Default to all columns except the title and subtitle columns, up to 4
+    const otherColumns = this.columns.filter(col =>
+      col !== titleCol &&
+      col !== subtitleCol &&
+      col.type !== 'avatar'
+    );
+    return otherColumns.slice(0, 4);
   });
-  
-  // Get column sizes based on config or defaults
-  columnSizes = computed(() => {
-    const cardsPerRow = this.config.cardConfig?.cardsPerRow || {};
-    return {
-      xs: cardsPerRow.xs ? `col-${12 / cardsPerRow.xs}` : 'col-12',
-      sm: cardsPerRow.sm ? `sm:col-${12 / cardsPerRow.sm}` : 'sm:col-6',
-      md: cardsPerRow.md ? `md:col-${12 / cardsPerRow.md}` : 'md:col-6',
-      lg: cardsPerRow.lg ? `lg:col-${12 / cardsPerRow.lg}` : 'lg:col-4',
-      xl: cardsPerRow.xl ? `xl:col-${12 / cardsPerRow.xl}` : 'xl:col-3'
-    };
-  });
-  
-  // Combined column class
-  columnClass = computed(() => {
-    const sizes = this.columnSizes();
-    return `${sizes.xs} ${sizes.sm} ${sizes.md} ${sizes.lg} ${sizes.xl}`;
-  });
-  
-  /**
-   * Get the value for the scrollHeight property
-   */
-  get scrollHeightValue(): string | undefined {
-    if (!this.config.scrollable) return undefined;
-    return this.config.scrollHeight === 'flex' 
-      ? 'calc(100vh - 16rem)' // Default flexible height
-      : this.config.scrollHeight;
-  }
-  
-  /**
-   * Handle card selection
-   */
-  onCardSelect(item: T): void {
-    this.rowSelect.emit(item);
-  }
 
   /**
    * Handle card double click
@@ -138,10 +129,27 @@ export class ListviewCardComponent<T = any> {
   }
 
   /**
-   * Handle page change event
+   * Handle window scroll event to detect when user reaches bottom
    */
-  onPageChange(event: any): void {
-    this.pageChange.emit(event);
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll(): void {
+    const threshold = 200; // Load more when 200px from bottom
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+    if (scrollTop + windowHeight >= documentHeight - threshold) {
+      this.onLoadMore();
+    }
+  }
+
+  /**
+   * Trigger load more event
+   */
+  onLoadMore(): void {
+    if (this.hasMoreData && !this.isLoadingMore) {
+      this.loadMore.emit();
+    }
   }
 
   /**
@@ -149,11 +157,11 @@ export class ListviewCardComponent<T = any> {
    */
   formatValue(item: T, column: ListViewColumn): string {
     const value = item[column.field as keyof T];
-    
+
     if (value === null || value === undefined) {
       return '';
     }
-    
+
     switch (column.type) {
       case 'date':
         if (value instanceof Date || typeof value === 'string' || typeof value === 'number') {
@@ -180,14 +188,14 @@ export class ListviewCardComponent<T = any> {
         return String(value);
     }
   }
-  
+
   /**
-   * Get field value without formatting 
+   * Get field value without formatting
    */
   getFieldValue(item: T, field: string): any {
     return item[field as keyof T];
   }
-  
+
   /**
    * Safely get the avatar image URL from the item
    */
@@ -198,22 +206,22 @@ export class ListviewCardComponent<T = any> {
     }
     return value.trim();
   }
-  
+
   /**
    * Get array of items for multiple avatars display
    */
   getMultipleAvatarItems(rowData: any, column: ListViewColumn): any[] {
     const fieldParts = column.field.split('.');
     let value = rowData;
-    
+
     // Navigate to the nested property (e.g., first5ContactsByDate)
     for (let i = 0; i < fieldParts.length - 1; i++) {
       value = value?.[fieldParts[i]];
     }
-    
+
     return Array.isArray(value) ? value : [];
   }
-  
+
   /**
    * Get initials for avatar when no image is available
    */
@@ -221,17 +229,17 @@ export class ListviewCardComponent<T = any> {
     if (!fallbackFieldPath || !item) {
       return '?';
     }
-    
+
     // Extract the actual field name from the path (e.g., 'firstName' from 'first5ContactsByDate.firstName')
     const fieldName = fallbackFieldPath.split('.').pop();
     if (!fieldName || !item[fieldName]) {
       return '?';
     }
-    
+
     const name = String(item[fieldName]).trim();
     return name.charAt(0).toUpperCase();
   }
-  
+
   /**
    * Get title for avatar hover tooltip
    */
@@ -239,11 +247,11 @@ export class ListviewCardComponent<T = any> {
     if (!fallbackFieldPath || !item) {
       return '';
     }
-    
+
     // Try to create a full name from firstName and lastName if available
     const firstName = item.firstName || '';
     const lastName = item.lastName || '';
-    
+
     if (firstName && lastName) {
       return `${firstName} ${lastName}`;
     } else if (firstName) {
@@ -255,10 +263,10 @@ export class ListviewCardComponent<T = any> {
         return String(item[fieldName]);
       }
     }
-    
+
     return '';
   }
-  
+
   /**
    * Get template value using the templateFn function
    */
@@ -267,5 +275,23 @@ export class ListviewCardComponent<T = any> {
       return column.templateFn(item);
     }
     return this.getFieldValue(item, column.field) || '';
+  }
+
+  /**
+   * Get subtitle value with proper formatting based on column type
+   */
+  getSubtitleValue(item: T, column: ListViewColumn): string {
+    switch (column.type) {
+      case 'email':
+        return this.getFieldValue(item, column.field) || '';
+      case 'template':
+        return this.getTemplateValue(item, column);
+      case 'date':
+      case 'number':
+      case 'currency':
+        return this.formatValue(item, column);
+      default:
+        return this.formatValue(item, column);
+    }
   }
 }

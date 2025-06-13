@@ -38,7 +38,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   internalUserSignal = signal<boolean>(false);
   adminUserSignal = signal<boolean>(false);
   restrictedRoleSignal = signal<boolean>(false);
-  
+
   // Initialize menu items in ngOnInit after signals are available
   private initializeMenuItems(isAdmin: boolean, userRoles: string[] = [], canManageOffice: boolean = false) {
     this.menuItems = [
@@ -66,6 +66,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
             icon: 'link',
             routerLink: ['/partnerships/interactions']
           },
+          // {
+          //   label: 'title.partnerTree',
+          //   icon: 'account_tree',
+          //   routerLink: ['/partnerships/partner-tree']
+          // },
           {
             label: 'title.partnershipAgreements',
             icon: 'description',
@@ -170,12 +175,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
         // Get user roles and canManageOffice status for admin users
         this.authService.user().subscribe({
           next: (claims) => {
-            const emailClaim = claims.find(c => c.type === 'email' || 
+            const emailClaim = claims.find(c => c.type === 'email' ||
                                          c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
-            
+
             const email = emailClaim?.value;
             const apiUrl = email ? `/api/user-info/current?email=${encodeURIComponent(email)}` : '/api/user-info/current';
-            
+
             this.http.get<any>(apiUrl).subscribe({
               next: (response) => {
                 const userRoles = response.roles || [];
@@ -207,7 +212,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.langChangeSubscription = this.translateService.onLangChange.subscribe(() => {
       this.cdr.detectChanges();
     });
-    
+
     // Initialize menu items on startup
     this.initializeMenuItems(false);
   }

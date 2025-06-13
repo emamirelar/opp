@@ -33,6 +33,7 @@ import { LoadingOverlayComponent, LoadingOverlayService } from '../../../reusabl
 export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
   overlayMenuOpenSubscription: Subscription;
   menuOutsideClickListener: any;
+  aiAssistantOutsideClickListener: any;
   breadcrumbs: string[] = [];
   private defaultAiAssistantSize = 30; // Default size when active (30%)
   private minAiAssistantSize = 20; // Minimum size when active (20%)
@@ -87,6 +88,16 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
           this.updateBreadcrumbs(this.activatedRoute.root);
           this.hideMenu();
       });
+      
+      // Listen for AI assistant state changes to add/remove outside click listeners
+      effect(() => {
+        const state = this.layoutService.layoutState();
+        if (this.isMobile && state.aiAssistantActive) {
+          this.addAiAssistantOutsideClickListener();
+        } else {
+          this.removeAiAssistantOutsideClickListener();
+        }
+      });
 
       // Initialize mobile detection without triggering change detection
       this.isMobile = window.innerWidth <= this.mobileBreakpoint;
@@ -100,6 +111,11 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
   private checkMobile(): void {
     const wasMobile = this.isMobile;
     this.isMobile = window.innerWidth <= this.mobileBreakpoint;
+    
+    // If switching from desktop to mobile, close AI assistant
+    if (!wasMobile && this.isMobile) {
+      this.closeAiAssistantOnMobile();
+    }
     
     // If mobile state changed, recalculate splitter sizes
     if (wasMobile !== this.isMobile) {
@@ -118,6 +134,12 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
     this.languageService.translationService.onLangChange.subscribe(() => {
       this.cdr.markForCheck();
     });
+    
+    // Close AI Assistant on mobile refresh
+    if (this.isMobile) {
+      this.closeAiAssistantOnMobile();
+    }
+    
     this.restoreSplitterState();
   }
 
@@ -171,6 +193,14 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
       return !(sidebarEl?.isSameNode(eventTarget) || sidebarEl?.contains(eventTarget) || topbarEl?.isSameNode(eventTarget) || topbarEl?.contains(eventTarget));
   }
 
+  isAiAssistantOutsideClicked(event: MouseEvent) {
+      const aiAssistantEl = document.querySelector('.ai-assistant-panel');
+      const aiToggleEl = document.querySelector('[data-ai-assistant-toggle]');
+      const eventTarget = event.target as Node;
+
+      return !(aiAssistantEl?.isSameNode(eventTarget) || aiAssistantEl?.contains(eventTarget) || aiToggleEl?.isSameNode(eventTarget) || aiToggleEl?.contains(eventTarget));
+  }
+
   hideMenu() {
       this.layoutService.layoutState.update((prev) => ({ ...prev, overlayMenuActive: false, staticMenuMobileActive: false, menuHoverActive: false }));
       if (this.menuOutsideClickListener) {
@@ -178,6 +208,11 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
           this.menuOutsideClickListener = null;
       }
       this.unblockBodyScroll();
+      
+      // Also close AI assistant on mobile when menu is hidden (e.g., route change)
+      if (this.isMobile && this.layoutService.layoutState().aiAssistantActive) {
+        this.closeAiAssistantOnMobile();
+      }
   }
 
   blockBodyScroll(): void {
@@ -213,6 +248,10 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
 
       if (this.menuOutsideClickListener) {
           this.menuOutsideClickListener();
+      }
+      
+      if (this.aiAssistantOutsideClickListener) {
+          this.aiAssistantOutsideClickListener();
       }
   }
 
@@ -370,5 +409,47 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
     
     // Force immediate change detection
     this.cdr.markForCheck();
+  }
+
+  /**
+   * Close AI Assistant on mobile refresh to avoid UI clutter
+   */
+  private closeAiAssistantOnMobile(): void {
+    this.layoutService.layoutState.update((prev) => ({ 
+      ...prev, 
+      aiAssistantActive: false 
+    }));
+    
+    // Clear cache to force recalculation
+    this._lastAiAssistantActive = null;
+    this._splitterSizes = [];
+    this._minSplitterSizes = [];
+    
+    // Update localStorage to reflect closed state
+    localStorage.setItem('aiAssistantActive', 'false');
+    
+    // Clear any saved splitter state
+    localStorage.removeItem('aiAssistantSplitterState');
+    sessionStorage.removeItem('ai-assistant-splitter');
+    
+    // Remove outside click listener if active
+    this.removeAiAssistantOutsideClickListener();
+  }
+  
+  private addAiAssistantOutsideClickListener(): void {
+    if (!this.aiAssistantOutsideClickListener) {
+      this.aiAssistantOutsideClickListener = this.renderer.listen('document', 'click', (event) => {
+        if (this.isAiAssistantOutsideClicked(event)) {
+          this.closeAiAssistantOnMobile();
+        }
+      });
+    }
+  }
+  
+  private removeAiAssistantOutsideClickListener(): void {
+    if (this.aiAssistantOutsideClickListener) {
+      this.aiAssistantOutsideClickListener();
+      this.aiAssistantOutsideClickListener = null;
+    }
   }
 }

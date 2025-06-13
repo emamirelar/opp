@@ -1,55 +1,41 @@
 <div class="flex flex-col gap-8">
   <div class="flex flex-col xl:flex-row gap-8">
     <div class="xl:w-1/2 flex flex-col gap-8">
-      <p-panel
-        class="{{infoLoading() ? 'opacity-50' : ''}}"
-      >
+      <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} shadow-sm border border-solid border-gray-50 rounded-xl">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
-            <span class="font-semibold">{{ 'personalInformation' | translate }}</span>
-            @if(recordPermissions().permissions.canUpdate){
-              <p-button
-                icon="pi pi-pencil"
-                [rounded]="true"
-                [text]="true"
-                [size]="'small'"
-                (onClick)="handleEditClick()"
-              ></p-button>
+            <span class="text-xl">Contact Information</span>
+            @if (recordPermissions().permissions.canUpdate) {
+              <p-button icon="pi pi-pencil"
+                        [rounded]="true"
+                        [text]="true"
+                        [size]="'small'"
+                        (onClick)="handleEditClick()"></p-button>
             }
           </div>
         </ng-template>
 
-        <div class="flex flex-col gap-6 pb-2">
-          <!-- Name and Title -->
-          <div class="flex gap-4">
-            <app-picture
-              [imageUrl]="recordData().profilePictureUrl!"
-              [uploadUrl]="getUploadProfilePictureUrl()"
-              [altText]="'Profile picture'"
-              [size]="'medium'"
-              [disabled]="!recordPermissions().permissions.canUpdate"
-              (imageChanged)="_loadRecordDetails()"
-            />
-            <div class="flex flex-col gap-1">
-              <div class="text-lg">
-                {{recordData().salutation}} {{recordData().firstName}} {{recordData().middleName}} {{recordData().lastName}} {{recordData().suffix}}
-              </div>
-              <div class="text-gray-600">
-                {{recordData().title}}
-                @if(recordData().department){
-                  - {{recordData().department}}
-                }
-              </div>
-              <a [routerLink]="['/partnerships/partners', recordData().partner?.id]" class="text-primary hover:underline font-semibold">
-                {{recordData().partner?.name}}
-              </a>
-            </div>
-          </div>
+        <div class="flex flex-col gap-4 pb-2">
 
+          <!-- Contact Info -->
+          @if(recordData().email || recordData().phone || recordData().mobile){
+            <div class="flex flex-col gap-2">
+              @if(recordData().email){
+                <div>{{recordData().email}}</div>
+              }
+              @if(recordData().phone){
+                <div>{{recordData().phone}} ({{ 'office' | translate }})</div>
+              }
+              @if(recordData().mobile){
+                <div>{{recordData().mobile}} (mobile)</div>
+              }
+            </div>
+          }
+          @if(showAdditionalInfo() && showFullContent()) {
           <!-- Assistant Info -->
           @if(recordData().assistant || recordData().assistantPhone || recordData().assistantEmail){
             <div class="flex flex-col gap-2">
-              <div class="font-semibold">{{ 'label.contact.contactViaAssistant' | translate }}</div>
+              <div class="text-sm">{{ 'label.contact.contactViaAssistant' | translate }}</div>
               @if(recordData().assistant){
                 <div>{{recordData().assistant}}</div>
               }
@@ -62,164 +48,154 @@
             </div>
           }
 
-          @if(showContactInfo()) {
-            <!-- Contact Info -->
-            <div class="flex flex-col xl:flex-row gap-4">
-              <div class="flex flex-col gap-2">
-                <div class="font-semibold">{{ 'personalInformation' | translate }}</div>
-
-                @if(recordData().email){
-                  <div>{{recordData().email}}</div>
+          <!-- Address -->
+          @if(recordData().mailingStreet || recordData().mailingCity || recordData().mailingCountry){
+            <div class="flex flex-col gap-2">
+              <div class="text-base">
+                @if(recordData().mailingStreet){
+                  <div>{{recordData().mailingStreet}}</div>
                 }
-                @if(recordData().phone){
-                  <div>{{recordData().phone}} ({{ 'office' | translate }})</div>
+                @if(recordData().mailingStreet2) {
+                  <div>{{recordData().mailingStreet2}}</div>
                 }
-                @if(recordData().mobile){
-                  <div>{{recordData().mobile}} (mobile)</div>
+                @if(recordData().mailingCity || recordData().mailingStateProvince || recordData().mailingPostalCode){
+                  <div>
+                    {{recordData().mailingCity}}
+                    @if(recordData().mailingStateProvince) {
+                      , {{recordData().mailingStateProvince}}
+                    }
+                    @if(recordData().mailingPostalCode) {
+                      {{recordData().mailingPostalCode}}
+                    }
+                  </div>
+                }
+                @if(recordData().mailingCountry) {
+                  <div>{{recordData().mailingCountry}}</div>
                 }
               </div>
             </div>
+          }
 
-            <!-- Address -->
-            @if(recordData().mailingStreet || recordData().mailingCity || recordData().mailingCountry){
+          @if(recordData().partner?.name){
+            <div class="flex flex-col gap-2">
+              <div class="text-sm">{{ 'label.partner.partner' | translate }}</div>
+              <div class="flex items-center gap-2">
+                <a [routerLink]="['/partnerships/partners', recordData().partner?.id]" class="text-primary hover:underline font-semibold">
+                  {{recordData().partner?.name}}
+                </a>
+              </div>
+            </div>
+          }
+
+
+            @if(recordData().id){
               <div class="flex flex-col gap-2">
-                <div class="font-semibold">{{ 'label.contact.mailingAddress' | translate }}</div>
-                <div class="text-base">
-                  @if(recordData().mailingStreet){
-                    <div>{{recordData().mailingStreet}}</div>
-                  }
-                  @if(recordData().mailingStreet2) {
-                    <div>{{recordData().mailingStreet2}}</div>
-                  }
-                  @if(recordData().mailingCity || recordData().mailingStateProvince || recordData().mailingPostalCode){
-                    <div>
-                      {{recordData().mailingCity}}
-                      @if(recordData().mailingStateProvince) {
-                        , {{recordData().mailingStateProvince}}
-                      }
-                      @if(recordData().mailingPostalCode) {
-                        {{recordData().mailingPostalCode}}
-                      }
-                    </div>
-                  }
-                  @if(recordData().mailingCountry) {
-                    <div>{{recordData().mailingCountry}}</div>
-                  }
-                </div>
+                <div class="text-sm">{{ 'label.contact.id' | translate }}</div>
+                <div>{{recordData().id}}</div>
               </div>
             }
-
-            <!-- Additional Info -->
+            @if(recordData().title){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.contact.title' | translate }}</div>
+                <div>{{recordData().title}}</div>
+              </div>
+            }
+            @if(recordData().department){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.contact.department' | translate }}</div>
+                <div>{{recordData().department}}</div>
+              </div>
+            }
+            @if(recordData().status){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.contact.status' | translate }}</div>
+                <div>{{recordData().status}}</div>
+              </div>
+            }
+            @if(recordData().pronouns){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.contact.pronouns' | translate }}</div>
+                <div>{{recordData().pronouns}}</div>
+              </div>
+            }
             @if(recordData().description){
               <div class="flex flex-col gap-2">
-                <div class="font-semibold">Notes</div>
+                <div class="text-sm">Notes</div>
                 <div>{{recordData().description}}</div>
               </div>
             }
-          } @else {
-            <div class="flex justify-center -my-2">
+          }
+
+          <!-- See More / See Less Button -->
+          @if (shouldShowSeeMoreButton()) {
+            <div class="flex justify-center -mb-4">
               <p-button
                 label="{{ 'button.seeMore' | translate }}"
                 icon="pi pi-chevron-down"
                 [rounded]="true"
                 [size]="'small'"
                 [text]="true"
-                (onClick)="showContactInfo.set(true)"
+                (onClick)="toggleFullContent()"
               />
             </div>
           }
 
-        </div>
-      </p-panel>
-
-      <p-panel
-        header="{{ 'title.links' | translate }}"
-      >
-        <app-link-list
-          [entityType]="entityTypeContact"
-          [entityId]="+recordId"
-          [disabled]="!recordPermissions().permissions.canUpdate"
-        />
-      </p-panel>
-
-
-    </div>
-
-    <div class="xl:w-1/2 flex flex-col gap-8">
-      <p-panel
-        header="Summary"
-      >
-      </p-panel>
-
-      <app-contact-view-interactions
-        [contactId]="recordId"
-        [disabled]="!recordPermissions().permissions.canUpdate"
-      />
-
-      <p-panel #docPanel header="{{ 'title.doc' | translate }}" [styleClass]="'section'">
-        <app-document #appDocument
-                      [entityId]="recordId"
-                      [entityName]="'contact'"
-                      [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
-                      [disabled]="!recordPermissions().permissions.canUpdate">
-          <div ngProjectAs="document-toolbar">
-            @if(recordPermissions().permissions.canUpdate){
-              <app-document-gdrive [entityId]="recordId"
-                                 [entityName]="'contact'"
-                                 [appDocumentRef]="appDocument"
-                                 [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
-            }
-          </div>
-        </app-document>
-      </p-panel>
-
-      <p-panel
-        header="System Information"
-      >
-        <div class="flex flex-col gap-4">
-          <!-- Status and ID -->
-          <div class="flex flex-col gap-2">
-            <div class="font-semibold">Status</div>
-            <div>{{recordData().status}}</div>
-          </div>
-
-          <div class="flex flex-col gap-2">
-            <div class="font-semibold">Contact ID</div>
-            <div>{{recordData().id}}</div>
-          </div>
-
-          <!-- Creation Info -->
-          <div class="flex flex-col gap-2">
-            <div class="font-semibold">Created</div>
-            <div>
-              {{recordData().createdDate | date:'medium'}}
-              @if(recordData().createdBy){
-                <div class="text-sm text-gray-600">by {{recordData().createdBy}}</div>
-              }
-            </div>
-          </div>
-
-          <!-- Last Modified -->
-          @if(recordData().lastModifiedDate){
-            <div class="flex flex-col gap-2">
-              <div class="font-semibold">Last Modified</div>
-              <div>
-                {{recordData().lastModifiedDate | date:'medium'}}
-                @if(recordData().lastModifiedBy){
-                  <div class="text-sm text-gray-600">by {{recordData().lastModifiedBy}}</div>
-                }
-              </div>
+          @if (shouldShowSeeLessButton()) {
+            <div class="flex justify-center -mb-4">
+              <p-button
+                label="{{ 'button.seeLess' | translate }}"
+                icon="pi pi-chevron-up"
+                [rounded]="true"
+                [size]="'small'"
+                [text]="true"
+                (onClick)="toggleFullContent()"
+              />
             </div>
           }
+
+          <p-divider></p-divider>
+
+          <span class="text-xl">{{ 'title.links' | translate }}</span>
+          @if (recordData().id && +(recordData().id!) > 0) {
+            <app-link-list [entityType]="entityTypeContact"
+                           [entityId]="+(recordData().id!)"
+                           [disabled]="false" />
+          }
+
+          <p-divider></p-divider>
+
+          <span class="text-xl">{{ 'title.doc' | translate }}</span>
+          <app-document #appDocument
+                        [entityId]="recordId"
+                        [entityName]="'contact'"
+                        [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
+                        [disabled]="!recordPermissions().permissions.canUpdate">
+            <div ngProjectAs="document-toolbar">
+              @if(recordPermissions().permissions.canUpdate){
+                <app-document-gdrive [entityId]="recordId"
+                                     [entityName]="'contact'"
+                                     [appDocumentRef]="appDocument"
+                                     [acceptedMIMETypes]="acceptedMiMIETypesForgDrive"></app-document-gdrive>
+              }
+            </div>
+          </app-document>
         </div>
       </p-panel>
 
+
     </div>
-  </div>
-  
-  <div class="flex justify-end gap-2 w-full">
-    <p-button label="{{'button.back' | translate}}" icon="pi pi-arrow-left" [styleClass]="'p-button-text'"
-              rounded
-              (onClick)="router.navigate(['partnerships/contacts'])" />
+    <div class="md:w-1/2 flex flex-col gap-8">
+      <app-ai-panel
+        class="shadow-sm"
+        [title]="'label.contact.summaryOfInteractions'"
+        [entityId]="recordId"
+        [promptType]="'contact_interactions_summary'"
+        [aiService]="geminiService"
+        (onRefresh)="onSummaryRefresh()"
+        (onDataLoaded)="onSummaryLoaded($event)"
+        (onError)="onSummaryError($event)"
+      />
+
+    </div>
   </div>
 </div>

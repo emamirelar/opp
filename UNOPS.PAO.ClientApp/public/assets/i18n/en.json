@@ -19,6 +19,7 @@
     "when": "When",
     "who": "Who",
     "why": "Why",
+    "contact": "Contact",
     "contacts": "Contacts",
     "interactions": "Interactions",
     "newInteraction": "New Interaction",
@@ -36,6 +37,8 @@
     "partners": "Partners",
     "partnerships": "Partnerships",
     "partnershipAgreements": "Partnership Agreements",
+    "fundingAndAgreements": "Funding & Agreements",
+    "dashboard": "Dashboard",
     "leads": "Leads",
     "initiatives": "Initiatives",
     "admin": "Administration",
@@ -152,7 +155,9 @@
       "mailingPostalCode": "Mailing Postal Code",
       "mailingCountry": "Mailing Country",
       "contactViaAssistant": "Contact via Assistant",
-      "createdByOffice": "Created By Office"
+      "createdByOffice": "Created By Office",
+      "summaryOfInteractions": "AI Summary of Interactions",
+      "contactNews": "Contact News"
     },
     "partnerTree": {
       "id": "ID",
@@ -326,7 +331,6 @@
     "loadingPermissions": "Loading permissions...",
     "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access role impersonation."
   },
-  "label.interaction.contact": "Contact",
   "errors": {
     "failedToLoad": "Error al cargar",
     "errorLoadingData": "Error loading data. Please try again later.",
@@ -434,7 +438,7 @@
   "search": {
     "placeholder": "Search...",
     "recentSearches": "Recent Searches",
-    "results": "Results",
+    "results": "Search Results for",
     "showAllResults": "Show All Results",
     "seeAllResults": "See all results",
     "contact": "Contact",
@@ -488,7 +492,7 @@
     "save": "Save",
     "saveNew": "Save New",
     "saveCurrentFilter": "Save current filter",
-    "updateFilter": "Update filter", 
+    "updateFilter": "Update filter",
     "deleteFilter": "Delete filter",
     "saveFilter": "Save filter",
     "filterName": "Filter name",

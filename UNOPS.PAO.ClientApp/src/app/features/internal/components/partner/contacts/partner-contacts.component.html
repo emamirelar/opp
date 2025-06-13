@@ -1,30 +1,9 @@
-<div class="flex flex-col gap-8">
-  <div class="font-semibold">Partner: {{partnerName()}}</div>
-
-  <app-listview
-    [dataUrl]="'/api/partner/' + partnerId() + '/contacts'"
-    [columns]="columns"
-    [config]="{
-      scrollable: true,
-      scrollHeight: 'flex',
-      enablePagination: true,
-      pageSize: 20,
-      pageSizeOptions: [20, 50, 100]
-    }"
-  >
-    <ng-template #actionsTemplate let-contact>
-      <div class="flex gap-2">
-        <p-button
-          icon="pi pi-external-link"
-          (click)="handleOnOpenRecordDetails(contact)"
-          title="Open Record Details"
-          rounded
-        />
-      </div>
-    </ng-template>
-  </app-listview>
-
-  
-</div>
+<app-listview
+  [dataUrl]="dataUrl()"
+  [columns]="columns"
+  [config]="config"
+  (rowClick)="onContactClick($event)"
+>
+</app-listview>
 
 

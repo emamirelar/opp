@@ -7,10 +7,10 @@ import { Tab, TabList, Tabs } from 'primeng/tabs';
 import { TooltipModule } from 'primeng/tooltip';
 import { DropdownModule } from 'primeng/dropdown';
 import { filter, Subscription } from 'rxjs';
-import { Partner } from '../../../models/partner.model';
-import {PictureComponent} from '@common/reusables/components/picture/picture.component';
-import {Button} from 'primeng/button';
+import { Contact } from '../../../models/contact.model';
+import { PictureComponent } from '@common/reusables/components/picture/picture.component';
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
+import { ContactService } from '../../../services/contact.service';
 
 interface TabItem {
   label: string;
@@ -19,9 +19,9 @@ interface TabItem {
 }
 
 @Component({
-  selector: 'app-partner-tabs',
+  selector: 'app-contact-tabs',
   standalone: true,
-  imports: [CommonModule, RouterModule, TranslateModule, FormsModule, Tabs, TabList, Tab, TooltipModule, PictureComponent, Button, GoBackComponent, DropdownModule],
+  imports: [CommonModule, RouterModule, TranslateModule, FormsModule, Tabs, TabList, Tab, TooltipModule, PictureComponent, GoBackComponent, DropdownModule],
   template: `
 
   <div class="flex flex-col gap-8">
@@ -34,7 +34,7 @@ interface TabItem {
         <div class="w-full flex justify-between items-center">
 
           <div class="font-semibold text-gray-400">
-            {{ 'title.partner' | translate }}
+            {{ 'title.contact' | translate }}
           </div>
 
           <app-go-back></app-go-back>
@@ -43,17 +43,28 @@ interface TabItem {
 
         <div class="flex gap-2 md:gap-4 w-full items-center">
       <app-picture
-        [imageUrl]="recordData.logoUrl || ''"
-        [uploadUrl]="getUploadLogoUrl()"
-        [altText]="'Partner logo'"
+        [imageUrl]="recordData.profilePictureUrl || ''"
+        [uploadUrl]="getUploadProfilePictureUrl()"
+        [altText]="'Contact profile picture'"
         [size]="isMobile() ? 'extra-small' : 'small'"
         (imageChanged)="_loadRecordDetails()"
       />
         <div class="flex flex-col">
 
           <div class="text-2xl md:text-4xl font-bold">
-            {{ recordData?.name }}
+            {{ getContactDisplayName() }}
           </div>
+          <div class="text-lg text-gray-600">
+            {{ recordData.title }}
+            @if(recordData.department){
+              - {{ recordData.department }}
+            }
+          </div>
+          @if(recordData.partner?.name) {
+            <div class="text-primary font-semibold">
+              {{ recordData.partner?.name }}
+            </div>
+          }
       </div>
       </div>
     </div>
@@ -68,7 +79,7 @@ interface TabItem {
           class="w-full">
         </p-dropdown>
       </div>
-
+      
       <!-- Desktop tabs -->
       <div class="hidden md:block">
         <p-tabs [value]="activeRoute">
@@ -93,19 +104,20 @@ interface TabItem {
     }
   `
 })
-export class PartnerTabsComponent implements OnInit, OnDestroy {
+export class ContactTabsComponent implements OnInit, OnDestroy {
   recordId: string = '';
   activeRoute: string = '';
 
   tabs: TabItem[] = [];
-  recordData: Partner = {} as Partner;
+  recordData: Contact = {} as Contact;
   private routerSubscription: Subscription | null = null;
 
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
     private location: Location,
-    private translateService: TranslateService
+    private translateService: TranslateService,
+    private contactService: ContactService
   ) {}
 
   ngOnInit(): void {
@@ -113,36 +125,21 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
 
     // Get the resolved data from the route
     this.activatedRoute.data.subscribe(data => {
-      this.recordData = data['partnerData'];
+      this.recordData = data['contactData'];
     });
 
     // Create tabs based on recordId
     this.tabs = [
       {
         label: 'title.details',
-        route: `/partnerships/partners/${this.recordId}`,
+        route: `/partnerships/contacts/${this.recordId}`,
         translatedLabel: this.translateService.instant('title.details')
       },
       {
-        label: 'title.contacts',
-        route: `/partnerships/partners/${this.recordId}/contacts`,
-        translatedLabel: this.translateService.instant('title.contacts')
-      },
-      {
         label: 'title.interactions',
-        route: `/partnerships/partners/${this.recordId}/interactions`,
+        route: `/partnerships/contacts/${this.recordId}/interactions`,
         translatedLabel: this.translateService.instant('title.interactions')
-      },
-      {
-        label: 'title.fundingAndAgreements',
-        route: `/partnerships/partners/${this.recordId}/funding-agreements`,
-        translatedLabel: this.translateService.instant('title.fundingAndAgreements')
-      },
-      {
-        label: 'title.dashboard',
-        route: `/partnerships/partners/${this.recordId}/data`,
-        translatedLabel: this.translateService.instant('title.dashboard')
-      },
+      }
     ];
 
     // Set initial active tab
@@ -172,16 +169,13 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
     this.activeRoute = matchingTab ? matchingTab.route : this.tabs[0].route;
   }
 
-
-  getUploadLogoUrl(): string {
-    // Return the upload URL for partner logo
-    return `/api/partners/${this.recordId}/upload-logo`;
+  getUploadProfilePictureUrl(): string {
+    return this.contactService.getUploadProfilePictureUrl(this.recordId);
   }
 
   _loadRecordDetails(): void {
-    // Reload partner data after logo change
-    // You might want to call a service to refresh the data
-    console.log('Logo updated, reloading partner details...');
+    // Reload contact data after profile picture change
+    console.log('Profile picture updated, reloading contact details...');
   }
 
   getActiveTab(): TabItem | null {
@@ -197,5 +191,17 @@ export class PartnerTabsComponent implements OnInit, OnDestroy {
 
   isMobile(): boolean {
     return window.innerWidth <= 768;
+  }
+
+  getContactDisplayName(): string {
+    const parts = [
+      this.recordData?.salutation,
+      this.recordData?.firstName,
+      this.recordData?.middleName,
+      this.recordData?.lastName,
+      this.recordData?.suffix
+    ].filter(part => part && part.trim() !== '');
+
+    return parts.join(' ') || 'Contact';
   }
 }

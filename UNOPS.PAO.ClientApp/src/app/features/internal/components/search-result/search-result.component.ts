@@ -10,8 +10,8 @@ import { BadgeModule } from 'primeng/badge';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ListViewColumn } from '../../../../common/pages/components/listview/listview.model';
 import {
-  ListviewSearchResultsComponent
-} from '../../../../common/pages/components/listview/search-results/listview-search-results.component';
+  ListviewComponent
+} from '../../../../common/pages/components/listview/listview.component';
 import { ContactService } from '../../services/contact.service';
 import { PartnerService } from '../../services/partner.service';
 import { InteractionService } from '../../services/interaction.service';
@@ -40,7 +40,7 @@ interface SearchResult {
     ButtonModule,
     TableModule,
     BadgeModule,
-    ListviewSearchResultsComponent
+    ListviewComponent
   ],
   templateUrl: './search-result.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
