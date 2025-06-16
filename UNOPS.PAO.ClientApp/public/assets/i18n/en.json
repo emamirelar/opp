@@ -45,6 +45,8 @@
     "editUserRoles": "Assign Roles for Impersonation",
     "editPartnershipUserAccess": "Edit Partnership User Access",
     "manageOffice": "Manage my Office",
+    "managerEntities": "Manage Entities",
+    "entityManager": "Entity Manager",
     "translationWorkbench": "Translation Workbench",
     "partnerTitles": {
       "partnerInformation": "Partner Information",
@@ -63,6 +65,7 @@
     "uploadImage": "Upload Image",
     "uploadAudio": "Upload Audio",
     "seeMore": "See More",
+    "seeLess": "See Less",
     "preFill": "AI Transcribe",
     "preFillOptions": "AI Transcribe",
     "preFillFrom": "Transcribe Data"
@@ -93,6 +96,7 @@
     "new": "New",
     "uploadImage": "Upload Image",
     "seeMore": "See More",
+    "seeLess": "See Less",
     "chooseImage": "Choose Image",
     "uploadAudio": "Upload Audio",
     "preFillOptions": "AI Transcribe",
@@ -191,11 +195,15 @@
       "reasonForLevyNotApplying": "Reason For Levy Not Applying",
       "levyTreatment": "Levy Treatment",
       "partner": "Partner",
+      "selectPartner": "Select Partner",
+      "selectPartnerOffice": "Select Partner Office",
+      "selectPartnerGroup": "Select Partner Group",
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",
       "partnerNews": "Partner News",
       "categoryNews": "Category News",
       "categorySummary": "Category Summary",
+      "groupSummary": "Group Summary",
       "partnerOffice": "Partner Office",
       "partnerCategory": "Partner Category",
       "partnerTeam": "Partner Team"
@@ -320,7 +328,9 @@
   },
   "label.interaction.contact": "Contact",
   "errors": {
-    "failedToLoad": "Error al cargar"
+    "failedToLoad": "Error al cargar",
+    "errorLoadingData": "Error loading data. Please try again later.",
+    "noDataAvailable": "No data available"
   },
   "aiAssistant": {
     "openButton": "Open AI Assistant",
@@ -382,7 +392,44 @@
   },
   "validation": {
     "required": "This field is required",
-    "maxLength": "Maximum length is {{max}} characters"
+    "maxLength": "Maximum length is {{max}} characters",
+    "pleaseFullAllRequired": "Please fill all the required details.",
+    "partnerRequired": "Partner must be entered.",
+    "lastNameRequired": "Last Name must be entered.",
+    "emailRequired": "Email must be entered."
+  },
+  "loading": {
+    "contactData": "Loading contact data...",
+    "partnerData": "Loading partner data..."
+  },
+  "interactions": {
+    "title": "Interactions",
+    "noInteractionsFound": "No interactions found",
+    "tryAdjustingFilters": "Try adjusting your search or filters",
+    "andOthers": "and {{count}} others"
+  },
+  "personalInformation": "Personal Information",
+  "office": "office",
+  "aria": {
+    "selectPartner": "Select Partner",
+    "selectNewEngagement": "Select New Engagement",
+    "selectPartnerOffice": "Select Partner Office",
+    "selectPartnerGroup": "Select Partner Group",
+    "selectPooledFund": "Select Pooled Fund",
+    "selectDDRequired": "Select DD Required",
+    "selectDDEACDone": "Select DD/EAC Done",
+    "selectLevyPotentiallyApplies": "Select Levy Potentially Applies",
+    "selectReasonForLevyNotApplying": "Select Reason For Levy Not Applying",
+    "selectLevyTreatment": "Select Levy Treatment"
+  },
+  "fieldLabels": {
+    "email": "Email",
+    "mobile": "Mobile",
+    "phone": "Phone",
+    "title": "Title",
+    "city": "City",
+    "country": "Country",
+    "partner": "Partner"
   },
   "search": {
     "placeholder": "Search...",
@@ -447,6 +494,8 @@
     "title": "AI Prompts Management",
     "addNew": "Add New Prompt",
     "search": "Search prompts...",
+    "description": "Description",
+    "descriptionHelper": "Enter a description for the prompt",
     "type": "Type",
     "model": "Model",
     "project": "Project",
@@ -502,6 +551,10 @@
     "rawResponse": "Raw Response",
     "promptFunction": "Prompt Function",
     "promptFunctionHelper": "Optional: Function name in the corresponding UNOPSManager class (e.g., GetBasicPartnerDetailsAsync). When provided, enables testing with real entity data.",
-    "entityIdRequiresFunction": "Entity ID testing requires a Prompt Function to be specified. Please provide a function name or use Test Data mode."
+    "entityIdRequiresFunction": "Entity ID testing requires a Prompt Function to be specified. Please provide a function name or use Test Data mode.",
+    "typeUnderscoreFormat": "Type must contain only lowercase letters, numbers, and underscores (e.g., my_prompt_type)",
+    "createPromptNotice": "Important Notice",
+    "createPromptDescription": "Creating a prompt from this screen has no effect on any application feature unless programmatic code is added to invoke this prompt by type. This is an administrative tool for prompt management only.",
+    "descriptionPlaceholder": "Enter a brief description of what this prompt does..."
   }
 }

@@ -13,12 +13,13 @@ public class InteractionByContactSpecification : BaseSpecification<Interaction>
     /// </summary>
     /// <param name="contactId">The contact ID to filter by</param>
     public InteractionByContactSpecification(int contactId)
-        : base(i => i.ContactId == contactId)
+        : base(i => i.InteractionContacts.Any(ic => ic.ContactId == contactId))
     {
         // Default ordering is by date descending
         ApplyOrderByDescending(i => i.Date);
         
-        // Include the related contact
-        AddInclude(i => i.Contact);
+        // Include the related contacts through junction table
+        AddInclude(i => i.InteractionContacts);
+        AddInclude("InteractionContacts.Contact");
     }
 } 

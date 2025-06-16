@@ -43,8 +43,17 @@ export class LinkListComponent {
   selectedLink = signal<Link | undefined>(undefined);
   isDragging = signal(false);
 
-  ngOnInit() {
-    this.linkDataService.initialize(this.entityType(), this.entityId(), this.pageSize());
+  constructor() {
+    // Effect to reinitialize when input parameters change
+    effect(() => {
+      const entityType = this.entityType();
+      const entityId = this.entityId();
+      const pageSize = this.pageSize();
+      
+      if (entityType && entityId) {
+        this.linkDataService.initialize(entityType, entityId, pageSize);
+      }
+    });
   }
 
   loadMore() {

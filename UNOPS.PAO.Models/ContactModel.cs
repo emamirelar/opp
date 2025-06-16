@@ -37,6 +37,11 @@ public class ContactModel
     public string? CreatedByOfficeName { get; set; }
     
     /// <summary>
+    /// Interactions associated with this contact
+    /// </summary>
+    public List<InteractionModel>? Interactions { get; set; }
+    
+    /// <summary>
     /// Permissions for this specific contact
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }

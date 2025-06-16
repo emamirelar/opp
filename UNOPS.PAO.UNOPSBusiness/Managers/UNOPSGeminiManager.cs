@@ -296,8 +296,13 @@ public class UNOPSGeminiManager : IGeminiManager
                     
                     if (entityData != null)
                     {
-                        // Serialize the entity data to JSON for AI processing
-                        relatedMessage = JsonConvert.SerializeObject(entityData, Formatting.Indented);
+                        // Serialize the entity data to JSON for AI processing with enum string conversion
+                        var settings = new JsonSerializerSettings
+                        {
+                            Formatting = Formatting.Indented,
+                            Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                        };
+                        relatedMessage = JsonConvert.SerializeObject(entityData, settings);
                     }
                     else
                     {
@@ -629,7 +634,11 @@ public class UNOPSGeminiManager : IGeminiManager
                     continue;
                 }
 
-                var content = JsonConvert.SerializeObject(record, Formatting.Indented);
+                var content = JsonConvert.SerializeObject(record, new JsonSerializerSettings
+                {
+                    Formatting = Formatting.Indented,
+                    Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                });
 
                 result.Add(new MyPubSubMessage
                 {
@@ -823,7 +832,10 @@ public class UNOPSGeminiManager : IGeminiManager
             isSuccess = false;
             foreach (var entry in dbEx.Entries)
             {
-                var entityJson = JsonConvert.SerializeObject(entry.Entity);
+                var entityJson = JsonConvert.SerializeObject(entry.Entity, new JsonSerializerSettings
+                {
+                    Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+                });
                 var errorMsg = dbEx.InnerException?.Message ?? dbEx.Message;
                 errorMessages.Add($"Error saving entity {entry.Entity.GetType().Name}: {entityJson} - {errorMsg}");
             }
@@ -873,6 +885,10 @@ public class UNOPSGeminiManager : IGeminiManager
             InsertedCount = recordsToAdd.Count
         };
 
-        return JsonConvert.SerializeObject(result, Formatting.Indented);
+        return JsonConvert.SerializeObject(result, new JsonSerializerSettings
+        {
+            Formatting = Formatting.Indented,
+            Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
+        });
     }
 }

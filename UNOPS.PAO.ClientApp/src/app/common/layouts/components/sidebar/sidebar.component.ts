@@ -120,6 +120,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
           routerLink: ['/admin/office-management']
         },
         {
+          label: 'title.managerEntities',
+          icon: 'settings',
+          routerLink: ['/admin/entity-manager']
+        },
+        {
           label: 'title.translationWorkbench',
           icon: 'translate',
           routerLink: ['/admin/translations']

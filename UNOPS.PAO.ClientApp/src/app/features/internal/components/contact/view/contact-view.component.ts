@@ -247,18 +247,22 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   onFileSelected(event: any) {
-    console.log('Files selected:', event);
+    
   }
 
   onFileRemoved(event: any) {
-    console.log('File removed:', event);
+    
   }
 
   onFilesCleared() {
-    console.log('All files cleared');
+    
   }
 
   get acceptedMiMIETypesForgDrive() {
     return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
+  }
+
+  getUploadProfilePictureUrl() {
+    return this.contactService.getUploadProfilePictureUrl(this.recordId);
   }
 }

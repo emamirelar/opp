@@ -18,12 +18,23 @@ public class MappingProfile : Profile
         CreateMap<UNOPSContact, ContactModel>()
             .ForMember(dest => dest.Partner, opt => opt.Ignore())
             .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
-            .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.ProfilePictureUrl));
+            .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.ProfilePictureUrl))
+            .ForMember(dest => dest.Interactions, opt => opt.MapFrom((src, dest, destMember, context) => 
+                src.Interactions != null ? src.Interactions.Cast<UNOPSInteraction>().Select(interaction => context.Mapper.Map<UNOPSInteraction, InteractionModel>(interaction)).ToList() : null));
         CreateMap<ContactModel, UNOPSContact>()
             .ForMember(dest => dest.Partner, opt => opt.Ignore());
         CreateMap<InteractionRequest, UNOPSInteraction>();
-        CreateMap<UNOPSInteraction, InteractionModel>();
-        CreateMap<InteractionModel, UNOPSInteraction>();
+        CreateMap<UNOPSInteraction, InteractionModel>()
+            .ForMember(dest => dest.ContactId, opt => opt.MapFrom(src => 
+                src.InteractionContacts != null && src.InteractionContacts.Any() 
+                    ? src.InteractionContacts.First().ContactId 
+                    : 0))
+            .ForMember(dest => dest.ContactName, opt => opt.MapFrom(src => 
+                src.InteractionContacts != null && src.InteractionContacts.Any() 
+                    ? src.InteractionContacts.First().Contact.Name 
+                    : null));
+        CreateMap<InteractionModel, UNOPSInteraction>()
+            .ForMember(dest => dest.InteractionContacts, opt => opt.Ignore()); // Handle via junction table processing
         CreateMap<PartnerTreeRequest, UNOPSPartnerTree>();
         
 

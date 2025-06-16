@@ -146,8 +146,35 @@ export class TopbarComponent implements OnInit, OnDestroy {
         label: 'View Profile',
         icon: 'pi pi-user',
         command: () => this.showProfile()
+      },
+      {
+        separator: true
+      },
+      {
+        label: 'Impersonate Roles',
+        icon: 'pi pi-users',
+        command: () => this.showRoleDialog()
       }
     ];
+
+    // Add development-only menu items
+    if (this.isDevelopment) {
+      this.profileMenuItems.push(
+        {
+          separator: true
+        },
+        {
+          label: 'Dev Login',
+          icon: 'pi pi-user-edit',
+          command: () => this.navigateToDevLogin()
+        },
+        {
+          label: 'Debug Info',
+          icon: 'pi pi-cog',
+          command: () => this.navigateToDebug()
+        }
+      );
+    }
   }
 
   private loadUserInfo() {

@@ -1,8 +1,21 @@
-<p-breadcrumb class="breadcrumb-bar" [model]="breadcrumbItems" [home]="homeBreadcrumb" [homeAriaLabel]="'Home'">
-    <ng-template #item let-item>
-        <a class="cursor-pointer">
-            <span class="material-symbols-outlined">{{item.icon}}</span>
-            <span>{{ item.label }}</span>
-        </a>
-    </ng-template>
+<p-breadcrumb
+  class="breadcrumb-bar"
+  [model]="breadcrumbItems()"
+  [home]="homeBreadcrumb"
+  [homeAriaLabel]="'Home'"
+>
+  <ng-template #item let-item>
+    <a
+      [routerLink]="item.routerLink"
+      [ngClass]="{
+        'cursor-pointer hover:text-blue-600': item.routerLink,
+        'cursor-default text-gray-600': !item.routerLink,
+      }"
+    >
+      <span class="material-symbols-outlined" *ngIf="item.icon" >{{
+        item.icon
+      }}</span>
+      <span>{{ item.label }}</span>
+    </a>
+  </ng-template>
 </p-breadcrumb>

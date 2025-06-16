@@ -103,9 +103,8 @@ namespace UNOPS.PAO.Presentation.Controllers
                         // Create a minimal interaction entity for permission checking
                         var interactionEntity = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSInteraction
                         {
-                            Id = interaction.Id,
-                            ContactId = interaction.ContactId,
-                            Contact = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSContact { Id = interaction.ContactId }
+                            Id = interaction.Id
+                            // Note: Contact relationships are now handled through InteractionContacts junction table
                         };
                         
                         if (await _businessSecurityService.CanUserAccessEntityAsync(interactionEntity, User, "read"))
@@ -170,9 +169,8 @@ namespace UNOPS.PAO.Presentation.Controllers
                 // Create entity for permission checking
                 var interactionEntity = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSInteraction
                 {
-                    Id = interaction.Id,
-                    ContactId = interaction.ContactId,
-                    Contact = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSContact { Id = interaction.ContactId }
+                    Id = interaction.Id
+                    // Note: Contact relationships are now handled through InteractionContacts junction table
                 };
 
                 return await _businessSecurityService.GetEntityPermissionsAsync(interactionEntity, User);

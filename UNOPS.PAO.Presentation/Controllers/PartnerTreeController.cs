@@ -147,7 +147,7 @@ public class PartnerTreeController : BaseController
     {
         return await HandleOperationAsync(async () =>
         {
-            var partnerTree = await _manager.GetPartnerTree(CurrentUserId, id);
+            var partnerTree = await _manager.GetPartnerTreeAsync(User, id);
             if (partnerTree == null)
             {
                 throw new BusinessException($"Partner Tree with ID {id} not found");

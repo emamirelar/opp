@@ -35,8 +35,13 @@
         "partnerDashboard": "Tableau de Bord du Partenaire",
         "admin": "Administration",
         "aiPromptsAdmin": "Admin des prompts IA",
+        "userManagement": "Gérer les autorisations utilisateur",
+        "impersonateRoles": "Imiter les rôles",
+        "editUserRoles": "Attribuer des rôles pour l'usurpation",
+        "editPartnershipUserAccess": "Modifier l'accès des utilisateurs de partenariat",
         "manageOffice": "Gérer mon bureau",
-        "translationWorkbench": "Atelier de traduction"
+        "managerEntities": "Gestionnaire d'entités",
+        "translationWorkbench": "Table de traduction"
     },
     "button": {
         "back": "Retour",
@@ -55,6 +60,7 @@
         "uploadImage": "Télécharger l'image",
         "addLink": "Ajouter un lien",
         "seeMore": "Voir plus",
+        "seeLess": "Voir moins",
         "chooseImage": "Choisir une image"
     },
     "label": {
@@ -82,10 +88,15 @@
             "partnerGroup": "Groupe de Partenaire"
         },
         "partner": {
+            "partner": "Partenaire",
+            "selectPartner": "Sélectionner un Partenaire",
+            "selectPartnerOffice": "Sélectionner un Bureau de Partenaire",
+            "selectPartnerGroup": "Sélectionner un Groupe de Partenaires",
             "summaryOfInteractions": "Résumé IA des Interactions",
             "categoryNews": "Actualités de Catégorie",
             "partnerNews": "Actualités du Partenaire",
-            "categorySummary": "Résumé de Catégorie"
+            "categorySummary": "Résumé de Catégorie",
+            "groupSummary": "Résumé de Groupe"
         },
         "clarificationDeadline": "Date Limite de Clarification",
         "document": {
@@ -189,7 +200,9 @@
         "comingSoon": "Bientôt Disponible"
     },
     "errors": {
-        "failedToLoad": "Échec du chargement"
+        "failedToLoad": "Erreur lors du chargement",
+        "errorLoadingData": "Erreur lors du chargement des données. Veuillez réessayer plus tard.",
+        "noDataAvailable": "Aucune donnée disponible"
     },
     "aiAssistant": {
         "openButton": "Ouvrir l'Assistant IA",
@@ -296,5 +309,46 @@
         "saveFilter": "Sauvegarder le filtre",
         "filterName": "Nom du filtre",
         "enterFilterName": "Saisir le nom du filtre"
+    },
+    "validation": {
+        "required": "Ce champ est obligatoire",
+        "maxLength": "La longueur maximale est de {{max}} caractères",
+        "pleaseFullAllRequired": "Veuillez remplir tous les détails requis.",
+        "partnerRequired": "Le partenaire doit être saisi.",
+        "lastNameRequired": "Le nom de famille doit être saisi.",
+        "emailRequired": "L'email doit être saisi."
+    },
+    "loading": {
+        "contactData": "Chargement des données de contact...",
+        "partnerData": "Chargement des données de partenaire..."
+    },
+    "interactions": {
+        "title": "Interactions",
+        "noInteractionsFound": "Aucune interaction trouvée",
+        "tryAdjustingFilters": "Essayez d'ajuster votre recherche ou vos filtres",
+        "andOthers": "et {{count}} autres"
+    },
+    "personalInformation": "Informations Personnelles",
+    "office": "bureau",
+    "aria": {
+        "selectPartner": "Sélectionner un Partenaire",
+        "selectNewEngagement": "Sélectionner un Nouvel Engagement",
+        "selectPartnerOffice": "Sélectionner un Bureau de Partenaire",
+        "selectPartnerGroup": "Sélectionner un Groupe de Partenaires",
+        "selectPooledFund": "Sélectionner un Fonds Commun",
+        "selectDDRequired": "Sélectionner DD Requis",
+        "selectDDEACDone": "Sélectionner DD/EAC Terminé",
+        "selectLevyPotentiallyApplies": "Sélectionner Prélèvement Potentiellement Applicable",
+        "selectReasonForLevyNotApplying": "Sélectionner Raison de Non-Application du Prélèvement",
+        "selectLevyTreatment": "Sélectionner Traitement du Prélèvement"
+    },
+    "fieldLabels": {
+        "email": "Email",
+        "mobile": "Mobile",
+        "phone": "Téléphone",
+        "title": "Titre",
+        "city": "Ville",
+        "country": "Pays",
+        "partner": "Partenaire"
     }
 }

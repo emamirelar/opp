@@ -188,7 +188,7 @@ export class ListviewDataLoaderService {
    */
   private fetchData<T>(): Observable<any> {
     if (!this.url) {
-      console.log('No URL set, returning current data state');
+      
       return of(this.dataState());
     }
     
@@ -204,23 +204,23 @@ export class ListviewDataLoaderService {
     // Handle search parameters based on mode
     if (this.useAdvancedSearch && this.searchCriteria.length > 0) {
       // For advanced search, we serialize field searches as JSON
-      console.log('Using advanced search with criteria:', this.searchCriteria);
+      
       params = params.set('advancedSearch', 'true');
       params = params.set('searchCriteria', JSON.stringify(this.searchCriteria));
     } else if (this.searchText) {
       // For simple search, set both SearchText and FirstName/LastName
-      console.log('Using simple search with text:', this.searchText);
+      
       const trimmedSearchText = this.searchText.trim();
       if (trimmedSearchText) {
         // Set the general search text
         params = params.set('searchText', trimmedSearchText);
         
-        console.log('Set search parameters:', params.toString());
+        
       }
     }
     
-    console.log('Making request to:', this.url);
-    console.log('With parameters:', params.toString());
+    
+    
     
     return this.http.get(this.url, { params }).pipe(
       tap(response => console.log('Received response:', response))

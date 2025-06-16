@@ -1,0 +1,562 @@
+<!-- Loading spinner for permissions -->
+<div *ngIf="permissionsLoading()" class="flex justify-center items-center min-h-[400px]">
+  <p-progressSpinner styleClass="w-20 h-20"></p-progressSpinner>
+</div>
+
+<!-- Main content when permissions are loaded -->
+<div *ngIf="!permissionsLoading()" class="min-h-screen bg-gray-50 p-6">
+  
+  <!-- Compact Header Section -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900 mb-3">{{ 'title.entityManager' | translate }}</h1>
+    
+    <!-- Entity Selector - Always Visible -->
+    <div class="grid grid-cols-1 gap-4 mb-4">
+      <div class="bg-white rounded-lg shadow p-4">
+        <h3 class="text-sm font-medium text-gray-700 mb-2">Select Entity</h3>
+        <p-dropdown 
+          [options]="entityOptions()" 
+          [(ngModel)]="selectedEntityName"
+          (onChange)="onEntityChange()"
+          placeholder="Choose an entity"
+          optionLabel="label"
+          optionValue="value"
+          styleClass="w-full">
+        </p-dropdown>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div *ngIf="selectedEntityName() && !configLoading()" class="max-w-6xl mx-auto">
+    
+    <!-- Field Configuration Card -->
+    <div class="bg-white rounded-lg shadow">
+      <!-- Panel Header with Actions -->
+      <div class="p-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-medium text-gray-900">
+            Field Configuration ({{ filteredFields().length }} fields)
+          </h2>
+          
+          <div class="flex items-center gap-3">
+            <!-- Action Buttons -->
+            <p-button 
+              icon="pi pi-cog" 
+              label="Edit Entity Configuration"
+              size="small"
+              severity="info"
+              (onClick)="openEntityConfigurationDialog()"
+              [disabled]="canViewOnly()">
+            </p-button>
+            <p-button 
+              icon="pi pi-plus" 
+              label="Add Field"
+              size="small"
+              (onClick)="openAddFieldDialog()"
+              [disabled]="canViewOnly()">
+            </p-button>
+            <p-button 
+              icon="pi pi-list" 
+              label="Manage List View"
+              size="small"
+              severity="info"
+              (onClick)="openListViewManagementDialog()"
+              [disabled]="canViewOnly()">
+            </p-button>
+          </div>
+        </div>
+        
+        <!-- Search and Filters Row -->
+        <div class="flex items-center gap-3 mt-4">
+          <!-- Search Input -->
+          <div class="flex-1">
+            <input 
+              type="text" 
+              pInputText
+              [(ngModel)]="searchFilter"
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="Search fields..."
+              class="w-full">
+          </div>
+          
+          <!-- Show List View Toggle -->
+          <p-toggleButton 
+            [(ngModel)]="showOnlyListViewFields"
+            (onChange)="onFilterChange()"
+            [onLabel]="'List View Only'"
+            [offLabel]="'All Fields'"
+            [onIcon]="'pi pi-eye'"
+            [offIcon]="'pi pi-eye-slash'"
+            [size]="'small'">
+          </p-toggleButton>
+        </div>
+      </div>
+
+      <!-- Scrollable Field List -->
+      <div class="overflow-y-auto" style="height: calc(100vh - 400px); min-height: 500px;">
+        <div class="p-4">
+          <!-- List View Fields on Top (when toggled) -->
+          <div *ngIf="showListViewFieldsOnTop()" class="mb-6">
+            <h3 class="text-md font-medium text-indigo-800 mb-3 flex items-center">
+              <i class="pi pi-list mr-2"></i>
+              List View Fields ({{ getListViewFields().length }})
+            </h3>
+            
+            <div class="space-y-2" 
+                 cdkDropList 
+                 [cdkDropListData]="getListViewFields()"
+                 (cdkDropListDropped)="onListViewFieldDrop($event)">
+              <div *ngFor="let field of getListViewFields(); trackBy: trackByFieldId" 
+                   class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 cursor-pointer hover:bg-indigo-100 transition-colors"
+                   cdkDrag
+                   (click)="selectFieldForConfig(field)">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <i class="pi pi-bars text-gray-400 cursor-move" cdkDragHandle></i>
+                    <span class="font-medium text-indigo-900">{{ field.listViewLabel || field.fieldName }}</span>
+                    <span class="text-xs bg-indigo-200 text-indigo-800 px-2 py-1 rounded">
+                      {{ field.listViewType || 'text' }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs text-indigo-600">Order: {{ field.listViewOrder }}</span>
+                    <p-button 
+                      icon="pi pi-pencil"
+                      size="small"
+                      severity="secondary"
+                      (onClick)="editingField.set(field); $event.stopPropagation()">
+                    </p-button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="border-t border-gray-200 my-6"></div>
+          </div>
+
+          <!-- All Fields List -->
+          <div class="space-y-3">
+            <div *ngFor="let field of filteredFields(); trackBy: trackByFieldId" 
+                 class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                 [class.ring-2]="selectedField()?.id === field.id"
+                 [class.ring-indigo-500]="selectedField()?.id === field.id"
+                 (click)="selectField(field)">
+              
+              <!-- Field Header -->
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <h4 class="font-medium text-gray-900">{{ field.fieldName }}</h4>
+                  <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">{{ field.dataType }}</span>
+                  <span *ngIf="field.isRequired" class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Required</span>
+                  <span *ngIf="field.showInListView" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">List View</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                  <p-button 
+                    icon="pi pi-pencil"
+                    size="small"
+                    severity="secondary"
+                    (onClick)="openEditFieldDialog(field); $event.stopPropagation()">
+                  </p-button>
+                  <p-button 
+                    icon="pi pi-trash"
+                    size="small"
+                    severity="danger"
+                    (onClick)="deleteField(field); $event.stopPropagation()"
+                    [disabled]="canViewOnly()">
+                  </p-button>
+                </div>
+              </div>
+
+              <!-- Field Description -->
+              <p *ngIf="field.description" class="text-sm text-gray-600 mb-3">{{ field.description }}</p>
+
+              <!-- Quick List View Preview -->
+              <div *ngIf="field.showInListView" class="bg-green-50 border border-green-200 rounded p-2">
+                <div class="text-xs text-green-800 font-medium mb-1">List View Configuration:</div>
+                <div class="text-xs text-green-700">
+                  Type: {{ field.listViewType || 'text' }} | 
+                  Order: {{ field.listViewOrder || 'unset' }} |
+                  Width: {{ field.listViewWidth || 'auto' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State for Entity Configuration -->
+  <div *ngIf="selectedEntityName() && configLoading()" class="flex items-center justify-center h-64">
+    <div class="text-center">
+      <p-progressSpinner styleClass="w-16 h-16 mb-4"></p-progressSpinner>
+      <p class="text-gray-600">Loading {{ selectedEntityName() }} configuration...</p>
+    </div>
+  </div>
+
+  <!-- No Entity Selected -->
+  <div *ngIf="!selectedEntityName() && !loading()" class="text-center py-12">
+    <i class="pi pi-database text-gray-400 text-6xl mb-4"></i>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">Select an Entity</h3>
+    <p class="text-gray-600">Choose an entity from the dropdown above to configure its fields</p>
+  </div>
+</div>
+
+<!-- Save Confirmation Toast -->
+<p-toast position="top-right"></p-toast>
+
+<!-- Confirmation Dialog for Delete Operations -->
+<p-confirmDialog></p-confirmDialog>
+
+<!-- Field Edit Dialog -->
+<p-dialog 
+  [(visible)]="showFieldEditDialog" 
+  [modal]="true" 
+  [style]="{width: '800px'}"
+  [header]="fieldDialogTitle()"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" *ngIf="editingField()">
+    <!-- Left Column: Basic Field Configuration -->
+    <div>
+      <h4 class="text-md font-medium text-gray-900 mb-4">Basic Configuration</h4>
+      
+      <div class="space-y-4">
+        <!-- Field Name -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Field Name *</label>
+          <input type="text" pInputText [(ngModel)]="editingField()!.fieldName" class="w-full" [disabled]="canViewOnly()">
+        </div>
+
+        <!-- Data Type -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Data Type *</label>
+          <p-dropdown 
+            [options]="dataTypeOptions" 
+            [(ngModel)]="editingField()!.dataType"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            [disabled]="canViewOnly()">
+          </p-dropdown>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+          <textarea pInputTextarea [(ngModel)]="editingField()!.description" rows="3" class="w-full" [disabled]="canViewOnly()"></textarea>
+        </div>
+
+        <!-- Display Field Path -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Display Field Path</label>
+          <p-dropdown 
+            [options]="(getRelatedDisplayOptions(editingField()!.dataType) | async) ?? []"
+            [(ngModel)]="editingField()!.displayFieldPath"
+            (onChange)="onDisplayFieldPathChange(editingField()!.id, $event.value)"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select field path"
+            styleClass="w-full"
+            [disabled]="canViewOnly()"
+            [showClear]="true">
+          </p-dropdown>
+          <small class="text-gray-500 mt-1 block">Choose which field to display in list views</small>
+        </div>
+
+        <!-- Column Type -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Column Type</label>
+          <p-dropdown 
+            [options]="getColumnTypeOptions()" 
+            [(ngModel)]="editingField()!.listViewType"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select column type"
+            styleClass="w-full"
+            [disabled]="canViewOnly()">
+          </p-dropdown>
+          <small class="text-gray-500 mt-1 block">Type of display for this field in list views</small>
+        </div>
+
+        <!-- Helper Text -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Helper Text</label>
+          <textarea pInputTextarea [(ngModel)]="editingField()!.helperText" rows="2" class="w-full" placeholder="Optional helper text to guide users..." [disabled]="canViewOnly()"></textarea>
+          <small class="text-gray-500 mt-1 block">Provide additional guidance to help users complete this field</small>
+        </div>
+
+        <!-- Flags -->
+        <div class="space-y-2">
+          <div class="flex items-center">
+            <p-checkbox [(ngModel)]="editingField()!.isRequired" binary="true" [disabled]="canViewOnly()"></p-checkbox>
+            <label class="ml-2 text-sm text-gray-700">Required Field</label>
+          </div>
+          <div class="flex items-center">
+            <p-checkbox [(ngModel)]="editingField()!.isActive" binary="true" [disabled]="canViewOnly()"></p-checkbox>
+            <label class="ml-2 text-sm text-gray-700">Active</label>
+          </div>
+          <div class="flex items-center">
+            <p-checkbox [(ngModel)]="editingField()!.enableChangeLog" binary="true" [disabled]="canViewOnly()" (onChange)="onEnableChangeLogChange($event)"></p-checkbox>
+            <label class="ml-2 text-sm text-gray-700">Enable Change Log</label>
+          </div>
+          <div class="flex items-center">
+            <p-checkbox [(ngModel)]="editingField()!.showInListView" binary="true" [disabled]="canViewOnly()"></p-checkbox>
+            <label class="ml-2 text-sm text-gray-700">Show in List View</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: List View Configuration -->
+    <div *ngIf="editingField()!.showInListView">
+      <h4 class="text-md font-medium text-gray-900 mb-4">List View Configuration</h4>
+      
+      <div class="space-y-4">
+        <!-- Custom Label -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Custom Label</label>
+          <input type="text" pInputText [(ngModel)]="editingField()!.listViewLabel" placeholder="Leave empty for default" class="w-full" [disabled]="canViewOnly()">
+        </div>
+
+        <!-- Column Type -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Column Type</label>
+          <p-dropdown 
+            [options]="getListViewTypeOptions()"
+            [(ngModel)]="editingField()!.listViewType"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            [disabled]="canViewOnly()">
+          </p-dropdown>
+        </div>
+
+        <!-- Column Width -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Width</label>
+          <input type="text" pInputText [(ngModel)]="editingField()!.listViewWidth" placeholder="auto" class="w-full" [disabled]="canViewOnly()">
+        </div>
+
+        <!-- Template Pattern (for template type) -->
+        <div *ngIf="editingField()!.listViewType === 'template'">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Template Pattern</label>
+          <input 
+            type="text" 
+            pInputText 
+            [(ngModel)]="editingField()!.displayTemplate"
+            (ngModelChange)="onTemplatePatternChange(editingField()!.id, $event)"
+            placeholder="e.g., {{ '{' }}partner.name{{ '}' }} ({{ '{' }}partner.shortName{{ '}' }})"
+            class="w-full" 
+            [disabled]="canViewOnly()">
+          <small class="text-blue-600 mt-1 block">
+            Use curly braces for field references: {{ '{' }}entity.fieldName{{ '}' }}
+          </small>
+        </div>
+
+        <!-- First Letter Fallback Field (for multiple-avatars type) -->
+        <div *ngIf="editingField()!.listViewType === 'multiple-avatars'">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Fallback Field for Initials</label>
+          <input type="text" pInputText [(ngModel)]="editingField()!.firstLetterFallbackField" placeholder="e.g., firstName" class="w-full" [disabled]="canViewOnly()">
+        </div>
+
+        <!-- Additional Options -->
+        <div class="space-y-2">
+          <div class="flex items-center">
+            <p-checkbox [(ngModel)]="editingField()!.listViewSortable" binary="true" [disabled]="canViewOnly()"></p-checkbox>
+            <label class="ml-2 text-sm text-gray-700">Sortable</label>
+          </div>
+          <div class="flex items-center">
+            <p-checkbox [(ngModel)]="editingField()!.listViewEllipsis" binary="true" [disabled]="canViewOnly()"></p-checkbox>
+            <label class="ml-2 text-sm text-gray-700">Show Ellipsis for Long Text</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button 
+      label="Cancel" 
+      severity="secondary"
+      (onClick)="closeFieldEditDialog()">
+    </p-button>
+    <p-button 
+      label="Save" 
+      severity="success"
+      (onClick)="saveFieldChanges()"
+      [disabled]="!isFieldValid() || canViewOnly()">
+    </p-button>
+    </ng-template>
+</p-dialog>
+
+<!-- Entity Configuration Dialog -->
+<p-dialog 
+  [(visible)]="showEntityConfigDialog" 
+  [modal]="true" 
+  [style]="{width: '600px'}"
+  header="Edit Entity Configuration"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <div class="space-y-4" *ngIf="entityConfigForm()">
+    <!-- Entity Name -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Entity Name *</label>
+      <input type="text" pInputText [(ngModel)]="entityConfigForm()!.entityName" class="w-full" [disabled]="true">
+      <small class="text-gray-500 mt-1 block">Entity name cannot be changed</small>
+    </div>
+
+    <!-- Table Name -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Table Name *</label>
+      <input type="text" pInputText [(ngModel)]="entityConfigForm()!.tableName" class="w-full" [disabled]="true">
+      <small class="text-gray-500 mt-1 block">Database table name for this entity (read-only)</small>
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+      <textarea 
+        pInputTextarea 
+        [(ngModel)]="entityConfigForm()!.description" 
+        rows="3" 
+        class="w-full" 
+        placeholder="Enter a description for this entity..."
+        [disabled]="canViewOnly()">
+      </textarea>
+      <small class="text-gray-500 mt-1 block">Optional description explaining the purpose of this entity</small>
+    </div>
+
+    <!-- Flags -->
+    <div class="space-y-3">
+      <div class="flex items-center">
+        <p-checkbox [(ngModel)]="entityConfigForm()!.isActive" binary="true" [disabled]="true"></p-checkbox>
+        <label class="ml-2 text-sm text-gray-700">Is Active (disabled for now)</label>
+        <small class="ml-2 text-gray-500">Feature temporarily disabled</small>
+      </div>
+      
+      <div class="flex items-center">
+        <p-checkbox [(ngModel)]="entityConfigForm()!.enableChangeLog" binary="true" [disabled]="canViewOnly()"></p-checkbox>
+        <label class="ml-2 text-sm text-gray-700">Enable Change Log</label>
+        <small class="ml-2 text-gray-500">Track changes made to records of this entity</small>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button 
+      label="Cancel" 
+      severity="secondary"
+      (onClick)="closeEntityConfigurationDialog()">
+    </p-button>
+    <p-button 
+      label="Save" 
+      severity="success"
+      (onClick)="saveEntityConfiguration()"
+      [disabled]="!isEntityConfigValid() || canViewOnly()">
+    </p-button>
+  </ng-template>
+</p-dialog> 
+
+<!-- List View Management Dialog -->
+<p-dialog 
+  [(visible)]="showListViewDialog" 
+  [modal]="true" 
+  [style]="{width: '900px', height: '600px'}"
+  header="Manage List View Fields"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false">
+  
+  <div class="grid grid-cols-2 gap-6 h-96">
+    <!-- Left Column: Active List View Fields -->
+    <div class="flex flex-col">
+      <h4 class="text-md font-medium text-gray-900 mb-3">Active List View Fields</h4>
+      <div class="flex-1 overflow-y-auto pr-2" style="max-height: 400px;">
+        <div class="space-y-2" 
+             cdkDropList 
+             [cdkDropListData]="getTempListViewFields()"
+             (cdkDropListDropped)="tempOnListViewFieldDrop($event)">
+          
+          <div *ngFor="let field of getTempListViewFields(); trackBy: trackByFieldId" 
+               class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 cursor-pointer hover:bg-indigo-100 transition-colors"
+               cdkDrag>
+            
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <i class="pi pi-bars text-gray-400 cursor-move" cdkDragHandle></i>
+                <span class="font-medium text-indigo-900">{{ field.listViewLabel || field.fieldName }}</span>
+              </div>
+              
+              <div class="flex items-center gap-1">
+                <span class="text-xs bg-indigo-200 text-indigo-800 px-2 py-1 rounded">
+                  {{ field.listViewOrder }}
+                </span>
+                <p-button 
+                  icon="pi pi-times"
+                  size="small"
+                  severity="danger"
+                  (onClick)="tempRemoveFieldFromListView(field.id)"
+                  [disabled]="canViewOnly()">
+                </p-button>
+              </div>
+            </div>
+            
+            <div class="text-xs text-indigo-700">
+              Type: {{ field.listViewType || 'text' }} | Width: {{ field.listViewWidth || 'auto' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Available Fields to Add -->
+    <div class="flex flex-col">
+      <h4 class="text-md font-medium text-gray-900 mb-3">Available Fields</h4>
+      <div class="flex-1 overflow-y-auto pl-2" style="max-height: 400px;">
+        <div class="space-y-2">
+          <div *ngFor="let field of getTempAvailableFields(); trackBy: trackByFieldId" 
+               class="bg-gray-50 border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+               (click)="tempMoveFieldToListView(field.id)">
+            
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="font-medium text-gray-900">{{ field.fieldName }}</div>
+                <div class="text-xs text-gray-600">{{ field.dataType }}</div>
+                <div *ngIf="field.description" class="text-xs text-gray-500 mt-1">{{ field.description }}</div>
+              </div>
+              <p-button 
+                icon="pi pi-plus"
+                size="small"
+                severity="success"
+                [disabled]="canViewOnly()">
+              </p-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-between">
+      <p-button 
+        label="Cancel" 
+        severity="secondary"
+        (onClick)="closeListViewDialog()">
+      </p-button>
+      <p-button 
+        label="Save Changes" 
+        severity="success"
+        (onClick)="saveListViewChanges()"
+        [disabled]="!listViewHasChanges() || canViewOnly()">
+      </p-button>
+    </div>
+  </ng-template>
+</p-dialog> 

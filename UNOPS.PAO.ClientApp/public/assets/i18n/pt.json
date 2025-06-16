@@ -34,7 +34,8 @@
         },
         "partnerDetails": "Detalhes do Parceiro",
         "partnerDashboard": "Painel do Parceiro",
-        "admin": "Administração"
+        "admin": "Administração",
+        "managerEntities": "Gerenciador de Entidades"
     },
     "button": {
         "back": "Voltar",
@@ -52,7 +53,8 @@
         "delete": "Excluir",
         "uploadImage": "Enviar Imagem",
         "addLink": "Adicionar Link",
-        "seeMore": "Ver mais"
+        "seeMore": "Ver mais",
+        "seeLess": "Ver menos"
     },
     "label": {
         "actions": "Ações",
@@ -156,6 +158,12 @@
             "mailingCountry": "País de envio",
             "contactViaAssistant": "Contatar através do assistente",
             "createdByOffice": "Criado por Escritório"
+        },
+        "partner": {
+            "partner": "Parceiro",
+            "selectPartner": "Selecionar Parceiro",
+            "selectPartnerOffice": "Selecionar Escritório do Parceiro",
+            "selectPartnerGroup": "Selecionar Grupo de Parceiros"
         }
     },
     "message": {
@@ -172,7 +180,9 @@
     },
     "label.interaction.contact": "Contato",
     "errors": {
-        "failedToLoad": "Falha ao carregar"
+        "failedToLoad": "Erro ao carregar",
+        "errorLoadingData": "Erro ao carregar dados. Tente novamente mais tarde.",
+        "noDataAvailable": "Nenhum dado disponível"
     },
     "aiAssistant": {
         "openButton": "Abrir Assistente de IA",
@@ -271,6 +281,48 @@
         "summaryOfInteractions": "Resumo IA de Interações",
         "categoryNews": "Notícias da Categoria",
         "partnerNews": "Notícias do Parceiro", 
-        "categorySummary": "Resumo da Categoria"
+        "categorySummary": "Resumo da Categoria",
+        "groupSummary": "Resumo do Grupo"
+    },
+    "validation": {
+        "required": "Este campo é obrigatório",
+        "maxLength": "O comprimento máximo é de {{max}} caracteres",
+        "pleaseFullAllRequired": "Por favor, preencha todos os detalhes obrigatórios.",
+        "partnerRequired": "O parceiro deve ser inserido.",
+        "lastNameRequired": "O sobrenome deve ser inserido.",
+        "emailRequired": "O email deve ser inserido."
+    },
+    "loading": {
+        "contactData": "Carregando dados do contato...",
+        "partnerData": "Carregando dados do parceiro..."
+    },
+    "interactions": {
+        "title": "Interações",
+        "noInteractionsFound": "Nenhuma interação encontrada",
+        "tryAdjustingFilters": "Tente ajustar sua pesquisa ou filtros",
+        "andOthers": "e {{count}} outros"
+    },
+    "personalInformation": "Informações Pessoais",
+    "office": "escritório",
+    "aria": {
+        "selectPartner": "Selecionar Parceiro",
+        "selectNewEngagement": "Selecionar Novo Engajamento",
+        "selectPartnerOffice": "Selecionar Escritório do Parceiro",
+        "selectPartnerGroup": "Selecionar Grupo de Parceiros",
+        "selectPooledFund": "Selecionar Fundo Comum",
+        "selectDDRequired": "Selecionar DD Obrigatório",
+        "selectDDEACDone": "Selecionar DD/EAC Concluído",
+        "selectLevyPotentiallyApplies": "Selecionar Taxa Potencialmente Aplicável",
+        "selectReasonForLevyNotApplying": "Selecionar Razão para Não Aplicação da Taxa",
+        "selectLevyTreatment": "Selecionar Tratamento da Taxa"
+    },
+    "fieldLabels": {
+        "email": "Email",
+        "mobile": "Celular",
+        "phone": "Telefone",
+        "title": "Título",
+        "city": "Cidade",
+        "country": "País",
+        "partner": "Parceiro"
     }
 }

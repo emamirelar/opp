@@ -64,7 +64,7 @@ export class GDriveAddLinkComponent implements OnInit, OnDestroy {
   }
 
   onValueChange(event: any, file: any) {
-    console.log(event, file);
+    
   }
 
   clear() {

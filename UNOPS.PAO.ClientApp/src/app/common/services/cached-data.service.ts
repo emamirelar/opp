@@ -126,7 +126,6 @@ export class CachedDataService {
     this.loadPartners();
     this.loadPartnerLevelTypeData();
     this.loadPartnerOffices();
-    this.loadPartnerCategories();
     this.loadPartnerCategoryGroups(); // Load category and group structure
     this.loadContacts();
     this.loadUsers();
@@ -486,21 +485,6 @@ export class CachedDataService {
       this.http.get('/api/values/organization-units').subscribe({
         next: (data: any) => {
           this.allPartnerOfficesData.set(data);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-        }
-      });
-    }
-  }
-
-  loadPartnerCategories() {
-    if ((this.allPartnerCategoriesData() == undefined) || (this.allPartnerCategoriesData().length <= 0)) {
-      this.isLoading.set(true);
-      this.http.get('/api/values/partner-categories').subscribe({
-        next: (data: any) => {
-          this.allPartnerCategoriesData.set(data);
           this.isLoading.set(false);
         },
         error: (err) => {

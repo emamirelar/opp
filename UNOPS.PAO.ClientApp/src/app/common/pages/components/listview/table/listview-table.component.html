@@ -6,7 +6,7 @@
   [loading]="loading"
   [first]="first"
   [lazy]="true"
-  [paginator]="config.enablePagination && data.length > 0"
+  [paginator]="config.enablePagination && data.length > 0 && totalRecords > rows"
   [rows]="rows"
   [totalRecords]="totalRecords"
   [rowsPerPageOptions]="config.pageSizeOptions"
@@ -22,11 +22,29 @@
       @for (column of columns; track column) {
         @if (column.sortable && config.enableSorting) {
           <th [pSortableColumn]="column.field" [ngStyle]="{'width': column.width || 'auto'}">
-            {{ column.label | translate }}
+            <div class="flex items-center gap-1">
+              <span>{{ column.label | translate }}</span>
+              @if (column.helperText) {
+                <i class="pi pi-question-circle text-xs text-gray-400 cursor-help" 
+                   [pTooltip]="column.helperText" 
+                   tooltipPosition="top"
+                   [tooltipOptions]="{showDelay: 300, hideDelay: 100}"></i>
+              }
+            </div>
             <p-sortIcon [field]="column.field"></p-sortIcon>
           </th>
         } @else {
-          <th [ngStyle]="{'width': column.width || 'auto'}">{{ column.label | translate }}</th>
+          <th [ngStyle]="{'width': column.width || 'auto'}">
+            <div class="flex items-center gap-1">
+              <span>{{ column.label | translate }}</span>
+              @if (column.helperText) {
+                <i class="pi pi-question-circle text-xs text-gray-400 cursor-help" 
+                   [pTooltip]="column.helperText" 
+                   tooltipPosition="top"
+                   [tooltipOptions]="{showDelay: 300, hideDelay: 100}"></i>
+              }
+            </div>
+          </th>
         }
       }
       <!-- Add actions column header if actions template exists -->
@@ -69,6 +87,48 @@
             }
             @case ('email') {
               <a href="mailto:{{ rowData[column.field] }}" (click)="$event.stopPropagation()" class="text-primary hover:underline" [ngClass]="{'ellipsis-text': column.ellipsis}" [title]="column.ellipsis ? rowData[column.field] : ''">{{ rowData[column.field] }}</a>
+            }
+            @case ('url') {
+              <a [href]="rowData[column.field]" 
+                 (click)="$event.stopPropagation()" 
+                 [target]="column.openInNewTab ? '_blank' : '_self'"
+                 class="text-primary hover:underline" 
+                 [ngClass]="{'ellipsis-text': column.ellipsis}" 
+                 [title]="column.ellipsis ? rowData[column.field] : ''">
+                {{ column.linkText || rowData[column.field] }}
+              </a>
+            }
+            @case ('html') {
+              <div [innerHTML]="rowData[column.field]" 
+                   [ngClass]="{'ellipsis-text': column.ellipsis}" 
+                   [title]="column.ellipsis ? rowData[column.field] : ''"
+                   (click)="$event.stopPropagation()">
+              </div>
+            }
+            @case ('image') {
+              <img [src]="rowData[column.field]" 
+                   [alt]="column.label"
+                   [style.width]="column.imageWidth || 'auto'"
+                   [style.height]="column.imageHeight || '32px'"
+                   [style.max-width]="'100%'"
+                   [style.object-fit]="'cover'"
+                   [style.border-radius]="'4px'"
+                   [style.cursor]="column.enlargeOnClick ? 'pointer' : 'default'"
+                   (click)="column.enlargeOnClick && enlargeImage(rowData[column.field], $event)"
+                   class="inline-block">
+            }
+            @case ('badge') {
+              <p-tag [value]="rowData[column.field]" 
+                     [severity]="getBadgeColor(rowData, column)"
+                     [ngClass]="{'ellipsis-text': column.ellipsis}"
+                     [title]="column.ellipsis ? rowData[column.field] : ''">
+              </p-tag>
+            }
+            @case ('icon') {
+              <i [ngClass]="getIconClass(rowData, column)" 
+                 [style.color]="getIconColor(rowData, column)"
+                 [title]="rowData[column.field]">
+              </i>
             }
             @case ('conditionalIcon') {
               <i [ngClass]="(column.conditionFn ? column.conditionFn(rowData) : rowData[column.field]) ? 'pi pi-verified text-green-500' : 'pi pi-times-circle text-red-300'"></i>

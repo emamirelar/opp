@@ -96,6 +96,16 @@ export class ListviewExportService {
         if (!transformFn && entityName.toLowerCase() === 'contact') {
           finalTransformFn = this.contactTransform;
         }
+        
+        // For partners, use a specialized transform
+        if (!transformFn && entityName.toLowerCase() === 'partner') {
+          finalTransformFn = this.partnerTransform;
+        }
+        
+        // For interactions, use a specialized transform
+        if (!transformFn && entityName.toLowerCase() === 'interaction') {
+          finalTransformFn = this.interactionTransform;
+        }
 
         // Transform data with the selected function
         const exportableData = finalTransformFn(response.data);
@@ -169,6 +179,61 @@ export class ListviewExportService {
   }
 
   /**
+   * Special transform function for Partner entities
+   * Formats partner data with specific field names and order
+   */
+  private partnerTransform(partners: any[]): Record<string, any>[] {
+    return partners.map(partner => {
+      return {
+        ID: partner.id || '',
+        Name: partner.name || '',
+        ShortName: partner.shortName || '',
+        Status: partner.status || '',
+        NewEngagement: partner.newEngagement || '',
+        Phone: partner.phone || '',
+        Website: partner.website || '',
+        PooledFund: partner.pooledFund || '',
+        DDRequired: partner.ddRequired || '',
+        DDEACDone: partner.ddeacDone || '',
+        EACReference: partner.eacReference || '',
+        GlobalKeyAccount: partner.globalKeyAccount || '',
+        UNSecretariatEntity: partner.unSecretariatEntity || '',
+        LevyPotentiallyApplies: partner.levyPotentiallyApplies || '',
+        ReasonForLevyNotApplying: partner.reasonForLevyNotApplying || '',
+        LevyTreatment: partner.levyTreatment || '',
+        Street: partner.address1Street || '',
+        Street2: partner.address1Street2 || '',
+        City: partner.address1City || '',
+        StateProvince: partner.address1StateProvince || '',
+        PostalCode: partner.address1PostalCode || '',
+        Country: partner.address1Country || ''
+      };
+    });
+  }
+
+  /**
+   * Special transform function for Interaction entities
+   * Formats interaction data with specific field names and order
+   */
+  private interactionTransform(interactions: any[]): Record<string, any>[] {
+    return interactions.map(interaction => {
+      return {
+        ID: interaction.id || '',
+        Type: interaction.type || '',
+        Date: interaction.date || '',
+        Subject: interaction.subject || '',
+        Description: interaction.description || '',
+        ContactId: interaction.contactId || '',
+        ContactName: interaction.contactName || '',
+        Status: interaction.status || '',
+        Location: interaction.location || '',
+        OrgUnitId: interaction.orgUnitId || '',
+        CreatedBy: interaction.createdBy || ''
+      };
+    });
+  }
+
+  /**
    * Default data transformation that keeps all properties
    * and converts each property to a readable format
    */
@@ -180,6 +245,11 @@ export class ListviewExportService {
       
       // Convert all keys to proper case (e.g., 'firstName' to 'First Name')
       Object.entries(item).forEach(([key, value]) => {
+        // Skip permissions field entirely
+        if (key === 'permissions') {
+          return;
+        }
+        
         if (typeof value !== 'object' || value === null) {
           // Format the key for display - convert camelCase to Title Case with spaces
           const formattedKey = key

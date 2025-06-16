@@ -14,15 +14,11 @@ import { GDriveDocumentComponent } from '../../../overrides/reusables/components
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ContactService } from '../../../services/contact.service';
 import { PartnerService } from '../../../services/partner.service';
-//import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
 import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
 import { ConfirmDialog } from 'primeng/confirmdialog';
-import {Contact} from '../../../models/contact.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import {Partner} from '../../../models/partner.model';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 import { CalendarModule } from 'primeng/calendar';
 import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
@@ -44,7 +40,6 @@ import { FeedbackDialogService } from '../../../../../common/reusables/services/
     ReactiveFormsModule,
     FormsModule,
     CalendarModule,
-    Button,
     InputTextModule,
     Textarea,
     SelectModule,
@@ -55,7 +50,6 @@ import { FeedbackDialogService } from '../../../../../common/reusables/services/
     CommonModule,
     MessageModule,
     ConfirmDialog,
-    NgIf,
     ChipModule,
     AutoCompleteModule,
     HttpClientModule,
@@ -75,7 +69,7 @@ export class InteractionModalComponent {
 
   onChange: any = () => { };
   onTouched: any = () => { };
-  
+
   record?: Interaction;
   isSaving = signal(false);
   recordId: string = '';
@@ -151,7 +145,7 @@ export class InteractionModalComponent {
         this.formGroup.patchValue({ createdBy: userId });
       }
     });
-    
+
     // Set up the footer template
     this.dialogConfig.templates = {
       footer: InteractionModalFooterComponent
@@ -163,42 +157,23 @@ export class InteractionModalComponent {
   }
 
   ngOnInit() {
-    this.record = this.dialogConfig.data?.record;
+    // Get the record ID from dialog data
+    const recordId = this.dialogConfig.data?.id;
+    const initialData = this.dialogConfig.data?.initialData;
 
-    if (this.record) {
-      this.recordId = this.record.id + '';
-      this.formGroup.patchValue({
-        id: this.record.id,
-        type: this.record.type,
-        date: new Date(this.record.date),
-        description: this.record.description,
-        contactId: this.record.contactId,
-        contactIds: this.record.contactIds,
-        partnerIds: this.record.partnerIds,
-        userIds: this.record.userIds,
-        emailAddresses: this.record.emailAddresses,
-        phoneNumbers: this.record.phoneNumbers,
-        location: this.record.location,
-        subject: this.record.subject,
-        createdBy: this.record.createdBy,
-        orgUnitId: this.record.orgUnitId,
-        previousContactIds: this.record.contactIds,
-        previousEmails: this.record.emailAddresses,
-        previousPhones: this.record.phoneNumbers,
-        previousUserIds: this.record.userIds
-      });
-
-      // Extract permissions from the interaction response if they exist
-      if (this.record.permissions) {
-        this.recordPermissions.set({
-          entity: 'Interaction',
-          hasAccess: true,
-          permissions: this.record.permissions
-        });
+    if (recordId) {
+      // Existing record - fetch full details from API
+      this.recordId = recordId.toString();
+      this.loadInteractionById(Number(recordId));
+    } else if (initialData && Object.keys(initialData).length > 0) {
+      // Existing record passed as initial data (fallback)
+      this.record = initialData;
+      if (this.record) {
+        this.recordId = this.record.id + '';
+        this.populateForm(this.record);
       }
     } else {
-      // For new interactions, set default permissions that allow creation
-      // The list component already checked canCreate before opening this modal
+      // New interaction - set default permissions that allow creation
       this.recordPermissions.set({
         entity: 'Interaction',
         hasAccess: true,
@@ -210,13 +185,63 @@ export class InteractionModalComponent {
         }
       });
     }
-        
+
     // Expose the handleSave function to be called from footer
     if (this.dialogConfig.data) {
       this.dialogConfig.data.handleSave = this.onSubmit.bind(this);
       this.dialogConfig.data.handleDelete = this.deleteInteraction.bind(this);
       this.dialogConfig.data.isSaving = this.isSaving;
       this.dialogConfig.data.recordPermissions = this.recordPermissions;
+    }
+  }
+
+  private loadInteractionById(id: number) {
+    this.interactionService.getById(id).subscribe({
+      next: (response) => {
+        if (response.body) {
+          this.record = response.body;
+          this.populateForm(this.record);
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load interaction:', error);
+        this.feedbackDialogService.showErrorToast({
+          detail: 'Failed to load interaction details',
+          summary: 'Error'
+        });
+      }
+    });
+  }
+
+  private populateForm(record: Interaction) {
+    this.formGroup.patchValue({
+      id: record.id,
+      type: record.type,
+      date: new Date(record.date),
+      description: record.description,
+      contactId: record.contactId,
+      contactIds: record.contactIds || [],
+      partnerIds: record.partnerIds || [],
+      userIds: record.userIds || [],
+      emailAddresses: record.emailAddresses || [],
+      phoneNumbers: record.phoneNumbers || [],
+      location: record.location,
+      subject: record.subject,
+      createdBy: record.createdBy,
+      orgUnitId: record.orgUnitId,
+      previousContactIds: record.contactIds || [],
+      previousEmails: record.emailAddresses || [],
+      previousPhones: record.phoneNumbers || [],
+      previousUserIds: record.userIds || []
+    });
+
+    // Extract permissions from the interaction response if they exist
+    if (record.permissions) {
+      this.recordPermissions.set({
+        entity: 'Interaction',
+        hasAccess: true,
+        permissions: record.permissions
+      });
     }
   }
 
@@ -244,7 +269,7 @@ export class InteractionModalComponent {
   onSubmit(): void {
     if (this.formGroup.valid) {
       const formValue = this.formGroup.value;
-      
+
       // Check permissions before saving
       if (formValue.id) {
         // For updates, check if user has update permission
@@ -476,7 +501,7 @@ export class InteractionModalComponent {
         if (invalidAddedEmails.length > 0) {
           // Handle invalid emails
           invalidAddedEmails.forEach(email => this.validateEmail(email));
-          
+
           // Revert to previous valid state
           this.formGroup.get('emailAddresses')?.setValue(previousEmails, { emitEvent: false });
 

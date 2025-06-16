@@ -12,7 +12,7 @@
   <app-listview
     #listviewComponent
     [dataUrl]="'/api/interactions'"
-    [columns]="columns"
+    [columns]="columns()"
     [entityType]="'Interaction'"
     [config]="listviewConfig()"
     (rowClick)="openEditInteractionModal($event)"

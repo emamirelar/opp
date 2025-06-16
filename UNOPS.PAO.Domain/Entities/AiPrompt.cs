@@ -5,6 +5,7 @@ public class AiPrompt : BaseBusinessEntity
     public string Type { get; set; }
     public string PromptFunction { get; set; } // Function name to call on the manager
     public string? Prompt { get; set; }
+    public string? Description { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string GenerationConfig { get; set; }
     public string ContentConfig { get; set; }

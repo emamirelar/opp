@@ -76,7 +76,7 @@
                 </app-contact-view-interactions-item>
               </div>
             } @empty {
-              <div class="text-center py-4">No interactions found</div>
+              <div class="text-center py-4">{{ 'interactions.noInteractionsFound' | translate }}</div>
             }
           </div>
         </div>
@@ -84,8 +84,8 @@
         @if (!isLoading()) {
           <div class="flex flex-col items-center justify-center h-64">
             <i class="pi pi-inbox text-5xl text-gray-300 mb-4"></i>
-            <p class="text-gray-500 text-xl">No interactions found</p>
-            <p class="text-gray-400">Try adjusting your search or filters</p>
+            <p class="text-gray-500 text-xl">{{ 'interactions.noInteractionsFound' | translate }}</p>
+            <p class="text-gray-400">{{ 'interactions.tryAdjustingFilters' | translate }}</p>
           </div>
         }
       }

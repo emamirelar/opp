@@ -36,14 +36,14 @@ export function authInterceptor(
       // Handle authentication errors
       if (error instanceof HttpErrorResponse) {
         if (error.status === 401) {
-          console.log('[AUTH-INTERCEPTOR] Received 401 error for URL:', request.url);
+          
           
           // Check if we're using IAP authentication
           return authService.isIapAuthenticated().pipe(
             switchMap(isIapAuthenticated => {
               if (isIapAuthenticated) {
                 console.warn('[AUTH-INTERCEPTOR] 401 error despite IAP authentication');
-                console.log('[AUTH-INTERCEPTOR] Refreshing page to fix IAP auth issue');
+                
                 
                 // If the URL includes specific endpoints that should work with IAP,
                 // we can attempt to reload the page to fix authentication

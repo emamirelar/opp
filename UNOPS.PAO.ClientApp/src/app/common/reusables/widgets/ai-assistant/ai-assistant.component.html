@@ -1,10 +1,4 @@
 <div class="fixed transition-all duration-300 ease-in-out transform origin-top-right bg-[var(--surface-overlay)] flex flex-col"
-     [ngClass]="{
-        'scale-100 opacity-100 translate-x-0': layoutService.layoutState().aiAssistantActive,
-        'opacity-0 translate-x-10 pointer-events-none': !layoutService.layoutState().aiAssistantActive,
-        'ai-assistant-fullscreen': isFullscreen(),
-        'top-16 sm:m-4 right-0 w-[27rem] bottom-0 sm:border-2 border-blue-50 border-solid sm:rounded-3xl p-4 gap-2 z-50': !isFullscreen()
-     }"
      [style.z-index]="isFullscreen() ? '9999' : '50'">
 
   <!-- Header with fullscreen functionality only -->

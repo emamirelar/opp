@@ -20,6 +20,8 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerTreeItemComponent } from './item/partner-tree-item.component';
 import { PermissionUtilityService } from '../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../common/pages/services/feedback-dialog.service';
+import { EntityConfigurationService } from '../../services/entity-configuration.service';
+import { ListViewColumn } from '../../../../common/pages/components/listview/listview.model';
 
 @Component({
   selector: 'app-partner-tree',
@@ -38,8 +40,13 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
   parentOptions: any[] = [];
   override service = inject(PartnerTreeService);
   cachedDataService = inject(CachedDataService);
+  entityConfigurationService = inject(EntityConfigurationService);
   originalData: any[] = [];
   override isDataLoading = this.service.isLoading();
+
+  // Dynamic partner tree columns loaded from API  
+  treeColumns = signal<ListViewColumn[]>([]);
+  treeColumnsLoading = signal(true);
 
   // Dialog state
   parentUpdated: boolean = false;
@@ -69,6 +76,10 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     super.ngOnInit();
     // Load entity permissions
     this.entityPermissionsData.loadPermissions(this.router, this.cdr);
+    
+    // Load dynamic columns from API
+    this.loadPartnerTreeColumns();
+    
     this.setNewPartnerFromAIAssistant();
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
@@ -423,5 +434,118 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
         this.applyExpansionState(node.children);
       }
     });
+  }
+
+  private loadPartnerTreeColumns() {
+    this.treeColumnsLoading.set(true);
+    this.entityConfigurationService.getEntityListViewConfiguration('PartnerTree')
+      .subscribe({
+        next: (columns) => {
+          // Convert backend columns to frontend format and add template functions
+          const processedColumns = columns.map(col => this.processColumn(col));
+          this.treeColumns.set(processedColumns);
+          this.treeColumnsLoading.set(false);
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Failed to load partner tree columns:', error);
+          // Fallback to default columns if API fails
+          this.setFallbackTreeColumns();
+          this.treeColumnsLoading.set(false);
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  private processColumn(column: any): ListViewColumn {
+    const processedColumn: ListViewColumn = {
+      field: column.field,
+      label: column.label,
+      type: column.type,
+      sortable: column.sortable,
+      width: column.width,
+      ellipsis: column.ellipsis,
+      helperText: column.helperText
+    };
+
+    // Handle nested field paths (fields with dots) by adding a template function
+    if (column.field && column.field.includes('.') && column.type !== 'template') {
+      // Keep the original field for identification but add a template function to access nested data
+      processedColumn.templateFn = (rowData: any) => {
+        const value = this.getNestedProperty(rowData, column.field);
+        return value !== undefined && value !== null ? String(value) : '';
+      };
+      // Change type to template since we're now using a template function
+      processedColumn.type = 'template';
+    }
+
+    // Add template function for template type columns
+    if (column.type === 'template' && column.templatePattern) {
+      processedColumn.templateFn = this.createTemplateFunction(column.templatePattern);
+    }
+
+    return processedColumn;
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      let result = templatePattern;
+      
+      // Replace field placeholders like {name}, {description} with actual values
+      const fieldMatches = templatePattern.match(/\{([^}]+)\}/g);
+      if (fieldMatches) {
+        fieldMatches.forEach(match => {
+          const fieldName = match.replace(/[{}]/g, '');
+          const fieldValue = this.getNestedProperty(rowData, fieldName) || '';
+          result = result.replace(match, fieldValue);
+        });
+      }
+      
+      return result.trim();
+    };
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((o, p) => o?.[p], obj);
+  }
+
+  private setFallbackTreeColumns() {
+    // Fallback to original hardcoded columns if API fails
+    // Note: Actions are always hardcoded in HTML template, not included here
+    const fallbackColumns: ListViewColumn[] = [
+      {
+        field: 'name',
+        label: 'label.partnerTree.name',
+        sortable: false,
+        type: 'text'
+      },
+      {
+        field: 'description',
+        label: 'label.partnerTree.description',
+        sortable: false,
+        type: 'text'
+      },
+      {
+        field: 'type',
+        label: 'label.partnerTree.type',
+        sortable: false,
+        type: 'text',
+        width: '80px'
+      },
+      {
+        field: 'partnerCategoryName',
+        label: 'label.partnerTree.partnerCategory',
+        sortable: false,
+        type: 'text'
+      },
+      {
+        field: 'partnerGroupName',
+        label: 'label.partnerTree.partnerGroup',
+        sortable: false,
+        type: 'text'
+      }
+    ];
+    
+    this.treeColumns.set(fallbackColumns);
   }
 }

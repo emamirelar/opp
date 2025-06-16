@@ -95,7 +95,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     
     // Force a refresh of the signals to ensure they pick up the new config
     setTimeout(() => {
-      console.log('Forcing signal refresh, isAdvancedSearch:', this.isAdvancedSearch());
+      
       
       // Re-initialize searchable fields when config changes
       this.initializeSearchableFields();
@@ -103,7 +103,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     
     // Initialize advanced search if enabled
     if (value.searchConfig?.useAdvancedSearch) {
-      console.log('Setting advanced search enabled in data loader');
+      
       this.dataLoader.setAdvancedSearchEnabled(true);
     }
 
@@ -251,7 +251,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
           // Set criteria in data loader
           this.dataLoader.setSearchCriteria(criteria);
           
-          console.log('Loaded search criteria from URL:', criteria);
+          
         }
       } catch (error) {
         console.warn('Failed to parse search criteria from URL:', error);

@@ -360,7 +360,7 @@ public class Startup
 
         // Register OrganizationHierarchy manager
         services.AddScoped<IOrganizationHierarchyManager, OrganizationHierarchyManager>();
-
+        
         // Add data seeding services
         services.AddDataSeeding();
 
@@ -371,6 +371,7 @@ public class Startup
 
         AddServices(services);
         services.AddScoped<IGoogleDriveDocumentManager, GoogleDriveDocumentManager>();
+        services.AddScoped<GoogleCloudStorageService>();
         ApplyMigrations(services);
         services.SeedAsync();
         ConfigureRegisters(services);

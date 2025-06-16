@@ -230,12 +230,12 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
       ascending: this.ascending
     };
 
-    console.log('SavedFilter request:', request);
+    
 
     this.savedFilterService.createSavedFilter(request)
       .subscribe({
         next: (savedFilter) => {
-          console.log('Filter saved successfully:', savedFilter);
+          
           this.showSaveDialog.set(false);
           this.loadSavedFilters(); // Refresh the list
           this.selectedSavedFilter.set(savedFilter);

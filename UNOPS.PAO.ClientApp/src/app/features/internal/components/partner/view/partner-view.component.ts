@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
@@ -35,14 +35,12 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PartnerContactsComponent } from '../contacts/partner-contacts.component';
 import { GeminiService } from '../../../services/gemini.service';
-import { MarkdownPipe } from '../../../pipes/markdown.pipe';
 import { LinkListComponent } from "../../../../../common/reusables/components/link/list/link-list.component";
 import { EntityType } from '../../../../../common/models/link.model';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
-import { PartnerTabsComponent } from '../tabs/partner-tabs.component';
 import { Partner } from '../../../models/partner.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
@@ -67,12 +65,11 @@ import { AiPanelComponent } from '../../../../../common/reusables/components/ai-
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
+    FormsModule,
     PartnerContactsComponent,
-    MarkdownPipe,
     LinkListComponent,
     PictureComponent,
     PartnerViewContactsComponent,
-    PartnerTabsComponent,
     TooltipModule,
     AiPanelComponent,
   ],
@@ -102,7 +99,7 @@ export class PartnerViewComponent implements OnInit {
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
   permissionService = inject(PermissionUtilityService);
-  
+
   // Permission management using utility service
   private permissionUtils = this.permissionService.createInstancePermissions('Partner');
   recordPermissions = this.permissionUtils.recordPermissions;
@@ -119,15 +116,15 @@ export class PartnerViewComponent implements OnInit {
 
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
-  
+
   // See More functionality for Partner Information
   showFullContent = signal<boolean>(false);
-  
+
   // Computed values for See More functionality
   shouldShowSeeMoreButton = computed(() => {
     return this.showAdditionalInfo() && !this.showFullContent();
   });
-  
+
   shouldShowSeeLessButton = computed(() => {
     return this.showAdditionalInfo() && this.showFullContent();
   });
@@ -147,7 +144,7 @@ export class PartnerViewComponent implements OnInit {
             if (data['partnerData']) {
               const partnerData = data['partnerData'];
               this.recordData.set(partnerData);
-              
+
               // Extract permissions from the resolver data if they exist
               if (partnerData.permissions) {
                 this.recordPermissions.set({
@@ -156,14 +153,14 @@ export class PartnerViewComponent implements OnInit {
                   permissions: partnerData.permissions
                 });
               }
-              
+
               this.infoLoading.set(false);
             } else {
               // Fallback to loading details directly if resolver data isn't available
               this._loadRecordDetails();
             }
           });
-          
+
           // Load permissions for this specific partner
           // Permissions are now extracted from the partner response directly
         }
@@ -187,7 +184,7 @@ export class PartnerViewComponent implements OnInit {
     this.partnerService.getPartnerById(this.recordId).subscribe({
       next: (data: any) => {
         this.recordData.set(data);
-        
+
         // Extract permissions from the response if they exist
         if (data.permissions) {
           this.recordPermissions.set({
@@ -196,7 +193,7 @@ export class PartnerViewComponent implements OnInit {
             permissions: data.permissions
           });
         }
-        
+
         this.infoLoading.set(false);
       },
       error: (error) => {
@@ -212,11 +209,11 @@ export class PartnerViewComponent implements OnInit {
 
   // AI Panel Event Handlers
   onSummaryRefresh() {
-    console.log('Summary refresh requested');
+
   }
 
   onSummaryLoaded(data: string) {
-    console.log('Summary loaded:', data);
+
   }
 
   onSummaryError(error: Error) {
@@ -224,11 +221,11 @@ export class PartnerViewComponent implements OnInit {
   }
 
   onNewsRefresh() {
-    console.log('News refresh requested');
+
   }
 
   onNewsLoaded(data: string) {
-    console.log('News loaded:', data);
+
   }
 
   onNewsError(error: Error) {
@@ -301,15 +298,15 @@ export class PartnerViewComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    console.log('Files selected:', event);
+
   }
 
   onFileRemoved(event: any) {
-    console.log('File removed:', event);
+
   }
 
   onFilesCleared() {
-    console.log('All files cleared');
+
   }
 
   handleEditClick() {
@@ -351,17 +348,17 @@ export class PartnerViewComponent implements OnInit {
   }
 
   /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
-    console.log('Opening org structure dialog for type:', type);
-    
+
+
     const ref = this.dialogService.open(OrgStructureDialogComponent, {
       header: 'Select Organizational Structure',
       width: '95vw',
       height: '95vh',
-      style: { 
-        maxWidth: '1400px', 
+      style: {
+        maxWidth: '1400px',
         maxHeight: '900px',
         backgroundColor: 'white',
-        padding: '0' 
+        padding: '0'
       },
       contentStyle: {
         padding: '0',
@@ -380,7 +377,7 @@ export class PartnerViewComponent implements OnInit {
 
     ref.onClose.subscribe((result) => {
       if (result) {
-        console.log('Selected organization:', result);
+
         // Refresh the corresponding panel based on type
         switch (type) {
           case 'summary':

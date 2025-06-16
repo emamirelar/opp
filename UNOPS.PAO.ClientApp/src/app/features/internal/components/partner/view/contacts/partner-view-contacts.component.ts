@@ -20,7 +20,6 @@ import { PartnerViewContactsDialogComponent } from './dialog/partner-view-contac
     TooltipModule,
     DynamicDialogModule,
     PartnerViewContactsItemComponent,
-    PartnerViewContactsDialogComponent
   ],
   templateUrl: './partner-view-contacts.component.html',
   providers: [DialogService]
@@ -119,4 +118,4 @@ export class PartnerViewContactsComponent implements OnInit {
         this.isLoading.set(false);
       });
   }
-} 
+}

@@ -9,6 +9,8 @@ export interface AiPrompt {
   type: string;
   promptFunction?: string;
   prompt?: string;
+  description?: string;
+  name?: string;
   createdAt: Date;
   generationConfig: string;
   contentConfig: string;
@@ -22,6 +24,8 @@ export interface AiPrompt {
 export interface GeminiModel {
   value: string;
   label: string;
+  location: string;
+  maxTokens: number;
 }
 
 export interface GenerationConfig {

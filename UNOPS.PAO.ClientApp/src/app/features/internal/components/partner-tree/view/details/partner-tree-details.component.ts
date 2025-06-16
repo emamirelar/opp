@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CachedDataService } from '../../../../../../common/services/cached-data.service';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { combineLatest, Observable, of, delay } from 'rxjs';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
@@ -11,7 +12,6 @@ import { FeedbackDialogService } from '../../../../../../common/pages/services/f
 import { DocumentService } from '../../../../services/document.service';
 import { DocumentComponent } from '../../../../../../common/reusables/components/document/document.component';
 import { GDriveDocumentComponent } from '../../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { PictureComponent } from "../../../../../../common/reusables/components/picture/picture.component";
 import { AiPanelComponent, AiDataService } from '../../../../../../common/reusables/components/ai-panel/ai-panel.component';
 
 import { TranslateModule } from '@ngx-translate/core';
@@ -28,18 +28,14 @@ import { MessageModule } from 'primeng/message';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { MarkdownPipe } from '../../../../pipes/markdown.pipe';
 import { LinkListComponent } from "../../../../../../common/reusables/components/link/list/link-list.component";
 import { EntityType } from "../../../../../../common/models/link.model";
 import { DialogService } from 'primeng/dynamicdialog';
-import { PartnerContactsComponent} from "../../../partner/contacts/partner-contacts.component";
 import { PartnerTree } from '../../../../models/partner-tree.model';
-import { PartnerCategoryGroup, PartnerGroup } from '../../../../models/partner-category-group.model';    
-import { JsonPipe } from '@angular/common';
-import { PartnerTreeService } from '../../../../services/partner-tree.service';
 import { PartnerTreeItemComponent } from '../../item/partner-tree-item.component';
 import { PermissionUtilityService } from '../../../../../../essentials/services/permission-utility.service';
-import { Observable, of, delay } from 'rxjs';
+import { ListViewColumn } from '../../../../../../common/pages/components/listview/listview.model';
+import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
 
 // Mock AI service for partner tree AI panels
 class MockPartnerTreeAiService implements AiDataService {
@@ -57,7 +53,7 @@ Recent activities with partners in this category show strong engagement across m
 - **Geographic Distribution:** Partners across 23 countries
 
 `,
-      
+
       'category-news': `
 
 **This is mocked data.**
@@ -71,7 +67,7 @@ Latest developments in this partner category:
 - **Regulatory Updates:** New compliance requirements effective Q2 2024
 
 `,
-      
+
       'partner-news': `
 
 **This is mocked data.**
@@ -85,7 +81,7 @@ Recent news and updates from partners in this network:
 - **Partnership Opportunities:** 12 new collaboration proposals under review
 
 `,
-      
+
       'category-summary': `
 
 **This is mocked data.**
@@ -98,6 +94,22 @@ This partner category demonstrates strong performance metrics:
 - **Project Success Rate:** 91% completion rate
 - **Innovation Index:** High adoption of emerging technologies
 - **Growth Potential:** Projected 25% expansion in next fiscal year
+
+`,
+
+      'group-summary': `
+
+**This is mocked data.**
+
+
+This partner group shows excellent collaboration outcomes:
+
+- **Active Members:** 12 organizations within this group
+- **Collaboration Frequency:** Weekly coordination meetings
+- **Joint Projects:** 6 active multi-partner initiatives
+- **Resource Sharing:** 78% efficiency in shared resource utilization
+- **Knowledge Exchange:** Regular best practices sharing sessions
+- **Success Stories:** 4 major breakthrough projects this quarter
 
 `
     };
@@ -135,14 +147,11 @@ This is a placeholder response while the AI service is being implemented.
     CardModule,
     CheckboxModule,
     ReactiveFormsModule,
-    MarkdownPipe,
     LinkListComponent,
-    PictureComponent,
-    PartnerContactsComponent,
     RouterModule,
-    JsonPipe,
     ProgressSpinnerModule,
-    AiPanelComponent
+    AiPanelComponent,
+    ListviewComponent
   ],
   templateUrl: './partner-tree-details.component.html',
   standalone: true,
@@ -154,7 +163,6 @@ export class PartnerTreeDetailsComponent implements OnInit {
   activatedRoute = inject(ActivatedRoute);
   documentService = inject(DocumentService);
   dialogService = inject(DialogService);
-  cdr = inject(ChangeDetectorRef);
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
@@ -168,7 +176,12 @@ export class PartnerTreeDetailsComponent implements OnInit {
   partnerTree = signal<PartnerTree | null>(null);
   partnerTreeChildren = signal<PartnerTree[]>([]);
 
-  childrenPartnerGroups = signal<PartnerGroup[]>([]);
+  // Computed children partner groups that updates automatically when partnerTree changes
+  childrenPartnerGroups = computed(() => {
+    const tree = this.partnerTree();
+    if (!tree?.partnerCategoryCode) return [];
+    return this.cachedDataService.getParterGroupByCategoryCode(tree.partnerCategoryCode);
+  });
 
   // Loading state
   isLoading = signal<boolean>(false);
@@ -185,7 +198,7 @@ export class PartnerTreeDetailsComponent implements OnInit {
 
   // Properties for app-link-list component
   entityTypePartner = EntityType.PartnerTree; // Entity type for link list component
-  
+
   // Properties for app-document component
   recordId = computed(() => {
     return this.partnerTree()?.id?.toString() || '';
@@ -195,39 +208,74 @@ export class PartnerTreeDetailsComponent implements OnInit {
   acceptedMiMIETypesForgDrive = 'application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet,application/vnd.google-apps.presentation';
 
   ngOnInit() {
-    this.activatedRoute.parent?.data.subscribe({
-      next: (data: {[key: string]: any}) => {
-        if (data['partnerTreeData']) {
-          this.partnerTree.set(data['partnerTreeData'].data);
-          this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
-          
-          // Extract permissions from response if available
-          if (data['partnerTreeData'].permissions) {
-            this.recordPermissions.set({
-              entity: 'PartnerTree',
-              hasAccess: true,
-              permissions: data['partnerTreeData'].permissions
-            });
-          } else if (this.partnerTree()?.id) {
-            // Load permissions for the partner tree
-            this.recordPermissionsData.loadPermissions(this.partnerTree()!.id!.toString(), this.cdr);
+    // Combine both parent route data and parameter changes for reactive updates
+    combineLatest([
+      this.activatedRoute.parent?.data || of({}),
+      this.activatedRoute.parent?.paramMap || of(null)
+    ]).subscribe({
+      next: ([data, params]) => {
+        const recordId = params?.get('recordId');
+
+        if (data && (data as any)['partnerTreeData']) {
+          const newPartnerTree = (data as any)['partnerTreeData'].data;
+
+          // Only update if it's actually a different record or if partnerTree is null
+          if (!this.partnerTree() || newPartnerTree?.id?.toString() !== this.partnerTree()?.id?.toString()) {
+            this.updatePartnerTreeData((data as any)['partnerTreeData']);
           }
+        } else if (recordId && (!this.partnerTree() || recordId !== this.partnerTree()?.id?.toString())) {
+          // Handle case where we have a recordId but no data yet (loading state)
+          this.isLoading.set(true);
         }
       },
       error: (error) => {
         console.error('Error loading partner tree data:', error);
-        this.feedbackDialogService.showErrorToast({ 
-          detail: 'Failed to load partner tree data' 
+        this.feedbackDialogService.showErrorToast({
+          detail: 'Failed to load partner tree data'
         });
+        this.isLoading.set(false);
       }
     });
+  }
+
+  private updatePartnerTreeData(partnerTreeData: any): void {
+    this.partnerTree.set(partnerTreeData.data);
+
+    // Extract permissions from response if available
+    if (partnerTreeData.permissions) {
+      this.recordPermissions.set({
+        entity: 'PartnerTree',
+        hasAccess: true,
+        permissions: partnerTreeData.permissions
+      });
+    } else if (this.partnerTree()?.id) {
+      // Load permissions for the partner tree without ChangeDetectorRef
+      this.recordPermissionsData.loadPermissions(this.partnerTree()!.id!.toString());
+    }
+
+    this.isLoading.set(false);
+  }
+
+  partnerColumns: ListViewColumn[] = [
+    {
+      field: 'name',
+      label: 'label.name',
+      sortable: false,
+      type: 'text'
+    }
+  ];
+
+  navigateToPartner($event: any) {
+    if ($event?.id) {
+      this.router.navigate(['/partnerships/partners/' + $event.id]);
+    }
   }
 
   handleEditClick() {
     // Check permission before opening modal
     if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {
-      this.feedbackDialogService.showErrorToast({ 
-        detail: 'You do not have permission to edit this partner tree' 
+      this.feedbackDialogService.showErrorToast({
+        detail: 'You do not have permission to edit this partner tree'
       });
       return;
     }
@@ -248,7 +296,6 @@ export class PartnerTreeDetailsComponent implements OnInit {
         this.cachedDataService.partnerTreeService.getPartnerTreeDataById(result.id!.toString()).subscribe({
           next: (data: any) => {
             this.partnerTree.set(data.data);
-            this.childrenPartnerGroups.set(this.cachedDataService.getParterGroupByCategoryCode(this.partnerTree()?.partnerCategoryCode));
             this.feedbackDialogService.showSuccessToast({ detail: 'Partner tree updated successfully!' });
             this.isLoading.set(false);
           },
@@ -260,4 +307,5 @@ export class PartnerTreeDetailsComponent implements OnInit {
       }
     });
   }
-} 
+}
+
