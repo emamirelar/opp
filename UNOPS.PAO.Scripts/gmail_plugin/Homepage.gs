@@ -1,18 +1,20 @@
-function onHomePageOpen(e){
- 
+function onHomePageOpen(e) {
   var mainCard = CardService.newCardBuilder()
-                .setHeader(
-                  CardService.newCardHeader()
-                .setTitle("Content Extractor")
-                .setImageStyle(CardService.ImageStyle.CIRCLE)
-                )
-                
-                .addSection(CardService.newCardSection()
-                    .setHeader("<b><color='#000000'>Contents Extracted</font></b>")
-                    .addWidget(CardService.newTextParagraph()
-                        .setText(homePageMsg)
-                    )
-                )                            
-                .build()
+    .setHeader(
+      CardService.newCardHeader()
+        .setTitle("Opportunity+") 
+        .setSubtitle("Home")
+        .setImageStyle(CardService.ImageStyle.CIRCLE)
+        .setImageUrl(ICON_URL)
+    )
+    .addSection(
+      CardService.newCardSection()
+        .setHeader("<b><font color=\"#005073\">Welcome</font></b>")
+        .addWidget(
+          CardService.newTextParagraph()
+            .setText("Open an email to see related Contacts, Partners, and more.")
+        )
+    )
+    .build();
   return mainCard;
 }

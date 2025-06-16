@@ -6,7 +6,8 @@ const API_BASE_URL = 'https://swift-legible-raven.ngrok-free.app/api'; //temp ur
 const AUTH_ENDPOINT = `${API_BASE_URL}/auth/google`;
 const CONTACT_ENDPOINT = `${API_BASE_URL}/api/contact`;
 const INTERACTION_API_ENDPOINT = `${API_BASE_URL}/gmail-addon/interactions`;
-const OPPORTUNITY_PLUS_ENDPOINT = `https://localhost:44426/`;
+const OPPORTUNITY_PLUS_ENDPOINT = `https://localhost:44426/#`;
+const ICON_URL = 'https://storage.googleapis.com/opportunity_plus_logo/Opportunity%20Logo%20Graphic1000px.png';
   
 // Manifest document : https://developers.google.com/apps-script/manifest
 // https://developers.google.com/apps-script/manifest/allowlist-url

@@ -105,7 +105,11 @@ public class AuthService : IAuthService
             
             // 3. Get user roles and other information
             var roles = await _userManager.GetRolesAsync(user);
-            string name = Convert.ToString(user?.Id);
+            //string name = Convert.ToString(user?.Id);
+
+            // **Crucially, use the user's internal database ID for the 'sub' claim (subject)**
+            string userIdForClaims = user.Id.ToString(); // This is your internal user ID
+            string name = user.UserName; // Or payload.Name if available for web client, otherwise use email as name
 
             var token = GenerateJwtToken(subject, email, name);
             var refreshToken = GenerateRefreshToken();
@@ -115,7 +119,7 @@ public class AuthService : IAuthService
                 AccessToken = token,
                 RefreshToken = refreshToken,
                 ExpiresAt = DateTime.UtcNow.AddHours(1),
-                UserId = subject,
+                UserId = userIdForClaims,
                 Email = email,
                 Name = name,
                 Roles = roles.ToList()

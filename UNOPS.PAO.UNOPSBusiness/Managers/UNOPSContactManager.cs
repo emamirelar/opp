@@ -538,12 +538,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         // Get contacts using the repository directly
         var contacts = contactRepository
             .GetAll(["Partner"])
-            .Where(c => (c.Email != null && input.EmailAddresses.Contains(c.Email)))
             .AsQueryable()
+            .Where(c => (c.Email != null && input.EmailAddresses.Contains(c.Email)))
             .Cast<UNOPSContact>()
             .ToList();
         
         // Map to models
-        return contacts.Select(c => mapper.Map<ContactModel>(c)).ToList();
+        return contacts.Select(c => MapEntityToModel(c, mapper)).ToList();
     }
 }

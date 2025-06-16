@@ -26,9 +26,13 @@ function createCard(e) {
       ...extractEmailAddresses(messageData.bcc)
     ].filter(email => email); // Remove null/undefined
 
-  const relatedRecords = findRelatedRecords(allEmails);
+  const uniqueEmails = removeDuplicatesUsingSet(allEmails);
 
-  const relatedRecordsCard = buildRelatedRecords(relatedRecords, messageData, false);
+  const relatedRecords = findRelatedRecords(uniqueEmails);
+
+  Logger.log('Message Data Content Form: ' + JSON.stringify(messageData));
+
+  const relatedRecordsCard = buildRelatedRecords(relatedRecords, messageData);
   return relatedRecordsCard;
 
   //const card = buildMessageCard(messageData, currentPage);
@@ -71,6 +75,9 @@ function getMessageData(eventObj) {
         }
         Logger.log(`Message #${i + 1} - Attachments found: ${attachments.length}`);
 
+        const rawBody = msg.getPlainBody();
+        const cleanedBody = cleanEmailBody(rawBody);
+
         // Build conversation content
         const sender = msg.getFrom();
         const date = Utilities.formatDate(msg.getDate(), Session.getScriptTimeZone(), 'dd-MMM-yyyy HH:mm');
@@ -82,7 +89,12 @@ function getMessageData(eventObj) {
 
         /*fullConversationContent += `<b>From:</b> ${sender}<br><b>To:</b> ${to}<br><b>cc:</b> ${cc}<br><b>bcc:</b> ${bcc}<br><b>Date:</b> ${date}<br><b>Subject:</b> ${subject}<br><br>${body.replace(/\n/g, '<br>')}<br><hr><br>`;*/
 
-        fullConversationContent += `${body.replace(/\n/g, '<br>')}<br><hr><br>`;
+        if(i == 0) {
+          fullConversationContent += `${cleanedBody}\n------------------`;
+        }
+        else {
+          fullConversationContent += `\n\n${cleanedBody}\n------------------`;
+        }
 
       } catch (err) {
         console.error(`Error processing message #${i}: `, err);
@@ -119,7 +131,48 @@ function getMessageData(eventObj) {
   }
 }
 
-function buildMessageCard(data, currentPage) {
+/**
+ * Cleans an email body by removing common quoted reply patterns.
+ * This is a heuristic and might not catch all variations.
+ * @param {string} body The raw plain text email body.
+ * @returns {string} The cleaned email body.
+ */
+function cleanEmailBody(body) {
+  let cleaned = body;
+
+  // 1. Remove lines starting with ">" (common for quoted text)
+  // This needs to be done carefully to preserve actual blockquotes if used by sender.
+  // For typical email replies, this is effective.
+  cleaned = cleaned.replace(/^>.*(?:\n>.*)*\n?/gm, '');
+
+  // 2. Remove standard reply headers (e.g., "--- Original Message ---", "On [Date], [Sender] wrote:")
+  // Common patterns for quoted replies
+  const replyHeaderPatterns = [
+    /^\s*On\s+.*,\s+.*<.+>\s+wrote:\s*$/im,
+    /^\s*Le\s+\w+\.\s+\d{1,2}\s+\w{3}\.\s+\d{4}\s+à\s+\d{2}:\d{2},\s+.*a\s+écrit\s*:\s*$/im, //TO-DO: not working for French. need to handle other languages as well.
+    /^\s*From:\s*.*$/im,
+    /^\s*Sent:\s*.*$/im,
+    /^\s*To:\s*.*$/im,
+    /^\s*Cc:\s*.*$/im,
+    /^\s*Subject:\s*.*$/im,
+    /^\s*---+\s*Original Message\s*---+$/im, // "--- Original Message ---"
+    /^\s*-----Original Message-----$/im, // "-----Original Message-----"
+    /^\s*\[Quoted text hidden\]\s*$/im,
+    /^\s*Begin forwarded message:\s*$/im
+  ];
+
+  for (const pattern of replyHeaderPatterns) {
+    cleaned = cleaned.replace(pattern, '');
+  }
+
+  // 3. Remove excess newlines that might result from removal
+  cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n'); // Reduce multiple newlines to just two
+  cleaned = cleaned.trim(); // Trim leading/trailing whitespace
+
+  return cleaned;
+}
+
+/*function buildMessageCard(data, currentPage) {
   const buttonText = data.existingInteraction ? "Update Interaction" : "Create Interaction";  
   const header = CardService.newCardHeader()
     .setTitle("📥 Extracted Email Content")
@@ -191,7 +244,7 @@ function buildMessageCard(data, currentPage) {
   /*const navigationSection = CardService.newCardSection()
     .addWidget(CardService.newTextParagraph().setText("<b>Navigation</b>"))
     .addWidget(buttonSet);*/
-
+/*
   const card = CardService.newCardBuilder()
     .setHeader(header)
     .addSection(CardService.newCardSection()
@@ -216,25 +269,8 @@ function buildMessageCard(data, currentPage) {
     .build();
 
   return card;
-}
+}*/
 
-function handleCreateUpdateInteraction(e) {
-  try {
-    const messageData = JSON.parse(e.parameters.messageData);
-    const result = createOrUpdateInteraction(messageData);
-
-    return result;
-    /*return CardService.newCardBuilder()
-      .addSection(CardService.newCardSection()
-      .addWidget(CardService.newTextParagraph()
-      .setText(`✅ Interaction ${messageData.existingInteraction ? 'updated' : 'created'} successfully!`)))
-      .build();*/
-
-  } catch (error) {
-    return CardService.newCardBuilder()
-      .addSection(CardService.newCardSection()
-      .addWidget(CardService.newTextParagraph()
-      .setText(`❌ Error: ${error.message}`)))
-      .build();
-  }
+function removeDuplicatesUsingSet(originalList) {
+  return [...new Set(originalList)];
 }

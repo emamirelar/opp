@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Handles the creation and updating of Interactions based on email data
  */
 
@@ -11,7 +11,7 @@
  * @param {string} subject - The email subject
  * @returns {string} Cleaned email body
  */
-function cleanEmailBody(body, subject) {
+/*function cleanEmailBody(body, subject) {
   if (!body) return '';
   
   // Remove HTML tags
@@ -47,12 +47,12 @@ function cleanEmailBody(body, subject) {
   cleanBody = cleanBody.trim();
   
   // Add subject at the beginning if not already present
-  if (!cleanBody.includes(subject)) {
+  /*if (!cleanBody.includes(subject)) {
     cleanBody = `Subject: ${subject}\n\n${cleanBody}`;
-  }
-  
+  }*/
+ /* 
   return cleanBody;
-}
+}*/
 
 /**
  * Extracts email address from a string that might contain full name
@@ -91,15 +91,10 @@ function extractEmailAddresses(emailString) {
   return emails.map(email => extractEmailAddress(email)).filter(email => email);
 }
 
-/**
- * Creates or updates an Interaction based on email data
- * @param {Object} messageData - The email message data
- * @returns {Object} The created/updated Interaction
- */
-function createOrUpdateInteraction(messageData) {
-  try {
-    // Log the incoming data for debugging
-    Logger.log('Message Data: ' + JSON.stringify(messageData));
+function getMappedInteractionData(messageData) {
+  // Log the incoming data for debugging
+    
+    Logger.log('Message Data Get Mapped Interaction Data: ' + JSON.stringify(messageData));
     const threadId = messageData.threadId;
 
     // Extract all email addresses
@@ -110,36 +105,62 @@ function createOrUpdateInteraction(messageData) {
       ...extractEmailAddresses(messageData.bcc)
     ].filter(email => email); // Remove null/undefined
 
-    Logger.log('All extracted emails: ' + JSON.stringify(allEmails));
+    const uniqueEmails = removeDuplicatesUsingSet(allEmails);
+
+    Logger.log('All extracted emails: ' + JSON.stringify(uniqueEmails));
 
     // Extract email data
     const interactionData = {
       Type: 'Email',
       Date: new Date(messageData.date).toISOString(), // Convert to ISO format
       Subject: messageData.subject,
-      data: cleanEmailBody(messageData.body, messageData.subject),
-      EmailAddresses: allEmails,
+      Description: messageData.body,
+      EmailAddresses: uniqueEmails,
       ContactId: 0,
       Location: 'Email',
       GmailThreadId: threadId
     };
-
     Logger.log('Final interaction data: ' + JSON.stringify(interactionData));
+    return interactionData;
+}
 
+/**
+ * Creates or updates an Interaction based on email data
+ * @param {Object} messageData - The email message data
+ * @returns {Object} The created/updated Interaction
+ */
+function createOrUpdateInteraction(e) {
+  try {
     // Check if interaction already exists
     //const existingInteraction = findExistingInteraction(threadId);
-    
+    const messageData = JSON.parse(e.parameters.messageData);
+    const interactionData = getMappedInteractionData(messageData);
+
     if (messageData.existingInteraction) {
       // Update existing interaction
-      //return updateInteraction(messageData.existingInteraction.id, interactionData);
-      const interactionCard = buildRelatedRecords(interactionData, true);
-      return interactionCard;
+      const updatedInteraction = updateInteraction(messageData.existingInteraction.id, interactionData);
+      
+      return CardService.newCardBuilder()
+      .addSection(CardService.newCardSection()
+      .addWidget(CardService.newTextParagraph()
+      .setText(`✅ Interaction updated successfully!`)))
+      .build();
+
+      //const interactionCard = buildRelatedRecords(interactionData, true);
+      //return interactionCard;
     } else {
       // Create new interaction
-      //return createInteraction(interactionData);
-      const interactionCard = buildRelatedRecords(interactionData, false);
-      return interactionCard;
+      const createdInteraction = createInteraction(interactionData);
+      //const interactionCard = buildRelatedRecords(interactionData, false);
+      //return interactionCard;
+
+      return CardService.newCardBuilder()
+      .addSection(CardService.newCardSection()
+      .addWidget(CardService.newTextParagraph()
+      .setText(`✅ Interaction created successfully!`)))
+      .build();
     }
+    
   } catch (error) {
     Logger.log('Error creating/updating interaction: ' + error);
     throw error;
@@ -201,6 +222,26 @@ function findRelatedRecords(emailAddresses) {
     return null;
   }
 }
+
+/*function handleCreateUpdateInteraction(messageData) {
+  try {
+    //const messageData = JSON.parse(e.parameters.messageData);
+    const result = createOrUpdateInteraction(messageData);
+    return result;
+    /*return CardService.newCardBuilder()
+      .addSection(CardService.newCardSection()
+      .addWidget(CardService.newTextParagraph()
+      .setText(`✅ Interaction ${messageData.existingInteraction ? 'updated' : 'created'} successfully!`)))
+      .build();*/
+/*
+  } catch (error) {
+    return CardService.newCardBuilder()
+      .addSection(CardService.newCardSection()
+      .addWidget(CardService.newTextParagraph()
+      .setText(`❌ Error: ${error.message}`)))
+      .build();
+  }
+}*/
 
 /**
  * Creates a new interaction
@@ -353,3 +394,7 @@ function getContactById(contactId) {
     throw error;
   }
 } 
+
+function handleCreateContact(emailAddress) {
+  Logger.log(emailAddress);
+}
