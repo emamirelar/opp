@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using UNOPS.PAO.UNOPSDataAccess.Utilities;
 
 #nullable disable
 
@@ -17,6 +18,13 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 type: "boolean",
                 nullable: false,
                 defaultValue: false);
+
+            // Execute SQL scripts for seeding data using the utility class
+            MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
+            {
+                "seed-entities.sql",
+                "seed-entity-field-managers.sql"
+            });
         }
 
         /// <inheritdoc />

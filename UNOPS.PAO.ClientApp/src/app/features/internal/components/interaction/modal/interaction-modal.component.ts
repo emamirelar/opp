@@ -96,6 +96,12 @@ export class InteractionModalComponent {
   allOrgUnits = this.cachedDataService.allPartnerOffices;
   currentUser = this.cachedDataService.currentUser;
 
+  // Check if this is an import edit
+  get isImportEdit(): boolean {
+    const record = this.dialogConfig.data?.record;
+    return record?.isImportEdit || record?.skipServerSave || this.dialogConfig.data?.isImportEdit || false;
+  }
+
   // Permission management using utility service
   private permissionUtils: any;
   recordPermissions: any;
@@ -160,6 +166,11 @@ export class InteractionModalComponent {
     // Get the record ID from dialog data
     const recordId = this.dialogConfig.data?.id;
     const initialData = this.dialogConfig.data?.initialData;
+    const recordData = this.dialogConfig.data?.record; // Data for import edits
+    // Check if this is an import edit to adjust validation
+    const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+                        this.dialogConfig.data?.record?.isImportEdit ||
+                        this.dialogConfig.data?.record?.skipServerSave;
 
     if (recordId) {
       // Existing record - fetch full details from API
@@ -170,6 +181,13 @@ export class InteractionModalComponent {
       this.record = initialData;
       if (this.record) {
         this.recordId = this.record.id + '';
+        this.populateForm(this.record);
+      }
+    } else if (recordData && Object.keys(recordData).length > 0) {
+      // Import edit data - use record data directly
+      this.record = recordData;
+      if (this.record) {
+        this.recordId = this.record.id ? this.record.id + '' : '';
         this.populateForm(this.record);
       }
     } else {
@@ -184,6 +202,13 @@ export class InteractionModalComponent {
           canDelete: false // New records can't be deleted
         }
       });
+    }
+
+    // For import edits, adjust form validation to be more lenient
+    if (isImportEdit && this.record) {
+      // Remove contactId required validation for import edits since it might be empty
+      this.formGroup.get('contactId')?.clearValidators();
+      this.formGroup.get('contactId')?.updateValueAndValidity();
     }
 
     // Expose the handleSave function to be called from footer
@@ -269,6 +294,26 @@ export class InteractionModalComponent {
   onSubmit(): void {
     if (this.formGroup.valid) {
       const formValue = this.formGroup.value;
+      
+      // Check if this is an import edit (we're only updating local data, not saving to server)
+      const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+                          this.dialogConfig.data?.record?.isImportEdit ||
+                          this.dialogConfig.data?.record?.skipServerSave;
+      
+      if (isImportEdit) {
+        // This is an import edit, skipping server save
+        // Just update the record with the form values and mark it as updated
+        if (this.record) {
+          Object.assign(this.record, formValue);
+          this.record._updated = true;
+          
+          // Close the dialog with the updated record
+          this.dialogRef.close(this.record);
+          return;
+        }
+      }
+      
+      // Only set loading state for actual server saves
 
       // Check permissions before saving
       if (formValue.id) {

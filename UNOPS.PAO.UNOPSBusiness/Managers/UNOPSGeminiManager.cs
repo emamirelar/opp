@@ -413,7 +413,7 @@ public class UNOPSGeminiManager : IGeminiManager
         }).ToList();
 
         var detailedResponse = await FetchDetailedResponseFromGemini(session, formattedChatHistory, req, promptType, fileUrl, fileType);
-        var updatedMessage = await _aiService.GetDependentDropdownValues(detailedResponse?.Dependents, JsonConvert.DeserializeObject(detailedResponse.RawMessage));
+        var updatedMessage = await _aiService.GetDependentDropdownValues(detailedResponse?.Dependents, JsonConvert.DeserializeObject(detailedResponse.RawMessage), null);
         var updatedDetailedResponse = new
         {
             detailedResponse.Entity,

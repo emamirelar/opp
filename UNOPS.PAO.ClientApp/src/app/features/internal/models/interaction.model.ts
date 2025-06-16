@@ -19,4 +19,9 @@ export interface Interaction {
   orgUnitId: number;
   createdBy: number;
   permissions?: EntityPermissionSet;
+  
+  // Import-specific properties
+  isImportEdit?: boolean;
+  _updated?: boolean;
+  _importRowId?: string;
 }
