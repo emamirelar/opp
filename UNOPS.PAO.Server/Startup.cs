@@ -252,7 +252,7 @@ public class Startup
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = Configuration["JWTSettings:validIssuer"],
-                    ValidAudience = Configuration["JWTSettings:validAudience"],
+                    ValidAudience = Configuration["JWTSettings:validAudienceDev"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))
                 };
             })

@@ -111,7 +111,7 @@ public class AuthService : IAuthService
             string userIdForClaims = user.Id.ToString(); // This is your internal user ID
             string name = user.UserName; // Or payload.Name if available for web client, otherwise use email as name
 
-            var token = GenerateJwtToken(subject, email, name);
+            var token = GenerateJwtToken(userIdForClaims, email, name);
             var refreshToken = GenerateRefreshToken();
 
             return new AuthResponse

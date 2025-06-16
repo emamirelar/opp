@@ -80,13 +80,13 @@ namespace UNOPS.PAO.Presentation.Controllers
                 retVal.UnmatchedEmails = input.EmailAddresses;
 
                 // Check permission to read contacts
-                /*var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
-                
+                var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
+
                 if (permissionResult != null)
                 {
                     retVal.ContactPermission = "You do not have permission to read contacts.";
                     return Ok(retVal);
-                }*/
+                }
 
                 // Find related contacts
                 var contacts = await _contactManager.GetContactsForGmailAddon(input);
