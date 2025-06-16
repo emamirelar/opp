@@ -26,9 +26,9 @@ import { PermissionUtilityService } from '../../../../../../essentials/services/
       ></p-button>
       <p-button 
         *ngIf="canSave()"
-        [loading]="config.data?.isSaving()" 
+        [loading]="getSavingState()" 
         icon="pi pi-check" 
-        [label]="'button.save' | translate" 
+        [label]="isImportEdit ? 'Update Import Data' : ('button.save' | translate)" 
         (click)="onSave()"
       ></p-button>
     </div>
@@ -45,6 +45,12 @@ export class InteractionModalFooterComponent {
   private dialogRef = inject(DynamicDialogRef);
   protected config = inject(DynamicDialogConfig);
   private permissionUtilityService = inject(PermissionUtilityService);
+
+  // Check if this is an edit for import data
+  get isImportEdit(): boolean {
+    const record = this.config.data?.record;
+    return record?.isImportEdit || record?.skipServerSave || false;
+  }
 
   onCancel(): void {
     this.dialogRef.close();
@@ -63,6 +69,11 @@ export class InteractionModalFooterComponent {
   }
 
   canSave(): boolean {
+    // For import edits, always allow saving since it's just updating local data
+    if (this.isImportEdit) {
+      return true;
+    }
+    
     const recordPermissions = this.config.data?.recordPermissions;
     if (!recordPermissions) return true; // Default to allow if no permissions data
     
@@ -77,5 +88,16 @@ export class InteractionModalFooterComponent {
     if (!recordPermissions) return true; // Default to allow if no permissions data
     
     return this.permissionUtilityService.canDelete(recordPermissions());
+  }
+
+  getSavingState(): boolean {
+    // For import edits, don't show loading state
+    if (this.isImportEdit) {
+      return false;
+    }
+    
+    // Check if isSaving exists and is a function in config.data
+    const isSaving = this.config.data?.isSaving;
+    return isSaving && typeof isSaving === 'function' ? isSaving() : false;
   }
 } 

@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import {Observable, map, of, catchError} from 'rxjs';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Partner } from '../../../../features/internal/models/partner.model';
+import { Interaction } from '../../../../features/internal/models/interaction.model';
+import { InteractionType } from '../../../../features/internal/models/interaction-type.enum';
 
 export interface AnalyzeFileRequest {
   type: string;
@@ -115,6 +117,63 @@ export const EXAMPLE_PARTNERS: Partner[] = [
     }
   ];
 
+export const EXAMPLE_INTERACTIONS: Interaction[] = [
+    {
+      id: 1,
+      type: InteractionType.Email,
+      date: '2024-01-15T10:30:00.000Z',
+      subject: 'Project Kick-off Meeting',
+      description: 'Discussed project timeline and deliverables with the partner team.',
+      contactId: 1,
+      contactName: 'John Doe',
+      status: 'Active',
+      contactIds: [1],
+      partnerIds: [1],
+      userIds: [1],
+      emailAddresses: ['john.doe@example.com'],
+      phoneNumbers: ['+1234567890'],
+      location: 'Virtual Meeting',
+      orgUnitId: 1,
+      createdBy: 1
+    },
+    {
+      id: 2,
+      type: InteractionType.VirtualMeeting,
+      date: '2024-01-20T14:00:00.000Z',
+      subject: 'Technical Review Session',
+      description: 'Technical review of proposed solutions and implementation approach.',
+      contactId: 2,
+      contactName: 'Jane Smith',
+      status: 'Active',
+      contactIds: [2],
+      partnerIds: [2],
+      userIds: [1, 2],
+      emailAddresses: ['jane.smith@example.com'],
+      phoneNumbers: ['+1987654321'],
+      location: 'Conference Room A',
+      orgUnitId: 1,
+      createdBy: 1
+    },
+    {
+      id: 3,
+      type: InteractionType.Phone,
+      date: '2024-01-25T16:15:00.000Z',
+      subject: 'Follow-up Call',
+      description: 'Follow-up discussion on project progress and next steps.',
+      contactId: 3,
+      contactName: 'Ahmed Hassan',
+      status: 'Active',
+      contactIds: [3],
+      partnerIds: [3],
+      userIds: [1],
+      emailAddresses: ['ahmed.hassan@example.com'],
+      phoneNumbers: ['+4412345678'],
+      location: 'Phone Call',
+      orgUnitId: 1,
+      createdBy: 1
+    }
+  ];
+
 @Injectable({
   providedIn: 'root',
 })
@@ -208,22 +267,26 @@ export class ImportService {
    * @param type The type of data being uploaded (e.g., 'bulk_contact_action')
    */
   bulkUpload(records: any[], type: string): Observable<any> {
-    // Process records to ensure createdBy is not null (convert null to a valid number in backend)
+    // Process records to ensure proper handling - delete empty/falsy properties
     const processedRecords = records.map(record => {
-      // Only modify the record if createdBy is null
-      if (!record.createdBy) {
-        delete record.createdBy;
-      }
-      if (!record.lastModifiedBy) {
-        delete record.lastModifiedBy;
-      }
-      if (!record.deletedBy) {
-        delete record.deletedBy;
-      }
-      if (!record.id) {
-        delete record.id;
-      }
-      return record;
+      const processedRecord = { ...record };
+      
+      // Keep original logic for these specific properties - delete if falsy
+      const specialProperties = ['createdBy', 'lastModifiedBy', 'deletedBy', 'id'];
+      specialProperties.forEach(prop => {
+        if (!processedRecord[prop]) {
+          delete processedRecord[prop];
+        }
+      });
+      
+      // For all other properties, delete if empty string to avoid serialization issues
+      Object.keys(processedRecord).forEach(prop => {
+        if (!specialProperties.includes(prop) && processedRecord[prop] === '') {
+          delete processedRecord[prop];
+        }
+      });
+      
+      return processedRecord;
     });
 
     const payload: BulkUploadRequest = {

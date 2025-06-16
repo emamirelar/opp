@@ -148,7 +148,17 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                         var dbSet = dbSetProperty.GetValue(dbContext) as IQueryable<object>;
                         if (dbSet != null)
                         {
-                            var entities = await dbSet.ToListAsync();
+                            // Add Include('All') to ensure all related entities are loaded
+                            var queryWithIncludes = dbSet.AsQueryable();
+                            
+                            // Get all navigation properties for the entity type to include them
+                            var navigationProperties = entityType.GetNavigations().Select(n => n.Name).ToArray();
+                            foreach (var navProp in navigationProperties)
+                            {
+                                queryWithIncludes = queryWithIncludes.Include(navProp);
+                            }
+                            
+                            var entities = await queryWithIncludes.ToListAsync();
                             var entity = entities.Where(e => 
                             {
                                 try 
@@ -176,8 +186,17 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                             
                             if (entity != null)
                             {
-                                // Serialize the entity to JSON
-                                var content = JsonConvert.SerializeObject(entity, Formatting.Indented);
+                                // Configure JSON serialization to avoid circular references but include related data
+                                var jsonSettings = new JsonSerializerSettings
+                                {
+                                    Formatting = Formatting.Indented,
+                                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                                    NullValueHandling = NullValueHandling.Ignore,
+                                    DateFormatHandling = DateFormatHandling.IsoDateFormat
+                                };
+                                
+                                // Serialize the entity to JSON with all related data
+                                var content = JsonConvert.SerializeObject(entity, jsonSettings);
                                 
                                 // Get the prompt data for summarization
                                 var promptData = (await contextService.GetPromptData("summarize_information")).FirstOrDefault();

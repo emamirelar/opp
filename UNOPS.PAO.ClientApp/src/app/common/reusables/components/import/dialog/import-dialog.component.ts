@@ -140,6 +140,22 @@ export class ImportDialogComponent implements OnInit {
     { field: 'address1Country', header: 'Country', required: false, label: 'Country', type: 'text', sortable: false },
   ];
 
+  // Interaction-specific columns
+  interactionColumns: ImportColumn[] = [
+    { field: 'type', header: 'Type', required: true, label: 'Type', type: 'text', sortable: false },
+    { field: 'date', header: 'Date', required: true, label: 'Date', type: 'text', sortable: false },
+    { field: 'subject', header: 'Subject', required: true, label: 'Subject', type: 'text', sortable: false },
+    { field: 'description', header: 'Description', required: false, label: 'Description', type: 'text', sortable: false },
+    { field: 'contactId', header: 'Contact', required: false, label: 'Contact', type: 'text', sortable: false },
+    { field: 'location', header: 'Location', required: false, label: 'Location', type: 'text', sortable: false },
+    { field: 'contactIds', header: 'Contact IDs', required: false, label: 'Contact IDs', type: 'text', sortable: false },
+    { field: 'partnerIds', header: 'Partner IDs', required: false, label: 'Partner IDs', type: 'text', sortable: false },
+    { field: 'userIds', header: 'User IDs', required: false, label: 'User IDs', type: 'text', sortable: false },
+    { field: 'emailAddresses', header: 'Email Addresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
+    { field: 'phoneNumbers', header: 'Phone Numbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
+    { field: 'orgUnitId', header: 'Org Unit ID', required: false, label: 'Org Unit ID', type: 'text', sortable: false }
+  ];
+
   // Create data effect in the constructor to ensure injection context
   constructor() {
     // Setup effect to update paginated data when data changes
@@ -186,6 +202,8 @@ export class ImportDialogComponent implements OnInit {
     
     if (entityType === 'partner') {
       this.columns = this.partnerColumns;
+    } else if (entityType === 'interaction') {
+      this.columns = this.interactionColumns;
     } else {
       // Default to contact columns
       this.columns = this.contactColumns;
