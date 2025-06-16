@@ -29,6 +29,7 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly RoleManager<PAOIdentityRole> _roleManager;
     private readonly ILogger<IAPAuthenticationHandler> _logger;
+    private readonly IConfiguration _configuration;
 
     public IAPAuthenticationHandler(
         IOptionsMonitor<IAPAuthenticationOptions> options,
@@ -36,12 +37,14 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         UrlEncoder encoder,
         ISystemClock clock,
         UserManager<PAOIdentityUser> userManager,
-        RoleManager<PAOIdentityRole> roleManager) 
+        RoleManager<PAOIdentityRole> roleManager,
+        IConfiguration configuration) 
         : base(options, logger, encoder, clock)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _logger = logger.CreateLogger<IAPAuthenticationHandler>();
+        _configuration = configuration;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -51,14 +54,57 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         {
             return AuthenticateResult.NoResult();
         }
-        
+
+        // First check for Bearer token
+        var bearerToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+        ClaimsPrincipal? bearerPrincipal = null;
+
+        if (!string.IsNullOrEmpty(bearerToken))
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jwtSecret = _configuration["JWTSettings:Secret"];
+                var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = _configuration["JWTSettings:validIssuer"],
+                    ValidAudience = _configuration["JWTSettings:validAudience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+
+                bearerPrincipal = tokenHandler.ValidateToken(bearerToken, validationParameters, out _);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Bearer token validation failed");
+            }
+        }
+
         // Check if we already have a verified JWT from the middleware
         if (Context.User?.Identity?.IsAuthenticated == true && 
             Context.User.HasClaim(c => c.Type == "iap-jwt-verified" && c.Value == "true"))
         {
+            // If we have a valid Bearer token, merge its claims
+            if (bearerPrincipal != null)
+            {
+                var userIdentity = Context.User.Identity as ClaimsIdentity;
+                foreach (var claim in bearerPrincipal.Claims)
+                {
+                    if (!userIdentity.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
+                    {
+                        userIdentity.AddClaim(claim);
+                    }
+                }
+            }
             return AuthenticateResult.Success(new AuthenticationTicket(Context.User, Scheme.Name));
         }
-        
+
         // Validate IAP JWT if required
         if (Options.RequireJwtVerification && !await ValidateIapJwtAsync())
         {
@@ -233,6 +279,18 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
         {
             if (!identity.HasClaim(c => c.Type == ClaimTypes.Role && c.Value == role))
                 identity.AddClaim(new Claim(ClaimTypes.Role, role));
+        }
+        
+        // If we have a valid Bearer token, merge its claims
+        if (bearerPrincipal != null)
+        {
+            foreach (var claim in bearerPrincipal.Claims)
+            {
+                if (!identity.HasClaim(c => c.Type == claim.Type && c.Value == claim.Value))
+                {
+                    identity.AddClaim(claim);
+                }
+            }
         }
         
         // Store authentication in cookie for development mode

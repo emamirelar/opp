@@ -340,7 +340,7 @@ public class Startup
         {
             // Set default policy to accept IAP authentication
             options.DefaultPolicy = new AuthorizationPolicyBuilder()
-                .AddAuthenticationSchemes("IAP")
+                .AddAuthenticationSchemes("IAP", "Bearer")
                 .RequireAuthenticatedUser()
                 .Build();
         });
