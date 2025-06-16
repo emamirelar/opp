@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE public."InsertEntityEmbedding"(entityName TEXT, entityId INT, embedding TEXT)
+CREATE OR REPLACE PROCEDURE public."InsertEntityEmbedding"(entityName TEXT, entityId INT, entityData TEXT,embedding TEXT)
 LANGUAGE plpgsql
 AS $$
 BEGIN
