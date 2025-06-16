@@ -19,11 +19,13 @@
         [isLoading]="isLoading"
         [orderBy]="orderBy"
         [ascending]="ascending"
+        [preselectedFilterId]="preselectedSavedFilterId"
         (filterApplied)="onSavedFilterApplied($event)"
         (filterSaved)="onSavedFilterSaved($event)"
         (filterUpdated)="onSavedFilterUpdated($event)"
         (filterDeleted)="onSavedFilterDeleted($event)"
         (applyCriteria)="onApplyCriteria($event)"
+        #savedFilterRef
       ></app-advanced-search-saved-filter>
     }
     @if (config.enableExport && (config.exportOptions?.showButton ?? true)) {
@@ -41,6 +43,22 @@
 
   <div class="w-full flex flex-col gap-4">
 
+    <!-- My Office Filter Checkbox -->
+    @if (isMyOfficeFilterAvailable()) {
+      <div class="flex items-center gap-2 p-2 bg-blue-50 rounded border">
+        <p-checkbox
+          [(ngModel)]="myOfficeOnly"
+          [binary]="true"
+          (onChange)="onMyOfficeFilterChange()"
+          inputId="myOfficeFilter"
+        ></p-checkbox>
+        <label for="myOfficeFilter" class="text-sm font-medium text-blue-700 cursor-pointer">
+          {{ 'search.myOfficeOnly' | translate }}
+        </label>
+        <i class="pi pi-info-circle text-blue-500 text-xs"
+           [pTooltip]="'search.myOfficeTooltip' | translate"></i>
+      </div>
+    }
 
     <!-- Search chips display -->
     <div class="flex flex-wrap items-center">
@@ -48,13 +66,22 @@
         @if (i > 0) {
           <span class="flex items-center px-4 text-gray-600">{{ criterion.logicalOperator || 'AND' }}</span>
         }
-        <p-chip className="w-48">
+        <p-chip className="w-64">
           <div class="flex items-center gap-2 px-4">
-            <span class="font-semibold">{{ criterion.label }}:</span> 
+            <span class="font-semibold">{{ criterion.label }}</span>
+            <span class="text-blue-600 font-medium">{{ getOperatorLabel(criterion.operator) }}</span>
             @if (isDateValue(criterion.value)) {
-              {{ criterion.value | date:'dd/MM/yyyy' }}
+              <span>{{ criterion.value | date:'dd/MM/yyyy' }}</span>
             } @else {
-              {{ criterion.value }}
+              <span>{{ criterion.value }}</span>
+            }
+            @if (criterion.secondValue) {
+              <span class="text-gray-500">{{ 'search.and' | translate }}</span>
+              @if (isDateValue(criterion.secondValue)) {
+                <span>{{ criterion.secondValue | date:'dd/MM/yyyy' }}</span>
+              } @else {
+                <span>{{ criterion.secondValue }}</span>
+              }
             }
             <span class="p-chip-remove-icon pi pi-times-circle" (click)="removeSearchCriterion(i)"></span>
           </div>
@@ -68,7 +95,7 @@
         <p-button
           icon="pi pi-times"
           class="ml-auto"
-          text  
+          text
           rounded
           (onClick)="onClearSearch()"
           [disabled]="isLoading"
@@ -76,7 +103,7 @@
         ></p-button>
       }
     </div>
-  
+
     <!-- Search input and field dropdown -->
     <div class="flex gap-2 flex-wrap items-center w-full">
       @if (searchCriteria.length > 0) {
@@ -96,15 +123,15 @@
           </ng-template>
         </p-dropdown>
       }
-      <p-dropdown 
-        [options]="searchableFields()" 
-        [(ngModel)]="selectedSearchField" 
+      <p-dropdown
+        [options]="searchableFields()"
+        [(ngModel)]="selectedSearchField"
         optionLabel="label"
         [placeholder]="'search.selectField' | translate"
         (onChange)="onSearchFieldSelect($event.value)"
         styleClass="w-64"
       ></p-dropdown>
-    
+
       <p-dropdown
         [options]="getComparisonOperators()"
         [(ngModel)]="selectedComparisonOperator"
@@ -120,7 +147,7 @@
           {{ option.label | translate }}
         </ng-template>
       </p-dropdown>
-      
+
       <!-- Date input for date fields -->
       @if (isDateField()) {
         <p-calendar
@@ -128,9 +155,9 @@
           [placeholder]="'search.selectDate' | translate"
           dateFormat="dd/mm/yy"
           [showIcon]="true"
-          styleClass="w-48"
+          styleClass="w-48 z-10"
         ></p-calendar>
-        
+
         <!-- Second date for "between" operator -->
         @if (isBetweenOperator()) {
           <span class="text-gray-600 px-2">{{ 'search.and' | translate }}</span>
@@ -156,8 +183,8 @@
           }
         </p-iconfield>
       }
-      
-      <p-button 
+
+      <p-button
         icon="pi pi-plus"
         class="ml-auto"
         [label]="'search.addFilter' | translate"

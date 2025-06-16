@@ -41,11 +41,16 @@
         [isLoading]="isLoading()"
         [searchCriteria]="searchCriteria"
         [entityType]="entityType"
+        [orderBy]="currentSortField"
+        [ascending]="currentSortOrder === 'asc'"
+        [preselectedSavedFilterId]="preselectedSavedFilterId"
         (search)="onAdvancedSearch($event)"
         (removeCriterion)="onRemoveSearchCriterion($event)"
         (clearSearch)="onClearAdvancedSearch()"
         (exportData)="exportData()"
-        (switchToSimple)="switchToSimpleSearch()">
+        (switchToSimple)="switchToSimpleSearch()"
+        (myOfficeFilterChanged)="onMyOfficeFilterChanged($event)"
+        (applySavedFilter)="onApplySavedFilter($event)">
       </app-listview-advanced-search>
     }
   }

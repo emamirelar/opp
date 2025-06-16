@@ -32,7 +32,7 @@ public class SearchCriteria
     public string Operator { get; set; } = "like";
     
     /// <summary>
-    /// The logical operator to combine with the next criterion (AND, OR)
+    /// The logical operator to combine this criterion with the previous one (AND, OR)
     /// </summary>
     [JsonPropertyName("logicalOperator")]
     public string? LogicalOperator { get; set; } = "AND";

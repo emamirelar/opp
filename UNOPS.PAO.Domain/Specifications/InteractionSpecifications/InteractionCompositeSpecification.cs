@@ -93,5 +93,6 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         public string? SearchText { get; set; }
         public bool AdvancedSearch { get; set; }
         public string? SearchCriteria { get; set; }
+        public bool MyOfficeOnly { get; set; }
     }
 } 

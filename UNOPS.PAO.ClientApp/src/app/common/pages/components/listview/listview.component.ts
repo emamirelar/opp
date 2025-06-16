@@ -26,6 +26,7 @@ import { AutoCompleteModule } from 'primeng/autocomplete';
 import { TranslateService } from '@ngx-translate/core';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { SavedFilter } from '../../../interfaces/saved-filter.interface';
 
 @Component({
   selector: 'app-listview',
@@ -172,6 +173,9 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     { label: 'OR', value: 'OR' }
   ];
   
+  // Saved filter state
+  preselectedSavedFilterId: number | null = null;
+  
   // Autocomplete and search mode state
   isAdvancedSearchMode = signal<boolean>(false);
   autocompleteSuggestions: any[] = [];
@@ -236,6 +240,23 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   private loadSearchCriteriaFromUrl(): void {
     const queryParams = this.route.snapshot.queryParams;
     
+    // Check if there's a saved filter ID in the URL
+    if (queryParams['savedFilterId']) {
+      const filterId = parseInt(queryParams['savedFilterId'], 10);
+      if (!isNaN(filterId)) {
+        console.log('Found saved filter ID in URL:', filterId);
+        this.preselectedSavedFilterId = filterId;
+        
+        // The saved filter component will handle loading this filter
+        // We just need to ensure advanced search mode is enabled if specified
+        if (queryParams['advancedSearch'] === 'true') {
+          this.isAdvancedSearchMode.set(true);
+          this.dataLoader.setAdvancedSearchEnabled(true);
+        }
+      }
+      return;
+    }
+    
     if (queryParams['advancedSearch'] === 'true' && queryParams['searchCriteria']) {
       try {
         const criteria = JSON.parse(queryParams['searchCriteria']) as SearchCriteria[];
@@ -268,6 +289,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     const queryParams: any = { ...this.route.snapshot.queryParams };
     delete queryParams.searchCriteria;
     delete queryParams.advancedSearch;
+    delete queryParams.savedFilterId;
     
     // Don't use queryParamsHandling: 'merge' as it prevents deletion of parameters
     this.router.navigate([], {
@@ -776,6 +798,57 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     // Clear search criteria from URL when switching to simple search
     this.clearSearchCriteriaFromUrl();
     
+    this.loadData();
+  }
+
+  /**
+   * Handle My Office filter change
+   */
+  onMyOfficeFilterChanged(enabled: boolean): void {
+    // Update data loader with My Office filter state
+    this.dataLoader.setMyOfficeFilter(enabled);
+    
+    // Execute search with updated filter
+    this.executeAdvancedSearch();
+  }
+
+  /**
+   * Handle saved filter applied event
+   */
+  onApplySavedFilter(filter: SavedFilter): void {
+    // Update URL parameters with saved filter information
+    const queryParams: any = { ...this.route.snapshot.queryParams };
+    
+    // Add saved filter ID to URL for tracking
+    queryParams.savedFilterId = filter.id;
+    
+    // If it's an advanced search, mark it in URL
+    if (filter.isAdvancedSearch) {
+      queryParams.advancedSearch = 'true';
+    }
+    
+    // Update sorting if specified in the filter
+    if (filter.orderBy) {
+      this.currentSortField = filter.orderBy;
+      this.currentSortOrder = filter.ascending ? 'asc' : 'desc';
+      this.dataLoader.setSorting(filter.orderBy, this.currentSortOrder);
+    }
+    
+    // Update URL without triggering navigation
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      replaceUrl: true
+    });
+    
+    // Reset pagination to first page
+    this.first = 0;
+    this.dataLoader.setPagination(0, this.rows);
+    
+    // Clear the preselected filter ID to avoid reprocessing
+    this.preselectedSavedFilterId = null;
+    
+    // Load data with the applied filter
     this.loadData();
   }
 }

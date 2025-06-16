@@ -49,10 +49,20 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
     return this._searchCriteria;
   }
   private _searchCriteria: SearchCriteria[] = [];
-  
+
   @Input() isLoading: boolean = false;
   @Input() orderBy?: string;
   @Input() ascending: boolean = true;
+  @Input() set preselectedFilterId(value: number | null) {
+    if (value && value !== this._preselectedFilterId) {
+      this._preselectedFilterId = value;
+      this.loadAndApplyPreselectedFilter(value);
+    }
+  }
+  get preselectedFilterId(): number | null {
+    return this._preselectedFilterId;
+  }
+  private _preselectedFilterId: number | null = null;
 
   // Outputs
   @Output() filterApplied = new EventEmitter<SavedFilter>();
@@ -66,41 +76,41 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
   selectedSavedFilter = signal<SavedFilter | null>(null);
   showSaveDialog = signal(false);
   showUpdateDialog = signal(false);
-  
+
   // Track unsaved changes
   private originalSearchCriteria = signal<SearchCriteria[]>([]);
   private currentSearchCriteria = signal<SearchCriteria[]>([]);
   private hasUnsavedChanges = signal(false);
-  
+
   // Computed property for modifications
   hasModifications = computed(() => {
     const selected = this.selectedSavedFilter();
     if (!selected) return false;
-    
+
     const currentCriteria = JSON.stringify(this.currentSearchCriteria());
     const originalCriteria = JSON.stringify(this.originalSearchCriteria());
-    
+
     return currentCriteria !== originalCriteria;
   });
-  
+
   // Computed property to check if we can save as new filter
   canSaveAsNewFilter = computed(() => {
     const currentCriteria = this.currentSearchCriteria();
     const selected = this.selectedSavedFilter();
-    
+
     // Must have criteria to save
     if (!currentCriteria || currentCriteria.length === 0) return false;
-    
+
     // If no filter selected, we can save as new
     if (!selected) return true;
-    
+
     // If filter selected but criteria are different, we can save as new
     const currentCriteriaStr = JSON.stringify(currentCriteria);
     const selectedCriteriaStr = JSON.stringify(this.originalSearchCriteria());
-    
+
     return currentCriteriaStr !== selectedCriteriaStr;
   });
-  
+
   // Form state
   saveFilterName = '';
   updateFilterName = '';
@@ -152,19 +162,19 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
     }
 
     this.selectedSavedFilter.set(filter);
-    
+
     // Apply the saved filter (READ-ONLY operation)
     this.savedFilterService.applySavedFilter(filter.id)
       .subscribe({
         next: (response) => {
           // First emit the filter for general handling (sorting, pagination, etc.)
           this.filterApplied.emit(filter);
-          
+
           // Then emit criteria if it's an advanced search for step-by-step application
           if (response.isAdvancedSearch && response.searchCriteria) {
             try {
               let criteria: SearchCriteria[] = [];
-              
+
               // Handle both string and array formats
               if (typeof response.searchCriteria === 'string') {
                 // Parse JSON string
@@ -176,7 +186,7 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
                 console.warn('Unexpected searchCriteria format:', response.searchCriteria);
                 return;
               }
-              
+
               // Emit criteria for the parent to apply one by one
               if (criteria && criteria.length > 0) {
                 this.applyCriteria.emit(criteria);
@@ -230,12 +240,12 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
       ascending: this.ascending
     };
 
-    
+
 
     this.savedFilterService.createSavedFilter(request)
       .subscribe({
         next: (savedFilter) => {
-          
+
           this.showSaveDialog.set(false);
           this.loadSavedFilters(); // Refresh the list
           this.selectedSavedFilter.set(savedFilter);
@@ -265,7 +275,7 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
     event.stopPropagation();
 
     if (!this.selectedSavedFilter()) return;
-    
+
     this.updateFilterName = this.selectedSavedFilter()!.name;
     this.showUpdateDialog.set(true);
   }
@@ -295,10 +305,10 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
           this.showUpdateDialog.set(false);
           this.loadSavedFilters(); // Refresh the list
           this.selectedSavedFilter.set(updatedFilter);
-          
+
           // Reset modification tracking after successful save
           this.storeOriginalCriteria(this.searchCriteria);
-          
+
           this.filterUpdated.emit(updatedFilter);
           this.messageService.add({
             severity: 'success',
@@ -334,6 +344,7 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
               next: () => {
                 const deletedId = this.selectedSavedFilter()!.id;
                 this.selectedSavedFilter.set(null);
+                this.showUpdateDialog.set(false); // Close the edit dialog
                 this.loadSavedFilters(); // Refresh the list
                 this.filterDeleted.emit(deletedId);
                 this.messageService.add({
@@ -385,6 +396,41 @@ export class AdvancedSearchSavedFilterComponent implements OnInit {
   private storeOriginalCriteria(criteria: SearchCriteria[]): void {
     this.originalSearchCriteria.set(JSON.parse(JSON.stringify(criteria))); // Deep copy
     this.currentSearchCriteria.set(JSON.parse(JSON.stringify(criteria))); // Also set current
+    this.hasUnsavedChanges.set(false);
+  }
+
+  /**
+   * Load and apply a preselected filter from URL
+   */
+  private loadAndApplyPreselectedFilter(filterId: number): void {
+    // First, load the filter details to set it as selected
+    this.savedFilterService.getSavedFilter(filterId)
+      .subscribe({
+        next: (filter) => {
+          // Set the filter as selected in the dropdown
+          this.selectedSavedFilter.set(filter);
+
+          // Then apply the filter to get its criteria and load data
+          this.onSavedFilterSelect(filter);
+        },
+        error: (error) => {
+          console.error('Error loading preselected filter:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load saved filter from URL'
+          });
+        }
+      });
+  }
+
+  /**
+   * Clear the selected saved filter
+   * Called when search criteria are modified to avoid confusion
+   */
+  clearSelectedFilter(): void {
+    this.selectedSavedFilter.set(null);
+    this.originalSearchCriteria.set([]);
     this.hasUnsavedChanges.set(false);
   }
 }

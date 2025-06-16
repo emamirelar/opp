@@ -72,12 +72,6 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       placeholder: 'Search interactions...',
       searchableFields: [
         {
-          field: 'type',
-          label: 'Type',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
           field: 'subject',
           label: 'Subject',
           type: 'string',

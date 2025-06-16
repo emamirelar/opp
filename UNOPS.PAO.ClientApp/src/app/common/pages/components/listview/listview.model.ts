@@ -216,4 +216,5 @@ export interface SearchCriteria {
 export interface SearchParams {
   generalSearch?: string;
   fieldSearches?: SearchCriteria[];
+  myOfficeOnly?: boolean;
 }

@@ -469,7 +469,9 @@
       "lessThanOrEqual": "less than or equal",
       "after": "after",
       "before": "before",
-      "between": "between"
+      "between": "between",
+      "on": "on",
+      "notOn": "not on"
     },
     "logicalOperators": {
       "and": "AND",
@@ -477,7 +479,9 @@
     },
     "selectDate": "Select date",
     "selectEndDate": "Select end date",
-    "and": "and"
+    "and": "and",
+    "myOfficeOnly": "My Office Only",
+    "myOfficeTooltip": "Filter results to show only data from your organizational unit"
   },
   "savedFilters": {
     "selectFilter": "Select filter",

@@ -20,7 +20,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 {
     private static readonly HashSet<string> IgnoredProperties = new() 
     { 
-        "PageIndex", "PageSize", "OrderBy", "Ascending", "Direction" 
+        "PageIndex", "PageSize", "OrderBy", "Ascending", "Direction", "MyOfficeOnly" 
     };
 
     protected GenericCompositeSpecification(TFilter filter)
@@ -32,40 +32,33 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
     {
         if (filter == null)
         {
-            Debug.WriteLine("Filter is null, returning default expression");
-            return x => true;
+                return x => true;
         }
 
-        Debug.WriteLine($"Filter type: {typeof(TFilter).Name}");
         var parameter = Expression.Parameter(typeof(TEntity), "x");
         var expressions = new List<Expression>();
 
         // Check if this is an advanced search
         bool isAdvancedSearch = filter.GetType().GetProperty("AdvancedSearch")?.GetValue(filter) as bool? ?? false;
         
-        Debug.WriteLine($"AdvancedSearch: {isAdvancedSearch}");
 
         // Process advanced search criteria if available
         if (isAdvancedSearch)
         {
-            Debug.WriteLine("Processing advanced search");
             var searchCriteria = GetSearchCriteria(filter);
             
             if (searchCriteria != null && searchCriteria.Any())
             {
-                Debug.WriteLine($"Found {searchCriteria.Count()} search criteria");
-                var criteriaExpressions = new List<Expression>();
+                var criteriaWithOperators = new List<(Expression Expression, string LogicalOperator)>();
                 
                 foreach (var criteria in searchCriteria)
                 {
                     try
                     {
-                        Debug.WriteLine($"Processing criteria: {criteria}");
                         
                         var criteriaDict = criteria as IDictionary<string, object>;
                         if (criteriaDict == null) 
                         {
-                            Debug.WriteLine("Criteria is not a dictionary, skipping");
                             continue;
                         }
 
@@ -73,12 +66,11 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                         string value = criteriaDict.TryGetValue("value", out object valueObj) ? valueObj?.ToString() : null;
                         string comparisonOperator = criteriaDict.TryGetValue("operator", out object opObj) ? opObj?.ToString() ?? "like" : "like";
                         string secondValue = criteriaDict.TryGetValue("secondValue", out object secondValueObj) ? secondValueObj?.ToString() : null;
+                        string logicalOperator = criteriaDict.TryGetValue("logicalOperator", out object logicalOpObj) ? logicalOpObj?.ToString() ?? "AND" : "AND";
 
-                        Debug.WriteLine($"Processing criteria - Field: {field}, Value: {value}, ComparisonOperator: {comparisonOperator}");
 
                         if (string.IsNullOrEmpty(field) || string.IsNullOrEmpty(value)) 
                         {
-                            Debug.WriteLine("Field or value is empty, skipping");
                             continue;
                         }
 
@@ -86,11 +78,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                         var propertyAccess = BuildPropertyAccess(parameter, field);
                         if (propertyAccess == null) 
                         {
-                            Debug.WriteLine($"Failed to build property access for {field}");
                             continue;
                         }
 
-                        Debug.WriteLine($"Property access built for {field}, type: {propertyAccess.Type}");
 
                         // Create the comparison expression
                         Expression comparisonExpr = null;
@@ -119,18 +109,24 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                                         }
                                         else
                                         {
-                                            // Fallback to Contains
-                                            var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                                            var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
-                                            comparisonExpr = Expression.AndAlso(nullCheck, containsCall);
+                                            // Fallback to case-insensitive Contains using ToLower()
+                                            var toLowerMethodFallback = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                                            var propertyToLowerFallback = Expression.Call(propertyAccess, toLowerMethodFallback);
+                                            var valueToLowerFallback = value.ToLower();
+                                            var containsMethodFallback = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                                            var containsCallFallback = Expression.Call(propertyToLowerFallback, containsMethodFallback, Expression.Constant(valueToLowerFallback));
+                                            comparisonExpr = Expression.AndAlso(nullCheck, containsCallFallback);
                                         }
                                     }
                                     catch
                                     {
-                                        // Fallback to Contains if EF.Functions is not available
-                                        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                                        var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
-                                        comparisonExpr = Expression.AndAlso(nullCheck, containsCall);
+                                        // Fallback to case-insensitive Contains using ToLower() if EF.Functions is not available
+                                        var toLowerMethodLikeCatch = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                                        var propertyToLowerLikeCatch = Expression.Call(propertyAccess, toLowerMethodLikeCatch);
+                                        var valueToLowerLikeCatch = value.ToLower();
+                                        var containsMethodLikeCatch = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                                        var containsCallLikeCatch = Expression.Call(propertyToLowerLikeCatch, containsMethodLikeCatch, Expression.Constant(valueToLowerLikeCatch));
+                                        comparisonExpr = Expression.AndAlso(nullCheck, containsCallLikeCatch);
                                     }
                                     break;
                                 case "not like":
@@ -149,25 +145,42 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                                         }
                                         else
                                         {
-                                            // Fallback to Not Contains
+                                            // Fallback to case-insensitive Not Contains using ToLower()
+                                            var toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                                            var propertyToLower = Expression.Call(propertyAccess, toLowerMethod);
+                                            var valueToLower = value.ToLower();
                                             var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                                            var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
+                                            var containsCall = Expression.Call(propertyToLower, containsMethod, Expression.Constant(valueToLower));
                                             comparisonExpr = Expression.AndAlso(nullCheck, Expression.Not(containsCall));
                                         }
                                     }
                                     catch
                                     {
-                                        // Fallback to Not Contains
+                                        // Fallback to case-insensitive Not Contains using ToLower()
+                                        var toLowerMethod = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                                        var propertyToLower = Expression.Call(propertyAccess, toLowerMethod);
+                                        var valueToLower = value.ToLower();
                                         var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                                        var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
+                                        var containsCall = Expression.Call(propertyToLower, containsMethod, Expression.Constant(valueToLower));
                                         comparisonExpr = Expression.AndAlso(nullCheck, Expression.Not(containsCall));
                                     }
                                     break;
                                 case "is":
-                                    comparisonExpr = Expression.Equal(propertyAccess, Expression.Constant(value));
+                                    // Case-insensitive string equality using ToLower()
+                                    var toLowerMethodIs = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                                    var propertyToLowerIs = Expression.Call(propertyAccess, toLowerMethodIs);
+                                    var valueToLowerIs = value.ToLower();
+                                    var equalsMethodIs = typeof(string).GetMethod("Equals", new[] { typeof(string) });
+                                    comparisonExpr = Expression.Call(propertyToLowerIs, equalsMethodIs, Expression.Constant(valueToLowerIs));
                                     break;
                                 case "is not":
-                                    comparisonExpr = Expression.NotEqual(propertyAccess, Expression.Constant(value));
+                                    // Case-insensitive string inequality using ToLower()
+                                    var toLowerMethodIsNot = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                                    var propertyToLowerIsNot = Expression.Call(propertyAccess, toLowerMethodIsNot);
+                                    var valueToLowerIsNot = value.ToLower();
+                                    var equalsMethodIsNot = typeof(string).GetMethod("Equals", new[] { typeof(string) });
+                                    var equalsCallIsNot = Expression.Call(propertyToLowerIsNot, equalsMethodIsNot, Expression.Constant(valueToLowerIsNot));
+                                    comparisonExpr = Expression.Not(equalsCallIsNot);
                                     break;
                                 default:
                                     // Default to "like" behavior with fallback
@@ -186,73 +199,148 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                                         }
                                         else
                                         {
-                                            // Fallback to Contains
-                                            var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                                            var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
-                                            comparisonExpr = Expression.AndAlso(nullCheck, containsCall);
+                                            // Fallback to case-insensitive Contains using ToLower()
+                                            var toLowerMethodFallback = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                                            var propertyToLowerFallback = Expression.Call(propertyAccess, toLowerMethodFallback);
+                                            var valueToLowerFallback = value.ToLower();
+                                            var containsMethodFallback = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                                            var containsCallFallback = Expression.Call(propertyToLowerFallback, containsMethodFallback, Expression.Constant(valueToLowerFallback));
+                                            comparisonExpr = Expression.AndAlso(nullCheck, containsCallFallback);
                                         }
                                     }
                                     catch
                                     {
-                                        // Fallback to Contains
-                                        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                                        var containsCall = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
-                                        comparisonExpr = Expression.AndAlso(nullCheck, containsCall);
+                                        // Fallback to case-insensitive Contains using ToLower()
+                                        var toLowerMethodDefaultCatch = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                                        var propertyToLowerDefaultCatch = Expression.Call(propertyAccess, toLowerMethodDefaultCatch);
+                                        var valueToLowerDefaultCatch = value.ToLower();
+                                        var containsMethodDefaultCatch = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                                        var containsCallDefaultCatch = Expression.Call(propertyToLowerDefaultCatch, containsMethodDefaultCatch, Expression.Constant(valueToLowerDefaultCatch));
+                                        comparisonExpr = Expression.AndAlso(nullCheck, containsCallDefaultCatch);
                                     }
                                     break;
                             }
                         }
                         else if (propertyAccess.Type == typeof(DateTime) || propertyAccess.Type == typeof(DateTime?))
                         {
-                            if (DateTime.TryParse(value, out var dateValue))
+                            var parsedDate = ParseDateValue(value);
+                            if (parsedDate.HasValue)
                             {
+                                var dateValue = parsedDate.Value;
                                 var constant = Expression.Constant(dateValue, propertyAccess.Type);
 
-                                // Handle different date operators
+                                // Handle different date operators with enhanced logic
                                 switch (comparisonOperator.ToLower())
                                 {
                                     case ">":
                                     case "after":
-                                        comparisonExpr = Expression.GreaterThan(propertyAccess, constant);
+                                        // For "after" dates, we typically want end of day comparison
+                                        var afterDate = GetEndOfDay(dateValue);
+                                        var afterConstant = Expression.Constant(afterDate, propertyAccess.Type);
+                                        comparisonExpr = Expression.GreaterThan(propertyAccess, afterConstant);
                                         break;
                                     case ">=":
-                                        comparisonExpr = Expression.GreaterThanOrEqual(propertyAccess, constant);
+                                    case "after or equal":
+                                        var afterEqualDate = GetStartOfDay(dateValue);
+                                        var afterEqualConstant = Expression.Constant(afterEqualDate, propertyAccess.Type);
+                                        comparisonExpr = Expression.GreaterThanOrEqual(propertyAccess, afterEqualConstant);
                                         break;
                                     case "<":
                                     case "before":
-                                        comparisonExpr = Expression.LessThan(propertyAccess, constant);
+                                        // For "before" dates, we typically want start of day comparison
+                                        var beforeDate = GetStartOfDay(dateValue);
+                                        var beforeConstant = Expression.Constant(beforeDate, propertyAccess.Type);
+                                        comparisonExpr = Expression.LessThan(propertyAccess, beforeConstant);
                                         break;
                                     case "<=":
-                                        comparisonExpr = Expression.LessThanOrEqual(propertyAccess, constant);
+                                    case "before or equal":
+                                        var beforeEqualDate = GetEndOfDay(dateValue);
+                                        var beforeEqualConstant = Expression.Constant(beforeEqualDate, propertyAccess.Type);
+                                        comparisonExpr = Expression.LessThanOrEqual(propertyAccess, beforeEqualConstant);
                                         break;
                                     case "between":
-                                        if (!string.IsNullOrEmpty(secondValue) && DateTime.TryParse(secondValue, out var endDateValue))
+                                        var secondParsedDate = ParseDateValue(secondValue);
+                                        if (secondParsedDate.HasValue)
                                         {
-                                            var endConstant = Expression.Constant(endDateValue, propertyAccess.Type);
-                                            var startComparison = Expression.GreaterThanOrEqual(propertyAccess, constant);
+                                            var startDate = GetStartOfDay(dateValue);
+                                            var endDate = GetEndOfDay(secondParsedDate.Value);
+                                            
+                                            var startConstant = Expression.Constant(startDate, propertyAccess.Type);
+                                            var endConstant = Expression.Constant(endDate, propertyAccess.Type);
+                                            
+                                            var startComparison = Expression.GreaterThanOrEqual(propertyAccess, startConstant);
                                             var endComparison = Expression.LessThanOrEqual(propertyAccess, endConstant);
                                             comparisonExpr = Expression.AndAlso(startComparison, endComparison);
                                         }
                                         else
                                         {
-                                            Debug.WriteLine($"Invalid second date value for 'between' operator: {secondValue}");
                                             continue;
                                         }
                                         break;
                                     case "is":
-                                        comparisonExpr = Expression.Equal(propertyAccess, constant);
+                                    case "on":
+                                        // For exact date matches, compare the entire day
+                                        var onStartDate = GetStartOfDay(dateValue);
+                                        var onEndDate = GetEndOfDay(dateValue);
+                                        
+                                        var onStartConstant = Expression.Constant(onStartDate, propertyAccess.Type);
+                                        var onEndConstant = Expression.Constant(onEndDate, propertyAccess.Type);
+                                        
+                                        var onStartComparison = Expression.GreaterThanOrEqual(propertyAccess, onStartConstant);
+                                        var onEndComparison = Expression.LessThanOrEqual(propertyAccess, onEndConstant);
+                                        comparisonExpr = Expression.AndAlso(onStartComparison, onEndComparison);
                                         break;
                                     case "is not":
-                                        comparisonExpr = Expression.NotEqual(propertyAccess, constant);
+                                    case "not on":
+                                        // For "not on" date, exclude the entire day
+                                        var notOnStartDate = GetStartOfDay(dateValue);
+                                        var notOnEndDate = GetEndOfDay(dateValue);
+                                        
+                                        var notOnStartConstant = Expression.Constant(notOnStartDate, propertyAccess.Type);
+                                        var notOnEndConstant = Expression.Constant(notOnEndDate, propertyAccess.Type);
+                                        
+                                        var notOnStartComparison = Expression.LessThan(propertyAccess, notOnStartConstant);
+                                        var notOnEndComparison = Expression.GreaterThan(propertyAccess, notOnEndConstant);
+                                        comparisonExpr = Expression.OrElse(notOnStartComparison, notOnEndComparison);
+                                        break;
+                                    case "this week":
+                                        var weekDates = GetThisWeekDates();
+                                        var weekStartConstant = Expression.Constant(weekDates.Start, propertyAccess.Type);
+                                        var weekEndConstant = Expression.Constant(weekDates.End, propertyAccess.Type);
+                                        var weekStartComparison = Expression.GreaterThanOrEqual(propertyAccess, weekStartConstant);
+                                        var weekEndComparison = Expression.LessThanOrEqual(propertyAccess, weekEndConstant);
+                                        comparisonExpr = Expression.AndAlso(weekStartComparison, weekEndComparison);
+                                        break;
+                                    case "this month":
+                                        var monthDates = GetThisMonthDates();
+                                        var monthStartConstant = Expression.Constant(monthDates.Start, propertyAccess.Type);
+                                        var monthEndConstant = Expression.Constant(monthDates.End, propertyAccess.Type);
+                                        var monthStartComparison = Expression.GreaterThanOrEqual(propertyAccess, monthStartConstant);
+                                        var monthEndComparison = Expression.LessThanOrEqual(propertyAccess, monthEndConstant);
+                                        comparisonExpr = Expression.AndAlso(monthStartComparison, monthEndComparison);
+                                        break;
+                                    case "this year":
+                                        var yearDates = GetThisYearDates();
+                                        var yearStartConstant = Expression.Constant(yearDates.Start, propertyAccess.Type);
+                                        var yearEndConstant = Expression.Constant(yearDates.End, propertyAccess.Type);
+                                        var yearStartComparison = Expression.GreaterThanOrEqual(propertyAccess, yearStartConstant);
+                                        var yearEndComparison = Expression.LessThanOrEqual(propertyAccess, yearEndConstant);
+                                        comparisonExpr = Expression.AndAlso(yearStartComparison, yearEndComparison);
                                         break;
                                     default:
-                                        comparisonExpr = Expression.Equal(propertyAccess, constant);
+                                        // Default to exact day match
+                                        var defaultStartDate = GetStartOfDay(dateValue);
+                                        var defaultEndDate = GetEndOfDay(dateValue);
+                                        var defaultStartConstant = Expression.Constant(defaultStartDate, propertyAccess.Type);
+                                        var defaultEndConstant = Expression.Constant(defaultEndDate, propertyAccess.Type);
+                                        var defaultStartComparison = Expression.GreaterThanOrEqual(propertyAccess, defaultStartConstant);
+                                        var defaultEndComparison = Expression.LessThanOrEqual(propertyAccess, defaultEndConstant);
+                                        comparisonExpr = Expression.AndAlso(defaultStartComparison, defaultEndComparison);
                                         break;
                                 }
                             }
                             else
                             {
-                                Debug.WriteLine($"Failed to parse date value: {value}");
                                 continue;
                             }
                         }
@@ -293,7 +381,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                             }
                             catch (Exception conversionEx)
                             {
-                                Debug.WriteLine($"Failed to convert numeric value: {value}, Error: {conversionEx.Message}");
                                 continue;
                             }
                         }
@@ -317,7 +404,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                             }
                             else
                             {
-                                Debug.WriteLine($"Failed to parse boolean value: {value}");
                                 continue;
                             }
                         }
@@ -328,35 +414,25 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 
                         if (comparisonExpr != null)
                         {
-                            criteriaExpressions.Add(comparisonExpr);
-                            Debug.WriteLine($"Successfully created comparison expression for {field}");
+                            // Store both the expression and its logical operator for later combination
+                            criteriaWithOperators.Add((comparisonExpr, logicalOperator));
                         }
                     }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine($"Error processing criteria: {ex.Message}");
                         continue;
                     }
                 }
 
                 // Combine criteria expressions based on logical operators
-                if (criteriaExpressions.Any())
+                if (criteriaWithOperators.Any())
                 {
-                    Expression advancedSearchExpression = criteriaExpressions[0];
-                    
-                    // For now, use AND to combine multiple criteria
-                    for (int i = 1; i < criteriaExpressions.Count; i++)
-                    {
-                        advancedSearchExpression = Expression.AndAlso(advancedSearchExpression, criteriaExpressions[i]);
-                    }
-                    
+                    Expression advancedSearchExpression = CombineExpressionsWithLogicalOperators(criteriaWithOperators);
                     expressions.Add(advancedSearchExpression);
-                    Debug.WriteLine("Added advanced search expression to final expressions");
                 }
             }
             else
             {
-                Debug.WriteLine("No search criteria found for advanced search");
             }
         }
 
@@ -369,7 +445,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             .Where(x => x.Value != null && !string.IsNullOrEmpty(x.Value.ToString()))
             .Select(x => 
             {
-                Debug.WriteLine($"Processing filter property: {x.Property.Name} with value: {x.Value}");
                 return CreatePropertyExpression(parameter, x.Property, x.Value);
             })
             .Where(expr => expr != null);
@@ -377,28 +452,26 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         foreach (var expr in propertyExpressions)
         {
             expressions.Add(expr.Body);
-            Debug.WriteLine($"Added property expression to final expressions");
         }
 
         // Handle search text (this should be combined with AND)
         if (filter is ISearchFilter searchFilter && !string.IsNullOrWhiteSpace(searchFilter.SearchText))
         {
-            Debug.WriteLine($"Processing search text: '{searchFilter.SearchText}'");
             var searchExpression = CreateSearchTextExpression(parameter, searchFilter.SearchText);
             if (searchExpression != null)
             {
                 expressions.Add(searchExpression.Body);
-                Debug.WriteLine("Added search text expression");
             }
         }
 
+        // Handle MyOfficeOnly filter - but cannot implement here due to lack of user context
+        // This needs to be handled in concrete specifications or at a higher level
+
         if (!expressions.Any())
         {
-            Debug.WriteLine("No valid expressions created, returning default expression");
             return x => true;
         }
 
-        Debug.WriteLine($"Total expressions to combine: {expressions.Count}");
 
         // Combine all expressions with AND
         Expression finalExpression = expressions[0];
@@ -407,7 +480,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             finalExpression = Expression.AndAlso(finalExpression, expressions[i]);
         }
 
-        Debug.WriteLine($"Final expression created: {finalExpression}");
         return Expression.Lambda<Func<TEntity, bool>>(finalExpression, parameter);
     }
 
@@ -417,21 +489,27 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
-                Debug.WriteLine("Search text is empty or whitespace");
                 return null;
             }
 
-            var searchTermValue = searchText.Trim();
-            Debug.WriteLine($"Creating search text expression for: {searchTermValue}");
+            var searchTermValue = NormalizeSearchText(searchText);
+            if (string.IsNullOrEmpty(searchTermValue))
+            {
+                return null;
+            }
+            
 
             var searchableProperties = GetSearchableProperties(typeof(TEntity));
-            Debug.WriteLine($"Found {searchableProperties.Count} searchable properties: {string.Join(", ", searchableProperties)}");
 
             if (!searchableProperties.Any())
             {
-                Debug.WriteLine("No searchable properties found");
                 return null;
             }
+
+            // Déterminer le mode de recherche (phrase exacte ou mots multiples)
+            var searchMode = DetermineSearchMode(searchTermValue);
+            var searchTerms = GetSearchTerms(searchTermValue, searchMode);
+            
 
             var propertyExpressions = new List<Expression>();
 
@@ -439,68 +517,35 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             {
                 try
                 {
-                    Debug.WriteLine($"Processing property path: {propertyPath}");
                     var propertyAccess = BuildPropertyAccess(parameter, propertyPath);
                     if (propertyAccess == null)
                     {
-                        Debug.WriteLine($"Failed to build property access for {propertyPath}");
                         continue;
                     }
 
                     var nullChecks = BuildNullChecks(parameter, propertyPath);
-                    Debug.WriteLine($"Built {nullChecks.Count} null checks for {propertyPath}");
 
-                    // Use EF.Functions.Like for string comparison, with fallback to Contains
-                    Expression stringComparisonExpr;
-                    try
+                    // Créer l'expression de recherche selon le mode
+                    Expression searchExpression = CreateSearchExpression(propertyAccess, searchTerms, searchMode);
+
+                    if (searchExpression != null)
                     {
-                        var efType = typeof(EF);
-                        var functionsProperty = efType.GetProperty("Functions");
-                        var functionsExpression = Expression.Property(null, functionsProperty);
-                        var likeMethod = functionsProperty.PropertyType.GetMethod("Like", new[] { typeof(string), typeof(string) });
-                        
-                        if (likeMethod != null)
-                        {
-                            var pattern = $"%{searchTermValue}%";
-                            stringComparisonExpr = Expression.Call(
-                                functionsExpression,
-                                likeMethod,
-                                propertyAccess,
-                                Expression.Constant(pattern)
-                            );
-                        }
-                        else
-                        {
-                            // Fallback to Contains
-                            var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                            stringComparisonExpr = Expression.Call(propertyAccess, containsMethod, Expression.Constant(searchTermValue));
-                        }
-                    }
-                    catch
-                    {
-                        // Fallback to Contains if EF.Functions is not available
-                        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                        stringComparisonExpr = Expression.Call(propertyAccess, containsMethod, Expression.Constant(searchTermValue));
-                    }
+                        // Combine null checks with search expression
+                        var finalExpression = nullChecks.Aggregate(
+                            searchExpression,
+                            (current, nullCheck) => Expression.AndAlso(nullCheck, current)
+                        );
 
-                    // Combine null checks with string comparison
-                    var finalExpression = nullChecks.Aggregate(
-                        stringComparisonExpr,
-                        (current, nullCheck) => Expression.AndAlso(nullCheck, current)
-                    );
-
-                    propertyExpressions.Add(finalExpression);
-                    Debug.WriteLine($"Successfully created expression for {propertyPath}");
+                        propertyExpressions.Add(finalExpression);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Error creating expression for {propertyPath}: {ex.Message}");
                 }
             }
 
             if (!propertyExpressions.Any())
             {
-                Debug.WriteLine("No valid property expressions created for search");
                 return null;
             }
 
@@ -515,7 +560,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error in CreateSearchTextExpression: {ex.Message}");
             return null;
         }
     }
@@ -524,11 +568,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
     {
         try
         {
-            Debug.WriteLine($"Building property access for: {propertyPath}");
             
             // Convert camelCase to PascalCase if needed
             var pascalCaseField = ConvertToPascalCase(propertyPath);
-            Debug.WriteLine($"Converted to PascalCase: {pascalCaseField}");
             
             var parts = pascalCaseField.Split('.');
             Expression expression = parameter;
@@ -536,24 +578,20 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             foreach (var part in parts)
             {
                 var currentType = expression.Type;
-                Debug.WriteLine($"Looking for property '{part}' on type {currentType.Name}");
                 
                 var property = currentType.GetProperty(part, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
                 if (property == null)
                 {
-                    Debug.WriteLine($"Property '{part}' not found on type {currentType.Name}");
                     return null;
                 }
                 
                 expression = Expression.Property(expression, property);
-                Debug.WriteLine($"Built property access for '{part}', new type: {expression.Type.Name}");
             }
             
             return expression;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error building property access for {propertyPath}: {ex.Message}");
             return null;
         }
     }
@@ -608,7 +646,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
     private static List<string> GetSearchableProperties(Type type, string prefix = "")
     {
         var searchableProperties = new List<string>();
-        Debug.WriteLine($"Getting searchable properties for type: {type.Name}");
 
         // Define core searchable properties for Contact
         if (type.Name == "Contact")
@@ -640,7 +677,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                 "Partner.Status"
             });
 
-            Debug.WriteLine($"Added {searchableProperties.Count} searchable properties for Contact");
             return searchableProperties;
         }
 
@@ -648,12 +684,10 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         foreach (var property in type.GetProperties())
         {
             var propertyPath = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}.{property.Name}";
-            Debug.WriteLine($"Checking property: {propertyPath}");
 
             if (property.PropertyType == typeof(string))
             {
                 searchableProperties.Add(propertyPath);
-                Debug.WriteLine($"Added string property: {propertyPath}");
             }
             else if (property.PropertyType.IsClass && property.PropertyType != typeof(string) && prefix.Split('.').Length < 2)
             {
@@ -675,11 +709,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             if (property.Name == "SearchText")
                 return null;
 
-            Debug.WriteLine($"Creating expression for property: {property.Name}");
 
             // Get property path (for nested properties)
             var propertyPath = GetPropertyPath(property.Name);
-            Debug.WriteLine($"Property path parts: {string.Join(" -> ", propertyPath)}");
 
             Expression propertyAccess = parameter;
 
@@ -692,7 +724,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                 
                 if (currentProperty == null)
                 {
-                    Debug.WriteLine($"Property {pathPart} not found on type {currentType.Name}");
                     return null;
                 }
 
@@ -726,16 +757,22 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                     }
                     else
                     {
-                        // Fallback to Contains
-                        var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                        stringComparisonExpr = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
+                        // Fallback to case-insensitive Contains using ToLower()
+                        var toLowerMethodProp = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                        var propertyToLowerProp = Expression.Call(propertyAccess, toLowerMethodProp);
+                        var valueToLowerProp = value.ToString().ToLower();
+                        var containsMethodProp = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                        stringComparisonExpr = Expression.Call(propertyToLowerProp, containsMethodProp, Expression.Constant(valueToLowerProp));
                     }
                 }
                 catch
                 {
-                    // Fallback to Contains if EF.Functions is not available
-                    var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                    stringComparisonExpr = Expression.Call(propertyAccess, containsMethod, Expression.Constant(value));
+                    // Fallback to case-insensitive Contains using ToLower() if EF.Functions is not available
+                    var toLowerMethodCatch = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                    var propertyToLowerCatch = Expression.Call(propertyAccess, toLowerMethodCatch);
+                    var valueToLowerCatch = value.ToString().ToLower();
+                    var containsMethodCatch = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                    stringComparisonExpr = Expression.Call(propertyToLowerCatch, containsMethodCatch, Expression.Constant(valueToLowerCatch));
                 }
                 
                 comparison = Expression.AndAlso(nullCheck, stringComparisonExpr);
@@ -750,7 +787,6 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error creating property expression for {property.Name}: {ex.Message}");
             return null;
         }
     }
@@ -777,18 +813,15 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         var searchCriteriaProperty = filter.GetType().GetProperty("SearchCriteria");
         if (searchCriteriaProperty == null) 
         {
-            Debug.WriteLine("SearchCriteria property not found");
             return null;
         }
 
         var searchCriteriaValue = searchCriteriaProperty.GetValue(filter);
-        Debug.WriteLine($"SearchCriteria value: {searchCriteriaValue}");
         
         if (searchCriteriaValue is string searchCriteriaString && !string.IsNullOrEmpty(searchCriteriaString))
         {
             try
             {
-                Debug.WriteLine($"Parsing JSON: {searchCriteriaString}");
                 using var doc = JsonDocument.Parse(searchCriteriaString);
                 if (doc.RootElement.ValueKind == JsonValueKind.Array)
                 {
@@ -803,16 +836,343 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                         criteriaList.Add(criterionDict);
                     }
                     
-                    Debug.WriteLine($"Successfully parsed {criteriaList.Count} criteria");
                     return criteriaList.Cast<dynamic>();
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error deserializing SearchCriteria: {ex.Message}");
             }
         }
         
         return null;
     }
+
+    /// <summary>
+    /// Combines expressions with their logical operators (OR/AND) respecting precedence and grouping
+    /// </summary>
+    private static Expression CombineExpressionsWithLogicalOperators(List<(Expression Expression, string LogicalOperator)> criteriaWithOperators)
+    {
+        if (!criteriaWithOperators.Any())
+            return null;
+
+        if (criteriaWithOperators.Count == 1)
+            return criteriaWithOperators[0].Expression;
+
+
+        // Start with the first expression
+        Expression result = criteriaWithOperators[0].Expression;
+        
+        // Process each subsequent expression with its logical operator
+        for (int i = 1; i < criteriaWithOperators.Count; i++)
+        {
+            var currentExpression = criteriaWithOperators[i].Expression;
+            var currentLogicalOperator = criteriaWithOperators[i].LogicalOperator;
+            
+            
+            if (string.Equals(currentLogicalOperator, "OR", StringComparison.OrdinalIgnoreCase))
+            {
+                result = Expression.OrElse(result, currentExpression);
+            }
+            else // Default to AND
+            {
+                result = Expression.AndAlso(result, currentExpression);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Normalise le texte de recherche en supprimant les espaces en trop et les caractères de contrôle
+    /// </summary>
+    private static string NormalizeSearchText(string searchText)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+            return string.Empty;
+
+        // Remplacer tous les caractères blancs (espaces, tabs, nouvelle ligne) par des espaces normaux
+        var normalized = System.Text.RegularExpressions.Regex.Replace(searchText, @"\s+", " ");
+        
+        // Trim les espaces en début et fin
+        return normalized.Trim();
+    }
+
+    /// <summary>
+    /// Détermine le mode de recherche basé sur le contenu du texte
+    /// </summary>
+    private static SearchTextMode DetermineSearchMode(string searchText)
+    {
+        if (string.IsNullOrEmpty(searchText))
+            return SearchTextMode.ExactPhrase;
+
+        // Si le texte est entouré de guillemets, c'est une recherche de phrase exacte
+        if (searchText.StartsWith("\"") && searchText.EndsWith("\"") && searchText.Length > 2)
+            return SearchTextMode.ExactPhrase;
+
+        // Si le texte contient plusieurs mots, utiliser la recherche par mots multiples
+        if (searchText.Contains(' '))
+            return SearchTextMode.MultipleWords;
+
+        // Sinon, recherche de phrase exacte (mot unique)
+        return SearchTextMode.ExactPhrase;
+    }
+
+    /// <summary>
+    /// Extrait les termes de recherche selon le mode spécifié
+    /// </summary>
+    private static string[] GetSearchTerms(string searchText, SearchTextMode mode)
+    {
+        if (string.IsNullOrEmpty(searchText))
+            return Array.Empty<string>();
+
+        switch (mode)
+        {
+            case SearchTextMode.ExactPhrase:
+                // Pour une phrase exacte, retourner le texte tel quel (sans guillemets si présents)
+                var cleanText = searchText.Trim('"');
+                return new[] { cleanText };
+
+            case SearchTextMode.MultipleWords:
+                // Diviser en mots individuels et filtrer les termes trop courts
+                return searchText
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(word => word.Length >= 2) // Ignorer les mots d'une lettre
+                    .ToArray();
+
+            default:
+                return new[] { searchText };
+        }
+    }
+
+    /// <summary>
+    /// Crée l'expression de recherche pour une propriété selon le mode spécifié
+    /// </summary>
+    private static Expression CreateSearchExpression(Expression propertyAccess, string[] searchTerms, SearchTextMode mode)
+    {
+        if (!searchTerms.Any())
+            return null;
+
+        switch (mode)
+        {
+            case SearchTextMode.ExactPhrase:
+                // Recherche de phrase exacte
+                return CreateStringContainsExpression(propertyAccess, searchTerms[0]);
+
+            case SearchTextMode.MultipleWords:
+                // Recherche par mots multiples (OR)
+                var wordExpressions = searchTerms
+                    .Select(term => CreateStringContainsExpression(propertyAccess, term))
+                    .Where(expr => expr != null)
+                    .ToArray();
+
+                if (!wordExpressions.Any())
+                    return null;
+
+                // Combiner avec OR
+                Expression result = wordExpressions[0];
+                for (int i = 1; i < wordExpressions.Length; i++)
+                {
+                    result = Expression.OrElse(result, wordExpressions[i]);
+                }
+                return result;
+
+            default:
+                return CreateStringContainsExpression(propertyAccess, searchTerms[0]);
+        }
+    }
+
+    /// <summary>
+    /// Crée une expression Contains pour une propriété string
+    /// </summary>
+    private static Expression CreateStringContainsExpression(Expression propertyAccess, string searchTerm)
+    {
+        try
+        {
+            // Try to use EF.Functions.Like for case-insensitive search
+            var efType = typeof(EF);
+            var functionsProperty = efType.GetProperty("Functions");
+            var functionsExpression = Expression.Property(null, functionsProperty);
+            var likeMethod = functionsProperty.PropertyType.GetMethod("Like", new[] { typeof(string), typeof(string) });
+            
+            if (likeMethod != null)
+            {
+                var pattern = $"%{searchTerm}%";
+                return Expression.Call(functionsExpression, likeMethod, propertyAccess, Expression.Constant(pattern));
+            }
+            else
+            {
+                // Fallback to case-insensitive Contains using ToLower()
+                var toLowerMethodString = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                var propertyToLowerString = Expression.Call(propertyAccess, toLowerMethodString);
+                var searchTermToLower = searchTerm.ToLower();
+                var containsMethodString = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                return Expression.Call(propertyToLowerString, containsMethodString, Expression.Constant(searchTermToLower));
+            }
+        }
+        catch
+        {
+            // Fallback to case-insensitive Contains using ToLower() if EF.Functions is not available
+            var toLowerMethodFinalCatch = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+            var propertyToLowerFinalCatch = Expression.Call(propertyAccess, toLowerMethodFinalCatch);
+            var searchTermToLowerFinalCatch = searchTerm.ToLower();
+            var containsMethodFinalCatch = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+            return Expression.Call(propertyToLowerFinalCatch, containsMethodFinalCatch, Expression.Constant(searchTermToLowerFinalCatch));
+        }
+    }
+
+    /// <summary>
+    /// Modes de recherche textuelle
+    /// </summary>
+    private enum SearchTextMode
+    {
+        /// <summary>
+        /// Recherche de phrase exacte (comportement par défaut)
+        /// </summary>
+        ExactPhrase,
+        
+        /// <summary>
+        /// Recherche par mots multiples (OR entre les mots)
+        /// </summary>
+        MultipleWords
+    }
+
+    #region Date Helper Methods
+
+    /// <summary>
+    /// Parse une valeur de date avec support de formats multiples et dates relatives
+    /// </summary>
+    private static DateTime? ParseDateValue(string dateValue)
+    {
+        if (string.IsNullOrWhiteSpace(dateValue))
+            return null;
+
+        var normalizedValue = dateValue.Trim().ToLower();
+
+        // Gestion des dates relatives en UTC
+        switch (normalizedValue)
+        {
+            case "today":
+            case "aujourd'hui":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+            case "yesterday":
+            case "hier":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(-1), DateTimeKind.Utc);
+            case "tomorrow":
+            case "demain":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(1), DateTimeKind.Utc);
+            case "last week":
+            case "semaine dernière":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(-7), DateTimeKind.Utc);
+            case "next week":
+            case "semaine prochaine":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date.AddDays(7), DateTimeKind.Utc);
+            case "last month":
+            case "mois dernier":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date.AddMonths(-1), DateTimeKind.Utc);
+            case "next month":
+            case "mois prochain":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date.AddMonths(1), DateTimeKind.Utc);
+            case "last year":
+            case "année dernière":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date.AddYears(-1), DateTimeKind.Utc);
+            case "next year":
+            case "année prochaine":
+                return DateTime.SpecifyKind(DateTime.UtcNow.Date.AddYears(1), DateTimeKind.Utc);
+        }
+
+        // Gestion des formats de dates standards
+        var formats = new[]
+        {
+            "yyyy-MM-dd",           // ISO 8601
+            "yyyy/MM/dd",           // Alternative slash
+            "dd/MM/yyyy",           // European format
+            "MM/dd/yyyy",           // American format
+            "dd-MM-yyyy",           // European dash
+            "MM-dd-yyyy",           // American dash
+            "yyyy-MM-dd HH:mm:ss",  // ISO with time
+            "yyyy-MM-dd HH:mm",     // ISO with time (no seconds)
+            "dd/MM/yyyy HH:mm:ss",  // European with time
+            "dd/MM/yyyy HH:mm",     // European with time (no seconds)
+            "yyyy-MM-ddTHH:mm:ss",  // ISO 8601 full
+            "yyyy-MM-ddTHH:mm:ssZ", // ISO 8601 with Z
+        };
+
+        foreach (var format in formats)
+        {
+            if (DateTime.TryParseExact(dateValue, format, 
+                System.Globalization.CultureInfo.InvariantCulture, 
+                System.Globalization.DateTimeStyles.None, out var result))
+            {
+                    return DateTime.SpecifyKind(result, DateTimeKind.Utc);
+            }
+        }
+
+        // Fallback vers DateTime.TryParse pour formats automatiques
+        if (DateTime.TryParse(dateValue, out var fallbackResult))
+        {
+            return DateTime.SpecifyKind(fallbackResult, DateTimeKind.Utc);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Obtient le début de la journée (00:00:00) en UTC
+    /// </summary>
+    private static DateTime GetStartOfDay(DateTime date)
+    {
+        var startOfDay = date.Date;
+        return DateTime.SpecifyKind(startOfDay, DateTimeKind.Utc);
+    }
+
+    /// <summary>
+    /// Obtient la fin de la journée (23:59:59.999) en UTC
+    /// </summary>
+    private static DateTime GetEndOfDay(DateTime date)
+    {
+        var endOfDay = date.Date.AddDays(1).AddMilliseconds(-1);
+        return DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
+    }
+
+    /// <summary>
+    /// Obtient les dates de début et fin de la semaine actuelle (Lundi à Dimanche) en UTC
+    /// </summary>
+    private static (DateTime Start, DateTime End) GetThisWeekDates()
+    {
+        var today = DateTime.UtcNow.Date;
+        var dayOfWeek = (int)today.DayOfWeek;
+        
+        // Considère Lundi comme le premier jour de la semaine
+        var mondayOffset = dayOfWeek == 0 ? -6 : -(dayOfWeek - 1);
+        var monday = today.AddDays(mondayOffset);
+        var sunday = monday.AddDays(6);
+        
+        return (GetStartOfDay(monday), GetEndOfDay(sunday));
+    }
+
+    /// <summary>
+    /// Obtient les dates de début et fin du mois actuel en UTC
+    /// </summary>
+    private static (DateTime Start, DateTime End) GetThisMonthDates()
+    {
+        var today = DateTime.UtcNow.Date;
+        var firstDay = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var lastDay = firstDay.AddMonths(1).AddDays(-1);
+        
+        return (GetStartOfDay(firstDay), GetEndOfDay(lastDay));
+    }
+
+    /// <summary>
+    /// Obtient les dates de début et fin de l'année actuelle en UTC
+    /// </summary>
+    private static (DateTime Start, DateTime End) GetThisYearDates()
+    {
+        var today = DateTime.UtcNow.Date;
+        var firstDay = new DateTime(today.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var lastDay = new DateTime(today.Year, 12, 31, 0, 0, 0, DateTimeKind.Utc);
+        
+        return (GetStartOfDay(firstDay), GetEndOfDay(lastDay));
+    }
+
+    #endregion
 } 

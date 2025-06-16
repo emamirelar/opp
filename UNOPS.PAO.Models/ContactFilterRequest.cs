@@ -99,6 +99,11 @@ public class ContactFilterRequest : PaginationRequest, IContactSearchFilter
     public string? PartnerName { get; set; }
     
     /// <summary>
+    /// Filter to show only contacts from current user's organizational unit
+    /// </summary>
+    public bool MyOfficeOnly { get; set; }
+    
+    /// <summary>
     /// Indicates if advanced search is enabled
     /// </summary>
     public bool AdvancedSearch { get; set; }
