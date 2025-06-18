@@ -36,6 +36,7 @@ import { PartnerTreeItemComponent } from '../../item/partner-tree-item.component
 import { PermissionUtilityService } from '../../../../../../essentials/services/permission-utility.service';
 import { ListViewColumn } from '../../../../../../common/pages/components/listview/listview.model';
 import { ListviewComponent } from '../../../../../../common/pages/components/listview/listview.component';
+import { GoBackComponent } from '../../../../../../common/reusables/components/go-back/go-back.component';
 
 // Mock AI service for partner tree AI panels
 class MockPartnerTreeAiService implements AiDataService {
@@ -151,7 +152,8 @@ This is a placeholder response while the AI service is being implemented.
     RouterModule,
     ProgressSpinnerModule,
     AiPanelComponent,
-    ListviewComponent
+    ListviewComponent,
+    GoBackComponent
   ],
   templateUrl: './partner-tree-details.component.html',
   standalone: true,
@@ -307,5 +309,6 @@ export class PartnerTreeDetailsComponent implements OnInit {
       }
     });
   }
+
 }
 

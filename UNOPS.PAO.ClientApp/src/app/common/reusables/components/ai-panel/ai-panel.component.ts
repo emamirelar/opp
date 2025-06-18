@@ -1,9 +1,10 @@
-import { Component, computed, inject, input, OnInit, output, signal } from '@angular/core';
+import { Component, computed, inject, input, OnInit, OnDestroy, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { PanelModule } from 'primeng/panel';
 import { ButtonModule } from 'primeng/button';
 import { MarkdownPipe } from '../../../../features/internal/pipes/markdown.pipe';
+import { Subject, takeUntil } from 'rxjs';
 
 export interface AiDataService {
   get(entityId: string, promptType: string): any; // Observable<string>
@@ -19,10 +20,16 @@ export interface AiDataService {
     MarkdownPipe
   ],
   templateUrl: './ai-panel.component.html',
-  standalone: true
+  standalone: true,
+  styles: `
+    :host {
+      @apply shadow-sm rounded-lg;
+    }
+  `
 })
-export class AiPanelComponent implements OnInit {
+export class AiPanelComponent implements OnInit, OnDestroy {
   private translateService = inject(TranslateService);
+  private destroy$ = new Subject<void>();
 
   // Inputs
   title = input.required<string>();
@@ -51,13 +58,13 @@ export class AiPanelComponent implements OnInit {
   shouldShowSpinner = computed(() => this.isLoading());
   shouldShowContent = computed(() => !this.isLoading() && !this.hasError() && this.content());
   shouldShowError = computed(() => !this.isLoading() && this.hasError());
-  
+
   // Content truncation logic
   shouldTruncate = computed(() => {
     const content = this.content();
     return content && content.length > this.truncateLength() && !this.showFullContent();
   });
-  
+
   displayContent = computed(() => {
     const content = this.content();
     if (this.shouldTruncate()) {
@@ -65,7 +72,7 @@ export class AiPanelComponent implements OnInit {
     }
     return content;
   });
-  
+
   showSeeMoreButton = computed(() => {
     const content = this.content();
     return content && content.length > this.truncateLength() && !this.showFullContent();
@@ -87,28 +94,35 @@ export class AiPanelComponent implements OnInit {
     this.hasError.set(false);
     this.showFullContent.set(false); // Reset "See more" state when loading new data
 
-    this.aiService().get(this.entityId(), this.promptType()).subscribe({
-      next: (data: string) => {
-        this.content.set(data);
-        this.isLoading.set(false);
-        this.onDataLoaded.emit(data);
-      },
-      error: (error: Error) => {
-        console.error('AiPanelComponent error:', error);
-        this.content.set(this.translateService.instant(this.errorMessage()));
-        this.isLoading.set(false);
-        this.hasError.set(true);
-        this.onError.emit(error);
-      }
-    });
+    this.aiService().get(this.entityId(), this.promptType())
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data: string) => {
+          this.content.set(data);
+          this.isLoading.set(false);
+          this.onDataLoaded.emit(data);
+        },
+        error: (error: Error) => {
+          console.error('AiPanelComponent error:', error);
+          this.content.set(this.translateService.instant(this.errorMessage()));
+          this.isLoading.set(false);
+          this.hasError.set(true);
+          this.onError.emit(error);
+        }
+      });
   }
 
   refresh() {
     this.onRefresh.emit();
     this.loadData();
   }
-  
+
   toggleFullContent() {
     this.showFullContent.set(!this.showFullContent());
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

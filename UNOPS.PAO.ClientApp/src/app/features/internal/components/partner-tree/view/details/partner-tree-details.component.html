@@ -5,33 +5,39 @@
     </div>
   }
 
+  <!-- Back button -->
+<!--  <app-go-back></app-go-back>-->
+
     <div class="flex w-full flex-col xl:flex-row gap-8">
       <div class="xl:w-1/2 flex flex-col gap-8">
         <p-panel>
           <ng-template pTemplate="header">
             <div class="flex justify-between items-center w-full">
-            <span class="font-semibold">
-              @if (partnerTree()?.partnerGroupCode) {
-                {{ 'label.partnerTree.partnerGroup' | translate }}
-              } @else if (partnerTree()?.partnerCategoryCode) {
-                {{ 'label.partnerTree.partnerCategory' | translate }}
-              } @else {
-                {{ 'title.partnerTree' | translate }}
-              }
-            </span>
-              @if(permissionUtilityService.canUpdate(recordPermissions())) {
-                <p-button icon="pi pi-pencil"
-                          [rounded]="true"
-                          [text]="true"
-                          [size]="'small'"
-                          [loading]="isLoading()"
-                          [disabled]="isLoading()"
-                          (onClick)="handleEditClick()"></p-button>
-              }
+              <span class="font-semibold text-xl">{{ 'title.details' | translate }}</span>
             </div>
           </ng-template>
-          <div class="text-2xl">
-            {{partnerTree()?.name}}
+          <div class="flex flex-col gap-4">
+            <!-- Partner Tree details -->
+            @if (partnerTree()?.description) {
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">{{ 'label.description' | translate }}</div>
+                <div>{{partnerTree()?.description}}</div>
+              </div>
+            }
+
+            @if (partnerTree()?.code) {
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">{{ 'label.partnerTree.code' | translate }}</div>
+                <div>{{partnerTree()?.code}}</div>
+              </div>
+            }
+
+            @if (partnerTree()?.status) {
+              <div class="flex flex-col gap-2">
+                <div class="font-semibold">{{ 'label.status' | translate }}</div>
+                <div>{{partnerTree()?.status}}</div>
+              </div>
+            }
           </div>
         </p-panel>
 
@@ -96,7 +102,7 @@
       </div>
 
         <div class="xl:w-1/2 flex flex-col gap-8">
-          
+
                     <!-- AI Summary of interactions -->
                     <app-ai-panel
                     [title]="'label.partner.summaryOfInteractions'"
@@ -105,7 +111,7 @@
                     [aiService]="mockAiService"
                     [loadOnInit]="true">
                   </app-ai-panel>
-        
+
                   <!-- AI summary of partner News -->
                   <app-ai-panel
                   [title]="'label.partner.partnerNews'"
@@ -140,6 +146,6 @@
 
 
         </div>
-      
+
     </div>
 </div>

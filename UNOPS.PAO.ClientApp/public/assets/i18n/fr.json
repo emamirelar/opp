@@ -14,6 +14,7 @@
         "when": "Quand",
         "who": "Qui",
         "why": "Pourquoi",
+        "contact": "Contact",
         "contacts": "Contacts",
         "partners": "Partners",
         "partnerTree": "Arbre des Partenaires",
@@ -41,7 +42,9 @@
         "editPartnershipUserAccess": "Modifier l'accès des utilisateurs de partenariat",
         "manageOffice": "Gérer mon bureau",
         "managerEntities": "Gestionnaire d'entités",
-        "translationWorkbench": "Table de traduction"
+        "translationWorkbench": "Table de traduction",
+        "fundingAndAgreements": "Accords de Financement",
+        "dashboard": "Tableau de Bord"
     },
     "button": {
         "back": "Retour",
@@ -177,7 +180,9 @@
             "mailingPostalCode": "Code postal d'envoi",
             "mailingCountry": "Pays d'envoi",
             "contactViaAssistant": "Contacter via l'assistant",
-            "createdByOffice": "Créé par Bureau"
+            "createdByOffice": "Créé par Bureau",
+            "summaryOfInteractions": "Résumé IA des Interactions",
+            "contactNews": "Actualités du Contact"
         },
         "pictureEditor": {
             "dropImageHere": "Déposez une image ici ou utilisez le bouton ci-dessous",
@@ -260,7 +265,7 @@
     "search": {
         "placeholder": "Rechercher...",
         "recentSearches": "Recherches récentes",
-        "results": "Résultats",
+        "results": "Résultats de recherche pour",
         "showAllResults": "Afficher tous les résultats",
         "seeAllResults": "Voir tous les résultats",
         "contact": "Contact",

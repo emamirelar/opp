@@ -176,7 +176,7 @@ export class InteractionModalComponent {
       // Existing record - fetch full details from API
       this.recordId = recordId.toString();
       this.loadInteractionById(Number(recordId));
-    } else if (initialData && Object.keys(initialData).length > 0) {
+    } else if (initialData && initialData.id) {
       // Existing record passed as initial data (fallback)
       this.record = initialData;
       if (this.record) {
@@ -202,6 +202,18 @@ export class InteractionModalComponent {
           canDelete: false // New records can't be deleted
         }
       });
+
+      // Pre-populate form with initial data for new records (e.g., partnerId)
+      if (initialData && Object.keys(initialData).length > 0) {
+        this.formGroup.patchValue(initialData);
+        
+        // If partnerId is provided, also set it in partnerIds array
+        if (initialData.partnerId) {
+          this.formGroup.patchValue({
+            partnerIds: [parseInt(initialData.partnerId)]
+          });
+        }
+      }
     }
 
     // For import edits, adjust form validation to be more lenient

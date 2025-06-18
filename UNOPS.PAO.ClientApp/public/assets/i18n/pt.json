@@ -17,6 +17,7 @@
         "who": "Quem",
         "why": "Por quê",
         "confirmation": "Confirmação",
+        "contact": "Contato",
         "contacts": "Contatos",
         "partners": "Parceiros",
         "partnerTree": "Árvore de Parceiros",
@@ -35,7 +36,9 @@
         "partnerDetails": "Detalhes do Parceiro",
         "partnerDashboard": "Painel do Parceiro",
         "admin": "Administração",
-        "managerEntities": "Gerenciador de Entidades"
+        "managerEntities": "Gerenciador de Entidades",
+        "fundingAndAgreements": "Acordos de Financiamento",
+        "dashboard": "Painel"
     },
     "button": {
         "back": "Voltar",
@@ -157,7 +160,9 @@
             "mailingPostalCode": "Código postal de envio",
             "mailingCountry": "País de envio",
             "contactViaAssistant": "Contatar através do assistente",
-            "createdByOffice": "Criado por Escritório"
+            "createdByOffice": "Criado por Escritório",
+            "summaryOfInteractions": "Resumo IA de Interações",
+            "contactNews": "Notícias do Contato"
         },
         "partner": {
             "partner": "Parceiro",
@@ -229,7 +234,7 @@
     "search": {
         "placeholder": "Pesquisar...",
         "recentSearches": "Pesquisas recentes",
-        "results": "Resultados",
+        "results": "Resultados de pesquisa para",
         "showAllResults": "Mostrar todos os resultados",
         "seeAllResults": "Ver todos os resultados",
         "contact": "Contato",
