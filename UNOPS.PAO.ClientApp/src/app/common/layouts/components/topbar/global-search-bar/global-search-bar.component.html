@@ -65,7 +65,7 @@
 
   <!-- Search results dropdown -->
 
-  @if(showResults) {
+  @if(showResults && isExpanded) {
   <div
        [ngClass]="{'lg:absolute': !isExpanded, 'fixed lg:absolute top-16 lg:top-auto left-4 right-4 lg:left-0 lg:right-0 z-50': isExpanded}"
        class="mt-1 bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto lg:max-w-2xl">

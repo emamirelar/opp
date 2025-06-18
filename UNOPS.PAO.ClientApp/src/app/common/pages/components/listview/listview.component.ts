@@ -75,9 +75,14 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
 
   // Core inputs
   @Input() set dataUrl(value: string) {
-    if (value) {
+    if (value && value !== this._dataUrl) {
       this._dataUrl = value;
-      this.loadData();
+      // Use setTimeout to avoid race conditions with ngAfterViewInit
+      setTimeout(() => {
+        if (!this.hasInitialDataLoaded) {
+          this.loadData();
+        }
+      }, 0);
     }
   }
   private _dataUrl: string = '';
@@ -101,23 +106,24 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     this._fullTextSearch = value;
     if (this._dataUrl) {
       this.searchTextValue = value;
+      this.hasInitialDataLoaded = true; // Mark as loaded to prevent duplicate calls
       this.loadData();
     }
   }
   private _fullTextSearch: string = '';
-  
-  @Input() 
+
+  @Input()
   set config(value: ListViewConfig) {
     this._config = value;
-    
+
     // Force a refresh of the signals to ensure they pick up the new config
     setTimeout(() => {
-      
-      
+
+
       // Re-initialize searchable fields when config changes
       this.initializeSearchableFields();
     }, 0);
-    
+
     // Initialize advanced search if enabled
     if (value.searchConfig?.useAdvancedSearch) {
       this.useAdvancedSearch = true;
@@ -127,11 +133,11 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     this.pageSize = value.pageSize || 20;
 
   }
-  
+
   get config(): ListViewConfig {
     return this._config;
   }
-  
+
   private _config: ListViewConfig = {
     pageSize: 20,
     pageSizeOptions: [20, 50, 100],
@@ -171,11 +177,11 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   searchText = '';
   currentSortField: string | undefined;
   currentSortOrder: 'asc' | 'desc' | undefined;
-  
+
   // Pagination properties
   first = 0;
   rows = 20;
-  
+
   // Data loader (mock for now until proper implementation)
   dataLoader = {
     setAdvancedSearchEnabled: (enabled: boolean) => {
@@ -196,12 +202,12 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       this.pageSize = rows;
     }
   };
-  
+
   // Infinite scroll state
   private allLoadedData = signal<T[]>([]);
   private hasMoreData = signal<boolean>(true);
   isLoadingMore = signal<boolean>(false);
-  
+
   // Advanced search state
   searchCriteria: SearchCriteria[] = [];
   selectedSearchField: any = null;
@@ -211,23 +217,23 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     { label: 'AND', value: 'AND' },
     { label: 'OR', value: 'OR' }
   ];
-  
+
   // Saved filter state
   preselectedSavedFilterId: number | null = null;
-  
+
   // Autocomplete and search mode state
   isAdvancedSearchMode = signal<boolean>(false);
   autocompleteSuggestions: any[] = [];
   searchValue: any = '';
-  
+
   // Computed properties
   isAdvancedSearch = computed(() => {
     return this.isAdvancedSearchMode();
   });
   searchableFields: SearchField[] = [];
-  
-  searchPlaceholder = computed(() => 
-    this.config.searchConfig?.placeholder || 
+
+  searchPlaceholder = computed(() =>
+    this.config.searchConfig?.placeholder ||
     (this.config.searchConfig?.useAdvancedSearch ? 'Search by field...' : 'Search...')
   );
 
@@ -242,9 +248,12 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   // Add signal for current component width
   private componentWidth = signal<number>(0);
 
+  // Track if initial data has been loaded to prevent double calls
+  private hasInitialDataLoaded = false;
+
   constructor() {
     this.setupSearchDebounce();
-    
+
     // Initialize searchable fields if available
     setTimeout(() => this.initializeSearchableFields(), 0);
   }
@@ -254,7 +263,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    */
   private syncSearchCriteriaToUrl(): void {
     const queryParams: any = { ...this.route.snapshot.queryParams };
-    
+
     if (this.searchCriteria.length > 0) {
       // Encode search criteria as JSON in URL
       queryParams.searchCriteria = JSON.stringify(this.searchCriteria);
@@ -264,7 +273,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       delete queryParams.searchCriteria;
       delete queryParams.advancedSearch;
     }
-    
+
     // Update URL without triggering navigation
     this.router.navigate([], {
       relativeTo: this.route,
@@ -278,14 +287,14 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    */
   private loadSearchCriteriaFromUrl(): void {
     const queryParams = this.route.snapshot.queryParams;
-    
+
     // Check if there's a saved filter ID in the URL
     if (queryParams['savedFilterId']) {
       const filterId = parseInt(queryParams['savedFilterId'], 10);
       if (!isNaN(filterId)) {
         console.log('Found saved filter ID in URL:', filterId);
         this.preselectedSavedFilterId = filterId;
-        
+
         // The saved filter component will handle loading this filter
         // We just need to ensure advanced search mode is enabled if specified
         if (queryParams['advancedSearch'] === 'true') {
@@ -295,20 +304,20 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       }
       return;
     }
-    
+
     if (queryParams['advancedSearch'] === 'true' && queryParams['searchCriteria']) {
       try {
         const criteria = JSON.parse(queryParams['searchCriteria']) as SearchCriteria[];
-        
+
         // Validate that the criteria are valid
         if (Array.isArray(criteria) && criteria.length > 0) {
           this.searchCriteria = criteria;
-          
+
           // Set advanced search mode
           this.isAdvancedSearchMode.set(true);
           this.useAdvancedSearch = true;
-          
-          
+
+
         }
       } catch (error) {
         console.warn('Failed to parse search criteria from URL:', error);
@@ -326,7 +335,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     delete queryParams.searchCriteria;
     delete queryParams.advancedSearch;
     delete queryParams.savedFilterId;
-    
+
     // Don't use queryParamsHandling: 'merge' as it prevents deletion of parameters
     this.router.navigate([], {
       relativeTo: this.route,
@@ -336,17 +345,25 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    this.initializeComponent();
+  }
+
+  /**
+   * Initialize component - centralized initialization logic
+   */
+  private initializeComponent(): void {
     // Setup resize observer to detect component width changes
     this.setupResizeObserver();
-    
+
     // Check initial component width
     this.checkComponentWidth();
-    
+
     // Load search criteria from URL if present
     this.loadSearchCriteriaFromUrl();
-    
-    // Load data after URL criteria are loaded
-    if (this._dataUrl) {
+
+    // Only load data if not already triggered by URL criteria loading or dataUrl setter
+    if (this._dataUrl && !this.hasInitialDataLoaded) {
+      this.hasInitialDataLoaded = true;
       this.loadData();
     }
   }
@@ -418,21 +435,21 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       this.searchSubject.next(value);
     }
   }
-  
+
   /**
    * Handle advanced search criterion from child component
    */
   onAdvancedSearch(criterion: SearchCriteria): void {
     // Add to local list
     this.searchCriteria = [...this.searchCriteria, criterion];
-    
+
     // Sync to URL
     this.syncSearchCriteriaToUrl();
-    
+
     // Execute search with the updated criteria
     this.executeAdvancedSearch();
   }
-  
+
   /**
    * Remove a search criterion
    */
@@ -440,15 +457,15 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     if (index >= 0 && index < this.searchCriteria.length) {
       // Remove from local list
       this.searchCriteria = this.searchCriteria.filter((_, i) => i !== index);
-      
+
       // Sync to URL
       this.syncSearchCriteriaToUrl();
-      
+
       // Execute search with the updated criteria
       this.executeAdvancedSearch();
     }
   }
-  
+
   /**
    * Execute advanced search with current criteria
    */
@@ -456,10 +473,11 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     this.pageIndex = 1;
     this.allLoadedData.set([]); // Reset loaded data
     this.hasMoreData.set(true);
-    
+    this.hasInitialDataLoaded = true; // Mark as loaded to prevent duplicate calls
+
     const searchParams = this.getSearchParams();
     this.searchChange.emit(searchParams);
-    
+
     this.loadData();
   }
 
@@ -468,13 +486,14 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    */
   private executeSearch(value: string): void {
     this.searchTextValue = value;
-    
+
     const searchParams = this.getSearchParams();
     this.searchChange.emit(searchParams);
-    
+
     this.pageIndex = 1;
     this.allLoadedData.set([]); // Reset loaded data
     this.hasMoreData.set(true);
+    this.hasInitialDataLoaded = true; // Mark as loaded to prevent duplicate calls
     this.loadData();
   }
 
@@ -522,7 +541,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       } else if (this.searchValue && this.searchValue.value) {
         searchTerm = this.searchValue.value.trim();
       }
-      
+
       this.searchText = searchTerm; // Keep searchText in sync
       this.executeSearch(searchTerm);
     }
@@ -541,10 +560,10 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       this.searchValue = '';
       this.searchTextValue = '';
     }
-    
+
     const searchParams = this.getSearchParams();
     this.searchChange.emit(searchParams);
-    
+
     this.pageIndex = 1;
     this.allLoadedData.set([]); // Reset loaded data
     this.hasMoreData.set(true);
@@ -556,13 +575,13 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    */
   onClearAdvancedSearch(): void {
     this.searchCriteria = [];
-    
+
     // Clear from URL
     this.clearSearchCriteriaFromUrl();
-    
+
     const searchParams = this.getSearchParams();
     this.searchChange.emit(searchParams);
-    
+
     this.pageIndex = 1;
     this.allLoadedData.set([]); // Reset loaded data
     this.hasMoreData.set(true);
@@ -582,29 +601,29 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
 
       // Otherwise use our built-in export functionality
       const entityName = this.config.entityName || 'Record';
-      
+
       // Use the customTransform function from config if provided
-      const customTransform = this.config.exportOptions?.customTransform || 
+      const customTransform = this.config.exportOptions?.customTransform ||
         // Otherwise create a transform that excludes fields if specified
-        (this.config.exportOptions?.excludeFields ? 
+        (this.config.exportOptions?.excludeFields ?
           (data: any[]) => {
             return data.map(item => {
               const result: Record<string, any> = {};
               const excludeFields = this.config.exportOptions?.excludeFields || [];
-              
+
               Object.entries(item).forEach(([key, value]) => {
                 if (!excludeFields.includes(key)) {
                   result[key] = value;
                 }
               });
-              
+
               return result;
             });
           } : undefined);
-      
+
       // Get the search parameters
       const searchParams = this.getSearchParams();
-      
+
       this.exportService.exportToGoogleSheet(
         entityName,
         this._dataUrl,
@@ -621,7 +640,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    */
   get scrollHeightValue(): string | undefined {
     if (!this.config.scrollable) return undefined;
-    return this.config.scrollHeight === 'flex' 
+    return this.config.scrollHeight === 'flex'
       ? 'calc(100vh - 16rem)' // Default flexible height
       : this.config.scrollHeight;
   }
@@ -656,8 +675,8 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    * Load data from the server
    */
   private loadData(): void {
-    if (!this._dataUrl) {
-      return;
+    if (!this._dataUrl || this.loadingState()) {
+      return; // Avoid concurrent calls
     }
 
     this.loadingState.set(true);
@@ -715,7 +734,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   private handleDataResponse(data: any): void {
     let totalCount = 0;
     let newRecords: T[] = [];
-    
+
     if (Array.isArray(data)) {
       totalCount = data.length;
       newRecords = data;
@@ -723,7 +742,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       totalCount = data.totalCount || data.records.length;
       newRecords = data.records;
     }
-    
+
     // For infinite scroll, append new data to existing data
     if (this.pageIndex === 1) {
       // First page or reset - replace all data
@@ -733,18 +752,18 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       const currentData = this.allLoadedData();
       this.allLoadedData.set([...currentData, ...newRecords]);
     }
-    
+
     // Update state signals
     this.dataState.set({
       records: this.allLoadedData(),
       totalCount
     });
-    
+
     // Check if there's more data to load
     const loadedCount = this.allLoadedData().length;
     this.hasMoreData.set(loadedCount < totalCount);
     this.isLoadingMore.set(false);
-    
+
     // Emit the total records count
     this.totalRecordsChange.emit(totalCount);
   }
@@ -828,7 +847,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
 
     // Update the search criteria
     this.searchCriteria = searchParams;
-    
+
     // Trigger search
     this.onSearch();
   }
@@ -838,10 +857,10 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
    */
   onAutocompleteSearch(event: any): void {
     const query = event.query?.toLowerCase() || '';
-    
+
     // Create suggestions based on searchable fields
     this.autocompleteSuggestions = [];
-    
+
     if (query.length > 0) {
       // Add general search suggestion first (using translation)
       const searchEverywhere = this.translateService?.instant('search.searchEverywhere') || 'Search everywhere';
@@ -851,7 +870,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
         field: null,
         type: 'general'
       });
-      
+
       // Add field-based suggestions
       const searchIn = this.translateService?.instant('search.searchIn') || 'Search in';
       this.searchableFields.forEach(field => {
@@ -896,10 +915,10 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     this.isAdvancedSearchMode.set(false);
     this.useAdvancedSearch = false;
     this.searchCriteria = [];
-    
+
     // Clear search criteria from URL when switching to simple search
     this.clearSearchCriteriaFromUrl();
-    
+
     this.pageIndex = 1;
     this.allLoadedData.set([]); // Reset loaded data
     this.hasMoreData.set(true);
@@ -912,7 +931,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   onMyOfficeFilterChanged(enabled: boolean): void {
     // Update data loader with My Office filter state
     this.dataLoader.setMyOfficeFilter(enabled);
-    
+
     // Execute search with updated filter
     this.executeAdvancedSearch();
   }
@@ -923,36 +942,36 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   onApplySavedFilter(filter: SavedFilter): void {
     // Update URL parameters with saved filter information
     const queryParams: any = { ...this.route.snapshot.queryParams };
-    
+
     // Add saved filter ID to URL for tracking
     queryParams.savedFilterId = filter.id;
-    
+
     // If it's an advanced search, mark it in URL
     if (filter.isAdvancedSearch) {
       queryParams.advancedSearch = 'true';
     }
-    
+
     // Update sorting if specified in the filter
     if (filter.orderBy) {
       this.currentSortField = filter.orderBy;
       this.currentSortOrder = filter.ascending ? 'asc' : 'desc';
       this.dataLoader.setSorting(filter.orderBy, this.currentSortOrder);
     }
-    
+
     // Update URL without triggering navigation
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
       replaceUrl: true
     });
-    
+
     // Reset pagination to first page
     this.first = 0;
     this.dataLoader.setPagination(0, this.rows);
-    
+
     // Clear the preselected filter ID to avoid reprocessing
     this.preselectedSavedFilterId = null;
-    
+
     // Load data with the applied filter
     this.loadData();
   }
