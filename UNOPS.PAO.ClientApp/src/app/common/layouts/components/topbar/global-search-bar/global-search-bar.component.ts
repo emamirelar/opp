@@ -110,6 +110,8 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
     if (window.innerWidth < this.breakpoint) {
       this.isExpanded = false;
     }
+    // Always hide the results panel (including recent searches)
+    this.showResults = false;
     this.clearSearch();
   }
 
