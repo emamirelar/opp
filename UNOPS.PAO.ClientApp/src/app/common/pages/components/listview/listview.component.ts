@@ -14,6 +14,7 @@ import { ListviewExportService } from './listview-export.service';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { DropdownModule } from 'primeng/dropdown';
+import { SelectModule } from 'primeng/select';
 import { ChipModule } from 'primeng/chip';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { ListviewCardComponent } from './card/listview-card.component';
@@ -39,6 +40,7 @@ import { SavedFilter } from '../../../interfaces/saved-filter.interface';
     InputIcon,
     ConfirmDialog,
     DropdownModule,
+    SelectModule,
     ChipModule,
     OverlayPanelModule,
     ListviewCardComponent,
@@ -99,6 +101,10 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   private sortOrder: 'asc' | 'desc' = 'asc';
   private searchTextValue = '';
   private useAdvancedSearch = false;
+  
+  // Sort state
+  currentSortConfig: string = '';
+  private sortableFieldsCache: ListViewColumn[] = [];
 
   @Input() columns: ListViewColumn[] = [];
 
@@ -132,6 +138,8 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     // Update page size from config
     this.pageSize = value.pageSize || 20;
 
+    // Initialize default sort
+    this.initializeDefaultSort();
   }
 
   get config(): ListViewConfig {
@@ -528,6 +536,85 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     this.sortField = event.field;
     this.sortOrder = order;
     this.loadData();
+  }
+
+  /**
+   * Get sortable fields from columns
+   */
+  sortableFields(): ListViewColumn[] {
+    if (this.sortableFieldsCache.length === 0) {
+      this.sortableFieldsCache = this.columns.filter(col => col.sortable);
+    }
+    return this.sortableFieldsCache;
+  }
+
+  /**
+   * Get sort options for dropdown
+   */
+  sortOptions(): Array<{ label: string, value: string }> {
+    const options: Array<{ label: string, value: string }> = [];
+    
+    this.sortableFields().forEach(field => {
+      // Add ascending option
+      options.push({
+        label: `${field.label} (${this.translateService.instant('label.ascending')})`,
+        value: `${field.field}:asc`
+      });
+      
+      // Add descending option
+      options.push({
+        label: `${field.label} (${this.translateService.instant('label.descending')})`,
+        value: `${field.field}:desc`
+      });
+    });
+    
+    return options;
+  }
+
+  /**
+   * Handle sort configuration change from dropdown
+   */
+  onSortConfigChange(sortConfig: string): void {
+    if (!sortConfig) {
+      this.clearSort();
+      return;
+    }
+
+    const [field, order] = sortConfig.split(':');
+    this.currentSortField = field;
+    this.currentSortOrder = order as 'asc' | 'desc';
+    this.sortField = field;
+    this.sortOrder = order as 'asc' | 'desc';
+    
+    this.sortChange.emit({ field, order: order as 'asc' | 'desc' });
+    this.loadData();
+  }
+
+  /**
+   * Clear sort configuration
+   */
+  clearSort(): void {
+    this.currentSortConfig = '';
+    this.currentSortField = '';
+    this.currentSortOrder = 'asc';
+    this.sortField = '';
+    this.sortOrder = 'asc';
+    
+    this.sortChange.emit({ field: '', order: 'asc' });
+    this.loadData();
+  }
+
+  /**
+   * Initialize default sort configuration from config
+   */
+  private initializeDefaultSort(): void {
+    if (this.config.defaultSortField && this.config.defaultSortOrder) {
+      this.sortField = this.config.defaultSortField;
+      this.sortOrder = this.config.defaultSortOrder;
+      this.currentSortField = this.config.defaultSortField;
+      this.currentSortOrder = this.config.defaultSortOrder;
+      this.currentSortConfig = `${this.config.defaultSortField}:${this.config.defaultSortOrder}`;
+    }
   }
 
   /**

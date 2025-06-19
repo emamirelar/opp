@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, Output, TemplateRef, computed, ElementRef, HostListener, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
@@ -36,7 +36,7 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
     }
   `]
 })
-export class ListviewCardComponent<T = any> {
+export class ListviewCardComponent<T = any> implements OnChanges {
   // Inputs
   @Input() columns: ListViewColumn[] = [];
   @Input() config!: ListViewConfig;
@@ -55,6 +55,7 @@ export class ListviewCardComponent<T = any> {
 
   // Scroll detection
   private elementRef = inject(ElementRef);
+  private cdr = inject(ChangeDetectorRef);
 
   // Custom template references
   @ContentChild('cardActionsTemplate') actionsTemplate?: TemplateRef<any>;
@@ -62,8 +63,22 @@ export class ListviewCardComponent<T = any> {
   // Computed values
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
 
+  // Add computed property to check if safe to render content
+  canRenderContent = computed(() => {
+    const hasColumns = this.columns && this.columns.length > 0;
+    const hasConfig = this.config;
+    const hasData = this.data && this.data.length > 0;
+    const notLoading = !this.loading;
+    
+    return hasColumns && hasConfig && (hasData || notLoading) && !this.error;
+  });
+
   // Computed property to get title column
   titleColumn = computed(() => {
+    if (!this.columns || this.columns.length === 0 || !this.config) {
+      return null;
+    }
+    
     const titleField = this.config.cardConfig?.titleField;
     if (titleField) {
       // Find column that matches the title field
@@ -75,15 +90,22 @@ export class ListviewCardComponent<T = any> {
 
   // Computed property to get avatar column
   avatarColumn = computed(() => {
-    return this.columns.find(col => col.type === 'avatar');
+    if (!this.columns || this.columns.length === 0) {
+      return null;
+    }
+    return this.columns.find(col => col.type === 'avatar') || null;
   });
 
   // Computed property to get subtitle column
   subtitleColumn = computed(() => {
+    if (!this.columns || this.columns.length === 0 || !this.config) {
+      return null;
+    }
+    
     const subtitleField = this.config.cardConfig?.subtitleField;
     if (subtitleField) {
       // Find column that matches the subtitle field
-      return this.columns.find(col => col.field === subtitleField);
+      return this.columns.find(col => col.field === subtitleField) || null;
     }
 
     // Default to the first text column after the title column
@@ -99,6 +121,10 @@ export class ListviewCardComponent<T = any> {
 
   // Computed property to get content columns
   contentColumns = computed(() => {
+    if (!this.columns || this.columns.length === 0 || !this.config) {
+      return [];
+    }
+    
     const titleCol = this.titleColumn();
     const subtitleCol = this.subtitleColumn();
     const contentFields = this.config.cardConfig?.contentFields;
@@ -120,6 +146,16 @@ export class ListviewCardComponent<T = any> {
     );
     return otherColumns.slice(0, 4);
   });
+
+  /**
+   * Handle input changes and force change detection if needed
+   */
+  ngOnChanges(): void {
+    // Force change detection when data or columns change
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
+  }
 
   /**
    * Handle card double click
@@ -190,10 +226,18 @@ export class ListviewCardComponent<T = any> {
   }
 
   /**
-   * Get field value without formatting
+   * Get field value without formatting - with safety checks
    */
   getFieldValue(item: T, field: string): any {
-    return item[field as keyof T];
+    try {
+      if (!item || !field) {
+        return null;
+      }
+      return item[field as keyof T] ?? null;
+    } catch (error) {
+      console.warn(`Error accessing field ${field}:`, error);
+      return null;
+    }
   }
 
   /**
