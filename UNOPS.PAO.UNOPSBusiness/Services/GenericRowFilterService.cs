@@ -17,7 +17,7 @@ public interface IGenericRowFilterService
 
 public class GenericRowFilterService : IGenericRowFilterService
 {
-    private readonly UNOPSAppDbContext _context;
+    private readonly IDbContextFactory<UNOPSAppDbContext> _contextFactory;
     private readonly ILogger<GenericRowFilterService> _logger;
     
     // Security configuration constants
@@ -37,9 +37,9 @@ public class GenericRowFilterService : IGenericRowFilterService
     // Maximum number of nested parentheses to prevent stack overflow
     private const int MAX_NESTING_DEPTH = 10;
 
-    public GenericRowFilterService(UNOPSAppDbContext context, ILogger<GenericRowFilterService> logger)
+    public GenericRowFilterService(IDbContextFactory<UNOPSAppDbContext> contextFactory, ILogger<GenericRowFilterService> logger)
     {
-        _context = context;
+        _contextFactory = contextFactory;
         _logger = logger;
     }
 
@@ -59,8 +59,9 @@ public class GenericRowFilterService : IGenericRowFilterService
             return query.Where(x => false); // Return empty query
         }
 
-        // Get permissions for this entity and user's roles
-        var permissions = await _context.EntityPermissions
+        // Get permissions for this entity and user's roles using a new context
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var permissions = await context.EntityPermissions
             .Where(ep => ep.Entity == entityName && userRoles.Contains(ep.Role))
             .ToListAsync();
 
@@ -170,8 +171,9 @@ public class GenericRowFilterService : IGenericRowFilterService
             return false;
         }
 
-        // Get permissions for this entity and user's roles
-        var permissions = await _context.EntityPermissions
+        // Get permissions for this entity and user's roles using a new context
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var permissions = await context.EntityPermissions
             .Where(ep => ep.Entity == entityName && userRoles.Contains(ep.Role))
             .ToListAsync();
 
@@ -287,8 +289,9 @@ public class GenericRowFilterService : IGenericRowFilterService
             context["@userOrgUnit"] = userOrgUnit;
             context["@orgUnit"] = userOrgUnit;
             
-            // Also get the org unit ID if needed
-            var orgUnitEntity = await _context.OrganizationHierarchies
+            // Also get the org unit ID if needed using a new context
+            using var dbContext = await _contextFactory.CreateDbContextAsync();
+            var orgUnitEntity = await dbContext.OrganizationHierarchies
                 .FirstOrDefaultAsync(o => o.Code == userOrgUnit && o.Type == OrganizationUnitType.OrgUnit);
             
             if (orgUnitEntity != null)
@@ -598,7 +601,8 @@ public class GenericRowFilterService : IGenericRowFilterService
 
         try
         {
-            var userInfo = await _context.UserInfos
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var userInfo = await context.UserInfos
                 .Where(u => u.UserEmail.ToLower() == userEmail.ToLower() && !u.IsDeleted)
                 .Select(u => u.OrgUnit)
                 .FirstOrDefaultAsync();

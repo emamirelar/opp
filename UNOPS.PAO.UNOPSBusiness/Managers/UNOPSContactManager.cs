@@ -26,6 +26,7 @@ using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Attributes;
 
 public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 {
@@ -111,18 +112,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     {
         var result = MapEntityToModel(entity, mapper);
         
-        // Add permissions if security service is available
-        if (_securityService != null)
-        {
-            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
-            result.Permissions = new EntityPermissionsModel
-            {
-                CanRead = ((dynamic)permissions).canRead,
-                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
-                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
-                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
-            };
-        }
+        // Add permissions using the helper method from BaseUNOPSManager
+        result.Permissions = await GetEntityPermissionsAsync(entity, user);
         
         return result;
     }
@@ -146,8 +137,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return MapModelToEntity(model, new UNOPSContact());
     }
 
-    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
-        : base(mapper, context, configuration)
+    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService)
+        : base(mapper, context, configuration, null, securityService)
     {
         this.mapper = mapper;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
@@ -217,17 +208,14 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     }
 
     // New secure methods with row-level filtering and permissions
+    [RBAC("read", Entity = "Contact")]
     public async Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request)
     {
         var query = contactRepository
             .GetAll(["Partner", "Partner.PartnerOffice"])
             .AsQueryable();
 
-        // Apply row-level security filters
-        if (_securityService != null)
-        {
-            query = await _securityService.ApplyRowFiltersAsync(query, user, "read");
-        }
+        // RBAC interceptor automatically applies row-level security filters
 
         // Get page index and calculate offset
         var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
@@ -241,12 +229,16 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
         // Get total count first
         var totalCount = query.Count();
+        Console.WriteLine($"🐛 DEBUG: Final total count: {totalCount}");
         
         // Materialize the entities to avoid concurrent database operations
         var entities = query
             .Skip(excludedRows)
             .Take(request.PageSize)
+            .Cast<UNOPSContact>()
             .ToList();
+
+        Console.WriteLine($"🐛 DEBUG: Retrieved {entities.Count} contacts for page {pageIndex}");
 
         // Get all unique user IDs from the contacts for efficient lookup
         var userIds = entities.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
@@ -278,24 +270,15 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         }
 
         // Map entities to models with efficient user and org lookup
+        // RBAC interceptor automatically applies row/column filtering, but we still need permissions for frontend
         var contactsWithPermissions = new List<ContactModel>();
         
         foreach (var entity in entities)
         {
             var contact = MapEntityToModelWithUserInfo(entity, mapper, userInfoLookup, orgHierarchyLookup);
             
-            // Add permissions if security service is available
-            if (_securityService != null)
-            {
-                var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
-                contact.Permissions = new EntityPermissionsModel
-                {
-                    CanRead = ((dynamic)permissions).canRead,
-                    CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
-                    CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
-                    CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
-                };
-            }
+            // Add permissions for frontend UI (RBAC interceptor handles security enforcement)
+            contact.Permissions = await GetEntityPermissionsAsync(entity, user);
             
             contactsWithPermissions.Add(contact);
         }
@@ -307,20 +290,18 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         };
     }
 
+    [RBAC("read", Entity = "Contact", EntityIdParameterName = "id")]
     public async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
     {
         var item = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice"]);
         if (item == null) return null;
 
-        // Check if user can access this specific contact
-        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(item, user, "read"))
-        {
-            return null; // User cannot access this contact
-        }
-
+        // RBAC interceptor automatically checks entity access and applies column filtering
+        // But we still need to add permissions for frontend UI
         return await MapEntityToModelWithPermissionsAsync(item, mapper, user);
     }
 
+    [RBAC("update", Entity = "Contact")]
     public async Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model)
     {
         var entity = await contactRepository.GetByIdAsync(model.Id, ["Partner", "Partner.PartnerOffice"]);
@@ -329,7 +310,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             throw new BusinessException($"Contact {model.Id} does not exist.");
         }
 
-        // Check if user can update this contact
+        // RBAC interceptor automatically checks update permissions
+        // Manual entity access check still needed since interceptor can't determine 
+        // entity ID from model.Id automatically
         if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "update"))
         {
             throw new UnauthorizedAccessException("You don't have permission to update this contact");
@@ -338,20 +321,17 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         entity = MapModelToEntity(model, entity);
         await contactRepository.UpdateAsync(entity);
 
+        // Return with permissions for frontend UI
         return await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
     }
 
+    [RBAC("delete", Entity = "Contact", EntityIdParameterName = "id")]
     public async Task DeleteContactAsync(ClaimsPrincipal user, int id)
     {
         var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice"]);
         if (entity == null) return;
 
-        // Check if user can delete this contact
-        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "delete"))
-        {
-            throw new UnauthorizedAccessException("You don't have permission to delete this contact");
-        }
-
+        // RBAC interceptor automatically handles all permission and entity access checks
         await contactRepository.Delete(entity);
     }
 

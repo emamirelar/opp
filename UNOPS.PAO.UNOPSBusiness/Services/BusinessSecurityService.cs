@@ -23,6 +23,17 @@ public interface IBusinessSecurityService
     // New overloads for PermissionsController
     Task<bool> CanUserAccessEntityAsync(ClaimsPrincipal user, string entityName, int entityId, string action = "read");
     Task<EntityPermissionsModel> GetEntityPermissionsAsync(ClaimsPrincipal user, string entityName);
+    
+    // Column filtering methods
+    Task<IEnumerable<string>> GetAllowedColumnsAsync<T>(ClaimsPrincipal user, string action = "read") where T : class;
+    Task<IEnumerable<string>> GetAllowedColumnsAsync(ClaimsPrincipal user, string entityName, string action = "read");
+    Task<bool> CanUserAccessColumnAsync<T>(ClaimsPrincipal user, string columnName, string action = "read") where T : class;
+    Task<bool> CanUserAccessColumnAsync(ClaimsPrincipal user, string entityName, string columnName, string action = "read");
+    Task<T> FilterEntityColumns<T>(T entity, ClaimsPrincipal user, string action = "read") where T : class;
+    Task<IEnumerable<T>> FilterEntityColumnsForList<T>(IEnumerable<T> entities, ClaimsPrincipal user, string action = "read") where T : class;
+    
+    // Convenience method to get all permissions at once for frontend UI
+    Task<EntityPermissionsModel> GetEntityPermissionsForUIAsync<T>(T entity, ClaimsPrincipal user) where T : class;
 }
 
 public class BusinessSecurityService : IBusinessSecurityService
@@ -31,17 +42,20 @@ public class BusinessSecurityService : IBusinessSecurityService
     private readonly ILogger<BusinessSecurityService> _logger;
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly IGenericRowFilterService _genericRowFilterService;
+    private readonly IGenericColumnFilterService _genericColumnFilterService;
 
     public BusinessSecurityService(
         UNOPSAppDbContext context, 
         ILogger<BusinessSecurityService> logger, 
         UserManager<PAOIdentityUser> userManager,
-        IGenericRowFilterService genericRowFilterService)
+        IGenericRowFilterService genericRowFilterService,
+        IGenericColumnFilterService genericColumnFilterService)
     {
         _context = context;
         _logger = logger;
         _userManager = userManager;
         _genericRowFilterService = genericRowFilterService;
+        _genericColumnFilterService = genericColumnFilterService;
     }
 
     public async Task<string?> GetUserOrgUnitAsync(ClaimsPrincipal user)
@@ -362,6 +376,83 @@ public class BusinessSecurityService : IBusinessSecurityService
             "update" => permissions.CanUpdate,
             "delete" => permissions.CanDelete,
             _ => false
+        };
+    }
+    #endregion
+
+    #region Column Filtering Methods
+    public async Task<IEnumerable<string>> GetAllowedColumnsAsync<T>(ClaimsPrincipal user, string action = "read") where T : class
+    {
+        return await _genericColumnFilterService.GetAllowedColumnsAsync<T>(user, action);
+    }
+
+    public async Task<IEnumerable<string>> GetAllowedColumnsAsync(ClaimsPrincipal user, string entityName, string action = "read")
+    {
+        return await _genericColumnFilterService.GetAllowedColumnsAsync(user, entityName, action);
+    }
+
+    public async Task<bool> CanUserAccessColumnAsync<T>(ClaimsPrincipal user, string columnName, string action = "read") where T : class
+    {
+        return await _genericColumnFilterService.CanUserAccessColumnAsync<T>(user, columnName, action);
+    }
+
+    public async Task<bool> CanUserAccessColumnAsync(ClaimsPrincipal user, string entityName, string columnName, string action = "read")
+    {
+        return await _genericColumnFilterService.CanUserAccessColumnAsync(user, entityName, columnName, action);
+    }
+
+    public async Task<T> FilterEntityColumns<T>(T entity, ClaimsPrincipal user, string action = "read") where T : class
+    {
+        return await _genericColumnFilterService.FilterEntityColumns(entity, user, action);
+    }
+
+    public async Task<IEnumerable<T>> FilterEntityColumnsForList<T>(IEnumerable<T> entities, ClaimsPrincipal user, string action = "read") where T : class
+    {
+        return await _genericColumnFilterService.FilterEntityColumnsForList(entities, user, action);
+    }
+
+    public async Task<EntityPermissionsModel> GetEntityPermissionsForUIAsync<T>(T entity, ClaimsPrincipal user) where T : class
+    {
+        if (entity == null) 
+        {
+            return new EntityPermissionsModel 
+            { 
+                CanRead = false, 
+                CanCreate = false, 
+                CanUpdate = false, 
+                CanDelete = false 
+            };
+        }
+
+        // For administrators, all permissions are true
+        if (user.IsInRole("PARTNER_GLOB_ADMIN"))
+        {
+            return new EntityPermissionsModel
+            {
+                CanRead = true,
+                CanCreate = true,
+                CanUpdate = true,
+                CanDelete = true
+            };
+        }
+
+        // Get all permissions in parallel for better performance
+        var tasks = new[]
+        {
+            CanUserAccessEntityAsync(entity, user, "read"),
+            CanUserAccessEntityAsync(entity, user, "create"),
+            CanUserAccessEntityAsync(entity, user, "update"),
+            CanUserAccessEntityAsync(entity, user, "delete")
+        };
+
+        var results = await Task.WhenAll(tasks);
+
+        return new EntityPermissionsModel
+        {
+            CanRead = results[0],
+            CanCreate = results[1],
+            CanUpdate = results[2],
+            CanDelete = results[3]
         };
     }
     #endregion

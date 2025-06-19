@@ -35,6 +35,7 @@ using System.IO;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
+using UNOPS.PAO.UNOPSBusiness.Extensions;
 
 namespace UNOPS.PAO.Server;
 
@@ -304,6 +305,12 @@ public class Startup
         // Add Generic Row Filter Service
         services.AddScoped<IGenericRowFilterService, GenericRowFilterService>();
         
+        // Add Generic Column Filter Service
+        services.AddScoped<IGenericColumnFilterService, GenericColumnFilterService>();
+        
+        // Add RBAC Infrastructure (interceptors, proxy generator, etc.)
+        services.AddRBACInfrastructure();
+        
         // Add Secure Specification Factory for RBAC-integrated pagination
         services.AddScoped<ISecureSpecificationFactory, SecureSpecificationFactory>();
         
@@ -346,6 +353,9 @@ public class Startup
         services.SeedAsync();
         ConfigureRegisters(services);
         services.AddHostedService<PubSubPullService>(); // Register your background service
+        
+        // Automatically discover and register all managers with RBAC attributes
+        services.AddRBACManagersAutomatically();
     }
 
     private void AddServices(ServiceRegistry services)
