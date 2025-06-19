@@ -35,11 +35,8 @@ public class AiPromptController : BaseController
     [HttpPost(APIDictionary.AiPromptsList)]
     public async Task<ActionResult> GetPromptsAsync([FromBody] AiPromptFilterRequest request)
     {
-        // Check permission to read AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "read");
-        if (permissionResult != null) return permissionResult;
-
-        var result = await _managerWrapper.AiPromptManager.GetPromptsAsync(request);
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.GetPromptsAsync(User, request);
         return Ok(result);
     }
 
@@ -49,11 +46,8 @@ public class AiPromptController : BaseController
     [HttpGet(APIDictionary.AiPrompts + "/{id}")]
     public async Task<ActionResult> GetPromptByIdAsync(int id)
     {
-        // Check permission to read AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "read");
-        if (permissionResult != null) return permissionResult;
-
-        var result = await _managerWrapper.AiPromptManager.GetPromptByIdAsync(id);
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.GetPromptByIdAsync(User, id);
         if (result == null)
         {
             return NotFound($"AI Prompt with ID {id} not found.");
@@ -67,16 +61,13 @@ public class AiPromptController : BaseController
     [HttpPost(APIDictionary.AiPrompts)]
     public async Task<ActionResult> CreatePromptAsync([FromBody] AiPromptModel model)
     {
-        // Check permission to create AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "create");
-        if (permissionResult != null) return permissionResult;
-
+        // RBAC interceptor handles permission checking
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var result = await _managerWrapper.AiPromptManager.CreatePromptAsync(model);
+        var result = await _managerWrapper.AiPromptManager.CreatePromptAsync(User, model);
         return StatusCode(201, result);
     }
 
@@ -86,16 +77,13 @@ public class AiPromptController : BaseController
     [HttpPut(APIDictionary.AiPrompts + "/{id}")]
     public async Task<ActionResult> UpdatePromptAsync(int id, [FromBody] AiPromptModel model)
     {
-        // Check permission to update AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "update");
-        if (permissionResult != null) return permissionResult;
-
+        // RBAC interceptor handles permission checking
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        var result = await _managerWrapper.AiPromptManager.UpdatePromptAsync(id, model);
+        var result = await _managerWrapper.AiPromptManager.UpdatePromptAsync(User, id, model);
         if (result == null)
         {
             return NotFound($"AI Prompt with ID {id} not found.");
@@ -109,11 +97,8 @@ public class AiPromptController : BaseController
     [HttpDelete(APIDictionary.AiPrompts + "/{id}")]
     public async Task<ActionResult> DeletePromptAsync(int id)
     {
-        // Check permission to delete AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "delete");
-        if (permissionResult != null) return permissionResult;
-
-        var success = await _managerWrapper.AiPromptManager.DeletePromptAsync(id);
+        // RBAC interceptor handles permission checking
+        var success = await _managerWrapper.AiPromptManager.DeletePromptAsync(User, id);
         if (!success)
         {
             return NotFound($"AI Prompt with ID {id} not found.");
@@ -127,11 +112,8 @@ public class AiPromptController : BaseController
     [HttpGet(APIDictionary.AiPromptsByType + "/{type}")]
     public async Task<ActionResult> GetPromptsByTypeAsync(string type)
     {
-        // Check permission to read AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "read");
-        if (permissionResult != null) return permissionResult;
-
-        var result = await _managerWrapper.AiPromptManager.GetPromptsByTypeAsync(type);
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.GetPromptsByTypeAsync(User, type);
         return Ok(result);
     }
 
@@ -141,11 +123,8 @@ public class AiPromptController : BaseController
     [HttpGet(APIDictionary.AiPromptsTypes)]
     public async Task<ActionResult> GetPromptTypesAsync()
     {
-        // Check permission to read AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "read");
-        if (permissionResult != null) return permissionResult;
-
-        var result = await _managerWrapper.AiPromptManager.GetPromptTypesAsync();
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.GetPromptTypesAsync(User);
         return Ok(result);
     }
 
@@ -155,11 +134,8 @@ public class AiPromptController : BaseController
     [HttpGet(APIDictionary.AiPromptsModels)]
     public async Task<ActionResult> GetModelsAsync()
     {
-        // Check permission to read AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "read");
-        if (permissionResult != null) return permissionResult;
-
-        var result = await _managerWrapper.AiPromptManager.GetModelsAsync();
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.GetModelsAsync(User);
         return Ok(result);
     }
 
@@ -169,11 +145,8 @@ public class AiPromptController : BaseController
     [HttpGet(APIDictionary.AiPromptsProjects)]
     public async Task<ActionResult> GetProjectsAsync()
     {
-        // Check permission to read AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "read");
-        if (permissionResult != null) return permissionResult;
-
-        var result = await _managerWrapper.AiPromptManager.GetProjectsAsync();
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.GetProjectsAsync(User);
         return Ok(result);
     }
 
@@ -183,11 +156,8 @@ public class AiPromptController : BaseController
     [HttpGet(APIDictionary.AiPromptsLocations)]
     public async Task<ActionResult> GetLocationsAsync()
     {
-        // Check permission to read AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "read");
-        if (permissionResult != null) return permissionResult;
-
-        var result = await _managerWrapper.AiPromptManager.GetLocationsAsync();
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.GetLocationsAsync(User);
         return Ok(result);
     }
 
@@ -197,11 +167,8 @@ public class AiPromptController : BaseController
     [HttpPost(APIDictionary.AiPromptsTest)]
     public async Task<ActionResult> TestPromptAsync([FromBody] TestPromptRequest request)
     {
-        // Check permission to read AI prompts
-        var permissionResult = await CheckEntityPermissionAsync("AiPromptManagement", "read");
-        if (permissionResult != null) return permissionResult;
-
-        var result = await _managerWrapper.AiPromptManager.TestPromptAsync(request);
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.TestPromptAsync(User, request);
         return Ok(result);
     }
 } 

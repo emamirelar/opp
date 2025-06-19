@@ -8,36 +8,33 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.UNOPSBusiness.Attributes;
+using AutoMapper;
+using Microsoft.Extensions.Configuration;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
-public class UNOPSUserManagementManager : IUserManagementManager
+public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManager
 {
-    private readonly UNOPSAppDbContext _context;
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly RoleManager<PAOIdentityRole> _roleManager;
-    private readonly IBusinessSecurityService _securityService;
 
     public UNOPSUserManagementManager(
+        IMapper mapper,
         UNOPSAppDbContext context,
+        IConfiguration configuration,
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
         IBusinessSecurityService securityService)
+        : base(mapper, context, configuration, userManager, securityService)
     {
-        _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
-        _securityService = securityService;
     }
 
+    [RBAC("read", Entity = "UserManagement")]
     public async Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request)
     {
-        // Security check - only PARTNER_GLOBAL_ADMIN and ORG_ADMIN can access
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
-        {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can manage users.");
-        }
-
         // Start with UserInfos query
         var userInfoQuery = _context.UserInfos.Where(u => !u.IsDeleted);
 
@@ -144,14 +141,10 @@ public class UNOPSUserManagementManager : IUserManagementManager
         };
     }
 
+    [RBAC("read", Entity = "UserManagement", RequireEntityAccess = true, EntityIdParameterName = "userId")]
     public async Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, int userId)
     {
-        // Security check
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
-        {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can view user details.");
-        }
-
+        // RBAC interceptor handles security enforcement
         var userInfo = await _context.UserInfos
             .Where(u => u.UserId == userId && !u.IsDeleted)
             .FirstOrDefaultAsync();
@@ -161,7 +154,7 @@ public class UNOPSUserManagementManager : IUserManagementManager
         var aspNetUser = await _userManager.FindByEmailAsync(userInfo.UserEmail);
         if (aspNetUser == null) return null;
 
-        // Check org unit access for ORG_UNIT_ADMIN
+        // Additional org unit check for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
             var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
@@ -187,14 +180,10 @@ public class UNOPSUserManagementManager : IUserManagementManager
         };
     }
 
+    [RBAC("update", Entity = "UserManagement", RequireEntityAccess = true, EntityIdParameterName = "userId")]
     public async Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, int userId, UpdateUserRolesRequest request)
     {
-        // Security check
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
-        {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can update user roles.");
-        }
-
+        // RBAC interceptor handles security enforcement
         var userInfo = await _context.UserInfos
             .Where(u => u.UserId == userId && !u.IsDeleted)
             .FirstOrDefaultAsync();
@@ -224,7 +213,7 @@ public class UNOPSUserManagementManager : IUserManagementManager
             }
         }
 
-        // Check org unit access for ORG_UNIT_ADMIN
+        // Additional org unit and role validation for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
             var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
@@ -293,17 +282,13 @@ public class UNOPSUserManagementManager : IUserManagementManager
         return await GetUserByIdAsync(user, userId);
     }
 
+    [RBAC("read", Entity = "UserManagement")]
     public async Task<IEnumerable<RoleModel>> GetAvailableRolesAsync(ClaimsPrincipal user)
     {
-        // Security check
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
-        {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can view available roles.");
-        }
-
+        // RBAC interceptor handles security enforcement
         var roles = await _roleManager.Roles.ToListAsync();
 
-        // Filter roles based on user permissions
+        // Filter roles based on user permissions (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
             // ORG_UNIT_ADMIN can only see and assign certain roles
@@ -319,14 +304,10 @@ public class UNOPSUserManagementManager : IUserManagementManager
         }).OrderBy(r => r.Name);
     }
 
+    [RBAC("read", Entity = "UserManagement")]
     public async Task<bool> GetOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode)
     {
-        // Security check
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
-        {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can view organization settings.");
-        }
-
+        // RBAC interceptor handles security enforcement
         // Find the organization unit
         var orgUnit = await _context.OrganizationHierarchies
             .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
@@ -337,7 +318,7 @@ public class UNOPSUserManagementManager : IUserManagementManager
             throw new ArgumentException($"Organization unit with code '{orgUnitCode}' not found.");
         }
 
-        // Check org unit access for ORG_UNIT_ADMIN
+        // Additional org unit check for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
             var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
@@ -350,14 +331,10 @@ public class UNOPSUserManagementManager : IUserManagementManager
         return orgUnit.IsSelfManagementEnabled;
     }
 
+    [RBAC("update", Entity = "UserManagement")]
     public async Task UpdateOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode, UpdateOrgUnitSelfManagementRequest request)
     {
-        // Security check
-        if (!user.IsInRole("PARTNER_GLOB_ADMIN") && !user.IsInRole("ORG_UNIT_ADMIN"))
-        {
-            throw new UnauthorizedAccessException("Access denied. Only Partnership Global Admins and Org Unit Admins can update organization settings.");
-        }
-
+        // RBAC interceptor handles security enforcement
         // Find the organization unit
         var orgUnit = await _context.OrganizationHierarchies
             .Where(o => o.Code == orgUnitCode && !o.IsDeleted && o.Type == OrganizationUnitType.OrgUnit)
@@ -368,7 +345,7 @@ public class UNOPSUserManagementManager : IUserManagementManager
             throw new ArgumentException($"Organization unit with code '{orgUnitCode}' not found.");
         }
 
-        // Check org unit access for ORG_UNIT_ADMIN
+        // Additional org unit check for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
             var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
@@ -384,5 +361,35 @@ public class UNOPSUserManagementManager : IUserManagementManager
         orgUnit.LastModifiedBy = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
 
         await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Gets basic entity data for AI prompts and generic operations
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        if (user != null)
+        {
+            return await GetUserByIdAsync(user, entityId);
+        }
+        
+        // Fallback for cases without user context
+        var userInfo = await _context.UserInfos
+            .Where(u => u.UserId == entityId && !u.IsDeleted)
+            .FirstOrDefaultAsync();
+
+        if (userInfo == null) return null;
+
+        return new UserManagementModel
+        {
+            UserId = userInfo.UserId,
+            Name = userInfo.Name ?? "N/A",
+            Email = userInfo.UserEmail ?? "N/A",
+            OrgUnit = userInfo.OrgUnit ?? "N/A",
+            OrgUnitCode = userInfo.OrgUnit,
+            Roles = new List<string>(),
+            LastModifiedDate = userInfo.LastModifiedDate,
+            IsActive = true
+        };
     }
 } 
