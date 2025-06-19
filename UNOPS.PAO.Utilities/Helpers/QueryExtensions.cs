@@ -82,7 +82,10 @@ public static class QueryExtensions
         return new PaginationResponse<TSource>
         {
             TotalCount = totalCount,
-            Records = queryResults.Select(transform).ToList()
+            Records = queryResults.Select(transform).ToList(),
+            PageIndex = pageIndex,
+            PageSize = request.PageSize,
+            TotalPages = request.PageSize > 0 ? (int)Math.Ceiling((double)totalCount / request.PageSize) : 0
         };
     }
 
@@ -111,7 +114,10 @@ public static class QueryExtensions
         return new PaginationResponse<TSource>
         {
             TotalCount = totalCount,
-            Records = records.Select(transform).ToList()
+            Records = records.Select(transform).ToList(),
+            PageIndex = pageIndex,
+            PageSize = request.PageSize,
+            TotalPages = request.PageSize > 0 ? (int)Math.Ceiling((double)totalCount / request.PageSize) : 0
         };
     }
 
@@ -169,7 +175,10 @@ public static class QueryExtensions
         return new PaginationResponse<TSource>
         {
             TotalCount = totalCount,
-            Records = queryResults.Select(transform).ToList()
+            Records = queryResults.Select(transform).ToList(),
+            PageIndex = pageIndex,
+            PageSize = request.PageSize,
+            TotalPages = request.PageSize > 0 ? (int)Math.Ceiling((double)totalCount / request.PageSize) : 0
         };
     }
 
@@ -200,7 +209,10 @@ public static class QueryExtensions
         return new PaginationResponse<TSource>
         {
             TotalCount = totalCount,
-            Records = records.Select(transform).ToList()
+            Records = records.Select(transform).ToList(),
+            PageIndex = pageIndex,
+            PageSize = request.PageSize,
+            TotalPages = request.PageSize > 0 ? (int)Math.Ceiling((double)totalCount / request.PageSize) : 0
         };
     }
 

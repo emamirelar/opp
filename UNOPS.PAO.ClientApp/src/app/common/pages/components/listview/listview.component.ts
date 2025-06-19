@@ -246,7 +246,8 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   );
 
   // Computed properties
-  isLoading = computed(() => this.loadingState() || this.isLoadingMore());
+  isLoading = computed(() => this.loadingState()); // Only initial loading, not load more
+  isLoadingAny = computed(() => this.loadingState() || this.isLoadingMore()); // Any loading state
   hasError = computed(() => this.errorState());
   currentPageData = computed(() => this.allLoadedData());
   totalRecordsCount = computed(() => this.dataState().totalCount);
@@ -513,15 +514,54 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Handle load more event for infinite scroll
+   * Handle load more event for infinite scroll with enhanced error handling
    */
   onLoadMore(): void {
-    if (this.hasMoreData() && !this.isLoadingMore()) {
-      this.isLoadingMore.set(true);
-      this.pageIndex++;
-      this.loadData();
-      this.loadMore.emit();
+    // Enhanced validation
+    if (!this.canLoadMoreData()) {
+      console.warn('LoadMore ignored: conditions not met', {
+        hasMoreData: this.hasMoreData(),
+        isLoadingMore: this.isLoadingMore(),
+        dataUrl: this._dataUrl,
+        currentDataLength: this.allLoadedData().length
+      });
+      return;
     }
+
+    try {
+      // Set loading state immediately
+      this.isLoadingMore.set(true);
+      this.errorState.set(false);
+      
+      // Increment page for next batch
+      this.pageIndex++;
+      
+      // Load the next page
+      this.loadData();
+      
+      // Emit event for external listeners
+      this.loadMore.emit();
+      
+    } catch (error) {
+      console.error('Error in onLoadMore:', error);
+      this.isLoadingMore.set(false);
+      this.errorState.set(true);
+      // Rollback page increment on error
+      this.pageIndex--;
+    }
+  }
+
+  /**
+   * Enhanced validation for load more capability
+   */
+  private canLoadMoreData(): boolean {
+    return (
+      this.hasMoreData() && 
+      !this.isLoadingMore() && 
+      !this.loadingState() && 
+      !!this._dataUrl &&
+      this.allLoadedData().length > 0
+    );
   }
 
   /**
@@ -766,7 +806,11 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       return; // Avoid concurrent calls
     }
 
-    this.loadingState.set(true);
+    // Only show main loading for initial load (page 1), not for load more
+    const isInitialLoad = this.pageIndex === 1;
+    if (isInitialLoad) {
+      this.loadingState.set(true);
+    }
     this.errorState.set(false);
 
     const params = this.buildHttpParams();
@@ -774,15 +818,35 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     this.http.get<any>(this._dataUrl, { params }).pipe(
       tap(response => {
         this.handleDataResponse(response);
-        this.loadingState.set(false);
+        // Only reset main loading state if it was set (for initial load)
+        if (isInitialLoad) {
+          this.loadingState.set(false);
+        }
         // Check component width after data loaded
         setTimeout(() => this.checkComponentWidth(), 100);
       }),
       catchError(err => {
-        this.loadingState.set(false);
+        // Reset loading states
+        if (isInitialLoad) {
+          this.loadingState.set(false);
+        }
+        this.isLoadingMore.set(false); // Important: reset load more state on error
         this.errorState.set(true);
+        
+        // Rollback page increment if it was a load more operation
+        if (this.pageIndex > 1) {
+          this.pageIndex--;
+          console.error('Error loading more data, rolling back pageIndex to:', this.pageIndex);
+        }
+        
         console.error('Error loading data:', err);
-        this.dataState.set({ records: [], totalCount: 0 });
+        
+        // Don't clear existing data on load more error, only on initial load error
+        if (this.pageIndex === 1) {
+          this.dataState.set({ records: [], totalCount: 0 });
+          this.allLoadedData.set([]);
+        }
+        
         return of({ records: [], totalCount: 0 } as ListViewData<T>);
       })
     ).subscribe();
@@ -816,12 +880,13 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Handle data response from server
+   * Handle data response from server with enhanced load more management
    */
   private handleDataResponse(data: any): void {
     let totalCount = 0;
     let newRecords: T[] = [];
 
+    // Parse response data
     if (Array.isArray(data)) {
       totalCount = data.length;
       newRecords = data;
@@ -830,14 +895,26 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       newRecords = data.records;
     }
 
+    // Validate load more response
+    if (this.pageIndex > 1 && newRecords.length === 0) {
+      console.warn('Load more returned empty results, marking as no more data');
+      this.hasMoreData.set(false);
+      this.isLoadingMore.set(false);
+      return;
+    }
+
     // For infinite scroll, append new data to existing data
     if (this.pageIndex === 1) {
       // First page or reset - replace all data
       this.allLoadedData.set(newRecords);
     } else {
-      // Subsequent pages - append to existing data
+      // Subsequent pages - append to existing data only if we have new records
       const currentData = this.allLoadedData();
-      this.allLoadedData.set([...currentData, ...newRecords]);
+      const combinedData = [...currentData, ...newRecords];
+      
+      // Prevent duplicate entries (based on ID field if available)
+      const uniqueData = this.removeDuplicateRecords(combinedData);
+      this.allLoadedData.set(uniqueData);
     }
 
     // Update state signals
@@ -848,11 +925,36 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
 
     // Check if there's more data to load
     const loadedCount = this.allLoadedData().length;
-    this.hasMoreData.set(loadedCount < totalCount);
+    const hasMoreData = loadedCount < totalCount && newRecords.length > 0;
+    this.hasMoreData.set(hasMoreData);
+    
+    // Reset loading state
     this.isLoadingMore.set(false);
 
     // Emit the total records count
     this.totalRecordsChange.emit(totalCount);
+
+    // Log success for debugging
+    if (this.pageIndex > 1) {
+      console.log(`Load more successful: page ${this.pageIndex}, loaded ${newRecords.length} new records, total: ${loadedCount}/${totalCount}`);
+    }
+  }
+
+  /**
+   * Remove duplicate records based on ID field
+   */
+  private removeDuplicateRecords(records: T[]): T[] {
+    if (!records || records.length === 0) return records;
+    
+    const seen = new Set();
+    return records.filter(record => {
+      const id = record[this.idField as keyof T];
+      if (!id || seen.has(id)) {
+        return false;
+      }
+      seen.add(id);
+      return true;
+    });
   }
 
   /**

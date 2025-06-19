@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, HostListener, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, HostListener, inject, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
@@ -34,9 +34,18 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
     .ellipsis-text:hover {
       cursor: help;
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-out;
+    }
   `]
 })
-export class ListviewCardComponent<T = any> implements OnChanges {
+export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit, OnDestroy {
   // Inputs
   @Input() columns: ListViewColumn[] = [];
   @Input() config!: ListViewConfig;
@@ -59,9 +68,29 @@ export class ListviewCardComponent<T = any> implements OnChanges {
 
   // Custom template references
   @ContentChild('cardActionsTemplate') actionsTemplate?: TemplateRef<any>;
+  
+  // ViewChild for intersection observer sentinel
+  @ViewChild('loadMoreSentinel') loadMoreSentinel?: ElementRef<HTMLDivElement>;
 
   // Computed values
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
+  
+  // Load more skeletons count - show a few placeholder cards
+  loadMoreSkeletonsCount = computed(() => {
+    // Show 2-4 skeletons based on page size, but keep it reasonable
+    const pageSize = this.config?.pageSize || 20;
+    return Math.min(Math.max(Math.floor(pageSize / 5), 2), 4);
+  });
+
+  // Array constructor for template access
+  Array = Array;
+  
+  // Intersection Observer for infinite scroll
+  private intersectionObserver?: IntersectionObserver;
+  
+  // Loading management
+  private lastLoadMoreTime = 0;
+  private readonly LOAD_MORE_DEBOUNCE_MS = 500; // Prevent rapid calls
 
   // Add computed property to check if safe to render content
   canRenderContent = computed(() => {
@@ -154,7 +183,26 @@ export class ListviewCardComponent<T = any> implements OnChanges {
     // Force change detection when data or columns change
     setTimeout(() => {
       this.cdr.detectChanges();
+      // Reobserve the sentinel when data changes
+      this.observeLoadMoreSentinel();
     }, 0);
+  }
+
+  /**
+   * AfterViewInit - Setup intersection observer
+   */
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+    this.observeLoadMoreSentinel();
+  }
+
+  /**
+   * OnDestroy - Cleanup intersection observer
+   */
+  ngOnDestroy(): void {
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+    }
   }
 
   /**
@@ -165,27 +213,81 @@ export class ListviewCardComponent<T = any> implements OnChanges {
   }
 
   /**
-   * Handle window scroll event to detect when user reaches bottom
+   * Setup Intersection Observer for infinite scroll
    */
-  @HostListener('window:scroll', ['$event'])
-  onWindowScroll(): void {
-    const threshold = 200; // Load more when 200px from bottom
-    const windowHeight = window.innerHeight;
-    const documentHeight = document.documentElement.scrollHeight;
-    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  private setupIntersectionObserver(): void {
+    if (!('IntersectionObserver' in window)) {
+      // Fallback for older browsers - keep the button
+      console.warn('IntersectionObserver not supported, infinite scroll disabled');
+      return;
+    }
 
-    if (scrollTop + windowHeight >= documentHeight - threshold) {
-      this.onLoadMore();
+    // Create intersection observer with root margin for early triggering
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          // When the sentinel becomes visible, load more data
+          if (entry.isIntersecting && this.hasMoreData && !this.isLoadingMore) {
+            this.onLoadMore();
+          }
+        });
+      },
+      {
+        // Root margin: start loading when element is 200px away from being visible
+        rootMargin: '200px',
+        // Threshold: trigger when any part of the element is visible
+        threshold: 0
+      }
+    );
+  }
+
+  /**
+   * Observe the load more sentinel element
+   */
+  private observeLoadMoreSentinel(): void {
+    if (this.intersectionObserver && this.loadMoreSentinel?.nativeElement) {
+      // Unobserve previous element first
+      this.intersectionObserver.disconnect();
+      // Observe the new sentinel element
+      this.intersectionObserver.observe(this.loadMoreSentinel.nativeElement);
     }
   }
 
   /**
-   * Trigger load more event
+   * Trigger load more event with improved loading management
    */
   onLoadMore(): void {
-    if (this.hasMoreData && !this.isLoadingMore) {
-      this.loadMore.emit();
+    const now = Date.now();
+    
+    // Multiple layers of protection
+    if (!this.canLoadMore() || !this.shouldAllowLoadMore(now)) {
+      return;
     }
+
+    // Update last load time for debouncing
+    this.lastLoadMoreTime = now;
+    
+    // Emit the load more event
+    this.loadMore.emit();
+  }
+
+  /**
+   * Check if we can load more data
+   */
+  private canLoadMore(): boolean {
+    return (
+      this.hasMoreData && 
+      !this.isLoadingMore && 
+      this.data && 
+      this.data.length > 0
+    );
+  }
+
+  /**
+   * Check if we should allow load more based on timing
+   */
+  private shouldAllowLoadMore(currentTime: number): boolean {
+    return (currentTime - this.lastLoadMoreTime) >= this.LOAD_MORE_DEBOUNCE_MS;
   }
 
   /**
