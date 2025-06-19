@@ -16,6 +16,7 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Business.Repositories.Generic;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Attributes;
 
 public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 {
@@ -30,25 +31,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         return mapper.Map<UNOPSInteraction, InteractionModel>(entity);
     }
 
-    private async Task<InteractionModel> MapEntityToModelWithPermissionsAsync(UNOPSInteraction entity, IMapper mapper, ClaimsPrincipal user)
-    {
-        var result = MapEntityToModel(entity, mapper);
-        
-        // Add permissions if security service is available
-        if (_securityService != null)
-        {
-            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
-            result.Permissions = new EntityPermissionsModel
-            {
-                CanRead = ((dynamic)permissions).canRead,
-                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
-                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete"),
-                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create")
-            };
-        }
-        
-        return result;
-    }
+
 
     private UNOPSInteraction MapModelToEntity(InteractionRequest model, UNOPSInteraction entity)
     {
@@ -73,7 +56,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     }
 
     public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
-        : base(mapper, context, configuration)
+        : base(mapper, context, configuration, null, securityService)
     {
         this.mapper = mapper;
         this.context = context;
@@ -371,78 +354,64 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         return MapEntityToModel(entity, mapper);
     }
 
-    // New secure methods with row-level filtering and permissions
+    /// <summary>
+    /// Gets all interactions with row-level security applied
+    /// </summary>
+    [RBAC("read", Entity = "Interaction", ApplyRowFiltering = true, ApplyColumnFiltering = true)]
     public async Task<PaginationResponse<InteractionModel>> GetInteractionsAsync(ClaimsPrincipal user, PaginationRequest request)
     {
+        // RBAC interceptor handles security enforcement
         var query = interactionRepository
             .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"])
             .AsQueryable();
 
-        // Apply row-level security filters
-        if (_securityService != null)
-        {
-            query = await _securityService.ApplyRowFiltersAsync(query, user, "read");
-        }
-
-        // Apply pagination with permissions
-        var pagedResults = query.Paginate(
+        var interactions = query.Paginate(
             x => MapEntityToModel(x, mapper),
             request
         );
 
-        // Add permissions to each interaction
-        if (_securityService != null)
+        // Add permissions for frontend UI
+        foreach (var interaction in interactions.Records)
         {
-            var interactionsWithPermissions = new List<InteractionModel>();
-            foreach (var interaction in pagedResults.Records)
+            var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
+            if (entity != null)
             {
-                var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
-                if (entity != null)
-                {
-                    var interactionWithPermissions = await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
-                    interactionsWithPermissions.Add(interactionWithPermissions);
-                }
+                interaction.Permissions = await GetEntityPermissionsAsync(entity, user);
             }
-            
-            return new PaginationResponse<InteractionModel>
-            {
-                Records = interactionsWithPermissions,
-                TotalCount = pagedResults.TotalCount,
-                PageIndex = pagedResults.PageIndex,
-                PageSize = pagedResults.PageSize,
-                TotalPages = pagedResults.TotalPages
-            };
         }
 
-        return pagedResults;
+        return interactions;
     }
 
+    /// <summary>
+    /// Gets a specific interaction with row-level security applied
+    /// </summary>
+    [RBAC("read", Entity = "Interaction", RequireEntityAccess = true, EntityIdParameterName = "id", ApplyColumnFiltering = true)]
     public async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
     {
+        // RBAC interceptor handles security enforcement
         var item = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
         if (item == null) return null;
 
-        // Check if user can access this specific interaction
-        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(item, user, "read"))
-        {
-            return null; // User cannot access this interaction
-        }
+        var result = MapEntityToModel(item, mapper);
+        
+        // Add permissions for frontend UI
+        result.Permissions = await GetEntityPermissionsAsync(item, user);
 
-        return await MapEntityToModelWithPermissionsAsync(item, mapper, user);
+        return result;
     }
 
+    /// <summary>
+    /// Updates an interaction with permission validation
+    /// </summary>
+    [RBAC("update", Entity = "Interaction", RequireEntityAccess = true, EntityIdParameterName = "model.Id")]
     public async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
     {
+        // RBAC interceptor handles security enforcement
         var entity = await interactionRepository.GetByIdAsync(model.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
         if (entity == null)
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");
-        }
-
-        // Check if user can update this interaction
-        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "update"))
-        {
-            throw new UnauthorizedAccessException("You don't have permission to update this interaction");
         }
 
         entity = MapModelToEntity(model, entity);
@@ -456,28 +425,78 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         await interactionRepository.UpdateAsync(entity);
 
-        return await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
+        var result = MapEntityToModel(entity, mapper);
+        
+        // Add permissions for frontend UI
+        result.Permissions = await GetEntityPermissionsAsync(entity, user);
+
+        return result;
     }
 
+    /// <summary>
+    /// Deletes an interaction with permission validation
+    /// </summary>
+    [RBAC("delete", Entity = "Interaction", RequireEntityAccess = true, EntityIdParameterName = "id")]
     public async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
     {
+        // RBAC interceptor handles security enforcement
         var entity = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
         if (entity == null) return;
-
-        // Check if user can delete this interaction
-        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(entity, user, "delete"))
-        {
-            throw new UnauthorizedAccessException("You don't have permission to delete this interaction");
-        }
 
         await interactionRepository.Delete(entity);
     }
 
     /// <summary>
-    /// Gets comprehensive interaction details for AI prompts including all related entities
+    /// Gets comprehensive interaction details with security checks for AI prompts
     /// </summary>
-    /// <param name="id">The interaction ID</param>
-    /// <returns>Complete interaction details with all relationships</returns>
+    [RBAC("read", Entity = "Interaction", RequireEntityAccess = true, EntityIdParameterName = "id", ApplyColumnFiltering = true)]
+    public async Task<InteractionModel?> GetInteractionDetailsAsync(ClaimsPrincipal user, int id)
+    {
+        // RBAC interceptor handles security enforcement
+        var item = await interactionRepository.GetByIdAsync(id,
+            includes: new[]
+            {
+                "OrgUnit",
+                "InteractionContacts",
+                "InteractionPartners", 
+                "InteractionUsers",
+                "InteractionContacts.Contact",
+                "InteractionContacts.Contact.Partner",
+                "InteractionContacts.Contact.Partner.PartnerOffice",
+                "InteractionPartners.Partner",
+                "InteractionUsers.User",
+                "Documents"
+            });
+
+        if (item == null) return null;
+
+        var result = MapEntityToModel(item, mapper);
+        
+        // Populate junction table IDs
+        if (item.InteractionContacts != null)
+        {
+            result.ContactIds = item.InteractionContacts.Select(ic => ic.ContactId).ToList();
+        }
+
+        if (item.InteractionPartners != null)
+        {
+            result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
+        }
+
+        if (item.InteractionUsers != null)
+        {
+            result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
+        }
+
+        // Add permissions for frontend UI
+        result.Permissions = await GetEntityPermissionsAsync(item, user);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets comprehensive interaction details for AI prompts including all related entities (legacy method without security)
+    /// </summary>
     public async Task<InteractionModel?> GetInteractionDetailsAsync(int id)
     {
         var item = await interactionRepository.GetByIdAsync(id,
@@ -500,61 +519,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             return null;
         }
 
-        // Map the entity to model with all relationships
         var result = MapEntityToModel(item, mapper);
-        
-        // Populate junction table IDs
-        if (item.InteractionContacts != null)
-        {
-            result.ContactIds = item.InteractionContacts.Select(ic => ic.ContactId).ToList();
-        }
-
-        if (item.InteractionPartners != null)
-        {
-            result.PartnerIds = item.InteractionPartners.Select(ip => ip.PartnerId).ToList();
-        }
-
-        if (item.InteractionUsers != null)
-        {
-            result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Gets comprehensive interaction details with security checks for AI prompts
-    /// </summary>
-    /// <param name="user">Current user claims</param>
-    /// <param name="id">The interaction ID</param>
-    /// <returns>Complete interaction details with all relationships and permissions</returns>
-    public async Task<InteractionModel?> GetInteractionDetailsAsync(ClaimsPrincipal user, int id)
-    {
-        var item = await interactionRepository.GetByIdAsync(id,
-            includes: new[]
-            {
-                "OrgUnit",
-                "InteractionContacts",
-                "InteractionPartners", 
-                "InteractionUsers",
-                "InteractionContacts.Contact",
-                "InteractionContacts.Contact.Partner",
-                "InteractionContacts.Contact.Partner.PartnerOffice",
-                "InteractionPartners.Partner",
-                "InteractionUsers.User",
-                "Documents"
-            });
-
-        if (item == null) return null;
-
-        // Check if user can access this specific interaction
-        if (_securityService != null && !await _securityService.CanUserAccessEntityAsync(item, user, "read"))
-        {
-            return null; // User cannot access this interaction
-        }
-
-        // Map the entity to model with permissions
-        var result = await MapEntityToModelWithPermissionsAsync(item, mapper, user);
         
         // Populate junction table IDs
         if (item.InteractionContacts != null)
@@ -580,6 +545,13 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// </summary>
     public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
     {
-        return await GetInteractionDetailsAsync(entityId);
+        if (user != null)
+        {
+            return await GetInteractionDetailsAsync(user, entityId);
+        }
+        else
+        {
+            return await GetInteractionDetailsAsync(entityId);
+        }
     }
 } 
