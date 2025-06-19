@@ -304,6 +304,9 @@ public class Startup
         // Add Generic Row Filter Service
         services.AddScoped<IGenericRowFilterService, GenericRowFilterService>();
         
+        // Add Secure Specification Factory for RBAC-integrated pagination
+        services.AddScoped<ISecureSpecificationFactory, SecureSpecificationFactory>();
+        
         // Configure authorization
         services.AddAuthorization(options =>
         {

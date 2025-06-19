@@ -366,6 +366,9 @@
     "examplePrompt3": "Summarize recent partner interactions",
     "learnMore": "Learn more about what you can use AI Assistant for"
   },
+  "actions": {
+    "loadMore": "Load More"
+  },
   "common": {
     "cancel": "Cancel",
     "capture": "Capture",
@@ -408,7 +411,8 @@
   },
   "loading": {
     "contactData": "Loading contact data...",
-    "partnerData": "Loading partner data..."
+    "partnerData": "Loading partner data...",
+    "loadingMore": "Loading more..."
   },
   "interactions": {
     "title": "Interactions",

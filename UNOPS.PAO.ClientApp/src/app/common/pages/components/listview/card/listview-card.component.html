@@ -164,26 +164,40 @@
         }
       </div>
 
-    <!-- Load more indicator -->
-    @if (isLoadingMore) {
-      <div class="flex justify-center p-4">
-        <div class="flex items-center gap-2">
-          <i class="pi pi-spin pi-spinner"></i>
-          <span>{{ 'loading.loadingMore' | translate }}</span>
-        </div>
-      </div>
-    }
+      <!-- Intersection Observer Sentinel - Invisible element for infinite scroll detection -->
+      @if (hasMoreData && !isLoadingMore && data.length > 0) {
+        <div #loadMoreSentinel class="h-1 w-full"></div>
+      }
 
-    <!-- Load more button (if needed as fallback) -->
-    @if (hasMoreData && !isLoadingMore && data.length > 0) {
-      <div class="flex justify-center p-4">
-        <button
-          type="button"
-          class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors"
-          (click)="onLoadMore()">
-          {{ 'actions.loadMore' | translate }}
-        </button>
-      </div>
-    }
+      <!-- Load more skeletons - match the grid layout -->
+      @if (isLoadingMore) {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          @for (i of Array(loadMoreSkeletonsCount()).fill(0); track $index) {
+            <div class="bg-white p-4 rounded-lg flex flex-row gap-4 animate-fadeIn shadow-sm">
+              <p-skeleton shape="circle" size="2.6rem" />
+              <div class="flex flex-col gap-2 w-full">
+                <div class="mb-2">
+                  <p-skeleton width="85%" height="1rem"></p-skeleton>
+                </div>
+                <div class="mb-2">
+                  <p-skeleton width="65%" height=".75rem"></p-skeleton>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Load more button (if needed as fallback) -->
+      @if (hasMoreData && !isLoadingMore && data.length > 0) {
+        <div class="flex justify-center p-4">
+          <button
+            type="button"
+            class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition-colors"
+            (click)="onLoadMore()">
+            {{ 'actions.loadMore' | translate }}
+          </button>
+        </div>
+      }
   }
 </div>
