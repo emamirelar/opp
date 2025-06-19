@@ -1,10 +1,10 @@
 <!-- Search container -->
 <div class="relative" #searchContainer>
   <!-- Mobile search icon (visible on small screens) -->
-  <button 
-    *ngIf="!isExpanded" 
-    (click)="toggleExpand()" 
-    class="md:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 ml-auto -mr-4"
+  <button
+    *ngIf="!isExpanded"
+    (click)="toggleExpand()"
+    class="lg:hidden flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 ml-auto -mr-4"
     type="button">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -12,17 +12,17 @@
   </button>
 
   <!-- Search input group (hidden on small screens unless expanded) -->
-  <div 
-    [ngClass]="{'hidden md:flex': !isExpanded, 'flex md:relative fixed top-2 md:top-0 left-0 right-0 z-50': isExpanded}"
-    class="items-center w-full h-12 rounded-full border-solid border border-gray-200 bg-white shadow-sm hover:shadow-md focus-within:shadow-md transition-shadow overflow-hidden px-4 md:max-w-2xl">
+  <div
+    [ngClass]="{'hidden lg:flex': !isExpanded, 'flex lg:relative fixed top-2 lg:top-0 left-4 right-4 lg:left-0 lg:right-0 z-50': isExpanded}"
+    class="items-center h-12 rounded-full border-solid border border-gray-200 bg-white shadow-sm hover:shadow-md focus-within:shadow-md transition-shadow overflow-hidden px-4 lg:max-w-2xl">
     <!-- Search icon -->
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
     </svg>
-    
+
     <!-- Search input -->
-    <input 
-      type="text" 
+    <input
+      type="text"
       class="flex-1 w-full h-full ml-2 outline-none bg-transparent"
       [placeholder]="'search.placeholder' | translate"
       [formControl]="searchControl"
@@ -31,7 +31,7 @@
       (keydown.enter)="goToResultsPage()"
 
     />
-    
+
     <!-- Loading indicator -->
     <div *ngIf="isLoading()" class="flex items-center justify-center ml-1">
       <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -39,22 +39,22 @@
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
     </div>
-    
+
     <!-- Search button - show when input has text -->
-    <button 
-      *ngIf="searchControl.value" 
-      (click)="goToResultsPage()" 
+    <button
+      *ngIf="searchControl.value"
+      (click)="goToResultsPage()"
       class="flex items-center justify-center h-8 w-8 rounded-full hover:bg-gray-100 ml-1"
       type="button">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
       </svg>
     </button>
-    
+
     <!-- Clear button - show when input has text -->
-    <button 
-      *ngIf="searchControl.value" 
-      (click)="clearSearch()" 
+    <button
+      *ngIf="searchControl.value"
+      (click)="clearSearch()"
       class="flex items-center justify-center h-6 w-6 rounded-full hover:bg-gray-100"
       type="button">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -62,13 +62,13 @@
       </svg>
     </button>
   </div>
-  
+
   <!-- Search results dropdown -->
-  
-  @if(showResults) {
+
+  @if(showResults && isExpanded) {
   <div
-       [ngClass]="{'md:absolute': !isExpanded, 'fixed md:absolute top-16 md:top-auto left-0 right-0 z-50': isExpanded}"
-       class="mt-1 bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto w-full md:max-w-2xl">
+       [ngClass]="{'lg:absolute': !isExpanded, 'fixed lg:absolute top-16 lg:top-auto left-4 right-4 lg:left-0 lg:right-0 z-50': isExpanded}"
+       class="mt-1 bg-white rounded-lg shadow-lg border border-gray-200 overflow-y-auto lg:max-w-2xl">
     <!-- Recent searches section -->
     <div *ngIf="recentSearches.length > 0" class="p-2">
       <div class="text-xs font-medium text-gray-500 px-3 py-1">{{ 'search.recentSearches' | translate }}</div>
@@ -83,36 +83,36 @@
         <span class="text-sm">{{ item }}</span>
       </button>
     </div>
-    
+
     <!-- Search results preview -->
     <div class="border-t border-gray-100" *ngIf="filteredResults.length > 0">
       <div class="flex justify-between items-center px-3 py-1">
         <div class="text-xs font-medium text-gray-500">{{ 'search.results' | translate }}</div>
-        <button 
-          (click)="goToResultsPage()" 
+        <button
+          (click)="goToResultsPage()"
           class="text-xs text-blue-600 hover:underline"
           type="button">
           {{ 'search.showAllResults' | translate }}
         </button>
       </div>
       <button
-        *ngFor="let result of filteredResults" 
+        *ngFor="let result of filteredResults"
         (click)="selectResult(result)"
         class="flex items-center w-full px-3 py-2 hover:bg-gray-100"
         type="button">
-        
+
         <!-- Avatar/Icon based on result type -->
         <div class="flex-shrink-0 mr-3">
-          <div *ngIf="result.type === 'contact'" 
+          <div *ngIf="result.type === 'contact'"
                class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-medium">
             {{ getInitials(result.title) }}
           </div>
-          <div *ngIf="result.type === 'partner'" 
+          <div *ngIf="result.type === 'partner'"
                class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 text-xs font-medium">
             {{ getInitials(result.title) }}
           </div>
         </div>
-        
+
         <div class="flex flex-col text-left">
           <span class="text-sm font-medium">{{ result.title }}</span>
           <div class="flex items-center">
@@ -122,11 +122,11 @@
           </div>
         </div>
       </button>
-      
+
       <!-- "See more" button if there are more than 5 results -->
       <div *ngIf="allResults.length > 5" class="px-3 py-2 border-t border-gray-100">
-        <button 
-          (click)="goToResultsPage()" 
+        <button
+          (click)="goToResultsPage()"
           class="w-full text-center text-sm text-blue-600 hover:underline"
           type="button">
           {{ 'search.seeAllResults' | translate }}

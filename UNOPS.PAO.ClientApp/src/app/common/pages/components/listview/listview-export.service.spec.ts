@@ -58,61 +58,69 @@ describe('ListviewExportService', () => {
   });
 
   describe('Basic Export Functionality', () => {
-    it('should export data to Google Sheets successfully', () => {
+    it('should export data to Google Sheets successfully', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
+
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          expect(feedbackDialogService.showInfoToast).toHaveBeenCalledWith({
+            detail: 'Preparing contacts for export...',
+            sticky: true
+          });
+          expect(feedbackDialogService.clearAll).toHaveBeenCalled();
+          expect(confirmationService.confirm).toHaveBeenCalled();
+          done();
+        },
+        error: done.fail
+      });
 
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && req.params.get('export') === 'true'
       );
       req.flush(mockData);
-
-      result$.subscribe(result => {
-        expect(result).toEqual(mockExportResult);
-        expect(feedbackDialogService.showInfoToast).toHaveBeenCalledWith({
-          detail: 'Preparing contacts for export...',
-          sticky: true
-        });
-        expect(feedbackDialogService.clearAll).toHaveBeenCalled();
-        expect(confirmationService.confirm).toHaveBeenCalled();
-      });
     });
 
-    it('should handle empty data response', () => {
+    it('should handle empty data response', (done) => {
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
-      const req = httpMock.expectOne(req => req.url === '/api/contacts');
-      req.flush([]);
-
       result$.subscribe({
+        next: () => done.fail('Expected error but got success'),
         error: (error) => {
           expect(error.message).toBe('No contacts found to export');
           expect(feedbackDialogService.showWarningToast).toHaveBeenCalledWith({
             detail: 'No contacts found to export'
           });
+          done();
         }
       });
-    });
-
-    it('should handle HTTP errors', () => {
-      const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
       const req = httpMock.expectOne(req => req.url === '/api/contacts');
-      req.error(new ErrorEvent('Network error'));
+      req.flush([]);
+    });
+
+    it('should handle HTTP errors', (done) => {
+      const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
       result$.subscribe({
+        next: () => done.fail('Expected error but got success'),
         error: () => {
           expect(feedbackDialogService.showErrorToast).toHaveBeenCalledWith({
             detail: jasmine.stringContaining('Failed to export contacts')
           });
+          done();
         }
       });
+
+      const req = httpMock.expectOne(req => req.url === '/api/contacts');
+      req.error(new ErrorEvent('Network error'));
     });
   });
 
   describe('Search Parameters', () => {
-    it('should include simple search parameters', () => {
+    it('should include simple search parameters', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const result$ = service.exportToGoogleSheet(
@@ -121,16 +129,22 @@ describe('ListviewExportService', () => {
         'test search'
       );
 
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && 
         req.params.get('searchText') === 'test search'
       );
       req.flush(mockData);
-
-      result$.subscribe();
     });
 
-    it('should include advanced search parameters', () => {
+    it('should include advanced search parameters', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const searchParams: SearchParams = {
@@ -145,17 +159,23 @@ describe('ListviewExportService', () => {
         searchParams
       );
 
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && 
         req.params.get('advancedSearch') === 'true' &&
         req.params.get('searchCriteria') === JSON.stringify(searchParams.fieldSearches)
       );
       req.flush(mockData);
-
-      result$.subscribe();
     });
 
-    it('should include general search from SearchParams object', () => {
+    it('should include general search from SearchParams object', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const searchParams: SearchParams = {
@@ -168,18 +188,24 @@ describe('ListviewExportService', () => {
         searchParams
       );
 
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && 
         req.params.get('searchText') === 'general search term'
       );
       req.flush(mockData);
-
-      result$.subscribe();
     });
   });
 
   describe('Sorting Parameters', () => {
-    it('should include sorting parameters', () => {
+    it('should include sorting parameters', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const result$ = service.exportToGoogleSheet(
@@ -190,17 +216,23 @@ describe('ListviewExportService', () => {
         'desc'
       );
 
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && 
         req.params.get('orderBy') === 'name' &&
         req.params.get('ascending') === 'false'
       );
       req.flush(mockData);
-
-      result$.subscribe();
     });
 
-    it('should handle ascending sort', () => {
+    it('should handle ascending sort', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const result$ = service.exportToGoogleSheet(
@@ -211,19 +243,25 @@ describe('ListviewExportService', () => {
         'asc'
       );
 
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => 
         req.url === '/api/contacts' && 
         req.params.get('orderBy') === 'email' &&
         req.params.get('ascending') === 'true'
       );
       req.flush(mockData);
-
-      result$.subscribe();
     });
   });
 
   describe('Response Format Handling', () => {
-    it('should handle response with records property', () => {
+    it('should handle response with records property', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const response = {
@@ -233,19 +271,23 @@ describe('ListviewExportService', () => {
 
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
+            jasmine.any(Array),
+            jasmine.stringMatching(/Contacts Export \d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}/)
+          );
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/contacts');
       req.flush(response);
-
-      result$.subscribe(result => {
-        expect(result).toEqual(mockExportResult);
-        expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
-          jasmine.any(Array),
-          jasmine.stringMatching(/Contacts Export \d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}/)
-        );
-      });
     });
 
-    it('should handle response with data property', () => {
+    it('should handle response with data property', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const response = {
@@ -255,26 +297,38 @@ describe('ListviewExportService', () => {
 
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/contacts');
       req.flush(response);
-
-      result$.subscribe();
     });
 
-    it('should handle direct array response', () => {
+    it('should handle direct array response', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
+      result$.subscribe({
+        next: (result) => {
+          expect(result).toEqual(mockExportResult);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/contacts');
       req.flush(mockData);
-
-      result$.subscribe();
     });
   });
 
   describe('Entity-Specific Transforms', () => {
-    it('should use contact transform for contact entities', () => {
+    it('should use contact transform for contact entities', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const contactData = [
@@ -289,26 +343,30 @@ describe('ListviewExportService', () => {
 
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
+      result$.subscribe({
+        next: () => {
+          expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
+            jasmine.arrayContaining([
+              jasmine.objectContaining({
+                ID: 1,
+                FirstName: 'John',
+                LastName: 'Doe',
+                Email: 'john@example.com',
+                Partner: 'Test Partner'
+              })
+            ]),
+            jasmine.any(String)
+          );
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/contacts');
       req.flush(contactData);
-
-      result$.subscribe(() => {
-        expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
-          jasmine.arrayContaining([
-            jasmine.objectContaining({
-              ID: 1,
-              FirstName: 'John',
-              LastName: 'Doe',
-              Email: 'john@example.com',
-              Partner: 'Test Partner'
-            })
-          ]),
-          jasmine.any(String)
-        );
-      });
     });
 
-    it('should use partner transform for partner entities', () => {
+    it('should use partner transform for partner entities', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const partnerData = [
@@ -323,26 +381,30 @@ describe('ListviewExportService', () => {
 
       const result$ = service.exportToGoogleSheet('Partner', '/api/partners');
 
+      result$.subscribe({
+        next: () => {
+          expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
+            jasmine.arrayContaining([
+              jasmine.objectContaining({
+                ID: 1,
+                Name: 'Test Partner',
+                ShortName: 'TP',
+                Status: 'Active',
+                Phone: '123-456-7890'
+              })
+            ]),
+            jasmine.any(String)
+          );
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/partners');
       req.flush(partnerData);
-
-      result$.subscribe(() => {
-        expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
-          jasmine.arrayContaining([
-            jasmine.objectContaining({
-              ID: 1,
-              Name: 'Test Partner',
-              ShortName: 'TP',
-              Status: 'Active',
-              Phone: '123-456-7890'
-            })
-          ]),
-          jasmine.any(String)
-        );
-      });
     });
 
-    it('should use interaction transform for interaction entities', () => {
+    it('should use interaction transform for interaction entities', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const interactionData = [
@@ -357,26 +419,30 @@ describe('ListviewExportService', () => {
 
       const result$ = service.exportToGoogleSheet('Interaction', '/api/interactions');
 
+      result$.subscribe({
+        next: () => {
+          expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
+            jasmine.arrayContaining([
+              jasmine.objectContaining({
+                ID: 1,
+                Type: 'Meeting',
+                Date: '2023-01-01',
+                Subject: 'Test Meeting',
+                ContactId: 123
+              })
+            ]),
+            jasmine.any(String)
+          );
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/interactions');
       req.flush(interactionData);
-
-      result$.subscribe(() => {
-        expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
-          jasmine.arrayContaining([
-            jasmine.objectContaining({
-              ID: 1,
-              Type: 'Meeting',
-              Date: '2023-01-01',
-              Subject: 'Test Meeting',
-              ContactId: 123
-            })
-          ]),
-          jasmine.any(String)
-        );
-      });
     });
 
-    it('should use custom transform function when provided', () => {
+    it('should use custom transform function when provided', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const customTransform = (data: any[]) => data.map(item => ({
@@ -393,25 +459,29 @@ describe('ListviewExportService', () => {
         customTransform
       );
 
+      result$.subscribe({
+        next: () => {
+          expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
+            jasmine.arrayContaining([
+              jasmine.objectContaining({
+                CustomField: 'John Doe',
+                CustomEmail: 'john@example.com'
+              })
+            ]),
+            jasmine.any(String)
+          );
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/contacts');
       req.flush(mockData);
-
-      result$.subscribe(() => {
-        expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
-          jasmine.arrayContaining([
-            jasmine.objectContaining({
-              CustomField: 'John Doe',
-              CustomEmail: 'john@example.com'
-            })
-          ]),
-          jasmine.any(String)
-        );
-      });
     });
   });
 
   describe('Default Transform', () => {
-    it('should use default transform for unknown entity types', () => {
+    it('should use default transform for unknown entity types', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const unknownData = [
@@ -425,29 +495,33 @@ describe('ListviewExportService', () => {
 
       const result$ = service.exportToGoogleSheet('Unknown', '/api/unknown');
 
+      result$.subscribe({
+        next: () => {
+          expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
+            jasmine.arrayContaining([
+              jasmine.objectContaining({
+                Id: 1,
+                'Some Field': 'value',
+                'Camel Case Field': 'test'
+              })
+            ]),
+            jasmine.any(String)
+          );
+
+          // Should not include permissions field
+          const callArgs = exportGoogleSheetService.exportToSheet.calls.mostRecent().args[0];
+          expect(callArgs[0].hasOwnProperty('permissions')).toBe(false);
+          expect(callArgs[0].hasOwnProperty('Permissions')).toBe(false);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/unknown');
       req.flush(unknownData);
-
-      result$.subscribe(() => {
-        expect(exportGoogleSheetService.exportToSheet).toHaveBeenCalledWith(
-          jasmine.arrayContaining([
-            jasmine.objectContaining({
-              Id: 1,
-              'Some Field': 'value',
-              'Camel Case Field': 'test'
-            })
-          ]),
-          jasmine.any(String)
-        );
-
-        // Should not include permissions field
-        const callArgs = exportGoogleSheetService.exportToSheet.calls.mostRecent().args[0];
-        expect(callArgs[0].hasOwnProperty('permissions')).toBe(false);
-        expect(callArgs[0].hasOwnProperty('Permissions')).toBe(false);
-      });
     });
 
-    it('should handle null and undefined values in default transform', () => {
+    it('should handle null and undefined values in default transform', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const dataWithNulls = [
@@ -461,21 +535,25 @@ describe('ListviewExportService', () => {
 
       const result$ = service.exportToGoogleSheet('Test', '/api/test');
 
+      result$.subscribe({
+        next: () => {
+          const callArgs = exportGoogleSheetService.exportToSheet.calls.mostRecent().args[0];
+          expect(callArgs[0]).toEqual(jasmine.objectContaining({
+            Id: 1,
+            'Null Field': '',
+            'Undefined Field': '',
+            'Valid Field': 'value'
+          }));
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/test');
       req.flush(dataWithNulls);
-
-      result$.subscribe(() => {
-        const callArgs = exportGoogleSheetService.exportToSheet.calls.mostRecent().args[0];
-        expect(callArgs[0]).toEqual(jasmine.objectContaining({
-          Id: 1,
-          'Null Field': '',
-          'Undefined Field': '',
-          'Valid Field': 'value'
-        }));
-      });
     });
 
-    it('should skip object properties in default transform', () => {
+    it('should skip object properties in default transform', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const dataWithObjects = [
@@ -489,73 +567,87 @@ describe('ListviewExportService', () => {
 
       const result$ = service.exportToGoogleSheet('Test', '/api/test');
 
+      result$.subscribe({
+        next: () => {
+          const callArgs = exportGoogleSheetService.exportToSheet.calls.mostRecent().args[0];
+          expect(callArgs[0]).toEqual({
+            Id: 1,
+            'String Field': 'value'
+          });
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/test');
       req.flush(dataWithObjects);
-
-      result$.subscribe(() => {
-        const callArgs = exportGoogleSheetService.exportToSheet.calls.mostRecent().args[0];
-        expect(callArgs[0]).toEqual({
-          Id: 1,
-          'String Field': 'value'
-        });
-      });
     });
   });
 
   describe('Filename Generation', () => {
-    it('should generate filename with timestamp', () => {
+    it('should generate filename with timestamp', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
+      result$.subscribe({
+        next: () => {
+          const callArgs = exportGoogleSheetService.exportToSheet.calls.mostRecent().args;
+          const filename = callArgs[1];
+          expect(filename).toMatch(/Contacts Export \d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}/);
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/contacts');
       req.flush(mockData);
-
-      result$.subscribe(() => {
-        const callArgs = exportGoogleSheetService.exportToSheet.calls.mostRecent().args;
-        const filename = callArgs[1];
-        expect(filename).toMatch(/Contacts Export \d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}/);
-      });
     });
   });
 
   describe('Success and Error Handling', () => {
-    it('should show success confirmation with clickable link', () => {
+    it('should show success confirmation with clickable link', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(of(mockExportResult));
 
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
+      result$.subscribe({
+        next: () => {
+          expect(confirmationService.confirm).toHaveBeenCalledWith(
+            jasmine.objectContaining({
+              message: jasmine.stringContaining(mockExportResult.url),
+              header: 'Export Complete',
+              icon: 'pi pi-check-circle'
+            })
+          );
+          done();
+        },
+        error: done.fail
+      });
+
       const req = httpMock.expectOne(req => req.url === '/api/contacts');
       req.flush(mockData);
-
-      result$.subscribe(() => {
-        expect(confirmationService.confirm).toHaveBeenCalledWith(
-          jasmine.objectContaining({
-            message: jasmine.stringContaining(mockExportResult.url),
-            header: 'Export Complete',
-            icon: 'pi pi-check-circle'
-          })
-        );
-      });
     });
 
-    it('should handle export service errors', () => {
+    it('should handle export service errors', (done) => {
       exportGoogleSheetService.exportToSheet.and.returnValue(
         throwError(() => new Error('Export failed'))
       );
 
       const result$ = service.exportToGoogleSheet('Contact', '/api/contacts');
 
-      const req = httpMock.expectOne(req => req.url === '/api/contacts');
-      req.flush(mockData);
-
       result$.subscribe({
+        next: () => done.fail('Expected error but got success'),
         error: () => {
           expect(feedbackDialogService.showErrorToast).toHaveBeenCalledWith({
             detail: 'Failed to export contacts: Export failed'
           });
+          done();
         }
       });
+
+      const req = httpMock.expectOne(req => req.url === '/api/contacts');
+      req.flush(mockData);
     });
   });
 });

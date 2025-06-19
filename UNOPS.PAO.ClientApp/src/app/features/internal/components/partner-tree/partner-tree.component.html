@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-8">
   <div class="flex gap-4 items-center">
-    <div class="text-2xl font-semibold">Partner Tree</div>
+    <div class="text-3xl font-bold">Partner Tree</div>
     <div class="grow"></div>
     @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
       <p-button icon="pi pi-plus" label="New Partner Level" (onClick)="onCreateNewPartnerLevel()"/>
@@ -21,14 +21,14 @@
         <tr>
           <!-- Always show first actions column -->
           <th>{{ 'label.partnerTree.actions' | translate }}</th>
-          
+
           @if (!treeColumnsLoading()) {
             <!-- Dynamic columns from API -->
             @for (column of treeColumns(); track column.field) {
               <th> {{ column.label | translate }}
                   @if (column.helperText) {
-                    <i class="pi pi-question-circle text-gray-400 cursor-help text-xs" 
-                       [pTooltip]="column.helperText" 
+                    <i class="pi pi-question-circle text-gray-400 cursor-help text-xs"
+                       [pTooltip]="column.helperText"
                        tooltipPosition="top"
                        [showDelay]="300">
                     </i>
@@ -43,13 +43,13 @@
             <th>{{ 'label.partnerTree.partnerCategory' | translate }}</th>
             <th>{{ 'label.partnerTree.partnerGroup' | translate }}</th>
           }
-          
+
           <!-- Always show last actions column -->
           <th class="w-32">{{ 'label.partnerTree.actions' | translate }}</th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-rowNode let-rowData="rowData">
-        <tr [ttRow]="rowNode" [pEditableRow]="rowData" 
+        <tr [ttRow]="rowNode" [pEditableRow]="rowData"
             [class.!bg-lime-50]="isRecordUpdated(rowNode)">
           <!-- Action Column (first) -->
           <td [ttEditableColumn]="'action'" [ttEditableColumnField]="rowData">
@@ -59,7 +59,7 @@
               {{ rowData['action'] }}
             </span>
           </td>
-          
+
           <!-- Name Column -->
           <td [ttEditableColumn]="'name'" [ttEditableColumnField]="rowData">
             <p-treeTableCellEditor>
@@ -74,7 +74,7 @@
               </ng-template>
             </p-treeTableCellEditor>
           </td>
-          
+
           <!-- Description Column -->
           <td [ttEditableColumn]="'description'" [ttEditableColumnField]="rowData">
             <p-treeTableCellEditor>
@@ -86,14 +86,14 @@
               </ng-template>
             </p-treeTableCellEditor>
           </td>
-          
+
           <!-- Type Column -->
           <td [ttEditableColumn]="'type'" [ttEditableColumnField]="rowData" class="w-20">
             <span class="block overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px] text-center" [pTooltip]="rowData['type']" tooltipPosition="top">
               {{ rowData['type']?.split('_')[1] }}
             </span>
           </td>
-          
+
           <!-- Partner Category Column -->
           <td [ttEditableColumn]="rowData.partnerCategoryEditable ? 'partnerCategory' : null" [ttEditableColumnField]="rowData">
             <p-treeTableCellEditor>
@@ -110,7 +110,7 @@
               </ng-template>
             </p-treeTableCellEditor>
           </td>
-          
+
           <!-- Partner Group Column -->
           <td [ttEditableColumn]="rowData.partnerGroupEditable ? 'partnerGroup' : null" [ttEditableColumnField]="rowData">
             <p-treeTableCellEditor>
@@ -127,7 +127,7 @@
               </ng-template>
             </p-treeTableCellEditor>
           </td>
-          
+
           <!-- Action Column (last) -->
           <td [ttEditableColumn]="'action'" [ttEditableColumnField]="rowData" class="w-32">
             <div class="flex justify-center w-full gap-2">

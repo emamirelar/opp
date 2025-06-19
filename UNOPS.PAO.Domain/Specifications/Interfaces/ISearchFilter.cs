@@ -74,6 +74,7 @@ public interface IInteractionSearchFilter : ISearchFilter, IMyOfficeFilter
     int? Id { get; set; }
     int? ContactId { get; set; }
     string? ContactName { get; set; }
+    int? PartnerId { get; set; }
     string? Type { get; set; }
     DateTime? FromDate { get; set; }
     DateTime? ToDate { get; set; }

@@ -1,9 +1,9 @@
 <div class="flex flex-col gap-8">
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">{{ 'aiPrompt.title' | translate }}</h1>
+    <h1 class="text-3xl font-bold">{{ 'aiPrompt.title' | translate }}</h1>
     @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
-      <p-button 
+      <p-button
         [label]="'aiPrompt.createNew' | translate"
         icon="pi pi-plus"
         (onClick)="openEditDialog()"
@@ -27,7 +27,7 @@
           <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
         }
       </p-iconfield>
-      <p-button 
+      <p-button
         icon="pi pi-search"
         [label]="'common.search' | translate"
         severity="secondary"
@@ -40,8 +40,8 @@
 
   <!-- Data Table -->
   <div [class.opacity-20]="loading()">
-    <p-table 
-      [value]="prompts()" 
+    <p-table
+      [value]="prompts()"
       [loading]="loading()"
       [paginator]="true"
       [rows]="pageSize()"
@@ -55,7 +55,7 @@
       [sortField]="'type'"
       [sortOrder]="1"
       styleClass="p-datatable-sm">
-      
+
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="type">
@@ -85,7 +85,7 @@
           <th class="w-12">{{ 'common.actions' | translate }}</th>
         </tr>
       </ng-template>
-      
+
       <ng-template pTemplate="body" let-prompt>
         <tr (click)="openEditDialog(prompt)" class="cursor-pointer">
           <td>{{ prompt.type }}</td>
@@ -97,8 +97,8 @@
           <td>
             <div class="flex gap-2">
               @if (!permissionsLoading() && entityPermissions().permissions.canUpdate) {
-                <p-button 
-                  icon="pi pi-pencil" 
+                <p-button
+                  icon="pi pi-pencil"
                   (onClick)="$event.stopPropagation(); openEditDialog(prompt)"
                   [pTooltip]="'common.edit' | translate"
                   severity="info"
@@ -106,8 +106,8 @@
                 </p-button>
               }
               @if (!permissionsLoading() && entityPermissions().permissions.canDelete) {
-                <p-button 
-                  icon="pi pi-trash" 
+                <p-button
+                  icon="pi pi-trash"
                   (onClick)="$event.stopPropagation(); confirmDelete(prompt)"
                   [pTooltip]="'common.delete' | translate"
                   severity="danger"
@@ -118,7 +118,7 @@
           </td>
         </tr>
       </ng-template>
-      
+
       <ng-template pTemplate="emptymessage">
         <tr>
           <td colspan="7" class="text-center p-4">
@@ -190,10 +190,10 @@
                   <label for="type" class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.type' | translate }} *
                   </label>
-                  <input 
+                  <input
                     id="type"
-                    pInputText 
-                    formControlName="type" 
+                    pInputText
+                    formControlName="type"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     [class.border-red-500]="promptForm.get('type')?.invalid && promptForm.get('type')?.touched"
                     [class.ring-red-200]="promptForm.get('type')?.invalid && promptForm.get('type')?.touched">
@@ -211,10 +211,10 @@
                   <label for="promptFunction" class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.promptFunction' | translate }}
                   </label>
-                  <input 
+                  <input
                     id="promptFunction"
-                    pInputText 
-                    formControlName="promptFunction" 
+                    pInputText
+                    formControlName="promptFunction"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     [class.border-red-500]="promptForm.get('promptFunction')?.invalid && promptForm.get('promptFunction')?.touched"
                     [class.ring-red-200]="promptForm.get('promptFunction')?.invalid && promptForm.get('promptFunction')?.touched">
@@ -227,10 +227,10 @@
                   <label for="description" class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.description' | translate }}
                   </label>
-                  <textarea 
+                  <textarea
                     id="description"
-                    pInputTextarea 
-                    formControlName="description" 
+                    pInputTextarea
+                    formControlName="description"
                     [rows]="3"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
                     [placeholder]="'aiPrompt.descriptionPlaceholder' | translate">
@@ -244,7 +244,7 @@
                   <label for="model" class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.model' | translate }} *
                   </label>
-                  <p-dropdown 
+                  <p-dropdown
                     id="model"
                     formControlName="model"
                     [options]="productionGeminiModels()"
@@ -262,10 +262,10 @@
                   <label class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.project' | translate }} *
                   </label>
-                  <input 
+                  <input
                     id="project"
-                    pInputText 
-                    formControlName="project" 
+                    pInputText
+                    formControlName="project"
                     [readonly]="true"
                     class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
                     [class.border-red-500]="promptForm.get('project')?.invalid && promptForm.get('project')?.touched"
@@ -279,10 +279,10 @@
                   <label class="block text-sm font-semibold text-gray-700">
                     {{ 'aiPrompt.location' | translate }} *
                   </label>
-                  <input 
+                  <input
                     id="location"
-                    pInputText 
-                    formControlName="location" 
+                    pInputText
+                    formControlName="location"
                     [readonly]="true"
                     class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700 cursor-not-allowed"
                     [class.border-red-500]="promptForm.get('location')?.invalid && promptForm.get('location')?.touched"
@@ -300,7 +300,7 @@
                   <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2">
                     {{ 'aiPrompt.generationSettings' | translate }}
                   </h3>
-                  
+
                   <div class="space-y-4">
                     <!-- Temperature -->
                     <div class="space-y-2">
@@ -308,15 +308,15 @@
                         <label class="block text-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.temperature' | translate }}
                         </label>
-                        <i class="pi pi-question-circle text-gray-400 cursor-help" 
+                        <i class="pi pi-question-circle text-gray-400 cursor-help"
                            [pTooltip]="'aiPrompt.temperatureHelp' | translate"
                            tooltipPosition="top"></i>
                       </div>
                       <div class="px-2">
-                        <p-slider 
+                        <p-slider
                           formControlName="temperature"
-                          [min]="0" 
-                          [max]="2" 
+                          [min]="0"
+                          [max]="2"
                           [step]="0.1"
                           class="w-full">
                         </p-slider>
@@ -334,15 +334,15 @@
                         <label class="block text-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.topP' | translate }}
                         </label>
-                        <i class="pi pi-question-circle text-gray-400 cursor-help" 
+                        <i class="pi pi-question-circle text-gray-400 cursor-help"
                            [pTooltip]="'aiPrompt.topPHelp' | translate"
                            tooltipPosition="top"></i>
                       </div>
                       <div class="px-2">
-                        <p-slider 
+                        <p-slider
                           formControlName="topP"
-                          [min]="0" 
-                          [max]="1" 
+                          [min]="0"
+                          [max]="1"
                           [step]="0.1"
                           class="w-full">
                         </p-slider>
@@ -360,15 +360,15 @@
                         <label class="block text-sm font-semibold text-gray-700">
                           {{ 'aiPrompt.maxOutputTokens' | translate }}
                         </label>
-                        <i class="pi pi-question-circle text-gray-400 cursor-help" 
+                        <i class="pi pi-question-circle text-gray-400 cursor-help"
                            [pTooltip]="'aiPrompt.maxOutputTokensHelp' | translate"
                            tooltipPosition="top"></i>
                       </div>
                       <div class="px-2">
-                        <p-slider 
+                        <p-slider
                           formControlName="maxOutputTokens"
-                          [min]="0" 
-                          [max]="selectedModelMaxTokens()" 
+                          [min]="0"
+                          [max]="selectedModelMaxTokens()"
                           [step]="1"
                           class="w-full">
                         </p-slider>
@@ -406,10 +406,10 @@
                       <label for="safetySettings" class="block text-sm font-semibold text-gray-700">
                         {{ 'aiPrompt.safetySettings' | translate }}
                       </label>
-                      <textarea 
+                      <textarea
                         id="safetySettings"
-                        pInputTextarea 
-                        formControlName="safetySettings" 
+                        pInputTextarea
+                        formControlName="safetySettings"
                         [rows]="3"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y">
                       </textarea>
@@ -424,10 +424,10 @@
                   {{ 'aiPrompt.prompt' | translate }} *
                 </label>
                 <div class="flex flex-col">
-                  <textarea 
+                  <textarea
                     id="prompt"
-                    pInputTextarea 
-                    formControlName="prompt" 
+                    pInputTextarea
+                    formControlName="prompt"
                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y min-h-[400px]"
                     [class.border-red-500]="promptForm.get('prompt')?.invalid && promptForm.get('prompt')?.touched"
                     [class.ring-red-200]="promptForm.get('prompt')?.invalid && promptForm.get('prompt')?.touched"
@@ -462,9 +462,9 @@
                       <div class="space-y-2">
                         <!-- Entity ID option - only show when function is provided -->
                         <div class="flex items-center gap-3" *ngIf="showEntityIdOption()">
-                          <p-radioButton 
-                            formControlName="testMode" 
-                            value="entityId" 
+                          <p-radioButton
+                            formControlName="testMode"
+                            value="entityId"
                             inputId="testModeEntityId">
                           </p-radioButton>
                           <label for="testModeEntityId" class="text-sm font-medium text-blue-700 cursor-pointer">
@@ -472,9 +472,9 @@
                           </label>
                         </div>
                         <div class="flex items-center gap-3">
-                          <p-radioButton 
-                            formControlName="testMode" 
-                            value="testData" 
+                          <p-radioButton
+                            formControlName="testMode"
+                            value="testData"
                             inputId="testModeTestData">
                           </p-radioButton>
                           <label for="testModeTestData" class="text-sm font-medium text-blue-700 cursor-pointer">
@@ -493,9 +493,9 @@
                       <label for="entityId" class="block text-sm font-semibold text-blue-800">
                         {{ 'aiPrompt.entityId' | translate }} *
                       </label>
-                      <input 
+                      <input
                         id="entityId"
-                        pInputText 
+                        pInputText
                         formControlName="entityId"
                         type="number"
                         min="1"
@@ -508,9 +508,9 @@
                       <label for="testData" class="block text-sm font-semibold text-blue-800">
                         {{ 'aiPrompt.testData' | translate }} *
                       </label>
-                      <textarea 
+                      <textarea
                         id="testData"
-                        pInputTextarea 
+                        pInputTextarea
                         formControlName="testData"
                         [rows]="4"
                         class="w-full px-3 py-2 border border-blue-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all resize-y"
@@ -521,7 +521,7 @@
                       </small>
                     </div>
 
-                    <p-button 
+                    <p-button
                       [label]="'aiPrompt.test' | translate"
                       icon="pi pi-play"
                       severity="info"
@@ -530,7 +530,7 @@
                       (onClick)="testPrompt()"
                       class="w-full">
                     </p-button>
-                    
+
                     <!-- Test Results Area -->
                     <div class="space-y-2">
                       <label class="block text-sm font-semibold text-blue-800">
@@ -543,11 +543,11 @@
                               <div class="text-sm text-green-700 font-medium p-3 border-b border-blue-100">
                                 <i class="pi pi-check-circle mr-2"></i>{{ 'aiPrompt.testSuccess' | translate }}
                               </div>
-                              
+
                               <!-- Tabs for Success Response -->
                               <div class="bg-gray-50 border-b border-gray-200">
                                 <nav class="flex" aria-label="Tabs">
-                                  <button 
+                                  <button
                                     type="button"
                                     class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
                                     [class.border-blue-500]="activeTab() === 'preview'"
@@ -561,7 +561,7 @@
                                     <i class="pi pi-eye mr-2"></i>
                                     {{ 'aiPrompt.preview' | translate }}
                                   </button>
-                                  <button 
+                                  <button
                                     type="button"
                                     class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
                                     [class.border-blue-500]="activeTab() === 'raw'"
@@ -577,7 +577,7 @@
                                   </button>
                                 </nav>
                               </div>
-                              
+
                               <!-- Tab Content -->
                               <div class="p-3 min-h-[150px] max-h-[300px] overflow-y-auto">
                                 @if (activeTab() === 'preview') {
@@ -616,13 +616,13 @@
       <!-- Fixed Footer with Action Buttons -->
       <div class="border-t border-gray-200 p-4 flex-shrink-0 mt-4">
         <div class="flex justify-end gap-2">
-          <p-button 
+          <p-button
             [label]="'aiPrompt.cancel' | translate"
             severity="secondary"
             icon="pi pi-times"
             (onClick)="closeDialog()">
           </p-button>
-          <p-button 
+          <p-button
             [label]="'aiPrompt.save' | translate"
             severity="primary"
             icon="pi pi-check"
@@ -638,4 +638,4 @@
   <!-- Toast and Confirmation Dialog -->
   <p-toast></p-toast>
   <p-confirmDialog></p-confirmDialog>
-</div> 
+</div>

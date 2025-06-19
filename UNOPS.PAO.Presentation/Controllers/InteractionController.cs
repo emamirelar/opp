@@ -19,17 +19,20 @@ namespace UNOPS.PAO.Presentation.Controllers
     {
         private readonly IInteractionManager _manager;
         private readonly IBusinessSecurityService _businessSecurityService;
+        private readonly ISecureSpecificationFactory _secureSpecificationFactory;
 
         public InteractionController(
             IManagerWrapper manager, 
             UserResolverService<int> userResolverService, 
             IAuthorizationService authorizationService,
             IBusinessSecurityService businessSecurityService,
+            ISecureSpecificationFactory secureSpecificationFactory,
             ILogger<InteractionController> logger)
             : base(logger, authorizationService, userResolverService)
         {
             _manager = manager.InteractionManager;
             _businessSecurityService = businessSecurityService;
+            _secureSpecificationFactory = secureSpecificationFactory;
         }
 
         [HttpPost(APIDictionary.Interaction)]
@@ -64,58 +67,56 @@ namespace UNOPS.PAO.Presentation.Controllers
                 
                 PaginationResponse<InteractionModel> result;
                 
-                // Handle different search scenarios
+                // Handle different search scenarios with integrated RBAC filtering
                 if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
                 {
-                    result = SearchControllerHelper.ProcessAdvancedSearchSync<InteractionFilterRequest, InteractionCompositeSpecification, PaginationResponse<InteractionModel>>(
-                        searchCriteria, searchText ?? request.SearchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                    result = await SecureSearchControllerHelper.ProcessSecureAdvancedSearchAsync<UNOPS.PAO.Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
+                        searchCriteria, 
+                        searchText ?? request.SearchText, 
+                        request.PageIndex, 
+                        request.PageSize, 
+                        request.OrderBy, 
+                        request.Ascending,
                         request,
                         "Interaction",
-                        filterRequest => new InteractionCompositeSpecification(filterRequest),
-                        (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                        CurrentUserId, _logger);
+                        User,
+                        _secureSpecificationFactory.CreateInteractionSpecificationAsync,
+                        async (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
+                        CurrentUserId, 
+                        _logger);
                 }
                 else if (!string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(request.SearchText))
                 {
                     var textToSearch = searchText ?? request.SearchText;
-                    result = SearchControllerHelper.ProcessSimpleTextSearchSync<InteractionFilterRequest, InteractionCompositeSpecification, PaginationResponse<InteractionModel>>(
-                        textToSearch!, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                    result = await SecureSearchControllerHelper.ProcessSecureSimpleTextSearchAsync<UNOPS.PAO.Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
+                        textToSearch!, 
+                        request.PageIndex, 
+                        request.PageSize, 
+                        request.OrderBy, 
+                        request.Ascending,
                         request,
                         "Interaction",
-                        filterRequest => new InteractionCompositeSpecification(filterRequest),
-                        (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                        CurrentUserId, _logger);
+                        User,
+                        _secureSpecificationFactory.CreateInteractionSpecificationAsync,
+                        async (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
+                        CurrentUserId, 
+                        _logger);
                 }
                 else
                 {
-                    // For no search parameters, return all interactions with pagination
-                    _logger.LogInformation("Retrieving all interactions with pagination");
-                    var specification = new InteractionCompositeSpecification(request);
-                    result = _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
+                    // For no search parameters, return all interactions with secure pagination
+                    result = await SecureSearchControllerHelper.ProcessSecureListingAsync<UNOPS.PAO.Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
+                        request,
+                        "Interaction",
+                        User,
+                        _secureSpecificationFactory.CreateInteractionSpecificationAsync,
+                        async (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
+                        CurrentUserId,
+                        _logger);
                 }
                 
-                // Apply RBAC filtering to the results
-                if (result.Records?.Any() == true)
-                {
-                    var filteredData = new List<InteractionModel>();
-                    foreach (var interaction in result.Records)
-                    {
-                        // Create a minimal interaction entity for permission checking
-                        var interactionEntity = new UNOPS.PAO.UNOPSDomain.Entities.UNOPSInteraction
-                        {
-                            Id = interaction.Id
-                            // Note: Contact relationships are now handled through InteractionContacts junction table
-                        };
-                        
-                        if (await _businessSecurityService.CanUserAccessEntityAsync(interactionEntity, User, "read"))
-                        {
-                            filteredData.Add(interaction);
-                        }
-                    }
-                    
-                    result.Records = filteredData;
-                    result.TotalCount = filteredData.Count;
-                }
+                // No need for post-query RBAC filtering anymore - security is integrated at database level
+                // This ensures proper pagination and accurate TotalCount
                 
                 return result;
             });

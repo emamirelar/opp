@@ -708,7 +708,12 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         {
             if (property.Name == "SearchText")
                 return null;
-
+            
+            // Special handling for PartnerId in Interaction entities
+            if (property.Name == "PartnerId" && typeof(TEntity).Name == "Interaction")
+            {
+                return CreatePartnerIdExpression(parameter, value);
+            }
 
             // Get property path (for nested properties)
             var propertyPath = GetPropertyPath(property.Name);
@@ -845,6 +850,66 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         }
         
         return null;
+    }
+
+    private static Expression<Func<TEntity, bool>> CreatePartnerIdExpression(
+        ParameterExpression parameter,
+        object value)
+    {
+        try
+        {
+            if (!int.TryParse(value.ToString(), out int partnerId))
+            {
+                Debug.WriteLine($"Failed to parse PartnerId value: {value}");
+                return null;
+            }
+
+            Debug.WriteLine($"Creating PartnerId expression for value: {partnerId}");
+
+            // Build expression: x => x.InteractionPartners.Any(ip => ip.PartnerId == partnerId)
+            var interactionPartnersProperty = typeof(TEntity).GetProperty("InteractionPartners");
+            if (interactionPartnersProperty == null)
+            {
+                Debug.WriteLine("InteractionPartners property not found on entity");
+                return null;
+            }
+
+            var interactionPartnersAccess = Expression.Property(parameter, interactionPartnersProperty);
+            
+            // Create parameter for the Any() lambda: ip => ip.PartnerId == partnerId
+            var junctionParameter = Expression.Parameter(interactionPartnersProperty.PropertyType.GetGenericArguments()[0], "ip");
+            var partnerIdProperty = junctionParameter.Type.GetProperty("PartnerId");
+            
+            if (partnerIdProperty == null)
+            {
+                Debug.WriteLine("PartnerId property not found on junction table");
+                return null;
+            }
+
+            var partnerIdAccess = Expression.Property(junctionParameter, partnerIdProperty);
+            var partnerIdConstant = Expression.Constant(partnerId);
+            var partnerIdEquality = Expression.Equal(partnerIdAccess, partnerIdConstant);
+            
+            var lambdaExpression = Expression.Lambda(partnerIdEquality, junctionParameter);
+            
+            // Get the Any method for ICollection<InteractionPartner>
+            var enumerableType = typeof(System.Linq.Enumerable);
+            var anyMethod = enumerableType.GetMethods()
+                .Where(m => m.Name == "Any" && m.GetParameters().Length == 2)
+                .First()
+                .MakeGenericMethod(junctionParameter.Type);
+            
+            // Create the Any() call
+            var anyCall = Expression.Call(anyMethod, interactionPartnersAccess, lambdaExpression);
+            
+            Debug.WriteLine("Successfully created PartnerId expression using Any()");
+            return Expression.Lambda<Func<TEntity, bool>>(anyCall, parameter);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error creating PartnerId expression: {ex.Message}");
+            return null;
+        }
     }
 
     /// <summary>

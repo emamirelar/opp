@@ -407,7 +407,10 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             return new PaginationResponse<InteractionModel>
             {
                 Records = interactionsWithPermissions,
-                TotalCount = pagedResults.TotalCount
+                TotalCount = pagedResults.TotalCount,
+                PageIndex = pagedResults.PageIndex,
+                PageSize = pagedResults.PageSize,
+                TotalPages = pagedResults.TotalPages
             };
         }
 

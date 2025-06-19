@@ -1,14 +1,13 @@
-<div class="w-full bg-gray-50 rounded-lg p-3 shadow-sm">
+<div class="w-full rounded-lg bg-white p-4 shadow-sm">
   <div class="flex justify-between items-center mb-2">
     <div class="flex items-center gap-2">
       <p-button
         icon="pi pi-arrow-left"
-        text
+        text rounded
         (onClick)="switchToSimpleSearch()"
         [pTooltip]="'search.backToSimple' | translate"
-        class="text-gray-600 hover:bg-gray-100"
       ></p-button>
-      <div class="text-md font-semibold text-gray-700">{{ 'search.advanced' | translate }}</div>
+      <div class="text-md font-semibold">{{ 'search.advanced' | translate }}</div>
     </div>
     <div class="flex items-center gap-2">
       @if (entityType) {

@@ -135,7 +135,7 @@ export class SplitterComponent implements AfterViewInit, OnDestroy {
           this.validateAndUpdateSizes(sizes);
         });
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   ngAfterViewInit() {
