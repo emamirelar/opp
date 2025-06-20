@@ -23,6 +23,7 @@
     <ProjectReference Include="..\UNOPS.PAO.DataAccess\UNOPS.PAO.DataAccess.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.Domain\UNOPS.PAO.Domain.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.RBAC\UNOPS.PAO.RBAC.csproj" />
   </ItemGroup>
 
 </Project>

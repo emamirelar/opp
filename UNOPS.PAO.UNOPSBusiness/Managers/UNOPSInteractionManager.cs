@@ -357,7 +357,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// <summary>
     /// Gets all interactions with row-level security applied
     /// </summary>
-    [RBAC("read", Entity = "Interaction", ApplyRowFiltering = true, ApplyColumnFiltering = true)]
     public async Task<PaginationResponse<InteractionModel>> GetInteractionsAsync(ClaimsPrincipal user, PaginationRequest request)
     {
         // RBAC interceptor handles security enforcement
@@ -386,7 +385,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// <summary>
     /// Gets a specific interaction with row-level security applied
     /// </summary>
-    [RBAC("read", Entity = "Interaction", RequireEntityAccess = true, EntityIdParameterName = "id", ApplyColumnFiltering = true)]
     public async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
@@ -404,7 +402,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// <summary>
     /// Updates an interaction with permission validation
     /// </summary>
-    [RBAC("update", Entity = "Interaction", RequireEntityAccess = true, EntityIdParameterName = "model.Id")]
     public async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
     {
         // RBAC interceptor handles security enforcement
@@ -436,7 +433,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// <summary>
     /// Deletes an interaction with permission validation
     /// </summary>
-    [RBAC("delete", Entity = "Interaction", RequireEntityAccess = true, EntityIdParameterName = "id")]
     public async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
@@ -449,7 +445,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// <summary>
     /// Gets comprehensive interaction details with security checks for AI prompts
     /// </summary>
-    [RBAC("read", Entity = "Interaction", RequireEntityAccess = true, EntityIdParameterName = "id", ApplyColumnFiltering = true)]
     public async Task<InteractionModel?> GetInteractionDetailsAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement

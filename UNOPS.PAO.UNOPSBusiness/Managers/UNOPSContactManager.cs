@@ -208,7 +208,6 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     }
 
     // New secure methods with row-level filtering and permissions
-    [RBAC("read", Entity = "Contact")]
     public async Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request)
     {
         var query = contactRepository
@@ -290,7 +289,6 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         };
     }
 
-    [RBAC("read", Entity = "Contact", EntityIdParameterName = "id")]
     public async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
     {
         var item = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice"]);
@@ -301,7 +299,6 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return await MapEntityToModelWithPermissionsAsync(item, mapper, user);
     }
 
-    [RBAC("update", Entity = "Contact")]
     public async Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model)
     {
         var entity = await contactRepository.GetByIdAsync(model.Id, ["Partner", "Partner.PartnerOffice"]);
@@ -325,7 +322,6 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
     }
 
-    [RBAC("delete", Entity = "Contact", EntityIdParameterName = "id")]
     public async Task DeleteContactAsync(ClaimsPrincipal user, int id)
     {
         var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice"]);

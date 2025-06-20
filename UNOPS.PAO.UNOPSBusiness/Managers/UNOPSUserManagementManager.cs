@@ -32,7 +32,6 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         _roleManager = roleManager;
     }
 
-    [RBAC("read", Entity = "UserManagement")]
     public async Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request)
     {
         // Start with UserInfos query
@@ -141,7 +140,6 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         };
     }
 
-    [RBAC("read", Entity = "UserManagement", RequireEntityAccess = true, EntityIdParameterName = "userId")]
     public async Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, int userId)
     {
         // RBAC interceptor handles security enforcement
@@ -180,7 +178,6 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         };
     }
 
-    [RBAC("update", Entity = "UserManagement", RequireEntityAccess = true, EntityIdParameterName = "userId")]
     public async Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, int userId, UpdateUserRolesRequest request)
     {
         // RBAC interceptor handles security enforcement
@@ -282,7 +279,6 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         return await GetUserByIdAsync(user, userId);
     }
 
-    [RBAC("read", Entity = "UserManagement")]
     public async Task<IEnumerable<RoleModel>> GetAvailableRolesAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement
@@ -304,7 +300,6 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         }).OrderBy(r => r.Name);
     }
 
-    [RBAC("read", Entity = "UserManagement")]
     public async Task<bool> GetOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode)
     {
         // RBAC interceptor handles security enforcement
@@ -331,7 +326,6 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         return orgUnit.IsSelfManagementEnabled;
     }
 
-    [RBAC("update", Entity = "UserManagement")]
     public async Task UpdateOrgUnitSelfManagementAsync(ClaimsPrincipal user, string orgUnitCode, UpdateOrgUnitSelfManagementRequest request)
     {
         // RBAC interceptor handles security enforcement

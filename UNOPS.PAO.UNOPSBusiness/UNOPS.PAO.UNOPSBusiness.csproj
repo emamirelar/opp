@@ -12,6 +12,7 @@
     <ProjectReference Include="..\UNOPS.PAO.UNOPSDataAccess\UNOPS.PAO.UNOPSDataAccess.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.UNOPSDomain\UNOPS.PAO.UNOPSDomain.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.Utilities\UNOPS.PAO.Utilities.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.RBAC\UNOPS.PAO.RBAC.csproj" />
   </ItemGroup>
 
   <ItemGroup>

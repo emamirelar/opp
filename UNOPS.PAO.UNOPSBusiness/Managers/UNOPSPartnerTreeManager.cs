@@ -86,7 +86,6 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         this.partnerTreeService = partnerTreeService;
     }
 
-    [RBAC("create", Entity = "PartnerTree")]
     public async Task<PartnerTreeModel> CreatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
     {
         // RBAC interceptor handles security enforcement
@@ -97,7 +96,6 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         return await MapEntityToModelWithPermissionsAsync(result, mapper, user);
     }
 
-    [RBAC("read", Entity = "PartnerTree", ApplyRowFiltering = true)]
     public async Task<IEnumerable<PartnerTreeModel>> GetPartnerTreesAsync(ClaimsPrincipal user, string sortBy = "Name", bool ascending = true)
     {
         // RBAC interceptor handles security enforcement and row filtering
@@ -135,7 +133,6 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         }
     }
 
-    [RBAC("read", Entity = "PartnerTree", RequireEntityAccess = true, EntityIdParameterName = "id")]
     public async Task<PartnerTreeModel?> GetPartnerTreeAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
@@ -145,14 +142,12 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         return await MapEntityToModelWithPermissionsAsync(item, mapper, user);
     }
 
-    [SkipRBAC(Reason = "External API method - no user context")]
     public IEnumerable<ExternalPartnerTreeModel> GetPostedPartnerTrees()
     {
         return partnerTreeService.GetAllPartnerTreesAsync().Result
             .Select(x => MapEntityToExternalModel(x, mapper));
     }
 
-    [SkipRBAC(Reason = "External API method - no user context")]
     public async Task<ExternalPartnerTreeModel?> GetPostedPartnerTree(int id)
     {
         var item = await partnerTreeService.GetPartnerTreeByIdAsync(id);
@@ -165,7 +160,6 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         return MapEntityToExternalModel(item, mapper);
     }
 
-    [RBAC("update", Entity = "PartnerTree", RequireEntityAccess = true, EntityIdParameterName = "model.Id")]
     public async Task<PartnerTreeModel?> UpdatePartnerTreeAsync(ClaimsPrincipal user, PartnerTreeDataModel model)
     {
         // RBAC interceptor handles security enforcement
@@ -182,7 +176,6 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         return await MapEntityToModelWithPermissionsAsync(entity, mapper, user);
     }
 
-    [RBAC("delete", Entity = "PartnerTree", RequireEntityAccess = true, EntityIdParameterName = "id")]
     public async Task DeletePartnerTreeAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
@@ -192,7 +185,6 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         await partnerTreeService.DeletePartnerTreeAsync(entity.Code);
     }
 
-    [RBAC("read", Entity = "PartnerTree", ApplyRowFiltering = true)]
     public async Task<IEnumerable<object>> GetCategoryAndGroupStructureAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement

@@ -2,7 +2,8 @@ using Castle.DynamicProxy;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using System.Security.Claims;
-using UNOPS.PAO.UNOPSBusiness.Attributes;
+using System.Collections;
+using UNOPS.PAO.RBAC.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Interceptors;
@@ -208,25 +209,17 @@ public class RBACInterceptor : IInterceptor
 
         try
         {
-            // Handle collections
+            // Handle collections - use the entity name instead of reflection
             if (IsCollectionType(returnType))
             {
-                var elementType = GetCollectionElementType(returnType);
-                if (elementType != null)
-                {
-                    var method = typeof(IBusinessSecurityService).GetMethod(nameof(IBusinessSecurityService.FilterEntityColumnsForList));
-                    var genericMethod = method?.MakeGenericMethod(elementType);
-                    var task = (Task<object>)genericMethod?.Invoke(_securityService, new[] { returnValue, user, rbacAttribute.Action })!;
-                    return await task;
-                }
+                // Use non-generic overload with entity name to avoid AsyncStateMachine issues
+                return await ApplyColumnFilteringToCollection(returnValue, user, entityName, rbacAttribute.Action);
             }
-            // Handle single entities
+            // Handle single entities - use the entity name instead of reflection
             else if (IsEntityType(returnType))
             {
-                var method = typeof(IBusinessSecurityService).GetMethod(nameof(IBusinessSecurityService.FilterEntityColumns));
-                var genericMethod = method?.MakeGenericMethod(returnType);
-                var task = (Task<object>)genericMethod?.Invoke(_securityService, new[] { returnValue, user, rbacAttribute.Action })!;
-                return await task;
+                // Use non-generic overload with entity name to avoid AsyncStateMachine issues
+                return await ApplyColumnFilteringToEntity(returnValue, user, entityName, rbacAttribute.Action);
             }
         }
         catch (Exception ex)
@@ -235,6 +228,90 @@ public class RBACInterceptor : IInterceptor
         }
 
         return returnValue;
+    }
+
+    private async Task<object> ApplyColumnFilteringToEntity(object entity, ClaimsPrincipal user, string entityName, string action)
+    {
+        // Get allowed columns using entity name (not generic type)
+        var allowedColumns = await _securityService.GetAllowedColumnsAsync(user, entityName, action);
+        return FilterEntityByColumns(entity, allowedColumns);
+    }
+
+    private async Task<object> ApplyColumnFilteringToCollection(object collection, ClaimsPrincipal user, string entityName, string action)
+    {
+        // Get allowed columns using entity name (not generic type)
+        var allowedColumns = await _securityService.GetAllowedColumnsAsync(user, entityName, action);
+        
+        if (collection is IEnumerable enumerable)
+        {
+            var filteredList = new List<object>();
+            foreach (var item in enumerable)
+            {
+                if (item != null)
+                {
+                    var filteredItem = FilterEntityByColumns(item, allowedColumns);
+                    filteredList.Add(filteredItem);
+                }
+            }
+            return filteredList;
+        }
+        
+        return collection;
+    }
+
+    private object FilterEntityByColumns(object entity, IEnumerable<string> allowedColumns)
+    {
+        if (entity == null) return entity;
+
+        var allowedColumnsSet = new HashSet<string>(allowedColumns, StringComparer.OrdinalIgnoreCase);
+        var entityType = GetActualEntityType(entity);
+        
+        if (entityType == null)
+        {
+            _logger.LogWarning("Could not determine actual entity type for {ObjectType}, skipping column filtering", entity.GetType().Name);
+            return entity;
+        }
+        
+        var properties = entityType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        _logger.LogDebug("Filtering entity {EntityType} with allowed columns: {AllowedColumns}", 
+            entityType.Name, string.Join(", ", allowedColumns));
+
+        // Instead of creating a new instance, modify the existing entity by setting restricted properties to default
+        foreach (var property in properties)
+        {
+            if (property.CanRead && property.CanWrite)
+            {
+                try
+                {
+                    if (!allowedColumnsSet.Contains(property.Name))
+                    {
+                        // Set restricted properties to default values
+                        if (property.PropertyType.IsValueType)
+                        {
+                            var defaultValue = Activator.CreateInstance(property.PropertyType);
+                            property.SetValue(entity, defaultValue);
+                            _logger.LogDebug("Set restricted property {PropertyName} to default value", property.Name);
+                        }
+                        else
+                        {
+                            property.SetValue(entity, null);
+                            _logger.LogDebug("Set restricted property {PropertyName} to null", property.Name);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Keeping allowed property {PropertyName}", property.Name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error filtering property {PropertyName} for entity {EntityType}", property.Name, entityType.Name);
+                }
+            }
+        }
+
+        return entity;
     }
 
     private async Task<object?> ApplyRowFiltering(object queryable, RBACAttribute rbacAttribute, ClaimsPrincipal user)
@@ -369,6 +446,69 @@ public class RBACInterceptor : IInterceptor
             return collectionType.GetGenericArguments().FirstOrDefault();
         
         return null;
+    }
+
+    private Type? GetActualEntityType(object entity)
+    {
+        var entityType = entity.GetType();
+        
+        // Handle AsyncStateMachine and other compiler-generated types
+        if (entityType.Name.Contains("AsyncStateMachine") || entityType.Name.Contains("`"))
+        {
+            _logger.LogDebug("Detected async state machine type: {TypeName}", entityType.FullName);
+            
+            // Try to extract the actual entity type from the FullName
+            // Example: "System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1+AsyncStateMachineBox`1[[UNOPS.PAO.Models.ContactModel, ..."
+            var fullName = entityType.FullName ?? "";
+            
+            // Look for the pattern [[ActualType, Assembly]]
+            var match = System.Text.RegularExpressions.Regex.Match(fullName, @"\[\[([^,]+),");
+            if (match.Success)
+            {
+                var actualTypeName = match.Groups[1].Value;
+                _logger.LogDebug("Extracted entity type name: {ActualTypeName}", actualTypeName);
+                
+                // Try to load the type
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                foreach (var assembly in assemblies)
+                {
+                    try
+                    {
+                        var actualType = assembly.GetType(actualTypeName);
+                        if (actualType != null)
+                        {
+                            _logger.LogDebug("Successfully resolved entity type: {ActualType}", actualType.Name);
+                            return actualType;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug(ex, "Error trying to load type {TypeName} from assembly {AssemblyName}", actualTypeName, assembly.FullName);
+                    }
+                }
+            }
+            
+            // Fallback: Try to get from generic arguments
+            if (entityType.IsGenericType)
+            {
+                var genericArgs = entityType.GetGenericArguments();
+                if (genericArgs.Length > 0)
+                {
+                    var firstArg = genericArgs[0];
+                    if (!firstArg.Name.Contains("AsyncStateMachine") && !firstArg.Name.Contains("`"))
+                    {
+                        _logger.LogDebug("Using first generic argument as entity type: {EntityType}", firstArg.Name);
+                        return firstArg;
+                    }
+                }
+            }
+            
+            _logger.LogWarning("Could not extract actual entity type from async state machine: {TypeName}", entityType.FullName);
+            return null;
+        }
+        
+        // For normal types, return as-is
+        return entityType;
     }
 
     #endregion

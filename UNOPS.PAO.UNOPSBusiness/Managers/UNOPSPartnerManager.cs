@@ -725,7 +725,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Gets all partners with row-level security applied
     /// </summary>
-    [RBAC("read", Entity = "Partner", ApplyRowFiltering = true, ApplyColumnFiltering = true)]
     public async Task<PaginationResponse<PartnerModel>> GetPartnersAsync(ClaimsPrincipal user, PaginationRequest request)
     {
         // RBAC interceptor handles security enforcement
@@ -757,7 +756,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Gets a specific partner with row-level security applied
     /// </summary>
-    [RBAC("read", Entity = "Partner", RequireEntityAccess = true, EntityIdParameterName = "id", ApplyColumnFiltering = true)]
     public async Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
@@ -778,7 +776,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Creates a new partner with permission validation
     /// </summary>
-    [RBAC("create", Entity = "Partner")]
     public async Task<PartnerModel?> CreatePartnerAsync(ClaimsPrincipal user, PartnerRequest model)
     {
         // RBAC interceptor handles security enforcement
@@ -796,7 +793,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Updates a partner with permission validation
     /// </summary>
-    [RBAC("update", Entity = "Partner", RequireEntityAccess = true, EntityIdParameterName = "model.Id")]
     public async Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model)
     {
         // RBAC interceptor handles security enforcement
@@ -821,7 +817,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Deletes a partner with permission validation
     /// </summary>
-    [RBAC("delete", Entity = "Partner", RequireEntityAccess = true, EntityIdParameterName = "id")]
     public async Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
@@ -838,7 +833,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Gets partners by partner group with security applied
     /// </summary>
-    [RBAC("read", Entity = "Partner", ApplyRowFiltering = true, ApplyColumnFiltering = true)]
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, string partnerGroupCode, PaginationRequest request)
     {
         // RBAC interceptor handles security enforcement
@@ -888,7 +882,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Gets partners by partner category with security applied
     /// </summary>
-    [RBAC("read", Entity = "Partner", ApplyRowFiltering = true, ApplyColumnFiltering = true)]
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request)
     {
         // RBAC interceptor handles security enforcement

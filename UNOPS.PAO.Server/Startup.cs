@@ -33,7 +33,6 @@ using UNOPS.PAO.UNOPSDataAccess.Seed;
 using UNOPS.PAO.UNOPSPresentation.Middleware;
 using System.IO;
 using UNOPS.PAO.Presentation.Security;
-using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.UNOPSBusiness.Extensions;
 
@@ -343,6 +342,10 @@ public class Startup
         // Add data seeding services
         services.AddDataSeeding();
 
+        // Automatically discover and register all managers with RBAC attributes
+        // Prioritizes UNOPS implementations over basic implementations
+        services.AddRBACManagersAutomatically();
+        
         //services.AddScoped<IManagerWrapper, ManagerWrapper>();
         services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();
 
@@ -353,9 +356,6 @@ public class Startup
         services.SeedAsync();
         ConfigureRegisters(services);
         services.AddHostedService<PubSubPullService>(); // Register your background service
-        
-        // Automatically discover and register all managers with RBAC attributes
-        services.AddRBACManagersAutomatically();
     }
 
     private void AddServices(ServiceRegistry services)

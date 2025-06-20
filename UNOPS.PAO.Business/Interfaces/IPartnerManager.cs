@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.RBAC.Attributes;
 
 namespace UNOPS.PAO.Business.Interfaces;
 
@@ -71,36 +72,43 @@ public interface IPartnerManager
     /// <summary>
     /// Gets partners with row-level security applied based on user permissions
     /// </summary>
+    [RBAC("read", Entity = "Partner", ApplyRowFiltering = true, ApplyColumnFiltering = true)]
     Task<PaginationResponse<PartnerModel>> GetPartnersAsync(ClaimsPrincipal user, PaginationRequest request);
     
     /// <summary>
     /// Gets a specific partner with row-level security applied
     /// </summary>
+    [RBAC("read", Entity = "Partner", RequireEntityAccess = true, EntityIdParameterName = "id", ApplyColumnFiltering = true)]
     Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id);
     
     /// <summary>
     /// Creates a new partner with permission validation
     /// </summary>
+    [RBAC("create", Entity = "Partner")]
     Task<PartnerModel?> CreatePartnerAsync(ClaimsPrincipal user, PartnerRequest model);
     
     /// <summary>
     /// Updates a partner with permission validation
     /// </summary>
+    [RBAC("update", Entity = "Partner", RequireEntityAccess = true, EntityIdParameterName = "model.Id")]
     Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model);
     
     /// <summary>
     /// Deletes a partner with permission validation
     /// </summary>
+    [RBAC("delete", Entity = "Partner", RequireEntityAccess = true, EntityIdParameterName = "id")]
     Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id);
     
     /// <summary>
     /// Gets partners by partner group with security applied
     /// </summary>
+    [RBAC("read", Entity = "Partner", ApplyRowFiltering = true, ApplyColumnFiltering = true)]
     Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, string partnerGroupCode, PaginationRequest request);
     
     /// <summary>
     /// Gets partners by partner category with security applied
     /// </summary>
+    [RBAC("read", Entity = "Partner", ApplyRowFiltering = true, ApplyColumnFiltering = true)]
     Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request);
     
     #endregion

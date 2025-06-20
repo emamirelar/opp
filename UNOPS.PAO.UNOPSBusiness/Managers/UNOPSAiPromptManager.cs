@@ -41,7 +41,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Tests an AI prompt with provided test data using the new function-based pattern
     /// </summary>
-    [RBAC("read", Entity = "AiPromptManagement")]
     public async Task<TestPromptResponse> TestPromptAsync(ClaimsPrincipal user, TestPromptRequest request)
     {
         // RBAC interceptor handles security enforcement
@@ -199,7 +198,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Gets all AI prompts with pagination
     /// </summary>
-    [RBAC("read", Entity = "AiPromptManagement")]
     public async Task<PaginationResponse<AiPromptModel>> GetPromptsAsync(ClaimsPrincipal user, AiPromptFilterRequest request)
     {
         // RBAC interceptor handles security enforcement
@@ -250,7 +248,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Gets a specific AI prompt by ID
     /// </summary>
-    [RBAC("read", Entity = "AiPromptManagement", RequireEntityAccess = true, EntityIdParameterName = "id")]
     public async Task<AiPromptModel?> GetPromptByIdAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
@@ -261,7 +258,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Creates a new AI prompt
     /// </summary>
-    [RBAC("create", Entity = "AiPromptManagement")]
     public async Task<AiPromptModel> CreatePromptAsync(ClaimsPrincipal user, AiPromptModel model)
     {
         // RBAC interceptor handles security enforcement
@@ -277,7 +273,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Updates an existing AI prompt
     /// </summary>
-    [RBAC("update", Entity = "AiPromptManagement", RequireEntityAccess = true, EntityIdParameterName = "id")]
     public async Task<AiPromptModel?> UpdatePromptAsync(ClaimsPrincipal user, int id, AiPromptModel model)
     {
         // RBAC interceptor handles security enforcement
@@ -304,7 +299,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Deletes an AI prompt
     /// </summary>
-    [RBAC("delete", Entity = "AiPromptManagement", RequireEntityAccess = true, EntityIdParameterName = "id")]
     public async Task<bool> DeletePromptAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
@@ -321,7 +315,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Gets prompts by type
     /// </summary>
-    [RBAC("read", Entity = "AiPromptManagement")]
     public async Task<IEnumerable<AiPromptModel>> GetPromptsByTypeAsync(ClaimsPrincipal user, string type)
     {
         // RBAC interceptor handles security enforcement
@@ -336,7 +329,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Gets unique prompt types for dropdown/filter
     /// </summary>
-    [RBAC("read", Entity = "AiPromptManagement")]
     public async Task<IEnumerable<string>> GetPromptTypesAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement
@@ -351,7 +343,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Gets unique models for dropdown/filter
     /// </summary>
-    [RBAC("read", Entity = "AiPromptManagement")]
     public async Task<IEnumerable<string>> GetModelsAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement
@@ -366,7 +357,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Gets unique projects for dropdown/filter
     /// </summary>
-    [RBAC("read", Entity = "AiPromptManagement")]
     public async Task<IEnumerable<string>> GetProjectsAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement
@@ -381,7 +371,6 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
     /// <summary>
     /// Gets unique locations for dropdown/filter
     /// </summary>
-    [RBAC("read", Entity = "AiPromptManagement")]
     public async Task<IEnumerable<string>> GetLocationsAsync(ClaimsPrincipal user)
     {
         // RBAC interceptor handles security enforcement

@@ -6,6 +6,8 @@ public class BaseRole
     public const string PARTNER_GLOB_ADMIN = "PARTNER_GLOB_ADMIN";
     public const string PARTNER_USER = "PARTNER_USER";
     public const string ORG_UNIT_ADMIN = "ORG_UNIT_ADMIN";
+    public const string GMAIL_GEN_USER = "GMAIL_GEN_USER";
+
 
     public static List<(string Name, string Description, List<Permission> Permissions)> GetAllRoles()
     {
@@ -29,6 +31,11 @@ public class BaseRole
             (
                 ORG_UNIT_ADMIN,
                 "Org Unit Admin",
+                new List<Permission>()
+            ),
+            (
+                GMAIL_GEN_USER,
+                "Gmail General User",
                 new List<Permission>()
             )
         };

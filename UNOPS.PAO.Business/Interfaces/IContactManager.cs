@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.RBAC.Attributes;
 
 namespace UNOPS.PAO.Business.Interfaces;
 
@@ -40,20 +41,24 @@ public interface IContactManager
     /// <summary>
     /// Gets contacts with row-level filtering and entity permissions applied
     /// </summary>
+    [RBAC("read", Entity = "Contact")]
     Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request);
     
     /// <summary>
     /// Gets a specific contact with entity-level access check and permissions
     /// </summary>
+    [RBAC("read", Entity = "Contact", EntityIdParameterName = "id", ApplyColumnFiltering = true)]
     Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id);
     
     /// <summary>
     /// Updates a contact with entity-level access check
     /// </summary>
+    [RBAC("update", Entity = "Contact")]
     Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model);
     
     /// <summary>
     /// Deletes a contact with entity-level access check
     /// </summary>
+    [RBAC("delete", Entity = "Contact", EntityIdParameterName = "id")]
     Task DeleteContactAsync(ClaimsPrincipal user, int id);
 }

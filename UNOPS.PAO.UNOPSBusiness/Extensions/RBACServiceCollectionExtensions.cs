@@ -1,7 +1,7 @@
 using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.UNOPSBusiness.Interceptors;
-using UNOPS.PAO.UNOPSBusiness.Attributes;
+using UNOPS.PAO.RBAC.Attributes;
 using System.Reflection;
 
 namespace UNOPS.PAO.UNOPSBusiness.Extensions;
@@ -45,6 +45,7 @@ public static class RBACServiceCollectionExtensions
 
     /// <summary>
     /// Automatically discovers and registers all managers with RBAC attributes
+    /// Prioritizes UNOPS implementations over basic implementations
     /// </summary>
     public static IServiceCollection AddRBACManagersAutomatically(this IServiceCollection services, params Assembly[] assemblies)
     {
@@ -58,8 +59,9 @@ public static class RBACServiceCollectionExtensions
             }.Where(a => a != null).ToArray();
         }
 
-        var managersToRegister = new List<(Type interfaceType, Type implementationType)>();
+        var discoveredManagers = new Dictionary<Type, List<Type>>();
 
+        // First pass: discover all manager implementations
         foreach (var assembly in assemblies)
         {
             try
@@ -72,33 +74,33 @@ public static class RBACServiceCollectionExtensions
                     if (implementationType.IsAbstract || implementationType.IsInterface || implementationType.IsGenericTypeDefinition)
                         continue;
 
-                    // Check if the type has any methods with RBAC attributes
+                    // Check if the type has any methods with RBAC attributes OR implements manager interfaces
                     var hasRBACMethods = implementationType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                         .Any(method => method.GetCustomAttribute<RBACAttribute>() != null || 
                                       method.GetCustomAttribute<SkipRBACAttribute>() != null);
 
-                    if (!hasRBACMethods)
+                    // Also include types that implement manager interfaces even without RBAC attributes
+                    var implementsManagerInterface = implementationType.GetInterfaces()
+                        .Any(i => i.Name.EndsWith("Manager") && i.Namespace?.StartsWith("UNOPS.PAO") == true);
+
+                    if (!hasRBACMethods && !implementsManagerInterface)
                         continue;
 
                     // Find interfaces that this type implements (excluding system interfaces)
                     var interfaces = implementationType.GetInterfaces()
                         .Where(i => !i.IsGenericType && 
                                    i.Namespace != null && 
-                                   (i.Namespace.StartsWith("UNOPS.PAO") || i.Namespace.Contains("Manager")))
+                                   i.Namespace.StartsWith("UNOPS.PAO") &&
+                                   i.Name.EndsWith("Manager"))
                         .ToList();
 
-                    // Prefer interfaces that end with "Manager" or contain the implementation name
-                    var preferredInterface = interfaces.FirstOrDefault(i => 
-                        i.Name.EndsWith("Manager") && 
-                        implementationType.Name.Contains(i.Name.Replace("I", "")));
-
-                    if (preferredInterface == null)
-                        preferredInterface = interfaces.FirstOrDefault();
-
-                    if (preferredInterface != null)
+                    foreach (var interfaceType in interfaces)
                     {
-                        managersToRegister.Add((preferredInterface, implementationType));
-                        Console.WriteLine($"[RBAC] Auto-discovered: {preferredInterface.Name} -> {implementationType.Name}");
+                        if (!discoveredManagers.ContainsKey(interfaceType))
+                        {
+                            discoveredManagers[interfaceType] = new List<Type>();
+                        }
+                        discoveredManagers[interfaceType].Add(implementationType);
                     }
                 }
             }
@@ -109,7 +111,41 @@ public static class RBACServiceCollectionExtensions
             }
         }
 
-        // Register all discovered managers
+        // Second pass: choose best implementation for each interface
+        var managersToRegister = new List<(Type interfaceType, Type implementationType)>();
+        
+        foreach (var (interfaceType, implementations) in discoveredManagers)
+        {
+            Type bestImplementation;
+            
+            if (implementations.Count == 1)
+            {
+                bestImplementation = implementations[0];
+            }
+            else
+            {
+                // Multiple implementations found - prefer UNOPS implementations
+                var unopsImplementation = implementations.FirstOrDefault(t => t.Name.StartsWith("UNOPS"));
+                var rbacImplementation = implementations.FirstOrDefault(t => 
+                    t.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                        .Any(method => method.GetCustomAttribute<RBACAttribute>() != null));
+                
+                // Priority order: UNOPS + RBAC > UNOPS > RBAC > first found
+                bestImplementation = unopsImplementation ?? rbacImplementation ?? implementations[0];
+                
+                Console.WriteLine($"[RBAC] Multiple implementations found for {interfaceType.Name}:");
+                foreach (var impl in implementations)
+                {
+                    var isChosen = impl == bestImplementation ? " (CHOSEN)" : "";
+                    Console.WriteLine($"[RBAC]   - {impl.Name}{isChosen}");
+                }
+            }
+            
+            managersToRegister.Add((interfaceType, bestImplementation));
+            Console.WriteLine($"[RBAC] Auto-discovered: {interfaceType.Name} -> {bestImplementation.Name}");
+        }
+
+        // Register all chosen managers
         foreach (var (interfaceType, implementationType) in managersToRegister)
         {
             try

@@ -119,8 +119,8 @@ public class GenericColumnFilterService : IGenericColumnFilterService
             _ => false
         }).ToList();
 
-        // Collect restricted columns from PropertyFilter (denylist approach)
-        var restrictedColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Collect permitted columns from PropertyFilter (denylist approach)
+        var permittedColumns = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var hasColumnFilters = false;
 
         foreach (var permission in relevantPermissions)
@@ -149,7 +149,7 @@ public class GenericColumnFilterService : IGenericColumnFilterService
                     {
                         if (!string.IsNullOrWhiteSpace(column))
                         {
-                            restrictedColumns.Add(column);
+                            permittedColumns.Add(column);
                         }
                     }
                 }
@@ -171,9 +171,9 @@ public class GenericColumnFilterService : IGenericColumnFilterService
         }
 
         // Remove restricted columns from all columns (denylist approach)
-        var allowedColumns = allColumns.Where(col => !restrictedColumns.Contains(col)).ToList();
+        var allowedColumns = allColumns.Where(col => permittedColumns.Contains(col)).ToList();
 
-        _logger.LogDebug("Restricted columns for entity {EntityName}, action {Action}: {RestrictedColumns}", entityName, action, string.Join(", ", restrictedColumns));
+        _logger.LogDebug("Permitted columns for entity {EntityName}, action {Action}: {PermittedColumns}", entityName, action, string.Join(", ", permittedColumns));
         _logger.LogDebug("Allowed columns for entity {EntityName}, action {Action}: {AllowedColumns}", entityName, action, string.Join(", ", allowedColumns));
         
         return allowedColumns;
@@ -353,7 +353,15 @@ public class GenericColumnFilterService : IGenericColumnFilterService
 
     private string GetEntityName<T>()
     {
-        return typeof(T).Name;
+        var entityName = typeof(T).Name;
+        
+        // Clean up common entity prefixes
+        if (entityName.StartsWith("UNOPS"))
+        {
+            entityName = entityName.Substring(5); // Remove "UNOPS" prefix
+        }
+        
+        return entityName;
     }
 
     #endregion
