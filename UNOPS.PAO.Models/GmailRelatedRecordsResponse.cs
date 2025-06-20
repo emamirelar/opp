@@ -10,9 +10,7 @@ public class GmailRelatedRecordsResponse
     public List<GmailRelatedPartner> Partners { get; set; }
     public List<GmailRelatedUser> Users { get; set; }
     public List<string> UnmatchedEmails { get; set; }
-    public string? ContactPermission { get; set; }
-    public string? PartnerPermission { get; set; }
-    public string? UserPermission { get; set; }
+    public bool CanCreateContacts { get; set; }
 
     public GmailRelatedRecordsResponse()
     {
@@ -29,6 +27,8 @@ public class GmailRelatedContact
     public string Title { get; set; }
     public string PartnerName { get; set; }
     public int Id { get; set; }
+    public bool CanRead { get; set; }
+    public string EmailAddress { get; set; }
 }
 
 public class  GmailRelatedPartner
@@ -37,10 +37,12 @@ public class  GmailRelatedPartner
     public string Name { get; set; }
     public string PartnerCode { get; set; }
     public string Phone { get; set; }
+    public bool CanRead { get; set; }
 }
 
 public class GmailRelatedUser
 {
     public string Name { get; set; }
     public string Title { get; set; }
+    public bool CanRead { get; set; }
 }

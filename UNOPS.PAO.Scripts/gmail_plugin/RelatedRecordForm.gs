@@ -20,105 +20,162 @@ function buildRelatedRecords(relatedRecords, messageData) {
   );
 
 
-  if (relatedRecords.contacts.length > 0) {
-    // --- Contact Section ---
-    var contactData = relatedRecords.contacts;
-
+  /*if (relatedRecords.canReadContacts == false) {
     var contactSection = CardService.newCardSection()
-        .setHeader("<b><font color=\"#005073\">Contacts (" + contactData.length + ")</font></b>")
-        .setCollapsible(true);
+        .setHeader("<b><font color=\"#005073\">Contacts (0)</font></b>");
 
-    contactData.forEach(function(contact) {
-      contactSection.addWidget(CardService.newDecoratedText()
-        // CORRECTED: Set icon directly using setIcon with CardService.Icon enum
-        .setIcon(CardService.Icon.PERSON)
-        .setText(contact.name)
-        .setButton(CardService.newTextButton()
-          .setText("View Contact")
-          .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-          .setOpenLink(CardService.newOpenLink().setUrl(`${OPPORTUNITY_PLUS_ENDPOINT}/partnerships/contacts/${contact.id}`))
-        )
-        .setWrapText(true)
-      );
+    contactSection.addWidget(CardService.newTextParagraph()
+    .setText(NO_CONTACT_READ_MSG));
 
-      contactSection.addWidget(CardService.newTextParagraph()
-        .setText("<font color=\"#555555\">Title: " + contact.title + "<br>Partner Name: " + contact.partnerName + "</font>")
-      );
-
-      if (contactData.length > 1 && contactData.indexOf(contact) < contactData.length - 1) {
-        contactSection.addWidget(CardService.newDivider());
-      }
-    });
     card.addSection(contactSection);
   }
+  else */
 
-  if(relatedRecords.partners.length > 0) {
-    // --- Partners Section ---
-    var partnersData = relatedRecords.partners;
+  if(relatedRecords) {
+    if (relatedRecords.contacts.length > 0) {
+      // --- Contact Section ---
+      var contactData = relatedRecords.contacts;
 
-    var partnersSection = CardService.newCardSection()
-        .setHeader("<b><font color=\"#005073\">Partners (" + partnersData.length + ")</font></b>")
-        .setCollapsible(true);
+      var contactSection = CardService.newCardSection()
+      .setHeader("<b><font color=\"#005073\">Contacts (" + contactData.length + ")</font></b>")
+      .setCollapsible(true);
 
-    partnersData.forEach(function(partner) {
-      partnersSection.addWidget(CardService.newDecoratedText()
-        // CORRECTED: Set icon directly using setIcon with CardService.Icon enum
-        .setIcon(CardService.Icon.BUILDING)
-        .setText(partner.name)
-        .setButton(CardService.newTextButton()
-          .setText("View Partner")
-          .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-          .setOpenLink(CardService.newOpenLink().setUrl(`${OPPORTUNITY_PLUS_ENDPOINT}/partnerships/partners/${partner.id}`))
-        )
-        .setWrapText(true)
-      );
+      contactData.forEach(function(contact) {
+        if(contact.canRead) {
+          contactSection.addWidget(CardService.newDecoratedText()
+            // CORRECTED: Set icon directly using setIcon with CardService.Icon enum
+            .setIcon(CardService.Icon.PERSON)
+            .setText(contact.name)
+            .setButton(CardService.newTextButton()
+              .setText("View Contact")
+              .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+              .setOpenLink(CardService.newOpenLink().setUrl(`${OPPORTUNITY_PLUS_ENDPOINT}/partnerships/contacts/${contact.id}`))
+            )
+            .setWrapText(true)
+          );
+
+          contactSection.addWidget(CardService.newTextParagraph()
+            .setText("<font color=\"#555555\">Title: " + contact.title + "<br>Partner Name: " + contact.partnerName + "</font>")
+          );
+        }
+        else {
+          contactSection.addWidget(CardService.newDecoratedText()
+            // CORRECTED: Set icon directly using setIcon with CardService.Icon enum
+            .setIcon(CardService.Icon.PERSON)
+            .setText(contact.emailAddress)
+            .setWrapText(true)
+          );
+          contactSection.addWidget(CardService.newTextParagraph()
+            .setText("<font color=\"#555555\">" + `${CONTACT_READ_ERROR_MSG}` + "</font>")
+          );
+        }
+
+        if (contactData.length > 1 && contactData.indexOf(contact) < contactData.length - 1) {
+          contactSection.addWidget(CardService.newDivider());
+        }
+      });
+      card.addSection(contactSection);
+    }
+
+    /*if (relatedRecords.canReadPartners == false) {
+      var partnersSection = CardService.newCardSection()
+          .setHeader("<b><font color=\"#005073\">Partners (0)</font></b>");
 
       partnersSection.addWidget(CardService.newTextParagraph()
-        .setText("<font color=\"#555555\">Partner Code: " + partner.partnerCode + "<br> Phone: " + partner.phone + "</font>")
-      );
+      .setText(NO_PARTNER_READ_MSG));
 
-      if (partnersData.length > 1 && partnersData.indexOf(partner) < partnersData.length - 1) {
-        partnersSection.addWidget(CardService.newDivider());
-      }
-    });
-    card.addSection(partnersSection);
-  }
+      card.addSection(partnersSection);
+    }
+    else */
+  
+    if(relatedRecords.partners.length > 0) {
+      // --- Partners Section ---
+      var partnersData = relatedRecords.partners;
 
-  if(relatedRecords.unmatchedEmails.length > 0) {
-    // --- Unmatched Emails Section ---
-    var unmatchedEmailsData = relatedRecords.unmatchedEmails;
+      var partnersSection = CardService.newCardSection()
+          .setHeader("<b><font color=\"#005073\">Partners (" + partnersData.length + ")</font></b>")
+          .setCollapsible(true);
 
-    var unmatchedEmailsSection = CardService.newCardSection()
+      partnersData.forEach(function(partner) {
+        if(partner.canRead) {
+          partnersSection.addWidget(CardService.newDecoratedText()
+            // CORRECTED: Set icon directly using setIcon with CardService.Icon enum
+            .setIcon(CardService.Icon.BUILDING)
+            .setText(partner.name)
+            .setButton(CardService.newTextButton()
+              .setText("View Partner")
+              .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+              .setOpenLink(CardService.newOpenLink().setUrl(`${OPPORTUNITY_PLUS_ENDPOINT}/partnerships/partners/${partner.id}`))
+            )
+            .setWrapText(true)
+          );
+          partnersSection.addWidget(CardService.newTextParagraph()
+            .setText("<font color=\"#555555\">Partner Code: " + partner.partnerCode + "<br> Phone: " + partner.phone + "</font>")
+          );
+        }
+        else {
+          partnersSection.addWidget(CardService.newDecoratedText()
+            // CORRECTED: Set icon directly using setIcon with CardService.Icon enum
+            .setIcon(CardService.Icon.BUILDING)
+            .setText(partner.name)
+            .setWrapText(true)
+          );
+          partnersSection.addWidget(CardService.newTextParagraph()
+            .setText("<font color=\"#555555\">" + `${PARTNER_READ_ERROR_MSG}` + "</font>")
+          );
+        }
+
+        if (partnersData.length > 1 && partnersData.indexOf(partner) < partnersData.length - 1) {
+          partnersSection.addWidget(CardService.newDivider());
+        }
+      });
+      card.addSection(partnersSection);
+    }
+
+    if(relatedRecords.unmatchedEmails.length > 0) {
+      // --- Unmatched Emails Section ---
+      var unmatchedEmailsData = relatedRecords.unmatchedEmails;
+
+      var unmatchedEmailsSection = CardService.newCardSection()
         .setHeader("<b><font color=\"#005073\">Unmatched Emails (" + unmatchedEmailsData.length + ")</font></b>")
         .setCollapsible(true);
     
-    unmatchedEmailsData.forEach(function(unmatchedEmail) {
-      unmatchedEmailsSection.addWidget(CardService.newDecoratedText()
-        .setIcon(CardService.Icon.EMAIL)
-        .setText(unmatchedEmail)
-        .setButton(CardService.newTextButton()
-          .setText("Create Contact")
-          .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
-          .setOnClickAction(CardService.newAction()
-          .setFunctionName("handleCreateContact")
-          .setParameters({ emailAddress: unmatchedEmail }))
-        )
-        .setWrapText(true)
-      );
+      unmatchedEmailsData.forEach(function(unmatchedEmail) {
 
-      if (unmatchedEmailsData.length > 1 && unmatchedEmailsData.indexOf(unmatchedEmail) < unmatchedEmailsData.length - 1) {
-        unmatchedEmailsSection.addWidget(CardService.newDivider());
-      }
-    });
-    card.addSection(unmatchedEmailsSection);
-  }
+        if(relatedRecords.canCreateContacts) {
+          unmatchedEmailsSection.addWidget(CardService.newDecoratedText()
+            .setIcon(CardService.Icon.EMAIL)
+            .setText(unmatchedEmail)
+            .setButton(CardService.newTextButton()
+              .setText("Create Contact")
+              .setTextButtonStyle(CardService.TextButtonStyle.TEXT)
+              .setOnClickAction(CardService.newAction()
+              .setFunctionName("handleCreateContact")
+              .setParameters({ emailAddress: unmatchedEmail }))
+            )
+            .setWrapText(true)
+          );
+        }
+        else {
+          unmatchedEmailsSection.addWidget(CardService.newDecoratedText()
+            .setIcon(CardService.Icon.EMAIL)
+            .setText(unmatchedEmail)
+            .setWrapText(true)
+          );
+        }
+        if (unmatchedEmailsData.length > 1 && unmatchedEmailsData.indexOf(unmatchedEmail) < unmatchedEmailsData.length - 1) {
+          unmatchedEmailsSection.addWidget(CardService.newDivider());
+        }
+      });
+      card.addSection(unmatchedEmailsSection);
+    }
 
-  const createUpdatebuttonText = "View Interaction Form";
+    const createUpdatebuttonText = "View Interaction Form";
 
 
-  Logger.log('Message Data Build Related Records: ' + JSON.stringify(messageData));
+    Logger.log('Message Data Build Related Records: ' + JSON.stringify(messageData));
   
-  const interactionButton = CardService.newTextButton()
+    const interactionButton = CardService.newTextButton()
     .setText(createUpdatebuttonText)
     .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
     .setBackgroundColor('#005073')
@@ -126,10 +183,21 @@ function buildRelatedRecords(relatedRecords, messageData) {
       .setFunctionName("buildInteractionCard")
       .setParameters({ messageData: JSON.stringify(messageData) }));
 
-  const interactionSection = CardService.newCardSection()
+    const interactionSection = CardService.newCardSection()
                                           .addWidget(interactionButton);
 
-  card.addSection(interactionSection);                                          
+    card.addSection(interactionSection);
+  }
+  else {
+    var errorSection = CardService.newCardSection()
+      .setHeader("<b><font color=\"#005073\">Error</font></b>");
+
+      errorSection.addWidget(CardService.newTextParagraph()
+            .setText("<font color=\"#555555\">" + `${RELATED_RECORDS_ERROR_MSG}` + "</font>")
+          );
+      card.addSection(errorSection);
+  }
+                                            
 
   return card.build();
 }

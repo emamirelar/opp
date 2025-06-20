@@ -11,32 +11,30 @@ using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.DataAccess.Services;
+using System.Net.Mail;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
     [Route("/")]
     [ApiController]
     [Authorize(AuthenticationSchemes = "Bearer")]
-    public class GmailAddonController : ControllerBase
+    public class GmailAddonController : GmailAddonBaseController
     {
         private readonly IInteractionManager _interactionManager;
         private readonly IContactManager _contactManager;
-        protected readonly IPermissionService _permissionService;
-        protected readonly ILogger _logger;
-        protected readonly UserResolverService<int> _userResolverService;
+        private readonly IPartnerManager _partnerManager;
 
         protected int CurrentUserId => _userResolverService.GetCurrentUserId();
 
         public GmailAddonController(IManagerWrapper manager,
-            ILogger<GmailAddonController> logger,
-            UserResolverService<int> userResolverService,
-            IPermissionService permissionService = null)
+        UserResolverService<int> userResolverService,
+        ILogger<GmailAddonController> logger,
+        IAuthorizationService authorizationService,
+        IPermissionService permissionService) : base(logger, authorizationService, userResolverService, permissionService)
         {
             _interactionManager = manager.InteractionManager;
             _contactManager = manager.ContactManager;
-            _permissionService = permissionService;
-            _logger = logger;
-            _userResolverService = userResolverService;
+            _partnerManager = manager.PartnerManager;
         }
 
         [HttpPost(APIDictionary.GmailAddonInteraction)]
@@ -79,48 +77,82 @@ namespace UNOPS.PAO.Presentation.Controllers
                 var retVal = new GmailRelatedRecordsResponse();
                 retVal.UnmatchedEmails = input.EmailAddresses;
 
-                // Check permission to read contacts
-                var permissionResult = await CheckEntityPermissionAsync("Contact", "read");
+                input.partnerIds = new List<int>();
 
-                if (permissionResult != null)
+                //List<int> contactPartnerIds = new List<int>();
+                List<int> softPartnerIds = new List<int>();
+
+                var contactCreatePermissionResult = await CheckEntityPermissionAsync("Contact", "create");
+
+                if (contactCreatePermissionResult == null)
                 {
-                    retVal.ContactPermission = "You do not have permission to read contacts.";
-                    return Ok(retVal);
+                    retVal.CanCreateContacts = true;
                 }
 
-                // Find related contacts
-                var contacts = await _contactManager.GetContactsForGmailAddon(input);
-
-                List<int> addedPartnerIds = new List<int>();
-
+                var contacts = await _contactManager.GetContactsForGmailAddon(input, User);
                 if (contacts != null && contacts.Any())
                 {
-                    foreach(ContactModel? contact in contacts)
+                    foreach (ContactModel? contact in contacts)
                     {
                         if (contact != null)
                         {
-                            retVal.Contacts.Add(new GmailRelatedContact
+                            if (contact.Permissions.CanRead)
                             {
-                                Name = $"{contact.Salutation} {contact.FirstName} {contact.MiddleName} {contact.LastName}",
-                                Title = contact.Title,
-                                PartnerName = contact.Partner?.Name ?? string.Empty,
-                                Id = contact.Id,
-                            });
-
-                            if(contact.Partner != null && !addedPartnerIds.Contains(contact.Partner.Id))
-                            {
-                                retVal.Partners.Add(new GmailRelatedPartner
+                                retVal.Contacts.Add(new GmailRelatedContact
                                 {
-                                    Id = contact.Partner.Id,
-                                    Name = contact.Partner.Name,
-                                    PartnerCode = contact.Partner.PartnerCode,
-                                    Phone = contact.Partner.Phone
+                                    Name = $"{contact.Salutation} {contact.FirstName} {contact.MiddleName} {contact.LastName}",
+                                    Title = contact.Title,
+                                    PartnerName = contact.Partner?.Name ?? string.Empty,
+                                    Id = contact.Id,
+                                    EmailAddress = contact.Email,
+                                    CanRead = true
                                 });
-
-                                addedPartnerIds.Add(contact.Partner.Id);
+                            }
+                            else
+                            {
+                                retVal.Contacts.Add(new GmailRelatedContact
+                                {
+                                    EmailAddress = contact.Email,
+                                    CanRead = false
+                                });
+                            }
+                            
+                            if (contact.Partner != null && !input.partnerIds.Contains(contact.Partner.Id))
+                            {
+                                input.partnerIds.Add(contact.Partner.Id);
                             }
 
                             retVal.UnmatchedEmails.Remove(contact.Email);
+                        }
+                    }
+                }
+
+                var partners = await _partnerManager.GetPartnersForGmailAddon(input, User);
+                if (partners != null && partners.Any())
+                {
+                    foreach (PartnerModel? partner in partners)
+                    {
+                        if (partner != null)
+                        {
+                            if(partner.Permissions.CanRead)
+                            {
+                                retVal.Partners.Add(new GmailRelatedPartner
+                                {
+                                    Id = partner.Id,
+                                    Name = partner.Name,
+                                    PartnerCode = partner.PartnerCode,
+                                    Phone = partner.Phone,
+                                    CanRead = true
+                                });
+                            }
+                            else
+                            {
+                                retVal.Partners.Add(new GmailRelatedPartner
+                                {
+                                    Name = partner.Name,
+                                    CanRead = false
+                                });
+                            }
                         }
                     }
                 }
@@ -130,24 +162,6 @@ namespace UNOPS.PAO.Presentation.Controllers
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-        }
-
-        protected async Task<ActionResult> CheckEntityPermissionAsync(string entityName, string action, object entity = null)
-        {
-            if (_permissionService == null)
-            {
-                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
-                return null; // Allow access if permission service is not available
-            }
-
-            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
-            {
-                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
-                    CurrentUserId, action, entityName);
-                return Forbid();
-            }
-
-            return null;
         }
     }
 }

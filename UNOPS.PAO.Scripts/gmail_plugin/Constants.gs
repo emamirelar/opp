@@ -8,6 +8,9 @@ const CONTACT_ENDPOINT = `${API_BASE_URL}/api/contact`;
 const INTERACTION_API_ENDPOINT = `${API_BASE_URL}/gmail-addon/interactions`;
 const OPPORTUNITY_PLUS_ENDPOINT = `https://localhost:44426/#`;
 const ICON_URL = 'https://storage.googleapis.com/opportunity_plus_logo/Opportunity%20Logo%20Graphic1000px.png';
+const CONTACT_READ_ERROR_MSG = 'Insufficient permissions to view this contact information';
+const PARTNER_READ_ERROR_MSG = 'Insufficient permissions to view this partner information';
+const RELATED_RECORDS_ERROR_MSG = 'There was an error retrieving the data';
   
 // Manifest document : https://developers.google.com/apps-script/manifest
 // https://developers.google.com/apps-script/manifest/allowlist-url

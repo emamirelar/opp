@@ -84,9 +84,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Add permissions if user context is available
         if (user != null && _securityService != null)
         {
+            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
             result.Permissions = new EntityPermissionsModel
             {
-                CanRead = await _securityService.CanUserAccessEntityAsync(entity, user, "read"),
+                CanRead = ((dynamic)permissions).canRead,
                 CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create"),
                 CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
                 CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete")
@@ -1098,7 +1099,36 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             request
         );
     }
-    
+
+    public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
+    {
+        var partners = PartnerRepository
+            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
+            .AsQueryable()
+            .Where(p => input.partnerIds.Contains(p.Id))
+            .Cast<UNOPSPartner>()
+            .ToList();
+
+        // Batch permission lookup once for all contacts
+        var userPermissions = await _securityService.GetEntityPermissionsAsync(user, "Partner");
+
+        var mappedPartners = new List<PartnerModel>();
+        foreach (var partner in partners)
+        {
+            var model = MapEntityToModel(partner, _mapper);
+            model.Permissions = new EntityPermissionsModel
+            {
+                CanRead = userPermissions.CanRead,
+                CanCreate = userPermissions.CanCreate,
+                CanUpdate = userPermissions.CanUpdate && await _securityService.CanUserAccessEntityAsync(partner, user, "update"),
+                CanDelete = userPermissions.CanDelete && await _securityService.CanUserAccessEntityAsync(partner, user, "delete")
+            };
+            mappedPartners.Add(model);
+        }
+
+        return mappedPartners;
+    }
+
     #endregion
 
     /// <summary>

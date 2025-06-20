@@ -7,4 +7,5 @@ namespace UNOPS.PAO.Models;
 public class GmailRelatedRecordsRequest
 {
     public List<string> EmailAddresses { get; set; }
+    public List<int>? partnerIds { get; set; }
 }

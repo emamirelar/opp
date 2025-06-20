@@ -102,6 +102,8 @@ public interface IPartnerManager
     /// Gets partners by partner category with security applied
     /// </summary>
     Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request);
-    
+
+    Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);
+
     #endregion
 }

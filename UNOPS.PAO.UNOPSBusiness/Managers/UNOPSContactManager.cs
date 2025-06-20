@@ -557,18 +557,32 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return await GetContactAsync(user, entityId);
     }
 
-    public async Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input)
+    public async Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
     {
-        
-        // Get contacts using the repository directly
         var contacts = contactRepository
-            .GetAll(["Partner"])
-            .AsQueryable()
-            .Where(c => (c.Email != null && input.EmailAddresses.Contains(c.Email)))
-            .Cast<UNOPSContact>()
-            .ToList();
-        
-        // Map to models
-        return contacts.Select(c => MapEntityToModel(c, mapper)).ToList();
+                        .GetAll(["Partner"])
+                        .AsQueryable()
+                        .Where(c => (c.Email != null && input.EmailAddresses.Contains(c.Email)))
+                        .Cast<UNOPSContact>()
+                        .ToList();
+
+        // Batch permission lookup once for all contacts
+        var userPermissions = await _securityService.GetEntityPermissionsAsync(user, "Contact");
+
+        var mappedContacts = new List<ContactModel>();
+        foreach (var contact in contacts)
+        {
+            var model = MapEntityToModel(contact, mapper);
+            model.Permissions = new EntityPermissionsModel
+            {
+                CanRead = userPermissions.CanRead,
+                CanCreate = userPermissions.CanCreate,
+                CanUpdate = userPermissions.CanUpdate && await _securityService.CanUserAccessEntityAsync(contact, user, "update"),
+                CanDelete = userPermissions.CanDelete && await _securityService.CanUserAccessEntityAsync(contact, user, "delete")
+            };
+            mappedContacts.Add(model);
+        }
+
+        return mappedContacts;
     }
 }
