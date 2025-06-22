@@ -12,6 +12,9 @@ using UNOPS.PAO.Identity.Entities;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Humanizer;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using System.Text.Json;
+using UNOPS.PAO.Models;
 
 namespace UNOPS.PAO.UNOPSPresentation.Controllers
 {
@@ -24,20 +27,17 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
         private readonly UserManager<PAOIdentityUser> _userManager;
         private readonly RoleManager<PAOIdentityRole> _roleManager;
         private readonly IPermissionService _permissionService;
-        private readonly IBusinessSecurityService _businessSecurityService;
 
         public PermissionsController(
             ILogger<PermissionsController> logger,
             UserManager<PAOIdentityUser> userManager,
             RoleManager<PAOIdentityRole> roleManager,
-            IPermissionService permissionService,
-            IBusinessSecurityService businessSecurityService)
+            IPermissionService permissionService)
         {
             _logger = logger;
             _userManager = userManager;
             _roleManager = roleManager;
             _permissionService = permissionService;
-            _businessSecurityService = businessSecurityService;
         }
 
         /// <summary>
@@ -91,48 +91,26 @@ namespace UNOPS.PAO.UNOPSPresentation.Controllers
                     _logger.LogInformation("DEBUG - Calling GetEntityPermissionsAsync for entity: {EntityName}", entityName);
                     
                     // Get entity-level permissions using BusinessSecurityService
-                    var entityPermissions = await _businessSecurityService.GetEntityPermissionsAsync(User, entityName);
+                    var entityPermissionsObj = await _permissionService.GetEntityPermissionsAsync(entityName);
+                    
+                    // Convert to JSON and deserialize to our response class
+                    var jsonString = JsonSerializer.Serialize(entityPermissionsObj);
+                    var permissions = JsonSerializer.Deserialize<EntityPermissionsModel>(jsonString);
                     
                     _logger.LogInformation("DEBUG - EntityPermissions result: CanRead={CanRead}, CanCreate={CanCreate}, CanUpdate={CanUpdate}, CanDelete={CanDelete}", 
-                        entityPermissions.CanRead, entityPermissions.CanCreate, entityPermissions.CanUpdate, entityPermissions.CanDelete);
-
-                    // If checking a specific instance, apply row-level filtering
-                    bool hasInstanceAccess = true;
-                    if (!string.IsNullOrEmpty(entityId) && int.TryParse(entityId, out int id))
-                    {
-                        _logger.LogInformation("DEBUG - Checking instance access for {EntityName} ID {Id}", entityName, id);
-                        hasInstanceAccess = await _businessSecurityService.CanUserAccessEntityAsync(User, entityName, id);
-                        _logger.LogInformation("Instance access check for {Entity} ID {Id}: {HasAccess}", 
-                            entityName, id, hasInstanceAccess);
-                    }
-                    else
-                    {
-                        _logger.LogInformation("DEBUG - No specific entity ID, skipping instance access check");
-                    }
-
-                    // Combine entity permissions with instance access
-                    var canRead = entityPermissions.CanRead && hasInstanceAccess;
-                    var canCreate = entityPermissions.CanCreate;
-                    var canUpdate = entityPermissions.CanUpdate && hasInstanceAccess;
-                    var canDelete = entityPermissions.CanDelete && hasInstanceAccess;
-
-                    // Log the results
-                    _logger.LogInformation("{Entity} permissions: CanRead={CanRead}, CanCreate={CanCreate}, CanUpdate={CanUpdate}, CanDelete={CanDelete}",
-                        entityName, canRead, canCreate, canUpdate, canDelete);
-                    
-                    _logger.LogInformation("DEBUG - Final hasAccess value: {HasAccess} (based on canRead)", canRead);
+                        permissions.CanRead, permissions.CanCreate, permissions.CanUpdate, permissions.CanDelete);
 
                     return Ok(new
                     {
                         route = normalizedRoute,
-                        hasAccess = canRead,
+                        hasAccess = permissions.CanRead,
                         entity = entityName,
                         permissions = new
                         {
-                            canRead,
-                            canCreate,
-                            canUpdate,
-                            canDelete
+                            canRead = permissions.CanRead,
+                            canCreate = permissions.CanCreate,
+                            canUpdate = permissions.CanUpdate,
+                            canDelete = permissions.CanDelete
                         }
                     });
                 }

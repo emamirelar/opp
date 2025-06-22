@@ -6,6 +6,7 @@ using UNOPS.PAO.Domain.Specifications.Interfaces;
 using UNOPS.PAO.Domain.Specifications.InteractionSpecifications;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDomain.Entities;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services;
@@ -16,14 +17,14 @@ namespace UNOPS.PAO.UNOPSBusiness.Services;
 /// </summary>
 public class SecureSpecificationFactory : ISecureSpecificationFactory
 {
-    private readonly IBusinessSecurityService _businessSecurityService;
+    private readonly IPermissionService _permissionService;
     private readonly ILogger<SecureSpecificationFactory> _logger;
     
     public SecureSpecificationFactory(
-        IBusinessSecurityService businessSecurityService,
+        IPermissionService permissionService,
         ILogger<SecureSpecificationFactory> logger)
     {
-        _businessSecurityService = businessSecurityService;
+        _permissionService = permissionService;
         _logger = logger;
     }
     
@@ -40,8 +41,8 @@ public class SecureSpecificationFactory : ISecureSpecificationFactory
         try
         {
             // Get user's organization unit for filtering
-            var userOrgUnit = await _businessSecurityService.GetUserOrgUnitAsync(user);
-            
+            var userOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
+
             _logger.LogDebug("Creating secure interaction specification for user with org unit: {OrgUnit}", 
                 userOrgUnit ?? "None");
             

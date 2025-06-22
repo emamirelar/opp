@@ -7,6 +7,7 @@ using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
+using UNOPS.PAO.UNOPSBusiness.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Managers;
@@ -23,9 +24,8 @@ public class EntityConfigurationController : BaseController
         IManagerWrapper manager,
         UserResolverService<int> userResolverService,
         ILogger<EntityConfigurationController> logger,
-        IAuthorizationService authorizationService,
-        IPermissionService permissionService)
-        : base(logger, authorizationService, userResolverService, permissionService)
+        IAuthorizationService authorizationService)
+        : base(logger, authorizationService, userResolverService)
     {
         _manager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
     }
@@ -54,9 +54,6 @@ public class EntityConfigurationController : BaseController
     [HttpGet(APIDictionary.EntityConfiguration + "/{entityName}")]
     public async Task<ActionResult> GetEntityConfiguration(string entityName)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "read");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var result = await _manager.GetEntityConfigurationDetailsAsync(User, entityName);
@@ -80,9 +77,6 @@ public class EntityConfigurationController : BaseController
     [HttpPost(APIDictionary.EntityConfiguration + "/{entityName}/save")]
     public async Task<ActionResult> SaveEntityConfiguration(string entityName, [FromBody] SaveEntityConfigurationRequest request)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "update");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var result = await _manager.SaveEntityConfigurationDetailsAsync(User, request);
@@ -106,9 +100,6 @@ public class EntityConfigurationController : BaseController
     [HttpGet(APIDictionary.EntityConfiguration)]
     public async Task<ActionResult> GetAllEntityConfigurations()
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "read");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var configurations = await _manager.GetAllEntityConfigurationsAsync(User);
@@ -130,11 +121,9 @@ public class EntityConfigurationController : BaseController
     /// Create a new entity configuration
     /// </summary>
     [HttpPost(APIDictionary.EntityConfigurationCreate)]
+    [AccessControlled(EntityTypes.EntityConfiguration, "create")]
     public async Task<ActionResult> CreateEntityConfiguration([FromBody] CreateEntityConfigurationRequest request)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "create");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var result = await _manager.CreateEntityConfigurationAsync(User, request);
@@ -156,16 +145,13 @@ public class EntityConfigurationController : BaseController
     /// Update an entity configuration
     /// </summary>
     [HttpPut(APIDictionary.EntityConfiguration + "/{id}")]
+    [AccessControlled(EntityTypes.EntityConfiguration, "update")]
     public async Task<ActionResult> UpdateEntityConfiguration(int id, [FromBody] UpdateEntityConfigurationRequest request)
     {
         if (id != request.Id)
         {
             return BadRequest(new { error = "ID mismatch" });
         }
-
-        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "update");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var result = await _manager.UpdateEntityConfigurationAsync(User, request);
@@ -187,11 +173,9 @@ public class EntityConfigurationController : BaseController
     /// Delete an entity configuration
     /// </summary>
     [HttpDelete(APIDictionary.EntityConfiguration + "/{id}")]
+    [AccessControlled(EntityTypes.EntityConfiguration, "delete")]
     public async Task<ActionResult> DeleteEntityConfiguration(int id)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "delete");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             await _manager.DeleteEntityConfigurationAsync(User, id);
@@ -213,11 +197,9 @@ public class EntityConfigurationController : BaseController
     /// Get fields for a specific entity configuration
     /// </summary>
     [HttpGet(APIDictionary.EntityConfiguration + "/{entityManagerId}/fields")]
+    [AccessControlled(EntityTypes.EntityConfiguration, "read")]
     public async Task<ActionResult> GetEntityFields(int entityManagerId)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityFieldManager", "read");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var fields = await _manager.GetEntityFieldsAsync(User, entityManagerId);
@@ -239,11 +221,9 @@ public class EntityConfigurationController : BaseController
     /// Create a new entity field
     /// </summary>
     [HttpPost(APIDictionary.EntityFieldCreate)]
+    [AccessControlled(EntityTypes.EntityConfiguration, "create")]
     public async Task<ActionResult> CreateEntityField([FromBody] CreateEntityFieldRequest request)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityFieldManager", "create");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var result = await _manager.CreateEntityFieldAsync(User, request);
@@ -265,16 +245,13 @@ public class EntityConfigurationController : BaseController
     /// Update an entity field
     /// </summary>
     [HttpPut(APIDictionary.EntityField + "/{id}")]
+    [AccessControlled(EntityTypes.EntityConfiguration, "update")]
     public async Task<ActionResult> UpdateEntityField(int id, [FromBody] UpdateEntityFieldRequest request)
     {
         if (id != request.Id)
         {
             return BadRequest(new { error = "ID mismatch" });
         }
-
-        var permissionResult = await CheckEntityPermissionAsync("EntityFieldManager", "update");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var result = await _manager.UpdateEntityFieldAsync(User, request);
@@ -296,11 +273,9 @@ public class EntityConfigurationController : BaseController
     /// Delete an entity field
     /// </summary>
     [HttpDelete(APIDictionary.EntityField + "/{id}")]
+    [AccessControlled(EntityTypes.EntityConfiguration, "delete")]
     public async Task<ActionResult> DeleteEntityField(int id)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityFieldManager", "delete");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             await _manager.DeleteEntityFieldAsync(User, id);
@@ -322,11 +297,9 @@ public class EntityConfigurationController : BaseController
     /// Get available fields for a related entity type (for relationship field configuration)
     /// </summary>
     [HttpGet(APIDictionary.EntityConfiguration + "/related-fields/{entityType}")]
+    [AccessControlled(EntityTypes.EntityConfiguration, "read")]
     public async Task<ActionResult> GetRelatedEntityFields(string entityType)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "read");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var fields = await _manager.GetRelatedEntityFieldsAsync(User, entityType);
@@ -348,11 +321,9 @@ public class EntityConfigurationController : BaseController
     /// Get field options for a specific data type in the context of an entity
     /// </summary>
     [HttpGet(APIDictionary.EntityConfiguration + "/field-options/{dataType}/{contextEntityName}")]
+    [AccessControlled(EntityTypes.EntityConfiguration, "read")]
     public async Task<ActionResult> GetFieldOptionsForDataType(string dataType, string contextEntityName)
     {
-        var permissionResult = await CheckEntityPermissionAsync("EntityManager", "read");
-        if (permissionResult != null) return permissionResult;
-
         try
         {
             var fields = await _manager.GetFieldOptionsForDataTypeAsync(User, dataType, contextEntityName);

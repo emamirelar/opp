@@ -45,7 +45,9 @@ public class ContactManager : IContactManager
         throw new NotImplementedException();
     }
 
-    public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
+
+
+    public virtual async Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination)
     {
         throw new NotImplementedException();
     }

@@ -9,8 +9,7 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
-using UNOPS.PAO.Presentation.Security;
-using UNOPS.PAO.UNOPSBusiness.Authorization;
+using UNOPS.PAO.UNOPSBusiness.Attributes;
 
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]
@@ -22,9 +21,8 @@ public class AiPromptController : BaseController
         IManagerWrapper managerWrapper,
         UserResolverService<int> userResolverService,
         IAuthorizationService authorizationService,
-        ILogger<AiPromptController> logger,
-        IPermissionService permissionService)
-        : base(logger, authorizationService, userResolverService, permissionService)
+        ILogger<AiPromptController> logger)
+        : base(logger, authorizationService, userResolverService)
     {
         _managerWrapper = managerWrapper;
     }
@@ -33,6 +31,7 @@ public class AiPromptController : BaseController
     /// Gets all AI prompts with pagination and search
     /// </summary>
     [HttpPost(APIDictionary.AiPromptsList)]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetPromptsAsync([FromBody] AiPromptFilterRequest request)
     {
         // RBAC interceptor handles permission checking
@@ -44,6 +43,7 @@ public class AiPromptController : BaseController
     /// Gets a specific AI prompt by ID
     /// </summary>
     [HttpGet(APIDictionary.AiPrompts + "/{id}")]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetPromptByIdAsync(int id)
     {
         // RBAC interceptor handles permission checking
@@ -59,6 +59,7 @@ public class AiPromptController : BaseController
     /// Creates a new AI prompt
     /// </summary>
     [HttpPost(APIDictionary.AiPrompts)]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> CreatePromptAsync([FromBody] AiPromptModel model)
     {
         // RBAC interceptor handles permission checking
@@ -75,6 +76,7 @@ public class AiPromptController : BaseController
     /// Updates an existing AI prompt
     /// </summary>
     [HttpPut(APIDictionary.AiPrompts + "/{id}")]
+    [AccessControlled(EntityTypes.AiPromptManagement, "update")]
     public async Task<ActionResult> UpdatePromptAsync(int id, [FromBody] AiPromptModel model)
     {
         // RBAC interceptor handles permission checking
@@ -95,6 +97,7 @@ public class AiPromptController : BaseController
     /// Deletes an AI prompt
     /// </summary>
     [HttpDelete(APIDictionary.AiPrompts + "/{id}")]
+    [AccessControlled(EntityTypes.AiPromptManagement, "delete")]
     public async Task<ActionResult> DeletePromptAsync(int id)
     {
         // RBAC interceptor handles permission checking
@@ -110,6 +113,7 @@ public class AiPromptController : BaseController
     /// Gets prompts by type
     /// </summary>
     [HttpGet(APIDictionary.AiPromptsByType + "/{type}")]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetPromptsByTypeAsync(string type)
     {
         // RBAC interceptor handles permission checking
@@ -121,6 +125,7 @@ public class AiPromptController : BaseController
     /// Gets unique prompt types for dropdown/filter
     /// </summary>
     [HttpGet(APIDictionary.AiPromptsTypes)]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetPromptTypesAsync()
     {
         // RBAC interceptor handles permission checking
@@ -132,6 +137,7 @@ public class AiPromptController : BaseController
     /// Gets unique models for dropdown/filter
     /// </summary>
     [HttpGet(APIDictionary.AiPromptsModels)]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetModelsAsync()
     {
         // RBAC interceptor handles permission checking
@@ -143,6 +149,7 @@ public class AiPromptController : BaseController
     /// Gets unique projects for dropdown/filter
     /// </summary>
     [HttpGet(APIDictionary.AiPromptsProjects)]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetProjectsAsync()
     {
         // RBAC interceptor handles permission checking
@@ -154,6 +161,7 @@ public class AiPromptController : BaseController
     /// Gets unique locations for dropdown/filter
     /// </summary>
     [HttpGet(APIDictionary.AiPromptsLocations)]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetLocationsAsync()
     {
         // RBAC interceptor handles permission checking
@@ -165,6 +173,7 @@ public class AiPromptController : BaseController
     /// Tests an AI prompt with provided test data
     /// </summary>
     [HttpPost(APIDictionary.AiPromptsTest)]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> TestPromptAsync([FromBody] TestPromptRequest request)
     {
         // RBAC interceptor handles permission checking

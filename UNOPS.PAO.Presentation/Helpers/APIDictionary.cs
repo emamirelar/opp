@@ -102,4 +102,10 @@ public class APIDictionary
     public const string EntityConfigurationCreate = EntityConfiguration + "/create";
     public const string EntityField = APIPrefix + "entity-field";
     public const string EntityFieldCreate = EntityField + "/create";
+
+    // User Management
+    public const string UserManagement = APIPrefix + "user-management";
+    public const string UserManagementUsers = UserManagement + "/users";
+    public const string UserManagementRoles = UserManagement + "/roles";
+    public const string UserManagementCurrentUserOrgUnit = UserManagement + "/current-user-org-unit";
 }

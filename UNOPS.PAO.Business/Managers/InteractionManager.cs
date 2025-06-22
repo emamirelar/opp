@@ -126,7 +126,7 @@ public class InteractionManager : IInteractionManager
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
-    public PaginationResponse<InteractionModel> GetInteractionsWithSpecification(int userId, ISpecification<Interaction> specification, PaginationRequest pagination)
+    public async Task<PaginationResponse<InteractionModel>> GetInteractionsWithSpecification(int userId, ISpecification<Interaction> specification, PaginationRequest pagination)
     {
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
@@ -161,7 +161,7 @@ public class InteractionManager : IInteractionManager
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
-    public PaginationResponse<InteractionModel> GetContactInteractionsAsync(int contactId, PaginationRequest request)
+    public async Task<PaginationResponse<InteractionModel>> GetContactInteractionsAsync(int contactId, PaginationRequest request)
     {
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }

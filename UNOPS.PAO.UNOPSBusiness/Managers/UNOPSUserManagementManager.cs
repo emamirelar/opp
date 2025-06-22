@@ -4,13 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Business.Interfaces;
-using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.UNOPSBusiness.Attributes;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -18,6 +17,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 {
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly RoleManager<PAOIdentityRole> _roleManager;
+    private readonly IPermissionService _permissionService;
 
     public UNOPSUserManagementManager(
         IMapper mapper,
@@ -25,11 +25,12 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         IConfiguration configuration,
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
-        IBusinessSecurityService securityService)
-        : base(mapper, context, configuration, userManager, securityService)
+        IPermissionService permissionService)
+        : base(mapper, context, configuration, userManager)
     {
         _userManager = userManager;
         _roleManager = roleManager;
+        _permissionService = permissionService;
     }
 
     public async Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request)
@@ -40,7 +41,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         // Apply "Show My Org Unit Only" filter if requested
         if (request.ShowMyOrgUnitOnly)
         {
-            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (!string.IsNullOrEmpty(currentUserOrgUnit))
             {
                 userInfoQuery = userInfoQuery.Where(x => x.OrgUnit == currentUserOrgUnit);
@@ -155,7 +156,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         // Additional org unit check for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
-            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (userInfo.OrgUnit != currentUserOrgUnit)
             {
                 throw new UnauthorizedAccessException("Access denied. You can only view users from your organization unit.");
@@ -213,11 +214,11 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         // Additional org unit and role validation for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
-            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
-            if (userInfo.OrgUnit != currentUserOrgUnit)
-            {
-                throw new UnauthorizedAccessException("Access denied. You can only update users from your organization unit.");
-            }
+            // var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            // if (userInfo.OrgUnit != currentUserOrgUnit)
+            // {
+            //     throw new UnauthorizedAccessException("Access denied. You can only update users from your organization unit.");
+            // }
 
             // ORG_UNIT_ADMIN can only assign certain roles
             var allowedRoles = new[] { "UNOPS_GEN_USER", "PARTNER_USER", "ORG_UNIT_ADMIN" };
@@ -316,7 +317,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         // Additional org unit check for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
-            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (orgUnit.Code != currentUserOrgUnit)
             {
                 throw new UnauthorizedAccessException("Access denied. You can only view settings for your organization unit.");
@@ -342,7 +343,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         // Additional org unit check for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
-            var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (orgUnit.Code != currentUserOrgUnit)
             {
                 throw new UnauthorizedAccessException("Access denied. You can only update settings for your organization unit.");

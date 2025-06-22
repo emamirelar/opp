@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using UNOPS.PAO.Models;
-using UNOPS.PAO.UNOPSBusiness.Authorization;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
@@ -13,16 +12,14 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
 public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityConfigurationManager
 {
-    private readonly IPermissionService _permissionService;
 
     public UNOPSEntityConfigurationManager(
         IMapper mapper, 
         UNOPSAppDbContext context, 
         IConfiguration configuration,
         IPermissionService permissionService) 
-        : base(mapper, context, configuration)
+        : base(mapper, context, configuration, null, "EntityConfiguration", permissionService)
     {
-        _permissionService = permissionService;
     }
 
     public async Task<IEnumerable<Entities>> GetAllEntitiesAsync()
@@ -35,7 +32,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<IEnumerable<EntityManager>> GetAllEntityConfigurationsAsync(ClaimsPrincipal user)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "read");
         
         return await _context.EntityManagers
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
@@ -46,7 +42,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityManager?> GetEntityConfigurationAsync(ClaimsPrincipal user, int id)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "read");
         
         return await _context.EntityManagers
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
@@ -55,7 +50,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityManager?> GetEntityConfigurationByNameAsync(ClaimsPrincipal user, string entityName)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "read");
         
         return await _context.EntityManagers
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
@@ -64,7 +58,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityManager> CreateEntityConfigurationAsync(ClaimsPrincipal user, CreateEntityConfigurationRequest request)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "create");
         
         // Check if entity name already exists
         var existing = await _context.EntityManagers
@@ -98,7 +91,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityManager> UpdateEntityConfigurationAsync(ClaimsPrincipal user, UpdateEntityConfigurationRequest request)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "update");
         
         var entity = await _context.EntityManagers
             .FirstOrDefaultAsync(em => em.Id == request.Id && !em.IsDeleted);
@@ -134,7 +126,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task DeleteEntityConfigurationAsync(ClaimsPrincipal user, int id)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "delete");
         
         var entity = await _context.EntityManagers
             .Include(em => em.EntityFields)
@@ -160,7 +151,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<IEnumerable<EntityFieldManager>> GetEntityFieldsAsync(ClaimsPrincipal user, int entityManagerId)
     {
-        await EnsurePermissionAsync(user, "EntityFieldManager", "read");
         
         return await _context.EntityFieldManagers
             .Where(ef => ef.EntityManagerId == entityManagerId && !ef.IsDeleted)
@@ -171,7 +161,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityFieldManager?> GetEntityFieldAsync(ClaimsPrincipal user, int fieldId)
     {
-        await EnsurePermissionAsync(user, "EntityFieldManager", "read");
         
         return await _context.EntityFieldManagers
             .Include(ef => ef.EntityManager)
@@ -180,7 +169,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityFieldManager> CreateEntityFieldAsync(ClaimsPrincipal user, CreateEntityFieldRequest request)
     {
-        await EnsurePermissionAsync(user, "EntityFieldManager", "create");
         
         // Verify the parent entity exists
         var parentEntity = await _context.EntityManagers
@@ -248,7 +236,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityFieldManager> UpdateEntityFieldAsync(ClaimsPrincipal user, UpdateEntityFieldRequest request)
     {
-        await EnsurePermissionAsync(user, "EntityFieldManager", "update");
         
         var field = await _context.EntityFieldManagers
             .Include(ef => ef.EntityManager)
@@ -310,7 +297,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task DeleteEntityFieldAsync(ClaimsPrincipal user, int fieldId)
     {
-        await EnsurePermissionAsync(user, "EntityFieldManager", "delete");
         
         var field = await _context.EntityFieldManagers
             .FirstOrDefaultAsync(ef => ef.Id == fieldId && !ef.IsDeleted);
@@ -329,7 +315,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityConfigurationDetailsResponse> GetEntityConfigurationDetailsAsync(ClaimsPrincipal user, string entityName)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "read");
         
         var entityConfig = await _context.EntityManagers
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted))
@@ -389,7 +374,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
 
     public async Task<EntityConfigurationDetailsResponse> SaveEntityConfigurationDetailsAsync(ClaimsPrincipal user, SaveEntityConfigurationRequest request)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "update");
         
         var userId = GetCurrentUserId(user);
         
@@ -401,7 +385,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
         if (entityConfig == null)
         {
             // Create new entity configuration
-            await EnsurePermissionAsync(user, "EntityManager", "create");
             
             entityConfig = new EntityManager
             {
@@ -472,7 +455,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             else
             {
                 // Create new field
-                await EnsurePermissionAsync(user, "EntityFieldManager", "create");
                 
                 var newField = new EntityFieldManager
                 {
@@ -546,9 +528,7 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     }
 
     public async Task<IEnumerable<RelatedFieldOptionDto>> GetRelatedEntityFieldsAsync(ClaimsPrincipal user, string entityType)
-    {
-        await EnsurePermissionAsync(user, "EntityManager", "read");
-        
+    {   
         var entityConfig = await _context.EntityManagers
             .Include(em => em.EntityFields.Where(f => !f.IsDeleted && f.IsActive))
             .FirstOrDefaultAsync(em => em.EntityName == entityType && !em.IsDeleted);
@@ -580,7 +560,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
     /// </summary>
     public async Task<IEnumerable<RelatedFieldOptionDto>> GetFieldOptionsForDataTypeAsync(ClaimsPrincipal user, string dataType, string contextEntityName)
     {
-        await EnsurePermissionAsync(user, "EntityManager", "read");
         
         // Map data type to actual entity property name based on context
         var propertyName = GetPropertyNameForDataType(dataType, contextEntityName);
@@ -660,15 +639,6 @@ public class UNOPSEntityConfigurationManager : BaseUNOPSManager, IUNOPSEntityCon
             },
             _ => Array.Empty<RelatedFieldOptionDto>()
         };
-    }
-
-    private async Task EnsurePermissionAsync(ClaimsPrincipal user, string entityName, string action)
-    {
-        var hasPermission = await _permissionService.CanPerformActionAsync(entityName, action, user);
-        if (!hasPermission)
-        {
-            throw new UnauthorizedAccessException($"Access denied for {action} operation on {entityName}");
-        }
     }
 
     private int GetCurrentUserId(ClaimsPrincipal user)

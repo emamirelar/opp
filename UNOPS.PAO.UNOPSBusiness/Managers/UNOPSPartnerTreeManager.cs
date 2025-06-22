@@ -11,8 +11,8 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using System.Security.Claims;
 using System.Linq;
-using UNOPS.PAO.UNOPSBusiness.Attributes;
 using Microsoft.Extensions.Configuration;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
 {
@@ -65,11 +65,8 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
     private async Task<PartnerTreeModel> MapEntityToModelWithPermissionsAsync(UNOPSPartnerTree entity, IMapper mapper, ClaimsPrincipal user)
     {
         var result = await MapEntityToModel(entity, mapper);
-        
-        // Add permissions using the helper method from BaseUNOPSManager
-        result.Permissions = await GetEntityPermissionsAsync(entity, user);
-        
-        return result;
+
+        return await MapEntityToModelWithPermissionsAsync(result, user); ;
     }
 
     private static ExternalPartnerTreeModel MapEntityToExternalModel(UNOPSPartnerTree entity, IMapper mapper)
@@ -79,8 +76,8 @@ public class UNOPSPartnerTreeManager : BaseUNOPSManager, IPartnerTreeManager
         return result;
     }
 
-    public UNOPSPartnerTreeManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IBusinessSecurityService securityService)
-        : base(mapper, context, configuration, null, securityService)
+    public UNOPSPartnerTreeManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService)
+        : base(mapper, context, configuration, null, "PartnerTree", permissionService)
     {
         this.mapper = mapper;
         this.partnerTreeService = partnerTreeService;

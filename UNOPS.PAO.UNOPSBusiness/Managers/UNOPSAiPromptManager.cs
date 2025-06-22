@@ -16,9 +16,8 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
-using UNOPS.PAO.UNOPSBusiness.Attributes;
-using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
 {
@@ -30,9 +29,9 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         UNOPSAppDbContext context, 
         IConfiguration configuration, 
         UserManager<PAOIdentityUser> userManager,
-        IBusinessSecurityService securityService,
-        IManagerWrapper managerWrapper)
-        : base(mapper, context, configuration, userManager, securityService)
+        IManagerWrapper managerWrapper,
+        IPermissionService permissionService)
+        : base(mapper, context, configuration, userManager, "AiPrompt", permissionService)
     {
         _promptRepository = new DataRepository<AiPrompt>(context);
         _managerWrapper = managerWrapper;

@@ -33,9 +33,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSEntityConfigurationManager entityConfigurationManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
-                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, 
-                               IContactManager contactManager,
-                               IBusinessSecurityService securityService = null, IPermissionService permissionService = null) : base(mapper, context, userManager, httpContextAccessor)
+                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService) : base(mapper, context, userManager, httpContextAccessor)
     {
         // Create a MemoryCache instance for services that need it
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -45,14 +43,14 @@ public class UNOPSManagerWrapper : ManagerWrapper
         var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
         
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
-        this.contactManager = contactManager;
-        interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, securityService);
-        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, securityService);
-        partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, securityService);
+        contactManager = new UNOPSContactManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
+        interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
+        partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
+        partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, permissionService, httpContextAccessor);
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
         linkManager = new LinkManager(mapper, opsContext);
-        userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, securityService);
-        aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, securityService, this);
+        userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);
+        aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);
         entityConfigurationManager = new UNOPSEntityConfigurationManager(mapper, opsContext, configuration, permissionService);
     }
 

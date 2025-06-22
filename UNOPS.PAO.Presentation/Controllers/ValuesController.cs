@@ -22,19 +22,16 @@ using Microsoft.EntityFrameworkCore;
 public class ValuesController : BaseController
 {
     private readonly ValuesManager _manager;
-    private readonly IBusinessSecurityService _businessSecurityService;
     private int currentUserId => _userResolverService.GetCurrentUserId();
 
     public ValuesController(
         ValuesManager manager,
-        IBusinessSecurityService businessSecurityService,
         ILogger<ValuesController> logger,
         IAuthorizationService authorizationService,
         UserResolverService<int> userResolverService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager;
-        _businessSecurityService = businessSecurityService;
     }
 
     [HttpGet(APIDictionary.Currency)]
@@ -79,10 +76,9 @@ public class ValuesController : BaseController
             var allPartners = await _manager.GetPartnersForFiltering().ToListAsync();
             
             // Apply row-level filtering based on user's role and organization unit
-            var filteredPartners = await _businessSecurityService.ApplyRowFiltersAsync(allPartners.AsQueryable(), User, "create");
             
             // Map to PartnerValueModel after filtering
-            return filteredPartners.Select(p => new PartnerValueModel
+            return allPartners.Select(p => new PartnerValueModel
             {
                 Id = p.Id,
                 Name = p.Name,

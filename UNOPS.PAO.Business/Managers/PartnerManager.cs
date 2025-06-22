@@ -126,6 +126,11 @@ public class PartnerManager : IPartnerManager
         };
     }
 
+    public virtual async Task<object> GetPartnersWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Partner> specification, PaginationRequest pagination)
+    {
+        throw new NotImplementedException("GetPartnersWithSpecificationAsync not implemented in base PartnerManager");
+    }
+
     // Implementation for UNOPSPartner specification (interface requirement)
     public async Task<PaginationResponse<PartnerModel>> GetPartnersWithSpecification(int userId, ISpecification<UNOPSPartner> specification, PaginationRequest pagination)
     {
