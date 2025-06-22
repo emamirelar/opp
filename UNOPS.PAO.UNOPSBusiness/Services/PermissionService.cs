@@ -6,6 +6,7 @@ using UNOPS.PAO.UNOPSDomain.Authorization;
 using System.Text.Json;
 using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Http;
+using System.Text.Json.Serialization;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services
 {
@@ -83,7 +84,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             // Check if user has permission for this action
             bool hasPermission = false;
             string rowFilterConditions = null;
-            var restrictedColumns = new HashSet<string>();
+            var permittedColumns = new HashSet<string>();
 
             foreach (var permission in permissions)
             {
@@ -130,7 +131,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                             {
                                 foreach (var column in columns)
                                 {
-                                    restrictedColumns.Add(column);
+                                    permittedColumns.Add(column);
                                 }
                             }
                         }
@@ -183,10 +184,14 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 data = query.ToList();
             }
 
-            // Apply column filtering if there are restricted columns
-            if (restrictedColumns.Any())
+            // Apply column filtering if there are permitted columns
+            if (permittedColumns.Any())
             {
-                return await ApplyColumnFilteringToDataGeneric(data, restrictedColumns);
+                // Always ensure Id and permissions are included, even if not in PropertyFilter
+                permittedColumns.Add("Id");
+                permittedColumns.Add("permissions");
+                
+                return await ApplyColumnFilteringToDataGeneric(data, permittedColumns);
             }
 
             return data;
@@ -262,38 +267,51 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         }
 
         /// <summary>
-        /// Applies column filtering to data by removing restricted columns (generic version)
+        /// Applies column filtering to data by keeping only permitted columns (generic version)
         /// </summary>
         /// <param name="data">The data to filter</param>
-        /// <param name="restrictedColumns">Set of column names to remove</param>
-        /// <returns>Data with restricted columns removed, maintaining original type</returns>
-        private async Task<List<T>> ApplyColumnFilteringToDataGeneric<T>(List<T> data, HashSet<string> restrictedColumns)
+        /// <param name="permittedColumns">Set of column names to keep</param>
+        /// <returns>Data with only permitted columns, maintaining original type</returns>
+        private async Task<List<T>> ApplyColumnFilteringToDataGeneric<T>(List<T> data, HashSet<string> permittedColumns)
         {
-            if (data == null || !restrictedColumns.Any())
+            if (data == null)
+                return data;
+
+            // If no permitted columns specified, return all data (backward compatibility)
+            if (!permittedColumns.Any())
                 return data;
 
             try
             {
+                // Configure JsonSerializer to handle circular references and respect JsonIgnore attributes
+                var options = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    WriteIndented = false
+                };
+
                 // Serialize to JSON, filter properties, then deserialize back to List<T>
-                var jsonString = JsonSerializer.Serialize(data);
+                var jsonString = JsonSerializer.Serialize(data, options);
                 var jsonDocument = JsonDocument.Parse(jsonString);
                 
-                var filteredJson = FilterJsonProperties(jsonDocument.RootElement, restrictedColumns);
+                var filteredJson = FilterJsonProperties(jsonDocument.RootElement, permittedColumns);
                 
-                var filteredData = JsonSerializer.Deserialize<List<T>>(filteredJson);
+                var filteredData = JsonSerializer.Deserialize<List<T>>(filteredJson, options);
                 return filteredData ?? data;
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
+                System.Diagnostics.Debug.WriteLine($"JSON processing failed: {ex.Message}");
                 // If JSON processing fails, return original data
                 return data;
             }
         }
 
         /// <summary>
-        /// Helper method to filter JSON properties
+        /// Helper method to filter JSON properties to keep only permitted columns
         /// </summary>
-        private string FilterJsonProperties(JsonElement element, HashSet<string> restrictedColumns)
+        private string FilterJsonProperties(JsonElement element, HashSet<string> permittedColumns)
         {
             if (element.ValueKind == JsonValueKind.Object)
             {
@@ -301,13 +319,22 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 
                 foreach (var property in element.EnumerateObject())
                 {
-                    if (!restrictedColumns.Contains(property.Name))
+                    // Check both exact match and case-insensitive match to handle PascalCase vs camelCase
+                    if (permittedColumns.Contains(property.Name) || 
+                        permittedColumns.Any(col => string.Equals(col, property.Name, StringComparison.OrdinalIgnoreCase)))
                     {
                         filteredObject[property.Name] = JsonSerializer.Deserialize<object>(property.Value.GetRawText());
                     }
                 }
                 
-                return JsonSerializer.Serialize(filteredObject);
+                // Configure JsonSerializer options for consistency
+                var options = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+                
+                return JsonSerializer.Serialize(filteredObject, options);
             }
             else if (element.ValueKind == JsonValueKind.Array)
             {
@@ -315,11 +342,18 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 
                 foreach (var item in element.EnumerateArray())
                 {
-                    var filteredItem = FilterJsonProperties(item, restrictedColumns);
+                    var filteredItem = FilterJsonProperties(item, permittedColumns);
                     filteredArray.Add(JsonSerializer.Deserialize<object>(filteredItem));
                 }
                 
-                return JsonSerializer.Serialize(filteredArray);
+                // Configure JsonSerializer options for consistency
+                var options = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+                
+                return JsonSerializer.Serialize(filteredArray, options);
             }
             
             return element.GetRawText();
