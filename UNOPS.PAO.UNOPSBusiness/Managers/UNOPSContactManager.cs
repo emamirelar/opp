@@ -145,7 +145,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     public PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request)
     {
         var query = contactRepository
-            .GetAll(["Partner"])
+            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
             .AsQueryable();
 
         // Custom pagination with efficient user lookup
@@ -194,7 +194,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     public async Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request)
     {
         var query = contactRepository
-            .GetAll(["Partner"])
+            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
             .AsQueryable();
 
         // Apply access control filters (row and column filtering) BEFORE pagination
@@ -258,13 +258,13 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner"]);
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]);
         if (entity == null) return null;
 
         // Check if user has permission to access this specific entity
         // Create a single-item query and apply access control filters
         var query = contactRepository
-            .GetAll(["Partner"])
+            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
             .Where(x => x.Id == id)
             .AsQueryable();
 
@@ -296,7 +296,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         await contactRepository.UpdateAsync(entity);
         
         // Return updated entity with includes
-        var updatedEntity = await contactRepository.GetByIdAsync(entity.Id, ["Partner"]);
+        var updatedEntity = await contactRepository.GetByIdAsync(entity.Id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]);
         return await MapEntityToModel(updatedEntity, mapper, user);
     }
 
@@ -311,7 +311,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     public async Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination)
     {
         var query = contactRepository
-            .GetAll(["Partner"])
+            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
             .AsQueryable();
 
         // Apply access control filters (row and column filtering) BEFORE pagination
@@ -358,7 +358,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public async Task<ContactModel?> GetContact(int userId, int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner"]);
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]);
         if (entity == null) return null;
 
         return await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
@@ -384,7 +384,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
     {
-        var contacts = contactRepository.GetAll(["Partner"]).Where(c => c.PartnerId == partnerId);
+        var contacts = contactRepository.GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]).Where(c => c.PartnerId == partnerId);
         var results = new List<ContactModel>();
         foreach (var contact in contacts)
         {
@@ -419,7 +419,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public async Task<ContactModel?> GetContactAsync(int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner"]);
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]);
         if (entity == null) return null;
 
         return await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
@@ -427,7 +427,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Interactions"]);
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup", "Interactions"]);
         if (entity == null) return null;
 
         var result = await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());

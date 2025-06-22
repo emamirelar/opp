@@ -8,7 +8,7 @@ using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 using UNOPS.PAO.Domain.Specifications.InteractionSpecifications;
 using UNOPS.PAO.Domain.Specifications.Interfaces;
 using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
-using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSDomain.Specifications;
 
@@ -24,14 +24,14 @@ public interface IMyOfficeFilterService
 
 public class MyOfficeFilterService : IMyOfficeFilterService
 {
-    private readonly IBusinessSecurityService _securityService;
+    private readonly IPermissionService _permissionService;
     private readonly ILogger<MyOfficeFilterService> _logger;
 
     public MyOfficeFilterService(
-        IBusinessSecurityService securityService, 
+        IPermissionService permissionService, 
         ILogger<MyOfficeFilterService> logger)
     {
-        _securityService = securityService;
+        _permissionService = permissionService;
         _logger = logger;
     }
 
@@ -41,7 +41,7 @@ public class MyOfficeFilterService : IMyOfficeFilterService
         
         if (filter.MyOfficeOnly)
         {
-            var userOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            var userOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             _logger.LogInformation("MyOfficeOnly requested, user org unit: {OrgUnit}", userOrgUnit);
             
             return new UNOPSPartnerCompositeWithMyOfficeSpecification(filter, userOrgUnit);
@@ -57,7 +57,7 @@ public class MyOfficeFilterService : IMyOfficeFilterService
         
         if (filter.MyOfficeOnly)
         {
-            var userOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            var userOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             _logger.LogInformation("MyOfficeOnly requested, user org unit: {OrgUnit}", userOrgUnit);
             
             return new UNOPSContactCompositeWithMyOfficeSpecification(filter, userOrgUnit);
@@ -73,7 +73,7 @@ public class MyOfficeFilterService : IMyOfficeFilterService
         
         if (filter.MyOfficeOnly)
         {
-            var userOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
+            var userOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             _logger.LogInformation("MyOfficeOnly requested, user org unit: {OrgUnit}", userOrgUnit);
             
             return new InteractionCompositeWithMyOfficeSpecification(filter, userOrgUnit);
