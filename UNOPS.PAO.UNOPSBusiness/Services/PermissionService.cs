@@ -5,16 +5,19 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Authorization;
 using System.Text.Json;
 using System.Linq.Dynamic.Core;
+using Microsoft.AspNetCore.Http;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services
 {
     public class PermissionService : IPermissionService
     {
         private readonly UNOPSAppDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public PermissionService(UNOPSAppDbContext context)
+        public PermissionService(UNOPSAppDbContext context, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<bool> HasPermissionAsync(ClaimsPrincipal user, string entity, string action)
@@ -37,7 +40,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
             // Query EntityPermissions table for matching entity and user roles
             var permissions = await _context.EntityPermissions
-                .Where(ep => ep.Entity == entity && userRoles.Contains(ep.Role))
+                .Where(ep => ep.Entity.ToLower() == entity.ToLower() && userRoles.Contains(ep.Role))
                 .ToListAsync();
 
             if (!permissions.Any())
@@ -168,12 +171,22 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             }
 
             // Execute the query to get data
-            var data = await query.ToListAsync();
+            List<T> data;
+            try
+            {
+                // Try async first (for EF queries)
+                data = await query.ToListAsync();
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("IAsyncEnumerable"))
+            {
+                // Fallback to synchronous execution (for LINQ to Objects after dynamic filtering)
+                data = query.ToList();
+            }
 
             // Apply column filtering if there are restricted columns
             if (restrictedColumns.Any())
             {
-                return await ApplyColumnFilteringToData(data, restrictedColumns);
+                return await ApplyColumnFilteringToDataGeneric(data, restrictedColumns);
             }
 
             return data;
@@ -198,7 +211,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
 
             // Query EntityPermissions table for matching entity and user roles
             var permissions = await _context.EntityPermissions
-                .Where(ep => ep.Entity == entityName && userRoles.Contains(ep.Role))
+                .Where(ep => ep.Entity.ToLower() == entityName.ToLower() && userRoles.Contains(ep.Role))
                 .ToListAsync();
 
             return permissions;
@@ -219,7 +232,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         /// <summary>
         /// Gets the user's organization unit for row filtering
         /// </summary>
-        private async Task<string> GetUserOrgUnitAsync(ClaimsPrincipal user)
+        public async Task<string> GetUserOrgUnitAsync(ClaimsPrincipal user)
         {
             if (user == null) return string.Empty;
 
@@ -249,25 +262,26 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         }
 
         /// <summary>
-        /// Applies column filtering to data by removing restricted columns
+        /// Applies column filtering to data by removing restricted columns (generic version)
         /// </summary>
         /// <param name="data">The data to filter</param>
         /// <param name="restrictedColumns">Set of column names to remove</param>
-        /// <returns>Data with restricted columns removed</returns>
-        private async Task<object> ApplyColumnFilteringToData(object data, HashSet<string> restrictedColumns)
+        /// <returns>Data with restricted columns removed, maintaining original type</returns>
+        private async Task<List<T>> ApplyColumnFilteringToDataGeneric<T>(List<T> data, HashSet<string> restrictedColumns)
         {
             if (data == null || !restrictedColumns.Any())
                 return data;
 
             try
             {
-                // Serialize to JSON, filter properties, then deserialize back
+                // Serialize to JSON, filter properties, then deserialize back to List<T>
                 var jsonString = JsonSerializer.Serialize(data);
                 var jsonDocument = JsonDocument.Parse(jsonString);
                 
                 var filteredJson = FilterJsonProperties(jsonDocument.RootElement, restrictedColumns);
                 
-                return JsonSerializer.Deserialize<object>(filteredJson);
+                var filteredData = JsonSerializer.Deserialize<List<T>>(filteredJson);
+                return filteredData ?? data;
             }
             catch (JsonException)
             {
@@ -309,6 +323,181 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             }
             
             return element.GetRawText();
+        }
+
+        /// <summary>
+        /// Checks if user can perform the specified action on the entity
+        /// </summary>
+        public async Task<bool> CanPerformActionAsync(string entityName, string action, ClaimsPrincipal user, object entity = null)
+        {
+            return await HasPermissionAsync(user, entityName, action);
+        }
+        
+        /// <summary>
+        /// Gets all permissions the current user has for a given entity
+        /// </summary>
+        public async Task<object> GetEntityPermissionsAsync(string entityName, object entity = null)
+        {
+            // Get the current user from HttpContext
+            var httpContext = _httpContextAccessor.HttpContext;
+            var user = httpContext?.User;
+            
+            if (user == null)
+            {
+                return new
+                {
+                    CanRead = false,
+                    CanCreate = false,
+                    CanUpdate = false,
+                    CanDelete = false
+                };
+            }
+            
+            return new
+            {
+                CanRead = await HasPermissionAsync(user, entityName, "read"),
+                CanCreate = await HasPermissionAsync(user, entityName, "create"),
+                CanUpdate = await HasPermissionAsync(user, entityName, "update"),
+                CanDelete = await HasPermissionAsync(user, entityName, "delete")
+            };
+        }
+
+        /// <summary>
+        /// Checks if the user has access to a specific entity instance using row filtering for the specified action
+        /// </summary>
+        public async Task<bool> HasInstanceAccessAsync(string entityName, object entity, ClaimsPrincipal user, string action)
+        {
+            if (user == null || !user.Identity.IsAuthenticated || entity == null)
+            {
+                return false;
+            }
+
+            // Get entity permissions for this user (use the private method that returns List<EntityPermission>)
+            var permissions = await GetEntityPermissionsAsync(user, entityName);
+            
+            if (!permissions.Any())
+            {
+                return false;
+            }
+
+            // Determine which permission property to check based on action
+            var actionKey = $"Can{char.ToUpper(action[0])}{action.Substring(1).ToLower()}";
+
+            // Check if any role has row filtering conditions for the specified action
+            foreach (var permission in permissions)
+            {
+                // Check if user has the basic permission for this action
+                bool hasBasicPermission = action.ToLower() switch
+                {
+                    "read" => permission.CanRead,
+                    "create" => permission.CanCreate,
+                    "update" => permission.CanUpdate,
+                    "delete" => permission.CanDelete,
+                    _ => false
+                };
+
+                if (!hasBasicPermission)
+                    continue;
+
+                // If there's no row filter, user has access to all instances
+                if (string.IsNullOrEmpty(permission.RowFilter))
+                {
+                    return true;
+                }
+
+                try
+                {
+                    // Parse row filter conditions
+                    var rowFilterJson = JsonSerializer.Deserialize<Dictionary<string, string>>(permission.RowFilter);
+                    if (rowFilterJson != null && rowFilterJson.TryGetValue(actionKey, out var filter))
+                    {
+                        if (string.IsNullOrEmpty(filter))
+                        {
+                            // Empty filter means access to all instances
+                            return true;
+                        }
+
+                        // Apply row filter to check if this specific instance is accessible
+                        var hasAccess = await CheckRowFilterCondition(entity, filter, user);
+                        if (hasAccess)
+                        {
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        // No specific filter for this action, assume access granted
+                        return true;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Invalid JSON, assume access granted to avoid breaking functionality
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if an entity instance matches the row filter condition
+        /// </summary>
+        private async Task<bool> CheckRowFilterCondition(object entity, string filterCondition, ClaimsPrincipal user)
+        {
+            try
+            {
+                // Get current user information for parameter substitution
+                var currentUserId = GetCurrentUserId(user);
+                var userOrgUnit = await GetUserOrgUnitAsync(user);
+
+                // Replace parameter placeholders with actual values
+                var processedFilter = filterCondition
+                    .Replace("@currentUserId", currentUserId.ToString())
+                    .Replace("@userOrgUnit", $"\"{userOrgUnit}\""); // Wrap in quotes for string comparison
+
+                // Instead of converting to dictionary, work directly with the entity type
+                // This preserves navigation properties and allows proper LINQ evaluation
+                var entityType = entity.GetType();
+                
+                // Create a generic method to handle the dynamic LINQ evaluation
+                var method = typeof(PermissionService).GetMethod(nameof(EvaluateFilterOnEntity), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var genericMethod = method.MakeGenericMethod(entityType);
+                
+                var result = (bool)genericMethod.Invoke(this, new object[] { entity, processedFilter });
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // Log the exception for debugging
+                System.Diagnostics.Debug.WriteLine($"Row filter evaluation failed: {ex.Message}");
+                // If filtering fails, assume no access for security
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Evaluates a filter condition on a specific entity type using Dynamic LINQ
+        /// </summary>
+        private bool EvaluateFilterOnEntity<T>(T entity, string filterCondition)
+        {
+            try
+            {
+                // Create a queryable from the single entity with proper type
+                var queryable = new[] { entity }.AsQueryable();
+                
+                // Apply the filter using Dynamic LINQ
+                var filteredResults = queryable.Where(filterCondition).ToList();
+                
+                // If the entity passes the filter, it will be in the results
+                return filteredResults.Any();
+            }
+            catch (Exception ex)
+            {
+                // Log the exception for debugging
+                System.Diagnostics.Debug.WriteLine($"Dynamic LINQ evaluation failed: {ex.Message}");
+                return false;
+            }
         }
     }
 }

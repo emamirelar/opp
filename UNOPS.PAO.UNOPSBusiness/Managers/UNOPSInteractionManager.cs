@@ -16,7 +16,8 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Business.Repositories.Generic;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
-using UNOPS.PAO.UNOPSBusiness.Attributes;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 {
@@ -24,14 +25,19 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private readonly BaseRepository<UNOPSInteraction> interactionRepository;
     private readonly BaseRepository<UNOPSContact> contactRepository;
     private readonly UNOPSAppDbContext context;
-    private readonly IBusinessSecurityService _securityService;
 
     private static InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
         return mapper.Map<UNOPSInteraction, InteractionModel>(entity);
     }
 
+    private async Task<InteractionModel> MapEntityToModelAsync(UNOPSInteraction entity, IMapper mapper, ClaimsPrincipal user = null)
+    {
+        // Use AutoMapper with the updated configuration
+        var result = mapper.Map<UNOPSInteraction, InteractionModel>(entity);
 
+        return await MapEntityToModelWithPermissionsAsync(result, user); ;
+    }
 
     private UNOPSInteraction MapModelToEntity(InteractionRequest model, UNOPSInteraction entity)
     {
@@ -55,14 +61,13 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         return entity;
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IBusinessSecurityService securityService = null)
-        : base(mapper, context, configuration, null, securityService)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
+        : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         this.context = context;
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
-        _securityService = securityService;
     }
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
@@ -299,33 +304,78 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
     }
     
-    public PaginationResponse<InteractionModel> GetContactInteractionsAsync(int contactId, PaginationRequest request)
+    public async Task<PaginationResponse<InteractionModel>> GetContactInteractionsAsync(int contactId, PaginationRequest request)
     {
         var query = interactionRepository
             .GetAll(["InteractionContacts"])
-            .Where(x => x.InteractionContacts.Any(ic => ic.ContactId == contactId))
-            .OrderByDescending(x => x.Date)
-            .AsQueryable()
-            .Where(x => !x.IsDeleted);
+            .Where(x => x.InteractionContacts.Any(ic => ic.ContactId == contactId) && !x.IsDeleted)
+            .AsQueryable();
 
-        return query.Paginate(
-            x => mapper.Map<InteractionModel>(x),
-            request
-        );
+        // Apply access control filters
+        var filteredData = await ApplyAccessControlFilters(query, GetCurrentUserOrSystemContext(), "read");
+        
+        // Filter to ensure we only have UNOPSInteraction instances and handle pagination manually
+        var interactionArray = filteredData.OfType<UNOPSInteraction>().OrderByDescending(x => x.Date).ToArray();
+        var totalCount = interactionArray.Length;
+        var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+        var excludedRows = (pageIndex - 1) * request.PageSize;
+        
+        var pagedItems = interactionArray
+            .Skip(excludedRows)
+            .Take(request.PageSize)
+            .ToArray();
+
+        var results = new List<InteractionModel>();
+        foreach (var item in pagedItems)
+        {
+            var mapped = await MapEntityToModelAsync(item, mapper, null);
+            results.Add(mapped);
+        }
+
+        return new PaginationResponse<InteractionModel>
+        {
+            Records = results,
+            TotalCount = totalCount,
+            PageIndex = pageIndex,
+            PageSize = request.PageSize
+        };
     }
 
-    public PaginationResponse<InteractionModel> GetInteractionsWithSpecification(int userId, ISpecification<Interaction> specification, PaginationRequest pagination)
+    public async Task<PaginationResponse<InteractionModel>> GetInteractionsWithSpecification(int userId, ISpecification<Interaction> specification, PaginationRequest pagination)
     {
         // Apply the specification to the query
         var query = interactionRepository.GetAll().AsQueryable()
             .Where(x => !x.IsDeleted);
         var filteredQuery = query.ApplySpecification(specification);
         
-        // Apply pagination
-        return filteredQuery.Paginate(
-            x => mapper.Map<InteractionModel>(x),
-            pagination
-        );
+        // Apply access control filters (row and column filtering) BEFORE pagination
+        var filteredData = await ApplyAccessControlFilters(filteredQuery, GetCurrentUserOrSystemContext(), "read");
+        
+        // Filter to ensure we only have UNOPSInteraction instances and handle pagination manually
+        var interactionArray = filteredData.OfType<UNOPSInteraction>().ToArray();
+        var totalCount = interactionArray.Length;
+        var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+        var excludedRows = (pageIndex - 1) * pagination.PageSize;
+        
+        var pagedItems = interactionArray
+            .Skip(excludedRows)
+            .Take(pagination.PageSize)
+            .ToArray();
+
+        var results = new List<InteractionModel>();
+        foreach (var item in pagedItems)
+        {
+            var mapped = await MapEntityToModelAsync(item, mapper, null);
+            results.Add(mapped);
+        }
+
+        return new PaginationResponse<InteractionModel>
+        {
+            Records = results,
+            TotalCount = totalCount,
+            PageIndex = pageIndex,
+            PageSize = pagination.PageSize
+        };
     }
 
     public IEnumerable<ExternalInteractionModel> GetPostedInteractions()
@@ -375,7 +425,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
             if (entity != null)
             {
-                interaction.Permissions = await GetEntityPermissionsAsync(entity, user);
+                //interaction.Permissions = await GetEntityPermissionsAsync(entity, user);
             }
         }
 
@@ -391,12 +441,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var item = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
         if (item == null) return null;
 
-        var result = MapEntityToModel(item, mapper);
-        
-        // Add permissions for frontend UI
-        result.Permissions = await GetEntityPermissionsAsync(item, user);
-
-        return result;
+        return await MapEntityToModelAsync(item, mapper, user);
     }
 
     /// <summary>
@@ -422,12 +467,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         await interactionRepository.UpdateAsync(entity);
 
-        var result = MapEntityToModel(entity, mapper);
-        
-        // Add permissions for frontend UI
-        result.Permissions = await GetEntityPermissionsAsync(entity, user);
-
-        return result;
+        return await MapEntityToModelAsync(entity, mapper, user);
     }
 
     /// <summary>
@@ -465,7 +505,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         if (item == null) return null;
 
-        var result = MapEntityToModel(item, mapper);
+        var result = await MapEntityToModelAsync(item, mapper, user);
         
         // Populate junction table IDs
         if (item.InteractionContacts != null)
@@ -482,9 +522,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         {
             result.UserIds = item.InteractionUsers.Select(iu => iu.UserId).ToList();
         }
-
-        // Add permissions for frontend UI
-        result.Permissions = await GetEntityPermissionsAsync(item, user);
 
         return result;
     }
@@ -514,7 +551,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             return null;
         }
 
-        var result = MapEntityToModel(item, mapper);
+        var result = await MapEntityToModelAsync(item, mapper, null);
         
         // Populate junction table IDs
         if (item.InteractionContacts != null)

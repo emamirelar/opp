@@ -341,7 +341,7 @@ public abstract class BaseUNOPSManager
     /// <summary>
     /// Applies access control filters using PermissionService
     /// </summary>
-    protected async Task<object> ApplyAccessControlFilters<T>(IQueryable<T> query, ClaimsPrincipal user, string action) where T : class
+    protected async Task<List<T>> ApplyAccessControlFilters<T>(IQueryable<T> query, ClaimsPrincipal user, string action) where T : class
     {
         if (_permissionService == null)
         {
@@ -349,7 +349,22 @@ public abstract class BaseUNOPSManager
             return new List<T>();
         }
 
-        return await _permissionService.ApplyAccessControlFiltersAsync(query, user, action, _entityName);
+        var result = await _permissionService.ApplyAccessControlFiltersAsync(query, user, action, _entityName);
+        
+        // Cast the result back to List<T>
+        if (result is List<T> typedList)
+        {
+            return typedList;
+        }
+        
+        // If it's some other enumerable, convert it
+        if (result is IEnumerable<T> enumerable)
+        {
+            return enumerable.ToList();
+        }
+        
+        // Fallback: return empty list
+        return new List<T>();
     }
 
     /// <summary>
