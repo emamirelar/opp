@@ -71,7 +71,7 @@ public class PartnerController : BaseController
                     request, // Use request as pagination request since PartnerFilterRequest extends PaginationRequest
                     "Partner",
                     filterRequest => new PartnerCompositeSpecification(filterRequest),
-                    async (userId, spec, pagination) => (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination),
+                    async (userId, spec, pagination) => await _manager.GetPartnersWithSpecification(CurrentUserId, spec, (PartnerFilterRequest)pagination),
                     CurrentUserId, _logger);
             }
             
@@ -84,14 +84,14 @@ public class PartnerController : BaseController
                     request,
                     "Partner",
                     filterRequest => new PartnerCompositeSpecification(filterRequest),
-                    async (userId, spec, pagination) => (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination),
+                    async (userId, spec, pagination) => await _manager.GetPartnersWithSpecification(CurrentUserId, spec, (PartnerFilterRequest)pagination),
                     CurrentUserId, _logger);
             }
             
             // For no search parameters, return all partners with pagination
             _logger.LogInformation("Retrieving all partners with pagination");
             var specification = new PartnerCompositeSpecification(request);
-            return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, specification, request);
+            return await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request);
         }, "partner search");
     }
 

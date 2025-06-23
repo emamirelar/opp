@@ -17,8 +17,8 @@ public interface IContactManager
     Task<ContactModel> CreateContactAsync(ContactRequest model);
 
     PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request);
-    
-    Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination);
+
+    PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination);
 
     Task<ContactModel?> GetContact(int userId, int id);
 

@@ -220,8 +220,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
+        var filteredQuery = query.ApplySpecification(specification);
+
         // Apply access control filters (row and column filtering) BEFORE pagination
-        var filteredData = await ApplyAccessControlFilters(query, user, "read");
+        var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
         
         // If filteredData is a list, we need to handle pagination manually
         if (filteredData is IEnumerable<UNOPSPartner> partnerList)

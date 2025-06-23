@@ -308,51 +308,51 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         await contactRepository.Delete(entity);
     }
 
-    public async Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination)
+    public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
     {
-        var query = contactRepository
-            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
-            .AsQueryable();
+        // Apply the specification to the query
+        var query = contactRepository.GetAll(["Partner"]).AsQueryable();
+        var filteredQuery = query.ApplySpecification(specification);
 
-        // Apply access control filters (row and column filtering) BEFORE pagination
-        var filteredData = await ApplyAccessControlFilters(query, user, "read");
-        
-        // If filteredData is a list, we need to handle pagination manually
-        if (filteredData is IEnumerable<UNOPSContact> contactList)
-        {
-            var contactArray = contactList.ToArray();
-            var totalCount = contactArray.Length;
-            var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
-            var excludedRows = (pageIndex - 1) * pagination.PageSize;
-            
-            var pagedItems = contactArray
-                .Skip(excludedRows)
-                .Take(pagination.PageSize)
-                .ToArray();
+        // Custom pagination with efficient user lookup
+        var totalCount = filteredQuery.Count();
+        var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+        var excludedRows = (pageIndex - 1) * pagination.PageSize;
 
-            var results = new List<ContactModel>();
-            foreach (var item in pagedItems)
-            {
-                var model = await MapEntityToModel(item, mapper, user);
-                results.Add(model);
-            }
+        var items = filteredQuery
+            .Skip(excludedRows)
+            .Take(pagination.PageSize)
+            .Cast<UNOPSContact>()
+            .ToList();
 
-            return new PaginationResponse<ContactModel>
-            {
-                Records = results,
-                TotalCount = totalCount,
-                PageIndex = pageIndex,
-                PageSize = pagination.PageSize
-            };
-        }
+        // Get all unique user IDs from the contacts
+        var userIds = items.Select(c => c.CreatedBy).Distinct().Where(id => id > 0).ToList();
 
-        // Fallback: if filteredData is not the expected type, return empty result
+        // Batch lookup all user info at once
+        var userInfoLookup = userInfoRepository.GetAll()
+            .Where(u => userIds.Contains(u.UserId))
+            .ToDictionary(u => u.UserId, u => u);
+
+        // Get all unique org unit codes from the user info
+        var orgUnitCodes = userInfoLookup.Values
+            .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+            .Select(u => u.OrgUnit)
+            .Distinct()
+            .ToList();
+
+        // Batch lookup all organization hierarchy at once
+        var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+            .Where(o => orgUnitCodes.Contains(o.Code) && !string.IsNullOrEmpty(o.Code) && o.Type == OrganizationUnitType.OrgUnit)
+            .GroupBy(o => o.Code)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // Map entities to models with efficient user and org lookup
+        var mappedItems = items.Select(x => MapEntityToModelWithUserInfo(x, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
+
         return new PaginationResponse<ContactModel>
         {
-            Records = new List<ContactModel>(),
-            TotalCount = 0,
-            PageIndex = pagination.PageIndex,
-            PageSize = pagination.PageSize
+            Records = mappedItems,
+            TotalCount = totalCount
         };
     }
 

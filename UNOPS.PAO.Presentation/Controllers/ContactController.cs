@@ -80,20 +80,20 @@ public class ContactController : BaseController
                     searchCriteria, searchText, pageIndex, pageSize, orderBy, ascending, paginationRequest,
                     "Contact",
                     filterRequest => new ContactCompositeSpecification(filterRequest),
-                    (userId, spec, pagination) => _manager.GetContactsWithSpecificationAsync(User, spec, pagination),
+                    (userId, spec, pagination) => _manager.GetContactsWithSpecification(userId, spec, pagination),
                     CurrentUserId, _logger);
             }
-            
+
             if (!string.IsNullOrWhiteSpace(searchText))
             {
                 return SearchControllerHelper.ProcessSimpleTextSearchSync<ContactFilterRequest, ContactCompositeSpecification, object>(
                     searchText, pageIndex, pageSize, orderBy, ascending, paginationRequest,
                     "Contact",
                     filterRequest => new ContactCompositeSpecification(filterRequest),
-                    (userId, spec, pagination) => _manager.GetContactsWithSpecificationAsync(User, spec, pagination),
+                    (userId, spec, pagination) => _manager.GetContactsWithSpecification(userId, spec, pagination),
                     CurrentUserId, _logger);
             }
-            
+
             // Return all contacts with pagination
             _logger.LogInformation("Retrieving all contacts with pagination");
             return await _manager.GetContactsAsync(User, paginationRequest);
