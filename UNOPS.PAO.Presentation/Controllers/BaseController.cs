@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
 using System.Text.Json;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -281,85 +282,6 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
 
         /// <summary>
-        /// Checks if the current user has permission to perform the specified action on the entity
-        /// </summary>
-        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
-        /// <param name="action">Action to perform (e.g., "read", "create", "update", "delete")</param>
-        /// <param name="entity">Optional entity instance for entity-specific checks</param>
-        /// <returns>ActionResult with Forbid if permission denied, null if allowed</returns>
-        protected async Task<ActionResult> CheckEntityPermissionAsync(string entityName, string action, object entity = null)
-        {
-            if (_permissionService == null)
-            {
-                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
-                return null; // Allow access if permission service is not available
-            }
-            
-            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
-            {
-                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
-                    CurrentUserId, action, entityName);
-                return Forbid();
-            }
-            
-            return null;
-        }
-
-        /// <summary>
-        /// Validates if user has the required permission. Throws exception if not authorized.
-        /// </summary>
-        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
-        /// <param name="action">Action to perform (e.g., "read", "create", "update", "delete")</param>
-        /// <param name="entity">Optional entity instance for entity-specific checks</param>
-        /// <returns>True if permission is granted, otherwise throws UnauthorizedAccessException</returns>
-        protected async Task<bool> ValidateEntityPermissionAsync(string entityName, string action, object entity = null)
-        {
-            if (_permissionService == null)
-            {
-                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
-                return true; // Allow access if permission service is not available
-            }
-            
-            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
-            {
-                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
-                    CurrentUserId, action, entityName);
-                throw new UnauthorizedAccessException($"You don't have permission to {action} {entityName}");
-            }
-            
-            return true;
-        }
-
-        /// <summary>
-        /// Gets all permissions the current user has for a given entity
-        /// </summary>
-        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
-        /// <param name="entity">Optional entity instance for entity-specific checks</param>
-        /// <returns>An object containing permission flags</returns>
-        protected async Task<object> GetEntityPermissionsAsync(string entityName, object entity = null)
-        {
-            if (_permissionService == null)
-            {
-                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Returning default permissions.", GetType().Name);
-                return new
-                {
-                    CanRead = true,
-                    CanCreate = true,
-                    CanUpdate = true,
-                    CanDelete = true
-                };
-            }
-            
-            return new
-            {
-                CanRead = await _permissionService.CanPerformActionAsync(entityName, "read", User, entity),
-                CanCreate = await _permissionService.CanPerformActionAsync(entityName, "create", User, entity),
-                CanUpdate = await _permissionService.CanPerformActionAsync(entityName, "update", User, entity),
-                CanDelete = await _permissionService.CanPerformActionAsync(entityName, "delete", User, entity)
-            };
-        }
-
-        /// <summary>
         /// Handles an operation with proper error handling, logging, and role-based authorization
         /// </summary>
         /// <typeparam name="T">Return type of the operation</typeparam>
@@ -537,5 +459,63 @@ namespace UNOPS.PAO.Presentation.Controllers
                 return StatusCode(500, new { error = $"An error occurred during {searchDescription}" });
             }
         }
+
+        protected async Task<ActionResult> GetEntityPermissionsAsync(string entityType, object entity = null)
+        {
+            var permissions = await _permissionService.GetEntityPermissionsAsync(entityType, entity);
+            return Ok(permissions);
+        }
+
+
+        /// <summary>
+        /// Checks if the current user has permission to perform the specified action on the entity
+        /// </summary>
+        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
+        /// <param name="action">Action to perform (e.g., "read", "create", "update", "delete")</param>
+        /// <param name="entity">Optional entity instance for entity-specific checks</param>
+        /// <returns>ActionResult with Forbid if permission denied, null if allowed</returns>
+        protected async Task<ActionResult> CheckEntityPermissionAsync(string entityName, string action, object entity = null)
+        {
+            if (_permissionService == null)
+            {
+                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
+                return null; // Allow access if permission service is not available
+            }
+            
+            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
+            {
+                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
+                    CurrentUserId, action, entityName);
+                return Forbid();
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// Validates if user has the required permission. Throws exception if not authorized.
+        /// </summary>
+        /// <param name="entityName">Name of the entity (e.g., "Contact", "Partner")</param>
+        /// <param name="action">Action to perform (e.g., "read", "create", "update", "delete")</param>
+        /// <param name="entity">Optional entity instance for entity-specific checks</param>
+        /// <returns>True if permission is granted, otherwise throws UnauthorizedAccessException</returns>
+        protected async Task<bool> ValidateEntityPermissionAsync(string entityName, string action, object entity = null)
+        {
+            if (_permissionService == null)
+            {
+                _logger.LogWarning("IPermissionService not available in controller {ControllerName}. Permission check skipped.", GetType().Name);
+                return true; // Allow access if permission service is not available
+            }
+            
+            if (!await _permissionService.CanPerformActionAsync(entityName, action, User, entity))
+            {
+                _logger.LogWarning("User {UserId} attempted to perform {Action} on {EntityName} without permission",
+                    CurrentUserId, action, entityName);
+                throw new UnauthorizedAccessException($"You don't have permission to {action} {entityName}");
+            }
+            
+            return true;
+        }
+
     }
 } 

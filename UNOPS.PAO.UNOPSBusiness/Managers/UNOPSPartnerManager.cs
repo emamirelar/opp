@@ -27,13 +27,15 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 {
     private readonly IMapper _mapper;
     private readonly UNOPSAppDbContext _context;
     private readonly IConfiguration _configuration;
-    private readonly IBusinessSecurityService _securityService;
+
     private BaseRepository<UNOPSPartner> PartnerRepository;
     private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
     private BaseRepository<UNOPSPartnerTree> PartnerTreeRepository;
@@ -46,7 +48,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     //private string[] includes = ["Currency", "Documents"];
 
-    private async Task<PartnerModel> MapEntityToModelAsync(UNOPSPartner entity, IMapper mapper)
+    private async Task<PartnerModel> MapEntityToModelAsync(UNOPSPartner entity, IMapper mapper, ClaimsPrincipal user = null)
     {
         // Use AutoMapper with the updated configuration
         var result = mapper.Map<UNOPSPartner, PartnerModel>(entity);
@@ -74,37 +76,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        return result;
-    }
-
-    private async Task<PartnerModel> MapEntityToModelWithPermissionsAsync(UNOPSPartner entity, IMapper mapper, ClaimsPrincipal? user = null)
-    {
-        var result = await MapEntityToModelAsync(entity, mapper);
-        
-        // Add permissions if user context is available
-        if (user != null && _securityService != null)
-        {
-            result.Permissions = new EntityPermissionsModel
-            {
-                CanRead = await _securityService.CanUserAccessEntityAsync(entity, user, "read"),
-                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create"),
-                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
-                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete")
-            };
-        }
-        else
-        {
-            // Default permissions when no user context available
-            result.Permissions = new EntityPermissionsModel
-            {
-                CanRead = true, // Assume readable if no security context
-                CanCreate = false,
-                CanUpdate = false, // Default to no write access
-                CanDelete = false
-            };
-        }
-
-        return result;
+        // Use the provided user or get current user context
+        var userContext = user ?? GetCurrentUserOrSystemContext();
+        return await MapEntityToModelWithPermissionsAsync(result, userContext); ;
     }
 
     private PartnerModel MapEntityToModel(UNOPSPartner entity, IMapper mapper)
@@ -133,13 +107,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return MapModelToEntity(model, new UNOPSPartner());
     }
 
-    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IBusinessSecurityService securityService)
-        : base(mapper, context, configuration)
+    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
+        : base(mapper, context, configuration, null, "Partner", permissionService, httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
         _configuration = configuration;
-        _securityService = securityService;
+       // _securityService = securityService;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
         PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
@@ -157,7 +131,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         await PartnerRepository.AddAsync(entity);
 
-        return await MapEntityToModelWithPermissionsAsync(entity, _mapper);
+        return await MapEntityToModelAsync(entity, _mapper, null);
     }
 
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
@@ -185,11 +159,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Take(request.PageSize)
             .ToList();
         
-        // Map entities asynchronously with default permissions
+        // Map entities asynchronously
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
         {
-            var mapped = await MapEntityToModelWithPermissionsAsync(entity, _mapper);
+            var mapped = await MapEntityToModelAsync(entity, _mapper, null);
             mappedEntities.Add(mapped);
         }
 
@@ -228,7 +202,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
         {
-            var mapped = await MapEntityToModelWithPermissionsAsync((UNOPSPartner)entity, _mapper);
+            var mapped = await MapEntityToModelAsync((UNOPSPartner)entity, _mapper, null);
             mappedEntities.Add(mapped);
         }
 
@@ -236,6 +210,57 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         {
             TotalCount = totalCount,
             Records = mappedEntities
+        };
+    }
+
+    public async Task<object> GetPartnersWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Partner> specification, PaginationRequest pagination)
+    {
+        var query = PartnerRepository
+            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .Where(x => !x.IsDeleted)
+            .AsQueryable();
+
+        var filteredQuery = query.ApplySpecification(specification);
+
+        // Apply access control filters (row and column filtering) BEFORE pagination
+        var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
+        
+        // If filteredData is a list, we need to handle pagination manually
+        if (filteredData is IEnumerable<UNOPSPartner> partnerList)
+        {
+            var partnerArray = partnerList.ToArray();
+            var totalCount = partnerArray.Length;
+            var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+            var excludedRows = (pageIndex - 1) * pagination.PageSize;
+            
+            var pagedItems = partnerArray
+                .Skip(excludedRows)
+                .Take(pagination.PageSize)
+                .ToArray();
+
+            var results = new List<PartnerModel>();
+            foreach (var item in pagedItems)
+            {
+                var mapped = await MapEntityToModelAsync(item, _mapper, user);
+                results.Add(mapped);
+            }
+
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = results,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pagination.PageSize
+            };
+        }
+
+        // Fallback: if filteredData is not the expected type, return empty result
+        return new PaginationResponse<PartnerModel>
+        {
+            Records = new List<PartnerModel>(),
+            TotalCount = 0,
+            PageIndex = pagination.PageIndex,
+            PageSize = pagination.PageSize
         };
     }
 
@@ -257,114 +282,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        return await MapEntityToModelWithPermissionsAsync(item, _mapper);
-    }
-
-    /*public async Task<string?> GetPartnerStage(int id)
-    {
-        var item = await PartnerRepository.GetByIdAsync(id);
-
-        if (item == null)
-        {
-            return null;
-        }
-
-        return item.Stage;
-    }*/
-
-    /*public IEnumerable<ExternalPartnerModel> GetPostedPartners()
-    {
-        return PartnerRepository
-            .GetAll()
-            .Select(x => MapEntityToExternalModel(x, _mapper));
-    }
-
-    public async Task<ExternalPartnerModel?> GetPostedPartner(int id)
-    {
-        var item = await PartnerRepository.GetByIdAsync(id);
-
-        if (item == null)
-        {
-            throw new BusinessException($"Partner {id} does not exist.");
-        }
-
-        return MapEntityToExternalModel(item, _mapper);
-    }*/
-
-    public async Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model)
-    {
-        var entity = await PartnerRepository.GetByIdAsync(model.Id);
-
-        if (entity == null)
-        {
-            throw new BusinessException($"Partner {model.Id} does not exist.");
-        }
-
-        entity = MapModelToEntity(model, entity);
-
-        await PartnerRepository.UpdateAsync(entity);
-
-        return await MapEntityToModelWithPermissionsAsync(entity, _mapper);
-    }
-
-    /*public async Task<PartnerModel?> UpdateStage(int userId, int id, string newStage)
-    {
-        var entity = await PartnerRepository.GetByIdAsync(id);
-
-        if (entity == null)
-        {
-            return default;
-        }
-
-        if (newStage == "Open")
-        {
-            entity.PostingDate = DateTime.Now.ToUniversalTime();
-        }
-
-        entity.Stage = newStage;
-
-        await PartnerRepository.UpdateAsync(entity);
-
-        return _mapper.Map<PartnerModel>(entity);
-    }*/
-
-    public async Task DeletePartnerAsync(int userId, int id)
-    {
-        var entity = await PartnerRepository.GetByIdAsync(id);
-
-        if (entity != null)
-        {
-            await PartnerRepository.Delete(entity);
-        }
-    }
-    public async Task<PartnerModel?> GetPartnerAsync(int userId, int id)
-    {
-        // Use the original implementation but fix to match the interface
-        return await GetPartnerAsync(id);
-    }
-    
-    public async Task<PartnerModel?> GetPartnerAsync(int id)
-    {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
-
-        var item = await PartnerRepository.GetByIdAsync(id, includes);
-
-        if (item == null)
-        {
-            return default;
-        }
-
-        // Load partner office if needed
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
-        }
-
-        return await MapEntityToModelWithPermissionsAsync(item, _mapper);
+        return await MapEntityToModelAsync(item, _mapper, null);
     }
 
     /// <summary>
@@ -391,7 +309,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        return await MapEntityToModelWithPermissionsAsync(item, _mapper);
+        return await MapEntityToModelAsync(item, _mapper, null);
     }
 
     /// <summary>
@@ -452,7 +370,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // var interactionsByContact = partner.GetInteractionsByContact();
         // var summary = partner.GetSummary();
 
-        return await MapEntityToModelWithPermissionsAsync(partner, _mapper);
+        return await MapEntityToModelAsync(partner, _mapper, null);
     }
 
     /// <summary>
@@ -480,7 +398,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        var result = await MapEntityToModelWithPermissionsAsync(partner, _mapper);
+        var result = await MapEntityToModelAsync(partner, _mapper, null);
 
         // Map the projects to ProjectSummaryModel
         if (partner.Projects != null && partner.Projects.Any())
@@ -528,7 +446,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        var result = await MapEntityToModelWithPermissionsAsync(partner, _mapper);
+        var result = await MapEntityToModelAsync(partner, _mapper, null);
 
         // Map the projects to ProjectSummaryModel
         if (partner.Projects != null && partner.Projects.Any())
@@ -604,7 +522,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             var mappedEntities = new List<PartnerModel>();
             foreach (var entity in entities)
             {
-                var mapped = await MapEntityToModelWithPermissionsAsync(entity, _mapper);
+                var mapped = await MapEntityToModelAsync(entity, _mapper, null);
                 mappedEntities.Add(mapped);
             }
             
@@ -685,7 +603,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
         {
-            var mapped = await MapEntityToModelWithPermissionsAsync(entity, _mapper);
+            var mapped = await MapEntityToModelAsync(entity, _mapper, null);
             mappedEntities.Add(mapped);
         }
 
@@ -859,33 +777,25 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     #region Secure Methods for Permission-based Access
     
     /// <summary>
-    /// Gets partners with row-level security applied based on user permissions
+    /// Gets all partners with row-level security applied
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetPartnersAsync(ClaimsPrincipal user, PaginationRequest request)
     {
+        // RBAC interceptor handles security enforcement
         var query = PartnerRepository
             .GetAll(["PartnerOffice", "PartnerGroup"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
-        // Apply row-level filters based on user permissions
-        var filteredQuery = await _securityService.ApplyRowFiltersAsync(query, user, "read");
-
-        return filteredQuery.Paginate(
+        var partners = query.Paginate(
             x => {
                 var model = MapEntityToModel(x, _mapper);
-                // Add permissions for this specific partner
-                model.Permissions = new EntityPermissionsModel
-                {
-                    CanRead = true, // Already filtered to only show readable partners
-                    CanCreate = false, // Not applicable to individual partners
-                    CanUpdate = _securityService.CanUserAccessEntityAsync(x, user, "update").Result,
-                    CanDelete = _securityService.CanUserAccessEntityAsync(x, user, "delete").Result
-                };
                 return model;
             },
             request
         );
+
+        return partners;
     }
 
     /// <summary>
@@ -893,30 +803,34 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerOffice"]);
+        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerOffice", "PartnerGroup"]);
         if (item == null)
         {
             return null;
         }
 
-        // Check if user can access this partner
-        if (!await _securityService.CanUserAccessEntityAsync(item, user, "read"))
+        // Check if user has permission to access this specific entity
+        // Create a single-item query and apply access control filters
+        var query = PartnerRepository
+            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .Where(x => x.Id == id && !x.IsDeleted)
+            .AsQueryable();
+
+        // Apply access control filters (row and column filtering)
+        var filteredData = await ApplyAccessControlFilters(query, user, "read");
+        
+        // If filteredData is a list and contains our entity, user has access
+        if (filteredData is IEnumerable<UNOPSPartner> partnerList)
         {
-            return null;
+            var accessiblePartner = partnerList.FirstOrDefault();
+            if (accessiblePartner != null)
+            {
+                return await MapEntityToModelAsync(accessiblePartner, _mapper, user);
+            }
         }
 
-        var model = await MapEntityToModelWithPermissionsAsync(item, _mapper);
-        
-        // Add permissions for this specific partner
-        model.Permissions = new EntityPermissionsModel
-        {
-            CanRead = true, // User can read since they passed the security check
-            CanCreate = false, // Not applicable to individual partners
-            CanUpdate = await _securityService.CanUserAccessEntityAsync(item, user, "update"),
-            CanDelete = await _securityService.CanUserAccessEntityAsync(item, user, "delete")
-        };
-
-        return model;
+        // User doesn't have access to this entity
+        return null;
     }
 
     /// <summary>
@@ -924,26 +838,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> CreatePartnerAsync(ClaimsPrincipal user, PartnerRequest model)
     {
-        // Check if user has permission to create partners
-        var entityPermissions = await _securityService.GetEntityPermissionsAsync(user, "Partner");
-        if (!entityPermissions.CanCreate)
-        {
-            return null;
-        }
-
+        // RBAC interceptor handles security enforcement
         var entity = MapModelToEntity(model);
         await PartnerRepository.AddAsync(entity);
 
         var resultModel = MapEntityToModel(entity, _mapper);
         
-        // Add permissions for the newly created partner
-        resultModel.Permissions = new EntityPermissionsModel
-        {
-            CanRead = true,
-            CanCreate = false, // Not applicable to individual partners
-            CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
-            CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete")
-        };
+        // Add permissions for frontend UI
+        //resultModel.Permissions = await GetEntityPermissionsAsync(entity, user);
 
         return resultModel;
     }
@@ -953,14 +855,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model)
     {
+        // RBAC interceptor handles security enforcement
         var entity = await PartnerRepository.GetByIdAsync(model.Id, ["PartnerOffice"]);
         if (entity == null)
-        {
-            return null;
-        }
-
-        // Check if user can update this partner
-        if (!await _securityService.CanUserAccessEntityAsync(entity, user, "update"))
         {
             return null;
         }
@@ -971,14 +868,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         var resultModel = MapEntityToModel(entity, _mapper);
         
-        // Add permissions for the updated partner
-        resultModel.Permissions = new EntityPermissionsModel
-        {
-            CanRead = true,
-            CanCreate = false, // Not applicable to individual partners
-            CanUpdate = true, // User can update since they passed the security check
-            CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete")
-        };
+        // Add permissions for frontend UI
+        //resultModel.Permissions = await GetEntityPermissionsAsync(entity, user);
 
         return resultModel;
     }
@@ -988,14 +879,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id)
     {
+        // RBAC interceptor handles security enforcement
         var entity = await PartnerRepository.GetByIdAsync(id, ["PartnerOffice"]);
         if (entity == null)
-        {
-            return false;
-        }
-
-        // Check if user can delete this partner
-        if (!await _securityService.CanUserAccessEntityAsync(entity, user, "delete"))
         {
             return false;
         }
@@ -1009,6 +895,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerGroupAsync(ClaimsPrincipal user, string partnerGroupCode, PaginationRequest request)
     {
+        // RBAC interceptor handles security enforcement
         // First get all partner trees with this group code
         var partnerTreesByGroup = PartnerTreeRepository.GetAll()
             .Where(pt => pt.Code == partnerGroupCode)
@@ -1032,23 +919,25 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Where(x => !x.IsDeleted && partnerTreesByGroupWithChildrenCodes.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
-        // Apply row-level filters based on user permissions
-        var filteredQuery = await _securityService.ApplyRowFiltersAsync(query, user, "read");
-
-        return filteredQuery.Paginate(
+        var partners = query.Paginate(
             x => {
                 var model = MapEntityToModel(x, _mapper);
-                model.Permissions = new EntityPermissionsModel
-                {
-                    CanRead = true,
-                    CanCreate = false,
-                    CanUpdate = _securityService.CanUserAccessEntityAsync(x, user, "update").Result,
-                    CanDelete = _securityService.CanUserAccessEntityAsync(x, user, "delete").Result
-                };
                 return model;
             },
             request
         );
+
+        // Add permissions for frontend UI
+        foreach (var partner in partners.Records)
+        {
+            /*partner.Permissions = await GetEntityPermissionsAsync(
+                await PartnerRepository.GetByIdAsync(partner.Id, ["PartnerOffice"]), 
+                user
+            );
+            */
+        }
+
+        return partners;
     }
 
     /// <summary>
@@ -1080,25 +969,109 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
-        // Apply row-level filters based on user permissions
-        var filteredQuery = await _securityService.ApplyRowFiltersAsync(query, user, "read");
+        // Apply access control filters (row and column filtering)
+        var filteredData = await ApplyAccessControlFilters(query, user, "read");
+        
+        // If filteredData is a list, we need to handle pagination manually
+        if (filteredData is IEnumerable<UNOPSPartner> partnerList)
+        {
+            var partnerArray = partnerList.ToArray();
+            var totalCount = partnerArray.Length;
+            var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
+            var excludedRows = (pageIndex - 1) * request.PageSize;
+            
+            var pagedItems = partnerArray
+                .Skip(excludedRows)
+                .Take(request.PageSize)
+                .ToArray();
 
-        return filteredQuery.Paginate(
+            var results = new List<PartnerModel>();
+            foreach (var item in pagedItems)
+            {
+                var mapped = await MapEntityToModelAsync(item, _mapper, user);
+                results.Add(mapped);
+            }
+
+            return new PaginationResponse<PartnerModel>
+            {
+                Records = results,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = request.PageSize
+            };
+        }
+
+        var partners = query.Paginate(
             x => {
                 var model = MapEntityToModel(x, _mapper);
-                model.Permissions = new EntityPermissionsModel
-                {
-                    CanRead = true,
-                    CanCreate = false,
-                    CanUpdate = _securityService.CanUserAccessEntityAsync(x, user, "update").Result,
-                    CanDelete = _securityService.CanUserAccessEntityAsync(x, user, "delete").Result
-                };
                 return model;
             },
             request
         );
+
+        return partners;
     }
     
+    #endregion
+
+    #region Interface Methods (Legacy - without ClaimsPrincipal)
+    
+    public async Task<PartnerModel?> GetPartnerAsync(int id)
+    {
+        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
+
+        var item = await PartnerRepository.GetByIdAsync(id, includes);
+
+        if (item == null)
+        {
+            return default;
+        }
+
+        // Load partner office if needed
+        if (item.PartnerOfficeId.HasValue)
+        {
+            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
+            if (partnerOffice != null)
+            {
+                item.PartnerOffice = partnerOffice;
+            }
+        }
+
+        return await MapEntityToModelAsync(item, _mapper, null);
+    }
+
+    public async Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(model.Id);
+
+        if (entity == null)
+        {
+            throw new BusinessException($"Partner {model.Id} does not exist.");
+        }
+
+        entity = MapModelToEntity(model, entity);
+
+        await PartnerRepository.UpdateAsync(entity);
+
+        return await MapEntityToModelAsync(entity, _mapper, null);
+    }
+
+    public async Task DeletePartnerAsync(int userId, int id)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(id);
+
+        if (entity != null)
+        {
+            await PartnerRepository.Delete(entity);
+        }
+    }
+
+    public async Task<PartnerModel?> GetPartnerAsync(int userId, int id)
+    {
+        // Use the original implementation but fix to match the interface
+        return await GetPartnerAsync(id);
+    }
+
     #endregion
 
     /// <summary>

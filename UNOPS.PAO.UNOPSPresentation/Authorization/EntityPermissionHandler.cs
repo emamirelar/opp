@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 public class EntityPermissionHandler : AuthorizationHandler<EntityPermissionRequirement>
 {

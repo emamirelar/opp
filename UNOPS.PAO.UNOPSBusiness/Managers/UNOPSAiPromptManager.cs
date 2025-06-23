@@ -4,9 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Repositories.Generic;
@@ -14,29 +16,33 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Utilities.Helpers;
+using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
-public class UNOPSAiPromptManager : IAiPromptManager
+public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
 {
-    private readonly IMapper _mapper;
     private readonly DataRepository<AiPrompt> _promptRepository;
-    private readonly UNOPSAppDbContext _context;
-    private readonly IConfiguration _configuration;
     private readonly IManagerWrapper _managerWrapper;
 
-    public UNOPSAiPromptManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IManagerWrapper managerWrapper)
+    public UNOPSAiPromptManager(
+        IMapper mapper, 
+        UNOPSAppDbContext context, 
+        IConfiguration configuration, 
+        UserManager<PAOIdentityUser> userManager,
+        IManagerWrapper managerWrapper,
+        IPermissionService permissionService)
+        : base(mapper, context, configuration, userManager, "AiPrompt", permissionService)
     {
-        _mapper = mapper;
         _promptRepository = new DataRepository<AiPrompt>(context);
-        _context = context;
-        _configuration = configuration;
         _managerWrapper = managerWrapper;
     }
 
     /// <summary>
     /// Tests an AI prompt with provided test data using the new function-based pattern
     /// </summary>
-    public async Task<TestPromptResponse> TestPromptAsync(TestPromptRequest request)
+    public async Task<TestPromptResponse> TestPromptAsync(ClaimsPrincipal user, TestPromptRequest request)
     {
+        // RBAC interceptor handles security enforcement
         try
         {
             // Validate that either ID or TestData is provided
@@ -69,7 +75,7 @@ public class UNOPSAiPromptManager : IAiPromptManager
                 }
 
                 // Get entity data using the function name from the database
-                entityData = await GetEntityDataAsync(aiPrompt.Name, aiPrompt.PromptFunction, request.Id.Value);
+                entityData = await GetEntityDataAsync(aiPrompt.Name, aiPrompt.PromptFunction, request.Id.Value, user);
             }
             
             // If no ID provided, use the first available AI prompt for this type (testData mode)
@@ -152,13 +158,13 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Gets entity data by calling the specified function on the appropriate manager
     /// </summary>
-    private async Task<object> GetEntityDataAsync(string entityType, string functionName, int entityId)
+    private async Task<object> GetEntityDataAsync(string entityType, string functionName, int entityId, ClaimsPrincipal user)
     {
         // Get the appropriate manager
         var manager = GetManagerByEntityType(entityType);
         
-        // Call the specific function on the manager
-        return await ((BaseUNOPSManager)manager).CallFunctionByNameAsync(functionName, entityId);
+        // Call the specific function on the manager with user context
+        return await ((BaseUNOPSManager)manager).CallFunctionByNameAsync(functionName, entityId, user);
     }
 
     /// <summary>
@@ -191,8 +197,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Gets all AI prompts with pagination
     /// </summary>
-    public async Task<PaginationResponse<AiPromptModel>> GetPromptsAsync(AiPromptFilterRequest request)
+    public async Task<PaginationResponse<AiPromptModel>> GetPromptsAsync(ClaimsPrincipal user, AiPromptFilterRequest request)
     {
+        // RBAC interceptor handles security enforcement
         var query = _promptRepository.GetAll().AsQueryable();
 
         // Apply search if provided
@@ -240,8 +247,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Gets a specific AI prompt by ID
     /// </summary>
-    public async Task<AiPromptModel?> GetPromptByIdAsync(int id)
+    public async Task<AiPromptModel?> GetPromptByIdAsync(ClaimsPrincipal user, int id)
     {
+        // RBAC interceptor handles security enforcement
         var prompt = await _promptRepository.GetByIdAsync(id);
         return prompt != null ? _mapper.Map<AiPromptModel>(prompt) : null;
     }
@@ -249,8 +257,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Creates a new AI prompt
     /// </summary>
-    public async Task<AiPromptModel> CreatePromptAsync(AiPromptModel model)
+    public async Task<AiPromptModel> CreatePromptAsync(ClaimsPrincipal user, AiPromptModel model)
     {
+        // RBAC interceptor handles security enforcement
         var entity = _mapper.Map<AiPrompt>(model);
         entity.CreatedAt = DateTime.UtcNow;
         entity.Id = null; // Ensure new entity
@@ -263,8 +272,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Updates an existing AI prompt
     /// </summary>
-    public async Task<AiPromptModel?> UpdatePromptAsync(int id, AiPromptModel model)
+    public async Task<AiPromptModel?> UpdatePromptAsync(ClaimsPrincipal user, int id, AiPromptModel model)
     {
+        // RBAC interceptor handles security enforcement
         var existingPrompt = await _promptRepository.GetByIdAsync(id);
         if (existingPrompt == null)
         {
@@ -288,8 +298,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Deletes an AI prompt
     /// </summary>
-    public async Task<bool> DeletePromptAsync(int id)
+    public async Task<bool> DeletePromptAsync(ClaimsPrincipal user, int id)
     {
+        // RBAC interceptor handles security enforcement
         var existingPrompt = await _promptRepository.GetByIdAsync(id);
         if (existingPrompt == null)
         {
@@ -303,8 +314,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Gets prompts by type
     /// </summary>
-    public async Task<IEnumerable<AiPromptModel>> GetPromptsByTypeAsync(string type)
+    public async Task<IEnumerable<AiPromptModel>> GetPromptsByTypeAsync(ClaimsPrincipal user, string type)
     {
+        // RBAC interceptor handles security enforcement
         var prompts = await _promptRepository
             .GetAll()
             .Where(p => p.Type == type)
@@ -316,8 +328,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Gets unique prompt types for dropdown/filter
     /// </summary>
-    public async Task<IEnumerable<string>> GetPromptTypesAsync()
+    public async Task<IEnumerable<string>> GetPromptTypesAsync(ClaimsPrincipal user)
     {
+        // RBAC interceptor handles security enforcement
         return await _promptRepository
             .GetAll()
             .Select(p => p.Type)
@@ -329,8 +342,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Gets unique models for dropdown/filter
     /// </summary>
-    public async Task<IEnumerable<string>> GetModelsAsync()
+    public async Task<IEnumerable<string>> GetModelsAsync(ClaimsPrincipal user)
     {
+        // RBAC interceptor handles security enforcement
         return await _promptRepository
             .GetAll()
             .Select(p => p.Model)
@@ -342,8 +356,9 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Gets unique projects for dropdown/filter
     /// </summary>
-    public async Task<IEnumerable<string>> GetProjectsAsync()
+    public async Task<IEnumerable<string>> GetProjectsAsync(ClaimsPrincipal user)
     {
+        // RBAC interceptor handles security enforcement
         return await _promptRepository
             .GetAll()
             .Select(p => p.Project)
@@ -355,14 +370,30 @@ public class UNOPSAiPromptManager : IAiPromptManager
     /// <summary>
     /// Gets unique locations for dropdown/filter
     /// </summary>
-    public async Task<IEnumerable<string>> GetLocationsAsync()
+    public async Task<IEnumerable<string>> GetLocationsAsync(ClaimsPrincipal user)
     {
+        // RBAC interceptor handles security enforcement
         return await _promptRepository
             .GetAll()
             .Select(p => p.Location)
             .Distinct()
             .OrderBy(l => l)
             .ToListAsync();
+    }
+
+    /// <summary>
+    /// Gets basic entity data for AI prompts and generic operations
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        if (user != null)
+        {
+            return await GetPromptByIdAsync(user, entityId);
+        }
+        
+        // Fallback for cases without user context
+        var prompt = await _promptRepository.GetByIdAsync(entityId);
+        return prompt != null ? _mapper.Map<AiPromptModel>(prompt) : null;
     }
 
     // Helper methods to extract values from JSON configuration

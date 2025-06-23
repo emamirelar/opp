@@ -38,11 +38,26 @@ public static class EnumerableExtensions
             return query;
         }
 
-        var lambda = (dynamic)CreateExpression(typeof(TSource), key);
+        try
+        {
+            var lambda = (dynamic)CreateExpression(typeof(TSource), key);
 
-        return ascending
-            ? Queryable.OrderBy(query, lambda)
-            : Queryable.OrderByDescending(query, lambda);
+            return ascending
+                ? Queryable.OrderBy(query, lambda)
+                : Queryable.OrderByDescending(query, lambda);
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("is not a member of type"))
+        {
+            // Invalid property name - return query without ordering
+            // Log this in production to identify problematic property names
+            System.Diagnostics.Debug.WriteLine($"OrderByColumnName: Invalid property '{key}' for type '{typeof(TSource).Name}'. Skipping ordering.");
+            return query;
+        }
+        catch (Exception)
+        {
+            // Any other error - return query without ordering to prevent crashes
+            return query;
+        }
     }
 
     private static LambdaExpression CreateExpression(Type type, string propertyName)

@@ -22,9 +22,8 @@ namespace UNOPS.PAO.Presentation.Controllers
             ISavedFilterService savedFilterService,
             UserResolverService<int> userResolverService,
             IAuthorizationService authorizationService,
-            ILogger<SavedFilterController> logger,
-            IPermissionService permissionService)
-            : base(logger, authorizationService, userResolverService, permissionService)
+            ILogger<SavedFilterController> logger)
+            : base(logger, authorizationService, userResolverService)
         {
             _savedFilterService = savedFilterService;
         }
