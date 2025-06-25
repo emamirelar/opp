@@ -34,10 +34,6 @@ import { InteractionIconService } from '../../../../services/interaction-icon.se
       width: 100%;
     }
 
-    .ellipsis-text:hover {
-      cursor: help;
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -377,6 +373,39 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
     const name = String(item[fieldName]).trim();
     return name.charAt(0).toUpperCase();
+  }
+
+  /**
+   * Get first letter of Field 1 for avatar fallback
+   */
+  getField1Initial(item: T): string {
+    const firstField = this.field1();
+    if (firstField) {
+      const value = this.getFieldValue(item, firstField.field);
+      if (value && typeof value === 'string' && value.trim()) {
+        return value.trim().charAt(0).toUpperCase();
+      }
+    }
+    return '?';
+  }
+
+  /**
+   * Get tooltip text for field - shows field description or full value if ellipsis
+   */
+  getFieldTooltip(item: T, column: ListViewColumn): string {
+    // If column has a description/label, use that
+    if (column.label) {
+      return column.label;
+    }
+    
+    // If ellipsis is enabled, show the full value
+    if (column.ellipsis) {
+      const value = this.getFieldValue(item, column.field);
+      return value ? String(value) : '';
+    }
+    
+    // Otherwise, return empty string (no tooltip)
+    return '';
   }
 
   /**
