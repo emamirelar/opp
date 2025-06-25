@@ -60,6 +60,11 @@ export interface TimelineConfig {
     years?: number;
     autoLoad?: boolean;
   };
+  rangeConstraints?: {
+    minRangeDuration?: number;
+    maxRangeDuration?: number;
+    enforceMinimum?: boolean;
+  };
 }
 
 export interface TimelineRange {
@@ -247,7 +252,6 @@ export class TimelineComponent implements OnDestroy, AfterViewInit, OnChanges {
     if (!this.dataUrl || this.fullDataLoaded) return;
 
     const fullDataUrl = this.buildFullDataUrl();
-    console.log('Loading full dataset for navigator:', fullDataUrl);
 
     this.isLoading.set(true);
     this.http.get<any>(fullDataUrl).subscribe({
@@ -473,6 +477,9 @@ export class TimelineComponent implements OnDestroy, AfterViewInit, OnChanges {
       cluster: clusterConfig,
       enableLazyLoading,
       lazyLoading,
+      dataLoadingStrategy,
+      navigatorRange,
+      rangeConstraints,
       ...visTimelineConfig
     } = this.config;
 
