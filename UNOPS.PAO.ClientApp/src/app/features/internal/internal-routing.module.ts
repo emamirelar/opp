@@ -23,6 +23,9 @@ import { ContactDataResolver } from './resolvers/contact-data.resolver';
 import { UserManagementComponent } from './admin/user-management/user-management.component';
 import { EntityManagerComponent } from './admin/entity-manager/entity-manager.component';
 import { PartnerTreePageComponent } from './components/partner-tree-page/partner-tree-page.component';
+import {
+  ContactViewInteractionsComponent
+} from '@features/internal/components/contact/view/interactions/contact-view-interactions.component';
 
 const internalRoutes: Routes = [
   {
@@ -70,7 +73,7 @@ const internalRoutes: Routes = [
                   },
                   {
                     path: 'interactions',
-                    loadComponent: () => import('./components/contact/view/interactions/contact-view-interactions.component').then(m => m.ContactViewInteractionsComponent),
+                    component: ContactViewInteractionsComponent,
                     data: { breadcrumb: 'Interactions' }
                   }
                 ]

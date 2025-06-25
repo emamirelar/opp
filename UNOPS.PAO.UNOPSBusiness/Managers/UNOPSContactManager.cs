@@ -40,7 +40,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private async Task<ContactModel> MapEntityToModel(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
-        result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
+        result.Partner = entity.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = entity.Partner.Id, Name = entity.Partner.Name } : null;
         
         // Convert ProfilePictureUrl to signed URL if it exists and contains Google Cloud Storage path
         if (!string.IsNullOrEmpty(result.ProfilePictureUrl) && googleCloudStorageService != null)
@@ -78,7 +78,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private ContactModel MapEntityToModelWithUserInfo(UNOPSContact entity, IMapper mapper, Dictionary<int, UserInfo> userInfoLookup, Dictionary<string, OrganizationHierarchy> orgHierarchyLookup)
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
-        result.Partner = mapper.Map<Partner, PartnerModel>(entity.Partner);
+        result.Partner = entity.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = entity.Partner.Id, Name = entity.Partner.Name } : null;
         
         // Convert ProfilePictureUrl to signed URL if it exists and contains Google Cloud Storage path
         if (!string.IsNullOrEmpty(result.ProfilePictureUrl) && googleCloudStorageService != null)
@@ -390,7 +390,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         {
             // Use synchronous mapping for interface compatibility
             var result = mapper.Map<UNOPSContact, ContactModel>(contact);
-            result.Partner = mapper.Map<Partner, PartnerModel>(contact.Partner);
+            result.Partner = contact.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = contact.Partner.Id, Name = contact.Partner.Name } : null;
             results.Add(result);
         }
         return results;

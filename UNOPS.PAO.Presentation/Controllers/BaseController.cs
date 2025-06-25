@@ -404,21 +404,83 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// </summary>
         /// <param name="pageIndex">The page index to validate</param>
         /// <param name="pageSize">The page size to validate</param>
-        /// <param name="maxPageSize">Maximum allowed page size (default: 100)</param>
+        /// <param name="maxPageSize">Maximum allowed page size (default: 2000)</param>
         /// <returns>BadRequest ActionResult if invalid, null if valid</returns>
-        protected ActionResult? ValidatePaginationParameters(int pageIndex, int pageSize, int maxPageSize = 100)
+        protected ActionResult? ValidatePaginationParameters(int pageIndex, int pageSize, int maxPageSize = 2000)
         {
+            var errors = new Dictionary<string, string[]>();
+
             if (pageIndex < 1)
             {
-                return BadRequest(new { error = "Page index must be greater than 0" });
+                errors["pageIndex"] = new[] { "Page index must be greater than 0" };
             }
             
-            if (pageSize < 1 || pageSize > maxPageSize)
+            if (pageSize < 1)
             {
-                return BadRequest(new { error = $"Page size must be between 1 and {maxPageSize}" });
+                errors["pageSize"] = new[] { "Page size must be greater than 0" };
+            }
+            else if (pageSize > maxPageSize)
+            {
+                errors["pageSize"] = new[] { $"Page size cannot exceed {maxPageSize}" };
+            }
+            
+            if (errors.Any())
+            {
+                return BadRequest(new ValidationProblemDetails(errors)
+                {
+                    Title = "Invalid pagination parameters"
+                });
             }
             
             return null;
+        }
+
+        /// <summary>
+        /// Validates model state and returns ValidationProblemDetails if invalid
+        /// </summary>
+        /// <returns>BadRequest with validation details if invalid, null if valid</returns>
+        protected ActionResult? ValidateModelState()
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ValidationProblemDetails(ModelState)
+                {
+                    Title = "One or more validation errors occurred"
+                });
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Creates a standardized validation error response
+        /// </summary>
+        /// <param name="field">Field name</param>
+        /// <param name="error">Error message</param>
+        /// <returns>BadRequest with validation details</returns>
+        protected ActionResult CreateValidationError(string field, string error)
+        {
+            var errors = new Dictionary<string, string[]>
+            {
+                [field] = new[] { error }
+            };
+            
+            return BadRequest(new ValidationProblemDetails(errors)
+            {
+                Title = "Validation failed"
+            });
+        }
+
+        /// <summary>
+        /// Creates a standardized validation error response with multiple errors
+        /// </summary>
+        /// <param name="errors">Dictionary of field names and error messages</param>
+        /// <returns>BadRequest with validation details</returns>
+        protected ActionResult CreateValidationErrors(Dictionary<string, string[]> errors)
+        {
+            return BadRequest(new ValidationProblemDetails(errors)
+            {
+                Title = "One or more validation errors occurred"
+            });
         }
 
         /// <summary>

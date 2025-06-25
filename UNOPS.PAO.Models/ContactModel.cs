@@ -27,10 +27,7 @@ public class ContactModel
     public string? MailingCountry { get; set; }
     public string? ProfilePictureUrl { get; set; }
     
-    [JsonIgnore] // Prevent circular reference when PartnerModel includes Contacts
-    public PartnerModel Partner { get; set; }
-    public int? PartnerId { get; set; }
-    public string? PartnerName { get; set; }
+    public PartnerSummaryModel? Partner { get; set; }
     public List<DocumentModel>? Documents { get; set; }
 
     public string? CreatedByName { get; set; }
@@ -45,4 +42,13 @@ public class ContactModel
     /// Permissions for this specific contact
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }
+}
+
+/// <summary>
+/// Simplified partner model for contact references
+/// </summary>
+public class PartnerSummaryModel
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
 }

@@ -63,7 +63,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           },
           {
             label: 'title.interactions',
-            icon: 'link',
+            icon: 'chat',
             routerLink: ['/partnerships/interactions']
           },
           // {

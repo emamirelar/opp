@@ -1,3 +1,73 @@
+<!-- Universal field formatting template -->
+<ng-template #fieldTemplate let-item="item" let-column="column" let-context="context">
+  @switch (column.type) {
+    @case ('email') {
+      <a href="mailto:{{ getFieldValue(item, column.field) }}"
+         (click)="$event.stopPropagation()"
+         [class]="getFieldClasses(column, context)"
+         [title]="column.ellipsis ? getFieldValue(item, column.field) : ''">
+        {{ getFieldValue(item, column.field) }}
+      </a>
+    }
+    @case ('link') {
+      <a [routerLink]="getRouterLink(item, column)"
+         (click)="$event.stopPropagation()"
+         [class]="getFieldClasses(column, context)"
+         [title]="column.ellipsis ? getFieldValue(item, column.field) : ''">
+        {{ formatValue(item, column) }}
+      </a>
+    }
+    @case ('conditionalIcon') {
+      <div class="flex items-center gap-1">
+        <span>{{ column.label | translate }}</span>
+        <i [ngClass]="(column.conditionFn ? column.conditionFn(item) : getFieldValue(item, column.field)) ? 'pi pi-verified text-green-500' : 'pi pi-times-circle text-red-300'"></i>
+      </div>
+    }
+    @case ('multiple-avatars') {
+      <div>
+        <div class="text-sm text-gray-600 mb-1">{{ column.label | translate }}</div>
+        <div class="flex -space-x-1 overflow-hidden">
+          @for (contact of getMultipleAvatarItems(item, column); track $index; let i = $index) {
+            @if (i < 3) {
+              @if (getAvatarUrl(contact, column.field.split('.').pop()!)) {
+                <p-avatar
+                  [image]="getAvatarUrl(contact, column.field.split('.').pop()!)"
+                  shape="circle"
+                  [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white'}"
+                  [title]="getAvatarTitle(contact, column.firstLetterFallbackField)"
+                  imageAlt="Contact Avatar">
+                </p-avatar>
+              } @else {
+                <p-avatar
+                  [label]="getAvatarInitials(contact, column.firstLetterFallbackField)"
+                  shape="circle"
+                  [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white', color: '#4b5563'}"
+                  [title]="getAvatarTitle(contact, column.firstLetterFallbackField)">
+                </p-avatar>
+              }
+            }
+          }
+          @if (getMultipleAvatarItems(item, column).length > 3) {
+            <div class="flex items-center justify-center w-8 h-8 bg-surface-300 text-gray-600 rounded-full border-2 border-white text-xs font-medium"
+                 [title]="'And ' + (getMultipleAvatarItems(item, column).length - 3) + ' more'">
+              +
+            </div>
+          }
+        </div>
+      </div>
+    }
+    @case ('template') {
+      <span [class]="getFieldClasses(column, context)" [innerHTML]="getTemplateValue(item, column)"></span>
+    }
+    @case ('avatar') {
+      <!-- Avatar type is handled separately in the main template -->
+    }
+    @default {
+      <span [class]="getFieldClasses(column, context)">{{ formatValue(item, column) }}</span>
+    }
+  }
+</ng-template>
+
 <div class="flex flex-col gap-4 ">
   @if (loading) {
     <div class="grid grid-cols-1 lg:grid-cols-2  gap-4">
@@ -47,111 +117,77 @@
                 @if (avatarColumn()) {
                   <div>
                     @if (getFieldValue(item, avatarColumn()!.field)) {
-                      <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)" shape="circle" size="large" imageAlt="Avatar"></p-avatar>
+                      <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)" shape="circle" size="large"></p-avatar>
                     } @else {
-                      <p-avatar icon="pi pi-image" shape="circle" size="large" imageAlt="Avatar"></p-avatar>
+                      <p-avatar icon="pi pi-image" shape="circle" size="large"></p-avatar>
                     }
+                  </div>
+                } @else if (shouldShowInteractionAvatar() && interactionIconColumn()) {
+                  <div>
+                    <div
+                      class="w-12 h-12 rounded-full flex items-center justify-center border border-solid"
+                      [style]="{
+                        'background-color': getInteractionColor(item, interactionIconColumn()!) + '15',
+                        'color': getInteractionColor(item, interactionIconColumn()!),
+                        'border-color': getInteractionColor(item, interactionIconColumn()!) + '30'
+                      }">
+                      <span class="material-symbols-outlined text-2xl font-medium">
+                        {{ getInteractionMaterialIconFilled(item, interactionIconColumn()!) }}
+                      </span>
+                    </div>
                   </div>
                 }
 
                 <div class="flex flex-col w-full">
-                    <!-- Card title -->
-                  <div class="flex w-full">
-                    @if (titleColumn()) {
-                      <div class="font-semibold text-lg">
-                        {{ formatValue(item, titleColumn()!) }}
+                    <!-- First row: Field 1 (main) and Field 5 (top right) -->
+                  <div class="flex w-full items-start">
+                    @if (field1()) {
+                      <div class="font-semibold text-lg flex-1">
+                        <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                      [ngTemplateOutletContext]="{ item: item, column: field1(), context: 'field1' }">
+                        </ng-container>
                       </div>
                     }
-                    <!-- Card subtitle -->
-                    @if (subtitleColumn()) {
-                      <div class="text-gray-400 text-sm ml-auto" >
-                        @if (subtitleColumn()?.type === 'email') {
-                          <a href="mailto:{{ getFieldValue(item, subtitleColumn()!.field) }}" (click)="$event.stopPropagation()" class="text-primary hover:underline">{{ getSubtitleValue(item, subtitleColumn()!) }}</a>
-                        } @else if (subtitleColumn()?.type === 'template') {
-                          <span [innerHTML]="getSubtitleValue(item, subtitleColumn()!)"></span>
-                        } @else {
-                          {{ getSubtitleValue(item, subtitleColumn()!) }}
-                        }
+                    @if (field5()) {
+                      <div class="text-gray-400 text-sm ml-auto">
+                        <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                      [ngTemplateOutletContext]="{ item: item, column: field5(), context: 'field5' }">
+                        </ng-container>
                       </div>
                     }
                   </div>
 
+                    <!-- Second row: Field 2 and Field 3 (side by side) -->
+                    <div class="flex gap-4 w-full mt-1">
+                      @if (field2()) {
+                        <div class="text-sm text-gray-600 flex">
+                          <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                        [ngTemplateOutletContext]="{ item: item, column: field2(), context: 'field2' }">
+                          </ng-container>
+                          <span>&nbsp;·&nbsp;</span>
+                          <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                        [ngTemplateOutletContext]="{ item: item, column: field3(), context: 'field3' }">
+                          </ng-container>
 
+                        </div>
+                      }
+                      @if (field3()) {
+                        <div class="text-sm text-gray-600 flex-1">
 
-
-                    <!-- Card content -->
-                    <div class="flex gap-2 flex-wrap w-full">
-                      @for (column of contentColumns(); track column.field) {
-
-                          @switch (column.type) {
-                            @case ('email') {
-                              <a href="mailto:{{ getFieldValue(item, column.field) }}"
-                                 (click)="$event.stopPropagation()"
-                                 class="text-primary hover:underline"
-                                 [class.ellipsis-text]="column.ellipsis"
-                                 [title]="column.ellipsis ? getFieldValue(item, column.field) : ''">
-                                {{ getFieldValue(item, column.field) }}
-                              </a>
-                            }
-                            @case ('conditionalIcon') {
-                              <div class="flex items-center gap-1">
-                                <span>{{ column.label | translate }}</span>
-                                <i [ngClass]="(column.conditionFn ? column.conditionFn(item) : getFieldValue(item, column.field)) ? 'pi pi-verified text-green-500' : 'pi pi-times-circle text-red-300'"></i>
-                              </div>
-                            }
-                            @case ('multiple-avatars') {
-                              <div>
-                                <div class="text-sm text-gray-600 mb-1">{{ column.label | translate }}</div>
-                                <div class="flex -space-x-1 overflow-hidden">
-                                  @for (contact of getMultipleAvatarItems(item, column); track $index; let i = $index) {
-                                    @if (i < 3) {
-                                      @if (getAvatarUrl(contact, column.field.split('.').pop()!)) {
-                                        <p-avatar
-                                          [image]="getAvatarUrl(contact, column.field.split('.').pop()!)"
-                                          shape="circle"
-                                          [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white'}"
-                                          [title]="getAvatarTitle(contact, column.firstLetterFallbackField)"
-                                          imageAlt="Contact Avatar">
-                                        </p-avatar>
-                                      } @else {
-                                        <p-avatar
-                                          [label]="getAvatarInitials(contact, column.firstLetterFallbackField)"
-                                          shape="circle"
-                                          [style]="{'border': '1px solid #cfdeec', 'z-index': 10 - i, 'background-color': 'white', color: '#4b5563'}"
-                                          [title]="getAvatarTitle(contact, column.firstLetterFallbackField)">
-                                        </p-avatar>
-                                      }
-                                    }
-                                  }
-                                  @if (getMultipleAvatarItems(item, column).length > 3) {
-                                    <div class="flex items-center justify-center w-8 h-8 bg-surface-300 text-gray-600 rounded-full border-2 border-white text-xs font-medium"
-                                         [title]="'And ' + (getMultipleAvatarItems(item, column).length - 3) + ' more'">
-                                      +
-                                    </div>
-                                  }
-                                </div>
-                              </div>
-                            }
-                            @case ('template') {
-                              <span
-                                class="text-sm text-gray-600"
-                                    [innerHTML]="getTemplateValue(item, column)">
-                              </span>
-                            }
-                            @default {
-                              @if (column.type !== 'avatar') {
-                                <span class="text-sm text-gray-600" >
-                                  {{ formatValue(item, column) }}
-                                </span>
-                              }
-                            }
-                          }
+                        </div>
                       }
                     </div>
 
+                    <!-- Third row: Field 4 (content area) -->
+                    @if (field4()) {
+                      <div class="text-sm text-gray-600 mt-2">
+                        <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                      [ngTemplateOutletContext]="{ item: item, column: field4(), context: 'field4' }">
+                        </ng-container>
+                      </div>
+                    }
+
               </div>
-
-
 
               <!-- Actions template -->
               @if (hasActionsTemplate()) {
