@@ -12,6 +12,10 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { InteractionModalComponent } from '../../../interaction/modal/interaction-modal.component';
 import { Router } from '@angular/router';
 import { SearchField } from '../../../../../../common/services/search-parser.service';
+import { InteractionIconService } from '../../../../../../common/services/interaction-icon.service';
+import { TimelineComponent, TimelineConfig } from '../../../../../../common/reusables/components/timeline/timeline.component';
+import { TabViewModule } from 'primeng/tabview';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-partner-view-interactions',
@@ -20,11 +24,22 @@ import { SearchField } from '../../../../../../common/services/search-parser.ser
     CommonModule,
     TranslateModule,
     Button,
-    ListviewComponent
+    ListviewComponent,
+    TimelineComponent,
+    TabViewModule,
+    ProgressSpinnerModule
   ],
   providers: [DialogService],
   template: `
     <div class="flex flex-col gap-8 w-full">
+      <app-timeline
+        [dataUrl]="interactionsApiUrl()"
+        [config]="timelineConfig()"
+        [partnerId]="partnerId() ? +partnerId() : undefined"
+        (itemSelect)="openEditInteractionModal($event)"
+        (rangeChanged)="onTimelineRangeChanged($event)">
+      </app-timeline>
+
       @if(!permissionsLoading() && permissionUtilityService.canCreate(entityPermissions())) {
         <div class="flex items-center gap-4 flex-wrap">
             <p-button class="ml-auto"
@@ -39,7 +54,6 @@ import { SearchField } from '../../../../../../common/services/search-parser.ser
         [dataUrl]="interactionsApiUrl()"
         [columns]="columns()"
         [entityType]="'Interaction'"
-
         [config]="listviewConfig()"
         (rowClick)="openEditInteractionModal($event)"
         (searchChange)="onSearchChange($event)"
@@ -47,6 +61,7 @@ import { SearchField } from '../../../../../../common/services/search-parser.ser
       </app-listview>
     </div>
   `,
+  styles: [``],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PartnerViewInteractionsComponent implements OnInit {
@@ -56,6 +71,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
   private entityConfigurationService = inject(EntityConfigurationService);
   private feedbackDialogService = inject(FeedbackDialogService);
   public permissionUtilityService = inject(PermissionUtilityService);
+  private interactionIconService = inject(InteractionIconService);
 
   // Get partner ID from route
   partnerId = signal<string>('');
@@ -68,6 +84,40 @@ export class PartnerViewInteractionsComponent implements OnInit {
   // Dynamic interaction columns loaded from API
   columns = signal<ListViewColumn[]>([]);
   columnsLoading = signal(true);
+
+  // Timeline configuration with navigator, clustering, and lazy loading
+  timelineConfig = computed<TimelineConfig>(() => ({
+    showNavigator: true,
+    navigatorHeight: '60px',
+    aggregateByDay: true,
+    height: '200px',
+    zoomable: true,
+    moveable: true,
+    selectable: true,
+    enableClustering: true,
+    dataLoadingStrategy:  'navigator-full',
+    cluster: {
+      maxItems: 3,
+      titleTemplate: 'Groupe de {count} interactions',
+      showStipes: true,
+      fitOnDoubleClick: true
+    },
+    enableLazyLoading: true,
+    lazyLoading: {
+      bufferDays: 60,
+      maxItemsPerLoad: 500,
+      preloadOnZoom: true,
+      cacheStrategy: 'session',
+      maxCacheSize: 15,
+      cacheTTL: 120,
+      enablePartialLoading: true
+    },
+    rangeConstraints: {
+      minRangeDuration: 24 * 60 * 60 * 1000,
+      maxRangeDuration: 365 * 24 * 60 * 60 * 1000,
+      enforceMinimum: true
+    }
+  }));
 
   // Computed API URL with partner filter
   interactionsApiUrl = computed(() => {
@@ -171,8 +221,13 @@ export class PartnerViewInteractionsComponent implements OnInit {
       helperText: column.helperText
     };
 
+    // Detect interaction type columns and convert them to interactionIcon type
+    if (column.field === 'type' && column.type === 'text') {
+      processedColumn.type = 'interactionIcon';
+    }
+
     // Handle nested field paths (fields with dots) by adding a template function
-    if (column.field && column.field.includes('.') && column.type !== 'template') {
+    if (column.field && column.field.includes('.') && column.type !== 'template' && column.type !== 'interactionIcon') {
       // Keep the original field for identification but add a template function to access nested data
       processedColumn.templateFn = (rowData: any) => {
         const value = this.getNestedProperty(rowData, column.field);
@@ -215,7 +270,7 @@ export class PartnerViewInteractionsComponent implements OnInit {
         field: 'type',
         label: 'label.interaction.type',
         sortable: true,
-        type: 'text'
+        type: 'interactionIcon'
       },
       {
         field: 'date',
@@ -265,10 +320,25 @@ export class PartnerViewInteractionsComponent implements OnInit {
     ref.onClose.subscribe((result) => {
       if (result) {
         console.log('Interaction created:', result);
-        // Refresh the listview
+        // Refresh the listview and timeline
         const listviewElement = document.querySelector('app-listview');
         if (listviewElement) {
           listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
+        }
+
+        const timelineElement = document.querySelector('app-timeline') as any;
+        if (timelineElement) {
+          if (result.date && timelineElement.invalidateCache) {
+            const interactionDate = new Date(result.date);
+            const bufferDays = 7;
+            const start = new Date(interactionDate.getTime() - (bufferDays * 24 * 60 * 60 * 1000));
+            const end = new Date(interactionDate.getTime() + (bufferDays * 24 * 60 * 60 * 1000));
+            timelineElement.invalidateCache(start, end);
+          }
+
+          if (timelineElement.refreshTimeline) {
+            timelineElement.refreshTimeline();
+          }
         }
       }
     });
@@ -298,10 +368,25 @@ export class PartnerViewInteractionsComponent implements OnInit {
     ref.onClose.subscribe((result) => {
       if (result) {
         console.log('Interaction updated:', result);
-        // Refresh the listview
+        // Refresh the listview and timeline
         const listviewElement = document.querySelector('app-listview');
         if (listviewElement) {
           listviewElement.dispatchEvent(new CustomEvent('refresh-listview'));
+        }
+
+        const timelineElement = document.querySelector('app-timeline') as any;
+        if (timelineElement) {
+          if (result.date && timelineElement.invalidateCache) {
+            const interactionDate = new Date(result.date);
+            const bufferDays = 7;
+            const start = new Date(interactionDate.getTime() - (bufferDays * 24 * 60 * 60 * 1000));
+            const end = new Date(interactionDate.getTime() + (bufferDays * 24 * 60 * 60 * 1000));
+            timelineElement.invalidateCache(start, end);
+          }
+
+          if (timelineElement.refreshTimeline) {
+            timelineElement.refreshTimeline();
+          }
         }
       }
     });
@@ -309,5 +394,13 @@ export class PartnerViewInteractionsComponent implements OnInit {
 
   onSearchChange(searchParams: SearchParams) {
     console.log('Partner interactions search changed:', searchParams);
+  }
+
+  onTabChange(event: any) {
+    console.log('Tab changed:', event);
+  }
+
+  onTimelineRangeChanged(range: {start: Date, end: Date}) {
+    console.log('Timeline range changed:', range);
   }
 }

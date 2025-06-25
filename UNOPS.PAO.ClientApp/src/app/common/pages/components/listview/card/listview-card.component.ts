@@ -6,8 +6,10 @@ import { DatePipe, DecimalPipe, CurrencyPipe } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { AvatarModule } from 'primeng/avatar';
+import { RouterModule } from '@angular/router';
 
 import { ListViewColumn, ListViewConfig } from '../listview.model';
+import { InteractionIconService } from '../../../../services/interaction-icon.service';
 
 @Component({
   selector: 'app-listview-card',
@@ -18,7 +20,8 @@ import { ListViewColumn, ListViewConfig } from '../listview.model';
     CardModule,
     ButtonModule,
     SkeletonModule,
-    AvatarModule
+    AvatarModule,
+    RouterModule
   ],
   templateUrl: './listview-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +68,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   // Scroll detection
   private elementRef = inject(ElementRef);
   private cdr = inject(ChangeDetectorRef);
+  private interactionIconService = inject(InteractionIconService);
 
   // Custom template references
   @ContentChild('cardActionsTemplate') actionsTemplate?: TemplateRef<any>;
@@ -102,21 +106,6 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     return hasColumns && hasConfig && (hasData || notLoading) && !this.error;
   });
 
-  // Computed property to get title column
-  titleColumn = computed(() => {
-    if (!this.columns || this.columns.length === 0 || !this.config) {
-      return null;
-    }
-    
-    const titleField = this.config.cardConfig?.titleField;
-    if (titleField) {
-      // Find column that matches the title field
-      return this.columns.find(col => col.field === titleField) || this.columns[0];
-    }
-    // Default to first column if no title field specified
-    return this.columns.find(col => col.type === 'text') || this.columns[0];
-  });
-
   // Computed property to get avatar column
   avatarColumn = computed(() => {
     if (!this.columns || this.columns.length === 0) {
@@ -125,55 +114,61 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     return this.columns.find(col => col.type === 'avatar') || null;
   });
 
-  // Computed property to get subtitle column
-  subtitleColumn = computed(() => {
-    if (!this.columns || this.columns.length === 0 || !this.config) {
+  // Computed property to get interaction icon column (for avatar display)
+  interactionIconColumn = computed(() => {
+    if (!this.columns || this.columns.length === 0) {
       return null;
     }
-    
-    const subtitleField = this.config.cardConfig?.subtitleField;
-    if (subtitleField) {
-      // Find column that matches the subtitle field
-      return this.columns.find(col => col.field === subtitleField) || null;
-    }
-
-    // Default to the first text column after the title column
-    const titleCol = this.titleColumn();
-    const availableColumns = this.columns.filter(col =>
-      col !== titleCol &&
-      col.type !== 'avatar' &&
-      (col.type === 'text' || col.type === 'email' || col.type === 'template')
-    );
-
-    return availableColumns[0] || null;
+    return this.columns.find(col => col.type === 'interactionIcon') || null;
   });
 
-  // Computed property to get content columns
-  contentColumns = computed(() => {
-    if (!this.columns || this.columns.length === 0 || !this.config) {
+  // Computed property to determine if we should show interaction icon in avatar position
+  shouldShowInteractionAvatar = computed(() => {
+    return this.interactionIconColumn() && !this.avatarColumn();
+  });
+
+  // Computed property to get ordered card fields (excluding avatar and interaction icons shown as avatar)
+  orderedCardFields = computed(() => {
+    if (!this.columns || this.columns.length === 0) {
       return [];
     }
     
-    const titleCol = this.titleColumn();
-    const subtitleCol = this.subtitleColumn();
-    const contentFields = this.config.cardConfig?.contentFields;
+    // Filter out avatar columns and interaction icon columns when they're shown as avatars
+    return this.columns.filter(col => {
+      if (col.type === 'avatar') return false;
+      if (col.type === 'interactionIcon' && this.shouldShowInteractionAvatar()) return false;
+      return true;
+    });
+  });
 
-    if (contentFields && contentFields.length > 0) {
-      // Filter columns that match the specified content fields, excluding title and subtitle
-      return this.columns.filter(col =>
-        contentFields.includes(col.field) &&
-        col !== titleCol &&
-        col !== subtitleCol
-      );
-    }
+  // Computed property to get field 1 (position 0 - main title)
+  field1 = computed(() => {
+    const fields = this.orderedCardFields();
+    return fields.length > 0 ? fields[0] : null;
+  });
 
-    // Default to all columns except the title and subtitle columns, up to 4
-    const otherColumns = this.columns.filter(col =>
-      col !== titleCol &&
-      col !== subtitleCol &&
-      col.type !== 'avatar'
-    );
-    return otherColumns.slice(0, 4);
+  // Computed property to get field 2 (position 1 - secondary info)
+  field2 = computed(() => {
+    const fields = this.orderedCardFields();
+    return fields.length > 1 ? fields[1] : null;
+  });
+
+  // Computed property to get field 3 (position 2 - content)
+  field3 = computed(() => {
+    const fields = this.orderedCardFields();
+    return fields.length > 2 ? fields[2] : null;
+  });
+
+  // Computed property to get field 4 (position 3 - top right)
+  field4 = computed(() => {
+    const fields = this.orderedCardFields();
+    return fields.length > 3 ? fields[3] : null;
+  });
+
+  // Computed property to get field 5 (position 4 - content area)
+  field5 = computed(() => {
+    const fields = this.orderedCardFields();
+    return fields.length > 4 ? fields[4] : null;
   });
 
   /**
@@ -317,10 +312,8 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
         }
         return String(value);
       case 'avatar':
-        // Pour le type avatar, on retourne simplement l'URL pour l'utiliser avec p-avatar
         return String(value);
       case 'email':
-        // Pour le type email, on retourne simplement l'adresse
         return String(value);
       default:
         return String(value);
@@ -423,21 +416,127 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     return this.getFieldValue(item, column.field) || '';
   }
 
+
   /**
-   * Get subtitle value with proper formatting based on column type
+   * Get CSS classes for field rendering based on context and column configuration
    */
-  getSubtitleValue(item: T, column: ListViewColumn): string {
+  getFieldClasses(column: ListViewColumn, context: 'field1' | 'field2' | 'field3' | 'field4' | 'field5'): string {
+    const baseClasses: string[] = [];
+
+    // Add context-specific classes
+    switch (context) {
+      case 'field1':
+        // Field 1 (main title) has its own styling in the template wrapper
+        break;
+      case 'field2':
+        // Field 2 has its own styling in the template wrapper
+        break;
+      case 'field3':
+        // Field 3 has its own styling in the template wrapper
+        break;
+      case 'field4':
+        // Field 4 (content area) has its own styling in the template wrapper
+        break;
+      case 'field5':
+        // Field 5 (top right) has its own styling in the template wrapper
+        break;
+    }
+
+    // Add column-type specific classes
     switch (column.type) {
       case 'email':
-        return this.getFieldValue(item, column.field) || '';
+      case 'link':
+        baseClasses.push('text-primary', 'hover:underline', 'cursor-pointer');
+        break;
       case 'template':
-        return this.getTemplateValue(item, column);
-      case 'date':
-      case 'number':
-      case 'currency':
-        return this.formatValue(item, column);
+        // Template content can contain HTML, so minimal styling
+        break;
       default:
-        return this.formatValue(item, column);
+        // Default field styling
+        break;
     }
+
+    // Add ellipsis classes if enabled
+    if (column.ellipsis) {
+      baseClasses.push('ellipsis-text');
+    }
+
+    return baseClasses.join(' ');
+  }
+
+  /**
+   * Get router link for a column based on row data
+   */
+  getRouterLink(item: T, column: ListViewColumn): string | null {
+    if (column.routerLink) {
+      return this.replacePlaceholders(column.routerLink, item);
+    }
+    return null;
+  }
+
+  /**
+   * Replace placeholders in a string with actual values from row data
+   * Example: '/partners/{id}/details' becomes '/partners/123/details'
+   */
+  private replacePlaceholders(template: string, item: T): string {
+    return template.replace(/\{([^}]+)\}/g, (match, fieldName) => {
+      const value = this.getNestedProperty(item, fieldName.trim());
+      return value !== null && value !== undefined ? String(value) : '';
+    });
+  }
+
+  /**
+   * Get nested property value from an object using dot notation
+   */
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((current, prop) => current?.[prop], obj);
+  }
+
+  /**
+   * Get interaction icon class for interactionIcon type columns
+   */
+  getInteractionIcon(item: T, column: ListViewColumn): string {
+    const type = this.getFieldValue(item, column.field);
+    return this.interactionIconService.getInteractionIcon(String(type || ''));
+  }
+
+  /**
+   * Get interaction color for interactionIcon type columns
+   */
+  getInteractionColor(item: T, column: ListViewColumn): string {
+    const type = this.getFieldValue(item, column.field);
+    return this.interactionIconService.getInteractionColor(String(type || ''));
+  }
+
+  /**
+   * Get Material Design icon name for interactionIcon type columns
+   */
+  getInteractionMaterialIcon(item: T, column: ListViewColumn): string {
+    const type = this.getFieldValue(item, column.field);
+    return this.interactionIconService.getInteractionMaterialIcon(String(type || ''));
+  }
+
+  /**
+   * Get Material Design filled icon name for interactionIcon type columns
+   */
+  getInteractionMaterialIconFilled(item: T, column: ListViewColumn): string {
+    const type = this.getFieldValue(item, column.field);
+    return this.interactionIconService.getInteractionMaterialIconFilled(String(type || ''));
+  }
+
+  /**
+   * Get gradient background for interactionIcon type columns
+   */
+  getInteractionGradient(item: T, column: ListViewColumn): string {
+    const type = this.getFieldValue(item, column.field);
+    return this.interactionIconService.getInteractionGradient(String(type || ''));
+  }
+
+  /**
+   * Get shadow color for interactionIcon type columns
+   */
+  getInteractionShadowColor(item: T, column: ListViewColumn): string {
+    const type = this.getFieldValue(item, column.field);
+    return this.interactionIconService.getInteractionShadowColor(String(type || ''));
   }
 }

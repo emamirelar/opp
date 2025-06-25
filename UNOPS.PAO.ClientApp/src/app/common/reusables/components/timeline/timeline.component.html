@@ -1,0 +1,37 @@
+<div class="timeline-container bg-white rounded-lg shadow-sm p-4 relative">
+  <!-- Loading indicator -->
+  @if (currentLoadingState === 'loading' || currentLoadingState === 'debouncing') {
+    <div class="loading-indicator">
+      <div class="loading-content">
+        @if (currentLoadingState === 'loading') {
+          <i class="pi pi-spin pi-spinner text-blue-600"></i>
+          <span class="text-xs text-gray-600 ml-2">{{ 'loading.loadingData' | translate }}</span>
+        } @else if (currentLoadingState === 'debouncing') {
+          <i class="pi pi-clock text-orange-500"></i>
+          <span class="text-xs text-gray-600 ml-2">{{ 'loading.preparing' | translate }}</span>
+        }
+      </div>
+    </div>
+  }
+
+  <div #timelineContainer class="timeline-visualization"></div>
+  @if (config.showNavigator) {
+    <div class="timeline-navigator-container mt-2">
+      <div class="timeline-navigator-header">
+        <span class="text-sm text-gray-600">{{ 'timeline.navigation' | translate }} ({{getYearRange()}})</span>
+        <button (click)="resetNavigatorView()" class="text-xs text-blue-600 hover:text-blue-800">{{ 'timeline.reset' | translate }}</button>
+      </div>
+      <div #navigatorContainer class="timeline-navigator"
+           (mousedown)="onNavigatorMouseDown($event)"
+           (mousemove)="onNavigatorMouseMove($event)"
+           (mouseup)="onNavigatorMouseUp($event)"
+           (mouseleave)="onNavigatorMouseUp($event)">
+        <canvas #navigatorCanvas class="navigator-canvas"></canvas>
+        <div class="navigator-selection"
+             [style.left.px]="selectionLeft"
+             [style.width.px]="selectionWidth"
+             [style.display]="selectionWidth > 0 ? 'block' : 'none'"></div>
+      </div>
+    </div>
+  }
+</div>

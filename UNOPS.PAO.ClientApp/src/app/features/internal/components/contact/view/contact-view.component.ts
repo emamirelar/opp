@@ -91,7 +91,9 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   // Computed properties for additional info visibility
   showAdditionalInfo = computed(() => {
     const data = this.recordData();
-    return data.id || data.title || data.department || data.status;
+    return data.id || data.title || data.department || data.status || data.pronouns || data.description ||
+           data.assistant || data.assistantPhone || data.assistantEmail ||
+           data.mailingStreet || data.mailingCity || data.mailingCountry;
   });
 
   showFullContent = signal<boolean>(false);

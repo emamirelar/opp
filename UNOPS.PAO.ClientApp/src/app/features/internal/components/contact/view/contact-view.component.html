@@ -17,6 +17,14 @@
 
         <div class="flex flex-col gap-4 pb-2">
 
+          <div class="flex flex-col gap-2">
+            <div class="text-sm">{{ 'fieldLabels.partner' | translate }}</div>
+            <a [routerLink]="['/partnerships/partners', recordData().partner?.id]"
+               class="text-primary hover:underline font-semibold">
+              {{recordData().partner?.name}}
+            </a>
+          </div>
+
           <!-- Contact Info -->
           @if(recordData().email || recordData().phone || recordData().mobile){
             <div class="flex flex-col gap-2">
@@ -31,6 +39,9 @@
               }
             </div>
           }
+
+
+
           @if(showAdditionalInfo() && showFullContent()) {
           <!-- Assistant Info -->
           @if(recordData().assistant || recordData().assistantPhone || recordData().assistantEmail){
@@ -76,16 +87,6 @@
             </div>
           }
 
-          @if(recordData().partner?.name){
-            <div class="flex flex-col gap-2">
-              <div class="text-sm">{{ 'label.partner.partner' | translate }}</div>
-              <div class="flex items-center gap-2">
-                <a [routerLink]="['/partnerships/partners', recordData().partner?.id]" class="text-primary hover:underline font-semibold">
-                  {{recordData().partner?.name}}
-                </a>
-              </div>
-            </div>
-          }
 
 
             @if(recordData().id){

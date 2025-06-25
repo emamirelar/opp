@@ -15,6 +15,7 @@ import { FeedbackDialogService } from '../../../../../common/reusables/services/
 import { SearchField } from '../../../../../common/services/search-parser.service';
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
+import { InteractionIconService } from '../../../../../common/services/interaction-icon.service';
 
 @Component({
   selector: 'app-interaction-list',
@@ -45,6 +46,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
   entityConfigurationService = inject(EntityConfigurationService);
   importDialogService = inject(ImportDialogService);
   cdr = inject(ChangeDetectorRef);
+  interactionIconService = inject(InteractionIconService);
 
   // Permission handling
   private permissionUtils = this.permissionUtilityService.createEntityPermissions('Interaction');
@@ -160,8 +162,13 @@ export class InteractionListComponent implements OnInit, OnDestroy {
       helperText: column.helperText
     };
 
+    // Detect interaction type columns and convert them to interactionIcon type
+    if (column.field === 'type' && column.type === 'text') {
+      processedColumn.type = 'interactionIcon';
+    }
+
     // Handle nested field paths (fields with dots) by adding a template function
-    if (column.field && column.field.includes('.') && column.type !== 'template') {
+    if (column.field && column.field.includes('.') && column.type !== 'template' && column.type !== 'interactionIcon') {
       // Keep the original field for identification but add a template function to access nested data
       processedColumn.templateFn = (rowData: any) => {
         const value = this.getNestedProperty(rowData, column.field);
@@ -205,7 +212,7 @@ export class InteractionListComponent implements OnInit, OnDestroy {
         field: 'type',
         label: 'label.interaction.type',
         sortable: true,
-        type: 'text'
+        type: 'interactionIcon'
       },
       {
         field: 'date',
