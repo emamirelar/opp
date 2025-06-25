@@ -393,14 +393,9 @@ export class PartnerViewInteractionsComponent implements OnInit {
   }
 
   onSearchChange(searchParams: SearchParams) {
-    console.log('Partner interactions search changed:', searchParams);
-  }
-
-  onTabChange(event: any) {
-    console.log('Tab changed:', event);
+    // console.log('Partner interactions search changed:', searchParams);
   }
 
   onTimelineRangeChanged(range: {start: Date, end: Date}) {
-    console.log('Timeline range changed:', range);
   }
 }

@@ -139,12 +139,33 @@ export class ResponsiveTabsComponent implements OnInit, OnDestroy {
   }
 
   private updateActiveTab(): void {
-    const currentUrl = this.router.url;
+    const currentUrl = this.router.url.split('?')[0]; // Remove query parameters
+    const currentUrlSegments = currentUrl.split('/').filter(segment => segment);
 
     // Find the matching tab based on the current URL
-    const matchingTab = this.tabs.find(tab => 
-      !tab.disabled && (currentUrl === tab.route || currentUrl.startsWith(tab.route + '/'))
-    );
+    // Sort tabs by route length (descending) to match the most specific route first
+    const sortedTabs = [...this.tabs].sort((a, b) => b.route.length - a.route.length);
+    
+    const matchingTab = sortedTabs.find(tab => {
+      if (tab.disabled) return false;
+      
+      const tabRoute = tab.route.split('?')[0]; // Remove query parameters from tab route
+      const tabRouteSegments = tabRoute.split('/').filter(segment => segment);
+      
+      // Exact match
+      if (currentUrl === tabRoute) return true;
+      
+      // Check if current URL starts with tab route (for child routes)
+      if (currentUrl.startsWith(tabRoute + '/')) return true;
+      
+      // For routes like /partnerships/partners/123, match with /partnerships/partners/123/contacts
+      if (tabRouteSegments.length > currentUrlSegments.length) return false;
+      
+      // Check segment by segment
+      return tabRouteSegments.every((segment, index) => 
+        currentUrlSegments[index] === segment
+      );
+    });
 
     // Use the matching tab's route, or default to the first non-disabled tab
     const firstActiveTab = this.tabs.find(tab => !tab.disabled);
