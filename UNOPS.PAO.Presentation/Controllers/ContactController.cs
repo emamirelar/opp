@@ -7,6 +7,8 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
+using UNOPS.PAO.UNOPSBusiness.Specifications;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -29,15 +31,18 @@ using UNOPS.PAO.Presentation;
 public class ContactController : BaseController
 {
     private readonly IContactManager _manager;
+    private readonly IOrgUnitFilterService _orgUnitFilterService;
 
     public ContactController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
         ILogger<ContactController> logger,
-        IAuthorizationService authorizationService)
+        IAuthorizationService authorizationService,
+        IOrgUnitFilterService orgUnitFilterService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.ContactManager;
+        _orgUnitFilterService = orgUnitFilterService;
     }
 
     [HttpPost(APIDictionary.Contact)]
@@ -55,48 +60,68 @@ public class ContactController : BaseController
     [HttpGet(APIDictionary.Contact)]
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> Get(
+        [FromQuery] ContactFilterRequest request,
         [FromQuery] bool advancedSearch = false, 
         [FromQuery] string? searchCriteria = null, 
-        [FromQuery] string? searchText = null,
-        [FromQuery] int pageIndex = 1, 
-        [FromQuery] int pageSize = 10, 
-        [FromQuery] string? orderBy = null, 
-        [FromQuery] bool? ascending = null)
+        [FromQuery] string? searchText = null)
     {
         
         // Validate pagination parameters
-        var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
+        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
         if (validationResult != null) return validationResult;
-        
-        // Create pagination request
-        var paginationRequest = new PaginationRequest(pageIndex, pageSize, orderBy, ascending);
         
         // Handle different search scenarios using the new helper methods
         return await HandleSearchOperationAsync(async () =>
         {
             if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
             {
-                return SearchControllerHelper.ProcessAdvancedSearchSync<ContactFilterRequest, ContactCompositeSpecification, object>(
-                    searchCriteria, searchText, pageIndex, pageSize, orderBy, ascending, paginationRequest,
+                // For advanced search, we need to parse the search criteria and combine with org unit filter
+                return await SearchControllerHelper.ProcessAdvancedSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
+                    searchCriteria, searchText ?? request.SearchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
+                    request,
                     "Contact",
                     filterRequest => new ContactCompositeSpecification(filterRequest),
-                    (userId, spec, pagination) => _manager.GetContactsWithSpecification(userId, spec, pagination),
+                    async (userId, spec, pagination) => {
+                        // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
+                        if (pagination is ContactFilterRequest contactPagination && contactPagination.OrgUnitId.HasValue)
+                        {
+                            var orgUnitSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(contactPagination, User);
+                            var adaptedSpec = new ContactSpecificationAdapter(orgUnitSpec);
+                            return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, adaptedSpec, contactPagination);
+                        }
+                        return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
+                    },
                     CurrentUserId, _logger);
             }
 
-            if (!string.IsNullOrWhiteSpace(searchText))
+            // Handle simple text search
+            if (!string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(request.SearchText))
             {
-                return SearchControllerHelper.ProcessSimpleTextSearchSync<ContactFilterRequest, ContactCompositeSpecification, object>(
-                    searchText, pageIndex, pageSize, orderBy, ascending, paginationRequest,
+                var textToSearch = searchText ?? request.SearchText;
+                return await SearchControllerHelper.ProcessSimpleTextSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
+                    textToSearch!, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                    request,
                     "Contact",
                     filterRequest => new ContactCompositeSpecification(filterRequest),
-                    (userId, spec, pagination) => _manager.GetContactsWithSpecification(userId, spec, pagination),
+                    async (userId, spec, pagination) => {
+                        // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
+                        if (pagination is ContactFilterRequest contactPagination && contactPagination.OrgUnitId.HasValue)
+                        {
+                            var orgUnitSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(contactPagination, User);
+                            var adaptedSpec = new ContactSpecificationAdapter(orgUnitSpec);
+                            return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, adaptedSpec, contactPagination);
+                        }
+                        return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
+                    },
                     CurrentUserId, _logger);
             }
 
-            // Return all contacts with pagination
-            _logger.LogInformation("Retrieving all contacts with pagination");
-            return await _manager.GetContactsAsync(User, paginationRequest);
+            // Use OrgUnitFilterService to create the appropriate specification
+            var unosContactSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(request, User);
+            var specification = new ContactSpecificationAdapter(unosContactSpec);
+            
+            var result = await _manager.GetContactsWithSpecificationAsync(User, specification, request);
+            return (PaginationResponse<ContactModel>)result;
         }, "contact search");
     }
 
@@ -130,6 +155,7 @@ public class ContactController : BaseController
         await _manager.DeleteContactAsync(User, id);
         return NoContent();
     }
+
 
     [HttpGet(APIDictionary.PartnerContacts)]
     [AccessControlled(EntityTypes.Contact, "read")]

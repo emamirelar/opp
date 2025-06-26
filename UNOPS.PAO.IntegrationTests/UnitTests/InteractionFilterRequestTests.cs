@@ -162,7 +162,7 @@ public class InteractionFilterRequestTests
             Description = "Test description",
             Subject = "Test subject",
             SearchText = "Search term",
-            MyOfficeOnly = true,
+            OrgUnitId = 10,
             AdvancedSearch = true,
             SearchCriteria = "Advanced criteria"
         };
@@ -179,7 +179,7 @@ public class InteractionFilterRequestTests
         request.Description.Should().Be("Test description");
         request.Subject.Should().Be("Test subject");
         request.SearchText.Should().Be("Search term");
-        request.MyOfficeOnly.Should().BeTrue();
+        request.OrgUnitId.Should().Be(10);
         request.AdvancedSearch.Should().BeTrue();
         request.SearchCriteria.Should().Be("Advanced criteria");
     }

@@ -92,7 +92,7 @@
             </ng-template>
             <app-listview
               [dataUrl]="'api/partner/by-partner-category-code/' + this.partnerTree()?.partnerCategoryCode"
-              [columns]="partnerColumns"
+              [columns]="partnerColumns()"
               (rowClick)="navigateToPartner($event)"
             >
             </app-listview>

@@ -40,4 +40,5 @@ public interface IContactManager
     Task DeleteContactAsync(ClaimsPrincipal user, int id);
 
     Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);
+    Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination);
 }

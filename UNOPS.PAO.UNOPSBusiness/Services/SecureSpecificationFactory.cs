@@ -18,13 +18,16 @@ namespace UNOPS.PAO.UNOPSBusiness.Services;
 public class SecureSpecificationFactory : ISecureSpecificationFactory
 {
     private readonly IPermissionService _permissionService;
+    private readonly IOrgUnitFilterService _orgUnitFilterService;
     private readonly ILogger<SecureSpecificationFactory> _logger;
     
     public SecureSpecificationFactory(
         IPermissionService permissionService,
+        IOrgUnitFilterService orgUnitFilterService,
         ILogger<SecureSpecificationFactory> logger)
     {
         _permissionService = permissionService;
+        _orgUnitFilterService = orgUnitFilterService;
         _logger = logger;
     }
     
@@ -69,9 +72,20 @@ public class SecureSpecificationFactory : ISecureSpecificationFactory
         IPartnerSearchFilter filter, 
         ClaimsPrincipal user)
     {
-        // Implementation would be similar for partners
-        // This demonstrates the extensible pattern
-        throw new NotImplementedException("Partner secure specification not yet implemented");
+        try
+        {
+            _logger.LogDebug("Creating secure partner specification with OrgUnit support");
+            
+            // Use OrgUnitFilterService to create specification with OrgUnit filtering
+            return await _orgUnitFilterService.CreatePartnerSpecificationAsync(filter, user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating secure partner specification");
+            
+            // Fallback to standard specification if there's an error
+            return new UNOPSDomain.Specifications.UNOPSPartnerCompositeSpecification(filter);
+        }
     }
     
     /// <summary>

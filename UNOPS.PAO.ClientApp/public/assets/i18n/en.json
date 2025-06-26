@@ -1,4 +1,7 @@
 {
+  "global": {
+    "filter": "Global Filter"
+  },
   "title": {
     "countries": "Countries",
     "currency": "Currency",

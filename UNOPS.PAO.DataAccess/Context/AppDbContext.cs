@@ -45,6 +45,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<InteractionUser> InteractionUsers { get; set; }
     public DbSet<InteractionPartner> InteractionPartners { get; set; }
     public DbSet<UserInfo> UserInfos { get; set; }
+    public DbSet<UserPreference> UserPreferences { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<SavedFilter> SavedFilters { get; set; }

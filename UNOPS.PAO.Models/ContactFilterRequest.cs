@@ -99,9 +99,9 @@ public class ContactFilterRequest : PaginationRequest, IContactSearchFilter
     public string? PartnerName { get; set; }
     
     /// <summary>
-    /// Filter to show only contacts from current user's organizational unit
+    /// Organization Unit filter - filters results by organizational unit (includes hierarchy)
     /// </summary>
-    public bool MyOfficeOnly { get; set; }
+    public int? OrgUnitId { get; set; }
     
     /// <summary>
     /// Indicates if advanced search is enabled

@@ -1,14 +1,15 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmationService } from 'primeng/api';
-import { of, Subject } from 'rxjs';
+import { of, Subject, BehaviorSubject } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { ListviewComponent } from './listview.component';
 import { ListviewExportService } from './listview-export.service';
 import { ListViewColumn, ListViewConfig, SearchCriteria } from './listview.model';
+import { GlobalFilterService } from '../../../../services/global-filter.service';
 
 describe('ListviewComponent', () => {
   let component: ListviewComponent;
@@ -18,6 +19,7 @@ describe('ListviewComponent', () => {
   let activatedRoute: jasmine.SpyObj<ActivatedRoute>;
   let translateService: jasmine.SpyObj<TranslateService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
+  let globalFilterService: jasmine.SpyObj<GlobalFilterService>;
 
   const mockColumns: ListViewColumn[] = [
     { label: 'Name', field: 'name', type: 'text', sortable: true },
@@ -58,6 +60,14 @@ describe('ListviewComponent', () => {
 
     const confirmationSpy = jasmine.createSpyObj('ConfirmationService', ['confirm']);
 
+    const globalFilterSpy = jasmine.createSpyObj('GlobalFilterService', 
+      ['getActiveOrgUnitId', 'setFilterEnabled', 'setSelectedOrgUnitId'],
+      {
+        activeOrgUnitId$: new BehaviorSubject<number | null>(null)
+      }
+    );
+    globalFilterSpy.getActiveOrgUnitId.and.returnValue(null);
+
     await TestBed.configureTestingModule({
       imports: [
         ListviewComponent,
@@ -70,7 +80,8 @@ describe('ListviewComponent', () => {
         { provide: Router, useValue: routerSpy },
         { provide: ActivatedRoute, useValue: activatedRouteSpy },
         { provide: TranslateService, useValue: translateSpy },
-        { provide: ConfirmationService, useValue: confirmationSpy }
+        { provide: ConfirmationService, useValue: confirmationSpy },
+        { provide: GlobalFilterService, useValue: globalFilterSpy }
       ]
     }).compileComponents();
 
@@ -81,6 +92,7 @@ describe('ListviewComponent', () => {
     activatedRoute = TestBed.inject(ActivatedRoute) as jasmine.SpyObj<ActivatedRoute>;
     translateService = TestBed.inject(TranslateService) as jasmine.SpyObj<TranslateService>;
     confirmationService = TestBed.inject(ConfirmationService) as jasmine.SpyObj<ConfirmationService>;
+    globalFilterService = TestBed.inject(GlobalFilterService) as jasmine.SpyObj<GlobalFilterService>;
   });
 
   it('should create', () => {
@@ -422,5 +434,323 @@ describe('ListviewComponent', () => {
 
       expect(component['checkComponentWidth']).toHaveBeenCalled();
     });
+  });
+
+  describe('OrgUnit Filter Integration', () => {
+    let httpMock: HttpTestingController;
+    let activeOrgUnitIdSubject: BehaviorSubject<number | null>;
+
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
+      activeOrgUnitIdSubject = (globalFilterService as any).activeOrgUnitId$;
+      
+      // Set up component with basic configuration
+      component.dataUrl = '/api/test';
+      component.config = {
+        pageSize: 20,
+        enablePagination: true,
+        entityName: 'Test'
+      } as ListViewConfig;
+      component.columns = [
+        { field: 'id', label: 'ID', type: 'number' },
+        { field: 'name', label: 'Name', type: 'string' }
+      ];
+    });
+
+    afterEach(() => {
+      httpMock.verify();
+    });
+
+    it('should include orgUnitId in HTTP params when filter is active', fakeAsync(() => {
+      // Set active org unit ID
+      const orgUnitId = 123;
+      globalFilterService.getActiveOrgUnitId.and.returnValue(orgUnitId);
+
+      // Initialize component
+      fixture.detectChanges();
+      tick();
+
+      // Component should load data with org unit filter
+      const req = httpMock.expectOne(request => {
+        return request.url === '/api/test' && 
+               request.params.has('orgUnitId') &&
+               request.params.get('orgUnitId') === orgUnitId.toString();
+      });
+
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('pageIndex')).toBe('1');
+      expect(req.request.params.get('pageSize')).toBe('20');
+
+      // Respond with test data
+      req.flush({ records: [], totalCount: 0 });
+    }));
+
+    it('should not include orgUnitId when filter is not active', fakeAsync(() => {
+      // No active org unit ID
+      globalFilterService.getActiveOrgUnitId.and.returnValue(null);
+
+      // Initialize component
+      fixture.detectChanges();
+      tick();
+
+      // Component should load data without org unit filter
+      const req = httpMock.expectOne(request => {
+        return request.url === '/api/test' && 
+               !request.params.has('orgUnitId');
+      });
+
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.has('orgUnitId')).toBeFalse();
+
+      // Respond with test data
+      req.flush({ records: [], totalCount: 0 });
+    }));
+
+    it('should reload data when org unit filter changes', fakeAsync(() => {
+      // Initialize component without org unit filter
+      fixture.detectChanges();
+      tick();
+
+      // Initial request without orgUnitId
+      let req = httpMock.expectOne('/api/test?pageIndex=1&pageSize=20&orderBy=&ascending=true');
+      req.flush({ records: [], totalCount: 0 });
+
+      // Change org unit filter
+      const newOrgUnitId = 456;
+      globalFilterService.getActiveOrgUnitId.and.returnValue(newOrgUnitId);
+      activeOrgUnitIdSubject.next(newOrgUnitId);
+      tick();
+
+      // Should trigger a new request with orgUnitId
+      req = httpMock.expectOne(request => {
+        return request.url === '/api/test' && 
+               request.params.get('orgUnitId') === newOrgUnitId.toString();
+      });
+
+      expect(req.request.params.get('pageIndex')).toBe('1'); // Should reset to first page
+      req.flush({ records: [], totalCount: 0 });
+    }));
+
+    it('should reset pagination when org unit filter changes', fakeAsync(() => {
+      // Initialize component and load first page
+      fixture.detectChanges();
+      tick();
+
+      let req = httpMock.expectOne('/api/test?pageIndex=1&pageSize=20&orderBy=&ascending=true');
+      req.flush({ records: Array(20).fill({}), totalCount: 100 });
+
+      // Navigate to page 3
+      component['pageIndex'] = 3;
+      component['loadData']();
+      tick();
+
+      req = httpMock.expectOne(request => request.params.get('pageIndex') === '3');
+      req.flush({ records: Array(20).fill({}), totalCount: 100 });
+
+      // Change org unit filter
+      globalFilterService.getActiveOrgUnitId.and.returnValue(789);
+      activeOrgUnitIdSubject.next(789);
+      tick();
+
+      // Should reset to page 1
+      req = httpMock.expectOne(request => {
+        return request.params.get('pageIndex') === '1' &&
+               request.params.get('orgUnitId') === '789';
+      });
+      req.flush({ records: [], totalCount: 0 });
+
+      expect(component['pageIndex']).toBe(1);
+    }));
+
+    it('should combine orgUnitId with search parameters', fakeAsync(() => {
+      const orgUnitId = 123;
+      globalFilterService.getActiveOrgUnitId.and.returnValue(orgUnitId);
+
+      // Initialize component
+      fixture.detectChanges();
+      tick();
+
+      // Initial load
+      let req = httpMock.expectOne(request => request.params.get('orgUnitId') === '123');
+      req.flush({ records: [], totalCount: 0 });
+
+      // Perform search
+      component.searchText = 'test search';
+      component.onSearch();
+      tick(300); // Debounce time
+
+      // Should include both search text and orgUnitId
+      req = httpMock.expectOne(request => {
+        return request.params.get('searchText') === 'test search' &&
+               request.params.get('orgUnitId') === orgUnitId.toString();
+      });
+      req.flush({ records: [], totalCount: 0 });
+    }));
+
+    it('should combine orgUnitId with advanced search', fakeAsync(() => {
+      const orgUnitId = 456;
+      globalFilterService.getActiveOrgUnitId.and.returnValue(orgUnitId);
+
+      // Configure for advanced search
+      component.config = {
+        ...component.config,
+        searchConfig: {
+          useAdvancedSearch: true,
+          searchableFields: [{ field: 'name', label: 'Name', type: 'string' }]
+        }
+      };
+
+      // Initialize component
+      fixture.detectChanges();
+      tick();
+
+      // Initial load
+      let req = httpMock.expectOne(request => request.params.get('orgUnitId') === '456');
+      req.flush({ records: [], totalCount: 0 });
+
+      // Set advanced search criteria
+      component['searchCriteria'] = [{ field: 'name', operator: 'like', value: 'test' }];
+      component['useAdvancedSearch'] = true;
+      component['loadData']();
+      tick();
+
+      // Should include both advanced search and orgUnitId
+      req = httpMock.expectOne(request => {
+        return request.params.get('advancedSearch') === 'true' &&
+               request.params.has('searchCriteria') &&
+               request.params.get('orgUnitId') === orgUnitId.toString();
+      });
+      req.flush({ records: [], totalCount: 0 });
+    }));
+
+    it('should handle org unit filter being disabled', fakeAsync(() => {
+      // Start with active org unit
+      globalFilterService.getActiveOrgUnitId.and.returnValue(123);
+      
+      fixture.detectChanges();
+      tick();
+
+      // Initial request with orgUnitId
+      let req = httpMock.expectOne(request => request.params.get('orgUnitId') === '123');
+      req.flush({ records: [], totalCount: 0 });
+
+      // Disable org unit filter
+      globalFilterService.getActiveOrgUnitId.and.returnValue(null);
+      activeOrgUnitIdSubject.next(null);
+      tick();
+
+      // Should reload without orgUnitId
+      req = httpMock.expectOne(request => !request.params.has('orgUnitId'));
+      req.flush({ records: [], totalCount: 0 });
+    }));
+
+    it('should handle rapid org unit changes', fakeAsync(() => {
+      fixture.detectChanges();
+      tick();
+
+      // Initial load
+      let req = httpMock.expectOne('/api/test?pageIndex=1&pageSize=20&orderBy=&ascending=true');
+      req.flush({ records: [], totalCount: 0 });
+
+      // Rapid org unit changes
+      globalFilterService.getActiveOrgUnitId.and.returnValue(1);
+      activeOrgUnitIdSubject.next(1);
+      
+      globalFilterService.getActiveOrgUnitId.and.returnValue(2);
+      activeOrgUnitIdSubject.next(2);
+      
+      globalFilterService.getActiveOrgUnitId.and.returnValue(3);
+      activeOrgUnitIdSubject.next(3);
+      
+      tick();
+
+      // Should only make one request with the final value
+      req = httpMock.expectOne(request => request.params.get('orgUnitId') === '3');
+      req.flush({ records: [], totalCount: 0 });
+    }));
+
+    it('should clear loaded data when org unit changes', fakeAsync(() => {
+      // Initialize and load some data
+      fixture.detectChanges();
+      tick();
+
+      let req = httpMock.expectOne('/api/test?pageIndex=1&pageSize=20&orderBy=&ascending=true');
+      req.flush({ 
+        records: [
+          { id: 1, name: 'Item 1' },
+          { id: 2, name: 'Item 2' }
+        ], 
+        totalCount: 2 
+      });
+
+      // Verify data is loaded
+      expect(component.data.length).toBe(2);
+
+      // Change org unit filter
+      globalFilterService.getActiveOrgUnitId.and.returnValue(999);
+      activeOrgUnitIdSubject.next(999);
+      tick();
+
+      // Request with new org unit
+      req = httpMock.expectOne(request => request.params.get('orgUnitId') === '999');
+      req.flush({ records: [], totalCount: 0 });
+
+      // Data should be cleared and replaced
+      expect(component.data.length).toBe(0);
+    }));
+
+    it('should not reload if component has not loaded initial data', fakeAsync(() => {
+      // Do not call fixture.detectChanges() to prevent initial load
+      
+      // Change org unit filter before component initialization
+      globalFilterService.getActiveOrgUnitId.and.returnValue(123);
+      activeOrgUnitIdSubject.next(123);
+      tick();
+
+      // No HTTP requests should be made
+      httpMock.expectNone('/api/test');
+
+      // Now initialize component
+      fixture.detectChanges();
+      tick();
+
+      // Should make initial request with current org unit
+      const req = httpMock.expectOne(request => request.params.get('orgUnitId') === '123');
+      req.flush({ records: [], totalCount: 0 });
+    }));
+
+    it('should maintain orgUnitId when loading more data', fakeAsync(() => {
+      const orgUnitId = 555;
+      globalFilterService.getActiveOrgUnitId.and.returnValue(orgUnitId);
+
+      fixture.detectChanges();
+      tick();
+
+      // Initial load
+      let req = httpMock.expectOne(request => 
+        request.params.get('pageIndex') === '1' &&
+        request.params.get('orgUnitId') === '555'
+      );
+      req.flush({ 
+        records: Array(10).fill({}).map((_, i) => ({ id: i + 1 })), 
+        totalCount: 25 
+      });
+
+      // Load more
+      component.onLoadMore();
+      tick();
+
+      // Second page should also include orgUnitId
+      req = httpMock.expectOne(request => 
+        request.params.get('pageIndex') === '2' &&
+        request.params.get('orgUnitId') === '555'
+      );
+      req.flush({ 
+        records: Array(10).fill({}).map((_, i) => ({ id: i + 11 })), 
+        totalCount: 25 
+      });
+
+      expect(component.data.length).toBe(20);
+    }));
   });
 });

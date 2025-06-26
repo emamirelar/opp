@@ -20,8 +20,8 @@ public class InteractionFilterRequest : PaginationRequest, IInteractionSearchFil
     public string? Subject { get; set; }
     public string? SearchText { get; set; }
     
-    // My Office filter - filters results to current user's organizational unit
-    public bool MyOfficeOnly { get; set; }
+    // Organization Unit filter - filters results by organizational unit (includes hierarchy)
+    public int? OrgUnitId { get; set; }
     
     // Advanced search properties
     public bool AdvancedSearch { get; set; }
