@@ -6,8 +6,8 @@ namespace UNOPS.PAO.Models;
 public class InteractionRequest : ExtensibleModel
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public InteractionType Type { get; set; }
-    public DateTime Date { get; set; }
+    public InteractionType Type { get; set; } = InteractionType.Email;
+    public DateTime Date { get; set; } = DateTime.UtcNow;
     
     public string? Description { get; set; }
     

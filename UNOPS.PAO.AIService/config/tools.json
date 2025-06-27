@@ -1,0 +1,1427 @@
+{
+  "entities": [
+    {
+      "entity": "Partner",
+      "description": "Manages partner organizations including creation, search, updates, relationship management, and document handling. Partners can be categorized and grouped hierarchically.",
+      "synonyms": ["organization", "company", "vendor", "supplier", "partner organization", "institution", "agency"],
+      "mandatoryFields": ["name", "shortName", "status", "newEngagement", "pooledFund", "ddRequired", "ddeacDone", "levyPotentiallyApplies"],
+      "endpoints": [
+        {
+          "name": "GetPartners",
+          "url": "/api/partner",
+          "method": "GET",
+          "description": "Retrieves a list of partners with advanced filtering, pagination, search capabilities, and access control.",
+          "parameters": {
+            "pageIndex": { "type": "integer", "required": false, "description": "Page number (1-based)" },
+            "pageSize": { "type": "integer", "required": false, "description": "Number of items per page" },
+            "searchText": { "type": "string", "required": false, "description": "Text to search across partner fields" },
+            "advancedSearch": { "type": "boolean", "required": false, "description": "Enable advanced search mode" },
+            "searchCriteria": { "type": "string", "required": false, "description": "JSON string containing advanced search filters" },
+            "orderBy": { "type": "string", "required": false, "description": "Field to order results by" },
+            "ascending": { "type": "boolean", "required": false, "description": "Sort direction (true for ascending)" },
+            "status": { "type": "string", "required": false, "description": "Filter by partner status" },
+            "name": { "type": "string", "required": false, "description": "Filter by partner name" },
+            "partnerOfficeId": { "type": "integer", "required": false, "description": "Filter by partner office ID" },
+            "myOfficeOnly": { "type": "boolean", "required": false, "description": "Filter to current user's office only" },
+            "globalKeyAccount": { "type": "boolean", "required": false, "description": "Filter by global key account status" }
+          },
+          "example_uses": [
+            "Show me all partners",
+            "List partners containing 'UNICEF' in the name",
+            "Find partners with global key account status",
+            "Show active partners from my office",
+            "Search for government partners"
+          ],
+          "when_to_use": "Use this when the user asks to search, list, filter, or browse partners."
+        },
+        {
+          "name": "GetSimilarityResults",
+          "url": "/get-similarity-result",
+          "method": "GET",
+          "description": "Performs AI-powered semantic/similarity search across partner data using embeddings and natural language processing with RBAC filtering.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Must be 'Partner' for partner searches" },
+            "searchText": { "type": "string", "required": true, "description": "Natural language text to search for semantically" },
+            "vectorEmbedding": { "type": "string", "required": false, "description": "Optional vector embedding for semantic search" },
+            "similarityThreshold": { "type": "float", "required": false, "description": "Threshold for similarity search (default: 0.3)" },
+            "embeddingThreshold": { "type": "float", "required": false, "description": "Threshold for embedding search (default: 0.7)" },
+            "whereCondition": { "type": "string", "required": false, "description": "Optional additional SQL WHERE condition" }
+          },
+          "example_uses": [
+            "Find partners similar to 'humanitarian aid organizations'",
+            "Search for partners like 'microfinance institutions'",
+            "Find partners working in 'climate change adaptation'",
+            "Search for 'Amy' across all partner data",
+            "Find partners similar to 'UNICEF'"
+          ],
+          "when_to_use": "Use this for AI-powered semantic search when the user asks for conceptual or meaning-based searches, or when regular text search isn't sufficient."
+        },
+        {
+          "name": "CreatePartner",
+          "url": "/api/partner",
+          "method": "POST",
+          "description": "Creates a new partner organization with complete details including address, contact info, and organizational metadata.",
+          "parameters": {
+            "name": { "type": "string", "required": true, "description": "Partner organization name" },
+            "shortName": { "type": "string", "required": true, "description": "Short/abbreviated name" },
+            "status": { "type": "string", "required": false, "description": "Partner status (defaults to 'Active')" },
+            "website": { "type": "string", "required": false, "description": "Partner website URL" },
+            "phone": { "type": "string", "required": false, "description": "Partner phone number" },
+            "address1Street": { "type": "string", "required": false, "description": "Street address line 1" },
+            "address1City": { "type": "string", "required": false, "description": "City" },
+            "address1Country": { "type": "string", "required": false, "description": "Country" },
+            "partnerOfficeId": { "type": "integer", "required": false, "description": "Associated UNOPS office ID" },
+            "partnerGroupCode": { "type": "string", "required": false, "description": "Partner group classification code" },
+            "globalKeyAccount": { "type": "boolean", "required": false, "description": "Whether this is a global key account" },
+            "unSecretariatEntity": { "type": "boolean", "required": false, "description": "Whether this is a UN Secretariat entity" },
+            "pooledFund": { "type": "string", "required": false, "description": "Pooled fund involvement" },
+            "ddRequired": { "type": "string", "required": false, "description": "Due diligence requirement status" }
+          },
+          "example_uses": [
+            "Create a new partner called UNICEF",
+            "Add a new organization with website www.redcross.org",
+            "Register a new government partner from Bangladesh"
+          ],
+          "when_to_use": "Use this when the user asks to add, create, register, or set up a new partner."
+        },
+        {
+          "name": "GetPartnerById",
+          "url": "/api/partner/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific partner by ID with complete details including documents, contacts, and office information.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Partner ID" }
+          },
+          "example_uses": [
+            "Show me details for partner ID 123",
+            "Get full information about partner 456",
+            "Display partner record 789"
+          ],
+          "when_to_use": "Use this when the user asks for specific partner details by ID or when you need complete partner information."
+        },
+        {
+          "name": "UpdatePartner",
+          "url": "/api/partner",
+          "method": "PUT",
+          "description": "Updates an existing partner's information including contact details, status, and organizational metadata.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Partner ID to update" },
+            "name": { "type": "string", "required": false, "description": "Updated partner name" },
+            "shortName": { "type": "string", "required": false, "description": "Updated short name" },
+            "status": { "type": "string", "required": false, "description": "Updated status" },
+            "website": { "type": "string", "required": false, "description": "Updated website" },
+            "phone": { "type": "string", "required": false, "description": "Updated phone number" },
+            "globalKeyAccount": { "type": "boolean", "required": false, "description": "Updated key account status" },
+            "partnerOfficeId": { "type": "integer", "required": false, "description": "Updated office assignment" }
+          },
+          "example_uses": [
+            "Update partner 123's name to New UNICEF",
+            "Change partner 456's status to Inactive",
+            "Update the website for partner 789"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or change partner information."
+        },
+        {
+          "name": "DeletePartner",
+          "url": "/api/partner/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes a partner from the system (marks as deleted rather than permanent removal).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Partner ID to delete" }
+          },
+          "example_uses": [
+            "Delete partner ID 123",
+            "Remove partner 456 from the system"
+          ],
+          "when_to_use": "Use this when the user asks to delete, remove, or eliminate a partner."
+        },
+        {
+          "name": "GetPartnerPermissions",
+          "url": "/api/partner/{id}/permissions",
+          "method": "GET",
+          "description": "Retrieves the current user's permissions for a specific partner (read, update, delete).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Partner ID" }
+          },
+          "example_uses": [
+            "Check my permissions for partner 123",
+            "What can I do with partner 456?"
+          ],
+          "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements."
+        },
+        {
+          "name": "UploadPartnerLogo",
+          "url": "/api/partner/{id}/logo",
+          "method": "POST",
+          "description": "Uploads and associates a logo image with a partner (max 1MB, JPEG/PNG/WEBP only).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Partner ID" },
+            "file": { "type": "file", "required": true, "description": "Image file (max 1MB)" }
+          },
+          "example_uses": [
+            "Upload a logo for partner 123",
+            "Add organization logo to partner record"
+          ],
+          "when_to_use": "Use this when the user wants to add or update a partner's logo/image."
+        },
+        {
+          "name": "GetPartnersByGroup",
+          "url": "/api/partner/by-partner-group-code/{code}",
+          "method": "GET",
+          "description": "Retrieves partners filtered by partner group code with pagination.",
+          "parameters": {
+            "code": { "type": "string", "required": true, "description": "Partner group code" },
+            "pageIndex": { "type": "integer", "required": false, "description": "Page number" },
+            "pageSize": { "type": "integer", "required": false, "description": "Items per page" }
+          },
+          "example_uses": [
+            "Show me all NGO partners",
+            "List government partners",
+            "Find all UN agency partners"
+          ],
+          "when_to_use": "Use this when the user asks for partners by group type or category."
+        },
+        {
+          "name": "GetPartnersByCategory",
+          "url": "/api/partner/by-partner-category-code/{code}",
+          "method": "GET",
+          "description": "Retrieves partners filtered by partner category code with pagination.",
+          "parameters": {
+            "code": { "type": "string", "required": true, "description": "Partner category code" },
+            "pageIndex": { "type": "integer", "required": false, "description": "Page number" },
+            "pageSize": { "type": "integer", "required": false, "description": "Items per page" }
+          },
+          "example_uses": [
+            "Show partners in the humanitarian category",
+            "List development partners",
+            "Find peace and security partners"
+          ],
+          "when_to_use": "Use this when the user asks for partners by specific category or thematic area."
+        }
+      ]
+    },
+    {
+      "entity": "Contact",
+      "description": "Manages individual contacts associated with partner organizations, including personal details, contact information, interactions, and profile management.",
+      "synonyms": ["person", "individual", "representative", "contact person", "staff member", "point of contact"],
+      "mandatoryFields": ["firstName", "lastName", "email", "title", "partnerId"],
+      "endpoints": [
+        {
+          "name": "GetContacts",
+          "url": "/api/contact",
+          "method": "GET",
+          "description": "Retrieves a list of contacts with advanced filtering, pagination, search capabilities, and access control.",
+          "parameters": {
+            "pageIndex": { "type": "integer", "required": false, "description": "Page number (1-based)" },
+            "pageSize": { "type": "integer", "required": false, "description": "Number of items per page" },
+            "searchText": { "type": "string", "required": false, "description": "Text to search across contact fields" },
+            "advancedSearch": { "type": "boolean", "required": false, "description": "Enable advanced search mode" },
+            "searchCriteria": { "type": "string", "required": false, "description": "JSON string containing advanced search filters" },
+            "orderBy": { "type": "string", "required": false, "description": "Field to order results by" },
+            "ascending": { "type": "boolean", "required": false, "description": "Sort direction (true for ascending)" }
+          },
+          "example_uses": [
+            "Show me all contacts",
+            "List contacts with email domain @unicef.org",
+            "Find contacts working at government partners",
+            "Search for contacts named John",
+            "Show contacts from my office only"
+          ],
+          "when_to_use": "Use this when the user asks to search, list, filter, or browse contacts."
+        },
+        {
+          "name": "GetSimilarityResults",
+          "url": "/get-similarity-result",
+          "method": "GET",
+          "description": "Performs AI-powered semantic/similarity search across contact data using embeddings and natural language processing with RBAC filtering.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Must be 'Contact' for contact searches" },
+            "searchText": { "type": "string", "required": true, "description": "Natural language text to search for semantically" },
+            "vectorEmbedding": { "type": "string", "required": false, "description": "Optional vector embedding for semantic search" },
+            "similarityThreshold": { "type": "float", "required": false, "description": "Threshold for similarity search (default: 0.3)" },
+            "embeddingThreshold": { "type": "float", "required": false, "description": "Threshold for embedding search (default: 0.7)" },
+            "whereCondition": { "type": "string", "required": false, "description": "Optional additional SQL WHERE condition" }
+          },
+          "example_uses": [
+            "Find contacts similar to 'program managers'",
+            "Search for contacts like 'technical experts'",
+            "Find contacts working on 'climate change'",
+            "Search for 'Amy' across all contact data",
+            "Find contacts similar to 'John Smith'"
+          ],
+          "when_to_use": "Use this for AI-powered semantic search when the user asks for conceptual or meaning-based searches across contact information."
+        },
+        {
+          "name": "CreateContact",
+          "url": "/api/contact",
+          "method": "POST",
+          "description": "Creates a new contact with comprehensive personal and professional details.",
+          "parameters": {
+            "firstName": { "type": "string", "required": true, "description": "Contact's first name" },
+            "lastName": { "type": "string", "required": true, "description": "Contact's last name" },
+            "email": { "type": "string", "required": true, "description": "Primary email address" },
+            "partnerId": { "type": "integer", "required": true, "description": "Associated partner organization ID" },
+            "salutation": { "type": "string", "required": false, "description": "Title/salutation (Mr., Ms., Dr., etc.)" },
+            "middleName": { "type": "string", "required": false, "description": "Middle name or initial" },
+            "suffix": { "type": "string", "required": false, "description": "Name suffix (Jr., Sr., III, etc.)" },
+            "title": { "type": "string", "required": true, "description": "Job title/position" },
+            "department": { "type": "string", "required": false, "description": "Department or division" },
+            "phone": { "type": "string", "required": false, "description": "Primary phone number" },
+            "mobile": { "type": "string", "required": false, "description": "Mobile phone number" },
+            "status": { "type": "string", "required": false, "description": "Contact status (defaults to 'Active')" },
+            "mailingStreet": { "type": "string", "required": false, "description": "Mailing address street" },
+            "mailingCity": { "type": "string", "required": false, "description": "Mailing address city" },
+            "mailingCountry": { "type": "string", "required": false, "description": "Mailing address country" }
+          },
+          "example_uses": [
+            "Create a contact named John Doe with email john@unicef.org",
+            "Add a new program manager contact for partner 123",
+            "Register Dr. Jane Smith as the technical lead"
+          ],
+          "when_to_use": "Use this when the user asks to add, create, register, or set up a new contact."
+        },
+        {
+          "name": "GetContactById",
+          "url": "/api/contact/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific contact by ID with complete details including partner information and created-by details.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Contact ID" }
+          },
+          "example_uses": [
+            "Show me details for contact ID 123",
+            "Get full information about contact 456",
+            "Display contact record 789"
+          ],
+          "when_to_use": "Use this when the user asks for specific contact details by ID or when you need complete contact information."
+        },
+        {
+          "name": "UpdateContact",
+          "url": "/api/contact",
+          "method": "PUT",
+          "description": "Updates an existing contact's information including personal details, job information, and contact details.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Contact ID to update" },
+            "firstName": { "type": "string", "required": false, "description": "Updated first name" },
+            "lastName": { "type": "string", "required": false, "description": "Updated last name" },
+            "email": { "type": "string", "required": false, "description": "Updated email address" },
+            "title": { "type": "string", "required": false, "description": "Updated job title" },
+            "phone": { "type": "string", "required": false, "description": "Updated phone number" },
+            "status": { "type": "string", "required": false, "description": "Updated status" },
+            "department": { "type": "string", "required": false, "description": "Updated department" }
+          },
+          "example_uses": [
+            "Update contact 123's email to newemail@unicef.org",
+            "Change contact 456's title to Senior Manager",
+            "Update the phone number for contact 789"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or change contact information."
+        },
+        {
+          "name": "DeleteContact",
+          "url": "/api/contact/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes a contact from the system (marks as deleted rather than permanent removal).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Contact ID to delete" }
+          },
+          "example_uses": [
+            "Delete contact ID 123",
+            "Remove contact 456 from the system"
+          ],
+          "when_to_use": "Use this when the user asks to delete, remove, or eliminate a contact."
+        },
+        {
+          "name": "GetPartnerContacts",
+          "url": "/api/partner/{partnerId}/contacts",
+          "method": "GET",
+          "description": "Retrieves all contacts associated with a specific partner organization.",
+          "parameters": {
+            "partnerId": { "type": "integer", "required": true, "description": "Partner organization ID" }
+          },
+          "example_uses": [
+            "Show me all contacts for partner 123",
+            "List UNICEF contacts",
+            "Get contact list for this organization"
+          ],
+          "when_to_use": "Use this when the user asks for contacts belonging to a specific partner or organization."
+        },
+        {
+          "name": "GetContactPermissions",
+          "url": "/api/contact/{id}/permissions",
+          "method": "GET",
+          "description": "Retrieves the current user's permissions for a specific contact (read, update, delete).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Contact ID" }
+          },
+          "example_uses": [
+            "Check my permissions for contact 123",
+            "What can I do with this contact?"
+          ],
+          "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements."
+        },
+        {
+          "name": "UploadContactProfilePicture",
+          "url": "/api/contact/{id}/profile-picture",
+          "method": "POST",
+          "description": "Uploads and associates a profile picture with a contact (max 1MB, JPEG/PNG/WEBP only).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Contact ID" },
+            "file": { "type": "file", "required": true, "description": "Image file (max 1MB)" }
+          },
+          "example_uses": [
+            "Upload a profile picture for contact 123",
+            "Add photo to contact record"
+          ],
+          "when_to_use": "Use this when the user wants to add or update a contact's profile picture."
+        }
+      ]
+    },
+    {
+      "entity": "Interaction",
+      "description": "Manages interactions and communications between users, contacts, and partners, including meetings, calls, emails, and other engagement activities with comprehensive relationship tracking.",
+      "synonyms": ["communication", "meeting", "call", "email", "engagement", "activity", "conversation", "correspondence"],
+      "mandatoryFields": ["type", "date", "subject", "contactId"],
+      "endpoints": [
+        {
+          "name": "GetInteractions",
+          "url": "/api/interactions",
+          "method": "GET",
+          "description": "Retrieves a list of interactions with advanced filtering, pagination, search capabilities, and access control.",
+          "parameters": {
+            "pageIndex": { "type": "integer", "required": false, "description": "Page number (1-based)" },
+            "pageSize": { "type": "integer", "required": false, "description": "Number of items per page" },
+            "searchText": { "type": "string", "required": false, "description": "Text to search across interaction fields" },
+            "advancedSearch": { "type": "boolean", "required": false, "description": "Enable advanced search mode" },
+            "searchCriteria": { "type": "string", "required": false, "description": "JSON string containing advanced search filters" },
+            "orderBy": { "type": "string", "required": false, "description": "Field to order results by (type, date, description, contactid)" },
+            "ascending": { "type": "boolean", "required": false, "description": "Sort direction (true for ascending)" },
+            "contactId": { "type": "integer", "required": false, "description": "Filter by specific contact ID" },
+            "contactName": { "type": "string", "required": false, "description": "Filter by contact name" },
+            "partnerId": { "type": "integer", "required": false, "description": "Filter by specific partner ID" },
+            "type": { "type": "string", "required": false, "description": "Filter by interaction type (Meeting, Call, Email, etc.)" },
+            "fromDate": { "type": "string", "required": false, "description": "Filter interactions from this date (ISO format)" },
+            "toDate": { "type": "string", "required": false, "description": "Filter interactions until this date (ISO format)" },
+            "date": { "type": "string", "required": false, "description": "Filter by specific date (ISO format)" },
+            "description": { "type": "string", "required": false, "description": "Filter by description content" },
+            "subject": { "type": "string", "required": false, "description": "Filter by subject/title" },
+            "myOfficeOnly": { "type": "boolean", "required": false, "description": "Filter to current user's office only" }
+          },
+          "example_uses": [
+            "Show me all interactions",
+            "List meetings from last week",
+            "Find interactions with UNICEF contacts",
+            "Show email interactions with partner 123",
+            "Search for interactions about climate change",
+            "List my office's interactions only"
+          ],
+          "when_to_use": "Use this when the user asks to search, list, filter, or browse interactions and communications."
+        },
+        {
+          "name": "GetSimilarityResults",
+          "url": "/get-similarity-result",
+          "method": "GET",
+          "description": "Performs AI-powered semantic/similarity search across interaction data using embeddings and natural language processing with RBAC filtering.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Must be 'Interaction' for interaction searches" },
+            "searchText": { "type": "string", "required": true, "description": "Natural language text to search for semantically" },
+            "vectorEmbedding": { "type": "string", "required": false, "description": "Optional vector embedding for semantic search" },
+            "similarityThreshold": { "type": "float", "required": false, "description": "Threshold for similarity search (default: 0.3)" },
+            "embeddingThreshold": { "type": "float", "required": false, "description": "Threshold for embedding search (default: 0.7)" },
+            "whereCondition": { "type": "string", "required": false, "description": "Optional additional SQL WHERE condition" }
+          },
+          "example_uses": [
+            "Find interactions similar to 'project planning meetings'",
+            "Search for interactions like 'budget discussions'",
+            "Find interactions about 'technical assistance'",
+            "Search for 'follow-up calls' across all interactions",
+            "Find interactions similar to 'partnership agreements'"
+          ],
+          "when_to_use": "Use this for AI-powered semantic search when the user asks for conceptual or meaning-based searches across interaction content and metadata."
+        },
+        {
+          "name": "CreateInteraction",
+          "url": "/api/interactions",
+          "method": "POST",
+          "description": "Creates a new interaction with comprehensive details including participants, communication channels, and relationship tracking.",
+          "parameters": {
+            "type": { "type": "string", "required": true, "description": "Interaction type (Meeting, Call, Email, etc.)" },
+            "date": { "type": "string", "required": true, "description": "Interaction date and time (ISO format), example: 2024-07-24T15:30:00.000Z" },
+            "subject": { "type": "string", "required": true, "description": "Interaction subject/title" },
+            "description": { "type": "string", "required": false, "description": "Detailed description of the interaction" },
+            "contactId": { "type": "integer", "required": true, "description": "Primary contact ID (for backward compatibility)" },
+            "contactIds": { "type": "array", "required": false, "description": "Array of contact IDs involved in the interaction" },
+            "partnerIds": { "type": "array", "required": false, "description": "Array of partner organization IDs involved" },
+            "userIds": { "type": "array", "required": false, "description": "Array of internal user IDs involved" },
+            "emailAddresses": { "type": "array", "required": false, "description": "Email addresses involved in the interaction" },
+            "phoneNumbers": { "type": "array", "required": false, "description": "Phone numbers involved in the interaction" },
+            "location": { "type": "string", "required": false, "description": "Meeting location or platform (for meetings/calls)" },
+            "orgUnitId": { "type": "integer", "required": false, "description": "Organizational unit responsible for the interaction" }
+          },
+          "example_uses": [
+            "Create a meeting with UNICEF contacts about project planning",
+            "Log a phone call with partner 123 regarding budget",
+            "Record an email interaction about technical assistance",
+            "Add a follow-up meeting with multiple stakeholders"
+          ],
+          "when_to_use": "Use this when the user asks to create, log, record, or add a new interaction or communication activity."
+        },
+        {
+          "name": "GetInteractionById",
+          "url": "/api/interactions/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific interaction by ID with complete details including all participants, relationships, and communication data.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Interaction ID" }
+          },
+          "example_uses": [
+            "Show me details for interaction ID 123",
+            "Get full information about meeting 456",
+            "Display interaction record 789"
+          ],
+          "when_to_use": "Use this when the user asks for specific interaction details by ID or when you need complete interaction information."
+        },
+        {
+          "name": "UpdateInteraction",
+          "url": "/api/interactions",
+          "method": "PUT",
+          "description": "Updates an existing interaction's information including participants, content, and metadata.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Interaction ID to update" },
+            "type": { "type": "string", "required": false, "description": "Updated interaction type" },
+            "date": { "type": "string", "required": false, "description": "Updated interaction date/time" },
+            "subject": { "type": "string", "required": false, "description": "Updated subject/title" },
+            "description": { "type": "string", "required": false, "description": "Updated description" },
+            "contactIds": { "type": "array", "required": false, "description": "Updated array of contact IDs" },
+            "partnerIds": { "type": "array", "required": false, "description": "Updated array of partner IDs" },
+            "userIds": { "type": "array", "required": false, "description": "Updated array of user IDs" },
+            "location": { "type": "string", "required": false, "description": "Updated location" }
+          },
+          "example_uses": [
+            "Update interaction 123's description with meeting outcomes",
+            "Change interaction 456's date and add more participants",
+            "Update the subject line for email interaction 789"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or change interaction information."
+        },
+        {
+          "name": "DeleteInteraction",
+          "url": "/api/interactions/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes an interaction from the system (marks as deleted rather than permanent removal).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Interaction ID to delete" }
+          },
+          "example_uses": [
+            "Delete interaction ID 123",
+            "Remove meeting record 456 from the system"
+          ],
+          "when_to_use": "Use this when the user asks to delete, remove, or eliminate an interaction record."
+        },
+        {
+          "name": "GetInteractionPermissions",
+          "url": "/api/interactions/{id}/permissions",
+          "method": "GET",
+          "description": "Retrieves the current user's permissions for a specific interaction (read, update, delete).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Interaction ID" }
+          },
+          "example_uses": [
+            "Check my permissions for interaction 123",
+            "What can I do with this meeting record?",
+            "Verify access rights for interaction 456"
+          ],
+          "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for interactions."
+        }
+      ]
+    },
+    {
+      "entity": "AiPrompt",
+      "description": "Manages AI prompts and templates for various AI-powered features including prompt configuration, testing, and management with support for different models, projects, and locations.",
+      "synonyms": ["ai template", "prompt template", "ai instruction", "ai configuration", "prompt config"],
+      "endpoints": [
+        {
+          "name": "GetAiPrompts",
+          "url": "/api/ai-prompt-management/list",
+          "method": "POST",
+          "description": "Retrieves a list of AI prompts with advanced filtering, pagination, and search capabilities.",
+          "parameters": {
+            "pageIndex": { "type": "integer", "required": false, "description": "Page number (1-based)" },
+            "pageSize": { "type": "integer", "required": false, "description": "Number of items per page" },
+            "searchText": { "type": "string", "required": false, "description": "Text to search across prompt fields" },
+            "orderBy": { "type": "string", "required": false, "description": "Field to order results by" },
+            "ascending": { "type": "boolean", "required": false, "description": "Sort direction (true for ascending)" }
+          },
+          "example_uses": [
+            "Show me all AI prompts",
+            "List available prompt templates",
+            "Search for prompts containing 'partner analysis'",
+            "Find prompts by model type"
+          ],
+          "when_to_use": "Use this when the user asks to view, list, browse, or search AI prompts or templates."
+        },
+        {
+          "name": "GetAiPromptById",
+          "url": "/api/ai-prompt-management/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific AI prompt by ID with complete configuration details.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "AI Prompt ID" }
+          },
+          "example_uses": [
+            "Show me details for AI prompt ID 123",
+            "Get configuration for prompt 456",
+            "Display prompt template 789"
+          ],
+          "when_to_use": "Use this when the user asks for specific AI prompt details by ID or when you need complete prompt configuration."
+        },
+        {
+          "name": "CreateAiPrompt",
+          "url": "/api/ai-prompt-management",
+          "method": "POST",
+          "description": "Creates a new AI prompt template with comprehensive configuration options.",
+          "parameters": {
+            "type": { "type": "string", "required": true, "description": "Prompt type/category (e.g., 'partner-analysis', 'contact-summary')" },
+            "prompt": { "type": "string", "required": true, "description": "The actual prompt text/template" },
+            "model": { "type": "string", "required": true, "description": "AI model to use (e.g., 'gemini-pro', 'gemini-flash')" },
+            "project": { "type": "string", "required": true, "description": "Google Cloud project ID" },
+            "location": { "type": "string", "required": true, "description": "Google Cloud location (e.g., 'us-central1')" },
+            "name": { "type": "string", "required": false, "description": "Prompt name/title" },
+            "promptFunction": { "type": "string", "required": false, "description": "Function name to call for entity data" },
+            "generationConfig": { "type": "string", "required": false, "description": "JSON configuration for AI generation parameters" },
+            "contentConfig": { "type": "string", "required": false, "description": "JSON configuration for content filtering" },
+            "toolsConfig": { "type": "string", "required": false, "description": "JSON configuration for AI tools (e.g., Google Search)" },
+            "safetySettings": { "type": "string", "required": false, "description": "JSON configuration for safety filters" }
+          },
+          "example_uses": [
+            "Create a new AI prompt for partner analysis",
+            "Add a prompt template for contact summaries",
+            "Set up a prompt for interaction analysis",
+            "Create a document processing prompt"
+          ],
+          "when_to_use": "Use this when the user asks to create, add, or set up new AI prompts or templates."
+        },
+        {
+          "name": "UpdateAiPrompt",
+          "url": "/api/ai-prompt-management/{id}",
+          "method": "PUT",
+          "description": "Updates an existing AI prompt's configuration and content.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "AI Prompt ID to update" },
+            "type": { "type": "string", "required": false, "description": "Updated prompt type" },
+            "prompt": { "type": "string", "required": false, "description": "Updated prompt text" },
+            "model": { "type": "string", "required": false, "description": "Updated AI model" },
+            "project": { "type": "string", "required": false, "description": "Updated project ID" },
+            "location": { "type": "string", "required": false, "description": "Updated location" },
+            "generationConfig": { "type": "string", "required": false, "description": "Updated generation configuration" }
+          },
+          "example_uses": [
+            "Update prompt 123's text to include new instructions",
+            "Change prompt 456's model to gemini-flash",
+            "Modify the temperature settings for prompt 789"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or change AI prompt configuration."
+        },
+        {
+          "name": "DeleteAiPrompt",
+          "url": "/api/ai-prompt-management/{id}",
+          "method": "DELETE",
+          "description": "Deletes an AI prompt from the system.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "AI Prompt ID to delete" }
+          },
+          "example_uses": [
+            "Delete AI prompt ID 123",
+            "Remove prompt template 456 from the system"
+          ],
+          "when_to_use": "Use this when the user asks to delete, remove, or eliminate an AI prompt."
+        },
+        {
+          "name": "GetPromptsByType",
+          "url": "/api/ai-prompt-management/type/{type}",
+          "method": "GET",
+          "description": "Retrieves all AI prompts of a specific type/category.",
+          "parameters": {
+            "type": { "type": "string", "required": true, "description": "Prompt type to filter by" }
+          },
+          "example_uses": [
+            "Show me all partner analysis prompts",
+            "List contact summary prompts",
+            "Find document processing prompts"
+          ],
+          "when_to_use": "Use this when the user asks for prompts of a specific type or category."
+        },
+        {
+          "name": "GetPromptTypes",
+          "url": "/api/ai-prompt-management/types",
+          "method": "GET",
+          "description": "Retrieves all unique prompt types available in the system for filtering and selection.",
+          "parameters": {},
+          "example_uses": [
+            "What prompt types are available?",
+            "Show me all prompt categories",
+            "List available prompt types"
+          ],
+          "when_to_use": "Use this when the user needs to see available prompt types for filtering or selection."
+        },
+        {
+          "name": "GetModels",
+          "url": "/api/ai-prompt-management/models",
+          "method": "GET",
+          "description": "Retrieves all unique AI models used in prompts for filtering and selection.",
+          "parameters": {},
+          "example_uses": [
+            "What AI models are available?",
+            "Show me all available models",
+            "List supported AI models"
+          ],
+          "when_to_use": "Use this when the user needs to see available AI models for configuration or filtering."
+        },
+        {
+          "name": "GetProjects",
+          "url": "/api/ai-prompt-management/projects",
+          "method": "GET",
+          "description": "Retrieves all unique Google Cloud projects used in prompts for filtering and selection.",
+          "parameters": {},
+          "example_uses": [
+            "What projects are configured?",
+            "Show me all Google Cloud projects",
+            "List available projects"
+          ],
+          "when_to_use": "Use this when the user needs to see available projects for configuration or filtering."
+        },
+        {
+          "name": "GetLocations",
+          "url": "/api/ai-prompt-management/locations",
+          "method": "GET",
+          "description": "Retrieves all unique Google Cloud locations used in prompts for filtering and selection.",
+          "parameters": {},
+          "example_uses": [
+            "What locations are configured?",
+            "Show me all available regions",
+            "List Google Cloud locations"
+          ],
+          "when_to_use": "Use this when the user needs to see available locations for configuration or filtering."
+        },
+        {
+          "name": "TestPrompt",
+          "url": "/api/ai-prompt-management/test",
+          "method": "POST",
+          "description": "Tests an AI prompt with either real entity data or custom test data to validate prompt effectiveness.",
+          "parameters": {
+            "type": { "type": "string", "required": true, "description": "Prompt type to test" },
+            "id": { "type": "integer", "required": false, "description": "Entity ID to use for testing (uses real data)" },
+            "testData": { "type": "string", "required": false, "description": "Custom test data (JSON string)" },
+            "prompt": { "type": "string", "required": false, "description": "Override prompt text for testing" },
+            "model": { "type": "string", "required": false, "description": "Override AI model for testing" },
+            "project": { "type": "string", "required": false, "description": "Override project for testing" },
+            "location": { "type": "string", "required": false, "description": "Override location for testing" },
+            "temperature": { "type": "number", "required": false, "description": "Override temperature setting (0.0-1.0)" },
+            "topP": { "type": "number", "required": false, "description": "Override top-p setting (0.0-1.0)" },
+            "maxOutputTokens": { "type": "integer", "required": false, "description": "Override max output tokens" },
+            "googleSearch": { "type": "boolean", "required": false, "description": "Enable/disable Google Search tool" },
+            "safetySettings": { "type": "string", "required": false, "description": "Override safety settings" }
+          },
+          "example_uses": [
+            "Test the partner analysis prompt with partner ID 123",
+            "Test contact summary prompt with custom data",
+            "Validate prompt with different temperature settings",
+            "Test prompt with Google Search enabled"
+          ],
+          "when_to_use": "Use this when the user wants to test, validate, or experiment with AI prompts before deploying them."
+        }
+      ]
+    },
+    {
+      "entity": "Document",
+      "description": "Manages documents and files associated with partners, contacts, interactions, and other entities, including document relationships, types, and metadata.",
+      "synonyms": ["file", "attachment", "document", "upload", "media"],
+      "endpoints": [
+        {
+          "name": "GetDocumentsByEntity",
+          "url": "/api/document/{entityName}/{entityId}",
+          "method": "GET",
+          "description": "Retrieves all documents associated with a specific entity (partner, contact, interaction, etc.) with document type information.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Entity type name (e.g., 'Partner', 'Contact', 'Interaction')" },
+            "entityId": { "type": "integer", "required": true, "description": "ID of the entity to get documents for" }
+          },
+          "example_uses": [
+            "Show me all documents for partner 123",
+            "List files attached to contact 456",
+            "Get documents for interaction 789",
+            "Find all attachments for this partner"
+          ],
+          "when_to_use": "Use this when the user asks for documents, files, or attachments related to a specific partner, contact, interaction, or other entity."
+        },
+        {
+          "name": "GetDocumentById",
+          "url": "/api/document/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific document by ID with complete details including document type and metadata.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Document ID" }
+          },
+          "example_uses": [
+            "Show me details for document ID 123",
+            "Get document information for file 456",
+            "Display document record 789"
+          ],
+          "when_to_use": "Use this when the user asks for specific document details by ID or when you need complete document information."
+        },
+        {
+          "name": "UpdateDocument",
+          "url": "/api/document",
+          "method": "PUT",
+          "description": "Updates an existing document's metadata, name, description, or other properties.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Document ID to update" },
+            "name": { "type": "string", "required": false, "description": "Updated document name" },
+            "description": { "type": "string", "required": false, "description": "Updated document description" },
+            "documentTypeId": { "type": "integer", "required": false, "description": "Updated document type ID" },
+            "tags": { "type": "string", "required": false, "description": "Updated document tags" }
+          },
+          "example_uses": [
+            "Update document 123's name to 'Partnership Agreement'",
+            "Change document 456's description",
+            "Update the document type for file 789",
+            "Add tags to document 321"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or change document information or metadata."
+        },
+        {
+          "name": "GetDocumentTypes",
+          "url": "/api/document-type",
+          "method": "GET",
+          "description": "Retrieves all available document types in the system for categorization and filtering.",
+          "parameters": {},
+          "example_uses": [
+            "What document types are available?",
+            "Show me document categories",
+            "List all file types I can use",
+            "What document classifications exist?"
+          ],
+          "when_to_use": "Use this when the user asks about available document types, categories, or classifications for organizing files."
+        }
+      ]
+    },
+    {
+      "entity": "Gemini",
+      "description": "Integrates with Google's Gemini AI for advanced AI capabilities including chat functionality, file analysis, data processing, similarity search, and session management.",
+      "synonyms": ["ai chat", "gemini ai", "ai assistant", "similarity search", "ai service", "intelligent assistant"],
+      "endpoints": [
+        {
+          "name": "CreateAiSession",
+          "url": "/api/ai-assistant/create-session",
+          "method": "POST",
+          "description": "Creates a new AI chat session for user interaction tracking and context management.",
+          "parameters": {},
+          "example_uses": [
+            "Start a new AI conversation",
+            "Begin a chat session with the AI assistant",
+            "Initialize AI interaction"
+          ],
+          "when_to_use": "Use this when the user wants to start a new conversation or interaction with the AI assistant."
+        },
+        {
+          "name": "GetUserSessions",
+          "url": "/api/ai-assistant/get-user-sessions",
+          "method": "POST",
+          "description": "Retrieves all AI chat sessions for the current user with session metadata.",
+          "parameters": {},
+          "example_uses": [
+            "Show me my AI chat history",
+            "List my previous AI conversations",
+            "Get my AI session history"
+          ],
+          "when_to_use": "Use this when the user wants to see their AI chat history or previous sessions."
+        },
+        {
+          "name": "GetSession",
+          "url": "/api/ai-assistant/get-session",
+          "method": "POST",
+          "description": "Retrieves details and chat history for a specific AI session.",
+          "parameters": {
+            "sessionId": { "type": "string", "required": true, "description": "AI session ID (GUID)" }
+          },
+          "example_uses": [
+            "Show me the conversation from session ABC123",
+            "Get chat history for this session",
+            "Display AI interaction details"
+          ],
+          "when_to_use": "Use this when the user wants to view a specific AI conversation or session details."
+        },
+        {
+          "name": "EndSession",
+          "url": "/api/ai-assistant/end-session",
+          "method": "POST",
+          "description": "Ends an active AI chat session and saves the conversation state.",
+          "parameters": {
+            "sessionId": { "type": "string", "required": true, "description": "AI session ID to end" }
+          },
+          "example_uses": [
+            "End this AI conversation",
+            "Close the current chat session",
+            "Finish AI interaction"
+          ],
+          "when_to_use": "Use this when the user wants to end their current AI conversation or close a session."
+        },
+        {
+          "name": "ChatWithGemini",
+          "url": "/api/ai-assistant/chat",
+          "method": "POST",
+          "description": "Sends a message to Gemini AI with optional file attachment for analysis and conversation.",
+          "parameters": {
+            "sessionId": { "type": "string", "required": true, "description": "Active session ID for conversation context" },
+            "message": { "type": "string", "required": true, "description": "Message or question to send to AI" },
+            "file": { "type": "file", "required": false, "description": "Optional file attachment for AI analysis" }
+          },
+          "example_uses": [
+            "Ask Gemini to analyze partner data",
+            "Chat with AI about contact insights",
+            "Upload a document and ask AI to summarize it",
+            "Get AI recommendations for partnership strategy"
+          ],
+          "when_to_use": "Use this when the user wants to chat with AI, ask questions, or get AI analysis of data or files."
+        },
+        {
+          "name": "ScanFile",
+          "url": "/api/scan-data",
+          "method": "POST",
+          "description": "Scans and analyzes uploaded files using Gemini AI for content extraction and insights.",
+          "parameters": {
+            "file": { "type": "file", "required": true, "description": "File to scan and analyze" }
+          },
+          "example_uses": [
+            "Scan this PDF for key information",
+            "Analyze the contents of this document",
+            "Extract data from this file using AI"
+          ],
+          "when_to_use": "Use this when the user wants to analyze file contents or extract information from documents using AI."
+        },
+        {
+          "name": "ProcessDataSummary",
+          "url": "/api/process-data",
+          "method": "POST",
+          "description": "Processes and generates AI-powered summaries for specific entity data (partners, contacts, interactions).",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Entity ID to process and summarize" },
+            "entityType": { "type": "string", "required": false, "description": "Type of entity to process" }
+          },
+          "example_uses": [
+            "Generate a summary for partner 123",
+            "Create an AI analysis of contact 456",
+            "Summarize interaction history for this entity"
+          ],
+          "when_to_use": "Use this when the user wants AI-generated summaries or analysis of specific entities like partners, contacts, or interactions."
+        },
+        {
+          "name": "UpdateAiAccessibility",
+          "url": "/api/ai-assistant/accessibility",
+          "method": "POST",
+          "description": "Updates AI assistant accessibility settings and preferences for the user session.",
+          "parameters": {
+            "sessionId": { "type": "string", "required": true, "description": "Session ID to update accessibility for" },
+            "settings": { "type": "object", "required": true, "description": "Accessibility configuration settings" }
+          },
+          "example_uses": [
+            "Enable screen reader mode for AI chat",
+            "Update AI response formatting preferences",
+            "Configure accessibility options"
+          ],
+          "when_to_use": "Use this when the user needs to configure accessibility settings for AI interactions."
+        },
+        {
+          "name": "GenerateEmbeddings",
+          "url": "/api/generate-embeddings",
+          "method": "GET",
+          "description": "Generates and stores vector embeddings for entities to enable semantic search capabilities.",
+          "parameters": {
+            "entityName": { "type": "string", "required": false, "description": "Specific entity type to generate embeddings for (optional)" }
+          },
+          "example_uses": [
+            "Generate embeddings for all entities",
+            "Create vector embeddings for partners",
+            "Update similarity search data"
+          ],
+          "when_to_use": "Use this for system administration to generate or update vector embeddings for semantic search functionality."
+        },
+        {
+          "name": "GetSimilarityResult",
+          "url": "/get-similarity-result",
+          "method": "GET",
+          "description": "Performs AI-powered similarity search to find related records across partners, contacts, interactions, and other entities using semantic matching and vector embeddings.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Entity type to search (Partner, Contact, Interaction, etc.)" },
+            "searchText": { "type": "string", "required": true, "description": "Search query or description to find similar records" },
+            "vectorEmbedding": { "type": "string", "required": false, "description": "Optional vector embedding for advanced similarity matching" },
+            "similarityThreshold": { "type": "float", "required": false, "default": 0.3, "description": "Similarity threshold (0.0-1.0)" },
+            "embeddingThreshold": { "type": "float", "required": false, "default": 0.7, "description": "Embedding threshold (0.0-1.0)" },
+            "whereCondition": { "type": "string", "required": false, "description": "Additional SQL WHERE condition for filtering" }
+          },
+          "example_uses": [
+            "Find partners similar to renewable energy companies",
+            "Show me opportunities like sustainable infrastructure projects",
+            "Find contacts with backgrounds similar to project managers",
+            "Search for partners with expertise in technology consulting",
+            "Find opportunities similar to the Solar Farm Project"
+          ],
+          "when_to_use": "Use this when the user wants to find similar or related records based on semantic similarity, fuzzy matching, or when looking for records with similar characteristics, expertise, or descriptions."
+        },
+        {
+          "name": "BulkUpload",
+          "url": "/api/import/bulk-upload",
+          "method": "POST",
+          "description": "Performs AI-assisted bulk upload and processing of data with intelligent parsing and validation.",
+          "parameters": {
+            "type": { "type": "string", "required": true, "description": "Type of data being uploaded (Partner, Contact, etc.)" },
+            "data": { "type": "object", "required": true, "description": "Bulk data to process and upload" }
+          },
+          "example_uses": [
+            "Bulk import partner data from spreadsheet",
+            "Upload multiple contacts with AI validation",
+            "Import large dataset with AI assistance"
+          ],
+          "when_to_use": "Use this when the user wants to upload large amounts of data with AI assistance for validation and processing."
+        },
+        {
+          "name": "AnalyseFile",
+          "url": "/api/import/analyse-file",
+          "method": "POST",
+          "description": "Analyzes uploaded files to extract structured data and provide import recommendations using AI.",
+          "parameters": {
+            "fileUrl": { "type": "string", "required": false, "description": "URL of file to analyze" },
+            "fileData": { "type": "string", "required": false, "description": "Base64 encoded file data" },
+            "analysisType": { "type": "string", "required": false, "description": "Type of analysis to perform" }
+          },
+          "example_uses": [
+            "Analyze this CSV file for import mapping",
+            "Extract partner data from this document",
+            "Get AI recommendations for data structure"
+          ],
+          "when_to_use": "Use this when the user wants to analyze files before import or extract structured data from documents using AI."
+        }
+      ]
+    },
+    {
+      "entity": "Configuration",
+      "description": "Manages entity configuration settings including field definitions, list view configurations, and dynamic entity management for customizing how entities like Partners, Contacts, and Interactions are structured and displayed.",
+      "synonyms": ["settings", "config", "system settings", "entity configuration", "field configuration", "entity management"],
+      "endpoints": [
+        {
+          "name": "GetEntities",
+          "url": "/api/entities",
+          "method": "GET",
+          "description": "Retrieves all available entities in the system that can be configured.",
+          "parameters": {},
+          "example_uses": [
+            "Show me all configurable entities",
+            "What entities can I manage?",
+            "List available entity types"
+          ],
+          "when_to_use": "Use this when the user wants to see what entities are available for configuration."
+        },
+        {
+          "name": "GetEntityConfiguration",
+          "url": "/api/entity-configuration/{entityName}",
+          "method": "GET",
+          "description": "Retrieves configuration details for a specific entity including field definitions and display settings.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Name of the entity to get configuration for (e.g., 'Partner', 'Contact')" }
+          },
+          "example_uses": [
+            "Show me Partner entity configuration",
+            "Get Contact field definitions",
+            "Display Interaction entity settings"
+          ],
+          "when_to_use": "Use this when the user wants to see how a specific entity is configured, including its fields and display settings."
+        },
+        {
+          "name": "GetAllEntityConfigurations",
+          "url": "/api/entity-configuration",
+          "method": "GET",
+          "description": "Retrieves all entity configurations in the system for administrative purposes.",
+          "parameters": {},
+          "example_uses": [
+            "Show me all entity configurations",
+            "List all configured entities",
+            "Display system entity settings"
+          ],
+          "when_to_use": "Use this when the user wants to see all entity configurations or perform administrative tasks."
+        },
+        {
+          "name": "SaveEntityConfiguration",
+          "url": "/api/entity-configuration/{entityName}/save",
+          "method": "POST",
+          "description": "Saves complete entity configuration including description and all field configurations.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Name of the entity to save configuration for" },
+            "description": { "type": "string", "required": false, "description": "Entity description" },
+            "fields": { "type": "array", "required": true, "description": "Array of field configuration objects" }
+          },
+          "example_uses": [
+            "Save Partner entity configuration with new fields",
+            "Update Contact entity field settings",
+            "Configure Interaction entity display options"
+          ],
+          "when_to_use": "Use this when the user wants to save or update entity configuration settings."
+        },
+        {
+          "name": "CreateEntityConfiguration",
+          "url": "/api/entity-configuration/create",
+          "method": "POST",
+          "description": "Creates a new entity configuration for a custom entity type.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Name of the new entity" },
+            "tableName": { "type": "string", "required": true, "description": "Database table name" },
+            "description": { "type": "string", "required": false, "description": "Entity description" },
+            "isActive": { "type": "boolean", "required": false, "description": "Whether the entity is active" },
+            "enableChangeLog": { "type": "boolean", "required": false, "description": "Enable change tracking" }
+          },
+          "example_uses": [
+            "Create a new Project entity configuration",
+            "Add a custom Document Type entity",
+            "Set up a new Location entity"
+          ],
+          "when_to_use": "Use this when the user wants to create configuration for a new custom entity type."
+        },
+        {
+          "name": "UpdateEntityConfiguration",
+          "url": "/api/entity-configuration/{id}",
+          "method": "PUT",
+          "description": "Updates an existing entity configuration's basic settings.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Entity configuration ID" },
+            "entityName": { "type": "string", "required": true, "description": "Updated entity name" },
+            "tableName": { "type": "string", "required": true, "description": "Updated table name" },
+            "description": { "type": "string", "required": false, "description": "Updated description" },
+            "isActive": { "type": "boolean", "required": false, "description": "Updated active status" },
+            "enableChangeLog": { "type": "boolean", "required": false, "description": "Updated change log setting" }
+          },
+          "example_uses": [
+            "Update Partner entity description",
+            "Change Contact entity settings",
+            "Modify entity configuration properties"
+          ],
+          "when_to_use": "Use this when the user wants to update basic entity configuration settings."
+        },
+        {
+          "name": "DeleteEntityConfiguration",
+          "url": "/api/entity-configuration/{id}",
+          "method": "DELETE",
+          "description": "Deletes an entity configuration and all its associated field configurations.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Entity configuration ID to delete" }
+          },
+          "example_uses": [
+            "Delete custom entity configuration",
+            "Remove unused entity type",
+            "Clean up obsolete configurations"
+          ],
+          "when_to_use": "Use this when the user wants to remove an entity configuration that's no longer needed."
+        },
+        {
+          "name": "GetEntityFields",
+          "url": "/api/entity-configuration/{entityManagerId}/fields",
+          "method": "GET",
+          "description": "Retrieves all field configurations for a specific entity.",
+          "parameters": {
+            "entityManagerId": { "type": "integer", "required": true, "description": "Entity configuration ID" }
+          },
+          "example_uses": [
+            "Show me all Partner fields",
+            "List Contact field configurations",
+            "Display entity field settings"
+          ],
+          "when_to_use": "Use this when the user wants to see field configurations for a specific entity."
+        },
+        {
+          "name": "CreateEntityField",
+          "url": "/api/entity-field/create",
+          "method": "POST",
+          "description": "Creates a new field configuration for an entity.",
+          "parameters": {
+            "entityManagerId": { "type": "integer", "required": true, "description": "Parent entity configuration ID" },
+            "fieldName": { "type": "string", "required": true, "description": "Field name" },
+            "dataType": { "type": "string", "required": true, "description": "Field data type (string, int, datetime, etc.)" },
+            "description": { "type": "string", "required": false, "description": "Field description" },
+            "isRequired": { "type": "boolean", "required": false, "description": "Whether field is required" },
+            "isActive": { "type": "boolean", "required": false, "description": "Whether field is active" },
+            "showInListView": { "type": "boolean", "required": false, "description": "Show in list views" },
+            "listViewLabel": { "type": "string", "required": false, "description": "Label for list view" },
+            "displayOrder": { "type": "integer", "required": false, "description": "Display order" }
+          },
+          "example_uses": [
+            "Add a new field to Partner entity",
+            "Create a custom Contact field",
+            "Add field to entity configuration"
+          ],
+          "when_to_use": "Use this when the user wants to add a new field to an entity configuration."
+        },
+        {
+          "name": "UpdateEntityField",
+          "url": "/api/entity-field/{id}",
+          "method": "PUT",
+          "description": "Updates an existing entity field configuration.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Field configuration ID" },
+            "fieldName": { "type": "string", "required": true, "description": "Updated field name" },
+            "dataType": { "type": "string", "required": true, "description": "Updated data type" },
+            "description": { "type": "string", "required": false, "description": "Updated description" },
+            "isRequired": { "type": "boolean", "required": false, "description": "Updated required status" },
+            "showInListView": { "type": "boolean", "required": false, "description": "Updated list view visibility" }
+          },
+          "example_uses": [
+            "Update Partner field configuration",
+            "Modify Contact field settings",
+            "Change field display properties"
+          ],
+          "when_to_use": "Use this when the user wants to modify an existing field configuration."
+        },
+        {
+          "name": "DeleteEntityField",
+          "url": "/api/entity-field/{id}",
+          "method": "DELETE",
+          "description": "Deletes an entity field configuration.",
+          "parameters": {
+            "id": { "type": "integer", "required": true, "description": "Field configuration ID to delete" }
+          },
+          "example_uses": [
+            "Remove field from entity",
+            "Delete unused field configuration",
+            "Clean up field definitions"
+          ],
+          "when_to_use": "Use this when the user wants to remove a field from an entity configuration."
+        },
+        {
+          "name": "GetRelatedEntityFields",
+          "url": "/api/entity-configuration/related-fields/{entityType}",
+          "method": "GET",
+          "description": "Retrieves available fields for a related entity type for relationship field configuration.",
+          "parameters": {
+            "entityType": { "type": "string", "required": true, "description": "Related entity type name" }
+          },
+          "example_uses": [
+            "Show me Partner fields for relationship",
+            "Get Contact fields for dropdown",
+            "List available relationship fields"
+          ],
+          "when_to_use": "Use this when configuring relationship fields and need to see available fields from related entities."
+        },
+        {
+          "name": "GetFieldOptionsForDataType",
+          "url": "/api/entity-configuration/field-options/{dataType}/{contextEntityName}",
+          "method": "GET",
+          "description": "Retrieves field options for a specific data type in the context of an entity.",
+          "parameters": {
+            "dataType": { "type": "string", "required": true, "description": "Data type to get options for" },
+            "contextEntityName": { "type": "string", "required": true, "description": "Context entity name" }
+          },
+          "example_uses": [
+            "Get Partner field options for Contact entity",
+            "Show relationship field choices",
+            "List data type field options"
+          ],
+          "when_to_use": "Use this when configuring fields and need to see available options based on data type and context."
+        },
+        {
+          "name": "GetEntityListViewConfiguration",
+          "url": "/api/entity-configuration/{entityName}/list-view",
+          "method": "GET",
+          "description": "Retrieves list view configuration for an entity including column definitions and display settings.",
+          "parameters": {
+            "entityName": { "type": "string", "required": true, "description": "Entity name to get list view config for" }
+          },
+          "example_uses": [
+            "Get Partner list view configuration",
+            "Show Contact table column settings",
+            "Display entity list view setup"
+          ],
+          "when_to_use": "Use this when the user wants to see how an entity's list view is configured or needs column definitions for dynamic tables."
+        }
+      ]
+    },
+    {
+      "entity": "UserManagement",
+      "description": "Manages users, roles, and permissions in the system.",
+      "synonyms": ["user", "role", "permission", "access"],
+      "endpoints": [
+        {
+          "name": "GetUsers",
+          "url": "/api/user",
+          "method": "GET",
+          "description": "Gets a list of users with filtering capabilities.",
+          "parameters": {
+            "pageIndex": { "type": "integer", "required": false },
+            "searchText": { "type": "string", "required": false }
+          },
+          "example_uses": [
+            "Show me all users",
+            "List users named John"
+          ],
+          "when_to_use": "Use this when the user asks to view or search for users."
+        },
+        {
+          "name": "GetRoles",
+          "url": "/api/role",
+          "method": "GET",
+          "description": "Gets available roles in the system.",
+          "parameters": {},
+          "example_uses": [
+            "What roles are available?",
+            "Show me user roles"
+          ],
+          "when_to_use": "Use this when the user asks about available roles or permissions."
+        }
+      ]
+    },
+    {
+      "entity": "Notification",
+      "description": "Manages system notifications and alerts for users.",
+      "synonyms": ["alert", "message", "notification"],
+      "endpoints": [
+        {
+          "name": "GetNotifications",
+          "url": "/api/notifications",
+          "method": "GET",
+          "description": "Gets user notifications with filtering options.",
+          "parameters": {
+            "unreadOnly": { "type": "boolean", "required": false }
+          },
+          "example_uses": [
+            "Show me my notifications",
+            "List unread notifications"
+          ],
+          "when_to_use": "Use this when the user asks for their notifications or alerts."
+        },
+        {
+          "name": "MarkNotificationAsRead",
+          "url": "/api/notifications/{id}/read",
+          "method": "PUT",
+          "description": "Marks a notification as read.",
+          "parameters": {
+            "id": { "type": "integer", "required": true }
+          },
+          "example_uses": [
+            "Mark notification 123 as read"
+          ],
+          "when_to_use": "Use this when the user wants to mark notifications as read."
+        }
+      ]
+    },
+    {
+      "entity": "OrganizationHierarchy",
+      "description": "Manages organizational hierarchy and structure within the system.",
+      "synonyms": ["org structure", "hierarchy", "organization tree"],
+      "endpoints": [
+        {
+          "name": "GetOrganizationHierarchy",
+          "url": "/api/organization-hierarchy",
+          "method": "GET",
+          "description": "Gets the organizational hierarchy tree structure.",
+          "parameters": {},
+          "example_uses": [
+            "Show me the organization structure",
+            "Get the org hierarchy"
+          ],
+          "when_to_use": "Use this when the user asks about organizational structure or hierarchy."
+        }
+      ]
+    },
+    {
+      "entity": "Link",
+      "description": "Manages links and relationships between different entities in the system.",
+      "synonyms": ["relationship", "connection", "association"],
+      "endpoints": [
+        {
+          "name": "GetLinks",
+          "url": "/api/link",
+          "method": "GET",
+          "description": "Gets links and relationships between entities.",
+          "parameters": {
+            "entityType": { "type": "string", "required": false },
+            "entityId": { "type": "integer", "required": false }
+          },
+          "example_uses": [
+            "Show me all links",
+            "Get relationships for partner 123"
+          ],
+          "when_to_use": "Use this when the user asks about relationships or connections between entities."
+        }
+      ]
+    },
+    {
+      "entity": "Profile",
+      "description": "Manages user profiles and personal information.",
+      "synonyms": ["user profile", "personal info", "account"],
+      "endpoints": [
+        {
+          "name": "GetProfile",
+          "url": "/api/profile",
+          "method": "GET",
+          "description": "Gets the current user's profile information.",
+          "parameters": {},
+          "example_uses": [
+            "Show me my profile",
+            "Get my account information"
+          ],
+          "when_to_use": "Use this when the user asks for their profile or account information."
+        },
+        {
+          "name": "UpdateProfile",
+          "url": "/api/profile",
+          "method": "PUT",
+          "description": "Updates the current user's profile information.",
+          "parameters": {
+            "firstName": { "type": "string", "required": false },
+            "lastName": { "type": "string", "required": false },
+            "email": { "type": "string", "required": false }
+          },
+          "example_uses": [
+            "Update my profile name to John Smith",
+            "Change my email address"
+          ],
+          "when_to_use": "Use this when the user wants to update their profile information."
+        }
+      ]
+    },
+    {
+      "entity": "PartnerTree",
+      "description": "Manages hierarchical partner relationships and tree structures.",
+      "synonyms": ["partner hierarchy", "partner tree", "partner structure"],
+      "endpoints": [
+        {
+          "name": "GetPartnerTrees",
+          "url": "/api/partner-tree",
+          "method": "GET",
+          "description": "Gets the partner hierarchy tree structure.",
+          "parameters": {},
+          "example_uses": [
+            "Show me the partner tree structure",
+            "Get partner hierarchy"
+          ],
+          "when_to_use": "Use this when the user asks about partner hierarchy or tree structure."
+        }
+      ]
+    },
+    {
+      "entity": "UserData",
+      "description": "Manages user-specific data and preferences.",
+      "synonyms": ["user preferences", "user data", "user settings"],
+      "endpoints": [
+        {
+          "name": "GetUserData",
+          "url": "/api/user-data",
+          "method": "GET",
+          "description": "Gets user-specific data and preferences.",
+          "parameters": {},
+          "example_uses": [
+            "Get my user data",
+            "Show me my preferences"
+          ],
+          "when_to_use": "Use this when the user asks for their personal data or preferences."
+        }
+      ]
+    }
+  ]
+} 
