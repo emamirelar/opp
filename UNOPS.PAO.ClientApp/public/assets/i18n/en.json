@@ -412,7 +412,13 @@
   "loading": {
     "contactData": "Loading contact data...",
     "partnerData": "Loading partner data...",
-    "loadingMore": "Loading more..."
+    "loadingMore": "Loading more...",
+    "loadingData": "Loading data...",
+    "preparing": "Preparing..."
+  },
+  "timeline": {
+    "navigation": "Navigation",
+    "reset": "Reset"
   },
   "interactions": {
     "title": "Interactions",

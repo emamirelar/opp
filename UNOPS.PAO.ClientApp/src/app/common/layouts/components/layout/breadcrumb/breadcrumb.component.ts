@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-breadcrumb',
-  imports: [BreadcrumbModule, NgClass, NgIf, Tooltip, RouterLink, JsonPipe],
+  imports: [BreadcrumbModule, NgClass, NgIf, RouterLink],
   templateUrl: './breadcrumb.component.html',
   standalone: true,
   styleUrl: './breadcrumb.component.scss',

@@ -37,6 +37,13 @@ namespace UNOPS.PAO.Presentation.Controllers
         [AccessControlled(EntityTypes.Interaction, "create")]
         public async Task<ActionResult> Create([FromBody] InteractionRequest req)
         {
+            // Validate model state first
+            var validationResult = ValidateModelState();
+            if (validationResult != null)
+            {
+                return validationResult;
+            }
+
             return await HandleOperationAsync(async () =>
             {
                 var result = await _manager.CreateInteractionAsync(req);
@@ -56,14 +63,22 @@ namespace UNOPS.PAO.Presentation.Controllers
             [FromQuery] string? searchCriteria = null,
             [FromQuery] string? searchText = null)
         {
+            // Validate model state first
+            var modelValidationResult = ValidateModelState();
+            if (modelValidationResult != null)
+            {
+                return modelValidationResult;
+            }
+
+            // Validate pagination parameters
+            var paginationValidationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+            if (paginationValidationResult != null) 
+            {
+                return paginationValidationResult;
+            }
+
             return await HandleOperationAsync(async () =>
             {
-                // Validate pagination parameters
-                var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
-                if (validationResult != null) 
-                {
-                    throw new BusinessException("Invalid pagination parameters");
-                }
                 
                 PaginationResponse<InteractionModel> result;
                 

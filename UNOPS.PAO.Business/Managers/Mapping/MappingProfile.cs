@@ -21,8 +21,7 @@ public class MappingProfile : Profile
         CreateMap<PartnerModel, Partner>();
         CreateMap<Contact, ContactValueModel>();
         CreateMap<Contact, ContactModel>()
-            .ForMember(dest => dest.Partner, opt => opt.Ignore())
-            .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null));
+            .ForMember(dest => dest.Partner, opt => opt.MapFrom(src => src.Partner != null ? new PartnerSummaryModel { Id = src.Partner.Id, Name = src.Partner.Name } : null));
         CreateMap<ContactModel, Contact>()
             .ForMember(dest => dest.Partner, opt => opt.Ignore());
         
