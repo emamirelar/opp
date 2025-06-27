@@ -19,18 +19,6 @@ function buildRelatedRecords(relatedRecords, messageData) {
       .setImageUrl(ICON_URL)
   );
 
-
-  /*if (relatedRecords.canReadContacts == false) {
-    var contactSection = CardService.newCardSection()
-        .setHeader("<b><font color=\"#005073\">Contacts (0)</font></b>");
-
-    contactSection.addWidget(CardService.newTextParagraph()
-    .setText(NO_CONTACT_READ_MSG));
-
-    card.addSection(contactSection);
-  }
-  else */
-
   if(relatedRecords) {
     if (relatedRecords.contacts.length > 0) {
       // --- Contact Section ---
@@ -76,17 +64,6 @@ function buildRelatedRecords(relatedRecords, messageData) {
       });
       card.addSection(contactSection);
     }
-
-    /*if (relatedRecords.canReadPartners == false) {
-      var partnersSection = CardService.newCardSection()
-          .setHeader("<b><font color=\"#005073\">Partners (0)</font></b>");
-
-      partnersSection.addWidget(CardService.newTextParagraph()
-      .setText(NO_PARTNER_READ_MSG));
-
-      card.addSection(partnersSection);
-    }
-    else */
   
     if(relatedRecords.partners.length > 0) {
       // --- Partners Section ---

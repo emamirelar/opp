@@ -12,6 +12,9 @@ using UNOPS.PAO.UNOPSBusiness.Authorization;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.DataAccess.Services;
 using System.Net.Mail;
+using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSDataAccess.Migrations;
+using UNOPS.PAO.Domain.Entities;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -105,6 +108,10 @@ namespace UNOPS.PAO.Presentation.Controllers
                                     PartnerName = contact.Partner?.Name ?? string.Empty,
                                     Id = contact.Id,
                                     EmailAddress = contact.Email,
+                                    Location = !string.IsNullOrEmpty(contact.MailingCity) && !string.IsNullOrEmpty(contact.MailingCountry)
+                                                ? $"{contact.MailingCity}, {contact.MailingCountry}"
+                                                : null,
+                                    ProfilePictureUrl = contact.ProfilePictureUrl,
                                     CanRead = true
                                 });
                             }
@@ -136,14 +143,48 @@ namespace UNOPS.PAO.Presentation.Controllers
                         {
                             if(partner.Permissions.CanRead)
                             {
-                                retVal.Partners.Add(new GmailRelatedPartner
-                                {
+                                GmailRelatedPartner currentPartner = new GmailRelatedPartner {
                                     Id = partner.Id,
                                     Name = partner.Name,
                                     PartnerCode = partner.PartnerCode,
                                     Phone = partner.Phone,
-                                    CanRead = true
-                                });
+                                    LogoUrl = partner.LogoUrl,
+                                    Location = !String.IsNullOrEmpty(partner.Address1City) && !String.IsNullOrEmpty(partner.Address1Country)
+                                                    ? $"{partner.Address1City}, {partner.Address1Country}"
+                                                    : null,
+                                    CanRead = true,
+                                    Contacts = new List<GmailRelatedContact>()
+                                };
+
+                                if (partner.First5ContactsByDate != null && partner.First5ContactsByDate.Count() > 0)
+                                {
+                                    foreach (ContactModel? contact in partner.First5ContactsByDate)
+                                    {
+                                        if (contact != null)
+                                        {
+                                            if (contact.Permissions.CanRead)
+                                            {
+                                                currentPartner.Contacts.Add(new GmailRelatedContact
+                                                {
+                                                    Name = $"{contact.Salutation} {contact.FirstName} {contact.MiddleName} {contact.LastName}",
+                                                    Title = contact.Title,
+                                                    Id = contact.Id,
+                                                    EmailAddress = contact.Email,
+                                                    CanRead = true
+                                                });
+                                            }
+                                            else
+                                            {
+                                                currentPartner.Contacts.Add(new GmailRelatedContact
+                                                {
+                                                    EmailAddress = contact.Email,
+                                                    CanRead = false
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                                retVal.Partners.Add(currentPartner);
                             }
                             else
                             {

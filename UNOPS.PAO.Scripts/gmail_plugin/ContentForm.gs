@@ -4,7 +4,7 @@
  * - Rendering the Gmail add-on card UI with navigation and interactivity
  */
 
-function createCard(e) {
+function onGmailMessageOpen(e) {
   const userProps = PropertiesService.getUserProperties();
   const accessToken = e.gmail.accessToken;
 
@@ -32,7 +32,7 @@ function createCard(e) {
 
   Logger.log('Message Data Content Form: ' + JSON.stringify(messageData));
 
-  const relatedRecordsCard = buildRelatedRecords(relatedRecords, messageData);
+  const relatedRecordsCard = buildOpportunityPlusCard(relatedRecords, messageData);
   return relatedRecordsCard;
 
   //const card = buildMessageCard(messageData, currentPage);

@@ -308,7 +308,8 @@ function getAccessToken() {
   }
 
   // If we have a refresh token, use it to get a new access token
-  if (refreshToken) {
+  //TO-DO: uncomment after refresh token logic is implemented on backend
+  /*if (refreshToken) {
     try {
       const response = UrlFetchApp.fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
@@ -331,7 +332,7 @@ function getAccessToken() {
       // If refresh fails, we need to re-authenticate
       return authenticate();
     }
-  }
+  }*/
 
   // If we don't have any tokens, we need to authenticate
   return authenticate();
@@ -345,6 +346,12 @@ function authenticate() {
   try {
     // Get the current user's email from Google Apps Script
     const userEmail = Session.getActiveUser().getEmail();
+
+    const idToken = ScriptApp.getIdentityToken(); 
+
+    if (!idToken) {
+      throw new Error("Could not obtain Google ID Token.");
+    }
     
     // Authenticate with our API using the user's email
     const response = UrlFetchApp.fetch(AUTH_ENDPOINT, {
@@ -354,7 +361,8 @@ function authenticate() {
       },
       payload: JSON.stringify({
         provider: 'UNOPS.PAO',
-        email: userEmail
+        idToken: idToken
+        //email: userEmail
       })
     });
 

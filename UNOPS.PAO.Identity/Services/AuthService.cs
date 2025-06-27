@@ -27,7 +27,7 @@ public class AuthService : IAuthService
         UserManager<PAOIdentityUser> userManager)
     {
         _configuration = configuration;
-        _googleClientId = _configuration["GoogleAuthSettings:clientId"];
+        _googleClientId = _configuration["GmailAppScriptAuthSettings:clientId"];
         _jwtIssuer = _configuration["JWTSettings:validIssuer"];
         _jwtAudience = _configuration["JWTSettings:validAudienceDev"];
         _userManager = userManager;
@@ -44,38 +44,20 @@ public class AuthService : IAuthService
     {
         try
         {
-            /*if (!request.IsValid())
-            {
-                throw new Exception("Invalid request. For Gmail plugin requests, Provider and Email are required. For web client requests, Provider and IdToken are required.");
-            }*/
-
-            string email;
+            string email = "";
             string subject;
 
-            if (!string.IsNullOrEmpty(request.Email))
+            if (!string.IsNullOrEmpty(request.IdToken))
             {
-                // This is a Gmail plugin request using email
-                email = request.Email;
-                
-                // For Gmail plugin requests, we'll use the email as both the name and subject
-                // since we can't get additional user info without OAuth
-                //name = email.Split('@')[0]; // Use the part before @ as the name
-                subject = email; // Use email as the subject
-            }
-            else
-            {
-                // This is a regular web client using Google ID token
                 var settings = new GoogleJsonWebSignature.ValidationSettings()
                 {
                     Audience = new[] { _googleClientId }
                 };
-
                 var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
                 email = payload.Email;
-                //name = payload.Name;
                 subject = payload.Subject;
             }
-            
+
             // Check if email is from UNOPS domain
             if (!email.EndsWith("@unops.org"))
             {
@@ -105,14 +87,18 @@ public class AuthService : IAuthService
             
             // 3. Get user roles and other information
             var roles = await _userManager.GetRolesAsync(user);
-            //string name = Convert.ToString(user?.Id);
-
+            
             // **Crucially, use the user's internal database ID for the 'sub' claim (subject)**
             string userIdForClaims = user.Id.ToString(); // This is your internal user ID
-            string name = user.UserName; // Or payload.Name if available for web client, otherwise use email as name
+            string name = user.UserName; // use email as name
 
             var token = GenerateJwtToken(userIdForClaims, email, name);
             var refreshToken = GenerateRefreshToken();
+
+            // TO-DO: Store the refresh token securely, associated with the user
+            //user.RefreshToken = refreshToken;
+            //user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Example: Refresh token valid for 7 days
+            //await _userManager.UpdateAsync(user);
 
             return new AuthResponse
             {
@@ -133,13 +119,69 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> RefreshTokenAsync(string refreshToken)
     {
+        //TO-DO: Implement refresh token logic
+        // 1. Validate the refresh token
+        /*if (string.IsNullOrEmpty(refreshToken))
+        {
+            throw new ArgumentException("Refresh token is required.");
+        }
+
+        var user = _userManager.Users.SingleOrDefault(u => u.RefreshToken == refreshToken && u.RefreshTokenExpiryTime > DateTime.UtcNow);
+
+        if (user == null)
+        {
+            throw new Exception("Invalid or expired refresh token.");
+        }
+
+        // 2. Generate new JWT token
+        var newAccessToken = GenerateJwtToken(user.Id.ToString(), user.Email, user.UserName);
+
+        // 3. Generate a new refresh token and update in database (optional but recommended for better security)
+        var newRefreshToken = GenerateRefreshToken();
+        user.RefreshToken = newRefreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Extend expiry
+        await _userManager.UpdateAsync(user);
+
+        // 4. Get user roles and other information for the response
+        var roles = await _userManager.GetRolesAsync(user);
+
+        return new AuthResponse
+        {
+            AccessToken = newAccessToken,
+            RefreshToken = newRefreshToken,
+            ExpiresAt = DateTime.UtcNow.AddHours(1), // New access token expiry
+            UserId = user.Id.ToString(),
+            Email = user.Email,
+            Name = user.UserName,
+            Roles = roles.ToList()
+        };*/
+
         // Implement refresh token validation and generation of new access token
         throw new NotImplementedException();
     }
 
     public async Task RevokeTokenAsync(string refreshToken)
     {
-        // Implement token revocation logic
+        //TO-DO: Implement token revocation logic
+        /*if (string.IsNullOrEmpty(refreshToken))
+        {
+            throw new ArgumentException("Refresh token is required.");
+        }
+
+        var user = _userManager.Users.SingleOrDefault(u => u.RefreshToken == refreshToken);
+
+        if (user == null)
+        {
+            // Token not found or already revoked, consider it a successful revocation
+            return;
+        }
+
+        // Clear the refresh token and its expiry from the user
+        user.RefreshToken = null;
+        user.RefreshTokenExpiryTime = null;
+        await _userManager.UpdateAsync(user);*/
+
+        // Implement refresh token validation and generation of new access token
         throw new NotImplementedException();
     }
 

@@ -31,6 +31,7 @@
     "urlFetchWhitelist": [
         "https://www.googleapis.com/oauth2/v3/userinfo",
         "https://swift-legible-raven.ngrok-free.app/api/auth/google",
+        "https://swift-legible-raven.ngrok-free.app/api/api/auth/refresh",
         "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions",
         "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions/*"
     ],

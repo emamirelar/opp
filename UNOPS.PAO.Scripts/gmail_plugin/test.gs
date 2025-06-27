@@ -1,8 +1,8 @@
-function onGmailMessageOpen(e) {
+/*function onGmailMessageOpen(e) {
   console.log(e);
   var mainCard = createCard(e);
   return mainCard;
-}
+}*/
 
 // function onCalendarEventOpen(e) {
 //   console.log(e);

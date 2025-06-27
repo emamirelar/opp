@@ -1109,22 +1109,45 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Cast<UNOPSPartner>()
             .ToList();
 
+        // Batch permission lookup once for all partners
+        var userPartnerPermissions = await _securityService.GetEntityPermissionsAsync(user, "Partner");
         // Batch permission lookup once for all contacts
-        var userPermissions = await _securityService.GetEntityPermissionsAsync(user, "Partner");
+        var userContactPermissions = await _securityService.GetEntityPermissionsAsync(user, "Contact");
 
         var mappedPartners = new List<PartnerModel>();
         foreach (var partner in partners)
         {
-            var model = MapEntityToModel(partner, _mapper);
+            var model = await MapEntityToModelAsync(partner, _mapper);
             model.Permissions = new EntityPermissionsModel
             {
-                CanRead = userPermissions.CanRead,
-                CanCreate = userPermissions.CanCreate,
-                CanUpdate = userPermissions.CanUpdate && await _securityService.CanUserAccessEntityAsync(partner, user, "update"),
-                CanDelete = userPermissions.CanDelete && await _securityService.CanUserAccessEntityAsync(partner, user, "delete")
+                CanRead = userPartnerPermissions.CanRead,
+                CanCreate = userPartnerPermissions.CanCreate,
+                CanUpdate = userPartnerPermissions.CanUpdate && await _securityService.CanUserAccessEntityAsync(partner, user, "update"),
+                CanDelete = userPartnerPermissions.CanDelete && await _securityService.CanUserAccessEntityAsync(partner, user, "delete")
             };
+
+            if(partner.First5ContactsByDate != null && partner.First5ContactsByDate.Count() > 0)
+            {
+                foreach (var contact in partner.First5ContactsByDate)
+                {
+                    // Map each contact to ContactModel
+                    var contactModel = _mapper.Map<ContactModel>(contact);
+                    // Add permissions for each contact
+                    contactModel.Permissions = new EntityPermissionsModel
+                    {
+                        CanRead = userContactPermissions.CanRead,
+                        CanCreate = userContactPermissions.CanCreate,
+                        CanUpdate = userContactPermissions.CanUpdate && await _securityService.CanUserAccessEntityAsync(contact, user, "update"),
+                        CanDelete = userContactPermissions.CanDelete && await _securityService.CanUserAccessEntityAsync(contact, user, "delete")
+                    };
+                    model.First5ContactsByDate.RemoveAll(c => c.Id == contactModel.Id);
+                    model.First5ContactsByDate.Add(contactModel);
+                }
+            }
+
             mappedPartners.Add(model);
         }
+
 
         return mappedPartners;
     }
