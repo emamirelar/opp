@@ -862,8 +862,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return null;
         }
 
-        // Update the entity
-        _mapper.Map(model, entity);
+        PatchNonNullProperties(model, entity);
         await PartnerRepository.UpdateAsync(entity);
 
         var resultModel = MapEntityToModel(entity, _mapper);
@@ -1049,7 +1048,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             throw new BusinessException($"Partner {model.Id} does not exist.");
         }
 
-        entity = MapModelToEntity(model, entity);
+        PatchNonNullProperties(model, entity);
 
         await PartnerRepository.UpdateAsync(entity);
 

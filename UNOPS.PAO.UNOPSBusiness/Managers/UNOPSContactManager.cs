@@ -26,6 +26,7 @@ using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using System.Reflection;
 
 public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 {
@@ -285,12 +286,14 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return null;
     }
 
+
     public async Task<ContactModel?> UpdateContactAsync(ClaimsPrincipal user, UpdateContactRequest model)
     {
         var entity = await contactRepository.GetByIdAsync(model.Id);
         if (entity == null) return null;
 
-        mapper.Map(model, entity);
+        PatchNonNullProperties(model, entity);
+
         entity.Name = String.Concat(model.Salutation, ' ', model.FirstName, ' ', model.MiddleName, ' ', model.LastName);
 
         await contactRepository.UpdateAsync(entity);
@@ -455,7 +458,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         var entity = await contactRepository.GetByIdAsync(model.Id);
         if (entity == null) return null;
 
-        mapper.Map(model, entity);
+        PatchNonNullProperties(model, entity);
         entity.Name = String.Concat(model.Salutation, ' ', model.FirstName, ' ', model.MiddleName, ' ', model.LastName);
 
         await contactRepository.UpdateAsync(entity);

@@ -280,7 +280,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         if (entity == null) return null;
 
-        mapper.Map(model, entity);
+        PatchNonNullProperties(model, entity);
 
         // Update emails/phones
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
@@ -398,7 +398,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             throw new BusinessException($"Interaction {id} does not exist.");
         }
 
-        entity = MapModelToEntity(request, entity);
+        PatchNonNullProperties(request, entity);
         await interactionRepository.UpdateAsync(entity);
 
         return MapEntityToModel(entity, mapper);
@@ -456,7 +456,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             throw new BusinessException($"Interaction {model.Id} does not exist.");
         }
 
-        entity = MapModelToEntity(model, entity);
+        PatchNonNullProperties(model, entity);
 
         // Update emails/phones
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();

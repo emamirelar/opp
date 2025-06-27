@@ -441,4 +441,39 @@ public abstract class BaseUNOPSManager
     {
         return await Task.FromResult(new { id, message = "GetById not implemented for " + entityName });
     }
+
+    public void PatchNonNullProperties<TSource, TTarget>(TSource source, TTarget target)
+    {
+        var sourceProperties = typeof(TSource).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        
+        // Handle duplicate property names by grouping and taking the first one
+        var targetProperties = typeof(TTarget).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                              .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+                                              .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var sourceProp in sourceProperties)
+        {
+            if (!targetProperties.TryGetValue(sourceProp.Name, out var targetProp)) continue;
+            if (!targetProp.CanWrite || !sourceProp.CanRead) continue;
+
+            var value = sourceProp.GetValue(source);
+
+            // Only set if value is not null (or not empty string for strings)
+            if (value != null && (!(value is string str) || !string.IsNullOrWhiteSpace(str)))
+            {
+                // Special handling for ID columns: don't update if source is 0 and target already has a value
+                if (sourceProp.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase) && 
+                    value.Equals(0))
+                {
+                    var existingValue = targetProp.GetValue(target);
+                    if (existingValue != null && !existingValue.Equals(0))
+                    {
+                        continue; // Skip updating ID if target already has a non-zero value
+                    }
+                }
+
+                targetProp.SetValue(target, value);
+            }
+        }
+    }
 } 
