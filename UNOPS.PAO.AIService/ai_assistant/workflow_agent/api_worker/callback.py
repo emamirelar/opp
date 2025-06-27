@@ -183,11 +183,13 @@ def inject_entity_configuration(llm_request, current_entity: dict, api_worker_st
 """
         
         # Add each endpoint with full details
+        from .utilities import construct_api_url
         for endpoint in entity_config.get('endpoints', []):
+            endpoint_full_url = construct_api_url(api_base_url, endpoint['url'])
             entity_config_text += f"""
 ---
 **{endpoint['name']}**
-- **URL:** {api_base_url}{endpoint['url']}
+- **URL:** {endpoint_full_url}
 - **Method:** {endpoint['method']}
 - **Description:** {endpoint['description']}
 - **When to use:** {endpoint.get('when_to_use', 'Not specified')}
@@ -196,7 +198,15 @@ def inject_entity_configuration(llm_request, current_entity: dict, api_worker_st
 """
             for param_name, param_info in endpoint.get('parameters', {}).items():
                 required_text = "REQUIRED" if param_info.get('required', False) else "Optional"
-                entity_config_text += f"  - **{param_name}** ({param_info.get('type', 'unknown')}, {required_text}): {param_info.get('description', 'No description')}\n"
+                param_description = param_info.get('description', 'No description')
+                
+                # Add possible values if they exist
+                possible_values = param_info.get('possible_values', [])
+                if possible_values:
+                    possible_values_text = ", ".join([f'"{val}"' for val in possible_values])
+                    param_description += f" | **Possible Values:** {possible_values_text} - Choose the closest matching value"
+                
+                entity_config_text += f"  - **{param_name}** ({param_info.get('type', 'unknown')}, {required_text}): {param_description}\n"
             
             # Add example uses
             if endpoint.get('example_uses'):
@@ -263,6 +273,8 @@ You are responsible for executing API calls based on detected entities and inten
 1. **Select Endpoint**: Choose appropriate endpoint from the configuration above based on intent "{intent}"
 2. **Build URL**: Combine {api_base_url} + endpoint path
 3. **Prepare Parameters**: Use extracted_params: {json.dumps(extracted_params)}
+   - **IMPORTANT**: For parameters with **Possible Values**, choose the closest matching value from the list
+   - **Match Logic**: Use semantic similarity to select the most appropriate value from possible_values
 4. **Call API**: invoke_api_tool(url=full_url, method=endpoint_method, body=parameters)
 5. **Exit Loop**: exit_loop_on_success() if API call succeeds
 
@@ -271,6 +283,8 @@ You are responsible for executing API calls based on detected entities and inten
 - **DO NOT USE example.com URLs** - use the real {api_base_url} URLs
 - **DO NOT SKIP API CALLS** - every entity must result in an API call
 - **MUST CALL exit_loop_on_success()** after successful API operations
+- **FOR PARAMETERS WITH POSSIBLE VALUES**: Always choose from the provided list, never use custom values
+- **VALUE MATCHING**: Use closest semantic match when selecting from possible_values
 
 **🔍 DEBUGGING INFO:**
 - Base URL: {api_base_url}
@@ -285,7 +299,15 @@ You are responsible for executing API calls based on detected entities and inten
         
         print(f"✅ Injected entity-specific configuration for: {entity_config['entity']}")
         print(f"📋 Available endpoints: {[ep['name'] for ep in entity_config.get('endpoints', [])]}")
-        print(f"🔍 DEBUG - Sample endpoint URL: {api_base_url}{entity_config.get('endpoints', [{}])[0].get('url', 'N/A')}")
+        
+        # Use construct_api_url to avoid double slash issues
+        from .utilities import construct_api_url
+        sample_endpoint_url = entity_config.get('endpoints', [{}])[0].get('url', 'N/A')
+        if sample_endpoint_url != 'N/A':
+            sample_full_url = construct_api_url(api_base_url, sample_endpoint_url)
+        else:
+            sample_full_url = 'N/A'
+        print(f"🔍 DEBUG - Sample endpoint URL: {sample_full_url}")
         print(f"🔍 DEBUG - System instruction starts with: {llm_request.config.system_instruction[:200]}...")
         
     except Exception as e:
@@ -570,6 +592,8 @@ You are responsible for executing real HTTP API calls based on detected entities
 - **POST/PUT requests**: Parameters go in request body (name, email, phone)
 - **Path parameters**: Replace {{id}} placeholders in URL path with actual values
 - **Required vs Optional**: Include required params, add optional when available
+- **Possible Values**: For parameters with possible_values, choose the closest semantic match from the provided list
+- **Value Selection**: Use intent and context to select the most appropriate value from possible_values
 
 **Step 5: Execute & Format Response**
 ```python
@@ -587,6 +611,13 @@ result = invoke_api_tool(
 - URL: GET {API_BASE_URL}/api/contact
 - Body: {{"search": "Madeline"}}
 - Response: Show found contacts for user to identify the correct one
+
+**Using Possible Values Example:**
+- Parameter: entityType with possible_values: ["retrieve_partner_information", "retrieve_contact_information", "retrieve_interaction_information"]
+- User asks: "Summarize about this contact"
+- Choose: "retrieve_contact_information" (closest match for contact summary)
+- User asks: "Generate partner summary"
+- Choose: "retrieve_partner_information" (closest match for partner summary)
 
 **Search Contacts with Limit:**
 - Input: entity="Contact", intent="search", params={{"search": "tech", "pageSize": 10}}

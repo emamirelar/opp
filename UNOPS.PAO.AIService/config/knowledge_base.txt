@@ -117,4 +117,31 @@ Responses are tailored based on:
 - Organizational unit-based data segregation
 - Audit trails for all data modifications
 - Integration with UNOPS authentication systems
-- Compliance with UN data protection standards 
+- Compliance with UN data protection standards
+
+## SUPPORT AND CONTACT INFORMATION
+
+### Technical Support
+- **Support Email**: larsj@unops.org
+- **When to Contact**: For technical issues, system errors, permissions problems, or general assistance with Opportunity+
+- **Support Hours**: During UNOPS business hours
+- **Response Time**: Support tickets are typically responded to within 24-48 hours
+
+### Getting Help
+When users mention "contact support", "contact admin", "need help", or click support-related gems:
+- Direct them to send an email to larsj@unops.org
+- Encourage them to include:
+  - Detailed description of the issue
+  - Steps to reproduce the problem
+  - Their username and organizational unit
+  - Screenshots if applicable
+  - Error messages (if any)
+
+### Common Support Scenarios
+- Permission denied errors
+- Cannot access certain features
+- Data not displaying correctly
+- System performance issues
+- Questions about user roles and access
+- Request for new features or modifications
+- Training and user guidance needs 

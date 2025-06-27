@@ -459,7 +459,10 @@ def dynamic_api_worker_instruction(callback_context: CallbackContext, llm_reques
     
     endpoint = find_appropriate_endpoint(entity_name, intent, entity_endpoints)
     endpoint_url = endpoint.get('url', '') if endpoint else ''
-    full_url = f"{api_base_url.rstrip('/')}/{endpoint_url.lstrip('/')}" if endpoint_url else api_base_url
+    
+    # Use the proper URL construction utility to avoid double slashes
+    from .utilities import construct_api_url
+    full_url = construct_api_url(api_base_url, endpoint_url) if endpoint_url else api_base_url
     
     # Add current entity context with specific endpoint information
     entity_context = f"""

@@ -906,7 +906,7 @@
           "description": "Processes and generates AI-powered summaries for specific entity data (partners, contacts, interactions).",
           "parameters": {
             "id": { "type": "integer", "required": true, "description": "Entity ID to process and summarize" },
-            "entityType": { "type": "string", "required": false, "description": "Type of entity to process" }
+            "entityType": { "type": "string", "required": false, "description": "Type of entity to process", "possible_values": ["retrieve_partner_information", "retrieve_contact_information", "retrieve_interaction_information"] }
           },
           "example_uses": [
             "Generate a summary for partner 123",
@@ -1000,6 +1000,25 @@
             "Get AI recommendations for data structure"
           ],
           "when_to_use": "Use this when the user wants to analyze files before import or extract structured data from documents using AI."
+        },
+        {
+          "name": "GetSupportContact",
+          "url": "/api/support/contact-info",
+          "method": "GET",
+          "description": "Provides technical support contact information for users who need assistance with the system.",
+          "parameters": {},
+          "example_uses": [
+            "I need help with the system",
+            "Contact support",
+            "How do I get technical assistance?",
+            "Who should I contact for help?",
+            "I have a problem with the application"
+          ],
+          "when_to_use": "Use this when the user asks for support, help, technical assistance, or mentions needing to contact someone about system issues.",
+          "support_info": {
+            "email": "larsj@unops.org",
+            "response_template": "For technical support with Opportunity+, please send an email to larsj@unops.org. Include details about your issue, steps to reproduce the problem, your username, organizational unit, and any error messages. Support tickets are typically responded to within 24-48 hours during UNOPS business hours."
+          }
         }
       ]
     },
