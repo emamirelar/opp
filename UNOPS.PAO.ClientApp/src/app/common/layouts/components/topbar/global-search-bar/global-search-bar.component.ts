@@ -46,6 +46,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   recentSearches: string[] = [];
   filteredResults: SearchResult[] = [];
   isLoading = signal(false);
+  private isUserInteracting = false;
 
 
 
@@ -90,10 +91,36 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   }
 
   onSearchFocus(): void {
+    this.isUserInteracting = true;
     this.showResults = true;
     if (this.searchControl.value) {
       this.fetchSearchResults(this.searchControl.value);
     }
+    
+    // Clear the interaction flag after a short delay
+    setTimeout(() => {
+      this.isUserInteracting = false;
+    }, 300);
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    // User is actively typing, prevent auto-close
+    this.isUserInteracting = true;
+    
+    // Clear the interaction flag after user stops typing
+    setTimeout(() => {
+      this.isUserInteracting = false;
+    }, 500);
+  }
+
+  onTouchStart(): void {
+    // User is interacting via touch, prevent auto-close
+    this.isUserInteracting = true;
+    
+    // Clear the interaction flag after touch interaction
+    setTimeout(() => {
+      this.isUserInteracting = false;
+    }, 300);
   }
 
 
@@ -269,14 +296,28 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   handleOutsideClick(event: MouseEvent): void {
-    if (this.searchContainer && !this.searchContainer.nativeElement.contains(event.target)) {
+    const target = event.target as HTMLElement;
+    
+    if (this.searchContainer && !this.searchContainer.nativeElement.contains(target)) {
       if (this.showResults) {
         this.showResults = false;
       }
 
-      // On mobile, if search is empty and expanded, collapse the search bar
-      if (window.innerWidth < this.breakpoint && this.isExpanded && !this.searchControl.value?.trim()) {
-        this.isExpanded = false;
+      // On mobile, collapse the search bar only if:
+      // 1. Search is empty AND
+      // 2. User clicked outside the search container AND
+      // 3. User is not currently interacting with the search AND
+      // 4. The clicked element is not a focusable element
+      if (window.innerWidth < this.breakpoint && this.isExpanded && !this.searchControl.value?.trim() && !this.isUserInteracting) {
+        // Don't close immediately if the user just clicked on an input or focusable element
+        if (!target.matches('input, textarea, [contenteditable], button')) {
+          // Add a small delay to prevent closing when user is trying to interact with the search
+          setTimeout(() => {
+            if (!this.searchControl.value?.trim() && !this.showResults && !this.isUserInteracting) {
+              this.isExpanded = false;
+            }
+          }, 150);
+        }
       }
     }
   }

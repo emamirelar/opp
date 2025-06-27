@@ -5,7 +5,7 @@
       <a href="mailto:{{ getFieldValue(item, column.field) }}"
          (click)="$event.stopPropagation()"
          [class]="getFieldClasses(column, context)"
-         [title]="column.ellipsis ? getFieldValue(item, column.field) : ''">
+         [title]="getFieldTooltip(item, column)">
         {{ getFieldValue(item, column.field) }}
       </a>
     }
@@ -13,7 +13,7 @@
       <a [routerLink]="getRouterLink(item, column)"
          (click)="$event.stopPropagation()"
          [class]="getFieldClasses(column, context)"
-         [title]="column.ellipsis ? getFieldValue(item, column.field) : ''">
+         [title]="getFieldTooltip(item, column)">
         {{ formatValue(item, column) }}
       </a>
     }
@@ -63,24 +63,42 @@
       <!-- Avatar type is handled separately in the main template -->
     }
     @default {
-      <span [class]="getFieldClasses(column, context)">{{ formatValue(item, column) }}</span>
+      <span [class]="getFieldClasses(column, context)" [title]="getFieldTooltip(item, column)">{{ formatValue(item, column) }}</span>
     }
   }
 </ng-template>
 
 <div class="flex flex-col gap-4 ">
   @if (loading) {
-    <div class="grid grid-cols-1 lg:grid-cols-2  gap-4">
-      @for (i of [1, 2, 3, 4, 5]; track i) {
-          <div class="h-full bg-white p-4 rounded-lg flex flex-row gap-4">
-            <p-skeleton shape="circle" size="2.6rem" />
-
-            <div class="flex flex-col gap-2 w-full">
-              <div class="mb-2">
-                <p-skeleton width="85%" height="1rem" ></p-skeleton>
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse">
+            <div class="flex gap-4">
+              <!-- Avatar skeleton -->
+              <div class="flex-shrink-0">
+                <div class="w-14 h-14 bg-gray-200 rounded-xl"></div>
               </div>
-              <div class="mb-2">
-                <p-skeleton width="65%" height=".75rem"></p-skeleton>
+
+              <!-- Content skeleton -->
+              <div class="flex flex-col flex-1 space-y-3">
+                <!-- Title and badge skeleton -->
+                <div class="flex items-start justify-between">
+                  <div class="h-5 bg-gray-200 rounded-md w-3/4"></div>
+                  <div class="h-5 bg-gray-100 rounded-md w-16"></div>
+                </div>
+
+                <!-- Subtitle skeleton -->
+                <div class="flex items-center gap-2">
+                  <div class="h-4 bg-gray-200 rounded w-20"></div>
+                  <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
+                  <div class="h-4 bg-gray-200 rounded w-24"></div>
+                </div>
+
+                <!-- Description skeleton -->
+                <div class="space-y-2">
+                  <div class="h-3 bg-gray-200 rounded w-full"></div>
+                  <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -110,24 +128,42 @@
 
   <!-- Card grid -->
   @if (!loading && !error && data && data.length > 0 && canRenderContent()) {
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         @for (item of data; track getFieldValue(item, 'id')) {
-            <div class="bg-white cursor-pointer shadow-sm hover:shadow-md rounded-lg p-4 flex gap-4 transition-shadow duration-200 ease-in-out"
+            <div class="group relative bg-white cursor-pointer shadow-sm border border-gray-100  hover:shadow-lg rounded-xl p-5 transition-all duration-300 ease-out hover:-translate-y-1 overflow-hidden"
               (click)="onCardClick(item)">
+
+              <!-- Subtle gradient background on hover -->
+              <div class="absolute inset-0 bg-gradient-to-br from-blue-50/0 to-purple-50/0 transition-all duration-300 rounded-xl"></div>
+
+              <!-- Card content -->
+              <div class="relative z-10 flex gap-4">
+                <!-- Avatar/Icon section with enhanced styling -->
                 @if (avatarColumn()) {
-                  <div>
+                  <div class="flex-shrink-0">
                     @if (getFieldValue(item, avatarColumn()!.field)) {
-                      <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)" shape="circle" size="large"></p-avatar>
+                      <div class="relative">
+                        <p-avatar [image]="getAvatarUrl(item, avatarColumn()!.field)"
+                                  shape="circle"
+                                  size="large"
+                                  ></p-avatar>
+                      </div>
                     } @else {
-                      <p-avatar icon="pi pi-image" shape="circle" size="large"></p-avatar>
+                      <div class="relative">
+                        <p-avatar [label]="getField1Initial(item)"
+                                  shape="circle"
+                                  size="large"
+                                  styleClass="bg-primary text-white"
+                                  ></p-avatar>
+                      </div>
                     }
                   </div>
                 } @else if (shouldShowInteractionAvatar() && interactionIconColumn()) {
-                  <div>
+                  <div class="flex-shrink-0">
                     <div
                       class="w-12 h-12 rounded-full flex items-center justify-center border border-solid"
                       [style]="{
-                        'background-color': getInteractionColor(item, interactionIconColumn()!) + '15',
+                        'background': 'linear-gradient(135deg, ' + getInteractionColor(item, interactionIconColumn()!) + '15 0%, ' + getInteractionColor(item, interactionIconColumn()!) + '25 100%)',
                         'color': getInteractionColor(item, interactionIconColumn()!),
                         'border-color': getInteractionColor(item, interactionIconColumn()!) + '30'
                       }">
@@ -138,18 +174,19 @@
                   </div>
                 }
 
-                <div class="flex flex-col w-full">
-                    <!-- First row: Field 1 (main) and Field 5 (top right) -->
-                  <div class="flex w-full items-start">
+                <!-- Content section -->
+                <div class="flex flex-col flex-1 min-w-0">
+                  <!-- Header with title and metadata -->
+                  <div class="flex items-start justify-between mb-1">
                     @if (field1()) {
-                      <div class="font-semibold text-lg flex-1">
+                      <div class="font-semibold text-lg text-gray-900 leading-tight flex-1 min-w-0">
                         <ng-container [ngTemplateOutlet]="fieldTemplate"
                                       [ngTemplateOutletContext]="{ item: item, column: field1(), context: 'field1' }">
                         </ng-container>
                       </div>
                     }
                     @if (field5()) {
-                      <div class="text-gray-400 text-sm ml-auto">
+                      <div class="text-gray-500 text-xs ml-3 flex-shrink-0 font-medium bg-gray-50 px-2 py-1 rounded-md">
                         <ng-container [ngTemplateOutlet]="fieldTemplate"
                                       [ngTemplateOutletContext]="{ item: item, column: field5(), context: 'field5' }">
                         </ng-container>
@@ -157,45 +194,52 @@
                     }
                   </div>
 
-                    <!-- Second row: Field 2 and Field 3 (side by side) -->
-                    <div class="flex gap-4 w-full mt-1">
+                  <!-- Subtitle/metadata row -->
+                  @if (field2() || field3()) {
+                    <div class="flex items-center gap-2 text-sm text-gray-600">
                       @if (field2()) {
-                        <div class="text-sm text-gray-600 flex">
+                        <div class="flex items-center gap-1">
                           <ng-container [ngTemplateOutlet]="fieldTemplate"
                                         [ngTemplateOutletContext]="{ item: item, column: field2(), context: 'field2' }">
                           </ng-container>
-                          <span>&nbsp;·&nbsp;</span>
+                        </div>
+                      }
+                      @if (field2() && field3()) {
+                        <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                      }
+                      @if (field3()) {
+                        <div class="flex items-center gap-1">
                           <ng-container [ngTemplateOutlet]="fieldTemplate"
                                         [ngTemplateOutletContext]="{ item: item, column: field3(), context: 'field3' }">
                           </ng-container>
-
-                        </div>
-                      }
-                      @if (field3()) {
-                        <div class="text-sm text-gray-600 flex-1">
-
                         </div>
                       }
                     </div>
+                  }
 
-                    <!-- Third row: Field 4 (content area) -->
-                    @if (field4()) {
-                      <div class="text-sm text-gray-600 mt-2">
-                        <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                      [ngTemplateOutletContext]="{ item: item, column: field4(), context: 'field4' }">
-                        </ng-container>
-                      </div>
-                    }
-
+                  <!-- Description/content area -->
+                  @if (field4()) {
+                    <div class="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                      <ng-container [ngTemplateOutlet]="fieldTemplate"
+                                    [ngTemplateOutletContext]="{ item: item, column: field4(), context: 'field4' }">
+                      </ng-container>
+                    </div>
+                  }
+                </div>
               </div>
 
-              <!-- Actions template -->
+              <!-- Actions overlay (appears on hover) -->
               @if (hasActionsTemplate()) {
-                <ng-container
-                    [ngTemplateOutlet]="actionsTemplate || null"
-                    [ngTemplateOutletContext]="{ $implicit: item }">
-                  </ng-container>
+                <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200 p-1">
+                    <ng-container
+                        [ngTemplateOutlet]="actionsTemplate || null"
+                        [ngTemplateOutletContext]="{ $implicit: item }">
+                      </ng-container>
+                  </div>
+                </div>
               }
+
             </div>
         }
       </div>
@@ -207,16 +251,35 @@
 
       <!-- Load more skeletons - match the grid layout -->
       @if (isLoadingMore) {
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           @for (i of Array(loadMoreSkeletonsCount()).fill(0); track $index) {
-            <div class="bg-white p-4 rounded-lg flex flex-row gap-4 animate-fadeIn shadow-sm">
-              <p-skeleton shape="circle" size="2.6rem" />
-              <div class="flex flex-col gap-2 w-full">
-                <div class="mb-2">
-                  <p-skeleton width="85%" height="1rem"></p-skeleton>
+            <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse shadow-sm">
+              <div class="flex gap-4">
+                <!-- Avatar skeleton -->
+                <div class="flex-shrink-0">
+                  <div class="w-14 h-14 bg-gray-200 rounded-xl"></div>
                 </div>
-                <div class="mb-2">
-                  <p-skeleton width="65%" height=".75rem"></p-skeleton>
+
+                <!-- Content skeleton -->
+                <div class="flex flex-col flex-1 space-y-3">
+                  <!-- Title and badge skeleton -->
+                  <div class="flex items-start justify-between">
+                    <div class="h-5 bg-gray-200 rounded-md w-3/4"></div>
+                    <div class="h-5 bg-gray-100 rounded-md w-16"></div>
+                  </div>
+
+                  <!-- Subtitle skeleton -->
+                  <div class="flex items-center gap-2">
+                    <div class="h-4 bg-gray-200 rounded w-20"></div>
+                    <div class="w-1 h-1 bg-gray-300 rounded-full"></div>
+                    <div class="h-4 bg-gray-200 rounded w-24"></div>
+                  </div>
+
+                  <!-- Description skeleton -->
+                  <div class="space-y-2">
+                    <div class="h-3 bg-gray-200 rounded w-full"></div>
+                    <div class="h-3 bg-gray-200 rounded w-5/6"></div>
+                  </div>
                 </div>
               </div>
             </div>
