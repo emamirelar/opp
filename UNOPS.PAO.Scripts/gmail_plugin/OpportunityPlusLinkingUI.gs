@@ -233,22 +233,30 @@ function buildOpportunityPlusCard(relatedRecords, messageData) {
     weKnowSection.addWidget(chipList);
 
     card.addSection(weKnowSection);
-  }
 
-  // Add fixed footer
-  card.setFixedFooter(
-    CardService.newFixedFooter()
-      .setPrimaryButton(
-        CardService.newTextButton()
-          .setText('Log this')
-          .setBackgroundColor('#006699')
-          .setOnClickAction(
-            CardService.newAction()
-              .setFunctionName('onClickPrimaryButton')
-          )
-      )
-  );
-  
+    // Add fixed footer
+    card.setFixedFooter(
+      CardService.newFixedFooter()
+        .setPrimaryButton(
+          CardService.newTextButton()
+            .setText('Log this')
+            .setBackgroundColor('#006699')
+            .setOnClickAction(
+              CardService.newAction()
+                .setFunctionName('onClickPrimaryButton')
+            )
+        )
+    );
+  }
+  else {
+    var errorSection = CardService.newCardSection()
+      .setHeader("<b><font color=\"#005073\">Error</font></b>");
+
+      errorSection.addWidget(CardService.newTextParagraph()
+            .setText("<font color=\"#555555\">" + `${RELATED_RECORDS_ERROR_MSG}` + "</font>")
+          );
+      card.addSection(errorSection);
+  }
   return card.build();
 }
 

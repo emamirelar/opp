@@ -30,6 +30,7 @@ public class GmailRelatedContact
     public string EmailAddress { get; set; }
     public string Location { get; set; }
     public string ProfilePictureUrl { get; set; }
+    public string Phone { get; set; }
     public bool CanRead { get; set; }
 }
 

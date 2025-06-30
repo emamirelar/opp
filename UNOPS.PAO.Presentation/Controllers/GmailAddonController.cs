@@ -111,6 +111,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                                     Location = !string.IsNullOrEmpty(contact.MailingCity) && !string.IsNullOrEmpty(contact.MailingCountry)
                                                 ? $"{contact.MailingCity}, {contact.MailingCountry}"
                                                 : null,
+                                    Phone = contact.Phone,
                                     ProfilePictureUrl = contact.ProfilePictureUrl,
                                     CanRead = true
                                 });
