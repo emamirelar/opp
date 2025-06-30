@@ -25,8 +25,10 @@ export interface ListViewColumn {
    * - 'icon': Display as an icon (FontAwesome or PrimeIcons)
    * - 'multiple-avatars': Display multiple avatars from an array of objects
    * - 'template': Use a custom template function to render the column content
+   * - 'link': Display as a clickable internal router link
+   * - 'interactionIcon': Display interaction type with appropriate icon and styling
    */
-  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'url' | 'html' | 'image' | 'badge' | 'icon' | 'conditionalIcon' | 'multiple-avatars' | 'template';
+  type: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'url' | 'html' | 'image' | 'badge' | 'icon' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'link' | 'interactionIcon';
   sortable: boolean;
   width?: string;
   /**
@@ -96,6 +98,12 @@ export interface ListViewColumn {
   
   /** For 'icon' type: Icon color mapping function */
   iconColorFn?: (value: any) => string;
+  
+  /**
+   * Router link pattern with placeholders for 'link' type columns
+   * Example: '/partners/{id}/details'
+   */
+  routerLink?: string;
 }
 
 export interface ListViewConfig {
@@ -113,7 +121,7 @@ export interface ListViewConfig {
   scrollHeight?: string;
   /**
    * Default view mode between 'table' and 'card'
-   * @default 'table'
+   * @default 'card'
    */
   defaultViewMode?: 'table' | 'card';
   /**
@@ -139,6 +147,10 @@ export interface ListViewConfig {
      * Field to use as the card title (defaults to first column)
      */
     titleField?: string;
+    /**
+     * Field to use as the card subtitle (defaults to first text column after title)
+     */
+    subtitleField?: string;
     /**
      * Fields to display in card content (defaults to first 4 columns after title)
      */
@@ -210,10 +222,11 @@ export interface SearchCriteria {
   logicalOperator?: 'AND' | 'OR';  // The logical operator connecting this criterion with the next one
   // Support for date range filters (like "between")
   secondValue?: string;  // For "between" operator, this holds the end date
-  fieldType?: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template';  // Field type to determine input type
+  fieldType?: 'text' | 'date' | 'number' | 'currency' | 'translate' | 'avatar' | 'email' | 'conditionalIcon' | 'multiple-avatars' | 'template' | 'interactionIcon';  // Field type to determine input type
 }
 
 export interface SearchParams {
   generalSearch?: string;
   fieldSearches?: SearchCriteria[];
+  myOfficeOnly?: boolean;
 }

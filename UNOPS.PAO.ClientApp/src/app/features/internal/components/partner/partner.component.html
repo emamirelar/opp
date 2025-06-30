@@ -1,7 +1,8 @@
 <div class="flex flex-col gap-8">
   <div class="flex flex-wrap items-center gap-4">
-    <div>
-      <p class="text-2xl font-semibold"> {{ 'title.partners' | translate }} </p>
+    <div class="flex items-center gap-3">
+      <span class="material-symbols-outlined text-3xl">corporate_fare</span>
+      <p class="text-3xl font-bold"> {{ 'title.partners' | translate }} </p>
     </div>
     <div class="ml-auto flex gap-2">
       @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
@@ -9,12 +10,14 @@
           icon="pi pi-file-import"
           [label]="'button.import' | translate"
           (click)="openImportDialog()"
-          severity="secondary"
+          rounded
+          text
         />
-        <p-button 
-          icon="pi pi-plus" 
-          label="New" 
+        <p-button
+          icon="pi pi-plus"
+          label="New"
           title="New Partner"
+          rounded
           (onClick)="openPartnerEditDialog()"
         />
       }

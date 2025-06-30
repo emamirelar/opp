@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UNOPS.PAO.Domain\UNOPS.PAO.Domain.csproj" />
+    <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
   </ItemGroup>
 
 </Project>

@@ -15,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class PictureComponent {
   @Input() imageUrl: string | null = null;
   @Input() altText: string = 'Profile picture';
-  @Input() size: 'small' | 'medium' | 'large' = 'medium';
+  @Input() size: 'extra-small' | 'small' | 'medium' | 'large' = 'medium';
   @Input() uploadUrl: string | null = null;
   @Input() disabled: boolean = false;
   @Output() imageChanged = new EventEmitter<string>();
@@ -27,6 +27,7 @@ export class PictureComponent {
 
   getSizeClass(): string {
     switch(this.size) {
+      case 'extra-small': return 'w-10 h-10';
       case 'small': return 'w-16 h-16';
       case 'medium': return 'w-24 h-24';
       case 'large': return 'w-32 h-32';

@@ -14,6 +14,7 @@
         "when": "Cuándo",
         "who": "Quién",
         "why": "Por qué",
+        "contact": "Contacto",
         "contacts": "Contactos",
         "partners": "Socios",
         "partnerTree": "Árbol de Socios",
@@ -33,6 +34,8 @@
         "partnerDetails": "Detalles del Socio",
         "partnerDashboard": "Panel del Socio",
         "admin": "Administración",
+        "fundingAndAgreements": "Acuerdos de Financiación",
+        "dashboard": "Panel de Control",
         "partner": {
             "summaryOfInteractions": "Resumen IA de Interacciones",
             "categoryNews": "Noticias de Categoría",
@@ -161,7 +164,9 @@
             "mailingPostalCode": "Código postal de envío",
             "mailingCountry": "País de envío",
             "contactViaAssistant": "Contactar a través del asistente",
-            "createdByOffice": "Creado por Oficina"
+            "createdByOffice": "Creado por Oficina",
+            "summaryOfInteractions": "Resumen IA de Interacciones",
+            "contactNews": "Noticias del Contacto"
         },
         "partner": {
             "partner": "Socio",
@@ -231,7 +236,7 @@
     "search": {
         "placeholder": "Buscar...",
         "recentSearches": "Búsquedas recientes",
-        "results": "Resultados",
+        "results": "Resultados de búsqueda para",
         "showAllResults": "Mostrar todos los resultados",
         "seeAllResults": "Ver todos los resultados",
         "contact": "Contacto",

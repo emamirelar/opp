@@ -9,9 +9,17 @@ public interface ISearchFilter
 }
 
 /// <summary>
+/// Interface for organizational unit filtering
+/// </summary>
+public interface IMyOfficeFilter
+{
+    bool MyOfficeOnly { get; set; }
+}
+
+/// <summary>
 /// Interface for contact-related search functionality
 /// </summary>
-public interface IContactSearchFilter : ISearchFilter
+public interface IContactSearchFilter : ISearchFilter, IMyOfficeFilter
 {
     int? Id { get; set; }
     string? FirstName { get; set; }
@@ -39,7 +47,7 @@ public interface IContactSearchFilter : ISearchFilter
 /// <summary>
 /// Interface for partner-related search functionality
 /// </summary>
-public interface IPartnerSearchFilter : ISearchFilter
+public interface IPartnerSearchFilter : ISearchFilter, IMyOfficeFilter
 {
     int? Id { get; set; }
     string? Name { get; set; }
@@ -61,11 +69,12 @@ public interface IPartnerSearchFilter : ISearchFilter
 /// <summary>
 /// Interface for interaction-related search functionality
 /// </summary>
-public interface IInteractionSearchFilter : ISearchFilter
+public interface IInteractionSearchFilter : ISearchFilter, IMyOfficeFilter
 {
     int? Id { get; set; }
     int? ContactId { get; set; }
     string? ContactName { get; set; }
+    int? PartnerId { get; set; }
     string? Type { get; set; }
     DateTime? FromDate { get; set; }
     DateTime? ToDate { get; set; }

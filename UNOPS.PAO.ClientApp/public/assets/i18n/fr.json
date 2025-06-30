@@ -14,6 +14,7 @@
         "when": "Quand",
         "who": "Qui",
         "why": "Pourquoi",
+        "contact": "Contact",
         "contacts": "Contacts",
         "partners": "Partners",
         "partnerTree": "Arbre des Partenaires",
@@ -41,7 +42,9 @@
         "editPartnershipUserAccess": "Modifier l'accès des utilisateurs de partenariat",
         "manageOffice": "Gérer mon bureau",
         "managerEntities": "Gestionnaire d'entités",
-        "translationWorkbench": "Table de traduction"
+        "translationWorkbench": "Table de traduction",
+        "fundingAndAgreements": "Accords de Financement",
+        "dashboard": "Tableau de Bord"
     },
     "button": {
         "back": "Retour",
@@ -112,6 +115,10 @@
         "linkFromDrive": "Lier des documents depuis Drive.",
         "name": "Nom",
         "no": "Non",
+        "sortBy": "Trier par",
+        "selectSort": "Sélectionner le tri",
+        "ascending": "Croissant",
+        "descending": "Décroissant",
         "postedDate": "Date de Publication",
         "sdgs": "ODD",
         "selectEligibleEntities": "Sélectionner des Entités Éligibles",
@@ -177,7 +184,9 @@
             "mailingPostalCode": "Code postal d'envoi",
             "mailingCountry": "Pays d'envoi",
             "contactViaAssistant": "Contacter via l'assistant",
-            "createdByOffice": "Créé par Bureau"
+            "createdByOffice": "Créé par Bureau",
+            "summaryOfInteractions": "Résumé IA des Interactions",
+            "contactNews": "Actualités du Contact"
         },
         "pictureEditor": {
             "dropImageHere": "Déposez une image ici ou utilisez le bouton ci-dessous",
@@ -260,7 +269,7 @@
     "search": {
         "placeholder": "Rechercher...",
         "recentSearches": "Recherches récentes",
-        "results": "Résultats",
+        "results": "Résultats de recherche pour",
         "showAllResults": "Afficher tous les résultats",
         "seeAllResults": "Voir tous les résultats",
         "contact": "Contact",
@@ -297,7 +306,9 @@
         },
         "selectDate": "Sélectionner une date",
         "selectEndDate": "Sélectionner la date de fin",
-        "and": "et"
+        "and": "et",
+        "myOfficeOnly": "Mon Bureau Seulement",
+        "myOfficeTooltip": "Filtrer les résultats pour afficher uniquement les données de votre unité organisationnelle"
     },
     "savedFilters": {
         "selectFilter": "Sélectionner un filtre",

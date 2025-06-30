@@ -51,7 +51,10 @@ public class Partner : ModifiableDeletableEntity
     // Computed property to get the first 5 contacts ordered by creation date (newest first)
     [NotMapped]
     public IEnumerable<Contact> First5ContactsByDate => 
-        Contacts?.OrderByDescending(c => c.CreatedDate).Take(5) ?? Enumerable.Empty<Contact>();
+        Contacts?.Where(c => c != null)
+                 .OrderByDescending(c => c.CreatedDate == DateTime.MinValue ? DateTime.MinValue : c.CreatedDate)
+                 .ThenByDescending(c => c.Id) // Fallback ordering by Id when CreatedDate is default
+                 .Take(5) ?? Enumerable.Empty<Contact>();
 
     /// <summary>
     /// Gets all interactions related to this partner through its contacts

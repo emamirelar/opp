@@ -13,11 +13,10 @@ public class MappingProfile : Profile
     {
         CreateMap<Project, ProjectModel>();
         CreateMap<Project, ProjectSummaryModel>();
-        CreateMap<UNOPSPartner, PartnerSummaryModel>();
+        CreateMap<UNOPSPartner, UNOPS.PAO.Models.PartnerSummaryModel>();
         CreateMap<ContactRequest, UNOPSContact>();
         CreateMap<UNOPSContact, ContactModel>()
-            .ForMember(dest => dest.Partner, opt => opt.Ignore())
-            .ForMember(dest => dest.PartnerName, opt => opt.MapFrom(src => src.Partner != null ? src.Partner.Name : null))
+            .ForMember(dest => dest.Partner, opt => opt.MapFrom(src => src.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = src.Partner.Id, Name = src.Partner.Name } : null))
             .ForMember(dest => dest.ProfilePictureUrl, opt => opt.MapFrom(src => src.ProfilePictureUrl))
             .ForMember(dest => dest.Interactions, opt => opt.MapFrom((src, dest, destMember, context) => 
                 src.Interactions != null ? src.Interactions.Cast<UNOPSInteraction>().Select(interaction => context.Mapper.Map<UNOPSInteraction, InteractionModel>(interaction)).ToList() : null));

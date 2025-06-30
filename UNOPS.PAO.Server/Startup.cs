@@ -35,11 +35,10 @@ using UNOPS.PAO.UNOPSIdentity.Authentication;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
 using UNOPS.PAO.UNOPSPresentation.Authorization;
 using UNOPS.PAO.UNOPSDataAccess.Seed;
-using UNOPS.PAO.UNOPSPresentation.Middleware;
 using System.IO;
 using UNOPS.PAO.Presentation.Security;
-using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Services;
+using UNOPS.PAO.UNOPSBusiness.Managers;
 
 namespace UNOPS.PAO.Server;
 
@@ -323,17 +322,8 @@ public class Startup
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
 
-        // RBAC Services
-        services.AddScoped<IPermissionService, PermissionService>();
-        
-        // Add Business Security Service for row-level filtering
-        services.AddScoped<IBusinessSecurityService, BusinessSecurityService>();
-        
         // Add SavedFilter Service
         services.AddScoped<ISavedFilterService, SavedFilterService>();
-        
-        // Add Generic Row Filter Service
-        services.AddScoped<IGenericRowFilterService, GenericRowFilterService>();
         
         // Configure authorization
         services.AddAuthorization(options =>
@@ -361,9 +351,18 @@ public class Startup
         // Register OrganizationHierarchy manager
         services.AddScoped<IOrganizationHierarchyManager, OrganizationHierarchyManager>();
         
+        // Register Permission service for access control
+        services.AddScoped<IPermissionService, PermissionService>();
+        
+        // Register Secure Specification Factory for RBAC-aware database filtering
+        services.AddScoped<ISecureSpecificationFactory, SecureSpecificationFactory>();
+        
         // Add data seeding services
         services.AddDataSeeding();
 
+        // Register HttpContextAccessor for accessing request context in managers
+        services.AddHttpContextAccessor();
+        
         //services.AddScoped<IManagerWrapper, ManagerWrapper>();
         services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();
 

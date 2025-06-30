@@ -45,6 +45,8 @@ public class ContactManager : IContactManager
         throw new NotImplementedException();
     }
 
+
+
     public PaginationResponse<ContactModel> GetContactsWithSpecification(int userId, ISpecification<Contact> specification, PaginationRequest pagination)
     {
         throw new NotImplementedException();
@@ -136,8 +138,7 @@ public class ContactManager : IContactManager
             .Select(x => new ContactModel()
             {
                 Id = x.Id,
-                PartnerId = x.Partner.Id,
-                PartnerName = x.Partner.Name,
+                Partner = new PartnerSummaryModel { Id = x.Partner.Id, Name = x.Partner.Name },
                 Salutation = x.Salutation,
                 FirstName = x.FirstName,
                 LastName = x.LastName,

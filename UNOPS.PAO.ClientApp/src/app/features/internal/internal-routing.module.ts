@@ -10,6 +10,7 @@ import { PartnerViewComponent } from './components/partner/view/partner-view.com
 import { PartnerDataComponent } from './components/partner/data/partner-data.component';
 import { ContactListComponent } from './components/contact/list/contact-list.component';
 import { ContactViewComponent } from './components/contact/view/contact-view.component';
+import { ContactTabsComponent } from './components/contact/tabs/contact-tabs.component';
 import { PartnerTabsComponent } from './components/partner/tabs/partner-tabs.component';
 import { ComingSoonComponent } from '../../common/pages/components/coming-soon/coming-soon.component';
 import { SearchResultComponent } from './components/search-result/search-result.component';
@@ -18,8 +19,13 @@ import { PartnerTreeDetailsComponent } from './components/partner-tree/view/deta
 import { PartnerTreeDataComponent } from './components/partner-tree/view/data/partner-tree-data.component';
 import { PartnerDataResolver } from './resolvers/partner-data.resolver';
 import { PartnerTreeDataResolver } from './resolvers/partner-tree-data.resolver';
+import { ContactDataResolver } from './resolvers/contact-data.resolver';
 import { UserManagementComponent } from './admin/user-management/user-management.component';
 import { EntityManagerComponent } from './admin/entity-manager/entity-manager.component';
+import { PartnerTreePageComponent } from './components/partner-tree-page/partner-tree-page.component';
+import {
+  ContactViewInteractionsComponent
+} from '@features/internal/components/contact/view/interactions/contact-view-interactions.component';
 
 const internalRoutes: Routes = [
   {
@@ -53,8 +59,24 @@ const internalRoutes: Routes = [
               { path: '', component: ContactListComponent },
               {
                 path: ':recordId',
-                data: { breadcrumb: 'Details' },
-                component: ContactViewComponent,
+                component: ContactTabsComponent,
+                canActivate: [authGuard, routePermissionGuard],
+                data: { breadcrumb: 'Contact' },
+                resolve: {
+                  contactData: ContactDataResolver
+                },
+                children: [
+                  {
+                    path: '',
+                    component: ContactViewComponent,
+                    data: { breadcrumb: 'Details' }
+                  },
+                  {
+                    path: 'interactions',
+                    component: ContactViewInteractionsComponent,
+                    data: { breadcrumb: 'Interactions' }
+                  }
+                ]
               },
             ]
           },
@@ -71,7 +93,7 @@ const internalRoutes: Routes = [
           {
             path: 'partner-tree',
             data: { breadcrumb: 'Partner Tree' },
-            component: PartnerTreeComponent,
+            component: PartnerTreePageComponent,
             canActivate: [authGuard, routePermissionGuard]
           },
           {
@@ -98,6 +120,21 @@ const internalRoutes: Routes = [
                 path: 'data',
                 component: PartnerDataComponent,
                 data: { breadcrumb: 'Data' }
+              },
+              {
+                path: 'contacts',
+                loadComponent: () => import('./components/partner/contacts/partner-contacts.component').then(m => m.PartnerContactsComponent),
+                data: { breadcrumb: 'Contacts' }
+              },
+              {
+                path: 'interactions',
+                loadComponent: () => import('./components/partner/view/interactions/partner-view-interactions.component').then(m => m.PartnerViewInteractionsComponent),
+                data: { breadcrumb: 'Interactions' }
+              },
+              {
+                path: 'funding-agreements',
+                loadComponent: () => import('./components/partner/funding-agreements/partner-funding-agreements.component').then(m => m.PartnerFundingAgreementsComponent),
+                data: { breadcrumb: 'Funding & Agreements' }
               }
             ]
           },

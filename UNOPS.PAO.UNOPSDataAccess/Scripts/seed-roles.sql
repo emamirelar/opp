@@ -12,7 +12,8 @@ VALUES
     ('UNOPS_GEN_USER', 'UNOPS_GEN_USER', 'General User'),
     ('PARTNER_GLOB_ADMIN', 'PARTNER_GLOB_ADMIN', 'Partnership Global Admin'),
     ('PARTNER_USER', 'PARTNER_USER', 'Partnership User'),
-    ('ORG_UNIT_ADMIN', 'ORG_UNIT_ADMIN', 'Org Unit Admin');
+    ('ORG_UNIT_ADMIN', 'ORG_UNIT_ADMIN', 'Org Unit Admin'),
+    ('GMAIL_GEN_USER', 'GMAIL_GEN_USER', 'Gmail General User');
 
 -- Clean up existing entity permissions
 DELETE FROM public."EntityPermissions";
@@ -106,6 +107,27 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerOffice != null && PartnerOffice.Code == @userOrgUnit", "CanDelete": ""}'
 );
 
+-- Gmail General User role permissions for Partner (read selected fields only)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Partner',
+    'GMAIL_GEN_USER',
+    true,
+    false,
+    false,
+    false,
+    '{"CanRead": ["CreatedBy", "LastModifiedBy", "CreatedAt", "LastModifiedDate", "IsDeleted", "Status", "PartnerOffice", "PartnerCategoryCode", "PartnerGroupCode", "Description", "Address", "Website", "Country", "Region", "PartnerId"], "CanCreate": [], "CanUpdate": [], "CanDelete": []}',
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
 -- Contact Entity Permissions
 
 -- UNOPS General User role permissions for Contact
@@ -192,6 +214,27 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "", "CanCreate": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit", "CanUpdate": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit", "CanDelete": "Partner != null && Partner.PartnerOffice != null && Partner.PartnerOffice.Code == @userOrgUnit"}'
 );
 
+-- Gmail General User role permissions for Contact (read selected fields + create all fields)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Contact',
+    'GMAIL_GEN_USER',
+    true,
+    true,
+    false,
+    false,
+    '{"CanRead": ["CreatedBy", "LastModifiedBy", "CreatedAt", "LastModifiedDate", "IsDeleted", "Status", "Partner", "PartnerId", "Name", "Description", "Phone", "Address", "Website", "Country", "Region", "Department", "Position", "OrganizationName"], "CanCreate": [], "CanUpdate": [], "CanDelete": []}',
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
 -- PartnerTree Entity Permissions
 
 -- UNOPS General User role permissions for PartnerTree
@@ -270,6 +313,27 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'PartnerTree',
     'ORG_UNIT_ADMIN',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Gmail General User role permissions for PartnerTree (no access)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'PartnerTree',
+    'GMAIL_GEN_USER',
     false,
     false,
     false,
@@ -364,6 +428,27 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "(OrgUnit != null && OrgUnit.Code == @userOrgUnit) || InteractionUsers.Any(iu => iu.UserId == @currentUserId)", "CanDelete": "OrgUnit != null && OrgUnit.Code == @userOrgUnit"}'
 );
 
+-- Gmail General User role permissions for Interaction (read/create/update all fields, no delete)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'Interaction',
+    'GMAIL_GEN_USER',
+    true,
+    true,
+    true,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
 -- UserManagement Entity Permissions
 
 -- Partnership Global Admin role permissions for UserManagement
@@ -406,6 +491,27 @@ INSERT INTO public."EntityPermissions" (
     true,
     null,
     '{"CanRead": "OrgUnit == @userOrgUnit", "CanCreate": "OrgUnit == @userOrgUnit", "CanUpdate": "OrgUnit == @userOrgUnit", "CanDelete": "OrgUnit == @userOrgUnit"}'
+);
+
+-- Gmail General User role permissions for UserManagement (no access)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'UserManagement',
+    'GMAIL_GEN_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- AiPromptManagement Entity Permissions
@@ -486,6 +592,27 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'AiPromptManagement',
     'ORG_UNIT_ADMIN',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Gmail General User role permissions for AiPromptManagement (no access)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'AiPromptManagement',
+    'GMAIL_GEN_USER',
     false,
     false,
     false,
@@ -593,6 +720,27 @@ INSERT INTO public."EntityPermissions" (
     '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
+-- Gmail General User role permissions for EntityManager (no access)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'EntityManager',
+    'GMAIL_GEN_USER',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
 -- EntityFieldManager Entity Permissions
 
 -- UNOPS General User role permissions for EntityFieldManager
@@ -671,6 +819,27 @@ INSERT INTO public."EntityPermissions" (
 ) VALUES (
     'EntityFieldManager',
     'ORG_UNIT_ADMIN',
+    false,
+    false,
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+);
+
+-- Gmail General User role permissions for EntityFieldManager (no access)
+INSERT INTO public."EntityPermissions" (
+    "Entity", 
+    "Role", 
+    "CanRead", 
+    "CanCreate", 
+    "CanUpdate", 
+    "CanDelete", 
+    "PropertyFilter", 
+    "RowFilter"
+) VALUES (
+    'EntityFieldManager',
+    'GMAIL_GEN_USER',
     false,
     false,
     false,

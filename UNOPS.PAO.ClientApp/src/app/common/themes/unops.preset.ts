@@ -3695,7 +3695,7 @@ const UnopsPreset = definePreset(Material,
         },
         panel: {
             root: {
-                background: "{content.background}",
+                background: "white",
                 //TODO: JW - This is a temporary fix for the panel border. Border should be removed rather than coloured.
                 borderColor: "{surface.0}",
                 color: "{content.color}",

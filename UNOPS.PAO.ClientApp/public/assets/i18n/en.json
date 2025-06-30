@@ -19,6 +19,7 @@
     "when": "When",
     "who": "Who",
     "why": "Why",
+    "contact": "Contact",
     "contacts": "Contacts",
     "interactions": "Interactions",
     "newInteraction": "New Interaction",
@@ -36,6 +37,8 @@
     "partners": "Partners",
     "partnerships": "Partnerships",
     "partnershipAgreements": "Partnership Agreements",
+    "fundingAndAgreements": "Funding & Agreements",
+    "dashboard": "Dashboard",
     "leads": "Leads",
     "initiatives": "Initiatives",
     "admin": "Administration",
@@ -152,7 +155,9 @@
       "mailingPostalCode": "Mailing Postal Code",
       "mailingCountry": "Mailing Country",
       "contactViaAssistant": "Contact via Assistant",
-      "createdByOffice": "Created By Office"
+      "createdByOffice": "Created By Office",
+      "summaryOfInteractions": "AI Summary of Interactions",
+      "contactNews": "Contact News"
     },
     "partnerTree": {
       "id": "ID",
@@ -224,6 +229,10 @@
     "linkDriveFile": "Link Drive File",
     "linkFromDrive": "Link documents from drive.",
     "name": "Name",
+    "sortBy": "Sort by",
+    "selectSort": "Select sort",
+    "ascending": "Ascending",
+    "descending": "Descending",
     "partnershipUserRole": "Partnership User Role",
     "partnerUser": "Partnership User",
     "otherRoles": "Other Roles",
@@ -326,7 +335,6 @@
     "loadingPermissions": "Loading permissions...",
     "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access role impersonation."
   },
-  "label.interaction.contact": "Contact",
   "errors": {
     "failedToLoad": "Error al cargar",
     "errorLoadingData": "Error loading data. Please try again later.",
@@ -357,6 +365,9 @@
     "examplePrompt2": "Help draft a partnership proposal",
     "examplePrompt3": "Summarize recent partner interactions",
     "learnMore": "Learn more about what you can use AI Assistant for"
+  },
+  "actions": {
+    "loadMore": "Load More"
   },
   "common": {
     "cancel": "Cancel",
@@ -400,7 +411,14 @@
   },
   "loading": {
     "contactData": "Loading contact data...",
-    "partnerData": "Loading partner data..."
+    "partnerData": "Loading partner data...",
+    "loadingMore": "Loading more...",
+    "loadingData": "Loading data...",
+    "preparing": "Preparing..."
+  },
+  "timeline": {
+    "navigation": "Navigation",
+    "reset": "Reset"
   },
   "interactions": {
     "title": "Interactions",
@@ -434,7 +452,7 @@
   "search": {
     "placeholder": "Search...",
     "recentSearches": "Recent Searches",
-    "results": "Results",
+    "results": "Search Results for",
     "showAllResults": "Show All Results",
     "seeAllResults": "See all results",
     "contact": "Contact",
@@ -469,7 +487,9 @@
       "lessThanOrEqual": "less than or equal",
       "after": "after",
       "before": "before",
-      "between": "between"
+      "between": "between",
+      "on": "on",
+      "notOn": "not on"
     },
     "logicalOperators": {
       "and": "AND",
@@ -477,14 +497,16 @@
     },
     "selectDate": "Select date",
     "selectEndDate": "Select end date",
-    "and": "and"
+    "and": "and",
+    "myOfficeOnly": "My Office Only",
+    "myOfficeTooltip": "Filter results to show only data from your organizational unit"
   },
   "savedFilters": {
     "selectFilter": "Select filter",
     "save": "Save",
     "saveNew": "Save New",
     "saveCurrentFilter": "Save current filter",
-    "updateFilter": "Update filter", 
+    "updateFilter": "Update filter",
     "deleteFilter": "Delete filter",
     "saveFilter": "Save filter",
     "filterName": "Filter name",

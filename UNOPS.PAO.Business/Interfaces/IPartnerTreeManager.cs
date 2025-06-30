@@ -25,6 +25,5 @@ public interface IPartnerTreeManager
 
     Task DeletePartnerTreeAsync(ClaimsPrincipal user, int id);
     
-
     Task<IEnumerable<object>> GetCategoryAndGroupStructureAsync(ClaimsPrincipal user);
 }

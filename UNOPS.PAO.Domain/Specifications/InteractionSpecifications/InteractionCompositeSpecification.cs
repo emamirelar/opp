@@ -24,6 +24,10 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         AddInclude(i => i.InteractionContacts);
         AddInclude("InteractionContacts.Contact");
         
+        // Include the related partners through junction table
+        AddInclude(i => i.InteractionPartners);
+        AddInclude("InteractionPartners.Partner");
+        
         // Default ordering is by date descending
         ApplyOrderByDescending(i => i.Date);
     }
@@ -48,6 +52,10 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         // Include the related contacts through junction table
         AddInclude(i => i.InteractionContacts);
         AddInclude("InteractionContacts.Contact");
+        
+        // Include the related partners through junction table
+        AddInclude(i => i.InteractionPartners);
+        AddInclude("InteractionPartners.Partner");
         
         // Default ordering is by date descending
         ApplyOrderByDescending(i => i.Date);
@@ -83,6 +91,7 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         public int? Id { get; set; }
         public int? ContactId { get; set; }
         public string? ContactName { get; set; }
+        public int? PartnerId { get; set; }
         public string? Type { get; set; }
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
@@ -93,5 +102,6 @@ public class InteractionCompositeSpecification : GenericCompositeSpecification<I
         public string? SearchText { get; set; }
         public bool AdvancedSearch { get; set; }
         public string? SearchCriteria { get; set; }
+        public bool MyOfficeOnly { get; set; }
     }
 } 

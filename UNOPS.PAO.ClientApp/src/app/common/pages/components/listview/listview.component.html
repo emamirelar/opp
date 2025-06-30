@@ -1,39 +1,70 @@
 <p-confirmDialog></p-confirmDialog>
 
-<div class="flex flex-col gap-4">
-  
+<div class="flex flex-col gap-8 ">
+
   <!-- Search bar -->
   @if (config.enableSearch) {
     <!-- Autocomplete Search Input (default mode) -->
     @if (!isAdvancedSearch()) {
-      <div class="w-full flex gap-2 items-center">
-        <p-iconfield iconPosition="left">
+      <div class="w-full flex gap-2 items-center   rounded-lg bg-white p-4 shadow-sm flex-wrap">
+        <p-iconfield iconPosition="left" class="w-full lg:w-64">
           <p-inputicon class="pi pi-search" />
           <input pInputText type="text"
+
             [(ngModel)]="searchValue"
             [placeholder]="searchPlaceholder()"
             (keyup.enter)="onSearch()"
-            class="w-64"
+            class="w-full lg:w-64"
           />
           @if (searchValue && searchValue.length > 0) {
             <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
           }
         </p-iconfield>
-        
+
+
+
         <!-- Advanced Search Button -->
         @if (config.searchConfig?.useAdvancedSearch) {
           <div class="flex justify-start">
+            <!-- Mobile: Icon only -->
+            <p-button
+              icon="pi pi-filter"
+              class="lg:hidden"
+              text rounded
+              [pTooltip]="'search.advanced' | translate"
+              (onClick)="switchToAdvancedSearch()"
+            ></p-button>
+            <!-- Desktop: Icon + Label -->
             <p-button
               [label]="'search.advanced' | translate"
               icon="pi pi-filter"
-              text
+              class="hidden lg:inline-flex"
+              text rounded
               (onClick)="switchToAdvancedSearch()"
             ></p-button>
           </div>
         }
+
+        <!-- Sort Dropdown -->
+        @if (config.enableSorting && sortableFields().length > 0) {
+          <div class="flex items-center gap-2 ml-auto">
+            <label class="text-sm font-medium text-gray-600">{{ 'label.sortBy' | translate }}:</label>
+            <p-select
+              [options]="sortOptions()"
+              [(ngModel)]="currentSortConfig"
+              (ngModelChange)="onSortConfigChange($event)"
+              optionLabel="label"
+              optionValue="value"
+              [placeholder]="'label.selectSort' | translate"
+              class="w-48"
+              [showClear]="true"
+              (onClear)="clearSort()"
+            />
+          </div>
+        }
       </div>
     }
-    
+
     <!-- Advanced Search -->
     @if (isAdvancedSearch()) {
       <app-listview-advanced-search
@@ -41,43 +72,21 @@
         [isLoading]="isLoading()"
         [searchCriteria]="searchCriteria"
         [entityType]="entityType"
+        [orderBy]="currentSortField"
+        [ascending]="currentSortOrder === 'asc'"
+        [preselectedSavedFilterId]="preselectedSavedFilterId"
         (search)="onAdvancedSearch($event)"
         (removeCriterion)="onRemoveSearchCriterion($event)"
         (clearSearch)="onClearAdvancedSearch()"
         (exportData)="exportData()"
-        (switchToSimple)="switchToSimpleSearch()">
+        (switchToSimple)="switchToSimpleSearch()"
+        (myOfficeFilterChanged)="onMyOfficeFilterChanged($event)"
+        (applySavedFilter)="onApplySavedFilter($event)">
       </app-listview-advanced-search>
     }
   }
 
-    <!-- Table view -->
-    @if (viewMode === 'table') {
-      <app-listview-table
-        [columns]="columns"
-        [config]="config"
-        [data]="currentPageData()"
-        [totalRecords]="totalRecordsCount()"
-        [loading]="isLoading()"
-        [error]="hasError()"
-        [first]="first"
-        [rows]="rows"
-        (pageChange)="onPageChange($event)"
-        (sortChange)="onSortChange($event)"
-        (rowClick)="onRowClick($event)"
-      >
-        @if (actionsTemplate) {
-          <ng-template #tableActionsTemplate let-rowData>
-            <ng-container
-              [ngTemplateOutlet]="actionsTemplate"
-              [ngTemplateOutletContext]="{ $implicit: rowData }"
-            ></ng-container>
-          </ng-template>
-        }
-      </app-listview-table>
-    }
-    
     <!-- Card view -->
-    @if (viewMode === 'card') {
       <app-listview-card
         [columns]="columns"
         [config]="config"
@@ -85,20 +94,19 @@
         [totalRecords]="totalRecordsCount()"
         [loading]="isLoading()"
         [error]="hasError()"
-        [first]="first"
-        [rows]="rows"
-        (pageChange)="onPageChange($event)"
+        [hasMoreData]="hasMoreDataAvailable()"
+        [isLoadingMore]="isLoadingMore()"
+        (loadMore)="onLoadMore()"
         (sortChange)="onSortChange($event)"
         (rowClick)="onRowClick($event)"
       >
         @if (actionsTemplate) {
           <ng-template #cardActionsTemplate let-rowData>
             <ng-container
-              [ngTemplateOutlet]="actionsTemplate" 
+              [ngTemplateOutlet]="actionsTemplate"
               [ngTemplateOutletContext]="{ $implicit: rowData }"
             ></ng-container>
           </ng-template>
         }
       </app-listview-card>
-    }
 </div>

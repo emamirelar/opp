@@ -15,6 +15,8 @@ using System.Net.Mail;
 using UNOPS.PAO.UNOPSBusiness.Managers;
 using UNOPS.PAO.UNOPSDataAccess.Migrations;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSBusiness.Attributes;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -41,6 +43,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
 
         [HttpPost(APIDictionary.GmailAddonInteraction)]
+        [AccessControlled(EntityTypes.Interaction, "create")]
         public async Task<IActionResult> CreateInteraction([FromBody] InteractionRequest model)
         {
             var result = await _interactionManager.CreateGmailInteractionAsync(model);
@@ -48,6 +51,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
 
         [HttpPut(APIDictionary.GmailAddonInteraction)]
+        [AccessControlled(EntityTypes.Interaction, "update")]
         public async Task<IActionResult> UpdateInteraction([FromBody] UpdateInteractionRequest model)
         {
             var result = await _interactionManager.UpdateGmailInteractionAsync(model);
@@ -55,6 +59,7 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
 
         [HttpPost(APIDictionary.GmailAddonFindInteraction)]
+        [AccessControlled(EntityTypes.Interaction, "read")]
         public async Task<IActionResult> FindGmailInteraction([FromBody] GmailInteractionRequest model)
         {
             try

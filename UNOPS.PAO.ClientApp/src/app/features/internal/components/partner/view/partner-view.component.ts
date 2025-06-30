@@ -32,7 +32,7 @@ import { MessageModule } from 'primeng/message';
 import { PartnerService } from '../../../services/partner.service';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PartnerContactsComponent } from '../contacts/partner-contacts.component';
 import { GeminiService } from '../../../services/gemini.service';
 import { LinkListComponent } from "../../../../../common/reusables/components/link/list/link-list.component";
@@ -44,6 +44,7 @@ import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.c
 import { Partner } from '../../../models/partner.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
+import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
 
 @Component({
   selector: 'app-partner-view',
@@ -72,6 +73,8 @@ import { AiPanelComponent } from '../../../../../common/reusables/components/ai-
     PartnerViewContactsComponent,
     TooltipModule,
     AiPanelComponent,
+    RouterModule,
+    GoBackComponent,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
@@ -113,6 +116,7 @@ export class PartnerViewComponent implements OnInit {
   showCommentDialog = false;
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
+
 
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
@@ -397,4 +401,5 @@ export class PartnerViewComponent implements OnInit {
   toggleFullContent() {
     this.showFullContent.set(!this.showFullContent());
   }
+
 }

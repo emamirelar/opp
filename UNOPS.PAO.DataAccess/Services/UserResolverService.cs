@@ -48,7 +48,7 @@ public class UserResolverService<TUserId>
         var context = _httpContextAccessor.HttpContext;
         if (context == null)
         {
-            Console.WriteLine("[UserResolverService] Warning: HttpContext is null, returning default user ID");
+            // Console.WriteLine("[UserResolverService] Warning: HttpContext is null, returning default user ID");
             return default;
         }
             
@@ -66,13 +66,13 @@ public class UserResolverService<TUserId>
             {
                 // IAP email header format: "accounts.google.com:user@example.com"
                 email = headerValue.ToString().Split(':').Last();
-                Console.WriteLine($"[UserResolverService] Found email in IAP headers: {email}");
+                // Console.WriteLine($"[UserResolverService] Found email in IAP headers: {email}");
             }
             else if (user != null)
             {
                 // Try to get email from claims as a fallback
                 email = user.FindFirst(ClaimTypes.Email)?.Value;
-                Console.WriteLine($"[UserResolverService] Found email in user claims: {email}");
+                // Console.WriteLine($"[UserResolverService] Found email in user claims: {email}");
             }
             
             // If we have an email, try to resolve it to a user ID
@@ -86,15 +86,15 @@ public class UserResolverService<TUserId>
                         var userId = _userLookupService.GetUserIdByEmailAsync(email).GetAwaiter().GetResult();
                         if (userId > 0)
                         {
-                            Console.WriteLine($"[UserResolverService] Resolved email to user ID: {userId}");
+                            // Console.WriteLine($"[UserResolverService] Resolved email to user ID: {userId}");
                             return (TUserId)Convert.ChangeType(userId, typeof(TUserId));
                         }
-                        Console.WriteLine($"[UserResolverService] Failed to resolve email to user ID, got: {userId}");
+                        // Console.WriteLine($"[UserResolverService] Failed to resolve email to user ID, got: {userId}");
                     }
                     catch (Exception ex)
                     {
                         // Log but don't throw to avoid breaking the app
-                        Console.WriteLine($"[UserResolverService] Error resolving user ID from email: {ex.Message}");
+                        // Console.WriteLine($"[UserResolverService] Error resolving user ID from email: {ex.Message}");
                     }
                 }
                 
@@ -104,13 +104,13 @@ public class UserResolverService<TUserId>
                     var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     if (userIdClaim != null)
                     {
-                        Console.WriteLine($"[UserResolverService] Using authenticated user ID: {userIdClaim}");
+                        // Console.WriteLine($"[UserResolverService] Using authenticated user ID: {userIdClaim}");
                         return (TUserId)Convert.ChangeType(userIdClaim, typeof(TUserId));
                     }
                 }
                 
                 // Return a default value as fallback only if we truly can't resolve the ID
-                Console.WriteLine("[UserResolverService] Using default user ID fallback");
+                // Console.WriteLine("[UserResolverService] Using default user ID fallback");
                 return (TUserId)Convert.ChangeType(1, typeof(TUserId));
             }
         }
@@ -122,13 +122,13 @@ public class UserResolverService<TUserId>
             var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim != null)
             {
-                Console.WriteLine($"[UserResolverService] Using authenticated user ID from claims: {userIdClaim}");
+                // Console.WriteLine($"[UserResolverService] Using authenticated user ID from claims: {userIdClaim}");
                 return (TUserId)Convert.ChangeType(userIdClaim, typeof(TUserId));
             }
         }
 
         // If all else fails, return default
-        Console.WriteLine("[UserResolverService] No authentication found, returning default");
+        // Console.WriteLine("[UserResolverService] No authentication found, returning default");
         return default;
     }
 }

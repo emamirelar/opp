@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
+using UNOPS.PAO.UNOPSBusiness.Attributes;
 
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]
@@ -24,21 +25,17 @@ public class PartnerTreeController : BaseController
         IManagerWrapper managerWrapper, 
         UserResolverService<int> userResolverService, 
         IAuthorizationService authorizationService,
-        ILogger<PartnerTreeController> logger,
-        IPermissionService permissionService)
-        : base(logger, authorizationService, userResolverService, permissionService)
+        ILogger<PartnerTreeController> logger)
+        : base(logger, authorizationService, userResolverService)
     {
         _manager = managerWrapper.PartnerTreeManager;
     }
 
     [HttpPost(APIDictionary.PartnerTree)]
+    [AccessControlled(EntityTypes.PartnerTree, "create")]
     // Internal call: Create a Partner Tree
     public async Task<ActionResult> Create([FromBody] PartnerTreeDataModel req)
     { 
-        // Check permission to create partner trees
-        var permissionResult = await CheckEntityPermissionAsync("PartnerTree", "create");
-        if (permissionResult != null) return permissionResult;
-        
         return await HandleOperationAsync(async () =>
         {
             var result = await _manager.CreatePartnerTreeAsync(User, req);
@@ -51,13 +48,10 @@ public class PartnerTreeController : BaseController
     }
 
     [HttpGet(APIDictionary.PartnerTree)]
+    [AccessControlled(EntityTypes.PartnerTree, "read")]
     // Internal call: get partner tree created by logged-in user
     public async Task<ActionResult> GetAll([FromQuery] string sortBy = "Name", [FromQuery] bool ascending = true)
     {
-        // Check permission to read partner trees
-        var permissionResult = await CheckEntityPermissionAsync("PartnerTree", "read");
-        if (permissionResult != null) return permissionResult;
-        
         try
         {
             // Use the new secure method that includes row filtering and permissions
@@ -82,13 +76,10 @@ public class PartnerTreeController : BaseController
     }
 
     [HttpGet(APIDictionary.PartnerTree + "/{id}")]
+    [AccessControlled(EntityTypes.PartnerTree, "read")]
     // Internal call: Partner Tree details
     public async Task<ActionResult> Get(int id)
     {
-        // Check permission to read partner trees
-        var permissionResult = await CheckEntityPermissionAsync("PartnerTree", "read");
-        if (permissionResult != null) return permissionResult;
-        
         return await HandleOperationAsync(async () =>
         {
             // Use the new secure method that checks entity-level access
@@ -101,14 +92,11 @@ public class PartnerTreeController : BaseController
         });
     }
 
-    [HttpPut(APIDictionary.PartnerTree)]
+    [HttpPut(APIDictionary.PartnerTree)]    
+    [AccessControlled(EntityTypes.PartnerTree, "update")]
     // Internal call: update Partner Tree
     public async Task<ActionResult> Update([FromBody] PartnerTreeDataModel[] req)
     {
-        // Check permission to update partner trees
-        var permissionResult = await CheckEntityPermissionAsync("PartnerTree", "update");
-        if (permissionResult != null) return permissionResult;
-        
         return await HandleOperationAsync(async () =>
         {
             List<PartnerTreeModel> updatedTrees = new List<PartnerTreeModel>();
@@ -128,13 +116,10 @@ public class PartnerTreeController : BaseController
     }
 
     [HttpDelete(APIDictionary.PartnerTree + "/{id}")]
+    [AccessControlled(EntityTypes.PartnerTree, "delete")]
     // Internal call: delete partner tree
     public async Task<ActionResult> Delete(int id)
     {
-        // Check permission to delete partner trees
-        var permissionResult = await CheckEntityPermissionAsync("PartnerTree", "delete");
-        if (permissionResult != null) return permissionResult;
-        
         return await HandleOperationAsync(async () =>
         {
             // Use the new secure method that checks entity-level permissions
@@ -161,12 +146,9 @@ public class PartnerTreeController : BaseController
     }
 
     [HttpGet(APIDictionary.PartnerTree + "-structure")]
+    [AccessControlled(EntityTypes.PartnerTree, "read")]
     public async Task<ActionResult> GetCategoryAndGroupStructure()
     {
-        // Check permission to read partner trees
-        var permissionResult = await CheckEntityPermissionAsync("PartnerTree", "read");
-        if (permissionResult != null) return permissionResult;
-        
         var result = await _manager.GetCategoryAndGroupStructureAsync(User);
         return Ok(result);
     }

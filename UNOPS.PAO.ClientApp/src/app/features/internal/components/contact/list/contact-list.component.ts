@@ -81,57 +81,57 @@ export class ContactListComponent implements OnInit, OnDestroy {
       useAdvancedSearch: true,
       placeholder: 'Search contacts...',
       searchableFields: [
-        { 
-          field: 'firstName', 
-          label: 'First Name', 
+        {
+          field: 'firstName',
+          label: 'First Name',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'lastName', 
-          label: 'Last Name', 
+        {
+          field: 'lastName',
+          label: 'Last Name',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'email', 
-          label: 'fieldLabels.email', 
+        {
+          field: 'email',
+          label: 'Email',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'mobile', 
-          label: 'fieldLabels.mobile', 
+        {
+          field: 'mobile',
+          label: 'Mobile',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'phone', 
-          label: 'fieldLabels.phone', 
+        {
+          field: 'phone',
+          label: 'Phone',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'title', 
-          label: 'fieldLabels.title', 
+        {
+          field: 'title',
+          label: 'Title',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'mailingCity', 
-          label: 'fieldLabels.city', 
+        {
+          field: 'mailingCity',
+          label: 'City',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         },
-        { 
-          field: 'mailingCountry', 
-          label: 'fieldLabels.country', 
+        {
+          field: 'mailingCountry',
+          label: 'Country',
           type: 'string',
           operators: ['is', 'is not']
         },
-        { 
-          field: 'partner.name', 
-          label: 'fieldLabels.partner', 
+        {
+          field: 'partner.name',
+          label: 'Partner Name',
           type: 'string',
           operators: ['is', 'is not', 'like', 'not like']
         }
@@ -143,14 +143,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
   currentSearchText = '';
 
   ngOnInit() {
-    
-    
+
+
     // Load permissions using utility service
     this.permissionUtils.loadPermissions(this.router, this.cdr);
-    
+
     // Load dynamic columns from API
     this.loadContactColumns();
-    
+
     this.route.queryParams
       .subscribe(params => {
         if (params['openNewDialog'] === 'true') {
@@ -215,7 +215,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   private createTemplateFunction(templatePattern: string): (rowData: any) => string {
     return (rowData: any) => {
       let result = templatePattern;
-      
+
       // Replace field placeholders like {firstName}, {lastName} with actual values
       const fieldMatches = templatePattern.match(/\{([^}]+)\}/g);
       if (fieldMatches) {
@@ -225,7 +225,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
           result = result.replace(match, fieldValue);
         });
       }
-      
+
       return result.trim();
     };
   }
@@ -246,11 +246,11 @@ export class ContactListComponent implements OnInit, OnDestroy {
         width: '15%',
         ellipsis: true
       },
-      { 
-        field: 'fullName', 
-        label: 'label.contact.fullName', 
-        type: 'template', 
-        sortable: false, 
+      {
+        field: 'fullName',
+        label: 'label.contact.fullName',
+        type: 'template',
+        sortable: false,
         width: '20%',
         templateFn: (contact: any) => {
           const firstName = contact.firstName || '';
@@ -260,7 +260,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
         }
       },
       { field: 'title', label: 'label.contact.title', type: 'text', sortable: true, width: '15%' },
-      { 
+      {
         field: 'createdByName',
         label: 'label.audit.createdBy',
         type: 'text',
@@ -269,7 +269,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       },
       { field: 'createdByOfficeName', label: 'label.contact.createdByOffice', type: 'text', sortable: false, width: '15%' },
     ];
-    
+
     this.contactColumns.set(fallbackColumns);
   }
 
@@ -282,7 +282,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       record = record.data;
     }
     if (record && record.id !== undefined && record.id !== null) {
-      
+
       this.router.navigate(['partnerships/contacts', record.id.toString()]);
     } else {
       console.error('Cannot navigate: record or record.id is undefined', record);
@@ -298,7 +298,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
+
     this.contactService.deleteContactById(record.id).subscribe({
       next: () => {
         this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
@@ -319,7 +319,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       // Refresh the list before navigating to show the new contact
       window.dispatchEvent(new CustomEvent('refresh-listview'));
       // Navigate to the new contact details
-      
+
       this.router.navigate(['partnerships/contacts', newRecordData.id.toString()]);
     } else {
       console.error('Cannot navigate to created contact: id is undefined', newRecordData);
@@ -341,7 +341,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
+
     const ref = this.dialogService.open(ContactEditDialogComponent, {
       header: contactData.id ? 'Edit Contact' : 'New Contact',
       width: '40vw',
@@ -374,7 +374,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
+
     const ref = this.dialogService.open(BusinessCardScannerComponent, {
       header: 'Scan Business Card',
       width: '95vw',
@@ -398,7 +398,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    
+
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('contact');
   }
