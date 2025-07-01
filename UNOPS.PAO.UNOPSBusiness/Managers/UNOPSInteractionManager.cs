@@ -626,7 +626,19 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     public virtual async Task<InteractionModel?> UpdateGmailInteractionAsync(UpdateInteractionRequest model)
     {
-        var entity = await interactionRepository.GetByIdAsync(model.Id, ["Contact", "Contact.Partner", "Contact.Partner.PartnerOffice"]);
+        var entity = await interactionRepository.GetByIdAsync(model.Id, includes: new[]
+            {
+                "OrgUnit",
+                "InteractionContacts",
+                "InteractionPartners",
+                "InteractionUsers",
+                "InteractionContacts.Contact",
+                "InteractionContacts.Contact.Partner",
+                "InteractionContacts.Contact.Partner.PartnerOffice",
+                "InteractionPartners.Partner",
+                "InteractionUsers.User",
+                "Documents"
+            });
         if (entity == null)
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");

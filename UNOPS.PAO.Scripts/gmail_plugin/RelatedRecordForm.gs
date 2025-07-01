@@ -5,8 +5,13 @@
  * @param {Object} e The event object, containing information about the context
  * in which the add-on is running.
  * @return {CardService.Card} The card to be displayed in the Gmail add-on.
+ * 
+ * 
+ * CURRENTLY NOT USED
+ * 
+ * 
  */
-function buildRelatedRecords(relatedRecords, messageData) {
+/*function buildRelatedRecords(relatedRecords, messageData) {
 
   // Create a new card builder
   var card = CardService.newCardBuilder();
@@ -177,7 +182,7 @@ function buildRelatedRecords(relatedRecords, messageData) {
                                             
 
   return card.build();
-}
+}*/
 
 /**
  * The entry point for the Gmail add-on.

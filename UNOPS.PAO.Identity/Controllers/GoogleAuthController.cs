@@ -7,11 +7,11 @@ namespace UNOPS.PAO.Identity.Controllers;
 
 [Route("/")]
 [ApiController]
-public class AuthController : ControllerBase
+public class GoogleAuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly IGoogleAuthService _authService;
 
-    public AuthController(IAuthService authService)
+    public GoogleAuthController(IGoogleAuthService authService)
     {
         _authService = authService;
     }

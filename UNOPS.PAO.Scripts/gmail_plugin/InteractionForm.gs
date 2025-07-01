@@ -1,3 +1,8 @@
+/*
+* CURRENTLY NOT USED
+*/
+
+/*
 function buildInteractionCard(e) {
   const messageData = JSON.parse(e.parameters.messageData);
   const interaction = getMappedInteractionData(messageData); // Assumed to return an object with Subject, EmailAddresses, Data
@@ -53,4 +58,4 @@ function buildInteractionCard(e) {
   card.addSection(buttonSection);
 
   return card.build();
-}
+}*/

@@ -2,14 +2,14 @@ using UNOPS.PAO.Identity.Models;
 
 namespace UNOPS.PAO.Identity.Services;
 
-public interface IAuthService
+public interface IGoogleAuthService
 {
-    Task<AuthResponse> AuthenticateWithGoogleAsync(GoogleSignInRequest request);
-    Task<AuthResponse> RefreshTokenAsync(string refreshToken);
+    Task<GoogleAuthResponse> AuthenticateWithGoogleAsync(GoogleSignInRequest request);
+    Task<GoogleAuthResponse> RefreshTokenAsync(string refreshToken);
     Task RevokeTokenAsync(string refreshToken);
 }
 
-public class AuthResponse
+public class GoogleAuthResponse
 {
     public string AccessToken { get; set; }
     public string RefreshToken { get; set; }

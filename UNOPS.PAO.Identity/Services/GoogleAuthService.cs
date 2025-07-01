@@ -12,7 +12,7 @@ using System.Net.Http.Json;
 
 namespace UNOPS.PAO.Identity.Services;
 
-public class AuthService : IAuthService
+public class GoogleAuthService : IGoogleAuthService
 {
     private readonly IConfiguration _configuration;
     private readonly string _googleClientId;
@@ -22,7 +22,7 @@ public class AuthService : IAuthService
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly SecretManagerServiceClient _secretManager;
 
-    public AuthService(
+    public GoogleAuthService(
         IConfiguration configuration, 
         UserManager<PAOIdentityUser> userManager)
     {
@@ -40,7 +40,7 @@ public class AuthService : IAuthService
         _jwtSecret = secret.Payload.Data.ToStringUtf8();
     }
 
-    public async Task<AuthResponse> AuthenticateWithGoogleAsync(GoogleSignInRequest request)
+    public async Task<GoogleAuthResponse> AuthenticateWithGoogleAsync(GoogleSignInRequest request)
     {
         try
         {
@@ -87,12 +87,12 @@ public class AuthService : IAuthService
             
             // 3. Get user roles and other information
             var roles = await _userManager.GetRolesAsync(user);
-            
+
             // **Crucially, use the user's internal database ID for the 'sub' claim (subject)**
             string userIdForClaims = user.Id.ToString(); // This is your internal user ID
             string name = user.UserName; // use email as name
 
-            var token = GenerateJwtToken(userIdForClaims, email, name);
+            var token = GenerateJwtToken(userIdForClaims, email, name, roles.ToList());
             var refreshToken = GenerateRefreshToken();
 
             // TO-DO: Store the refresh token securely, associated with the user
@@ -100,15 +100,14 @@ public class AuthService : IAuthService
             //user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Example: Refresh token valid for 7 days
             //await _userManager.UpdateAsync(user);
 
-            return new AuthResponse
+            return new GoogleAuthResponse
             {
                 AccessToken = token,
                 RefreshToken = refreshToken,
                 ExpiresAt = DateTime.UtcNow.AddHours(1),
                 UserId = userIdForClaims,
                 Email = email,
-                Name = name,
-                Roles = roles.ToList()
+                Name = name
             };
         }
         catch (Exception ex)
@@ -117,7 +116,7 @@ public class AuthService : IAuthService
         }
     }
 
-    public async Task<AuthResponse> RefreshTokenAsync(string refreshToken)
+    public async Task<GoogleAuthResponse> RefreshTokenAsync(string refreshToken)
     {
         //TO-DO: Implement refresh token logic
         // 1. Validate the refresh token
@@ -185,20 +184,31 @@ public class AuthService : IAuthService
         throw new NotImplementedException();
     }
 
-    private string GenerateJwtToken(string subject, string email, string name)
+    private string GenerateJwtToken(string subject, string email, string name, List<string> roles = null)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_jwtSecret);
+
+        // Create the base claims
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, subject),
+            new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.Name, name),
+        };
+    
+        // Add role claims
+        if (roles != null && roles.Any())
+        {
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+        }
         
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, subject),
-                new Claim(ClaimTypes.Email, email),
-                new Claim(ClaimTypes.Name, name),
-                // Add more claims as needed
-            }),
+            Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddHours(1),
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),

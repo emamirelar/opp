@@ -78,10 +78,14 @@ function buildOpportunityPlusCard(relatedRecords, messageData) {
       });
 
       dontKnowSection.addWidget(
-      CardService.newSelectionInput()
+        CardService.newSelectionInput()
         .setType(CardService.SelectionInputType.SWITCH)
         .setFieldName('select_all')
         .addItem('Select all', 'ALL', false)
+        .setOnChangeAction(
+          CardService.newAction()
+                  .setFunctionName('handleSelectAll')
+        )
       );
 
       dontKnowSection.addWidget(
@@ -243,7 +247,8 @@ function buildOpportunityPlusCard(relatedRecords, messageData) {
             .setBackgroundColor('#006699')
             .setOnClickAction(
               CardService.newAction()
-                .setFunctionName('onClickPrimaryButton')
+                .setFunctionName('createOrUpdateInteraction')
+                .setParameters({ messageData: JSON.stringify(messageData) })
             )
         )
     );
@@ -260,167 +265,6 @@ function buildOpportunityPlusCard(relatedRecords, messageData) {
   return card.build();
 }
 
-/**
- * Builds the card UI for Opportunity+ Linking Partners feature
- * @return {CardService.Card} The constructed card
- */
-function buildOpportunityPlusCard2() {
-  var card = CardService.newCardBuilder();
-  
-  // Build header
-  var header = CardService.newCardHeader()
-    .setTitle('Opportunity+')
-    .setSubtitle('Linking Partners')
-    .setImageUrl('https://i.ibb.co/qLSDKBmW/Opportunity-Logo-Graphic1000px.png')
-    .setImageStyle(CardService.ImageStyle.CIRCLE);
-  
-  card.setHeader(header);
-
-  const iconImage = CardService.newIconImage().setMaterialIcon(
-    CardService.newMaterialIcon().setName('business'),
-  );
-  
-  // Section 1: What We Don't Know
-  var section1 = CardService.newCardSection()
-    .setHeader('What We Don\'t Know')
-    .setCollapsible(true);
-  
-  // Add widgets to section 1
-  section1.addWidget(
-    CardService.newDecoratedText()
-      .setStartIcon(iconImage)
-      .setTopLabel('Organisation')
-      .setText('Large Org')
-      .setSwitchControl(
-        CardService.newSwitch()
-          .setFieldName('checkbox1')
-          .setValue('false')
-          .setControlType(CardService.SwitchControlType.CHECK_BOX)
-      )
-  );
-  
-  section1.addWidget(
-    CardService.newDecoratedText()
-      .setStartIcon(iconImage)
-      .setTopLabel('Organisation')
-      .setText('Medium Org')
-      .setSwitchControl(
-        CardService.newSwitch()
-          .setFieldName('checkbox2')
-          .setValue('false')
-          .setControlType(CardService.SwitchControlType.CHECK_BOX)
-      )
-  );
-  
-  section1.addWidget(
-    CardService.newSelectionInput()
-      .setType(CardService.SelectionInputType.CHECK_BOX)
-      .setFieldName('select_all')
-      .addItem('Select all', 'ALL', false)
-  );
-  
-  section1.addWidget(
-    CardService.newButtonSet()
-      .addButton(
-        CardService.newTextButton()
-          .setText('Add Selected')
-          .setBackgroundColor('#aed8ff')
-          .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
-          .setOnClickAction(
-            CardService.newAction()
-              .setFunctionName('handleAddSelected')
-          )
-      )
-  );
-  
-  // Section 2: What We Know
-  var section2 = CardService.newCardSection()
-    .setHeader('What We Know')
-    .setCollapsible(true)
-    .setNumUncollapsibleWidgets(3);
-  
-  // Add widgets to section 2
-  section2.addWidget(
-    CardService.newDecoratedText()
-      .setStartIcon(iconImage)
-      .setTopLabel('Large Organisation')
-      .setText('The Big Organisation Name')
-  );
-  
-  section2.addWidget(
-    CardService.newDecoratedText()
-      .setStartIcon(iconImage)
-      .setTopLabel('Organisation')
-      .setText('Medium Org')
-  );
-  
-  section2.addWidget(
-    CardService.newDecoratedText()
-      .setStartIcon(iconImage)
-      .setTopLabel('Medium Organisation')
-      .setText('Name of the Org')
-  );
-  
-  section2.addWidget(
-    CardService.newDecoratedText()
-      .setStartIcon(iconImage)
-      .setTopLabel('Medium Organisation')
-      .setText('Name of the Org')
-  );
-  
-  section2.addWidget(
-    CardService.newDecoratedText()
-      .setStartIcon(iconImage)
-      .setTopLabel('chipchip@ersen.org')
-      .setText('Chip Chipersen')
-  );
-  
-  // Create chip list
-  var chipList = CardService.newGrid()
-    .setTitle('Related Items')
-    .setNumColumns(4);
-  
-  // Add chips
-  var chipData = [
-    { label: 'Small Org', icon: CardService.Icon.DOMAIN },
-    { label: 'Chip Chipersen', icon: CardService.Icon.PERSON },
-    { label: 'Medium Org', icon: CardService.Icon.DOMAIN },
-    { label: 'Chippy Chipsonian', icon: CardService.Icon.PERSON },
-    { label: 'Chippy Chipsonian', icon: CardService.Icon.PERSON },
-    { label: 'Chippy Chipsonian', icon: CardService.Icon.PERSON },
-    { label: 'Chippy Chipsonian', icon: CardService.Icon.PERSON }
-  ];
-  
-  chipData.forEach(function(chip) {
-    chipList.addItem(
-      CardService.newGridItem()
-        .setTitle(chip.label)
-    );
-  });
-  
-  section2.addWidget(chipList);
-  
-  // Add sections to card
-  card.addSection(section1);
-  card.addSection(section2);
-  
-  // Add fixed footer
-  card.setFixedFooter(
-    CardService.newFixedFooter()
-      .setPrimaryButton(
-        CardService.newTextButton()
-          .setText('Log this')
-          .setBackgroundColor('#006699')
-          .setOnClickAction(
-            CardService.newAction()
-              .setFunctionName('onClickPrimaryButton')
-          )
-      )
-  );
-  
-  return card.build();
-}
-
 // Handler functions
 function onClickPrimaryButton(e) {
   return CardService.newActionResponseBuilder()
@@ -433,6 +277,13 @@ function handleAddSelected(e) {
   return CardService.newActionResponseBuilder()
     .setNotification(CardService.newNotification()
       .setText('Selected items added'))
+    .build();
+}
+
+function handleSelectAll(e) {
+  return CardService.newActionResponseBuilder()
+    .setNotification(CardService.newNotification()
+      .setText('Selected all clicked'))
     .build();
 }
 
