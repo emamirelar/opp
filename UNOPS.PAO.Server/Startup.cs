@@ -168,7 +168,10 @@ public class Startup
 
     public void ConfigureContainer(ServiceRegistry services)
     {
-        ConfigureDataAccess(services);
+        if (!CurrentEnvironment.IsEnvironment("Testing"))
+        {
+            ConfigureDataAccess(services);
+        }
 
         services.Scan(x =>
         {
@@ -218,29 +221,32 @@ public class Startup
         var jwtSecret = secret.Payload.Data.ToStringUtf8();
 
         // Configure authentication with support for both IAP and cookies
-        services.AddAuthentication(options =>
-            {
-                // Always use IAP as the default authentication scheme for all requests
-                options.DefaultAuthenticateScheme = "IAP"; 
-                options.DefaultChallengeScheme = "IAP";
-                options.DefaultScheme = "IAP";
-                
-                // Keep cookie as the sign-in scheme for interactive login
-                options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
-            })
-            .AddCookie(IdentityConstants.ApplicationScheme,
-                opt => {
-                    opt.Events.OnRedirectToLogin = (context) =>
-                    {
-                        context.Response.StatusCode = 401;
-                        return Task.CompletedTask;
-                    };
-                    opt.Events.OnRedirectToAccessDenied = context =>
-                    {
-                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                        return Task.CompletedTask;
-                    };
+        // Skip IAP configuration in Testing environment - tests will configure their own
+        if (!CurrentEnvironment.IsEnvironment("Testing"))
+        {
+            services.AddAuthentication(options =>
+                {
+                    // Always use IAP as the default authentication scheme for all requests
+                    options.DefaultAuthenticateScheme = "IAP"; 
+                    options.DefaultChallengeScheme = "IAP";
+                    options.DefaultScheme = "IAP";
+                    
+                    // Keep cookie as the sign-in scheme for interactive login
+                    options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
                 })
+                .AddCookie(IdentityConstants.ApplicationScheme,
+                    opt => {
+                        opt.Events.OnRedirectToLogin = (context) =>
+                        {
+                            context.Response.StatusCode = 401;
+                            return Task.CompletedTask;
+                        };
+                        opt.Events.OnRedirectToAccessDenied = context =>
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            return Task.CompletedTask;
+                        };
+                    })
             //Add JWT Bearer authentication for API requests
             .AddJwtBearer("Bearer", options =>
             {
@@ -307,6 +313,7 @@ public class Startup
                     }
                 }
             });
+        }
 
         services.AddAuthorization();
 
@@ -347,6 +354,11 @@ public class Startup
 
         // Register UserInfo service
         services.AddScoped<IUserInfoService, UserInfoService>();
+        
+        // Register OrgUnit filtering services
+        services.AddScoped<IUserPreferenceService, UserPreferenceService>();
+        services.AddScoped<IOrgUnitHierarchyService, OrgUnitHierarchyService>();
+        services.AddScoped<IOrgUnitFilterService, OrgUnitFilterService>();
 
         // Register OrganizationHierarchy manager
         services.AddScoped<IOrganizationHierarchyManager, OrganizationHierarchyManager>();
@@ -371,10 +383,19 @@ public class Startup
         AddServices(services);
         services.AddScoped<IGoogleDriveDocumentManager, GoogleDriveDocumentManager>();
         services.AddScoped<GoogleCloudStorageService>();
-        ApplyMigrations(services);
+        
+        if (!CurrentEnvironment.IsEnvironment("Testing"))
+        {
+            ApplyMigrations(services);
+        }
+        
         services.SeedAsync();
         ConfigureRegisters(services);
-        services.AddHostedService<PubSubPullService>(); // Register your background service
+        
+        if (!CurrentEnvironment.IsEnvironment("Testing"))
+        {
+            services.AddHostedService<PubSubPullService>(); // Register your background service
+        }
     }
 
     private void AddServices(ServiceRegistry services)
@@ -392,7 +413,7 @@ public class Startup
 
     private void ConfigureDataAccess(ServiceRegistry services)
     {
-        string? connectionString = !CurrentEnvironment.IsDevelopment() ? GetConnectionStringFromSecretManager() : Configuration.GetConnectionString("DbContext");
+        string? connectionString = !CurrentEnvironment.IsDevelopment() && !CurrentEnvironment.IsEnvironment("Testing") ? GetConnectionStringFromSecretManager() : Configuration.GetConnectionString("DbContext");
 
         if (connectionString == null)
             throw new Exception("Connection string cannot be null. " +

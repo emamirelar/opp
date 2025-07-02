@@ -196,8 +196,13 @@ export class PartnerViewInteractionsComponent implements OnInit {
     this.entityConfigurationService.getEntityListViewConfiguration('Interaction')
       .subscribe({
         next: (columns) => {
+          // Filter out redundant partner-related columns since we're already in partner context
+          const filteredColumns = columns.filter(col => 
+            !['partner.name', 'partnerName', 'partnerId', 'partner.id'].includes(col.field)
+          );
+          
           // Convert backend columns to frontend format and add template functions
-          const processedColumns = columns.map(col => this.processColumn(col));
+          const processedColumns = filteredColumns.map(col => this.processColumn(col));
           this.columns.set(processedColumns);
           this.columnsLoading.set(false);
         },

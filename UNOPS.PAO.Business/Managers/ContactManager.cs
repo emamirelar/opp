@@ -234,4 +234,22 @@ public class ContactManager : IContactManager
     {
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
+
+    public virtual async Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination)
+    {
+        // For base implementation, fall back to user ID-based method
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            return GetContactsWithSpecification(userId, specification, pagination);
+        }
+        
+        return new PaginationResponse<ContactModel>
+        {
+            Records = new List<ContactModel>(),
+            TotalCount = 0,
+            PageIndex = pagination.PageIndex,
+            PageSize = pagination.PageSize
+        };
+    }
 }

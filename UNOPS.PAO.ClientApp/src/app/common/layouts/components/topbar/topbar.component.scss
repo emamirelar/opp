@@ -33,51 +33,6 @@
     }
   }
 
-  .layout-topbar-actions {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    .layout-topbar-action {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 2.5rem;
-      height: 2.5rem;
-      color: var(--text-color);
-      border-radius: 50%;
-      transition: background-color 0.2s;
-      cursor: pointer;
-      user-select: none;
-
-      i {
-        font-size: 1.25rem;
-      }
-
-      img {
-        width: 1.5rem;
-        height: 1.5rem;
-      }
-
-      &:hover {
-        background-color: var(--surface-hover);
-      }
-    }
-
-    .layout-topbar-menu {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-
-      .p-avatar {
-        width: 2.5rem;
-        height: 2.5rem;
-        font-size: 1rem;
-      }
-    }
-  }
 }
 
 .notification-panel {
@@ -248,31 +203,6 @@
         }
       }
 
-      .layout-topbar-actions {
-        gap: 0.25rem;
-
-        .layout-topbar-action {
-          width: 2rem;
-          height: 2rem;
-
-          i {
-            font-size: 1rem;
-          }
-
-          img {
-            width: 1.25rem;
-            height: 1.25rem;
-          }
-        }
-
-        .layout-topbar-menu {
-          .p-avatar {
-            width: 2rem;
-            height: 2rem;
-            font-size: 0.875rem;
-          }
-        }
-      }
     }
   }
 }

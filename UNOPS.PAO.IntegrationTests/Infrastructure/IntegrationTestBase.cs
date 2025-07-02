@@ -24,8 +24,13 @@ public abstract class IntegrationTestBase : IClassFixture<PAOWebApplicationFacto
             AllowAutoRedirect = false
         });
         
-        // Set up authentication header
-        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Test");
+        // Set up authentication headers for Testing environment
+        // The IAP handler will check for these headers when cookies are not available
+        Client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-Email", "accounts.google.com:testuser@unops.org");
+        Client.DefaultRequestHeaders.Add("X-Goog-Authenticated-User-ID", "accounts.google.com:123");
+        
+        // Also add a cookie header for the development IAP simulation
+        Client.DefaultRequestHeaders.Add("Cookie", "DevIAPAuth=testuser@unops.org; dev-user-email=testuser@unops.org");
         
         JsonOptions = new JsonSerializerOptions
         {
@@ -93,13 +98,13 @@ public abstract class IntegrationTestBase : IClassFixture<PAOWebApplicationFacto
 
     protected async Task<UNOPSAppDbContext> GetDbContextAsync()
     {
-        using var scope = Factory.Services.CreateScope();
+        var scope = Factory.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<UNOPSAppDbContext>();
     }
 
     protected async Task<AppDbContext> GetCoreDbContextAsync()
     {
-        using var scope = Factory.Services.CreateScope();
+        var scope = Factory.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<AppDbContext>();
     }
 

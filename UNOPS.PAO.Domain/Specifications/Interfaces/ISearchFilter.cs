@@ -11,15 +11,15 @@ public interface ISearchFilter
 /// <summary>
 /// Interface for organizational unit filtering
 /// </summary>
-public interface IMyOfficeFilter
+public interface IOrgUnitFilter
 {
-    bool MyOfficeOnly { get; set; }
+    int? OrgUnitId { get; set; }
 }
 
 /// <summary>
 /// Interface for contact-related search functionality
 /// </summary>
-public interface IContactSearchFilter : ISearchFilter, IMyOfficeFilter
+public interface IContactSearchFilter : ISearchFilter, IOrgUnitFilter
 {
     int? Id { get; set; }
     string? FirstName { get; set; }
@@ -47,7 +47,7 @@ public interface IContactSearchFilter : ISearchFilter, IMyOfficeFilter
 /// <summary>
 /// Interface for partner-related search functionality
 /// </summary>
-public interface IPartnerSearchFilter : ISearchFilter, IMyOfficeFilter
+public interface IPartnerSearchFilter : ISearchFilter, IOrgUnitFilter
 {
     int? Id { get; set; }
     string? Name { get; set; }
@@ -69,7 +69,7 @@ public interface IPartnerSearchFilter : ISearchFilter, IMyOfficeFilter
 /// <summary>
 /// Interface for interaction-related search functionality
 /// </summary>
-public interface IInteractionSearchFilter : ISearchFilter, IMyOfficeFilter
+public interface IInteractionSearchFilter : ISearchFilter, IOrgUnitFilter
 {
     int? Id { get; set; }
     int? ContactId { get; set; }

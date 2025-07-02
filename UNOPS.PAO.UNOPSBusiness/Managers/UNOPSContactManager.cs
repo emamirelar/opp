@@ -2,6 +2,9 @@ using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
 using UNOPS.PAO.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using Microsoft.Extensions.Logging;
+using UNOPS.PAO.UNOPSBusiness.Specifications;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -39,6 +42,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private BaseRepository<OrganizationHierarchy> organizationHierarchyRepository;
     private GoogleCloudStorageService googleCloudStorageService;
     private CommonEntityRepository commonRepository;
+    private readonly ILogger<UNOPSContactManager>? _logger;
 
     private async Task<ContactModel> MapEntityToModel(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
     {
@@ -124,7 +128,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return MapModelToEntity(model, new UNOPSContact());
     }
 
-    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, IHttpContextAccessor httpContextAccessor = null)
+    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, IHttpContextAccessor httpContextAccessor = null, ILogger<UNOPSContactManager> logger = null)
         : base(mapper, context, configuration, null, "Contact", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
@@ -134,6 +138,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
         commonRepository = new CommonEntityRepository(context);
         googleCloudStorageService = new GoogleCloudStorageService(configuration);
+        _logger = logger;
     }
 
     public async Task<ContactModel> CreateContactAsync(ContactRequest model)
@@ -399,6 +404,74 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return results;
     }
 
+    private async Task<object> GetUNOPSContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<UNOPSContact> specification, PaginationRequest pagination)
+    {
+        // Apply the specification directly to the UNOPSContact query
+        var query = contactRepository
+            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
+            .AsQueryable();
+        
+        var filteredQuery = query.ApplySpecification(specification);
+
+        // Apply access control filters (row and column filtering) BEFORE pagination
+        var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
+        
+        // If filteredData is a list, we need to handle pagination manually
+        if (filteredData is IEnumerable<UNOPSContact> contactList)
+        {
+            var contactArray = contactList.ToArray();
+            var totalCount = contactArray.Length;
+            var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+            var excludedRows = (pageIndex - 1) * pagination.PageSize;
+            
+            var pagedItems = contactArray
+                .Skip(excludedRows)
+                .Take(pagination.PageSize)
+                .ToArray();
+
+            // Get all unique user IDs from the contacts for user info lookup
+            var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
+            
+            // Fetch all user info in one query
+            var userInfoLookup = userInfoRepository.GetAll()
+                .Where(u => userIds.Contains(u.UserId))
+                .ToDictionary(u => u.UserId);
+            
+            // Get all unique org units from user info
+            var orgUnits = userInfoLookup.Values
+                .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+                .Select(u => u.OrgUnit)
+                .Distinct()
+                .ToList();
+            
+            // Fetch all organization hierarchy in one query
+            var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+                .Where(o => !string.IsNullOrEmpty(o.Code) && 
+                           o.Type == OrganizationUnitType.OrgUnit && 
+                           orgUnits.Contains(o.Code))
+                .ToDictionary(o => o.Code);
+
+            var results = pagedItems.Select(item => MapEntityToModelWithUserInfo(item, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
+
+            return new PaginationResponse<ContactModel>
+            {
+                Records = results,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pagination.PageSize
+            };
+        }
+
+        // Fallback: if filteredData is not the expected type, return empty result
+        return new PaginationResponse<ContactModel>
+        {
+            Records = new List<ContactModel>(),
+            TotalCount = 0,
+            PageIndex = pagination.PageIndex,
+            PageSize = pagination.PageSize
+        };
+    }
+
     public async Task<string?> UpdateContactProfilePictureAsync(int contactId, IFormFile file)
     {
         var contact = await contactRepository.GetByIdAsync(contactId);
@@ -451,6 +524,80 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         }
 
         return result;
+    }
+
+    public async Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination)
+    {
+        // Check if this is an adapted UNOPSContact specification
+        if (specification is ContactSpecificationAdapter adapter)
+        {
+            return await GetUNOPSContactsWithSpecificationAsync(user, adapter.GetOriginalSpecification(), pagination);
+        }
+        
+        // Apply the specification to the query
+        var query = contactRepository
+            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
+            .AsQueryable();
+        
+        var filteredQuery = query.ApplySpecification(specification);
+
+        // Apply access control filters (row and column filtering) BEFORE pagination
+        var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
+        
+        // If filteredData is a list, we need to handle pagination manually
+        if (filteredData is IEnumerable<UNOPSContact> contactList)
+        {
+            var contactArray = contactList.ToArray();
+            var totalCount = contactArray.Length;
+            var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
+            var excludedRows = (pageIndex - 1) * pagination.PageSize;
+            
+            var pagedItems = contactArray
+                .Skip(excludedRows)
+                .Take(pagination.PageSize)
+                .ToArray();
+
+            // Get all unique user IDs from the contacts for user info lookup
+            var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
+            
+            // Fetch all user info in one query
+            var userInfoLookup = userInfoRepository.GetAll()
+                .Where(u => userIds.Contains(u.UserId))
+                .ToDictionary(u => u.UserId);
+            
+            // Get all unique org units from user info
+            var orgUnits = userInfoLookup.Values
+                .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+                .Select(u => u.OrgUnit)
+                .Distinct()
+                .ToList();
+            
+            // Fetch all organization hierarchy in one query
+            var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+                .Where(o => !string.IsNullOrEmpty(o.Code) && 
+                           o.Type == OrganizationUnitType.OrgUnit && 
+                           orgUnits.Contains(o.Code))
+                .ToDictionary(o => o.Code);
+
+            var results = pagedItems.Select(item => MapEntityToModelWithUserInfo(item, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
+
+            return new PaginationResponse<ContactModel>
+            {
+                Records = results,
+                TotalCount = totalCount,
+                PageIndex = pageIndex,
+                PageSize = pagination.PageSize
+            };
+        }
+
+        // Fallback: if filteredData is not the expected type, return empty result
+        return new PaginationResponse<ContactModel>
+        {
+            Records = new List<ContactModel>(),
+            TotalCount = 0,
+            PageIndex = pagination.PageIndex,
+            PageSize = pagination.PageSize
+        };
     }
 
     public async Task<ContactModel?> UpdateContactAsync(int userId, UpdateContactRequest model)

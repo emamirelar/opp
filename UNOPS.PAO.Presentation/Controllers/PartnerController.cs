@@ -16,6 +16,10 @@ using System;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Presentation;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
+using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Specifications;
+using UNOPS.PAO.Domain.Specifications;
+using UNOPS.PAO.Domain.Entities;
 
 // using UNOPS.PAO.UNOPSBusiness.Authorization;
 // using UNOPS.PAO.UNOPSBusiness.Attributes;
@@ -25,15 +29,18 @@ using UNOPS.PAO.UNOPSBusiness.Attributes;
 public class PartnerController : BaseController
 {
     private readonly IPartnerManager _manager;
+    private readonly IOrgUnitFilterService _orgUnitFilterService;
 
     public PartnerController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
         IAuthorizationService authorizationService,
-        ILogger<PartnerController> logger)
+        ILogger<PartnerController> logger,
+        IOrgUnitFilterService orgUnitFilterService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.PartnerManager;
+        _orgUnitFilterService = orgUnitFilterService;
     }
 
     [HttpPost(APIDictionary.Partner)]
@@ -66,12 +73,23 @@ public class PartnerController : BaseController
         {
             if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
             {
+                // For advanced search, we need to parse the search criteria and combine with org unit filter
+                // Since SearchControllerHelper expects a synchronous factory, we'll create the spec inline
                 return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
                     searchCriteria, searchText ?? request.SearchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
                     request, // Use request as pagination request since PartnerFilterRequest extends PaginationRequest
                     "Partner",
                     filterRequest => new PartnerCompositeSpecification(filterRequest),
-                    async (userId, spec, pagination) => await _manager.GetPartnersWithSpecification(CurrentUserId, spec, (PartnerFilterRequest)pagination),
+                    async (userId, spec, pagination) => {
+                        // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
+                        if (pagination is PartnerFilterRequest partnerPagination && partnerPagination.OrgUnitId.HasValue)
+                        {
+                            var orgUnitSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(partnerPagination, User);
+                            var adaptedSpec = new PartnerSpecificationAdapter(orgUnitSpec);
+                            return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, adaptedSpec, partnerPagination);
+                        }
+                        return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
+                    },
                     CurrentUserId, _logger);
             }
             
@@ -84,14 +102,28 @@ public class PartnerController : BaseController
                     request,
                     "Partner",
                     filterRequest => new PartnerCompositeSpecification(filterRequest),
-                    async (userId, spec, pagination) => await _manager.GetPartnersWithSpecification(CurrentUserId, spec, (PartnerFilterRequest)pagination),
+                    async (userId, spec, pagination) => {
+                        // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
+                        if (pagination is PartnerFilterRequest partnerPagination && partnerPagination.OrgUnitId.HasValue)
+                        {
+                            var orgUnitSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(partnerPagination, User);
+                            var adaptedSpec = new PartnerSpecificationAdapter(orgUnitSpec);
+                            return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, adaptedSpec, partnerPagination);
+                        }
+                        return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
+                    },
                     CurrentUserId, _logger);
             }
             
             // For no search parameters, return all partners with pagination
-            _logger.LogInformation("Retrieving all partners with pagination");
-            var specification = new PartnerCompositeSpecification(request);
-            return await _manager.GetPartnersWithSpecification(CurrentUserId, specification, request);
+            _logger.LogInformation("Retrieving all partners with pagination. OrgUnitId filter: {OrgUnitId}", request.OrgUnitId);
+            
+            // Use OrgUnitFilterService to create the appropriate specification
+            var unosPartnerSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(request, User);
+            var specification = new PartnerSpecificationAdapter(unosPartnerSpec);
+            
+            var result = await _manager.GetPartnersWithSpecificationAsync(User, specification, request);
+            return (PaginationResponse<PartnerModel>)result;
         }, "partner search");
     }
 

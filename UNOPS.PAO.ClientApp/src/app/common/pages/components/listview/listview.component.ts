@@ -1,4 +1,4 @@
-import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, ViewChild, AfterViewInit, computed, inject, effect, OnDestroy, signal, Signal } from '@angular/core';
+import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, ViewChild, AfterViewInit, computed, inject, effect, OnDestroy, signal, Signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { Subject, debounceTime, distinctUntilChanged, Subscription, catchError, tap, of } from 'rxjs';
+import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { ListviewExportService } from './listview-export.service';
@@ -63,6 +64,9 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   private translateService = inject(TranslateService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private globalFilterService = inject(GlobalFilterService);
+  private globalFilterSubscription?: Subscription;
+  private cdr = inject(ChangeDetectorRef);
 
   @Input() entityType?: EntityType;
 
@@ -355,6 +359,17 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initializeComponent();
+    
+    // Subscribe to global filter changes
+    this.globalFilterSubscription = this.globalFilterService.activeOrgUnitId$.subscribe(() => {
+      // Reload data when the active org unit changes
+      if (this.hasInitialDataLoaded) {
+        this.pageIndex = 1;
+        this.allLoadedData.set([]);
+        this.hasMoreData.set(true);
+        this.loadData();
+      }
+    });
   }
 
   /**
@@ -380,6 +395,10 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.searchSubscription) {
       this.searchSubscription.unsubscribe();
+    }
+    
+    if (this.globalFilterSubscription) {
+      this.globalFilterSubscription.unsubscribe();
     }
 
     // Clean up resize observer
@@ -822,6 +841,8 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
         if (isInitialLoad) {
           this.loadingState.set(false);
         }
+        // Force change detection after data update
+        this.cdr.detectChanges();
         // Check component width after data loaded
         setTimeout(() => this.checkComponentWidth(), 100);
       }),
@@ -874,6 +895,12 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
         .set('searchCriteria', JSON.stringify(this.searchCriteria));
     } else if (this.searchTextValue?.trim()) {
       params = params.set('searchText', this.searchTextValue.trim());
+    }
+    
+    // Add org unit filter if enabled
+    const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
+    if (activeOrgUnitId) {
+      params = params.set('orgUnitId', activeOrgUnitId.toString());
     }
 
     return params;
@@ -938,6 +965,9 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     if (this.pageIndex > 1) {
       console.log(`Load more successful: page ${this.pageIndex}, loaded ${newRecords.length} new records, total: ${loadedCount}/${totalCount}`);
     }
+    
+    // Force change detection to ensure UI updates
+    this.cdr.detectChanges();
   }
 
   /**

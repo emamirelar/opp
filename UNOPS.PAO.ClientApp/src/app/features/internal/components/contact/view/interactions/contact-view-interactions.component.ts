@@ -155,8 +155,14 @@ export class ContactViewInteractionsComponent implements OnInit {
     this.entityConfigurationService.getEntityListViewConfiguration('Interaction')
       .subscribe({
         next: (columns: any) => {
+          // Filter out redundant contact-related columns since we're already in contact context
+          const filteredColumns = columns.filter((col: any) => 
+            !['contact.name', 'contactName', 'contact.firstName', 'contact.lastName', 
+              'contactId', 'contact.id', 'contact.fullName'].includes(col.field)
+          );
+          
           // Convert backend columns to frontend format and add template functions
-          const processedColumns = columns.map((col: any) => this.processColumn(col));
+          const processedColumns = filteredColumns.map((col: any) => this.processColumn(col));
           this.columns.set(processedColumns);
           this.columnsLoading.set(false);
         },
