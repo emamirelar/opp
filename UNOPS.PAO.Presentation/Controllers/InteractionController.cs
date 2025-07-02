@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Enums;
-using UNOPS.PAO.Domain.Specifications.InteractionSpecifications;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Presentation.Helpers;
 using UNOPS.PAO.Presentation.Security;
@@ -20,17 +19,20 @@ namespace UNOPS.PAO.Presentation.Controllers
     {
         private readonly IInteractionManager _manager;
         private readonly ISecureSpecificationFactory _secureSpecificationFactory;
+        private readonly IOrgUnitFilterService _orgUnitFilterService;
 
         public InteractionController(
             IManagerWrapper manager, 
             UserResolverService<int> userResolverService, 
             IAuthorizationService authorizationService,
             ISecureSpecificationFactory secureSpecificationFactory,
+            IOrgUnitFilterService orgUnitFilterService,
             ILogger<InteractionController> logger)
             : base(logger, authorizationService, userResolverService)
         {
             _manager = manager.InteractionManager;
             _secureSpecificationFactory = secureSpecificationFactory;
+            _orgUnitFilterService = orgUnitFilterService;
         }
 
         [HttpPost(APIDictionary.Interaction)]
@@ -101,7 +103,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                     //     _logger);
                     
                     // Simplified version without RBAC
-                    var specification = new InteractionCompositeSpecification(request);
+                    var specification = await _orgUnitFilterService.CreateInteractionSpecificationAsync(request, User);
                     result = await _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
                 }
                 else if (!string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(request.SearchText))
@@ -122,7 +124,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                     //     _logger);
                     
                     // Simplified version without RBAC
-                    var specification = new InteractionCompositeSpecification(request);
+                    var specification = await _orgUnitFilterService.CreateInteractionSpecificationAsync(request, User);
                     result = await _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
                 }
                 else
@@ -138,7 +140,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                     //     _logger);
                     
                     // Simplified version without RBAC
-                    var specification = new InteractionCompositeSpecification(request);
+                    var specification = await _orgUnitFilterService.CreateInteractionSpecificationAsync(request, User);
                     result = await _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
                 }
                 
