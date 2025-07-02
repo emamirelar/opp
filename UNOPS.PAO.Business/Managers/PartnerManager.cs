@@ -587,6 +587,11 @@ public class PartnerManager : IPartnerManager
     {
         throw new NotImplementedException();
     }
-    
+
+    public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
+    }
+
     #endregion
 }

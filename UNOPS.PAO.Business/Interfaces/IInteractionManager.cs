@@ -36,4 +36,9 @@ public interface IInteractionManager
     Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model);
     
     Task DeleteInteractionAsync(ClaimsPrincipal user, int id);
+
+    Task<InteractionModel?> FindGmailInteractionAsync(GmailInteractionRequest model);
+
+    Task<InteractionModel> CreateGmailInteractionAsync(InteractionRequest model);
+    Task<InteractionModel?> UpdateGmailInteractionAsync(UpdateInteractionRequest model);
 } 

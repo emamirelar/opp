@@ -39,6 +39,7 @@ public class InteractionModel
     /// Permissions for this specific partner
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }
+    public string? GmailThreadId { get; set; }
 }
 
 public class InteractionContactModel

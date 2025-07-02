@@ -229,4 +229,9 @@ public class ContactManager : IContactManager
         
         await DeleteContactAsync(userId, id);
     }
+
+    public async Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
+    }
 }

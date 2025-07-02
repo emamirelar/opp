@@ -29,6 +29,7 @@ using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using static Google.Cloud.Vision.V1.ProductSearchResults.Types;
 
 public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 {
@@ -80,6 +81,37 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var userContext = user ?? GetCurrentUserOrSystemContext();
         return await MapEntityToModelWithPermissionsAsync(result, userContext); ;
     }
+
+    /*private async Task<PartnerModel> MapEntityToModelWithPermissionsAsync(UNOPSPartner entity, IMapper mapper, ClaimsPrincipal? user = null)
+    {
+        var result = await MapEntityToModelAsync(entity, mapper);
+        
+        // Add permissions if user context is available
+        if (user != null && _securityService != null)
+        {
+            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = ((dynamic)permissions).canRead,
+                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create"),
+                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete")
+            };
+        }
+        else
+        {
+            // Default permissions when no user context available
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = true, // Assume readable if no security context
+                CanCreate = false,
+                CanUpdate = false, // Default to no write access
+                CanDelete = false
+            };
+        }
+
+        return result;
+    }*/
 
     private PartnerModel MapEntityToModel(UNOPSPartner entity, IMapper mapper)
     {
@@ -1070,6 +1102,59 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         // Use the original implementation but fix to match the interface
         return await GetPartnerAsync(id);
+    }
+
+    public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
+    {
+        var partners = PartnerRepository
+            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
+            .AsQueryable()
+            .Where(p => input.partnerIds.Contains(p.Id))
+            .Cast<UNOPSPartner>()
+            .ToList();
+
+        // Batch permission lookup once for all partners
+        var userPartnerPermissions = await GetEntityPermissionsAsync(user, "Partner");
+        // Batch permission lookup once for all contacts
+        //var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
+
+        var mappedPartners = new List<PartnerModel>();
+        foreach (var partner in partners)
+        {
+            var model = await MapEntityToModelAsync(partner, _mapper);
+            /*model.Permissions = new EntityPermissionsModel
+            {
+                CanRead = userPartnerPermissions.CanRead,
+                CanCreate = userPartnerPermissions.CanCreate,
+                CanUpdate = userPartnerPermissions.CanUpdate && await _securityService.CanUserAccessEntityAsync(partner, user, "update"),
+                CanDelete = userPartnerPermissions.CanDelete && await _securityService.CanUserAccessEntityAsync(partner, user, "delete")
+            };*/
+
+            if(partner.First5ContactsByDate != null && partner.First5ContactsByDate.Count() > 0)
+            {
+                foreach (var contact in partner.First5ContactsByDate)
+                {
+                    // Map each contact to ContactModel
+                    var contactModel = _mapper.Map<ContactModel>(contact);
+                    // Add permissions for each contact
+                    //Checking the permissions for contacts separately as the basemanager checks for the current entity only
+                    contactModel.Permissions = new EntityPermissionsModel
+                    {
+                        CanRead = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "read"),
+                        CanCreate = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "create"),
+                        CanUpdate = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "update"),
+                        CanDelete = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "delete")
+                    };
+                    model.First5ContactsByDate.RemoveAll(c => c.Id == contactModel.Id);
+                    model.First5ContactsByDate.Add(contactModel);
+                }
+            }
+
+            mappedPartners.Add(model);
+        }
+
+
+        return mappedPartners;
     }
 
     #endregion

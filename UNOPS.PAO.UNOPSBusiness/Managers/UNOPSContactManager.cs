@@ -25,6 +25,9 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.Business.Managers;
+using UNOPS.PAO.Domain.Specifications.ContactSpecifications;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 public class UNOPSContactManager : BaseUNOPSManager, IContactManager
@@ -480,5 +483,34 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         if (entity == null) return null;
 
         return await MapEntityToModel(entity, mapper, userContext);
+    }
+
+    public async Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
+    {
+        var contacts = contactRepository
+                        .GetAll(["Partner"])
+                        .AsQueryable()
+                        .Where(c => (c.Email != null && input.EmailAddresses.Contains(c.Email)))
+                        .Cast<UNOPSContact>()
+                        .ToList();
+
+        // Batch permission lookup once for all contacts
+        var userPermissions = await GetEntityPermissionsAsync(user, "Contact");
+
+        var mappedContacts = new List<ContactModel>();
+        foreach (var contact in contacts)
+        {
+            var model = await MapEntityToModel(contact, mapper, user);
+            /*model.Permissions = new EntityPermissionsModel
+            {
+                CanRead = userPermissions.CanRead,
+                CanCreate = userPermissions.CanCreate,
+                CanUpdate = userPermissions.CanUpdate && await CanUserAccessEntityAsync(contact, user, "update"),
+                CanDelete = userPermissions.CanDelete && await CanUserAccessEntityAsync(contact, user, "delete")
+            };*/
+            mappedContacts.Add(model);
+        }
+
+        return mappedContacts;
     }
 }
