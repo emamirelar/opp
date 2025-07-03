@@ -69,7 +69,7 @@
 </ng-template>
 
 <div class="flex flex-col gap-4 ">
-  @if (loading) {
+  @if (loading()) {
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       @for (i of [1, 2, 3, 4, 5, 6]; track i) {
           <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse">
@@ -107,7 +107,7 @@
   }
 
   <!-- Error message -->
-  @if (error && !loading) {
+  @if (error() && !loading()) {
     <div class="p-4 rounded-lg">
       <div class="flex items-center justify-center p-4">
         <i class="pi pi-exclamation-triangle text-3xl text-yellow-500 mr-3"></i>
@@ -117,7 +117,7 @@
   }
 
   <!-- No data message -->
-  @if (!loading && !error && (!data || data.length === 0)) {
+  @if (!loading() && !error() && (!data() || data().length === 0)) {
     <div class="p-4 rounded-lg">
       <div class="flex items-center justify-center p-4">
         <i class="pi pi-info-circle text-3xl text-primary mr-3"></i>
@@ -127,9 +127,9 @@
   }
 
   <!-- Card grid -->
-  @if (!loading && !error && data && data.length > 0 && canRenderContent()) {
+  @if (!loading() && !error() && data() && data().length > 0 && canRenderContent()) {
       <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        @for (item of data; track trackByFn($index, item)) {
+        @for (item of data(); track trackByFn($index, item)) {
             <div class="group relative bg-white cursor-pointer shadow-sm border border-gray-100  hover:shadow-lg rounded-xl p-5 transition-all duration-300 ease-out hover:-translate-y-1 overflow-hidden"
               (click)="onCardClick(item)">
 
@@ -245,12 +245,12 @@
       </div>
 
       <!-- Intersection Observer Sentinel - Invisible element for infinite scroll detection -->
-      @if (hasMoreData && !isLoadingMore && data.length > 0) {
+      @if (hasMoreData() && !isLoadingMore() && data().length > 0) {
         <div #loadMoreSentinel class="h-1 w-full"></div>
       }
 
       <!-- Load more skeletons - match the grid layout -->
-      @if (isLoadingMore) {
+      @if (isLoadingMore()) {
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           @for (i of Array(loadMoreSkeletonsCount()).fill(0); track $index) {
             <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse shadow-sm">
@@ -288,7 +288,7 @@
       }
 
       <!-- Load more button (if needed as fallback) -->
-      @if (hasMoreData && !isLoadingMore && data.length > 0) {
+      @if (hasMoreData() && !isLoadingMore() && data().length > 0) {
         <div class="flex justify-center p-4">
           <button
             type="button"

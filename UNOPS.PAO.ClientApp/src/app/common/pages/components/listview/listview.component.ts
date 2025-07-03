@@ -1,4 +1,4 @@
-import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, Output, TemplateRef, AfterViewInit, computed, inject, signal, ChangeDetectorRef, DestroyRef } from '@angular/core';
+import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, Output, TemplateRef, AfterViewInit, computed, inject, signal, ChangeDetectorRef, DestroyRef, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -7,7 +7,7 @@ import { ListViewColumn, ListViewConfig, SearchCriteria, SearchParams, EntityTyp
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { Subject, debounceTime, distinctUntilChanged, catchError, tap, of } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, catchError, tap, of, switchMap } from 'rxjs';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
@@ -119,15 +119,16 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
   // Search handling
   private readonly searchSubject = new Subject<string>();
+  private readonly loadDataSubject = new Subject<void>();
   private resizeObserver: ResizeObserver | null = null;
 
   // Template references
   @ContentChild('actionsTemplate') actionsTemplate?: TemplateRef<any>;
 
   // Inputs
-  @Input() entityType?: EntityType;
-  @Input() columns: ListViewColumn[] = [];
-  @Input() idField = 'id';
+  entityType = input<EntityType>();
+  columns = input<ListViewColumn[]>([]);
+  idField = input('id');
 
   @Input() set dataUrl(value: string) {
     if (value && value !== this._dataUrl) {
@@ -228,6 +229,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
   constructor() {
     this.setupSearchDebounce();
+    this.setupLoadDataStream();
 
     // Subscribe to global filter changes
     this.globalFilterService.activeOrgUnitId$
@@ -303,6 +305,55 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     ).subscribe(searchValue => {
       this.executeSearch(searchValue);
     });
+  }
+
+  private setupLoadDataStream(): void {
+    this.loadDataSubject.pipe(
+      switchMap(() => {
+        const { pageIndex } = this.state();
+        const isInitialLoad = pageIndex === 1;
+        
+        if (isInitialLoad) {
+          this.state.update(s => ({ ...s, loading: true }));
+        }
+        this.state.update(s => ({ ...s, error: false }));
+
+        const params = this.buildHttpParams();
+        return this.http.get<any>(this._dataUrl, { params }).pipe(
+          tap(response => {
+            this.handleDataResponse(response);
+            if (isInitialLoad) {
+              this.state.update(s => ({ ...s, loading: false }));
+            }
+            this.cdr.detectChanges();
+            setTimeout(() => this.checkComponentWidth(), 100);
+          }),
+          catchError(err => {
+            const { pageIndex } = this.state();
+
+            if (isInitialLoad) {
+              this.state.update(s => ({ ...s, loading: false }));
+            }
+
+            this.state.update(s => ({
+              ...s,
+              loadingMore: false,
+              error: true,
+              pageIndex: pageIndex > 1 ? pageIndex - 1 : pageIndex
+            }));
+
+            console.error('Error loading data:', err);
+
+            if (pageIndex === 1) {
+              this.state.update(s => ({ ...s, data: [], totalCount: 0 }));
+            }
+
+            return of({ records: [], totalCount: 0 } as ListViewData<T>);
+          })
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe();
   }
 
   private loadSearchCriteriaFromUrl(): void {
@@ -500,7 +551,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
   // Sort methods
   sortableFields(): ListViewColumn[] {
-    return this.columns.filter(col => col.sortable);
+    return this.columns().filter(col => col.sortable);
   }
 
   sortOptions(): Array<{ label: string, value: string }> {
@@ -655,52 +706,13 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   }
 
   private loadData(): void {
-    const { loading, pageIndex } = this.state();
+    const { loading } = this.state();
 
     if (!this._dataUrl || loading) {
       return;
     }
 
-    const isInitialLoad = pageIndex === 1;
-    if (isInitialLoad) {
-      this.state.update(s => ({ ...s, loading: true }));
-    }
-    this.state.update(s => ({ ...s, error: false }));
-
-    const params = this.buildHttpParams();
-
-    this.http.get<any>(this._dataUrl, { params }).pipe(
-      tap(response => {
-        this.handleDataResponse(response);
-        if (isInitialLoad) {
-          this.state.update(s => ({ ...s, loading: false }));
-        }
-        this.cdr.detectChanges();
-        setTimeout(() => this.checkComponentWidth(), 100);
-      }),
-      catchError(err => {
-        const { pageIndex } = this.state();
-
-        if (isInitialLoad) {
-          this.state.update(s => ({ ...s, loading: false }));
-        }
-
-        this.state.update(s => ({
-          ...s,
-          loadingMore: false,
-          error: true,
-          pageIndex: pageIndex > 1 ? pageIndex - 1 : pageIndex
-        }));
-
-        console.error('Error loading data:', err);
-
-        if (pageIndex === 1) {
-          this.state.update(s => ({ ...s, data: [], totalCount: 0 }));
-        }
-
-        return of({ records: [], totalCount: 0 } as ListViewData<T>);
-      })
-    ).subscribe();
+    this.loadDataSubject.next();
   }
 
   private buildHttpParams(): HttpParams {
@@ -782,7 +794,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
     const seen = new Set();
     return records.filter(record => {
-      const id = record[this.idField as keyof T];
+      const id = record[this.idField() as keyof T];
       if (!id || seen.has(id)) {
         return false;
       }
@@ -795,7 +807,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private initializeSearchableFields(): void {
     if (this._config.searchConfig?.searchableFields) {
       this.searchableFields = this._config.searchConfig.searchableFields.map(field => {
-        const column = this.columns.find(c => c.field === field.field);
+        const column = this.columns().find(c => c.field === field.field);
         return {
           field: field.field,
           label: field.label,
@@ -806,8 +818,8 @@ export class ListviewComponent<T = any> implements AfterViewInit {
       return;
     }
 
-    if (this.columns && this.columns.length > 0) {
-      this.searchableFields = this.columns.map(column => ({
+    if (this.columns() && this.columns().length > 0) {
+      this.searchableFields = this.columns().map(column => ({
         field: column.field,
         label: column.label,
         type: this.getFieldType(column),
