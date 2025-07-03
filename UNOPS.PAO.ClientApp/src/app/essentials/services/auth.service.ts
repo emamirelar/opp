@@ -195,7 +195,7 @@ export class AuthService {
       });
     }
     
-    return this.http.get('/api/SecureResource/authtest').pipe(
+    return this.http.get('/api/dev/check-iap-simulation').pipe(
       catchError(error => {
         return of({
           hasIapEmailHeader: false,

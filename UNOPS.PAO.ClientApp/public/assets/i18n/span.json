@@ -25,6 +25,8 @@
         "newInteraction": "Nueva Interacción",
         "editInteraction": "Editar Interacción",
         "scanBusinessCard": "Escanear Tarjeta de Visita",
+        "newContact": "Nuevo Contacto",
+        "editContact": "Editar Contacto",
         "confirmation": "Confirmación",
         "links": "Enlaces",
         "editLink": "Editar Enlace",
@@ -188,7 +190,15 @@
         "interactionDeleted": "Interacción eliminada con éxito",
         "errorDeletingInteraction": "Error al eliminar la interacción",
         "dropUrlToAddLink": "Suelte una URL o archivo para agregar enlace",
-        "comingSoon": "Próximamente"
+        "comingSoon": "Próximamente",
+        "noPermissionToDelete": "No tiene permiso para eliminar contactos",
+        "noPermissionToEdit": "No tiene permiso para editar contactos",
+        "noPermissionToCreate": "No tiene permiso para crear contactos",
+        "noPermissionToImport": "No tiene permiso para importar contactos",
+        "permissionDenied": "Permiso denegado",
+        "recordDeletedSuccessfully": "¡Registro eliminado exitosamente!",
+        "failedToDeleteRecord": "Error al eliminar el registro",
+        "anErrorOccurred": "Ocurrió un error"
     },
     "errors": {
         "failedToLoad": "Error al cargar",
@@ -238,6 +248,7 @@
     },
     "search": {
         "placeholder": "Buscar...",
+        "contactsPlaceholder": "Buscar contactos...",
         "recentSearches": "Búsquedas recientes",
         "results": "Resultados de búsqueda para",
         "showAllResults": "Mostrar todos los resultados",
