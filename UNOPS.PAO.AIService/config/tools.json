@@ -1382,7 +1382,8 @@
           "parameters": {},
           "example_uses": [
             "Show me my profile",
-            "Get my account information"
+            "Get my account information",
+            "Get user context"
           ],
           "when_to_use": "Use this when the user asks for their profile or account information."
         },
@@ -1439,6 +1440,41 @@
             "Show me my preferences"
           ],
           "when_to_use": "Use this when the user asks for their personal data or preferences."
+        },
+        {
+          "name": "GetUserContext",
+          "url": "/api/user-info/current",
+          "method": "GET",
+          "description": "Gets the user's context.",
+          "parameters": {
+            "email": { "type": "string", "required": true, "description": "User email" }
+          },
+          "example_uses": [
+            "Get my user context"
+          ],
+          "when_to_use": "Use this when the user asks for their user context."
+        },
+        {
+          "name": "UpdateUserPreferences",
+          "url": "/api/user-info/update",
+          "method": "PUT",
+          "description": "Updates the user's preferences.",
+          "parameters": {
+            "userId": { "type": "integer", "required": true, "description": "User ID" },
+            "name": { "type": "string", "required": false, "description": "User name" },
+            "userEmail": { "type": "string", "required": false, "description": "User email" },
+            "orgUnit": { "type": "string", "required": false, "description": "User org unit" },
+            "supervisorId": { "type": "string", "required": false, "description": "User supervisor ID" },
+            "textToSpeech": { "type": "boolean", "required": false, "description": "User text to speech preference" },
+            "language": { "type": "string", "required": false, "description": "User language" }
+          },
+          "example_uses": [
+            "Update my user preferences",
+            "Update my language to French",
+            "Talk to me",
+            "Update my org unit to B0002 - UNICEF"
+          ],
+          "when_to_use": "Use this when the user wants to update their user preferences."
         }
       ]
     }

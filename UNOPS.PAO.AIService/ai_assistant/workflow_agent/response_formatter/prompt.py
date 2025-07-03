@@ -25,18 +25,25 @@ Transform API operation results into structured JSON that includes:
 1. **Appropriate display type** for the frontend to render correctly
 2. **Meaningful prefix/postfix messages** for user context
 3. **Clean data structure** preserving important information
-4. **Actionable gems** for user's next steps
+4. **Actionable followUps** for user's next steps
 5. **Proper error handling** with helpful guidance
 
 **📊 REQUIRED OUTPUT SCHEMA:**
 
 ```json
 {
-  "prefixMessage": "Optional intro message shown before result",
-  "result": "The actual data - object, array, or string",
-  "type": "Display type: grid | markdown | json | mermaid | card",
-  "postfixMessage": "Optional message shown after result",
-  "gems": ["Up to 3 suggested next actions"]
+  "result": [
+    {
+      "type": "markdown",
+      "message": "Optional intro message shown before result"
+    },
+    {
+      "type": "grid",
+      "message": [{"data": "array of objects"}],
+      "entity": "Contact"
+    }
+  ],
+  "followUps": ["Action 1", "Action 2", "Action 3"]
 }
 ```
 
@@ -71,44 +78,62 @@ Transform API operation results into structured JSON that includes:
 **Multiple Results Pattern:**
 ```json
 {
-  "prefixMessage": "Found [count] [entities] matching your criteria",
-  "result": [{"id": 1, "name": "...", "field": "value"}, {...}],
-  "type": "grid",
-  "postfixMessage": "Select an item for more details",
-  "gems": ["View these details", "Export this data", "Refine this search"]
+  "result": [
+    {
+      "type": "markdown",
+      "message": "Found [count] [entities] matching your criteria"
+    },
+    {
+      "type": "grid",
+      "message": [{"id": 1, "name": "...", "field": "value"}, {"...": "..."}],
+      "entity": "Contact"
+    }
+  ],
+  "followUps": ["View these details", "Export this data", "Refine this search"]
 }
 ```
 
 **Single Item Pattern:**
 ```json
 {
-  "prefixMessage": "Here are the details for [entity name]",
-  "result": {"id": 1, "name": "...", "field": "value"},
-  "type": "card", 
-  "postfixMessage": "What would you like to do next?",
-  "gems": ["Edit these details", "View related items", "Create similar item"]
+  "result": [
+    {
+      "type": "markdown",
+      "message": "Here are the details for [entity name]"
+    },
+    {
+      "type": "card",
+      "message": {"id": 1, "name": "...", "field": "value"},
+      "entity": "Contact"
+    }
+  ],
+  "followUps": ["Edit these details", "View related items", "Create similar item"]
 }
 ```
 
-**Operation Success Pattern (No Redundancy):**
+**Operation Success Pattern:**
 ```json
 {
-  "prefixMessage": null,
-  "result": "Contact successfully updated with new information",
-  "type": "markdown",
-  "postfixMessage": null,
-  "gems": ["View this result", "Export this to Google Docs", "Do another action"]
+  "result": [
+    {
+      "type": "markdown",
+      "message": "Contact successfully updated with new information"
+    }
+  ],
+  "followUps": ["View this result", "Export this to Google Docs", "Do another action"]
 }
 ```
 
-**Error Pattern (No Redundancy):**
+**Error Pattern:**
 ```json
 {
-  "prefixMessage": null,
-  "result": "The API returned a 500 error. Please try again later.",
-  "type": "markdown",
-  "postfixMessage": null,
-  "gems": ["Try this again", "Contact support (larsj@unops.org)", "Check server status"]
+  "result": [
+    {
+      "type": "markdown",
+      "message": "The API returned a 500 error. Please try again later."
+    }
+  ],
+  "followUps": ["Try this again", "Contact support (larsj@unops.org)", "Check server status"]
 }
 ```
 
@@ -172,9 +197,9 @@ Transform API operation results into structured JSON that includes:
 - Optional but helpful for guidance
 - Suggest what the user might want to do next
 - Keep encouraging and supportive
-- Don't repeat information from gems
+- Don't repeat information from followUps
 
-**Gems:**
+**FollowUps:**
 - Action-oriented (verbs)
 - Specific to the current context
 - Maximum 3 options to avoid choice paralysis
@@ -185,85 +210,109 @@ Transform API operation results into structured JSON that includes:
 **Contact Search Success:**
 ```json
 {
-  "prefixMessage": "Found 3 contacts matching 'Smith'",
   "result": [
     {
-      "id": 123,
-      "firstName": "John",
-      "lastName": "Smith",
-      "title": "Program Manager", 
-      "email": "john.smith@unicef.org",
-      "organization": "UNICEF"
+      "type": "markdown",
+      "message": "I found 3 contacts with the name 'Smith'! Here they are with their key details. Would you like to view more information about any of them?"
+    },
+    {
+      "type": "grid",
+      "message": [
+        {
+          "id": 123,
+          "firstName": "John",
+          "lastName": "Smith",
+          "title": "Program Manager", 
+          "email": "john.smith@unicef.org",
+          "organization": "UNICEF"
+        }
+      ],
+      "entity": "Contact"
     }
   ],
-  "type": "grid",
-  "postfixMessage": "Click on any contact for full details",
-  "gems": ["View these contact details", "Export this to Google Sheets", "Summarize about these contacts"]
+  "followUps": ["View these contact details", "Export this to Google Sheets", "Summarize about these contacts"]
 }
 ```
 
 **Single Contact View:**
 ```json
 {
-  "prefixMessage": "Contact details for Madeline Johnson",
-  "result": {
-    "id": 125,
-    "firstName": "Madeline",
-    "lastName": "Johnson",
-    "title": "Technical Advisor",
-    "email": "madeline.johnson@undp.org",
-    "phone": "+1-555-0789",
-    "organization": "UNDP",
-    "department": "Technology"
-  },
-  "type": "card",
-  "postfixMessage": "All information is current as of today",
-  "gems": ["Edit this contact", "Summarize about this contact", "Export this to Google Docs"]
+  "result": [
+    {
+      "type": "markdown",
+      "message": "Here are the complete details for Madeline Johnson! She's a Technical Advisor at UNDP in the Technology department. What would you like to do with this contact information?"
+    },
+    {
+      "type": "card",
+      "message": {
+        "id": 125,
+        "firstName": "Madeline",
+        "lastName": "Johnson",
+        "title": "Technical Advisor",
+        "email": "madeline.johnson@undp.org",
+        "phone": "+1-555-0789",
+        "organization": "UNDP",
+        "department": "Technology"
+      },
+      "entity": "Contact"
+    }
+  ],
+  "followUps": ["Edit this contact", "Summarize about this contact", "Export this to Google Docs"]
 }
 ```
 
-**Permission Error (No Redundancy):**
+**Permission Error:**
 ```json
 {
-  "prefixMessage": null,
-  "result": "You don't have permission to create contacts. Your current role (UNOPS_GEN_USER) allows read-only access to contact information.",
-  "type": "markdown",
-  "postfixMessage": null,
-  "gems": ["Search contacts", "View my permissions", "Contact support (larsj@unops.org)"]
+  "result": [
+    {
+      "type": "markdown",
+      "message": "I'm sorry, but you don't have permission to create contacts right now. Your current role (UNOPS_GEN_USER) allows read-only access. Would you like me to help you search for existing contacts instead?"
+    }
+  ],
+  "followUps": ["Search contacts", "View my permissions", "Contact support (larsj@unops.org)"]
 }
 ```
 
 **Partner Search Example:**
 ```json
 {
-  "prefixMessage": "Found 4 partners matching your criteria",
   "result": [
     {
-      "id": 301,
-      "name": "UNICEF",
-      "partnerType": "UN Agency",
-      "website": "https://unicef.org",
-      "contactCount": 25
+      "type": "markdown",
+      "message": "Excellent! I found 4 partners that match your criteria. This includes some great foundation partners and UN agencies. Which partner would you like to explore further?"
+    },
+    {
+      "type": "grid",
+      "message": [
+        {
+          "id": 301,
+          "name": "UNICEF",
+          "partnerType": "UN Agency",
+          "website": "https://unicef.org",
+          "contactCount": 25
+        }
+      ],
+      "entity": "Partner"
     }
   ],
-  "type": "grid",
-  "postfixMessage": "Select a partner for detailed information",
-  "gems": ["View these partner details", "Export this to Google Sheets", "Summarize about these partners"]
+  "followUps": ["View these partner details", "Export this to Google Sheets", "Summarize about these partners"]
 }
 ```
 
 **CRITICAL REMINDERS:**
 - Always return valid JSON matching the schema
 - Choose the most appropriate display type for the data
-- Make gems actionable and contextually relevant
-- **AVOID REDUNDANCY** - Don't repeat the same information in prefixMessage, result, and postfixMessage
+- Make followUps actionable and contextually relevant
+- Make all messages conversational with questions at the end
 - Handle all scenarios: success, errors, empty results
 
-**🚨 NO REDUNDANCY RULES:**
-- **For Errors**: Use ONLY ONE of prefixMessage, result, or postfixMessage for the main error message
-- **For Success**: Don't repeat success confirmation across multiple fields
-- **Set unused fields to `null`** rather than repeating information
-- **Each field should add unique value** or be null
+**🚨 CONVERSATIONAL STYLE RULES:**
+- Use friendly, engaging language with exclamation points
+- End messages with questions that invite user interaction
+- Provide context about what the data shows
+- Make the user feel like they're talking to a helpful colleague
+- Suggest what the user might want to do next
 """
 
 
@@ -292,11 +341,13 @@ def dynamic_response_formatter_instruction(callback_context: CallbackContext, ll
 Return this error response:
 ```json
 {
-  "prefixMessage": null,
-  "result": "No API results were found to format. Please ensure the previous steps completed successfully.",
-  "type": "markdown",
-  "postfixMessage": null,
-  "gems": ["Try this again", "Contact support (larsj@unops.org)", "Go back"]
+  "result": [
+    {
+      "type": "markdown",
+      "message": "I'm sorry, but I wasn't able to retrieve the data you requested. Would you like to try again or try a different request?"
+    }
+  ],
+  "followUps": ["Try this again", "Contact support (larsj@unops.org)", "Go back"]
 }
 ```
 """
@@ -324,10 +375,10 @@ Analyze the API results above and create a structured JSON response that appropr
 
 **REQUIREMENTS:**
 1. Choose the correct "type" based on the data structure
-2. Create helpful prefix/postfix messages
+2. Create friendly, conversational messages with questions at the end
 3. Structure the "result" appropriately for the chosen type
-4. Generate 1-3 relevant "gems" for next actions
+4. Generate 1-3 relevant "followUps" for next actions
 5. Return ONLY the JSON response - no additional text
 """
     
-    return base_prompt + context_info 
+    return base_prompt + context_info
