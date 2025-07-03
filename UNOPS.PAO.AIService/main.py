@@ -81,6 +81,18 @@ def add_chat_endpoint(app: FastAPI):
         Custom chat endpoint that handles current_url context and state updates
         """
         try:
+            print("\n" + "="*50)
+            print("📥 INCOMING CHAT REQUEST")
+            print("="*50)
+            print(f"🔍 Request Details:")
+            print(f"  - app_name: {request.app_name}")
+            print(f"  - user_id: {request.user_id}")
+            print(f"  - session_id: {request.session_id}")
+            print(f"  - message: {request.message}")
+            print(f"  - streaming: {request.streaming}")
+            print(f"  - state: {request.state}")
+            print("="*50)
+            
             # Import here to avoid circular imports
             from google.adk.runners import Runner
             from google.adk.sessions import DatabaseSessionService
@@ -90,8 +102,10 @@ def add_chat_endpoint(app: FastAPI):
             
             # Create session service
             session_service = DatabaseSessionService(db_url=SESSION_DB_URL)
+            print(f"🔧 Created session service with DB: {SESSION_DB_URL}")
             
             # Get or create session
+            print(f"🔍 Getting session for app: {request.app_name}, user: {request.user_id}, session: {request.session_id}")
             session = await session_service.get_session(
                 app_name=request.app_name,
                 user_id=request.user_id,
@@ -99,66 +113,99 @@ def add_chat_endpoint(app: FastAPI):
             )
             
             if not session:
+                print("🆕 Creating new session...")
                 # Create new session if it doesn't exist
+                initial_state = request.state or {}
                 session = await session_service.create_session(
                     app_name=request.app_name,
                     user_id=request.user_id,
                     session_id=request.session_id,
-                    state=request.state or {}
+                    state=initial_state
                 )
+                print(f"✅ New session created with state: {session.state}")
             else:
+                print(f"📋 Found existing session with state: {session.state}")
+                
                 # Update existing session state if provided
                 if request.state:
+                    print(f"🔄 Updating session state with new data: {request.state}")
+                    
                     # Merge new state with existing state
                     updated_state = {**session.state, **request.state}
+                    print(f"🔀 Merged state: {updated_state}")
                     
-                    # Create a new event to update session state
-                    from google.adk.events.event import Event
-                    import time
-                    import uuid
-                    
-                    state_update_event = Event(
-                        id=str(uuid.uuid4()),
-                        invocation_id="state_update",
-                        author="system",
-                        timestamp=time.time(),
-                        actions={
-                            "state_delta": updated_state
-                        }
-                    )
-                    
-                    # Append the state update event
-                    await session_service.append_event(session, state_update_event)
-                    
-                    # Update session state locally
-                    session.state.update(updated_state)
+                    try:
+                        # Update session state using the session service
+                        await session_service.update_session_state(
+                            session=session,
+                            state=updated_state
+                        )
+                        print(f"✅ Session state updated successfully via session service")
+                        
+                        # Refresh the session to get the updated state
+                        session = await session_service.get_session(
+                            app_name=request.app_name,
+                            user_id=request.user_id,
+                            session_id=request.session_id
+                        )
+                        print(f"🔄 Refreshed session state: {session.state}")
+                        
+                    except Exception as state_error:
+                        print(f"⚠️ State update via session service failed: {state_error}")
+                        print("🔄 Falling back to manual state update...")
+                        
+                        # Fallback: manually update session state
+                        session.state.update(updated_state)
+                        print(f"✅ Manual state update completed: {session.state}")
+                        
+                else:
+                    print("ℹ️ No state update provided, using existing state")
+            
+            print(f"📊 Final session state before processing: {session.state}")
+            
+            # Ensure state is properly set before creating runner
+            if not hasattr(session, 'state') or session.state is None:
+                session.state = {}
+                print("⚠️ Session state was None, initialized to empty dict")
             
             # Create runner
+            print(f"🏃 Creating runner for agent: {root_agent.name}")
             runner = Runner(
                 app_name=request.app_name,
                 agent=root_agent,
                 session_service=session_service
             )
+            print(f"✅ Runner created successfully")
             
             # Create user message
             user_message = types.Content(parts=[types.Part(text=request.message)])
+            print(f"💬 Created user message: {request.message}")
+            
+            print("\n🚀 STARTING AGENT PROCESSING...")
+            print("="*50)
             
             # Handle streaming vs non-streaming
             if request.streaming:
+                print("🌊 Using streaming mode")
                 # Return streaming response
                 async def event_generator():
                     try:
                         stream_mode = StreamingMode.SSE
+                        print(f"🔄 Starting streaming with mode: {stream_mode}")
                         async for event in runner.run_async(
                             user_id=request.user_id,
                             session_id=request.session_id,
                             new_message=user_message,
                             run_config=RunConfig(streaming_mode=stream_mode),
                         ):
+                            print(f"�� Streaming event: {type(event).__name__}")
                             # Format as SSE data
                             sse_event = event.model_dump_json(exclude_none=True, by_alias=True)
                             yield f"data: {sse_event}\n\n"
                     except Exception as e:
+                        print(f"❌ Error in streaming: {e}")
+                        import traceback
+                        print(f"❌ Streaming traceback: {traceback.format_exc()}")
                         yield f'data: {{"error": "{str(e)}"}}\n\n'
                 
                 return StreamingResponse(
@@ -166,19 +213,41 @@ def add_chat_endpoint(app: FastAPI):
                     media_type="text/event-stream",
                 )
             else:
+                print("📝 Using regular response mode")
                 # Return regular response
-                events = [
-                    event
+                try:
+                    events = []
+                    print(f"🔄 Starting agent run...")
                     async for event in runner.run_async(
                         user_id=request.user_id,
                         session_id=request.session_id,
                         new_message=user_message,
-                    )
-                ]
-                return {"events": events}
+                    ):
+                        print(f"📤 Received event: {type(event).__name__}")
+                        # Try to get more info about the event without accessing .type
+                        if hasattr(event, 'content'):
+                            print(f"  Event content type: {type(event.content)}")
+                        if hasattr(event, 'author'):
+                            print(f"  Event author: {event.author}")
+                        events.append(event)
+                    
+                    print(f"✅ Processing complete. Generated {len(events)} events")
+                    for i, event in enumerate(events):
+                        print(f"  Event {i+1}: {type(event).__name__}")
+                    
+                    return {"events": events}
+                    
+                except Exception as run_error:
+                    print(f"❌ Error during agent run: {run_error}")
+                    import traceback
+                    print(f"❌ Agent run traceback: {traceback.format_exc()}")
+                    raise run_error
                 
         except Exception as e:
-            print(f"Error in chat endpoint: {e}")
+            print(f"❌ ERROR in chat endpoint: {e}")
+            print(f"❌ Error type: {type(e)}")
+            import traceback
+            print(f"❌ Full traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -87,7 +87,7 @@ user_detail_agent = Agent(
     
     Do this immediately without any conversation.
 
-    Once retrieved, respond with just "User data retrieved successfully"
+    After calling the function, respond with: "User profile retrieved successfully"
     """,
     tools=[FunctionTool(func=get_user_profile)],
     output_key="user_profile"
