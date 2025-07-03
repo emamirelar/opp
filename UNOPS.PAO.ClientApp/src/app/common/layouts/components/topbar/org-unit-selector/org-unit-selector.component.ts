@@ -114,7 +114,11 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
   filterOrgUnits() {
     if (!this.searchText.trim()) {
       // Show all items with proper visibility based on expansion
-      this.filteredOrgUnits = this.orgUnitOptions.filter(unit => this.isUnitVisible(unit));
+      this.filteredOrgUnits = this.orgUnitOptions.filter(unit => {
+        // Set visibility based on expansion state
+        unit.visible = this.isUnitVisible(unit);
+        return unit.visible;
+      });
       return;
     }
 
@@ -142,9 +146,12 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
     }
 
     // Filter to show only matching items and their parents, maintaining original order
-    this.filteredOrgUnits = this.orgUnitOptions.filter(unit => 
-      matchingIds.has(unit.id) || parentIds.has(unit.id)
-    );
+    this.filteredOrgUnits = this.orgUnitOptions.filter(unit => {
+      const shouldShow = matchingIds.has(unit.id) || parentIds.has(unit.id);
+      // Update visibility flag
+      unit.visible = shouldShow;
+      return shouldShow;
+    });
   }
 
   onSearchChange() {
@@ -309,15 +316,7 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
           mainOrgUnit.isDefault = true;
         }
 
-
-        // Re-sort to put new default first
-        this.orgUnitOptions.sort((a, b) => {
-          if (a.isDefault && !b.isDefault) return -1;
-          if (!a.isDefault && b.isDefault) return 1;
-          if (a.level !== b.level) return a.level - b.level;
-          return a.name.localeCompare(b.name);
-        });
-
+        // Keep original hierarchical order instead of sorting by default status
         // Re-apply filter
         this.filterOrgUnits();
 
