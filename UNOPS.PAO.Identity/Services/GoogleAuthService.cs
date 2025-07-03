@@ -8,7 +8,9 @@ using UNOPS.PAO.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 using Google.Cloud.SecretManager.V1;
+using UNOPS.PAO.Identity.Helpers;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 
 namespace UNOPS.PAO.Identity.Services;
 
@@ -20,17 +22,23 @@ public class GoogleAuthService : IGoogleAuthService
     private readonly string _jwtIssuer;
     private readonly string _jwtAudience;
     private readonly UserManager<PAOIdentityUser> _userManager;
+    private readonly RoleManager<PAOIdentityRole> _roleManager;
     private readonly SecretManagerServiceClient _secretManager;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public GoogleAuthService(
         IConfiguration configuration, 
-        UserManager<PAOIdentityUser> userManager)
+        UserManager<PAOIdentityUser> userManager,
+        RoleManager<PAOIdentityRole> roleManager,
+        IHttpContextAccessor httpContextAccessor)
     {
         _configuration = configuration;
+        _httpContextAccessor = httpContextAccessor;
         _googleClientId = _configuration["GmailAppScriptAuthSettings:clientId"];
         _jwtIssuer = _configuration["JWTSettings:validIssuer"];
-        _jwtAudience = _configuration["JWTSettings:validAudienceDev"];
+        _jwtAudience = new GmailAddonHelper(_configuration, _httpContextAccessor).GetValidAudienceForCurrentHost();
         _userManager = userManager;
+        _roleManager = roleManager;
         _secretManager = SecretManagerServiceClient.Create();
         
         // Get the JWT secret from Secret Manager
@@ -83,6 +91,15 @@ public class GoogleAuthService : IGoogleAuthService
                 {
                     throw new Exception("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
+
+                // Ensure GMAIL_GEN_USER role exists
+                if (!await _roleManager.RoleExistsAsync("GMAIL_GEN_USER"))
+                {
+                    await _roleManager.CreateAsync(new PAOIdentityRole { Name = "GMAIL_GEN_USER" });
+                }
+
+                // Assign GMAIL_GEN_USER role
+                await _userManager.AddToRoleAsync(user, "GMAIL_GEN_USER");
             }
             
             // 3. Get user roles and other information

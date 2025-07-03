@@ -33,7 +33,11 @@
         "https://swift-legible-raven.ngrok-free.app/api/auth/google",
         "https://swift-legible-raven.ngrok-free.app/api/api/auth/refresh",
         "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions",
-        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions/*"
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions/*",
+        "https://test-opportunityplus.unops.org/api/auth/google",
+        "https://test-opportunityplus.unops.org/api/api/auth/refresh",
+        "https://test-opportunityplus.unops.org/gmail-addon/interactions",
+        "https://test-opportunityplus.unops.org/gmail-addon/interactions/*"
     ],
     "addOns": {
         "common": {
