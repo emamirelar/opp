@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -9,9 +11,20 @@ using Microsoft.Extensions.Options;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using UNOPS.PAO.DataAccess.Context;
+using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSIdentity.Authentication;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using Microsoft.AspNetCore.Builder;
+using System.Linq;
+using UNOPS.PAO.IntegrationTests.TestData;
+using UNOPS.PAO.Server;
+using Lamar;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
+using UNOPS.PAO.Identity.Entities;
 
 namespace UNOPS.PAO.IntegrationTests.Infrastructure;
 
@@ -19,13 +32,55 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Set the environment first
+        builder.UseEnvironment("Testing");
+        
+        // Add test configuration
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddJsonFile("appsettings.Testing.json", optional: false, reloadOnChange: false);
+        });
+        
+        // Configure services BEFORE Startup to prevent authentication conflicts
         builder.ConfigureServices(services =>
+        {
+            // Remove all authentication-related services that might have been added
+            RemoveAuthenticationServices(services);
+            
+            // Add our test authentication scheme
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = "IAP";
+                options.DefaultChallengeScheme = "IAP";
+                options.DefaultScheme = "IAP";
+                options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
+            })
+            .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("IAP", options => { })
+            .AddCookie(IdentityConstants.ApplicationScheme, options =>
+            {
+                options.Events.OnRedirectToLogin = (context) =>
+                {
+                    context.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
+            });
+        });
+        
+        // Use the actual startup class but override services
+        builder.UseStartup<Startup>();
+        
+        builder.ConfigureTestServices(services =>
         {
             // Remove existing DbContext registrations
             RemoveService<DbContextOptions<UNOPSAppDbContext>>(services);
             RemoveService<DbContextOptions<AppDbContext>>(services);
             RemoveService<DbContextOptions<PAOIdentityDbContext>>(services);
-
+            
             // Add in-memory database for testing
             var dbName = $"TestDb_{Guid.NewGuid()}";
             
@@ -50,15 +105,46 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
             // Add basic services for tests
             services.AddLogging();
             services.AddMemoryCache();
-
-            // Override authentication with test handlers
-            services.RemoveAll<IAuthenticationSchemeProvider>();
-            services.AddAuthentication("Test")
-                .AddScheme<TestAuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { })
-                .AddScheme<TestAuthenticationSchemeOptions, TestAuthenticationHandler>("IAP", options => { });
+            
+            // Ensure controllers are added from the correct assemblies
+            services.AddControllers()
+                .AddApplicationPart(typeof(Presentation.AssemblyReference).Assembly)
+                .AddApplicationPart(typeof(UNOPSPresentation.AssemblyReference).Assembly);
+            
+            // Add routing
+            services.AddRouting();
+            
+            // Replace OrgUnitHierarchyService with test-friendly implementation
+            services.RemoveAll<IOrgUnitHierarchyService>();
+            services.AddScoped<IOrgUnitHierarchyService, TestOrgUnitHierarchyService>();
+            
+            // Replace PermissionService with test implementation
+            services.RemoveAll<IPermissionService>();
+            services.AddScoped<IPermissionService, TestPermissionService>();
         });
+    }
+    
+    private void RemoveAuthenticationServices(IServiceCollection services)
+    {
+        // Remove all authentication-related services
+        var authenticationServiceDescriptors = services
+            .Where(d => d.ServiceType.Namespace != null && 
+                       (d.ServiceType.Namespace.Contains("Authentication") ||
+                        d.ServiceType.Name.Contains("Authentication") ||
+                        d.ServiceType.Name.Contains("AuthenticationScheme")))
+            .ToList();
 
-        builder.UseEnvironment("Testing");
+        foreach (var descriptor in authenticationServiceDescriptors)
+        {
+            services.Remove(descriptor);
+        }
+        
+        // Also remove specific authentication services
+        services.RemoveAll<IAuthenticationService>();
+        services.RemoveAll<IAuthenticationHandlerProvider>();
+        services.RemoveAll<IAuthenticationSchemeProvider>();
+        services.RemoveAll<IAuthenticationHandlerProvider>();
+        services.RemoveAll<IOptionsMonitor<AuthenticationSchemeOptions>>();
     }
 
     private void RemoveService<T>(IServiceCollection services)
@@ -85,41 +171,57 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
             unopsDb.Database.EnsureCreated();
             coreDb.Database.EnsureCreated();
             identityDb.Database.EnsureCreated();
+            
+            // Seed basic data for tests
+            SeedTestData(unopsDb, coreDb);
+            
+            // Seed identity user
+            SeedIdentityUser(services).Wait();
         }
         
         return host;
     }
-}
-
-public class TestAuthenticationSchemeOptions : AuthenticationSchemeOptions { }
-
-public class TestAuthenticationHandler : AuthenticationHandler<TestAuthenticationSchemeOptions>
-{
-    public const string TestUserId = "test-user-123";
-    public const string TestUserEmail = "testuser@unops.org";
-    public const string TestUserName = "Test User";
-
-    public TestAuthenticationHandler(IOptionsMonitor<TestAuthenticationSchemeOptions> options,
-        ILoggerFactory logger, UrlEncoder encoder) : base(options, logger, encoder)
+    
+    private void SeedTestData(UNOPSAppDbContext unopsDb, AppDbContext coreDb)
     {
-    }
-
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
-    {
-        var claims = new[]
+        // Ensure test user exists
+        var userInfos = unopsDb.UserInfos.FirstOrDefault(u => u.UserEmail == "testuser@unops.org");
+        if (userInfos == null)
         {
-            new Claim(ClaimTypes.NameIdentifier, TestUserId),
-            new Claim(ClaimTypes.Email, TestUserEmail),
-            new Claim(ClaimTypes.Name, TestUserName),
-            new Claim("sub", TestUserId),
-            new Claim("email", TestUserEmail),
-            new Claim("name", TestUserName)
-        };
-
-        var identity = new ClaimsIdentity(claims, "Test");
-        var principal = new ClaimsPrincipal(identity);
-        var ticket = new AuthenticationTicket(principal, "Test");
-
-        return Task.FromResult(AuthenticateResult.Success(ticket));
+            unopsDb.UserInfos.Add(new UserInfo
+            {
+                UserId = 123,
+                UserEmail = "testuser@unops.org",
+                Name = "Test User",
+                OrgUnit = "HQ"
+            });
+            unopsDb.SaveChanges();
+        }
+        
+        // Use TestDataSeeder for consistent data
+        TestDataSeeder.SeedBasicData(unopsDb);
+    }
+    
+    private async Task SeedIdentityUser(IServiceProvider services)
+    {
+        var userManager = services.GetRequiredService<UserManager<PAOIdentityUser>>();
+        var identityDb = services.GetRequiredService<PAOIdentityDbContext>();
+        
+        // Create test user if not exists
+        var existingUser = await userManager.FindByIdAsync("123");
+        if (existingUser == null)
+        {
+            var user = new PAOIdentityUser
+            {
+                Id = 123,
+                UserName = "testuser@unops.org",
+                Email = "testuser@unops.org",
+                EmailConfirmed = true,
+                NormalizedEmail = "TESTUSER@UNOPS.ORG",
+                NormalizedUserName = "TESTUSER@UNOPS.ORG"
+            };
+            
+            await userManager.CreateAsync(user);
+        }
     }
 }

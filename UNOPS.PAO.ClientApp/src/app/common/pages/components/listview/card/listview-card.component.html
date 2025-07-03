@@ -4,7 +4,7 @@
     @case ('email') {
       <a href="mailto:{{ getFieldValue(item, column.field) }}"
          (click)="$event.stopPropagation()"
-         [class]="getFieldClasses(column, context)"
+         [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')"
          [title]="getFieldTooltip(item, column)">
         {{ getFieldValue(item, column.field) }}
       </a>
@@ -12,7 +12,7 @@
     @case ('link') {
       <a [routerLink]="getRouterLink(item, column)"
          (click)="$event.stopPropagation()"
-         [class]="getFieldClasses(column, context)"
+         [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')"
          [title]="getFieldTooltip(item, column)">
         {{ formatValue(item, column) }}
       </a>
@@ -57,20 +57,20 @@
       </div>
     }
     @case ('template') {
-      <span [class]="getFieldClasses(column, context)" [innerHTML]="getTemplateValue(item, column)"></span>
+      <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')" [innerHTML]="getTemplateValue(item, column)"></span>
     }
     @case ('avatar') {
       <!-- Avatar type is handled separately in the main template -->
     }
     @default {
-      <span [class]="getFieldClasses(column, context)" [title]="getFieldTooltip(item, column)">{{ formatValue(item, column) }}</span>
+      <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">{{ formatValue(item, column) }}</span>
     }
   }
 </ng-template>
 
 <div class="flex flex-col gap-4 ">
-  @if (loading) {
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+  @if (loading()) {
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       @for (i of [1, 2, 3, 4, 5, 6]; track i) {
           <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse">
             <div class="flex gap-4">
@@ -107,7 +107,7 @@
   }
 
   <!-- Error message -->
-  @if (error && !loading) {
+  @if (error() && !loading()) {
     <div class="p-4 rounded-lg">
       <div class="flex items-center justify-center p-4">
         <i class="pi pi-exclamation-triangle text-3xl text-yellow-500 mr-3"></i>
@@ -117,7 +117,7 @@
   }
 
   <!-- No data message -->
-  @if (!loading && !error && (!data || data.length === 0)) {
+  @if (!loading() && !error() && (!data() || data().length === 0)) {
     <div class="p-4 rounded-lg">
       <div class="flex items-center justify-center p-4">
         <i class="pi pi-info-circle text-3xl text-primary mr-3"></i>
@@ -127,9 +127,9 @@
   }
 
   <!-- Card grid -->
-  @if (!loading && !error && data && data.length > 0 && canRenderContent()) {
-      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        @for (item of data; track getFieldValue(item, 'id')) {
+  @if (!loading() && !error() && data() && data().length > 0 && canRenderContent()) {
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        @for (item of data(); track trackByFn($index, item)) {
             <div class="group relative bg-white cursor-pointer shadow-sm border border-gray-100  hover:shadow-lg rounded-xl p-5 transition-all duration-300 ease-out hover:-translate-y-1 overflow-hidden"
               (click)="onCardClick(item)">
 
@@ -178,39 +178,39 @@
                 <div class="flex flex-col flex-1 min-w-0">
                   <!-- Header with title and metadata -->
                   <div class="flex items-start justify-between mb-1">
-                    @if (field1()) {
+                    @if (cardFields().field1) {
                       <div class="font-semibold text-lg text-gray-900 leading-tight flex-1 min-w-0">
                         <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                      [ngTemplateOutletContext]="{ item: item, column: field1(), context: 'field1' }">
+                                      [ngTemplateOutletContext]="{ item: item, column: cardFields().field1, context: 'field1' }">
                         </ng-container>
                       </div>
                     }
-                    @if (field5()) {
+                    @if (cardFields().field5) {
                       <div class="text-gray-500 text-xs ml-3 flex-shrink-0 font-medium bg-gray-50 px-2 py-1 rounded-md">
                         <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                      [ngTemplateOutletContext]="{ item: item, column: field5(), context: 'field5' }">
+                                      [ngTemplateOutletContext]="{ item: item, column: cardFields().field5, context: 'field5' }">
                         </ng-container>
                       </div>
                     }
                   </div>
 
                   <!-- Subtitle/metadata row -->
-                  @if (field2() || field3()) {
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                      @if (field2()) {
-                        <div class="flex items-center gap-1">
+                  @if (cardFields().field2 || cardFields().field3) {
+                    <div class="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap overflow-hidden">
+                      @if (cardFields().field2) {
+                        <div class="flex items-center gap-1 min-w-0">
                           <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                        [ngTemplateOutletContext]="{ item: item, column: field2(), context: 'field2' }">
+                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field2, context: 'field2' }">
                           </ng-container>
                         </div>
                       }
-                      @if (field2() && field3()) {
-                        <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                      @if (cardFields().field2 && cardFields().field3 && hasFieldValue(item, cardFields().field2) && hasFieldValue(item, cardFields().field3)) {
+                        <span class="w-1 h-1 bg-gray-400 rounded-full flex-shrink-0"></span>
                       }
-                      @if (field3()) {
-                        <div class="flex items-center gap-1">
+                      @if (cardFields().field3) {
+                        <div class="flex items-center gap-1 min-w-0">
                           <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                        [ngTemplateOutletContext]="{ item: item, column: field3(), context: 'field3' }">
+                                        [ngTemplateOutletContext]="{ item: item, column: cardFields().field3, context: 'field3' }">
                           </ng-container>
                         </div>
                       }
@@ -218,10 +218,10 @@
                   }
 
                   <!-- Description/content area -->
-                  @if (field4()) {
+                  @if (cardFields().field4) {
                     <div class="text-sm text-gray-600 leading-relaxed line-clamp-2">
                       <ng-container [ngTemplateOutlet]="fieldTemplate"
-                                    [ngTemplateOutletContext]="{ item: item, column: field4(), context: 'field4' }">
+                                    [ngTemplateOutletContext]="{ item: item, column: cardFields().field4, context: 'field4' }">
                       </ng-container>
                     </div>
                   }
@@ -245,13 +245,13 @@
       </div>
 
       <!-- Intersection Observer Sentinel - Invisible element for infinite scroll detection -->
-      @if (hasMoreData && !isLoadingMore && data.length > 0) {
+      @if (hasMoreData() && !isLoadingMore() && data().length > 0) {
         <div #loadMoreSentinel class="h-1 w-full"></div>
       }
 
       <!-- Load more skeletons - match the grid layout -->
-      @if (isLoadingMore) {
-        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      @if (isLoadingMore()) {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           @for (i of Array(loadMoreSkeletonsCount()).fill(0); track $index) {
             <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse shadow-sm">
               <div class="flex gap-4">
@@ -288,7 +288,7 @@
       }
 
       <!-- Load more button (if needed as fallback) -->
-      @if (hasMoreData && !isLoadingMore && data.length > 0) {
+      @if (hasMoreData() && !isLoadingMore() && data().length > 0) {
         <div class="flex justify-center p-4">
           <button
             type="button"

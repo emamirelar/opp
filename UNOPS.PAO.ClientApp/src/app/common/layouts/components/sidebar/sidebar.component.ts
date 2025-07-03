@@ -7,10 +7,13 @@ import { LanguageService } from '../../../services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { OrgUnitSelectorComponent } from '../topbar/org-unit-selector/org-unit-selector.component';
+import { ButtonModule } from 'primeng/button';
+import { GlobalFilterService } from '../../../../services/global-filter.service';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [MenuComponent, CommonModule, HttpClientModule],
+  imports: [MenuComponent, CommonModule, HttpClientModule, OrgUnitSelectorComponent, ButtonModule, TranslateModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
   standalone: true,
@@ -18,6 +21,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 })
 export class SidebarComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
+  private globalFilterService = inject(GlobalFilterService);
 
   constructor(
     public el: ElementRef,
@@ -38,6 +42,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   internalUserSignal = signal<boolean>(false);
   adminUserSignal = signal<boolean>(false);
   restrictedRoleSignal = signal<boolean>(false);
+  globalFilterEnabled = signal<boolean>(true);
 
   // Initialize menu items in ngOnInit after signals are available
   private initializeMenuItems(isAdmin: boolean, userRoles: string[] = [], canManageOffice: boolean = false) {
@@ -170,6 +175,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Initialize global filter state from service
+    this.globalFilterEnabled.set(this.globalFilterService.isFilterEnabled());
+
     this.authService.isAdmin().subscribe((isAdmin: boolean) => {
       if (isAdmin) {
         // Get user roles and canManageOffice status for admin users
@@ -230,5 +238,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.translateMenu(item.items);
       }
     }
+  }
+
+  toggleGlobalFilter() {
+    const newValue = !this.globalFilterEnabled();
+    this.globalFilterEnabled.set(newValue);
+    this.globalFilterService.setFilterEnabled(newValue);
+    console.log('Global filter toggled:', newValue);
   }
 }

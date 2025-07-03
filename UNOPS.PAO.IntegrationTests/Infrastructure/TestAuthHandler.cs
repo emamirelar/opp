@@ -40,17 +40,27 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
         // Ensure we have basic claims
         if (!claims.Any(c => c.Type == ClaimTypes.NameIdentifier))
         {
-            claims.Add(new Claim(ClaimTypes.NameIdentifier, "test-user"));
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, "123"));
         }
 
         if (!claims.Any(c => c.Type == ClaimTypes.Name))
         {
             claims.Add(new Claim(ClaimTypes.Name, "Test User"));
         }
+        
+        if (!claims.Any(c => c.Type == ClaimTypes.Email))
+        {
+            claims.Add(new Claim(ClaimTypes.Email, "testuser@unops.org"));
+        }
+        
+        if (!claims.Any(c => c.Type == ClaimTypes.Role))
+        {
+            claims.Add(new Claim(ClaimTypes.Role, "User"));
+        }
 
-        var identity = new ClaimsIdentity(claims, "Test");
+        var identity = new ClaimsIdentity(claims, "IAP");
         var principal = new ClaimsPrincipal(identity);
-        var ticket = new AuthenticationTicket(principal, "Test");
+        var ticket = new AuthenticationTicket(principal, "IAP");
 
         return Task.FromResult(AuthenticateResult.Success(ticket));
     }

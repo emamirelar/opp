@@ -3,6 +3,8 @@ using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -36,6 +38,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     private readonly IMapper _mapper;
     private readonly UNOPSAppDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<UNOPSPartnerManager> _logger;
 
     private BaseRepository<UNOPSPartner> PartnerRepository;
     private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
@@ -139,12 +142,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return MapModelToEntity(model, new UNOPSPartner());
     }
 
-    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
+    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, ILogger<UNOPSPartnerManager> logger, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
         : base(mapper, context, configuration, null, "Partner", permissionService, httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
         _configuration = configuration;
+        _logger = logger;
        // _securityService = securityService;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
         PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
@@ -253,14 +257,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .AsQueryable();
 
         var filteredQuery = query.ApplySpecification(specification);
-
+        
+        // OrgUnit filtering is now handled by the specification created by OrgUnitFilterService
+        // No need for duplicate logic here
+        
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
         
         // If filteredData is a list, we need to handle pagination manually
-        if (filteredData is IEnumerable<UNOPSPartner> partnerList)
+        // Note: ApplyAccessControlFilters returns List<Partner> but we need to handle it as Partner
+        if (filteredData is IEnumerable<Partner> basePartnerList)
         {
-            var partnerArray = partnerList.ToArray();
+            // Cast back to UNOPSPartner since we know all items in the query are UNOPSPartner
+            var partnerArray = basePartnerList.Cast<UNOPSPartner>().ToArray();
             var totalCount = partnerArray.Length;
             var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
             var excludedRows = (pageIndex - 1) * pagination.PageSize;

@@ -30,6 +30,7 @@ import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.
 import { RoleService } from '../../../../essentials/services/role.service';
 import { RoleDialogComponent } from './role-dialog/role-dialog.component';
 import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
+import { OrgUnitSelectorComponent } from './org-unit-selector/org-unit-selector.component';
 
 interface UserInfo {
   userId: number;
@@ -48,6 +49,7 @@ interface UserInfo {
     CommonModule,
     HttpClientModule,
     LanguageSelectorComponent,
+    OrgUnitSelectorComponent,
     ProfileMenubarComponent,
     StyleClassModule,
     ButtonModule,
@@ -191,21 +193,57 @@ export class TopbarComponent implements OnInit, OnDestroy {
           next: (response) => {
             // Extract user info from the nested response structure
             const userInfoData = response.userInfoWithOrgSettings || response;
-            this.userInfo = {
-              userId: userInfoData.userId,
-              name: userInfoData.name,
-              userEmail: userInfoData.userEmail,
-              orgUnit: userInfoData.orgUnit,
-              orgUnitDescription: userInfoData.orgUnitDescription,
-              supervisorId: userInfoData.supervisorId,
-              supervisorName: userInfoData.supervisorName,
-              supervisorEmail: userInfoData.supervisorEmail
-            };
-            this.loadNotifications();
-            this.loadUserRoles();
+            
+            if (userInfoData) {
+              this.userInfo = {
+                userId: userInfoData.userId || 0,
+                name: userInfoData.name || email || 'Unknown User',
+                userEmail: userInfoData.userEmail || email || '',
+                orgUnit: userInfoData.orgUnit || 'N/A',
+                orgUnitDescription: userInfoData.orgUnitDescription || '',
+                supervisorId: userInfoData.supervisorId || 0,
+                supervisorName: userInfoData.supervisorName || '',
+                supervisorEmail: userInfoData.supervisorEmail || ''
+              };
+              this.cdr.markForCheck(); // Trigger change detection
+              this.loadNotifications();
+              this.loadUserRoles();
+            } else {
+              console.warn('No user info data received from API');
+              // Create a minimal user info from email claim as fallback
+              if (email) {
+                this.userInfo = {
+                  userId: 0,
+                  name: email.split('@')[0],
+                  userEmail: email,
+                  orgUnit: 'N/A',
+                  orgUnitDescription: '',
+                  supervisorId: 0,
+                  supervisorName: '',
+                  supervisorEmail: ''
+                };
+                this.cdr.markForCheck();
+              }
+            }
           },
           error: (err) => {
             console.error('Error loading user info:', err);
+            // As a fallback, try to create basic user info from claims
+            const emailClaim = claims.find(c => c.type === 'email' || 
+                                         c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
+            if (emailClaim?.value) {
+              this.userInfo = {
+                userId: 0,
+                name: emailClaim.value.split('@')[0],
+                userEmail: emailClaim.value,
+                orgUnit: 'N/A',
+                orgUnitDescription: '',
+                supervisorId: 0,
+                supervisorName: '',
+                supervisorEmail: ''
+              };
+              this.cdr.markForCheck();
+            }
           }
         });
       },
@@ -470,6 +508,20 @@ export class TopbarComponent implements OnInit, OnDestroy {
   showProfile() {
     if (this.userInfo) {
       this.profileDialog.show(this.userInfo);
+    } else {
+      // Temporary fallback for debugging
+      console.warn('UserInfo is null, creating temporary profile data');
+      const tempUserInfo = {
+        userId: 0,
+        name: 'Debug User',
+        userEmail: 'debug@example.com',
+        orgUnit: 'N/A',
+        orgUnitDescription: '',
+        supervisorId: 0,
+        supervisorName: '',
+        supervisorEmail: ''
+      };
+      this.profileDialog.show(tempUserInfo);
     }
   }
 }

@@ -178,9 +178,14 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 // Try async first (for EF queries)
                 data = await query.ToListAsync();
             }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("IAsyncEnumerable"))
+            catch (InvalidOperationException ex) when (ex.Message.Contains("IAsyncEnumerable") || ex.Message.Contains("Unable to cast"))
             {
                 // Fallback to synchronous execution (for LINQ to Objects after dynamic filtering)
+                data = query.ToList();
+            }
+            catch (InvalidCastException)
+            {
+                // Another type of exception that can occur with non-EF queries
                 data = query.ToList();
             }
 

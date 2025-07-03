@@ -143,7 +143,13 @@ export class ContactEditDialogComponent implements OnInit {
     
     // Check if we have the record data
     if (this.record) {
-      this.formGroup.patchValue(this.record);
+      // Extract partnerId from partner object if it exists
+      const formData: any = { ...this.record };
+      if (this.record.partner && this.record.partner.id) {
+        formData.partnerId = this.record.partner.id;
+      }
+      
+      this.formGroup.patchValue(formData);
     }
     
     // Check if any assistant fields have values

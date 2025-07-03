@@ -1,0 +1,265 @@
+// Button styles
+.org-unit-button {
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: var(--surface-hover);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color-text);
+  }
+  
+  .org-unit-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    
+    // Responsive max-width
+    @media (min-width: 1280px) { // xl screens and up
+      max-width: 300px;
+    }
+    @media (min-width: 1024px) and (max-width: 1279px) { // lg screens
+      max-width: 250px;
+    }
+    @media (min-width: 768px) and (max-width: 1023px) { // md screens
+      max-width: 180px;
+    }
+    @media (min-width: 640px) and (max-width: 767px) { // sm screens
+      max-width: 120px;
+    }
+    // Below sm, the text is hidden by Tailwind class
+  }
+  
+  i {
+    font-size: 1rem;
+    
+    &.pi-building,
+    &.pi-sitemap,
+    &.pi-map-marker,
+    &.pi-folder {
+      color: var(--primary-color);
+    }
+    
+    &.pi-star-fill {
+      color: #ffd700;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// Modal styles
+:host ::ng-deep {
+  .org-unit-dialog {
+    .p-dialog-content {
+      padding: 1.5rem;
+    }
+    
+    .org-units-list {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid var(--surface-border);
+      border-radius: var(--border-radius);
+      
+      .org-unit-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-bottom: 1px solid var(--surface-border);
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        &:hover {
+          background-color: var(--surface-hover);
+        }
+        
+        &.selected {
+          background-color: var(--highlight-bg);
+          color: var(--highlight-text-color);
+          
+          .org-unit-code {
+            color: var(--highlight-text-color);
+            opacity: 0.7;
+          }
+        }
+        
+        .org-unit-label {
+          font-weight: 500;
+        }
+        
+        .org-unit-code {
+          font-size: 0.875rem;
+          margin-left: 0.5rem;
+        }
+        
+        .pi-building,
+        .pi-sitemap,
+        .pi-map-marker,
+        .pi-folder {
+          color: var(--primary-color);
+          font-size: 0.875rem;
+        }
+        
+        .org-unit-star {
+          cursor: pointer;
+          transition: transform 0.2s ease, color 0.2s ease;
+          font-size: 1rem;
+          
+          &:hover {
+            transform: scale(1.2);
+          }
+          
+          &.pi-star-fill {
+            color: #ffd700 !important;
+          }
+          
+          &.pi-star {
+            &:hover {
+              color: #ffd700 !important;
+            }
+          }
+        }
+      }
+      
+      .no-results,
+      .loading-container {
+        padding: 2rem;
+        text-align: center;
+        color: var(--text-color-secondary);
+        
+        i {
+          margin-right: 0.5rem;
+        }
+        
+        .pi-spinner {
+          font-size: 1.5rem;
+          animation: spin 2s linear infinite;
+        }
+      }
+    }
+  }
+  
+  // Loading animation
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  // Scrollbar styles
+  .org-units-list {
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: var(--surface-ground);
+      border-radius: 4px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: var(--surface-border);
+      border-radius: 4px;
+      
+      &:hover {
+        background: var(--text-color-secondary);
+      }
+    }
+  }
+  
+  // Tree styles
+  .org-unit-tree {
+    .p-tree {
+      border: 1px solid var(--surface-border);
+      border-radius: var(--border-radius);
+      background: transparent;
+      padding: 0;
+      
+      .p-tree-container {
+        max-height: 400px;
+        overflow-y: auto;
+        
+        &::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        &::-webkit-scrollbar-track {
+          background: var(--surface-ground);
+          border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+          background: var(--surface-border);
+          border-radius: 4px;
+          
+          &:hover {
+            background: var(--text-color-secondary);
+          }
+        }
+      }
+      
+      .p-treenode {
+        padding: 0;
+        
+        .p-treenode-content {
+          padding: 0.75rem 1rem;
+          border-radius: 0;
+          transition: background-color 0.2s;
+          
+          &:hover {
+            background-color: var(--surface-hover);
+          }
+          
+          &.p-treenode-selectable.p-highlight {
+            background-color: var(--highlight-bg);
+            color: var(--highlight-text-color);
+            
+            .text-gray-500 {
+              color: var(--highlight-text-color);
+              opacity: 0.7;
+            }
+          }
+          
+          .p-tree-toggler {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-right: 0.5rem;
+          }
+          
+          .p-treenode-icon {
+            color: var(--primary-color);
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+          }
+        }
+      }
+      
+      // Custom star icon styles
+      .pi-star, .pi-star-fill {
+        transition: transform 0.2s ease, color 0.2s ease;
+        font-size: 1rem;
+        
+        &:hover {
+          transform: scale(1.2);
+        }
+        
+        &.pi-star-fill {
+          color: #ffd700 !important;
+        }
+        
+        &.pi-star:hover {
+          color: #ffd700 !important;
+        }
+      }
+    }
+  }
+}
