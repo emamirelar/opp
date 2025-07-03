@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, inject, ViewChild, AfterViewInit, OnDestroy, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, inject, ViewChild, AfterViewInit, OnDestroy, SimpleChanges, input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
@@ -46,24 +46,14 @@ import { InteractionIconService } from '../../../../services/interaction-icon.se
 })
 export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit, OnDestroy {
   // Inputs
-  @Input() columns: ListViewColumn[] = [];
-  @Input() config!: ListViewConfig;
-  @Input() set data(value: T[]) {
-    this._data = value;
-    // Re-observe sentinel when data changes (but only after view init)
-    if (this.hasViewInitialized) {
-      this.scheduleObserveSentinel();
-    }
-  }
-  get data(): T[] {
-    return this._data;
-  }
-  private _data: T[] = [];
-  @Input() totalRecords: number = 0;
-  @Input() loading: boolean = false;
-  @Input() error: boolean = false;
-  @Input() hasMoreData: boolean = true;
-  @Input() isLoadingMore: boolean = false;
+  columns = input<ListViewColumn[]>([]);
+  config = input.required<ListViewConfig>();
+  data = input<T[]>([]);
+  totalRecords = input(0);
+  loading = input(false);
+  error = input(false);
+  hasMoreData = input(true);
+  isLoadingMore = input(false);
 
   // Events
   @Output() loadMore = new EventEmitter<void>();
@@ -87,7 +77,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   // Load more skeletons count - show a few placeholder cards
   loadMoreSkeletonsCount = computed(() => {
     // Show 2-4 skeletons based on page size, but keep it reasonable
-    const pageSize = this.config?.pageSize || 20;
+    const pageSize = this.config()?.pageSize || 20;
     return Math.min(Math.max(Math.floor(pageSize / 5), 2), 4);
   });
 
@@ -99,23 +89,32 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   private hasViewInitialized = false;
   private observeSentinelScheduled = false;
 
+  // Effect to handle data changes
+  private dataChangeEffect = effect(() => {
+    // Watch for data changes and re-observe sentinel
+    this.data();
+    if (this.hasViewInitialized) {
+      this.scheduleObserveSentinel();
+    }
+  });
+
   // Loading management
   private lastLoadMoreTime = 0;
   private readonly LOAD_MORE_DEBOUNCE_MS = 500; // Prevent rapid calls
 
   // Add computed property to check if safe to render content
   canRenderContent = computed(() => {
-    const hasColumns = this.columns && this.columns.length > 0;
-    const hasConfig = this.config;
-    const hasData = this.data && this.data.length > 0;
-    const notLoading = !this.loading;
+    const hasColumns = this.columns() && this.columns().length > 0;
+    const hasConfig = this.config();
+    const hasData = this.data() && this.data().length > 0;
+    const notLoading = !this.loading();
 
-    return hasColumns && hasConfig && (hasData || notLoading) && !this.error;
+    return hasColumns && hasConfig && (hasData || notLoading) && !this.error();
   });
 
   // Computed property to get avatar column
   avatarColumn = computed(() => {
-    const columns = this.columns;
+    const columns = this.columns();
     if (!columns || columns.length === 0) {
       return null;
     }
@@ -124,7 +123,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   // Computed property to get interaction icon column (for avatar display)
   interactionIconColumn = computed(() => {
-    const columns = this.columns;
+    const columns = this.columns();
     if (!columns || columns.length === 0) {
       return null;
     }
@@ -140,7 +139,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   // Computed property to get ordered card fields (excluding avatar and interaction icons shown as avatar)
   orderedCardFields = computed(() => {
-    const columns = this.columns;
+    const columns = this.columns();
     if (!columns || columns.length === 0) {
       return [];
     }
@@ -219,7 +218,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
       (entries) => {
         entries.forEach(entry => {
           // When the sentinel becomes visible, load more data
-          if (entry.isIntersecting && this.hasMoreData && !this.isLoadingMore) {
+          if (entry.isIntersecting && this.hasMoreData() && !this.isLoadingMore()) {
             this.onLoadMore();
           }
         });
@@ -282,10 +281,10 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
    */
   private canLoadMore(): boolean {
     return (
-      this.hasMoreData &&
-      !this.isLoadingMore &&
-      this.data &&
-      this.data.length > 0
+      this.hasMoreData() &&
+      !this.isLoadingMore() &&
+      this.data() &&
+      this.data().length > 0
     );
   }
 

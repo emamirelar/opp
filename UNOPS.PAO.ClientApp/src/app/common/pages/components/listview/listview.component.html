@@ -71,7 +71,7 @@
         [config]="config"
         [isLoading]="isLoading()"
         [searchCriteria]="searchCriteria"
-        [entityType]="entityType"
+        [entityType]="entityType()"
         [orderBy]="currentSortField()"
         [ascending]="currentSortOrder() === 'asc'"
         [preselectedSavedFilterId]="preselectedSavedFilterId"
@@ -88,7 +88,7 @@
 
     <!-- Card view -->
       <app-listview-card
-        [columns]="columns"
+        [columns]="columns()"
         [config]="config"
         [data]="currentPageData()"
         [totalRecords]="totalRecordsCount()"
