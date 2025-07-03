@@ -1,4 +1,4 @@
-import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, TemplateRef, ViewChild, AfterViewInit, computed, inject, effect, OnDestroy, signal, Signal, ChangeDetectorRef } from '@angular/core';
+import { Component, ContentChild, ElementRef, EventEmitter, HostListener, Input, Output, TemplateRef, AfterViewInit, computed, inject, signal, ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -7,7 +7,7 @@ import { ListViewColumn, ListViewConfig, SearchCriteria, SearchParams, EntityTyp
 import { FormsModule } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { Subject, debounceTime, distinctUntilChanged, Subscription, catchError, tap, of } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, catchError, tap, of } from 'rxjs';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
@@ -20,13 +20,31 @@ import { ChipModule } from 'primeng/chip';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { ListviewCardComponent } from './card/listview-card.component';
 import { TooltipModule } from 'primeng/tooltip';
-import { SearchField, SearchCriterion } from '../../../services/search-parser.service';
+import { SearchField } from '../../../services/search-parser.service';
 import { ListviewAdvancedSearchComponent } from './advanced-search/listview-advanced-search.component';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { TranslateService } from '@ngx-translate/core';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { SavedFilter } from '../../../interfaces/saved-filter.interface';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+interface ListViewState<T> {
+  loading: boolean;
+  loadingMore: boolean;
+  error: boolean;
+  data: T[];
+  totalCount: number;
+  hasMoreData: boolean;
+  pageIndex: number;
+  pageSize: number;
+  sortField: string;
+  sortOrder: 'asc' | 'desc';
+  searchText: string;
+  searchCriteria: SearchCriteria[];
+  isAdvancedSearchMode: boolean;
+  componentWidth: number;
+}
 
 @Component({
   selector: 'app-listview',
@@ -54,96 +72,101 @@ import { SavedFilter } from '../../../interfaces/saved-filter.interface';
   providers: [ConfirmationService],
   standalone: true
 })
-export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
-  private http = inject(HttpClient);
-  private searchSubject = new Subject<string>();
-  private searchSubscription: Subscription = Subscription.EMPTY;
-  private exportService = inject(ListviewExportService);
-  private elRef = inject(ElementRef);
+export class ListviewComponent<T = any> implements AfterViewInit {
+  private readonly http = inject(HttpClient);
+  private readonly exportService = inject(ListviewExportService);
+  private readonly elRef = inject(ElementRef);
+  private readonly translateService = inject(TranslateService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly globalFilterService = inject(GlobalFilterService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+
+  // State management
+  private readonly state = signal<ListViewState<T>>({
+    loading: false,
+    loadingMore: false,
+    error: false,
+    data: [],
+    totalCount: 0,
+    hasMoreData: true,
+    pageIndex: 1,
+    pageSize: 20,
+    sortField: '',
+    sortOrder: 'asc',
+    searchText: '',
+    searchCriteria: [],
+    isAdvancedSearchMode: false,
+    componentWidth: 0
+  });
+
+  // Computed signals
+  readonly isLoading = computed(() => this.state().loading);
+  readonly isLoadingMore = computed(() => this.state().loadingMore);
+  readonly hasError = computed(() => this.state().error);
+  readonly currentPageData = computed(() => this.state().data);
+  readonly totalRecordsCount = computed(() => this.state().totalCount);
+  readonly hasMoreDataAvailable = computed(() => this.state().hasMoreData);
+  readonly isAdvancedSearch = computed(() => this.state().isAdvancedSearchMode);
+  readonly currentSortField = computed(() => this.state().sortField);
+  readonly currentSortOrder = computed(() => this.state().sortOrder);
+
+  readonly searchPlaceholder = computed(() =>
+    this.config.searchConfig?.placeholder ||
+    (this.config.searchConfig?.useAdvancedSearch ? 'Search by field...' : 'Search...')
+  );
+
+  // Search handling
+  private readonly searchSubject = new Subject<string>();
   private resizeObserver: ResizeObserver | null = null;
-  private translateService = inject(TranslateService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private globalFilterService = inject(GlobalFilterService);
-  private globalFilterSubscription?: Subscription;
-  private cdr = inject(ChangeDetectorRef);
 
-  @Input() entityType?: EntityType;
-
-  // Listen for refresh events
-  @HostListener('window:refresh-listview')
-  refreshData() {
-    this.loadData();
-  }
-
-  // Custom template references
+  // Template references
   @ContentChild('actionsTemplate') actionsTemplate?: TemplateRef<any>;
 
-  // Core inputs
+  // Inputs
+  @Input() entityType?: EntityType;
+  @Input() columns: ListViewColumn[] = [];
+  @Input() idField = 'id';
+
   @Input() set dataUrl(value: string) {
     if (value && value !== this._dataUrl) {
       this._dataUrl = value;
-      // Use setTimeout to avoid race conditions with ngAfterViewInit
-      setTimeout(() => {
-        if (!this.hasInitialDataLoaded) {
-          this.loadData();
-        }
-      }, 0);
+      setTimeout(() => this.loadData(), 0);
     }
   }
   private _dataUrl: string = '';
 
-  // State signals
-  private loadingState = signal<boolean>(false);
-  private errorState = signal<boolean>(false);
-  private dataState = signal<ListViewData<T>>({ records: [], totalCount: 0 });
-
-  // HTTP state
-  private pageIndex = 1;
-  private pageSize = 20;
-  private sortField = '';
-  private sortOrder: 'asc' | 'desc' = 'asc';
-  private searchTextValue = '';
-  private useAdvancedSearch = false;
-  
-  // Sort state
-  currentSortConfig: string = '';
-  private sortableFieldsCache: ListViewColumn[] = [];
-
-  @Input() columns: ListViewColumn[] = [];
-
   @Input() set fullTextSearch(value: string) {
-    this._fullTextSearch = value;
     if (this._dataUrl) {
-      this.searchTextValue = value;
-      this.hasInitialDataLoaded = true; // Mark as loaded to prevent duplicate calls
+      this.state.update(s => ({ ...s, searchText: value }));
       this.loadData();
     }
   }
-  private _fullTextSearch: string = '';
 
   @Input()
   set config(value: ListViewConfig) {
     this._config = value;
 
-    // Force a refresh of the signals to ensure they pick up the new config
-    setTimeout(() => {
+    // Initialize searchable fields when config changes
+    setTimeout(() => this.initializeSearchableFields(), 0);
 
-
-      // Re-initialize searchable fields when config changes
-      this.initializeSearchableFields();
-    }, 0);
-
-    // Initialize advanced search if enabled
-    if (value.searchConfig?.useAdvancedSearch) {
-      this.useAdvancedSearch = true;
-    }
-
-    // Update page size from config
-    this.pageSize = value.pageSize || 20;
+    // Update state from config
+    this.state.update(s => ({
+      ...s,
+      pageSize: value.pageSize || 20,
+      isAdvancedSearchMode: (value.searchConfig?.useAdvancedSearch && s.searchCriteria.length > 0) || false
+    }));
 
     // Initialize default sort
-    this.initializeDefaultSort();
+    if (value.defaultSortField && value.defaultSortOrder) {
+      this.state.update(s => ({
+        ...s,
+        sortField: value.defaultSortField!,
+        sortOrder: value.defaultSortOrder!
+      }));
+      this.currentSortConfig = `${value.defaultSortField}:${value.defaultSortOrder}`;
+    }
   }
 
   get config(): ListViewConfig {
@@ -163,6 +186,7 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     autoSwitchMinWidth: 768,
     defaultViewMode: 'card'
   };
+
   @Input() set searchDebounceTime(value: number) {
     this._searchDebounceTime = value;
     this.setupSearchDebounce();
@@ -170,13 +194,9 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   get searchDebounceTime(): number {
     return this._searchDebounceTime;
   }
-  private _searchDebounceTime = 500; // Default debounce time in ms
-  @Input() idField = 'id';
+  private _searchDebounceTime = 500;
 
-  // View mode (card only)
-  viewMode: 'card' = 'card';
-
-  // Events
+  // Outputs
   @Output() rowClick = new EventEmitter<T>();
   @Output() sortChange = new EventEmitter<{field: string, order: 'asc' | 'desc'}>();
   @Output() searchChange = new EventEmitter<SearchParams>();
@@ -184,233 +204,74 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
   @Output() totalRecordsChange = new EventEmitter<number>();
   @Output() loadMore = new EventEmitter<void>();
 
-  // State
-  selectedRecord: T | null = null;
-  searchText = '';
-  currentSortField: string | undefined;
-  currentSortOrder: 'asc' | 'desc' | undefined;
-
-  // Pagination properties
-  first = 0;
-  rows = 20;
-
-  // Data loader (mock for now until proper implementation)
-  dataLoader = {
-    setAdvancedSearchEnabled: (enabled: boolean) => {
-      this.useAdvancedSearch = enabled;
-    },
-    setMyOfficeFilter: (enabled: boolean) => {
-      // Implementation for my office filter
-      console.log('My office filter:', enabled);
-    },
-    setSorting: (field: string, order: 'asc' | 'desc') => {
-      this.currentSortField = field;
-      this.currentSortOrder = order;
-    },
-    setPagination: (first: number, rows: number) => {
-      this.first = first;
-      this.rows = rows;
-      this.pageIndex = Math.floor(first / rows) + 1;
-      this.pageSize = rows;
-    }
-  };
-
-  // Infinite scroll state
-  private allLoadedData = signal<T[]>([]);
-  private hasMoreData = signal<boolean>(true);
-  isLoadingMore = signal<boolean>(false);
-
-  // Advanced search state
-  searchCriteria: SearchCriteria[] = [];
-  selectedSearchField: any = null;
-  advancedSearchText = '';
-  selectedOperator: 'AND' | 'OR' = 'AND';
+  // Component state
+  viewMode: 'card' = 'card';
+  searchableFields: SearchField[] = [];
+  searchValue: any = '';
+  currentSortConfig: string = '';
+  preselectedSavedFilterId: number | null = null;
   operators = [
     { label: 'AND', value: 'AND' },
     { label: 'OR', value: 'OR' }
   ];
 
-  // Saved filter state
-  preselectedSavedFilterId: number | null = null;
-
-  // Autocomplete and search mode state
-  isAdvancedSearchMode = signal<boolean>(false);
-  autocompleteSuggestions: any[] = [];
-  searchValue: any = '';
-
-  // Computed properties
-  isAdvancedSearch = computed(() => {
-    return this.isAdvancedSearchMode();
-  });
-  searchableFields: SearchField[] = [];
-
-  searchPlaceholder = computed(() =>
-    this.config.searchConfig?.placeholder ||
-    (this.config.searchConfig?.useAdvancedSearch ? 'Search by field...' : 'Search...')
-  );
-
-  // Computed properties
-  isLoading = computed(() => this.loadingState()); // Only initial loading, not load more
-  isLoadingAny = computed(() => this.loadingState() || this.isLoadingMore()); // Any loading state
-  hasError = computed(() => this.errorState());
-  currentPageData = computed(() => this.allLoadedData());
-  totalRecordsCount = computed(() => this.dataState().totalCount);
-  hasActionsTemplate = computed(() => !!this.actionsTemplate);
-  hasMoreDataAvailable = computed(() => this.hasMoreData());
-
-  // Add signal for current component width
-  private componentWidth = signal<number>(0);
-
-  // Track if initial data has been loaded to prevent double calls
-  private hasInitialDataLoaded = false;
+  // Data loader mock (for compatibility)
+  dataLoader = {
+    setMyOfficeFilter: (enabled: boolean) => {
+      console.log('My office filter:', enabled);
+    },
+    setPagination: (first: number, rows: number) => {
+      const pageIndex = Math.floor(first / rows) + 1;
+      this.state.update(s => ({ ...s, pageIndex, pageSize: rows }));
+    }
+  };
 
   constructor() {
     this.setupSearchDebounce();
 
-    // Initialize searchable fields if available
-    setTimeout(() => this.initializeSearchableFields(), 0);
-  }
+    // Subscribe to global filter changes
+    this.globalFilterService.activeOrgUnitId$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (this._dataUrl) {
+          this.state.update(s => ({ ...s, pageIndex: 1, data: [], hasMoreData: true }));
+          this.loadData();
+        }
+      });
 
-  /**
-   * Sync search criteria to URL parameters
-   */
-  private syncSearchCriteriaToUrl(): void {
-    const queryParams: any = { ...this.route.snapshot.queryParams };
-
-    if (this.searchCriteria.length > 0) {
-      // Encode search criteria as JSON in URL
-      queryParams.searchCriteria = JSON.stringify(this.searchCriteria);
-      queryParams.advancedSearch = 'true';
-    } else {
-      // Remove search criteria from URL when cleared
-      delete queryParams.searchCriteria;
-      delete queryParams.advancedSearch;
-    }
-
-    // Update URL without triggering navigation
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      replaceUrl: true
+    // Cleanup resize observer on destroy
+    this.destroyRef.onDestroy(() => {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+        this.resizeObserver = null;
+      }
     });
   }
 
-  /**
-   * Load search criteria from URL parameters
-   */
-  private loadSearchCriteriaFromUrl(): void {
-    const queryParams = this.route.snapshot.queryParams;
-
-    // Check if there's a saved filter ID in the URL
-    if (queryParams['savedFilterId']) {
-      const filterId = parseInt(queryParams['savedFilterId'], 10);
-      if (!isNaN(filterId)) {
-        console.log('Found saved filter ID in URL:', filterId);
-        this.preselectedSavedFilterId = filterId;
-
-        // The saved filter component will handle loading this filter
-        // We just need to ensure advanced search mode is enabled if specified
-        if (queryParams['advancedSearch'] === 'true') {
-          this.isAdvancedSearchMode.set(true);
-          this.dataLoader.setAdvancedSearchEnabled(true);
-        }
-      }
-      return;
-    }
-
-    if (queryParams['advancedSearch'] === 'true' && queryParams['searchCriteria']) {
-      try {
-        const criteria = JSON.parse(queryParams['searchCriteria']) as SearchCriteria[];
-
-        // Validate that the criteria are valid
-        if (Array.isArray(criteria) && criteria.length > 0) {
-          this.searchCriteria = criteria;
-
-          // Set advanced search mode
-          this.isAdvancedSearchMode.set(true);
-          this.useAdvancedSearch = true;
-
-
-        }
-      } catch (error) {
-        console.warn('Failed to parse search criteria from URL:', error);
-        // Clear invalid parameters
-        this.clearSearchCriteriaFromUrl();
-      }
-    }
+  @HostListener('window:refresh-listview')
+  refreshData() {
+    this.loadData();
   }
 
-  /**
-   * Clear search criteria from URL parameters
-   */
-  private clearSearchCriteriaFromUrl(): void {
-    const queryParams: any = { ...this.route.snapshot.queryParams };
-    delete queryParams.searchCriteria;
-    delete queryParams.advancedSearch;
-    delete queryParams.savedFilterId;
-
-    // Don't use queryParamsHandling: 'merge' as it prevents deletion of parameters
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams,
-      replaceUrl: true
-    });
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.checkComponentWidth();
   }
 
   ngAfterViewInit(): void {
     this.initializeComponent();
-    
-    // Subscribe to global filter changes
-    this.globalFilterSubscription = this.globalFilterService.activeOrgUnitId$.subscribe(() => {
-      // Reload data when the active org unit changes
-      if (this.hasInitialDataLoaded) {
-        this.pageIndex = 1;
-        this.allLoadedData.set([]);
-        this.hasMoreData.set(true);
-        this.loadData();
-      }
-    });
   }
 
-  /**
-   * Initialize component - centralized initialization logic
-   */
   private initializeComponent(): void {
-    // Setup resize observer to detect component width changes
     this.setupResizeObserver();
-
-    // Check initial component width
     this.checkComponentWidth();
-
-    // Load search criteria from URL if present
     this.loadSearchCriteriaFromUrl();
 
-    // Only load data if not already triggered by URL criteria loading or dataUrl setter
-    if (this._dataUrl && !this.hasInitialDataLoaded) {
-      this.hasInitialDataLoaded = true;
+    if (this._dataUrl) {
       this.loadData();
     }
   }
 
-  ngOnDestroy(): void {
-    if (this.searchSubscription) {
-      this.searchSubscription.unsubscribe();
-    }
-    
-    if (this.globalFilterSubscription) {
-      this.globalFilterSubscription.unsubscribe();
-    }
-
-    // Clean up resize observer
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
-    }
-  }
-
-  /**
-   * Setup resize observer to detect width changes and auto-switch view mode
-   */
   private setupResizeObserver(): void {
     if (!window.ResizeObserver) {
       console.warn('ResizeObserver API not supported in this browser');
@@ -420,267 +281,101 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     this.resizeObserver = new ResizeObserver(entries => {
       for (const entry of entries) {
         const width = entry.contentRect.width;
-        this.handleResize(width);
+        this.state.update(s => ({ ...s, componentWidth: width }));
       }
     });
 
-    // Start observing the component's element
     this.resizeObserver.observe(this.elRef.nativeElement);
   }
 
-  /**
-   * Handle resize events (simplified for card-only view)
-   */
-  private handleResize(width: number): void {
-    // No view mode switching needed - always card view
+  private checkComponentWidth(): void {
+    setTimeout(() => {
+      const width = this.elRef.nativeElement.offsetWidth;
+      this.state.update(s => ({ ...s, componentWidth: width }));
+    }, 0);
   }
 
-  /**
-   * Setup search debounce
-   */
   private setupSearchDebounce(): void {
-    // Clean up existing subscription if it exists
-    if (this.searchSubscription) {
-      this.searchSubscription.unsubscribe();
-    }
-
-    // Create new subscription with current debounce time
-    this.searchSubscription = this.searchSubject.pipe(
+    this.searchSubject.pipe(
       debounceTime(this.searchDebounceTime),
-      distinctUntilChanged()
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(searchValue => {
       this.executeSearch(searchValue);
     });
   }
 
+  private loadSearchCriteriaFromUrl(): void {
+    const queryParams = this.route.snapshot.queryParams;
 
-  /**
-   * Handle search input from the user
-   */
+    if (queryParams['savedFilterId']) {
+      const filterId = parseInt(queryParams['savedFilterId'], 10);
+      if (!isNaN(filterId)) {
+        this.preselectedSavedFilterId = filterId;
+        if (queryParams['advancedSearch'] === 'true') {
+          this.state.update(s => ({ ...s, isAdvancedSearchMode: true }));
+        }
+      }
+      return;
+    }
+
+    if (queryParams['advancedSearch'] === 'true' && queryParams['searchCriteria']) {
+      try {
+        const criteria = JSON.parse(queryParams['searchCriteria']) as SearchCriteria[];
+        if (Array.isArray(criteria) && criteria.length > 0) {
+          this.state.update(s => ({
+            ...s,
+            searchCriteria: criteria,
+            isAdvancedSearchMode: true
+          }));
+        } else {
+          this.state.update(s => ({ ...s, isAdvancedSearchMode: false }));
+          this.clearSearchCriteriaFromUrl();
+        }
+      } catch (error) {
+        console.warn('Failed to parse search criteria from URL:', error);
+        this.state.update(s => ({ ...s, isAdvancedSearchMode: false }));
+        this.clearSearchCriteriaFromUrl();
+      }
+    } else {
+      this.state.update(s => ({ ...s, isAdvancedSearchMode: false }));
+    }
+  }
+
+  private syncSearchCriteriaToUrl(): void {
+    const queryParams: any = { ...this.route.snapshot.queryParams };
+    const { searchCriteria } = this.state();
+
+    if (searchCriteria.length > 0) {
+      queryParams.searchCriteria = JSON.stringify(searchCriteria);
+      queryParams.advancedSearch = 'true';
+    } else {
+      delete queryParams.searchCriteria;
+      delete queryParams.advancedSearch;
+    }
+
+    this.updateUrlParams(queryParams);
+  }
+
+  private clearSearchCriteriaFromUrl(): void {
+    const queryParams: any = { ...this.route.snapshot.queryParams };
+    delete queryParams.searchCriteria;
+    delete queryParams.advancedSearch;
+    delete queryParams.savedFilterId;
+
+    this.updateUrlParams(queryParams);
+  }
+
+  // Search methods
   onSearchInput(value: string): void {
-    // Only use debounce for simple search mode
     if (!this.config.searchConfig?.useAdvancedSearch) {
       this.searchSubject.next(value);
     }
   }
 
-  /**
-   * Handle advanced search criterion from child component
-   */
-  onAdvancedSearch(criterion: SearchCriteria): void {
-    // Add to local list
-    this.searchCriteria = [...this.searchCriteria, criterion];
-
-    // Sync to URL
-    this.syncSearchCriteriaToUrl();
-
-    // Execute search with the updated criteria
-    this.executeAdvancedSearch();
-  }
-
-  /**
-   * Remove a search criterion
-   */
-  onRemoveSearchCriterion(index: number): void {
-    if (index >= 0 && index < this.searchCriteria.length) {
-      // Remove from local list
-      this.searchCriteria = this.searchCriteria.filter((_, i) => i !== index);
-
-      // Sync to URL
-      this.syncSearchCriteriaToUrl();
-
-      // Execute search with the updated criteria
-      this.executeAdvancedSearch();
-    }
-  }
-
-  /**
-   * Execute advanced search with current criteria
-   */
-  executeAdvancedSearch(): void {
-    this.pageIndex = 1;
-    this.allLoadedData.set([]); // Reset loaded data
-    this.hasMoreData.set(true);
-    this.hasInitialDataLoaded = true; // Mark as loaded to prevent duplicate calls
-
-    const searchParams = this.getSearchParams();
-    this.searchChange.emit(searchParams);
-
-    this.loadData();
-  }
-
-  /**
-   * Execute the search with the given value (simple search)
-   */
-  private executeSearch(value: string): void {
-    this.searchTextValue = value;
-
-    const searchParams = this.getSearchParams();
-    this.searchChange.emit(searchParams);
-
-    this.pageIndex = 1;
-    this.allLoadedData.set([]); // Reset loaded data
-    this.hasMoreData.set(true);
-    this.hasInitialDataLoaded = true; // Mark as loaded to prevent duplicate calls
-    this.loadData();
-  }
-
-  /**
-   * Handle row selection
-   */
-  onRowClick(event: any): void {
-    this.rowClick.emit(event);
-  }
-
-  /**
-   * Handle load more event for infinite scroll with enhanced error handling
-   */
-  onLoadMore(): void {
-    // Enhanced validation
-    if (!this.canLoadMoreData()) {
-      console.warn('LoadMore ignored: conditions not met', {
-        hasMoreData: this.hasMoreData(),
-        isLoadingMore: this.isLoadingMore(),
-        dataUrl: this._dataUrl,
-        currentDataLength: this.allLoadedData().length
-      });
-      return;
-    }
-
-    try {
-      // Set loading state immediately
-      this.isLoadingMore.set(true);
-      this.errorState.set(false);
-      
-      // Increment page for next batch
-      this.pageIndex++;
-      
-      // Load the next page
-      this.loadData();
-      
-      // Emit event for external listeners
-      this.loadMore.emit();
-      
-    } catch (error) {
-      console.error('Error in onLoadMore:', error);
-      this.isLoadingMore.set(false);
-      this.errorState.set(true);
-      // Rollback page increment on error
-      this.pageIndex--;
-    }
-  }
-
-  /**
-   * Enhanced validation for load more capability
-   */
-  private canLoadMoreData(): boolean {
-    return (
-      this.hasMoreData() && 
-      !this.isLoadingMore() && 
-      !this.loadingState() && 
-      !!this._dataUrl &&
-      this.allLoadedData().length > 0
-    );
-  }
-
-  /**
-   * Handle sort change event
-   */
-  onSortChange(event: any): void {
-    const order = event.order === 1 ? 'asc' : 'desc';
-    this.currentSortField = event.field;
-    this.currentSortOrder = order;
-    this.sortChange.emit({ field: event.field, order });
-
-    this.sortField = event.field;
-    this.sortOrder = order;
-    this.loadData();
-  }
-
-  /**
-   * Get sortable fields from columns
-   */
-  sortableFields(): ListViewColumn[] {
-    if (this.sortableFieldsCache.length === 0) {
-      this.sortableFieldsCache = this.columns.filter(col => col.sortable);
-    }
-    return this.sortableFieldsCache;
-  }
-
-  /**
-   * Get sort options for dropdown
-   */
-  sortOptions(): Array<{ label: string, value: string }> {
-    const options: Array<{ label: string, value: string }> = [];
-    
-    this.sortableFields().forEach(field => {
-      // Add ascending option
-      options.push({
-        label: `${field.label} (${this.translateService.instant('label.ascending')})`,
-        value: `${field.field}:asc`
-      });
-      
-      // Add descending option
-      options.push({
-        label: `${field.label} (${this.translateService.instant('label.descending')})`,
-        value: `${field.field}:desc`
-      });
-    });
-    
-    return options;
-  }
-
-  /**
-   * Handle sort configuration change from dropdown
-   */
-  onSortConfigChange(sortConfig: string): void {
-    if (!sortConfig) {
-      this.clearSort();
-      return;
-    }
-
-    const [field, order] = sortConfig.split(':');
-    this.currentSortField = field;
-    this.currentSortOrder = order as 'asc' | 'desc';
-    this.sortField = field;
-    this.sortOrder = order as 'asc' | 'desc';
-    
-    this.sortChange.emit({ field, order: order as 'asc' | 'desc' });
-    this.loadData();
-  }
-
-  /**
-   * Clear sort configuration
-   */
-  clearSort(): void {
-    this.currentSortConfig = '';
-    this.currentSortField = '';
-    this.currentSortOrder = 'asc';
-    this.sortField = '';
-    this.sortOrder = 'asc';
-    
-    this.sortChange.emit({ field: '', order: 'asc' });
-    this.loadData();
-  }
-
-  /**
-   * Initialize default sort configuration from config
-   */
-  private initializeDefaultSort(): void {
-    if (this.config.defaultSortField && this.config.defaultSortOrder) {
-      this.sortField = this.config.defaultSortField;
-      this.sortOrder = this.config.defaultSortOrder;
-      this.currentSortField = this.config.defaultSortField;
-      this.currentSortOrder = this.config.defaultSortOrder;
-      this.currentSortConfig = `${this.config.defaultSortField}:${this.config.defaultSortOrder}`;
-    }
-  }
-
-  /**
-   * Handle search event (for backward compatibility with enter key)
-   */
   onSearch(): void {
-    if (!this.isAdvancedSearch()) {
+    const { isAdvancedSearchMode } = this.state();
+    if (!isAdvancedSearchMode) {
       let searchTerm = '';
       if (typeof this.searchValue === 'string') {
         searchTerm = this.searchValue.trim();
@@ -688,69 +383,234 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
         searchTerm = this.searchValue.value.trim();
       }
 
-      this.searchText = searchTerm; // Keep searchText in sync
       this.executeSearch(searchTerm);
     }
   }
 
-  /**
-   * Clear all search criteria
-   */
+  private executeSearch(value: string): void {
+    this.state.update(s => ({
+      ...s,
+      searchText: value,
+      pageIndex: 1,
+      data: [],
+      hasMoreData: true
+    }));
+
+    const searchParams = this.getSearchParams();
+    this.searchChange.emit(searchParams);
+    this.loadData();
+  }
+
+  onAdvancedSearch(criterion: SearchCriteria): void {
+    this.state.update(s => ({
+      ...s,
+      searchCriteria: [...s.searchCriteria, criterion]
+    }));
+
+    this.syncSearchCriteriaToUrl();
+    this.executeAdvancedSearch();
+  }
+
+  onRemoveSearchCriterion(index: number): void {
+    this.state.update(s => ({
+      ...s,
+      searchCriteria: s.searchCriteria.filter((_, i) => i !== index)
+    }));
+
+    this.syncSearchCriteriaToUrl();
+    this.executeAdvancedSearch();
+  }
+
+  executeAdvancedSearch(): void {
+    this.state.update(s => ({
+      ...s,
+      pageIndex: 1,
+      data: [],
+      hasMoreData: true
+    }));
+
+    const searchParams = this.getSearchParams();
+    this.searchChange.emit(searchParams);
+    this.loadData();
+  }
+
   clearSearch(): void {
-    if (this.isAdvancedSearchMode()) {
-      this.searchCriteria = [];
-      // Clear from URL
+    const { isAdvancedSearchMode } = this.state();
+
+    if (isAdvancedSearchMode) {
+      this.state.update(s => ({ ...s, searchCriteria: [] }));
       this.clearSearchCriteriaFromUrl();
     } else {
-      this.searchText = '';
+      this.state.update(s => ({ ...s, searchText: '' }));
       this.searchValue = '';
-      this.searchTextValue = '';
     }
 
     const searchParams = this.getSearchParams();
     this.searchChange.emit(searchParams);
 
-    this.pageIndex = 1;
-    this.allLoadedData.set([]); // Reset loaded data
-    this.hasMoreData.set(true);
+    this.state.update(s => ({
+      ...s,
+      pageIndex: 1,
+      data: [],
+      hasMoreData: true,
+      isAdvancedSearchMode: false
+    }));
     this.loadData();
   }
 
-  /**
-   * Clear all advanced search criteria
-   */
   onClearAdvancedSearch(): void {
-    this.searchCriteria = [];
+    this.state.update(s => ({
+      ...s,
+      searchCriteria: [],
+      pageIndex: 1,
+      data: [],
+      hasMoreData: true,
+      isAdvancedSearchMode: false
+    }));
 
-    // Clear from URL
     this.clearSearchCriteriaFromUrl();
 
     const searchParams = this.getSearchParams();
     this.searchChange.emit(searchParams);
-
-    this.pageIndex = 1;
-    this.allLoadedData.set([]); // Reset loaded data
-    this.hasMoreData.set(true);
     this.loadData();
   }
 
-  /**
-   * Export data to Google Sheets
-   */
+  switchToAdvancedSearch(): void {
+    this.state.update(s => ({
+      ...s,
+      isAdvancedSearchMode: true,
+      searchText: ''
+    }));
+    this.searchValue = '';
+  }
+
+  switchToSimpleSearch(): void {
+    this.state.update(s => ({
+      ...s,
+      isAdvancedSearchMode: false,
+      searchCriteria: [],
+      pageIndex: 1,
+      data: [],
+      hasMoreData: true
+    }));
+
+    this.clearSearchCriteriaFromUrl();
+    this.loadData();
+  }
+
+  // Sort methods
+  sortableFields(): ListViewColumn[] {
+    return this.columns.filter(col => col.sortable);
+  }
+
+  sortOptions(): Array<{ label: string, value: string }> {
+    const options: Array<{ label: string, value: string }> = [];
+
+    this.sortableFields().forEach(field => {
+      options.push({
+        label: `${field.label} (${this.translateService.instant('label.ascending')})`,
+        value: `${field.field}:asc`
+      });
+
+      options.push({
+        label: `${field.label} (${this.translateService.instant('label.descending')})`,
+        value: `${field.field}:desc`
+      });
+    });
+
+    return options;
+  }
+
+  onSortChange(event: any): void {
+    const order = event.order === 1 ? 'asc' : 'desc';
+
+    this.state.update(s => ({
+      ...s,
+      sortField: event.field,
+      sortOrder: order
+    }));
+
+    this.sortChange.emit({ field: event.field, order });
+    this.loadData();
+  }
+
+  onSortConfigChange(sortConfig: string): void {
+    if (!sortConfig) {
+      this.clearSort();
+      return;
+    }
+
+    const [field, order] = sortConfig.split(':');
+
+    this.state.update(s => ({
+      ...s,
+      sortField: field,
+      sortOrder: order as 'asc' | 'desc'
+    }));
+
+    this.sortChange.emit({ field, order: order as 'asc' | 'desc' });
+    this.loadData();
+  }
+
+  clearSort(): void {
+    this.currentSortConfig = '';
+
+    this.state.update(s => ({
+      ...s,
+      sortField: '',
+      sortOrder: 'asc'
+    }));
+
+    this.sortChange.emit({ field: '', order: 'asc' });
+    this.loadData();
+  }
+
+  // Data loading
+  onRowClick(event: any): void {
+    this.rowClick.emit(event);
+  }
+
+  onLoadMore(): void {
+    const { hasMoreData, loadingMore, loading, data } = this.state();
+
+    if (!hasMoreData || loadingMore || loading || !this._dataUrl || data.length === 0) {
+      console.warn('LoadMore ignored: conditions not met');
+      return;
+    }
+
+    try {
+      this.state.update(s => ({
+        ...s,
+        loadingMore: true,
+        error: false,
+        pageIndex: s.pageIndex + 1
+      }));
+
+      this.loadData();
+      this.loadMore.emit();
+
+    } catch (error) {
+      console.error('Error in onLoadMore:', error);
+      this.state.update(s => ({
+        ...s,
+        loadingMore: false,
+        error: true,
+        pageIndex: s.pageIndex - 1
+      }));
+    }
+  }
+
   exportData(): void {
     if (this.config.enableExport && this._dataUrl) {
-      // If user has explicitly implemented their own handler, use that
       if (this.exportClick.observed) {
         this.exportClick.emit();
         return;
       }
 
-      // Otherwise use our built-in export functionality
       const entityName = this.config.entityName || 'Record';
+      const { sortField, sortOrder } = this.state();
 
-      // Use the customTransform function from config if provided
       const customTransform = this.config.exportOptions?.customTransform ||
-        // Otherwise create a transform that excludes fields if specified
         (this.config.exportOptions?.excludeFields ?
           (data: any[]) => {
             return data.map(item => {
@@ -767,137 +627,103 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
             });
           } : undefined);
 
-      // Get the search parameters
       const searchParams = this.getSearchParams();
 
       this.exportService.exportToGoogleSheet(
         entityName,
         this._dataUrl,
-        searchParams,  // Pass the full search parameters object
-        this.currentSortField || this.config.defaultSortField,
-        this.currentSortOrder || this.config.defaultSortOrder,
+        searchParams,
+        sortField || this.config.defaultSortField,
+        sortOrder || this.config.defaultSortOrder,
         customTransform
       ).subscribe();
     }
   }
 
-  /**
-   * Get the value for the scrollHeight property
-   */
-  get scrollHeightValue(): string | undefined {
-    if (!this.config.scrollable) return undefined;
-    return this.config.scrollHeight === 'flex'
-      ? 'calc(100vh - 16rem)' // Default flexible height
-      : this.config.scrollHeight;
-  }
-
-  /**
-   * Check component width and adjust view mode if necessary
-   */
-  private checkComponentWidth(): void {
-    setTimeout(() => {
-      const width = this.elRef.nativeElement.offsetWidth;
-      this.componentWidth.set(width);
-      this.handleResize(width);
-    }, 0);
-  }
-
-  /**
-   * Get current search parameters
-   */
   private getSearchParams(): SearchParams {
-    if (this.useAdvancedSearch) {
+    const { isAdvancedSearchMode, searchCriteria, searchText } = this.state();
+
+    if (isAdvancedSearchMode) {
       return {
-        fieldSearches: this.searchCriteria
+        fieldSearches: searchCriteria
       };
     } else {
       return {
-        generalSearch: this.searchTextValue
+        generalSearch: searchText
       };
     }
   }
 
-  /**
-   * Load data from the server
-   */
   private loadData(): void {
-    if (!this._dataUrl || this.loadingState()) {
-      return; // Avoid concurrent calls
+    const { loading, pageIndex } = this.state();
+
+    if (!this._dataUrl || loading) {
+      return;
     }
 
-    // Only show main loading for initial load (page 1), not for load more
-    const isInitialLoad = this.pageIndex === 1;
+    const isInitialLoad = pageIndex === 1;
     if (isInitialLoad) {
-      this.loadingState.set(true);
+      this.state.update(s => ({ ...s, loading: true }));
     }
-    this.errorState.set(false);
+    this.state.update(s => ({ ...s, error: false }));
 
     const params = this.buildHttpParams();
 
     this.http.get<any>(this._dataUrl, { params }).pipe(
       tap(response => {
         this.handleDataResponse(response);
-        // Only reset main loading state if it was set (for initial load)
         if (isInitialLoad) {
-          this.loadingState.set(false);
+          this.state.update(s => ({ ...s, loading: false }));
         }
-        // Force change detection after data update
         this.cdr.detectChanges();
-        // Check component width after data loaded
         setTimeout(() => this.checkComponentWidth(), 100);
       }),
       catchError(err => {
-        // Reset loading states
+        const { pageIndex } = this.state();
+
         if (isInitialLoad) {
-          this.loadingState.set(false);
+          this.state.update(s => ({ ...s, loading: false }));
         }
-        this.isLoadingMore.set(false); // Important: reset load more state on error
-        this.errorState.set(true);
-        
-        // Rollback page increment if it was a load more operation
-        if (this.pageIndex > 1) {
-          this.pageIndex--;
-          console.error('Error loading more data, rolling back pageIndex to:', this.pageIndex);
-        }
-        
+
+        this.state.update(s => ({
+          ...s,
+          loadingMore: false,
+          error: true,
+          pageIndex: pageIndex > 1 ? pageIndex - 1 : pageIndex
+        }));
+
         console.error('Error loading data:', err);
-        
-        // Don't clear existing data on load more error, only on initial load error
-        if (this.pageIndex === 1) {
-          this.dataState.set({ records: [], totalCount: 0 });
-          this.allLoadedData.set([]);
+
+        if (pageIndex === 1) {
+          this.state.update(s => ({ ...s, data: [], totalCount: 0 }));
         }
-        
+
         return of({ records: [], totalCount: 0 } as ListViewData<T>);
       })
     ).subscribe();
   }
 
-  /**
-   * Build HTTP parameters for the request
-   */
   private buildHttpParams(): HttpParams {
-    let params = new HttpParams()
-      .set('pageIndex', this.pageIndex.toString())
-      .set('pageSize', this.pageSize.toString());
+    const { pageIndex, pageSize, sortField, sortOrder, isAdvancedSearchMode, searchCriteria, searchText } = this.state();
 
-    // Sorting
-    if (this.sortField) {
+    let params = new HttpParams()
+      .set('pageIndex', pageIndex.toString())
+      .set('pageSize', pageSize.toString());
+
+    if (sortField) {
       params = params
-        .set('orderBy', this.sortField)
-        .set('ascending', (this.sortOrder === 'asc').toString());
+        .set('orderBy', sortField)
+        .set('ascending', (sortOrder === 'asc').toString());
     }
 
-    // Search parameters
-    if (this.useAdvancedSearch && this.searchCriteria.length > 0) {
+    if (isAdvancedSearchMode && searchCriteria.length > 0) {
       params = params
         .set('advancedSearch', 'true')
-        .set('searchCriteria', JSON.stringify(this.searchCriteria));
-    } else if (this.searchTextValue?.trim()) {
-      params = params.set('searchText', this.searchTextValue.trim());
+        .set('searchCriteria', JSON.stringify(searchCriteria));
+    } else if (searchText?.trim()) {
+      params = params.set('searchText', searchText.trim());
     }
-    
-    // Add org unit filter if enabled
+
     const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
     if (activeOrgUnitId) {
       params = params.set('orgUnitId', activeOrgUnitId.toString());
@@ -906,14 +732,12 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     return params;
   }
 
-  /**
-   * Handle data response from server with enhanced load more management
-   */
   private handleDataResponse(data: any): void {
+    const { pageIndex, data: currentData } = this.state();
+
     let totalCount = 0;
     let newRecords: T[] = [];
 
-    // Parse response data
     if (Array.isArray(data)) {
       totalCount = data.length;
       newRecords = data;
@@ -922,60 +746,40 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       newRecords = data.records;
     }
 
-    // Validate load more response
-    if (this.pageIndex > 1 && newRecords.length === 0) {
+    if (pageIndex > 1 && newRecords.length === 0) {
       console.warn('Load more returned empty results, marking as no more data');
-      this.hasMoreData.set(false);
-      this.isLoadingMore.set(false);
+      this.state.update(s => ({ ...s, hasMoreData: false, loadingMore: false }));
       return;
     }
 
-    // For infinite scroll, append new data to existing data
-    if (this.pageIndex === 1) {
-      // First page or reset - replace all data
-      this.allLoadedData.set(newRecords);
+    let updatedData: T[];
+    if (pageIndex === 1) {
+      updatedData = newRecords;
     } else {
-      // Subsequent pages - append to existing data only if we have new records
-      const currentData = this.allLoadedData();
       const combinedData = [...currentData, ...newRecords];
-      
-      // Prevent duplicate entries (based on ID field if available)
-      const uniqueData = this.removeDuplicateRecords(combinedData);
-      this.allLoadedData.set(uniqueData);
+      updatedData = this.removeDuplicateRecords(combinedData);
     }
 
-    // Update state signals
-    this.dataState.set({
-      records: this.allLoadedData(),
-      totalCount
-    });
+    this.state.update(s => ({
+      ...s,
+      data: updatedData,
+      totalCount,
+      hasMoreData: updatedData.length < totalCount && newRecords.length > 0,
+      loadingMore: false
+    }));
 
-    // Check if there's more data to load
-    const loadedCount = this.allLoadedData().length;
-    const hasMoreData = loadedCount < totalCount && newRecords.length > 0;
-    this.hasMoreData.set(hasMoreData);
-    
-    // Reset loading state
-    this.isLoadingMore.set(false);
-
-    // Emit the total records count
     this.totalRecordsChange.emit(totalCount);
 
-    // Log success for debugging
-    if (this.pageIndex > 1) {
-      console.log(`Load more successful: page ${this.pageIndex}, loaded ${newRecords.length} new records, total: ${loadedCount}/${totalCount}`);
+    if (pageIndex > 1) {
+      console.log(`Load more successful: page ${pageIndex}, loaded ${newRecords.length} new records, total: ${updatedData.length}/${totalCount}`);
     }
-    
-    // Force change detection to ensure UI updates
+
     this.cdr.detectChanges();
   }
 
-  /**
-   * Remove duplicate records based on ID field
-   */
   private removeDuplicateRecords(records: T[]): T[] {
     if (!records || records.length === 0) return records;
-    
+
     const seen = new Set();
     return records.filter(record => {
       const id = record[this.idField as keyof T];
@@ -987,40 +791,28 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
     });
   }
 
-  /**
-   * Used to manually check width (e.g. when container is resized)
-   */
-  @HostListener('window:resize')
-  onWindowResize(): void {
-    this.checkComponentWidth();
-  }
-
+  // Field initialization
   private initializeSearchableFields(): void {
     if (this._config.searchConfig?.searchableFields) {
       this.searchableFields = this._config.searchConfig.searchableFields.map(field => {
         const column = this.columns.find(c => c.field === field.field);
-        const result = {
+        return {
           field: field.field,
           label: field.label,
           type: column ? this.getFieldType(column) : 'string',
           operators: column ? this.getOperatorsForType(this.getFieldType(column)) : ['is', 'is not', 'like', 'not like']
         };
-        return result;
       });
       return;
     }
 
-    // Fallback to using columns if no searchable fields in config
     if (this.columns && this.columns.length > 0) {
-      this.searchableFields = this.columns.map(column => {
-        const result = {
-          field: column.field,
-          label: column.label,
-          type: this.getFieldType(column),
-          operators: this.getOperatorsForType(this.getFieldType(column))
-        };
-        return result;
-      });
+      this.searchableFields = this.columns.map(column => ({
+        field: column.field,
+        label: column.label,
+        type: this.getFieldType(column),
+        operators: this.getOperatorsForType(this.getFieldType(column))
+      }));
     }
   }
 
@@ -1031,7 +823,6 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
         return 'number';
       case 'date':
         return 'date';
-      // Handle boolean data as string since 'boolean' is not a valid column type
       default:
         return 'string';
     }
@@ -1046,152 +837,62 @@ export class ListviewComponent<T = any> implements AfterViewInit, OnDestroy {
       case 'date':
         return ['is', 'is not', 'after', 'before', 'between', '>', '<', '>=', '<='];
       default:
-        // Boolean values and any other types use basic operators
         return ['is', 'is not'];
     }
   }
 
-  onAdvancedSearchChange(event: { criteria: SearchCriterion[] }): void {
-    // Convert criteria to search parameters
-    const searchParams = event.criteria.map(criterion => {
-      const field = this.searchableFields.find(f => f.field === criterion.field);
-      return {
-        field: criterion.field,
-        label: field?.label || criterion.field,
-        value: criterion.value,
-        operator: criterion.operator,
-        logicalOperator: criterion.logicalOperator
-      };
-    });
+  // Event handlers
 
-    // Update the search criteria
-    this.searchCriteria = searchParams;
-
-    // Trigger search
-    this.onSearch();
-  }
-
-  /**
-   * Handle autocomplete search input
-   */
-  onAutocompleteSearch(event: any): void {
-    const query = event.query?.toLowerCase() || '';
-
-    // Create suggestions based on searchable fields
-    this.autocompleteSuggestions = [];
-
-    if (query.length > 0) {
-      // Add general search suggestion first (using translation)
-      const searchEverywhere = this.translateService?.instant('search.searchEverywhere') || 'Search everywhere';
-      this.autocompleteSuggestions.push({
-        label: `${searchEverywhere}: "${event.query}"`,
-        value: event.query,
-        field: null,
-        type: 'general'
-      });
-
-      // Add field-based suggestions
-      const searchIn = this.translateService?.instant('search.searchIn') || 'Search in';
-      this.searchableFields.forEach(field => {
-        if (field.label.toLowerCase().includes(query) || field.field.toLowerCase().includes(query)) {
-          this.autocompleteSuggestions.push({
-            label: `${searchIn} ${field.label}: "${event.query}"`,
-            value: event.query,
-            field: field.field,
-            type: 'field'
-          });
-        }
-      });
-    }
-  }
-
-  /**
-   * Handle autocomplete selection
-   */
-  onAutocompleteSelect(event: any): void {
-    // Perform the search
-    this.searchText = event.value;
-    this.searchValue = event.value;
-    this.executeSearch(event.value);
-  }
-
-  /**
-   * Switch to advanced search mode
-   */
-  switchToAdvancedSearch(): void {
-    this.isAdvancedSearchMode.set(true);
-    this.useAdvancedSearch = true;
-    // Clear all simple search values
-    this.searchValue = '';
-    this.searchText = '';
-    this.searchTextValue = '';
-  }
-
-  /**
-   * Switch back to simple search mode
-   */
-  switchToSimpleSearch(): void {
-    this.isAdvancedSearchMode.set(false);
-    this.useAdvancedSearch = false;
-    this.searchCriteria = [];
-
-    // Clear search criteria from URL when switching to simple search
-    this.clearSearchCriteriaFromUrl();
-
-    this.pageIndex = 1;
-    this.allLoadedData.set([]); // Reset loaded data
-    this.hasMoreData.set(true);
-    this.loadData();
-  }
-
-  /**
-   * Handle My Office filter change
-   */
   onMyOfficeFilterChanged(enabled: boolean): void {
-    // Update data loader with My Office filter state
     this.dataLoader.setMyOfficeFilter(enabled);
-
-    // Execute search with updated filter
     this.executeAdvancedSearch();
   }
 
-  /**
-   * Handle saved filter applied event
-   */
   onApplySavedFilter(filter: SavedFilter): void {
-    // Update URL parameters with saved filter information
     const queryParams: any = { ...this.route.snapshot.queryParams };
 
-    // Add saved filter ID to URL for tracking
     queryParams.savedFilterId = filter.id;
 
-    // If it's an advanced search, mark it in URL
     if (filter.isAdvancedSearch) {
       queryParams.advancedSearch = 'true';
     }
 
-    // Update sorting if specified in the filter
     if (filter.orderBy) {
-      this.currentSortField = filter.orderBy;
-      this.currentSortOrder = filter.ascending ? 'asc' : 'desc';
-      this.dataLoader.setSorting(filter.orderBy, this.currentSortOrder);
+      this.state.update(s => ({
+        ...s,
+        sortField: filter.orderBy || '',
+        sortOrder: filter.ascending ? 'asc' : 'desc'
+      }));
     }
 
-    // Update URL without triggering navigation
+    this.updateUrlParams(queryParams);
+
+    this.dataLoader.setPagination(0, this.state().pageSize);
+    this.preselectedSavedFilterId = null;
+    this.loadData();
+  }
+
+  // Getters
+  get scrollHeightValue(): string | undefined {
+    if (!this.config.scrollable) return undefined;
+    return this.config.scrollHeight === 'flex'
+      ? 'calc(100vh - 16rem)'
+      : this.config.scrollHeight;
+  }
+
+  get searchCriteria(): SearchCriteria[] {
+    return this.state().searchCriteria;
+  }
+
+  set searchCriteria(value: SearchCriteria[]) {
+    this.state.update(s => ({ ...s, searchCriteria: value }));
+  }
+
+  private updateUrlParams(queryParams: any): void {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
       replaceUrl: true
-    });
-
-    // Reset pagination to first page
-    this.first = 0;
-    this.dataLoader.setPagination(0, this.rows);
-
-    // Clear the preselected filter ID to avoid reprocessing
-    this.preselectedSavedFilterId = null;
-
-    // Load data with the applied filter
-    this.loadData();
+    }).catch(error => console.error('Navigation error:', error));
   }
 }
