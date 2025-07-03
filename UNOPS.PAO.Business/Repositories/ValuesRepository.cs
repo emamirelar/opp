@@ -112,7 +112,7 @@ public class ValuesRepository
     public async Task<IEnumerable<OrganizationHierarchyPrimeModel>> GetOrganizationHierarchyPrime()
     {
         var allUnits = await context.OrganizationHierarchies
-            .Where(x => !x.IsDeleted && x.Status == EntityStatus.Active)
+            .Where(x => !x.IsDeleted && x.Status == EntityStatus.Active && (x.Type == 0 || x.ParentId != null))
             .OrderBy(x => x.Name)
             .ToListAsync();
 

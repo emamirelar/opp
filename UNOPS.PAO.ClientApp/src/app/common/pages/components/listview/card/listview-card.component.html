@@ -70,7 +70,7 @@
 
 <div class="flex flex-col gap-4 ">
   @if (loading()) {
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       @for (i of [1, 2, 3, 4, 5, 6]; track i) {
           <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse">
             <div class="flex gap-4">
@@ -128,7 +128,7 @@
 
   <!-- Card grid -->
   @if (!loading() && !error() && data() && data().length > 0 && canRenderContent()) {
-      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         @for (item of data(); track trackByFn($index, item)) {
             <div class="group relative bg-white cursor-pointer shadow-sm border border-gray-100  hover:shadow-lg rounded-xl p-5 transition-all duration-300 ease-out hover:-translate-y-1 overflow-hidden"
               (click)="onCardClick(item)">
@@ -251,7 +251,7 @@
 
       <!-- Load more skeletons - match the grid layout -->
       @if (isLoadingMore()) {
-        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           @for (i of Array(loadMoreSkeletonsCount()).fill(0); track $index) {
             <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse shadow-sm">
               <div class="flex gap-4">
