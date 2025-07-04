@@ -59,22 +59,26 @@ function buildOpportunityPlusCard(relatedRecords, messageData) {
     var unmatchedCounter = 1;
     if(unmatchedEmailsData.length > 0) {
       Logger.log('In unmatchedEmailsData');
-      unmatchedEmailsData.forEach(function(unmatchedEmail) {
+      unmatchedEmailsData.forEach(function(unmatchedEmailObj) {
+        var emailAddress = unmatchedEmailObj.unmatchedEmail;
+        var partnerName = unmatchedEmailObj.partnerName;
+        var partnerId = unmatchedEmailObj.partnerId;
+                      
         // Add widgets to section 1
-        dontKnowSection.addWidget(
-        CardService.newDecoratedText()
+        const decoratedText = CardService.newDecoratedText()
           .setStartIcon(personIconImage)
-          .setTopLabel('Contact')
-          .setText(unmatchedEmail)
+          .setTopLabel(partnerName)
+          .setText(emailAddress)
           .setSwitchControl(
             CardService.newSwitch()
               .setFieldName('checkbox' + `${unmatchedCounter}`)
               .setValue('false')
               .setControlType(CardService.SwitchControlType.CHECK_BOX)
-            )
-          );
+            );
 
-          unmatchedCounter += 1;
+        dontKnowSection.addWidget(decoratedText);
+
+        unmatchedCounter += 1;
       });
 
       dontKnowSection.addWidget(

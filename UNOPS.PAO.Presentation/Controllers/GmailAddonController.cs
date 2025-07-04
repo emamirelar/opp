@@ -83,7 +83,7 @@ namespace UNOPS.PAO.Presentation.Controllers
             try
             {
                 var retVal = new GmailRelatedRecordsResponse();
-                retVal.UnmatchedEmails = input.EmailAddresses;
+                var unmatchedEmailStrings = new List<string>(input.EmailAddresses);
 
                 input.partnerIds = new List<int>();
 
@@ -152,7 +152,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                                 input.partnerIds.Add(contact.Partner.Id);
                             }
 
-                            retVal.UnmatchedEmails.Remove(contact.Email);
+                            unmatchedEmailStrings.Remove(contact.Email);
                         }
                     }
                 }
@@ -235,6 +235,10 @@ namespace UNOPS.PAO.Presentation.Controllers
                         }
                     }
                 }
+
+                // Process unmatched emails with partner suggestions
+                retVal.UnmatchedEmails = await _contactManager.GetUnmatchedEmailsWithPartnerSuggestionsAsync(unmatchedEmailStrings, User);
+
                 return Ok(retVal);
             }
             catch (Exception ex)

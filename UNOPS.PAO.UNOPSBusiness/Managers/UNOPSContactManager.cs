@@ -705,4 +705,154 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
         return mappedContacts;
     }
+
+    public async Task<List<UnmatchedEmailModel>> GetUnmatchedEmailsWithPartnerSuggestionsAsync(List<string> emailAddresses, ClaimsPrincipal user = null)
+    {
+        var unmatchedEmails = new List<UnmatchedEmailModel>();
+        
+        foreach (var email in emailAddresses)
+        {
+            var unmatchedEmail = new UnmatchedEmailModel
+            {
+                UnmatchedEmail = email
+            };
+            
+            // Extract domain from email
+            var emailDomain = email.Split('@').LastOrDefault();
+            if (string.IsNullOrEmpty(emailDomain))
+            {
+                unmatchedEmails.Add(unmatchedEmail);
+                continue;
+            }
+            
+            // Look up contacts with the same domain
+            var contactsWithSameDomain = await contactRepository.GetAll(["Partner"])
+                .AsQueryable()
+                .Where(c => !string.IsNullOrEmpty(c.Email) && c.Email.Contains($"@{emailDomain}"))
+                .ToListAsync();
+            
+            if (contactsWithSameDomain.Any())
+            {
+                // Find the most occurring PartnerId
+                var partnerIdCounts = contactsWithSameDomain
+                    .GroupBy(c => c.PartnerId)
+                    .OrderByDescending(g => g.Count())
+                    .FirstOrDefault();
+                
+                if (partnerIdCounts != null)
+                {
+                    var mostCommonPartnerId = partnerIdCounts.Key;
+                    var partner = await partnerRepository.GetByIdAsync(mostCommonPartnerId);
+                    
+                    if (partner != null)
+                    {
+                        unmatchedEmail.PartnerId = mostCommonPartnerId;
+                        unmatchedEmail.PartnerName = partner.Name;
+                    }
+                }
+            }
+            else
+            {
+                // No contacts found with same domain, use Gemini to lookup potential partner name
+                try
+                {
+                    var potentialPartnerName = await GetPartnerNameFromGeminiAsync(emailDomain);
+                    if (!string.IsNullOrEmpty(potentialPartnerName))
+                    {
+                        unmatchedEmail.PartnerName = potentialPartnerName;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogWarning($"Failed to get partner name from Gemini for domain {emailDomain}: {ex.Message}");
+                }
+            }
+            
+            unmatchedEmails.Add(unmatchedEmail);
+        }
+        
+        return unmatchedEmails;
+    }
+    
+    private async Task<string> GetPartnerNameFromGeminiAsync(string domain)
+    {
+        /*try
+        {
+            // Create a simple prompt for organization name lookup
+            var promptData = new AiPrompt
+            {
+                Type = "domain_organization_lookup",
+                Prompt = "Based on the email domain '{promptData}', what is the most likely organization or company name? Please respond with ONLY the organization name, nothing else. If you cannot determine a likely organization name, respond with 'Unknown'.",
+                Project = _configuration["AISettings:ProjectId"],
+                Location = _configuration["AISettings:Location"] ?? "us-central1",
+                Model = _configuration["AISettings:GeminiModelName"] ?? "gemini-1.5-flash-001",
+                GenerationConfig = """
+                {
+                    "temperature": 0.1,
+                    "topP": 0.8,
+                    "topK": 40,
+                    "maxOutputTokens": 50,
+                    "responseMimeType": "text/plain"
+                }
+                """,
+                ContentConfig = """
+                {
+                    "role": "user",
+                    "parts": [{"text": ""}]
+                }
+                """,
+                SafetySettings = """
+                [
+                    {
+                        "category": "HARM_CATEGORY_HARASSMENT",
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    },
+                    {
+                        "category": "HARM_CATEGORY_HATE_SPEECH", 
+                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
+                    }
+                ]
+                """
+            };
+
+            // Use the existing AI service to make the call
+            var aiService = new AiContextualService(_configuration, _context, null);
+            var response = await aiService.FetchResultFromGemini(promptData, domain);
+            
+            // Parse the response - for simple text responses, it might just be the text
+            try
+            {
+                var parsedResponse = aiService.GetDetailsFromGeminiResponse(response);
+                var organizationName = parsedResponse["text"]?.ToString() ?? 
+                                     parsedResponse["content"]?.ToString() ?? 
+                                     response.Trim();
+                
+                // Clean up the response
+                organizationName = organizationName?.Trim()?.Trim('"');
+                
+                // Return the organization name or fallback
+                return !string.IsNullOrEmpty(organizationName) && 
+                       organizationName != "Unknown" && 
+                       !organizationName.Contains("cannot") &&
+                       !organizationName.Contains("unable") 
+                    ? organizationName 
+                    : $"Organization for {domain}";
+            }
+            catch
+            {
+                // If parsing fails, try to extract text directly from response
+                var cleanResponse = response?.Trim()?.Trim('"');
+                return !string.IsNullOrEmpty(cleanResponse) && 
+                       cleanResponse != "Unknown" 
+                    ? cleanResponse 
+                    : $"Organization for {domain}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning($"Failed to get organization name from Gemini for domain {domain}: {ex.Message}");
+            return $"Organization for {domain}";
+        }*/
+        return String.Empty;
+    }
 }
