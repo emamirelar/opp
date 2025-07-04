@@ -32,7 +32,7 @@ function onGmailMessageOpen(e) {
 
   Logger.log('Message Data Content Form: ' + JSON.stringify(messageData));
 
-  const relatedRecordsCard = buildOpportunityPlusCard(relatedRecords, messageData);
+  const relatedRecordsCard = buildOpportunityPlusCard(relatedRecords, messageData, null);
   return relatedRecordsCard;
 
   //const card = buildMessageCard(messageData, currentPage);

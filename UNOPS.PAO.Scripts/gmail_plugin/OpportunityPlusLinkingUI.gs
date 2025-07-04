@@ -1,4 +1,4 @@
-function buildOpportunityPlusCard(relatedRecords, messageData) {
+function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
   
   //Icon Images
   const partnerIconImage = CardService.newIconImage().setMaterialIcon(
@@ -44,11 +44,13 @@ function buildOpportunityPlusCard(relatedRecords, messageData) {
           .setTextButtonStyle(CardService.TextButtonStyle.BORDERLESS)
           .setText('Select And Add Unknown ' + `(${unmatchedEmailsDataLength})`);
 
+    const numUncollapsed = checkboxStates ? unmatchedEmailsDataLength + 2 : 0;
+
     const dontKnowSection =
         CardService.newCardSection()
           .setHeader('What We Don\'t Know')
           .setCollapsible(true)
-          .setNumUncollapsibleWidgets(0)
+          .setNumUncollapsibleWidgets(numUncollapsed)
           .setCollapseControl(
               CardService.newCollapseControl()
                   .setHorizontalAlign(CardService.HorizontalAlignment.START)
@@ -56,13 +58,20 @@ function buildOpportunityPlusCard(relatedRecords, messageData) {
                   .setExpandButton(expandButton),
           );
     
-    var unmatchedCounter = 1;
     if(unmatchedEmailsData.length > 0) {
       Logger.log('In unmatchedEmailsData');
       unmatchedEmailsData.forEach(function(unmatchedEmailObj) {
         var emailAddress = unmatchedEmailObj.unmatchedEmail;
         var partnerName = unmatchedEmailObj.partnerName;
         var partnerId = unmatchedEmailObj.partnerId;
+        
+        // Determine checkbox state - use checkboxStates if provided, otherwise default to false
+        var checkboxValue = false;
+        if (checkboxStates && checkboxStates['cb' + emailAddress] !== undefined) {
+          checkboxValue = checkboxStates['cb' + emailAddress];
+          Logger.log('checkboxStates[cb' + emailAddress + ']: ' + checkboxStates['cb' + emailAddress]);
+          Logger.log('checkboxValue: ' + checkboxValue);
+        }
                       
         // Add widgets to section 1
         const decoratedText = CardService.newDecoratedText()
@@ -71,24 +80,45 @@ function buildOpportunityPlusCard(relatedRecords, messageData) {
           .setText(emailAddress)
           .setSwitchControl(
             CardService.newSwitch()
-              .setFieldName('checkbox' + `${unmatchedCounter}`)
-              .setValue('false')
+              .setFieldName('cb' + emailAddress)
+              .setValue(String(checkboxValue))
+              .setSelected(checkboxValue)
               .setControlType(CardService.SwitchControlType.CHECK_BOX)
             );
 
-        dontKnowSection.addWidget(decoratedText);
+        Logger.log('decoratedText: ' + decoratedText);
 
-        unmatchedCounter += 1;
+        dontKnowSection.addWidget(decoratedText);
       });
+
+      // Determine if "Select all" should be checked based on checkboxStates
+      var selectAllState = false;
+      if (checkboxStates) {
+        // Check if all checkboxes are selected
+        var allSelected = true;
+        for (var i = 0; i < unmatchedEmailsData.length; i++) {
+          var emailAddress = unmatchedEmailsData[i].unmatchedEmail;
+          if (!checkboxStates['cb' + emailAddress] || checkboxStates['cb' + emailAddress] === false) {
+            allSelected = false;
+            break;
+          }
+        }
+        selectAllState = allSelected;
+      }
 
       dontKnowSection.addWidget(
         CardService.newSelectionInput()
         .setType(CardService.SelectionInputType.SWITCH)
         .setFieldName('select_all')
-        .addItem('Select all', 'ALL', false)
+        .addItem('Select all', 'ALL', selectAllState)
         .setOnChangeAction(
           CardService.newAction()
                   .setFunctionName('handleSelectAll')
+                  .setParameters({ 
+                    relatedRecords: JSON.stringify(relatedRecords),
+                    messageData: JSON.stringify(messageData),
+                    totalCheckboxes: unmatchedEmailsData.length.toString()
+                  })
         )
       );
 
@@ -285,10 +315,46 @@ function handleAddSelected(e) {
 }
 
 function handleSelectAll(e) {
-  return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification()
-      .setText('Selected all clicked'))
-    .build();
+  try {
+    // Get the state of the "Select all" switch
+    var formInputs = e.formInputs || {};
+    var selectAllState = formInputs['select_all'] && formInputs['select_all'].length > 0;
+    
+    Logger.log('selectAllState: ' + selectAllState);
+    Logger.log('formInputs: ' + JSON.stringify(formInputs));
+    // Get the parameters passed from the action
+    var relatedRecords = JSON.parse(e.parameters.relatedRecords);
+    var messageData = JSON.parse(e.parameters.messageData);
+    var totalCheckboxes = parseInt(e.parameters.totalCheckboxes);
+    
+    Logger.log('totalCheckboxes: ' + totalCheckboxes);
+    // Create checkbox states object
+    var checkboxStates = {};
+    
+    // Set all checkboxes to the same state as "Select all"
+    var unmatchedEmailsData = relatedRecords.unmatchedEmails;
+    for (var i = 0; i < unmatchedEmailsData.length; i++) {
+      var emailAddress = unmatchedEmailsData[i].unmatchedEmail;
+      checkboxStates['cb' + emailAddress] = selectAllState;
+    }
+    
+    
+    Logger.log('checkboxStates: ' + JSON.stringify(checkboxStates));
+    // Rebuild the card with updated checkbox states
+    var updatedCard = buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates);
+    
+    // Return navigation to the updated card
+    return CardService.newActionResponseBuilder()
+      .setNavigation(CardService.newNavigation().updateCard(updatedCard))
+      .build();
+      
+  } catch (error) {
+    Logger.log('Error in handleSelectAll: ' + error.toString());
+    return CardService.newActionResponseBuilder()
+      .setNotification(CardService.newNotification()
+        .setText('Error updating selections: ' + error.toString()))
+      .build();
+  }
 }
 
 function handleChipClick(e) {
