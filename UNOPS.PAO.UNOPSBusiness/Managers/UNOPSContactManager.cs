@@ -641,6 +641,25 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                         .Cast<UNOPSContact>()
                         .ToList();
 
+        // Get all contact IDs to load interactions
+        var allContactIds = contacts.Select(c => c.Id).ToList();
+
+        // Get interactions through the InteractionContacts junction table with full interaction entities for permission checking
+        var interactionContacts = await _context.InteractionContacts
+            .Where(ic => allContactIds.Contains(ic.ContactId))
+            .Include(ic => ic.Interaction)
+            .Select(ic => new
+            {
+                ic.ContactId,
+                Interaction = ic.Interaction
+            })
+            .ToListAsync();
+
+        // Group interactions by contact ID for efficient lookup
+        var interactionsByContact = interactionContacts
+            .GroupBy(ic => ic.ContactId)
+            .ToDictionary(g => g.Key, g => g.Select(ic => ic.Interaction).ToList());
+
         // Batch permission lookup once for all contacts
         var userPermissions = await GetEntityPermissionsAsync(user, "Contact");
 
@@ -655,6 +674,32 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 CanUpdate = userPermissions.CanUpdate && await CanUserAccessEntityAsync(contact, user, "update"),
                 CanDelete = userPermissions.CanDelete && await CanUserAccessEntityAsync(contact, user, "delete")
             };*/
+
+            // Add interactions directly to the contact with Id, Type, Description, Date, and Permissions
+            if (interactionsByContact.TryGetValue(contact.Id, out var contactInteractions))
+            {
+                var interactionModels = new List<InteractionModel>();
+                foreach (var interaction in contactInteractions)
+                {
+                    var interactionModel = new InteractionModel
+                    {
+                        Id = interaction.Id,
+                        Type = interaction.Type,
+                        Description = interaction.Description,
+                        Date = interaction.Date,
+                        Permissions = new EntityPermissionsModel
+                        {
+                            CanRead = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "read"),
+                            CanCreate = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "create"),
+                            CanUpdate = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "update"),
+                            CanDelete = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "delete")
+                        }
+                    };
+                    interactionModels.Add(interactionModel);
+                }
+                model.Interactions = interactionModels;
+            }
+
             mappedContacts.Add(model);
         }
 

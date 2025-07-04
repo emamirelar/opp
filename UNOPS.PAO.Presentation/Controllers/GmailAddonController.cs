@@ -106,7 +106,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                         {
                             if (contact.Permissions.CanRead)
                             {
-                                retVal.Contacts.Add(new GmailRelatedContact
+                                var gmailContact = new GmailRelatedContact
                                 {
                                     Name = $"{contact.Salutation} {contact.FirstName} {contact.MiddleName} {contact.LastName}",
                                     Title = contact.Title,
@@ -119,7 +119,24 @@ namespace UNOPS.PAO.Presentation.Controllers
                                     Phone = contact.Phone,
                                     ProfilePictureUrl = contact.ProfilePictureUrl,
                                     CanRead = true
-                                });
+                                };
+
+                                // Add interactions if available
+                                if (contact.Interactions != null && contact.Interactions.Any())
+                                {
+                                    gmailContact.Interactions = contact.Interactions
+                                        .Where(i => i.Permissions.CanRead)
+                                        .Select(i => new GmailRelatedInteraction
+                                        {
+                                            Id = i.Id,
+                                            Type = i.Type.ToString(),
+                                            Description = i.Description,
+                                            Date = i.Date,
+                                            CanRead = i.Permissions.CanRead
+                                        }).ToList();
+                                }
+
+                                retVal.Contacts.Add(gmailContact);
                             }
                             else
                             {
@@ -162,9 +179,24 @@ namespace UNOPS.PAO.Presentation.Controllers
                                     Contacts = new List<GmailRelatedContact>()
                                 };
 
-                                if (partner.First5ContactsByDate != null && partner.First5ContactsByDate.Count() > 0)
+                                // Add partner interactions if available
+                                if (partner.Interactions != null && partner.Interactions.Any())
                                 {
-                                    foreach (ContactModel? contact in partner.First5ContactsByDate)
+                                    currentPartner.Interactions = partner.Interactions
+                                        .Where(i => i.Permissions.CanRead)
+                                        .Select(i => new GmailRelatedInteraction
+                                        {
+                                            Id = i.Id,
+                                            Type = i.Type.ToString(),
+                                            Description = i.Description,
+                                            Date = i.Date,
+                                            CanRead = i.Permissions.CanRead
+                                        }).ToList();
+                                }
+
+                                if (partner.Contacts != null && partner.Contacts.Count() > 0)
+                                {
+                                    foreach (ContactModel? contact in partner.Contacts)
                                     {
                                         if (contact != null)
                                         {

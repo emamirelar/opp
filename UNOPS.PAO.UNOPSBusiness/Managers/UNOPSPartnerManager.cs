@@ -1116,14 +1116,45 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
     {
         var partners = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
+            .GetAll(["PartnerOffice", "PartnerGroup"])
             .AsQueryable()
             .Where(p => input.partnerIds.Contains(p.Id))
             .Cast<UNOPSPartner>()
             .ToList();
 
+        // Get all partner IDs to load interactions and contacts
+        var allPartnerIds = partners.Select(p => p.Id).ToList();
+
+        // Get all contacts for these partners
+        var allContacts = await _context.Contacts
+            .Where(c => allPartnerIds.Contains(c.PartnerId))
+            .Cast<UNOPSContact>()
+            .ToListAsync();
+
+        // Group contacts by partner ID for efficient lookup
+        var contactsByPartner = allContacts
+            .GroupBy(c => c.PartnerId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Get interactions through the InteractionPartners junction table with full interaction entities for permission checking
+        var interactionPartners = await _context.InteractionPartners
+            .Where(ip => allPartnerIds.Contains(ip.PartnerId))
+            .Include(ip => ip.Interaction)
+            .Select(ip => new
+            {
+                ip.PartnerId,
+                Interaction = ip.Interaction
+            })
+            .ToListAsync();
+
+        // Group interactions by partner ID for efficient lookup
+        var interactionsByPartner = interactionPartners
+            .GroupBy(ip => ip.PartnerId)
+            .ToDictionary(g => g.Key, g => g.Select(ip => ip.Interaction).ToList());
+
         // Batch permission lookup once for all partners
-        var userPartnerPermissions = await GetEntityPermissionsAsync(user, "Partner");
+        var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
+        var userInteractionPermissions = await GetEntityPermissionsAsync(user, "Interaction");
         // Batch permission lookup once for all contacts
         //var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
 
@@ -1131,22 +1162,42 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         foreach (var partner in partners)
         {
             var model = await MapEntityToModelAsync(partner, _mapper);
-            /*model.Permissions = new EntityPermissionsModel
-            {
-                CanRead = userPartnerPermissions.CanRead,
-                CanCreate = userPartnerPermissions.CanCreate,
-                CanUpdate = userPartnerPermissions.CanUpdate && await _securityService.CanUserAccessEntityAsync(partner, user, "update"),
-                CanDelete = userPartnerPermissions.CanDelete && await _securityService.CanUserAccessEntityAsync(partner, user, "delete")
-            };*/
 
-            if(partner.First5ContactsByDate != null && partner.First5ContactsByDate.Count() > 0)
+            // Add interactions directly to the partner with only Id, Type, Description, and Permissions
+            if (interactionsByPartner.TryGetValue(partner.Id, out var partnerInteractions))
             {
-                foreach (var contact in partner.First5ContactsByDate)
+                var interactionModels = new List<InteractionModel>();
+                foreach (var interaction in partnerInteractions)
+                {
+                    var interactionModel = new InteractionModel
+                    {
+                        Id = interaction.Id,
+                        Type = interaction.Type,
+                        Description = interaction.Description,
+                        Date = interaction.Date,
+                        Permissions = new EntityPermissionsModel
+                        {
+                            CanRead = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "read"),
+                            CanCreate = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "create"),
+                            CanUpdate = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "update"),
+                            CanDelete = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "delete")
+                        }
+                    };
+                    interactionModels.Add(interactionModel);
+                }
+                model.Interactions = interactionModels;
+            }
+
+            // Add all contacts for this partner (not just first 5)
+            if (contactsByPartner.TryGetValue(partner.Id, out var partnerContacts))
+            {
+                var contactModels = new List<ContactModel>();
+                foreach (var contact in partnerContacts)
                 {
                     // Map each contact to ContactModel
                     var contactModel = _mapper.Map<ContactModel>(contact);
-                    // Add permissions for each contact
-                    //Checking the permissions for contacts separately as the basemanager checks for the current entity only
+                    
+                    // Add permissions for each contact using direct permission service calls
                     contactModel.Permissions = new EntityPermissionsModel
                     {
                         CanRead = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "read"),
@@ -1154,9 +1205,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
                         CanUpdate = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "update"),
                         CanDelete = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "delete")
                     };
-                    model.First5ContactsByDate.RemoveAll(c => c.Id == contactModel.Id);
-                    model.First5ContactsByDate.Add(contactModel);
+                    
+                    contactModels.Add(contactModel);
                 }
+                
+                model.Contacts = contactModels;
             }
 
             mappedPartners.Add(model);

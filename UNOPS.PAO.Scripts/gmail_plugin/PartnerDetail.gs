@@ -105,6 +105,46 @@ function onPartnerChipSelected(e) {
       card.addSection(contactSection);
   }
 
+  if(partner.interactions && partner.interactions.length > 0) {
+    //Recent interactions
+    const interactionSection =
+          CardService.newCardSection()
+            .setHeader('Recent interactions')
+            .setCollapsible(false);
+
+    // Sort interactions by date (most recent first) and take first 5
+    const sortedInteractions = partner.interactions
+        .filter(interaction => interaction.canRead)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 5);
+            
+    sortedInteractions.forEach(function(interaction) {
+        // Format the date
+        const interactionDate = new Date(interaction.date);
+        const formattedDate = `${interactionDate.getMonth() + 1}/${interactionDate.getDate()}/${interactionDate.getFullYear()}`;
+        
+        // Determine the interaction type label
+        let typeLabel = interaction.type;
+        if (interaction.type === 'Email') {
+          typeLabel = 'Sent';
+        } else if (interaction.type === 'EmailReceived') {
+          typeLabel = 'Received';
+        } else if (interaction.type === 'Call') {
+          typeLabel = 'Call';
+        } else if (interaction.type === 'Meeting') {
+          typeLabel = 'Meeting';
+        }
+
+        interactionSection.addWidget(
+          CardService.newDecoratedText()
+            .setStartIcon(CardService.newIconImage().setMaterialIcon(CardService.newMaterialIcon().setName('mail')))
+            .setText(interaction.description)
+            .setTopLabel(`${typeLabel} ${formattedDate}`)
+        );
+      });
+      card.addSection(interactionSection);
+  }
+
   //Back Section
   const backSection =
           CardService.newCardSection();

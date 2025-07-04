@@ -32,6 +32,7 @@ public class GmailRelatedContact
     public string ProfilePictureUrl { get; set; }
     public string Phone { get; set; }
     public bool CanRead { get; set; }
+    public List<GmailRelatedInteraction> Interactions { get; set; }
 }
 
 public class  GmailRelatedPartner
@@ -44,10 +45,12 @@ public class  GmailRelatedPartner
     public string Location { get; set; }
     public bool CanRead { get; set; }
     public List<GmailRelatedContact> Contacts { get; set; }
+    public List<GmailRelatedInteraction> Interactions { get; set; }
 }
 
 public class GmailRelatedUser
 {
+    public int Id { get; set; }
     public string Name { get; set; }
     public string Title { get; set; }
     public bool CanRead { get; set; }
@@ -55,6 +58,7 @@ public class GmailRelatedUser
 
 public class GmailRelatedInteraction
 {
+    public int Id { get; set; }
     public string Type { get; set; }
     public string Description { get; set; }
     public DateTime Date { get; set; }

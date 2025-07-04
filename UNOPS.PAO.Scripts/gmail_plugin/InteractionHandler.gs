@@ -139,11 +139,10 @@ function findExistingInteraction(threadId) {
  */
 function findRelatedRecords(emailAddresses) {
   try {
-
     const findRequestData = {
       EmailAddresses: emailAddresses
     };
-
+    Logger.log('INTERACTION_API_ENDPOINT: ' + INTERACTION_API_ENDPOINT);
     const response = UrlFetchApp.fetch(`${INTERACTION_API_ENDPOINT}/find-related-records`, {
       method: 'POST',
       headers: {
