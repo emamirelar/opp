@@ -75,7 +75,7 @@ def get_user_profile() -> dict:
 
 user_detail_agent = Agent(
     name="user_detail_agent",
-    model="gemini-2.0-flash-001",
+    model="gemini-2.5-flash",
     description="Agent that gathers user details from the API",
     instruction="""
     You are a background data gathering agent.

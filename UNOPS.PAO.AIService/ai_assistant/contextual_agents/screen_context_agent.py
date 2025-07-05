@@ -317,7 +317,7 @@ def gather_screen_context(screen_url: str = "", entity: str = "", id: int = -1, 
 
 screen_context_agent = Agent(
     name="screen_context_agent",
-    model="gemini-2.0-flash-001",
+    model="gemini-2.5-flash",
     description="Agent that intelligently gathers screen context by analyzing URLs and fetching real data",
     instruction="""
     You are a background data gathering agent.

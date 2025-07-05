@@ -21,7 +21,7 @@ def combined_before_model_callback(callback_context, llm_request=None):
 api_caller_agent = LlmAgent(
     name="api_caller_agent",
     description="Agent that makes actual API calls using entity-specific endpoints from dynamic configuration",
-    model="gemini-2.0-flash-001",
+    model="gemini-2.5-flash",
     instruction="""
     🚀 **API CALLER AGENT**
     

@@ -13,7 +13,7 @@ from .callback import extract_entity_intent_before_model, dynamic_instruction_ca
 entity_detection_agent = LlmAgent(
     name="entity_detection_agent", 
     description="Advanced entity detection agent that dynamically loads entity and intent information from tools.json configuration",
-    model="gemini-2.0-flash-001",
+    model="gemini-2.5-flash",
     instruction=dynamic_instruction_callback,  # Use dynamic instruction
     output_key="entity_intent_detection",
     before_model_callback=extract_entity_intent_before_model

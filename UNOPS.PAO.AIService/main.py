@@ -13,6 +13,7 @@ from google.genai import types
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse
+import uuid
 
 # Import our configuration manager
 from ai_assistant.config_manager import config_manager
@@ -100,16 +101,24 @@ def add_chat_endpoint(app: FastAPI):
             from google.adk.agents.run_config import StreamingMode
             from ai_assistant.agent import root_agent
             
+            # Handle null or empty session_id by generating a new one
+            session_id = request.session_id
+            if not session_id or session_id.strip() == "":
+                session_id = str(uuid.uuid4())
+                print(f"🆔 Generated new session_id: {session_id}")
+            else:
+                print(f"🆔 Using provided session_id: {session_id}")
+            
             # Create session service
             session_service = DatabaseSessionService(db_url=SESSION_DB_URL)
             print(f"🔧 Created session service with DB: {SESSION_DB_URL}")
             
             # Get or create session
-            print(f"🔍 Getting session for app: {request.app_name}, user: {request.user_id}, session: {request.session_id}")
+            print(f"🔍 Getting session for app: {request.app_name}, user: {request.user_id}, session: {session_id}")
             session = await session_service.get_session(
                 app_name=request.app_name,
                 user_id=request.user_id,
-                session_id=request.session_id
+                session_id=session_id
             )
             
             if not session:
@@ -119,7 +128,7 @@ def add_chat_endpoint(app: FastAPI):
                 session = await session_service.create_session(
                     app_name=request.app_name,
                     user_id=request.user_id,
-                    session_id=request.session_id,
+                    session_id=session_id,
                     state=initial_state
                 )
                 print(f"✅ New session created with state: {session.state}")
@@ -146,7 +155,7 @@ def add_chat_endpoint(app: FastAPI):
                         session = await session_service.get_session(
                             app_name=request.app_name,
                             user_id=request.user_id,
-                            session_id=request.session_id
+                            session_id=session_id
                         )
                         print(f"🔄 Refreshed session state: {session.state}")
                         
@@ -177,9 +186,12 @@ def add_chat_endpoint(app: FastAPI):
             )
             print(f"✅ Runner created successfully")
             
-            # Create user message
-            user_message = types.Content(parts=[types.Part(text=request.message)])
-            print(f"💬 Created user message: {request.message}")
+            # Create user message with proper role
+            user_message = types.Content(
+                parts=[types.Part(text=request.message)],
+                role="user"
+            )
+            print(f"💬 Created user message: {request.message} (role: user)")
             
             print("\n🚀 STARTING AGENT PROCESSING...")
             print("="*50)
@@ -194,11 +206,11 @@ def add_chat_endpoint(app: FastAPI):
                         print(f"🔄 Starting streaming with mode: {stream_mode}")
                         async for event in runner.run_async(
                             user_id=request.user_id,
-                            session_id=request.session_id,
+                            session_id=session_id,
                             new_message=user_message,
                             run_config=RunConfig(streaming_mode=stream_mode),
                         ):
-                            print(f"�� Streaming event: {type(event).__name__}")
+                            print(f" Streaming event: {type(event).__name__}")
                             # Format as SSE data
                             sse_event = event.model_dump_json(exclude_none=True, by_alias=True)
                             yield f"data: {sse_event}\n\n"
@@ -218,27 +230,57 @@ def add_chat_endpoint(app: FastAPI):
                 try:
                     events = []
                     print(f"🔄 Starting agent run...")
+                    
+                    # Add detailed debugging for the agent run
+                    print(f"🔍 Debug info:")
+                    print(f"  - User message: {user_message}")
+                    print(f"  - User message parts: {user_message.parts if hasattr(user_message, 'parts') else 'No parts'}")
+                    if hasattr(user_message, 'parts') and user_message.parts:
+                        for i, part in enumerate(user_message.parts):
+                            print(f"    Part {i}: {part.text if hasattr(part, 'text') else 'No text'}")
+                    
                     async for event in runner.run_async(
                         user_id=request.user_id,
-                        session_id=request.session_id,
+                        session_id=session_id,
                         new_message=user_message,
                     ):
                         print(f"📤 Received event: {type(event).__name__}")
                         # Try to get more info about the event without accessing .type
                         if hasattr(event, 'content'):
                             print(f"  Event content type: {type(event.content)}")
+                            if hasattr(event.content, 'parts'):
+                                print(f"  Event content parts: {len(event.content.parts) if event.content.parts else 0}")
                         if hasattr(event, 'author'):
                             print(f"  Event author: {event.author}")
+                        if hasattr(event, 'actions'):
+                            print(f"  Event actions: {event.actions}")
                         events.append(event)
                     
                     print(f"✅ Processing complete. Generated {len(events)} events")
                     for i, event in enumerate(events):
                         print(f"  Event {i+1}: {type(event).__name__}")
                     
-                    return {"events": events}
+                    return {
+                        "events": events,
+                        "session_id": session_id  # Return the session_id (especially important if auto-generated)
+                    }
                     
                 except Exception as run_error:
                     print(f"❌ Error during agent run: {run_error}")
+                    print(f"❌ Error type: {type(run_error)}")
+                    
+                    # Add more specific debugging for the GenAI error
+                    if "text parameter" in str(run_error):
+                        print("🔍 DEBUGGING: This is the 'text parameter' error")
+                        print(f"🔍 User message content: {user_message}")
+                        print(f"🔍 User message type: {type(user_message)}")
+                        if hasattr(user_message, 'parts'):
+                            print(f"🔍 User message parts: {user_message.parts}")
+                            for i, part in enumerate(user_message.parts):
+                                print(f"🔍   Part {i}: text='{part.text if hasattr(part, 'text') else 'NO TEXT'}', type={type(part)}")
+                        
+                        print(f"🔍 Session state: {session.state if session else 'NO SESSION'}")
+                    
                     import traceback
                     print(f"❌ Agent run traceback: {traceback.format_exc()}")
                     raise run_error

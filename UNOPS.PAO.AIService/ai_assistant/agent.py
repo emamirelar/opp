@@ -99,7 +99,7 @@ def search_knowledge_base(query: str, max_results: int = 3) -> str:
 
 user_request_agent = Agent(
     name="user_request_agent",
-    model="gemini-2.0-flash-001",
+    model="gemini-2.5-flash",
     description="Main AI assistant for Opportunity+ system with comprehensive workflow capabilities",
     instruction=ROOT_PROMPT,
     tools=[

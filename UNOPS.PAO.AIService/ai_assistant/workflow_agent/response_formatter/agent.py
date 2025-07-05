@@ -35,7 +35,7 @@ def create_response_agent():
     return LlmAgent(
         name="response_formatter_agent",
         description="Formats API responses into structured JSON responses with appropriate display types for frontend rendering",
-        model="gemini-2.0-flash-001",
+        model="gemini-2.5-flash",
         instruction=dynamic_response_instruction,  # Use dynamic instruction
         output_key="formatted_response",
         output_schema=FormattedResponse,
