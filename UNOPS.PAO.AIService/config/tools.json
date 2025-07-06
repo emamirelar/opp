@@ -203,7 +203,7 @@
     {
       "entity": "Contact",
       "description": "Manages individual contacts associated with partner organizations, including personal details, contact information, interactions, and profile management.",
-      "synonyms": ["person", "individual", "representative", "contact person", "staff member", "point of contact"],
+      "synonyms": ["person", "individual", "representative", "contact person", "staff member", "point of contact", "partner contact"],
       "mandatoryFields": ["firstName", "lastName", "email", "title", "partnerId"],
       "endpoints": [
         {
@@ -330,21 +330,6 @@
             "Remove contact 456 from the system"
           ],
           "when_to_use": "Use this when the user asks to delete, remove, or eliminate a contact."
-        },
-        {
-          "name": "GetPartnerContacts",
-          "url": "/api/partner/{partnerId}/contacts",
-          "method": "GET",
-          "description": "Retrieves all contacts associated with a specific partner organization.",
-          "parameters": {
-            "partnerId": { "type": "integer", "required": true, "description": "Partner organization ID" }
-          },
-          "example_uses": [
-            "Show me all contacts for partner 123",
-            "List UNICEF contacts",
-            "Get contact list for this organization"
-          ],
-          "when_to_use": "Use this when the user asks for contacts belonging to a specific partner or organization."
         },
         {
           "name": "GetContactPermissions",

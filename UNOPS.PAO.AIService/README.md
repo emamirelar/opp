@@ -1,284 +1,519 @@
-# UNOPS AI Service
+# UNOPS Opportunity+ AI Agent - Advanced Multi-Agent System
 
-An advanced agentic AI system built with Google ADK (Agent Development Kit) for UNOPS operations. This service provides intelligent entity detection, API integration, and workflow automation capabilities.
+A sophisticated **multi-agent AI system** built with Google ADK (Agent Development Kit) that provides intelligent entity detection, API integration, Google Drive operations, web search capabilities, and comprehensive workflow automation for UNOPS operations.
 
-## 🚀 Features
+## 🚀 **Core Capabilities**
 
-- **Entity Detection**: Advanced NLP-based entity and intent detection from user queries
-- **API Worker**: Automated API calls based on detected entities and intents
-- **Workflow Orchestration**: Sequential agent processing with loop management
-- **Dynamic Configuration**: Tools and endpoints loaded from `tools.json` configuration
-- **Web Interface**: Built-in web UI for testing and interaction
-- **Real-time Processing**: FastAPI-based server with streaming support
+### 🧠 **Multi-Agent Architecture**
+- **Sequential Agent Processing**: Coordinated workflow through specialized sub-agents
+- **Entity Detection**: Advanced NLP-based entity recognition from natural language queries
+- **API Worker**: Automated API calls with intelligent endpoint mapping
+- **Response Formatting**: User-friendly response generation with context awareness
+- **Contextual Agents**: User profile and screen context management
 
-## 📋 Prerequisites
+### 🔍 **Search & Knowledge Management**
+- **Google Drive Integration**: Search, read, and analyze documents in Google Drive
+- **Knowledge Base Search**: Semantic search through organizational knowledge base
+- **Web Search**: Google search integration for external information and current events
+- **Similarity Search**: AI-powered semantic search using vector embeddings
+- **Content Search**: Deep content analysis across files and documents
 
-- Python 3.9 or higher
-- Git
-- Windows (for batch files) or similar environment
+### 🌐 **API Integration & Data Management**
+- **Dynamic API Endpoint Mapping**: Automatic endpoint detection based on entity types
+- **15+ Supported Entities**: Partner, Contact, Interaction, Document, AI Prompt, and more
+- **CRUD Operations**: Complete Create, Read, Update, Delete functionality
+- **Permission Management**: Role-based access control and user permissions
+- **Cache Management**: Intelligent caching with TTL and entity-aware invalidation
 
-## 🛠️ Initial Setup
+### 📊 **Advanced Features**
+- **Streaming Responses**: Real-time response streaming for better user experience
+- **Session Management**: Persistent conversation state and context
+- **File Analysis**: AI-powered document analysis and content extraction
+- **Accessibility Support**: Screen reader compatibility and accessibility features
+- **Multi-Environment Support**: Development, test, and production configurations
 
-### 1. Clone the Repository
+## 🏗️ **System Architecture**
+
+### 🎯 **Agent Hierarchy**
+```
+🎯 Root Agent (Sequential Processing)
+├── 🧠 Contextual Agent
+│   ├── 👤 User Detail Agent      # User profile management
+│   └── 🖥️ Screen Context Agent   # UI context awareness
+└── 🤖 User Request Agent (Main AI Assistant)
+    ├── 🔍 Direct Response Tools
+    │   ├── search_google_drive_knowledge    # Knowledge base search
+    │   ├── search_google_drive             # File search & management
+    │   ├── read_google_drive_file          # Document reading
+    │   ├── search_google_drive_content     # Content-based search
+    │   ├── get_cache_stats                 # Cache monitoring
+    │   ├── clear_cache                     # Cache management
+    │   └── refresh_cache                   # Cache refresh
+    ├── 🌐 Search Agent                     # Google web search
+    └── 🔄 Workflow Agent (Sequential Processing)
+        ├── 🎯 Entity Detection Agent
+        │   ├── Detects 15+ entity types
+        │   ├── Determines user intent (CRUD operations)
+        │   ├── Extracts parameters and context
+        │   └── Maps entities to API endpoints
+        ├── 🔧 API Worker Agent (Loop Agent)
+        │   └── API Caller Agent
+        │       ├── Dynamic endpoint mapping
+        │       ├── HTTP request execution
+        │       ├── Authentication handling
+        │       ├── Response processing
+        │       └── Error handling & retries
+        └── 📄 Response Formatter Agent
+            ├── User-friendly response formatting
+            ├── Error message handling
+            ├── Follow-up suggestions
+            └── Context-aware responses
+```
+
+### 🔧 **System Components**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    🌐 FastAPI Application                        │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │   Web Interface │  │   REST API      │  │   Chat Endpoint │   │
+│  │   /dev-ui       │  │   /docs         │  │   /chat         │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+┌─────────────────────────────────────────────────────────────────┐
+│                    🧠 Google ADK Integration                     │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │   Agent Runner  │  │   Session Mgmt  │  │   Tool Registry │   │
+│  │   Orchestration │  │   State Mgmt    │  │   Dynamic Load  │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+┌─────────────────────────────────────────────────────────────────┐
+│                    ⚙️ Configuration System                       │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │ framework_config│  │   tools.json    │  │   .env file     │   │
+│  │ Environment-    │  │   1,572 lines   │  │   Runtime       │   │
+│  │ specific JSON   │  │   Entity Config │  │   Variables     │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+┌─────────────────────────────────────────────────────────────────┐
+│                    🔧 Core Services                              │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │   Cache System  │  │   Config Mgr    │  │   Google Drive  │   │
+│  │   Entity-aware  │  │   Singleton     │  │   Tool          │   │
+│  │   TTL-based     │  │   Load-once     │  │   Integration   │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                                   │
+┌─────────────────────────────────────────────────────────────────┐
+│                    💾 Data & Integration Layer                   │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │   PostgreSQL    │  │   Google Cloud  │  │   External APIs │   │
+│  │   Session Store │  │   Vertex AI     │  │   UNOPS Backend │   │
+│  │   User Data     │  │   Secret Mgr    │  │   15+ Entities  │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 📋 **Supported Entities & Operations**
+
+### 🏢 **Core Business Entities**
+| Entity | Description | Operations | Key Features |
+|--------|-------------|------------|--------------|
+| **Partner** | Organizations, companies, vendors | CRUD, Search, Similarity | Hierarchical grouping, permissions |
+| **Contact** | Individual contacts | CRUD, Search, Similarity | Profile management, relationships |
+| **Interaction** | Communications, meetings | CRUD, Search, History | Timeline tracking, summaries |
+| **Document** | File management | CRUD, Upload, Analysis | Type categorization, metadata |
+| **AiPrompt** | AI prompt templates | CRUD, Management | Template system, versioning |
+
+### 🔧 **System Entities**
+| Entity | Description | Operations | Key Features |
+|--------|-------------|------------|--------------|
+| **GoogleDrive** | Drive integration | Search, Read, Upload | Content analysis, file management |
+| **Gemini** | AI services | Chat, Analysis, Embeddings | Session management, file analysis |
+| **Configuration** | System settings | View, Update | Entity configuration, permissions |
+| **UserManagement** | User administration | CRUD, Permissions | Role-based access control |
+| **Notification** | System notifications | CRUD, Management | Alert system, user preferences |
+
+### 🌐 **Additional Entities**
+- **OrganizationHierarchy**: Organizational structure management
+- **Link**: URL and link management
+- **Profile**: User profile management
+- **PartnerTree**: Partner relationship hierarchy
+- **UserData**: User-specific data management
+
+## 🎯 **Key Features & Capabilities**
+
+### 🔍 **Intelligent Search Capabilities**
+```
+📚 Knowledge Base Search
+├── Search Google Drive documents
+├── Semantic content analysis
+├── Document summarization
+└── Context-aware responses
+
+🌐 Web Search Integration
+├── Google search for current events
+├── External company information
+├── Latest news and developments
+└── Authoritative source verification
+
+🔎 Similarity Search
+├── AI-powered semantic matching
+├── Vector embeddings
+├── Cross-entity relationship discovery
+└── Intelligent recommendations
+```
+
+### 🤖 **AI-Powered Operations**
+```
+🧠 Entity Detection
+├── 15+ entity types recognized
+├── Intent classification (CRUD)
+├── Parameter extraction
+└── Context understanding
+
+📊 Data Processing
+├── Automated API calls
+├── Response formatting
+├── Error handling
+├── Permission checking
+└── Cache management
+
+💬 Conversational AI
+├── Natural language processing
+├── Context-aware responses
+├── Follow-up suggestions
+└── Multi-turn conversations
+```
+
+### 🔧 **Advanced System Features**
+```
+⚡ Performance Optimization
+├── Intelligent caching system
+├── Entity-aware cache invalidation
+├── Streaming responses
+├── Parallel processing
+└── Connection pooling
+
+🔒 Security & Access Control
+├── Role-based permissions
+├── IAP integration
+├── CORS configuration
+├── Secure authentication
+└── Audit logging
+
+🌍 Multi-Environment Support
+├── Development configuration
+├── Test environment
+├── Production settings
+└── Environment-specific overrides
+```
+
+## 📁 **Project Structure**
+
+```
+UNOPS.PAO.AIService/
+├── 🏠 Root Files
+│   ├── main.py                         # FastAPI application with ADK
+│   ├── framework_config.py             # Configuration loader
+│   ├── agent.py                        # Root agent definition
+│   ├── requirements.txt                # Dependencies
+│   ├── .env                           # Environment variables
+│   └── README.md                      # This documentation
+├── 📁 config/                         # Configuration files
+│   ├── framework_config_dev.json      # Development configuration
+│   ├── framework_config_test.json     # Test configuration
+│   ├── framework_config_prod.json     # Production configuration
+│   ├── tools.json                     # Entity & API definitions (1,572 lines)
+│   └── knowledge_base.txt             # Knowledge base content
+├── 🤖 ai_assistant/                   # Core AI system
+│   ├── agent.py                       # Main agent with all capabilities
+│   ├── config_manager.py              # Configuration management
+│   ├── cache.py                       # Entity-aware caching
+│   ├── search_agent.py                # Google search integration
+│   ├── contextual_agents/             # Context management
+│   │   ├── user_detail_agent.py       # User profile management
+│   │   ├── screen_context_agent.py    # UI context awareness
+│   │   └── contextual_agent.py        # Context coordination
+│   ├── tools/                         # Tool implementations
+│   │   ├── google_drive_tool.py       # Google Drive integration
+│   │   └── __init__.py                # Tool registry
+│   └── workflow_agent/                # Workflow orchestration
+│       ├── agent.py                   # Sequential agent coordinator
+│       ├── entity_detection/          # Entity detection sub-agent
+│       │   ├── agent.py               # Entity recognition
+│       │   └── prompts.py             # Detection prompts
+│       ├── api_worker/                # API worker sub-agent
+│       │   ├── agent.py               # API orchestration
+│       │   ├── callback.py            # Dynamic tool injection
+│       │   └── utilities.py           # API utilities
+│       └── response_formatter/        # Response formatting sub-agent
+│           ├── agent.py               # Response formatting
+│           └── prompts.py             # Formatting prompts
+├── 🧪 tests/                          # Test files
+│   ├── test_entity_detection.py       # Entity detection tests
+│   ├── test_enhanced_workflow.py      # Workflow tests
+│   ├── test_google_drive.py          # Google Drive tests
+│   └── test_fixes.py                 # System integration tests
+└── 📜 scripts/                        # Utility scripts
+    ├── update_packages.bat            # Dependency updates
+    └── run_app.bat                    # Application runner
+```
+
+## 🚀 **Quick Start**
+
+### 1. **Environment Setup**
 ```bash
+# Clone repository
 git clone <repository-url>
-cd UNOPSAiService
-```
+cd UNOPS.PAO.AIService
 
-### 2. Create Virtual Environment
-```bash
+# Create virtual environment
 python -m venv venv
-```
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
 
-### 3. Activate Virtual Environment
-
-**Windows:**
-```bash
-venv\Scripts\activate
-```
-
-**Linux/Mac:**
-```bash
-source venv/bin/activate
-```
-
-### 4. Install Dependencies
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 5. Environment Configuration
+### 2. **Configuration**
+```bash
+# Create .env file
+echo "ENVIRONMENT=dev" > .env
 
-Create a `.env` file in the root directory (optional):
-```env
-# Server Configuration
-PORT=8000
-HOST=0.0.0.0
-SERVE_WEB_INTERFACE=true
-
-# Database Configuration  
-DATABASE_URL=postgresql://postgres:password@localhost:5433/database_name
-
-# Development Settings
-API_BASE_URL=https://localhost:44426
-IS_DEVELOPMENT=true
-DEV_EMAIL=your.email@example.com
+# Configuration files are already set up:
+# - config/framework_config_dev.json (development)
+# - config/framework_config_test.json (testing)
+# - config/framework_config_prod.json (production)
 ```
 
-## 🚀 Quick Start
-
-### Option 1: Using Batch Files (Windows)
-
-**Update Dependencies:**
+### 3. **Run Application**
 ```bash
-update_packages.bat
-```
-
-**Run the Application:**
-```bash
-run_app.bat
-```
-
-This will automatically:
-- Activate the virtual environment
-- Start the FastAPI server
-- Open the web interface in your browser
-
-### Option 2: Manual Commands
-
-**Activate Virtual Environment:**
-```bash
-venv\Scripts\activate
-```
-
-**Run the Application:**
-```bash
+# Option 1: Direct execution
 python main.py
+
+# Option 2: Using batch file (Windows)
+run_app.bat
+
+# Option 3: With custom port
+set PORT=8080 && python main.py
 ```
 
-**Access the Web Interface:**
-Open your browser to: http://localhost:8000/dev-ui
+### 4. **Access Interfaces**
+- **Web Interface**: http://localhost:8000/dev-ui
+- **API Documentation**: http://localhost:8000/docs
+- **Chat Endpoint**: http://localhost:8000/chat
 
-## 🏗️ Architecture
+## 💬 **Usage Examples**
 
-### Agent Structure
+### 🔍 **Search & Discovery**
 ```
-workflow_agent (SequentialAgent)
-├── entity_detection_agent (LlmAgent)
-│   ├── Detects entities from user input
-│   ├── Determines user intent
-│   └── Extracts parameters
-└── api_worker_agent (LoopAgent)
-    └── api_caller_agent (LlmAgent)
-        ├── Maps entities to API endpoints
-        ├── Executes HTTP requests
-        └── Formats responses
+"Find all partners containing UNICEF"
+"Search for contacts in Bangladesh"
+"Show me documents related to climate change"
+"Find interactions from last month"
+"Search Google Drive for partnership agreements"
 ```
 
-### Key Components
-
-- **Entity Detection**: Processes user queries to identify entities (Contact, Partner, Interaction, etc.)
-- **Intent Recognition**: Determines user intent (search, create, update, delete)
-- **API Integration**: Automatically calls appropriate API endpoints based on detection results
-- **Loop Management**: Handles multi-step workflows with proper exit conditions
-- **Configuration Management**: Dynamic loading from `tools.json` configuration file
-
-## 📁 Project Structure
-
+### 🔧 **Data Operations**
 ```
-UNOPSAiService/
-├── ai_assistant/
-│   ├── agent.py                    # Root agent definition
-│   ├── config_manager.py           # Configuration management
-│   └── workflow_agent/
-│       ├── agent.py                # Main workflow agent
-│       ├── entity_detection/       # Entity detection sub-agent
-│       └── api_worker/             # API worker sub-agent
-├── config/
-│   ├── tools.json                  # API endpoints and entity configuration
-│   └── knowledge_base.txt          # Knowledge base content
-├── main.py                         # FastAPI application entry point
-├── requirements.txt                # Python dependencies
-├── update_packages.bat             # Dependency update script
-├── run_app.bat                     # Application runner script
-└── README.md                       # This file
+"Create a new partner named Red Cross"
+"Update contact John Smith's email address"
+"Delete partner ID 123"
+"Show me details for contact Madeline"
+"Upload a document for partner UNICEF"
 ```
 
-## 🔧 Configuration
+### 🧠 **AI-Powered Queries**
+```
+"What's the latest news about UNOPS?"
+"Analyze this document for key insights"
+"Find partners similar to humanitarian organizations"
+"Generate a summary for partner 456"
+"Search for opportunities in renewable energy"
+```
 
-### tools.json
-The `config/tools.json` file contains:
-- Entity definitions and synonyms
-- API endpoint configurations
-- Parameter mappings
-- Usage examples
+### 📊 **System Management**
+```
+"Show cache statistics"
+"Clear the partner cache"
+"Refresh all cached data"
+"Check my permissions for partner 123"
+"Display system configuration"
+```
 
-### Environment Variables
-- `PORT`: Server port (default: 8000)
-- `HOST`: Server host (default: 0.0.0.0)
-- `API_BASE_URL`: Backend API base URL
-- `DATABASE_URL`: PostgreSQL connection string
-- `IS_DEVELOPMENT`: Enable development mode
-- `DEV_EMAIL`: Development user email
+## 🔧 **Configuration System**
 
-## 🧪 Testing
-
-Run the test suites to verify functionality:
-
+### 🌍 **Environment-Based Configuration**
 ```bash
-# Test entity detection
-python test_entity_detection.py
-
-# Test workflow processing
-python test_enhanced_workflow.py
-
-# Test intent detection fixes
-python test_madeline_intent_fix.py
-
-# Test loop exit behavior
-python test_loop_exit_behavior.py
+# Set environment in .env file
+ENVIRONMENT=dev    # Loads framework_config_dev.json
+ENVIRONMENT=test   # Loads framework_config_test.json
+ENVIRONMENT=prod   # Loads framework_config_prod.json
 ```
 
-## 📚 API Endpoints
-
-### Main Endpoints
-- `GET /`: Root endpoint
-- `POST /chat`: Chat with the AI agent
-- `GET /dev-ui`: Web development interface
-- `GET /docs`: Interactive API documentation
-
-### Chat Request Format
+### ⚙️ **Key Configuration Sections**
 ```json
 {
-  "app_name": "opportunity_ai_agent",
-  "user_id": "user123", 
-  "session_id": "session456",
-  "message": "Get details of contact Madeline",
-  "streaming": false,
-  "state": {}
+  "branding": {
+    "application_name": "Opportunity+ AI Agent",
+    "project_name": "UNOPS Opportunity+",
+    "organization": "UNOPS"
+  },
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "api_base_url": "https://your-api-backend.com"
+  },
+  "google_cloud": {
+    "project": "unops-pao-ai-service",
+    "location": "us-central1"
+  },
+  "runtime": {
+    "gemini_model": "gemini-2.5-flash",
+    "api_timeout": 30,
+    "max_retries": 3
+  }
 }
 ```
 
-## 💡 Usage Examples
+## 🧪 **Testing**
 
-### Basic Queries
-- `"Find all contacts"`
-- `"Get details of contact Madeline"`
-- `"Create a new partner named UNICEF"`
-- `"Update contact John Smith's email"`
-- `"Show me all interactions from last week"`
-
-### Entity Types Supported
-- **Contact**: Individual contacts and their information
-- **Partner**: Partner organizations and relationships
-- **Interaction**: Communications and meetings
-- **Document**: File and document management
-- **AiPrompt**: AI prompt templates
-- **Configuration**: System configuration management
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**1. Virtual Environment Not Activated**
+### 🔍 **Test Suites**
 ```bash
-# Ensure you see (venv) in your command prompt
+# Entity detection tests
+python test_entity_detection.py
+
+# Workflow processing tests
+python test_enhanced_workflow.py
+
+# Google Drive integration tests
+python test_google_drive.py
+
+# System integration tests
+python test_fixes.py
+```
+
+### ✅ **Test Coverage**
+- ✅ Entity detection and intent recognition
+- ✅ API endpoint mapping and execution
+- ✅ Google Drive search and file operations
+- ✅ Cache management and invalidation
+- ✅ Configuration loading and validation
+- ✅ Multi-agent workflow coordination
+- ✅ Response formatting and error handling
+
+## 🔒 **Security & Authentication**
+
+### 🛡️ **Security Features**
+- **IAP Integration**: Google Identity-Aware Proxy support
+- **Role-Based Access Control**: Granular permissions per entity
+- **CORS Configuration**: Cross-origin resource sharing controls
+- **Secret Management**: Google Cloud Secret Manager integration
+- **Secure Sessions**: Encrypted session storage
+
+### 🔑 **Authentication Flow**
+1. **User Authentication**: IAP or custom authentication
+2. **Session Creation**: Secure session establishment
+3. **Permission Checking**: Role-based access validation
+4. **API Authorization**: Endpoint-specific permission checks
+5. **Audit Logging**: Security event tracking
+
+## 📊 **Monitoring & Analytics**
+
+### 📈 **Built-in Monitoring**
+- **Cache Performance**: Hit/miss rates, memory usage
+- **Agent Metrics**: Response times, success rates
+- **API Analytics**: Endpoint usage, error rates
+- **User Activity**: Session tracking, usage patterns
+
+### 📊 **Monitoring Endpoints**
+```bash
+GET /framework/info          # System information
+GET /framework/config        # Configuration status
+GET /framework/tools         # Available tools
+GET /cache/stats            # Cache statistics
+GET /google-drive/files     # Google Drive file listing
+```
+
+## 🚀 **Advanced Features**
+
+### 🔄 **Streaming & Real-time**
+- **Streaming Responses**: Real-time response generation
+- **Session Persistence**: Conversation state management
+- **Context Awareness**: Multi-turn conversation support
+- **Background Processing**: Asynchronous task execution
+
+### 🧠 **AI & Machine Learning**
+- **Vector Embeddings**: Semantic search capabilities
+- **Similarity Matching**: AI-powered relationship discovery
+- **Content Analysis**: Document understanding and summarization
+- **Intent Recognition**: Natural language understanding
+
+### 🔧 **System Administration**
+- **Cache Management**: Intelligent caching with TTL
+- **Configuration Hot-reload**: Runtime configuration updates
+- **Health Monitoring**: System health checks
+- **Performance Optimization**: Resource usage optimization
+
+## 🤝 **API Integration**
+
+### 🌐 **Supported API Operations**
+- **RESTful APIs**: Full CRUD operations
+- **Authentication**: Bearer token and API key support
+- **Error Handling**: Comprehensive error management
+- **Retry Logic**: Automatic retry with exponential backoff
+- **Rate Limiting**: Request throttling and queuing
+
+### 📡 **External Integrations**
+- **Google Drive API**: File operations and content search
+- **Google Search API**: Web search capabilities
+- **Vertex AI**: Advanced AI model integration
+- **PostgreSQL**: Database operations and session storage
+
+## 📞 **Support & Troubleshooting**
+
+### 🔧 **Common Issues**
+```bash
+# Virtual environment not activated
 venv\Scripts\activate
-```
 
-**2. Dependencies Not Installed**
-```bash
+# Dependencies not installed
 pip install -r requirements.txt
+
+# Port already in use
+set PORT=8001 && python main.py
+
+# Configuration issues
+python -c "from framework_config import validate_config; print(validate_config())"
 ```
 
-**3. Port Already in Use**
+### 🐛 **Debug Mode**
 ```bash
-# Change port in .env file or use environment variable
-set PORT=8001
-python main.py
-```
-
-**4. Database Connection Issues**
-- Check PostgreSQL server is running
-- Verify DATABASE_URL configuration
-- Ensure database exists and is accessible
-
-### Debug Mode
-Run with debug logging:
-```bash
+# Enable debug logging
 python main.py --debug
+
+# Check configuration
+python -c "from ai_assistant.config_manager import config_manager; print(config_manager.framework_config)"
+
+# Test Google Drive integration
+python test_google_drive.py
 ```
 
-## 🔒 Security Notes
-
-- The application includes IAP header simulation for development
-- Use proper authentication in production environments
-- Configure CORS settings appropriately
-- Secure database connections with proper credentials
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests to ensure functionality
-5. Submit a pull request
-
-## 📄 License
+## 📄 **License & Contributing**
 
 This project is part of UNOPS internal systems and follows UNOPS software development guidelines.
 
-## 📞 Support
-
-For technical support or questions:
-- Check the troubleshooting section
-- Review the test files for usage examples
-- Consult the API documentation at `/docs`
-
 ---
 
-**Quick Start Summary:**
-1. Run `update_packages.bat` (first time setup)
-2. Run `run_app.bat` (to start the application)
-3. Access http://localhost:8000/dev-ui in your browser
-4. Start chatting with the AI agent! 
+**🎯 Quick Summary:**
+- **Multi-Agent System**: 15+ entities, intelligent workflow processing
+- **Search Capabilities**: Google Drive, web search, semantic similarity
+- **AI Integration**: Gemini AI, vector embeddings, natural language processing
+- **Enterprise Ready**: Role-based access, caching, monitoring, multi-environment support
+- **Easy Deployment**: Single command startup, configuration-driven, Docker ready
+
+**🚀 Get Started:** `python main.py` → Access http://localhost:8000/dev-ui → Start chatting! 

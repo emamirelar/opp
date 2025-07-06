@@ -1,18 +1,24 @@
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
+from google.adk.tools.tool_context import ToolContext
+from ..agent_callbacks import user_detail_agent_callback
+from ai_assistant.config_manager import config_manager
 
-def get_user_profile() -> dict:
+def get_user_profile(tool_context: ToolContext) -> dict:
     """
     Get current user's profile information from the API.
-    Uses the GetUserContext endpoint from tools.json via invoke_api_tool.
+    This function only runs when cache is not available.
     """
     try:
+        # Get session state from tool context  
+        session_state = tool_context.state
+        
         # Import here to avoid circular imports
-        from ..config_manager import config_manager, API_BASE_URL
+        from ai_assistant.config_manager import config_manager, API_BASE_URL
         from ..workflow_agent.api_worker.utilities import invoke_api_tool, construct_api_url
         import os
         
-        print("🔍 Getting user profile via tools.json configuration...")
+        print("📡 [FUNCTION] Fetching fresh user profile from API...")
         
         # Load entities configuration from tools.json
         entities_config = config_manager.get_entities()
@@ -25,7 +31,7 @@ def get_user_profile() -> dict:
                 break
         
         if not profile_entity:
-            print("⚠️ UserData entity not found in tools.json - using fallback")
+            print("⚠️ UserData entity not found in tools.json")
             return {}
         
         # Find the GetUserContext endpoint
@@ -36,7 +42,7 @@ def get_user_profile() -> dict:
                 break
         
         if not get_profile_endpoint:
-            print("⚠️ GetUserContext endpoint not found in tools.json - using fallback")
+            print("⚠️ GetUserContext endpoint not found in tools.json")
             return {}
         
         # GetUserContext requires email parameter - get from environment or use dev email
@@ -49,7 +55,7 @@ def get_user_profile() -> dict:
         # Prepare parameters with required email
         parameters = {"email": user_email}
         
-        print(f"📡 Calling API: {method} {api_url} with email: {user_email}")
+        print(f"🌐 [FUNCTION] Calling API: {method} {api_url} with email: {user_email}")
         
         # Use the invoke_api_tool to make the API call with proper headers
         result = invoke_api_tool(
@@ -60,13 +66,26 @@ def get_user_profile() -> dict:
         
         if result.get('status') == 'success':
             response_data = result.get('response', {})
-            print(f"✅ Successfully retrieved user profile from API")
+            print(f"✅ [FUNCTION] Successfully retrieved user profile from API")
 
             user_profile = response_data
             
+            # Store in session state and cache
+            try:
+                if session_state is not None:
+                    session_state['user_profile'] = user_profile
+                    
+                # Cache the result for future use
+                from ..cache import entity_cache
+                entity_cache.set_user_profile(user_email, user_profile)
+                
+            except Exception as cache_error:
+                print(f"⚠️ Failed to set session state or cache: {cache_error}")
+            
             return user_profile
         else:
-            print(f"❌ API call failed: {result.get('error', 'Unknown error')}")
+            error_msg = result.get('error', 'Unknown error')
+            print(f"❌ API call failed: {error_msg}")
             return {}
             
     except Exception as e:
@@ -75,7 +94,7 @@ def get_user_profile() -> dict:
 
 user_detail_agent = Agent(
     name="user_detail_agent",
-    model="gemini-2.5-flash",
+    model=config_manager.framework_config['runtime']['gemini_model'],
     description="Agent that gathers user details from the API",
     instruction="""
     You are a background data gathering agent.
@@ -90,5 +109,6 @@ user_detail_agent = Agent(
     After calling the function, respond with: "User profile retrieved successfully"
     """,
     tools=[FunctionTool(func=get_user_profile)],
-    output_key="user_profile"
+    output_key="user_profile",
+    before_model_callback=user_detail_agent_callback
 ) 

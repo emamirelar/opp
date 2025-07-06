@@ -146,6 +146,48 @@ user_data = {
   * **when_to_use**: Guidance on when this endpoint should be used
   * **example_uses**: Examples of user requests that would use this endpoint
   * **description**: What the endpoint does
+- **CRITICAL: Handle filter_by parameters to select specialized endpoints**
+
+**🚨 INTELLIGENT ENDPOINT SELECTION:**
+
+**Common Sense Rule**: Look for specialized endpoints that match the user's intent.
+
+**SPECIFIC EXAMPLE - Partner Contacts:**
+
+**✅ CORRECT Flow for "partner contacts of ABC Corp":**
+```python
+# Step 1: Entity detected as Contact with partnerName: "ABC Corp"
+# Step 2: Search for partner to get ID
+partner_search = invoke_api_tool(
+    url="{api_base_url}/get-similarity-result",
+    method="GET", 
+    body={"entityName": "Partner", "searchText": "ABC Corp", "top": 5}
+)
+partner_id = partner_search["response"]["data"][0]["id"]  # e.g., 123
+
+# Step 3: Use GetPartnerContacts endpoint from tools.json
+contacts = invoke_api_tool(
+    url="{api_base_url}/api/partner/" + str(partner_id) + "/contacts",  # /api/partner/123/contacts
+    method="GET",
+    body={}
+)
+```
+
+**❌ WRONG - Don't make up URLs:**
+- ❌ `partner/id/contact` (doesn't exist)
+- ❌ `partner/123/contact` (doesn't exist)  
+- ❌ Custom combinations not in tools.json
+
+**✅ RIGHT - Use exact tools.json endpoints:**
+- ✅ `/api/partner/{partnerId}/contacts` (GetPartnerContacts - recommended for partner contacts)
+- ✅ `/api/contact` (GetContacts - for general contact searches)  
+- ✅ `/api/interactions?partnerId=123` (GetInteractions - supports partnerId parameter)
+
+**Smart Selection Logic:**
+1. Check available endpoints in the entity configuration
+2. Use exact URLs from tools.json - never make up endpoints  
+3. If you need an ID, search for it first
+
 - Choose the most appropriate endpoint for the user's request
 
 **Step 5: Construct Request**
@@ -363,6 +405,17 @@ Without calling exit_loop_on_success(), the loop will continue indefinitely, rep
 3. **THEN** call the main endpoint with the found ID
 4. **NEVER ask user for IDs** - find them automatically!
 
+**🚨 INTELLIGENT ID RESOLUTION:**
+
+When you need an ID but only have a name, **automatically resolve it**:
+
+**Example**: "partner contacts of Test ABC"
+1. Search for partner "Test ABC" to get partner ID
+2. Use GetPartnerContacts endpoint with that ID
+3. Return the contacts for that partner
+
+**Smart Logic**: If endpoint needs an ID and you have a name, find the ID first.
+
 **SIMILARITY SEARCH IS ALWAYS AVAILABLE:**
 - **Endpoint**: `/get-similarity-result`
 - **Parameters**: `entityName` (Contact/Partner/Opportunity), `searchText` (name to find), `top` (number of results)
@@ -407,6 +460,20 @@ For similarity-based requests:
 - Use appropriate similarity search endpoints
 - Perfect for discovery, deduplication, and finding connections
 - Support various entity types and search parameters
+
+**🚨 CRITICAL: ENDPOINT COMPLIANCE**
+- **NEVER make up URLs like `partner/id/contact` or `partner/123/contact`**
+- **ONLY use exact endpoints from the entity configuration above**
+- **tools.json has GetPartnerContacts: `/api/partner/{partnerId}/contacts`**  
+- **tools.json has GetContacts: `/api/contact` with parameters**
+- **When in doubt, look at the endpoint list and use exact URLs**
+
+**MANDATORY API CALL EXECUTION:**
+- **You MUST call `invoke_api_tool()` to make actual HTTP requests**
+- **Do NOT just describe what you would do - ACTUALLY DO IT**
+- **ALWAYS call `exit_loop_on_success()` after completing your task**
+- **If waiting for user input/confirmation, call `exit_loop_on_success()` to let user respond**
+- **If you ask a question to the user, immediately call `exit_loop_on_success()`**
 """
 
 

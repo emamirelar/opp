@@ -82,6 +82,22 @@ The following entities are dynamically loaded from your system configuration:
 4. **Apply Context**: Use endpoint guidance to refine detection
 5. **Handle Multiple Entities**: Split complex requests into multiple detections
 
+**CRITICAL: TARGET ENTITY DETECTION (COMMON SENSE RULE):**
+When user mentions multiple entities, detect the **TARGET ENTITY** (what data they want):
+
+**Simple Rule**: The NOUN they want data about is the target entity.
+
+- "partner contacts" → User wants **Contact** data (filtered by partner)
+- "interaction contacts" → User wants **Contact** data (filtered by interaction)
+- "partner interactions" → User wants **Interaction** data (filtered by partner)
+- "contact interactions" → User wants **Interaction** data (filtered by contact)
+
+**Pattern Recognition:**
+- Query contains "contacts" → Entity = **Contact**
+- Query contains "interactions" → Entity = **Interaction**  
+- Query contains "opportunities" → Entity = **Opportunity**
+- Query contains "partners" → Entity = **Partner**
+
 **SMART CONTEXT DETECTION:**
 - **Personal Names**: If user mentions a person's name (e.g., "John", "Madeline", "Smith"), likely refers to **Contact** entity
 - **Organization Names**: If user mentions company/org names (e.g., "UNICEF", "WHO"), likely refers to **Partner** entity  
@@ -130,6 +146,12 @@ The following entities are dynamically loaded from your system configuration:
 - "Update partner UNICEF status" → [{"entity": "Partner", "intent": "update", "confidence": 0.9, "extracted_params": {"name": "UNICEF", "field": "status"}, "reasoning": "Partner update request"}]
 - "Delete contact John Doe" → [{"entity": "Contact", "intent": "delete", "confidence": 0.85, "extracted_params": {"name": "John Doe"}, "reasoning": "Contact deletion request"}]
 
+**COMPOUND ENTITY EXAMPLES:**
+- "partner contacts" → [{"entity": "Contact", "intent": "search", "extracted_params": {"partner_filter": true}, "reasoning": "User wants Contact data related to partners"}]
+- "partner contacts of Test ABC" → [{"entity": "Contact", "intent": "search", "extracted_params": {"partner_name": "Test ABC"}, "reasoning": "User wants contacts for specific partner"}]
+- "partner interactions" → [{"entity": "Interaction", "intent": "search", "extracted_params": {"partner_filter": true}, "reasoning": "User wants Interaction data related to partners"}]
+- "contact interactions" → [{"entity": "Interaction", "intent": "search", "extracted_params": {"contact_filter": true}, "reasoning": "User wants interactions for contacts"}]
+
 **Similarity Search:**
 - "Find partners similar to UNICEF" → {"entity": "Partner", "intent": "similarity_search", "confidence": 0.9, "extracted_params": {"search_text": "UNICEF"}, "reasoning": "Semantic similarity search request"}
 
@@ -139,7 +161,11 @@ Always analyze the complete user input and return comprehensive detection result
 
 **CRITICAL REMINDER: Your response must be ONLY the JSON object - no explanations, no text, just the JSON!**
 
-**FINAL INSTRUCTION: Whatever the user sends you as input, analyze that EXACT text for entity and intent detection. If the user sends something like "Get details of Madeline", detect that Madeline is a Contact entity with search intent. DO NOT respond with acknowledgments or meta-responses - ONLY return the JSON detection result.**
+**FINAL INSTRUCTIONS:**
+1. **Analyze the user's exact text for entity and intent detection**
+2. **Use common sense: the data type they want is the target entity**
+3. **"partner contacts" = Contact entity, "partner interactions" = Interaction entity**
+4. **Return ONLY the JSON detection result - no explanations**
 """
     
     return prompt

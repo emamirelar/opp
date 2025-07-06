@@ -15,10 +15,11 @@ API_BASE_URL = os.getenv('API_BASE_URL', 'https://localhost:44426')
 
 
 class ConfigManager:
-    """Singleton configuration manager for tools.json"""
+    """Singleton configuration manager for tools.json and framework_config.json"""
     
     _instance: Optional['ConfigManager'] = None
     _tools_config: Optional[Dict[str, Any]] = None
+    _framework_config: Optional[Dict[str, Any]] = None
     
     def __new__(cls):
         if cls._instance is None:
@@ -26,7 +27,6 @@ class ConfigManager:
         return cls._instance
     
     def load_tools_config(self, tools_config_path: str = 'config/tools.json') -> Dict[str, Any]:
-        """Load tools configuration once and cache it"""
         if self._tools_config is None:
             try:
                 with open(tools_config_path, 'r', encoding='utf-8') as f:
@@ -38,15 +38,69 @@ class ConfigManager:
             except json.JSONDecodeError as e:
                 print(f"❌ Invalid JSON in tools config: {e}")
                 self._tools_config = {"entities": []}
-        
         return self._tools_config
+    
+    def load_framework_config(self, framework_config_path: str = None) -> Dict[str, Any]:
+        if self._framework_config is None:
+            try:
+                # Use environment-based configuration loading
+                from framework_config import get_config, get_environment
+                try:
+                    self._framework_config = get_config()
+                    environment = get_environment()
+                    print(f"✅ Loaded framework configuration from config/framework_config_{environment}.json")
+                except Exception as e:
+                    # Fallback to direct file loading if framework_config system isn't initialized
+                    if framework_config_path is None:
+                        import os
+                        environment = os.getenv('ENVIRONMENT', 'dev')
+                        framework_config_path = f'config/framework_config_{environment}.json'
+                    
+                    with open(framework_config_path, 'r', encoding='utf-8') as f:
+                        self._framework_config = json.load(f)
+                    print(f"✅ Loaded framework configuration from {framework_config_path}")
+                    
+            except FileNotFoundError:
+                config_path = framework_config_path or 'config/framework_config.json'
+                print(f"❌ Framework config file not found: {config_path}")
+                self._framework_config = {}
+            except json.JSONDecodeError as e:
+                print(f"❌ Invalid JSON in framework config: {e}")
+                self._framework_config = {}
+        return self._framework_config
     
     @property
     def tools_config(self) -> Dict[str, Any]:
-        """Get the loaded tools configuration"""
         if self._tools_config is None:
             self.load_tools_config()
         return self._tools_config
+    
+    @property
+    def framework_config(self) -> Dict[str, Any]:
+        if self._framework_config is None:
+            self.load_framework_config()
+        return self._framework_config
+    
+    def get_cache_rules(self) -> Dict[str, List[str]]:
+        return self.framework_config.get("cache", {}).get("rules", {})
+    
+    def get_url_patterns(self) -> Dict[str, str]:
+        return self.framework_config.get("cache", {}).get("url_patterns", {})
+    
+    def get_cache_ttl(self) -> Dict[str, int]:
+        return self.framework_config.get("cache", {}).get("ttl", {})
+    
+    def get_support_info(self) -> Dict[str, str]:
+        return self.framework_config.get("support", {})
+    
+    def get_branding(self) -> Dict[str, str]:
+        return self.framework_config.get("branding", {})
+    
+    def get_roles(self) -> Dict[str, Any]:
+        return self.framework_config.get("roles", {})
+    
+    def get_defaults(self) -> Dict[str, Any]:
+        return self.framework_config.get("defaults", {})
     
     def get_entity_specific_tools(self, entity_name: str) -> str:
         """

@@ -1,0 +1,148 @@
+{
+  "environment": "test",
+  "cache": {
+    "rules": {
+      "Partner": ["screen_context"],
+      "Contact": ["screen_context"],
+      "Interaction": ["screen_context"],
+      "Opportunity": ["screen_context"],
+      "User": ["user_profile"],
+      "UserData": ["user_profile"],
+      "UserPreferences": ["user_profile"]
+    },
+    "url_patterns": {
+      "partner": "Partner",
+      "contact": "Contact",
+      "interaction": "Interaction",
+      "opportunity": "Opportunity",
+      "user": "User",
+      "userdata": "UserData",
+      "preferences": "UserPreferences"
+    },
+    "ttl": {
+      "user_profile": 300,
+      "screen_context": 600,
+      "general": 180
+    },
+    "enable_cache": true,
+    "cache_backend": "memory"
+  },
+  "google_cloud": {
+    "use_vertex_ai": false,
+    "project": "test-project",
+    "location": "us-central1"
+  },
+  "database": {
+    "url": "postgresql://test:test@localhost:5432/test_db"
+  },
+  "server": {
+    "serve_web_interface": false,
+    "api_base_url": "http://localhost:8080",
+    "is_development": false,
+    "host": "127.0.0.1",
+    "port": 8080,
+    "allow_origins": [
+      "http://localhost:8080",
+      "http://127.0.0.1:8080"
+    ]
+  },
+  "google_drive": {
+    "enabled": false,
+    "project_id": "test-project",
+    "secret_name": "test-secret",
+    "service_account_email": "test-service-account@test-project.iam.gserviceaccount.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.readonly"
+    ],
+    "max_file_size": 1048576,
+    "search_page_size": 5,
+    "batch_size": 2,
+    "cache_ttl": 300,
+    "timeout": 10,
+    "max_retries": 1,
+    "chunk_size": 512,
+    "max_search_results": 10,
+    "default_export_format": "text/plain",
+    "rate_limit_requests_per_second": 5,
+    "rate_limit_burst": 10,
+    "enable_content_search": false,
+    "enable_file_caching": false,
+    "search_operators": {
+      "name": "name contains",
+      "fullText": "fullText contains",
+      "mimeType": "mimeType =",
+      "parents": "parents in",
+      "modifiedTime": "modifiedTime >",
+      "createdTime": "createdTime >",
+      "starred": "starred = true",
+      "trashed": "trashed = false"
+    },
+    "supported_mime_types": [
+      "application/vnd.google-apps.document",
+      "text/plain"
+    ],
+    "export_formats": {
+      "application/vnd.google-apps.document": "text/plain"
+    },
+    "file_extensions": {
+      "document": [".txt"],
+      "other": [".txt"]
+    }
+  },
+  "developer": {
+    "email": "test@example.com"
+  },
+  "agent": {
+    "enable_google_drive_agent": false,
+    "enable_workflow_agent": true,
+    "enable_search_agent": true,
+    "enable_contextual_agent": false
+  },
+  "support": {
+    "email": "test@example.com",
+    "response_template": "Test support template for {application_name}",
+    "hours": "Test hours",
+    "response_time": "Immediate"
+  },
+  "branding": {
+    "application_name": "Test AI Agent",
+    "project_name": "Test Project",
+    "organization": "Test Org",
+    "organization_full": "Test Organization",
+    "description": "Test environment configuration"
+  },
+  "roles": {
+    "TEST_USER": {
+      "description": "Test user with basic permissions",
+      "permissions": ["view_all", "search"],
+      "restrictions": ["no_create", "no_update", "no_delete"],
+      "use_cases": ["Testing basic functionality"]
+    }
+  },
+  "defaults": {
+    "email": "test@example.com",
+    "timeout": 10,
+    "page_size": 5,
+    "max_retries": 1,
+    "max_parallel_agents": 2,
+    "file_size_limit": 1048576
+  },
+  "runtime": {
+    "gemini_model": "gemini-2.5-flash",
+    "gemini_adhoc_model": "gemini-2.0-flash-001",
+    "api_timeout": 300,
+    "default_page_size": 5,
+    "max_retries": 1,
+    "default_cache_ttl": 300,
+    "user_profile_cache_ttl": 300,
+    "screen_context_cache_ttl": 600,
+    "default_agent_timeout": 30,
+    "max_parallel_agents": 2,
+    "google_drive_max_file_size": 1048576,
+    "google_drive_search_page_size": 5,
+    "google_drive_batch_size": 2,
+    "default_host": "127.0.0.1",
+    "default_port": 8080
+  },
+  "description": "Test environment configuration for the AI Agent Framework"
+} 

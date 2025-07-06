@@ -5,27 +5,37 @@ Main FastAPI application for Opportunity+ AI Agent with ADK
 
 import os
 import uvicorn
-from fastapi import FastAPI, HTTPException
+import asyncio
+import logging
+import uuid
+from fastapi import FastAPI, HTTPException, Query
 from contextlib import asynccontextmanager
 from google.adk.cli.fast_api import get_fast_api_app
 from google.adk.sessions import DatabaseSessionService
+from google.adk.runners import Runner
+from google.adk.agents import RunConfig
+from google.adk.agents.run_config import StreamingMode
 from google.genai import types
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse
-import uuid
+
+# Framework imports
+from framework_config import get_config, validate_config, get_environment_info
+from ai_assistant.tools import create_google_drive_tool
 
 # Import our configuration manager
 from ai_assistant.config_manager import config_manager
 
-# Configuration from environment variables
-PORT = int(os.getenv('PORT', 8000))
-HOST = os.getenv('HOST', '0.0.0.0')
-AGENT_DIR = os.getenv('AGENT_DIR', '.')
-SESSION_DB_URL = os.getenv('DATABASE_URL', 'postgresql://postgres:0Y%2FX3YNxHLL0fL4T@localhost:5433/anusha')
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# Enable web interface
-SERVE_WEB_INTERFACE = os.getenv('SERVE_WEB_INTERFACE', 'true').lower() == 'true'
+# Global variables
+google_drive_tool = None
 
 
 class ChatRequest(BaseModel):
@@ -41,40 +51,106 @@ class ChatRequest(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager - load configurations once at startup"""
-    print("FastAPI server starting up...")
+    logger.info("🚀 FastAPI server starting up...")
     
     # Load configurations once at startup
-    print("Loading configurations...")
+    logger.info("📋 Loading configurations...")
     config_manager.load_tools_config('config/tools.json')
     
-    print("All configurations loaded successfully!")
+    # Initialize Google Drive tool if enabled
+    global google_drive_tool
+    config = get_config()
+    google_drive_config = config.get('google_drive', {})
+    agent_config = config.get('agent', {})
+    
+    if google_drive_config.get('enabled', False) and agent_config.get('enable_google_drive_agent', False):
+        try:
+            google_drive_tool = await create_google_drive_tool()
+            logger.info("✅ Google Drive tool initialized successfully")
+        except Exception as e:
+            logger.warning(f"⚠️ Google Drive tool initialization failed: {str(e)}")
+            logger.info("📝 Application will continue without Google Drive integration")
+    else:
+        logger.info("📝 Google Drive tool disabled in configuration")
+    
+    logger.info("✅ All configurations loaded successfully!")
     
     yield
     
-    print("FastAPI server shutting down...")
+    # Cleanup
+    logger.info("🛑 FastAPI server shutting down...")
+    if google_drive_tool:
+        await google_drive_tool.cleanup()
+        logger.info("✅ Google Drive tool cleaned up")
 
 
 def create_fastapi_app():
     """Create and configure the FastAPI application with ADK"""
+    config = get_config()
+    database_config = config.get('database', {})
+    server_config = config.get('server', {})
     
     # Create the FastAPI app with ADK integration
     app = get_fast_api_app(
         agents_dir=".",  # Current directory - will look for agent.py here
-        session_service_uri=SESSION_DB_URL,
-        allow_origins=["*"],
-        web=SERVE_WEB_INTERFACE,
+        session_service_uri=database_config.get('url', 'sqlite:///./ai_agent.db'),
+        allow_origins=server_config.get('allow_origins', ["*"]),
+        web=server_config.get('serve_web_interface', True),
         trace_to_cloud=False,
         lifespan=lifespan  # Load configs once at startup
     )
     
-    # Add our custom chat endpoint
+    # Override the app metadata
+    branding_config = config.get('branding', {})
+    app_title = branding_config.get('application_name', 'AI Service')
+    app_description = branding_config.get('description', 'AI Agent Framework')
+    app.title = app_title
+    app.description = f"AI Agent Framework for {app_title} with Google ADK integration"
+    app.version = "1.0.0"
+    
+    # Add our custom endpoints
+    add_framework_endpoints(app)
     add_chat_endpoint(app)
+    add_title_endpoint(app)
+    add_google_drive_endpoints(app)
     
     return app
 
 
+def add_framework_endpoints(app: FastAPI):
+    """Add framework-specific endpoints"""
+    config = get_config()
+    branding_config = config.get('branding', {})
+    
+    @app.get("/framework/info")
+    async def get_framework_info():
+        """Get framework information"""
+        return {
+            "framework": branding_config.get('application_name', 'AI Service'),
+            "version": "1.0.0",
+            "description": branding_config.get('description', 'AI Agent Framework'),
+            "status": "running",
+            "environment": get_environment_info()
+        }
+    
+    @app.get("/framework/config")
+    async def get_framework_config():
+        """Get framework configuration"""
+        return validate_config()
+    
+    @app.get("/framework/tools")
+    async def get_available_tools():
+        """Get available tools"""
+        tools = []
+        if google_drive_tool:
+            tools.append(google_drive_tool.get_tool_info())
+        return {"available_tools": tools, "total_tools": len(tools)}
+
+
 def add_chat_endpoint(app: FastAPI):
     """Add the custom /chat endpoint to the FastAPI app"""
+    config = get_config()
+    database_config = config.get('database', {})
     
     @app.post("/chat")
     async def chat_endpoint(request: ChatRequest):
@@ -82,39 +158,35 @@ def add_chat_endpoint(app: FastAPI):
         Custom chat endpoint that handles current_url context and state updates
         """
         try:
-            print("\n" + "="*50)
-            print("📥 INCOMING CHAT REQUEST")
-            print("="*50)
-            print(f"🔍 Request Details:")
-            print(f"  - app_name: {request.app_name}")
-            print(f"  - user_id: {request.user_id}")
-            print(f"  - session_id: {request.session_id}")
-            print(f"  - message: {request.message}")
-            print(f"  - streaming: {request.streaming}")
-            print(f"  - state: {request.state}")
-            print("="*50)
+            logger.info("="*50)
+            logger.info("📥 INCOMING CHAT REQUEST")
+            logger.info("="*50)
+            logger.info(f"🔍 Request Details:")
+            logger.info(f"  - app_name: {request.app_name}")
+            logger.info(f"  - user_id: {request.user_id}")
+            logger.info(f"  - session_id: {request.session_id}")
+            logger.info(f"  - message: {request.message}")
+            logger.info(f"  - streaming: {request.streaming}")
+            logger.info(f"  - state: {request.state}")
+            logger.info("="*50)
             
             # Import here to avoid circular imports
-            from google.adk.runners import Runner
-            from google.adk.sessions import DatabaseSessionService
-            from google.adk.agents import RunConfig
-            from google.adk.agents.run_config import StreamingMode
             from ai_assistant.agent import root_agent
             
             # Handle null or empty session_id by generating a new one
             session_id = request.session_id
             if not session_id or session_id.strip() == "":
                 session_id = str(uuid.uuid4())
-                print(f"🆔 Generated new session_id: {session_id}")
+                logger.info(f"🆔 Generated new session_id: {session_id}")
             else:
-                print(f"🆔 Using provided session_id: {session_id}")
+                logger.info(f"🆔 Using provided session_id: {session_id}")
             
             # Create session service
-            session_service = DatabaseSessionService(db_url=SESSION_DB_URL)
-            print(f"🔧 Created session service with DB: {SESSION_DB_URL}")
+            session_service = DatabaseSessionService(db_url=database_config.get('url', 'sqlite:///./ai_agent.db'))
+            logger.info(f"🔧 Created session service with DB: {database_config.get('url', 'sqlite:///./ai_agent.db')}")
             
             # Get or create session
-            print(f"🔍 Getting session for app: {request.app_name}, user: {request.user_id}, session: {session_id}")
+            logger.info(f"🔍 Getting session for app: {request.app_name}, user: {request.user_id}, session: {session_id}")
             session = await session_service.get_session(
                 app_name=request.app_name,
                 user_id=request.user_id,
@@ -122,7 +194,7 @@ def add_chat_endpoint(app: FastAPI):
             )
             
             if not session:
-                print("🆕 Creating new session...")
+                logger.info("🆕 Creating new session...")
                 # Create new session if it doesn't exist
                 initial_state = request.state or {}
                 session = await session_service.create_session(
@@ -131,93 +203,84 @@ def add_chat_endpoint(app: FastAPI):
                     session_id=session_id,
                     state=initial_state
                 )
-                print(f"✅ New session created with state: {session.state}")
+                logger.info(f"✅ New session created with state: {session.state}")
             else:
-                print(f"📋 Found existing session with state: {session.state}")
+                logger.info(f"📋 Found existing session with state: {session.state}")
                 
                 # Update existing session state if provided
                 if request.state:
-                    print(f"🔄 Updating session state with new data: {request.state}")
+                    logger.info(f"🔄 Updating session state with new data: {request.state}")
                     
                     # Merge new state with existing state
                     updated_state = {**session.state, **request.state}
-                    print(f"🔀 Merged state: {updated_state}")
+                    logger.info(f"🔀 Merged state: {updated_state}")
                     
                     try:
-                        # Update session state using the session service
-                        await session_service.update_session_state(
-                            session=session,
-                            state=updated_state
-                        )
-                        print(f"✅ Session state updated successfully via session service")
-                        
-                        # Refresh the session to get the updated state
-                        session = await session_service.get_session(
-                            app_name=request.app_name,
-                            user_id=request.user_id,
-                            session_id=session_id
-                        )
-                        print(f"🔄 Refreshed session state: {session.state}")
+                        # Update session state directly on the session object
+                        session.state.update(updated_state)
+                        logger.info(f"✅ Session state updated successfully: {session.state}")
                         
                     except Exception as state_error:
-                        print(f"⚠️ State update via session service failed: {state_error}")
-                        print("🔄 Falling back to manual state update...")
+                        logger.warning(f"⚠️ State update failed: {state_error}")
+                        logger.info("🔄 Falling back to basic state initialization...")
                         
-                        # Fallback: manually update session state
+                        # Fallback: ensure session has a state dict
+                        if not hasattr(session, 'state') or session.state is None:
+                            session.state = {}
                         session.state.update(updated_state)
-                        print(f"✅ Manual state update completed: {session.state}")
+                        logger.info(f"✅ Fallback state update completed: {session.state}")
                         
                 else:
-                    print("ℹ️ No state update provided, using existing state")
+                    logger.info("ℹ️ No state update provided, using existing state")
             
-            print(f"📊 Final session state before processing: {session.state}")
+            logger.info(f"📊 Final session state before processing: {session.state}")
             
             # Ensure state is properly set before creating runner
             if not hasattr(session, 'state') or session.state is None:
                 session.state = {}
-                print("⚠️ Session state was None, initialized to empty dict")
+                logger.info("⚠️ Session state was None, initialized to empty dict")
             
             # Create runner
-            print(f"🏃 Creating runner for agent: {root_agent.name}")
+            logger.info(f"🏃 Creating runner for agent: {root_agent.name}")
             runner = Runner(
                 app_name=request.app_name,
                 agent=root_agent,
                 session_service=session_service
             )
-            print(f"✅ Runner created successfully")
+            logger.info(f"✅ Runner created successfully")
             
             # Create user message with proper role
             user_message = types.Content(
                 parts=[types.Part(text=request.message)],
                 role="user"
             )
-            print(f"💬 Created user message: {request.message} (role: user)")
+            logger.info(f"💬 Created user message: {request.message} (role: user)")
             
-            print("\n🚀 STARTING AGENT PROCESSING...")
-            print("="*50)
+            logger.info("\n🚀 STARTING AGENT PROCESSING...")
+            logger.info("="*50)
             
             # Handle streaming vs non-streaming
             if request.streaming:
-                print("🌊 Using streaming mode")
+                logger.info("🌊 Using streaming mode")
                 # Return streaming response
                 async def event_generator():
                     try:
                         stream_mode = StreamingMode.SSE
-                        print(f"🔄 Starting streaming with mode: {stream_mode}")
+                        logger.info(f"🔄 Starting streaming with mode: {stream_mode}")
                         async for event in runner.run_async(
                             user_id=request.user_id,
                             session_id=session_id,
                             new_message=user_message,
                             run_config=RunConfig(streaming_mode=stream_mode),
                         ):
-                            print(f" Streaming event: {type(event).__name__}")
+                            logger.info(f"📤 Streaming event: {type(event).__name__}")
                             # Format as SSE data
                             sse_event = event.model_dump_json(exclude_none=True, by_alias=True)
                             yield f"data: {sse_event}\n\n"
                     except Exception as e:
-                        print(f"❌ Error in streaming: {e}")
+                        logger.error(f"❌ Error in streaming: {e}")
                         import traceback
-                        print(f"❌ Streaming traceback: {traceback.format_exc()}")
+                        logger.error(f"❌ Streaming traceback: {traceback.format_exc()}")
                         yield f'data: {{"error": "{str(e)}"}}\n\n'
                 
                 return StreamingResponse(
@@ -225,40 +288,40 @@ def add_chat_endpoint(app: FastAPI):
                     media_type="text/event-stream",
                 )
             else:
-                print("📝 Using regular response mode")
+                logger.info("📝 Using regular response mode")
                 # Return regular response
                 try:
                     events = []
-                    print(f"🔄 Starting agent run...")
+                    logger.info(f"🔄 Starting agent run...")
                     
                     # Add detailed debugging for the agent run
-                    print(f"🔍 Debug info:")
-                    print(f"  - User message: {user_message}")
-                    print(f"  - User message parts: {user_message.parts if hasattr(user_message, 'parts') else 'No parts'}")
+                    logger.info(f"🔍 Debug info:")
+                    logger.info(f"  - User message: {user_message}")
+                    logger.info(f"  - User message parts: {user_message.parts if hasattr(user_message, 'parts') else 'No parts'}")
                     if hasattr(user_message, 'parts') and user_message.parts:
                         for i, part in enumerate(user_message.parts):
-                            print(f"    Part {i}: {part.text if hasattr(part, 'text') else 'No text'}")
+                            logger.info(f"    Part {i}: {part.text if hasattr(part, 'text') else 'No text'}")
                     
                     async for event in runner.run_async(
                         user_id=request.user_id,
                         session_id=session_id,
                         new_message=user_message,
                     ):
-                        print(f"📤 Received event: {type(event).__name__}")
+                        logger.info(f"📤 Received event: {type(event).__name__}")
                         # Try to get more info about the event without accessing .type
                         if hasattr(event, 'content'):
-                            print(f"  Event content type: {type(event.content)}")
+                            logger.info(f"  Event content type: {type(event.content)}")
                             if hasattr(event.content, 'parts'):
-                                print(f"  Event content parts: {len(event.content.parts) if event.content.parts else 0}")
+                                logger.info(f"  Event content parts: {len(event.content.parts) if event.content.parts else 0}")
                         if hasattr(event, 'author'):
-                            print(f"  Event author: {event.author}")
+                            logger.info(f"  Event author: {event.author}")
                         if hasattr(event, 'actions'):
-                            print(f"  Event actions: {event.actions}")
+                            logger.info(f"  Event actions: {event.actions}")
                         events.append(event)
                     
-                    print(f"✅ Processing complete. Generated {len(events)} events")
+                    logger.info(f"✅ Processing complete. Generated {len(events)} events")
                     for i, event in enumerate(events):
-                        print(f"  Event {i+1}: {type(event).__name__}")
+                        logger.info(f"  Event {i+1}: {type(event).__name__}")
                     
                     return {
                         "events": events,
@@ -266,39 +329,244 @@ def add_chat_endpoint(app: FastAPI):
                     }
                     
                 except Exception as run_error:
-                    print(f"❌ Error during agent run: {run_error}")
-                    print(f"❌ Error type: {type(run_error)}")
+                    logger.error(f"❌ Error during agent run: {run_error}")
+                    logger.error(f"❌ Error type: {type(run_error)}")
                     
                     # Add more specific debugging for the GenAI error
                     if "text parameter" in str(run_error):
-                        print("🔍 DEBUGGING: This is the 'text parameter' error")
-                        print(f"🔍 User message content: {user_message}")
-                        print(f"🔍 User message type: {type(user_message)}")
+                        logger.error("🔍 DEBUGGING: This is the 'text parameter' error")
+                        logger.error(f"🔍 User message content: {user_message}")
+                        logger.error(f"🔍 User message type: {type(user_message)}")
                         if hasattr(user_message, 'parts'):
-                            print(f"🔍 User message parts: {user_message.parts}")
+                            logger.error(f"🔍 User message parts: {user_message.parts}")
                             for i, part in enumerate(user_message.parts):
-                                print(f"🔍   Part {i}: text='{part.text if hasattr(part, 'text') else 'NO TEXT'}', type={type(part)}")
+                                logger.error(f"🔍   Part {i}: text='{part.text if hasattr(part, 'text') else 'NO TEXT'}', type={type(part)}")
                         
-                        print(f"🔍 Session state: {session.state if session else 'NO SESSION'}")
+                        logger.error(f"🔍 Session state: {session.state if session else 'NO SESSION'}")
                     
                     import traceback
-                    print(f"❌ Agent run traceback: {traceback.format_exc()}")
+                    logger.error(f"❌ Agent run traceback: {traceback.format_exc()}")
                     raise run_error
                 
         except Exception as e:
-            print(f"❌ ERROR in chat endpoint: {e}")
-            print(f"❌ Error type: {type(e)}")
+            logger.error(f"❌ ERROR in chat endpoint: {e}")
+            logger.error(f"❌ Error type: {type(e)}")
             import traceback
-            print(f"❌ Full traceback: {traceback.format_exc()}")
+            logger.error(f"❌ Full traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=str(e))
 
 
-if __name__ == "__main__":
-    print("Starting Opportunity+ AI Agent Server")
-    print(f"Host: {HOST}")
-    print(f"Port: {PORT}")
-    print(f"Web Interface: {SERVE_WEB_INTERFACE}")
-    print(f"Database: {SESSION_DB_URL}")
+def add_title_endpoint(app: FastAPI):
+    """Add the /title endpoint to get session's first 2 conversations and generate a title"""
+    config = get_config()
+    database_config = config.get('database', {})
     
-    app = create_fastapi_app()
-    uvicorn.run(app, host=HOST, port=PORT)
+    @app.get("/title")
+    async def get_session_title(session_id: str = Query(..., description="Session ID to retrieve conversations from"), user_id: str = Query(..., description="User ID to retrieve conversations from")):
+        """
+        Get the first 2 conversations from a session and generate a title using Gemini
+        """
+        try:
+            logger.info("="*50)
+            logger.info("📋 INCOMING TITLE REQUEST")
+            logger.info("="*50)
+            logger.info(f"🔍 Request Details:")
+            logger.info(f"  - session_id: {session_id}")
+            logger.info("="*50)
+            
+            # Validate session_id
+            if not session_id or session_id.strip() == "":
+                raise HTTPException(status_code=400, detail="Session ID is required")
+            
+            # Create session service
+            session_service = DatabaseSessionService(db_url=database_config.get('url', 'sqlite:///./ai_agent.db'))
+            logger.info(f"🔧 Created session service with DB: {database_config.get('url', 'sqlite:///./ai_agent.db')}")
+            
+            try:
+                session = await session_service.get_session(
+                                app_name="ai_assistant",
+                                user_id=user_id,
+                                session_id=session_id
+                            )
+                
+                if not session:
+                    logger.warning(f"❌ Session not found: {session_id}")
+                    raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+                
+                logger.info(f"📋 Found session: {session_id}")
+                
+                conversation_history = session.events
+                logger.info(f"📝 Conversation history length: {len(conversation_history)}")
+                
+                if not conversation_history:
+                    return {
+                        "session_id": session_id,
+                        "formatted_conversation": "No conversations found in this session",
+                        "title": "Empty Session"
+                    }
+                
+                conversations = []
+                conversation_count = 0
+                for i, message in enumerate(conversation_history):
+                    if conversation_count >= 2:
+                        break
+                    if hasattr(message, 'author') and message.author == "user":
+                        user_message = ""
+                        if hasattr(message, 'content') and message.content and hasattr(message.content, 'parts'):
+                            user_parts = []
+                            for part in message.content.parts:
+                                if hasattr(part, 'text') and part.text:
+                                    user_parts.append(part.text)
+                            user_message = " ".join(user_parts)
+                        if user_message.strip():
+                            assistant_message = ""
+                            for j in range(i + 1, len(conversation_history)):
+                                next_message = conversation_history[j]
+                                if (hasattr(next_message, 'author') and 
+                                    next_message.author in ["user_request_agent", "response_formatter_agent", "entity_detection_agent", "api_caller_agent"]):
+                                    if hasattr(next_message, 'content') and next_message.content and hasattr(next_message.content, 'parts'):
+                                        assistant_parts = []
+                                        for part in next_message.content.parts:
+                                            if hasattr(part, 'text') and part.text:
+                                                assistant_parts.append(part.text)
+                                        assistant_message = " ".join(assistant_parts)
+                                    if assistant_message:
+                                        if assistant_message.startswith("```json"):
+                                            assistant_message = assistant_message.replace("```json", "").replace("```", "").strip()
+                                        try:
+                                            import json
+                                            json_data = json.loads(assistant_message)
+                                            if "result" in json_data and json_data["result"]:
+                                                first_result = json_data["result"][0]
+                                                if "message" in first_result:
+                                                    assistant_message = first_result["message"]
+                                        except json.JSONDecodeError:
+                                            pass
+                                    break
+                            conversations.append({
+                                "conversation_number": conversation_count + 1,
+                                "user_message": user_message.strip(),
+                                "assistant_message": assistant_message.strip() if assistant_message else "No response recorded"
+                            })
+                            conversation_count += 1
+                            logger.info(f"✅ Added conversation {conversation_count}: User='{user_message[:30]}...', Assistant='{assistant_message[:30] if assistant_message else 'No response'}...'")
+                logger.info(f"✅ Retrieved {len(conversations)} conversations")
+                formatted_conversation = ""
+                if conversations:
+                    formatted_display = []
+                    for conv in conversations:
+                        formatted_display.append(f"👤 User: {conv['user_message']}")
+                        formatted_display.append(f"🤖 Assistant: {conv['assistant_message']}")
+                        formatted_display.append("---")
+                    formatted_conversation = "\n".join(formatted_display[:-1])
+                try:
+                    from ai_assistant.workflow_agent.entity_detection.callback import generate_conversation_title
+                    title = generate_conversation_title(formatted_conversation)
+                    logger.info(f"📝 Generated title: {title}")
+                except Exception as title_error:
+                    logger.warning(f"⚠️ Failed to generate title with Gemini: {title_error}")
+                    title = "Conversation"
+                response = {
+                    "session_id": session_id,
+                    "formatted_conversation": formatted_conversation,
+                    "title": title
+                }
+                return response
+            except Exception as db_error:
+                logger.error(f"❌ Database error: {db_error}")
+                raise HTTPException(status_code=500, detail=f"Database error: {str(db_error)}")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"❌ Unexpected error in title endpoint: {e}")
+            import traceback
+            logger.error(f"❌ Title endpoint traceback: {traceback.format_exc()}")
+            raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+def add_google_drive_endpoints(app: FastAPI):
+    """Add Google Drive endpoints if available"""
+    if google_drive_tool:
+        @app.get("/google-drive/files")
+        async def search_google_drive_files(
+            query: str = None,
+            name_contains: str = None,
+            mime_type: str = None,
+            max_results: int = 20
+        ):
+            """Search for files in Google Drive"""
+            try:
+                files = await google_drive_tool.find_files(
+                    query=query,
+                    name_contains=name_contains,
+                    mime_type=mime_type,
+                    max_results=max_results
+                )
+                return {"files": [file.to_dict() for file in files]}
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @app.get("/google-drive/files/{file_id}")
+        async def get_google_drive_file(file_id: str):
+            """Get information about a specific Google Drive file"""
+            try:
+                file_info = await google_drive_tool.get_file_info(file_id)
+                if not file_info:
+                    raise HTTPException(status_code=404, detail="File not found")
+                return file_info.to_dict()
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @app.get("/google-drive/files/{file_id}/content")
+        async def get_google_drive_file_content(file_id: str):
+            """Get the content of a Google Drive file"""
+            try:
+                content = await google_drive_tool.read_file_content(file_id)
+                if not content:
+                    raise HTTPException(status_code=404, detail="File not found or content not readable")
+                return content.to_dict()
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+
+
+def main():
+    """Main entry point"""
+    try:
+        # Initialize configuration first
+        from framework_config import initialize_config
+        config = initialize_config('dev')  # This will load config based on ENVIRONMENT variable
+        
+        # Get configuration values
+        server_config = config.get('server', {})
+        database_config = config.get('database', {})
+        branding_config = config.get('branding', {})
+        
+        # Log startup information
+        logger.info("🚀 Starting Opportunity+ AI Agent Server")
+        logger.info(f"📍 Host: {server_config.get('host', '0.0.0.0')}")
+        logger.info(f"🔌 Port: {server_config.get('port', 8000)}")
+        logger.info(f"🌐 Web Interface: {server_config.get('serve_web_interface', True)}")
+        logger.info(f"💾 Database: {database_config.get('url', 'sqlite:///./ai_agent.db')}")
+        logger.info(f"🔧 Development Mode: {server_config.get('is_development', True)}")
+        logger.info(f"🏢 Application: {branding_config.get('application_name', 'AI Service')}")
+        
+        # Create the FastAPI app
+        app = create_fastapi_app()
+        
+        # Run the server
+        uvicorn.run(
+            app, 
+            host=server_config.get('host', '0.0.0.0'), 
+            port=server_config.get('port', 8000),
+            log_level="info"
+        )
+        
+    except KeyboardInterrupt:
+        logger.info("🛑 Server stopped by user")
+    except Exception as e:
+        logger.error(f"❌ Server failed to start: {str(e)}")
+        import sys
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

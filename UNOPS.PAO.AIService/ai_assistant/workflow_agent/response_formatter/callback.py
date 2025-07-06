@@ -137,9 +137,22 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
 			"entity": "Contact"
 		}
 	],
+	"sources": [
+		{
+			"title": "Source Title",
+			"url": "https://example.com",
+			"description": "Brief description of the source"
+		}
+	],
 	"followUps": ["Action 1", "Action 2", "Action 3"]
 }
 ```
+
+**📚 SOURCES FIELD:**
+- Include the "sources" array only when the response contains information from external sources
+- This applies when data comes from web searches, knowledge base searches, or external APIs
+- For internal application data (partners, contacts, opportunities), do not include sources
+- Each source should have title, url, and optional description
 
 ALWAYS start with a friendly, conversational markdown message that:
 - Explains what you found/did in an engaging way

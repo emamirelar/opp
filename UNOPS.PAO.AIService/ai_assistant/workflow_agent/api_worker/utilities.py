@@ -10,6 +10,97 @@ from typing import Dict, Any, Optional
 from google.adk.tools.tool_context import ToolContext
 
 
+def detect_entity_from_url(url: str) -> Optional[str]:
+    """
+    Detect entity type from API URL for cache invalidation.
+    
+    Args:
+        url: API URL to analyze
+        
+    Returns:
+        Optional[str]: Detected entity type or None
+    """
+    try:
+        # Load URL patterns from configuration
+        try:
+            from ...config_manager import config_manager
+            entity_patterns = config_manager.get_url_patterns()
+            print(f"✅ Loaded URL patterns from configuration: {list(entity_patterns.keys())}")
+        except Exception as e:
+            print(f"⚠️ Failed to load URL patterns from config, using defaults: {e}")
+            # Fallback to default patterns
+            entity_patterns = {
+                'partner': 'Partner',
+                'contact': 'Contact',
+                'interaction': 'Interaction',
+                'opportunity': 'Opportunity',
+                'user': 'User',
+                'userdata': 'UserData',
+                'preferences': 'UserPreferences'
+            }
+        
+        url_lower = url.lower()
+        
+        for pattern, entity in entity_patterns.items():
+            if pattern in url_lower:
+                return entity
+                
+        return None
+        
+    except Exception as e:
+        print(f"⚠️ Error detecting entity from URL: {e}")
+        return None
+
+
+def invalidate_cache_after_api_success(url: str, method: str, response_data: dict) -> None:
+    """
+    Invalidate relevant caches after successful API operations.
+    
+    Args:
+        url: API URL that was called
+        method: HTTP method used
+        response_data: Response data from the API
+    """
+    
+    try:
+        # Only invalidate for data-modifying operations
+        if method.upper() not in ['POST', 'PUT', 'DELETE', 'PATCH']:
+            return
+            
+        # Try to import cache system
+        try:
+            from ...agent_callbacks import api_success_callback
+        except ImportError:
+            print("⚠️ Cache system not available - skipping cache invalidation")
+            return
+        
+        # Detect entity from URL
+        entity_type = detect_entity_from_url(url)
+        
+        if not entity_type:
+            print(f"⚠️ Could not detect entity type from URL: {url}")
+            return
+        
+        # Determine operation type
+        operation_mapping = {
+            'POST': 'create',
+            'PUT': 'update',
+            'PATCH': 'update',
+            'DELETE': 'delete'
+        }
+        
+        operation = operation_mapping.get(method.upper(), 'update')
+        
+        print(f"🔄 Cache invalidation triggered: {entity_type} {operation} from {method} {url}")
+        
+        # Call cache invalidation
+        api_success_callback(entity_type, operation, response_data)
+        
+    except Exception as e:
+        print(f"⚠️ Error in cache invalidation: {e}")
+        # Don't fail the API call if cache invalidation fails
+
+
 def advance_entity_index(tool_context: ToolContext):
     """
     Advance to the next entity after successful processing of current entity.
@@ -320,6 +411,11 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
             "response": response_data,
             "headers": dict(response.headers)
         }
+        
+        # Trigger cache invalidation for successful data-modifying operations
+        if success and method.upper() in ['POST', 'PUT', 'DELETE', 'PATCH']:
+            print(f"\n🔄 Triggering cache invalidation for successful {method.upper()} operation...")
+            invalidate_cache_after_api_success(url, method, response_data)
         
         print(f"\n📋 FINAL RESULT:")
         print(f"✅ Status: {result['status']}")

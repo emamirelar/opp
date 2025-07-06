@@ -177,13 +177,19 @@ Transform API operation results into structured JSON that includes:
 - "View help about this issue"
 - "Search instead"
 
-**🔍 DATA PRESERVATION RULES:**
+**🔍 DATA PRESERVATION RULES - CRITICAL:**
 
-1. **Keep essential fields**: ID, name, email, title, organization
-2. **Maintain relationships**: Partner-to-contact associations, etc.
-3. **Preserve metadata**: Creation dates, last updated, status
-4. **Include identifiers**: Always include IDs for frontend operations
-5. **Format consistently**: Standardize field names and structures
+1. **INCLUDE ALL FIELDS from API response** - Don't filter or omit any data
+2. **Keep ALL identifiers**: ID, partnerId, contactId, interactionId, etc.
+3. **Preserve ALL relationships**: Partner-to-contact, contact-to-interaction associations
+4. **Maintain ALL metadata**: Creation dates, last updated, status, timestamps
+5. **Include ALL contact info**: Email, phone, mobile, address fields
+6. **Keep ALL business data**: Title, department, organization, notes, descriptions
+7. **Preserve ALL optional fields**: Even if empty, include them in the response
+8. **NEVER truncate or summarize** - Pass through complete data structures
+
+**🚨 COMPLETE DATA RULE:**
+If the API returns 20 fields, include all 20 fields in your JSON response. The frontend needs complete data for operations.
 
 **💡 MESSAGE CRAFTING GUIDELINES:**
 
@@ -213,7 +219,7 @@ Transform API operation results into structured JSON that includes:
   "result": [
     {
       "type": "markdown",
-      "message": "I found 3 contacts with the name 'Smith'! Here they are with their key details. Would you like to view more information about any of them?"
+      "message": "I found 3 contacts with the name 'Smith'! Here they are with their complete details. Would you like to view more information about any of them?"
     },
     {
       "type": "grid",
@@ -222,9 +228,20 @@ Transform API operation results into structured JSON that includes:
           "id": 123,
           "firstName": "John",
           "lastName": "Smith",
+          "salutation": "Mr.",
           "title": "Program Manager", 
+          "department": "Child Protection",
           "email": "john.smith@unicef.org",
-          "organization": "UNICEF"
+          "phone": "+1-555-0123",
+          "mobile": "+1-555-0124",
+          "partnerId": 45,
+          "partnerName": "UNICEF",
+          "status": "Active",
+          "mailingStreet": "123 Main St",
+          "mailingCity": "New York",
+          "mailingCountry": "USA",
+          "createdDate": "2024-01-15T10:30:00Z",
+          "lastModified": "2024-07-20T14:45:00Z"
         }
       ],
       "entity": "Contact"
@@ -302,10 +319,12 @@ Transform API operation results into structured JSON that includes:
 
 **CRITICAL REMINDERS:**
 - Always return valid JSON matching the schema
+- **INCLUDE ALL FIELDS from the API response data - never omit any fields**
 - Choose the most appropriate display type for the data
 - Make followUps actionable and contextually relevant
 - Make all messages conversational with questions at the end
 - Handle all scenarios: success, errors, empty results
+- **Pass through complete data structures without filtering or truncation**
 
 **🚨 CONVERSATIONAL STYLE RULES:**
 - Use friendly, engaging language with exclamation points
@@ -374,11 +393,13 @@ Return this error response:
 Analyze the API results above and create a structured JSON response that appropriately presents this data to answer the user's question: "{original_request}"
 
 **REQUIREMENTS:**
-1. Choose the correct "type" based on the data structure
-2. Create friendly, conversational messages with questions at the end
-3. Structure the "result" appropriately for the chosen type
-4. Generate 1-3 relevant "followUps" for next actions
-5. Return ONLY the JSON response - no additional text
+1. **INCLUDE ALL FIELDS from the API results - don't filter any data**
+2. Choose the correct "type" based on the data structure
+3. Create friendly, conversational messages with questions at the end
+4. Structure the "result" appropriately for the chosen type
+5. Generate 1-3 most relevant "followUps" for next actions
+6. Return ONLY the JSON response - no additional text
+7. **Preserve complete data structures - pass through all fields from API response**
 """
     
     return base_prompt + context_info

@@ -9,6 +9,7 @@ from google.adk.agents import LoopAgent, LlmAgent
 from google.adk.tools.base_tool import BaseTool
 from .utilities import invoke_api_tool, exit_loop_on_success
 from .callback import inject_entity_specific_tools_before_model, advance_entity_callback
+from ai_assistant.config_manager import config_manager
 
 
 def combined_before_model_callback(callback_context, llm_request=None):
@@ -21,7 +22,7 @@ def combined_before_model_callback(callback_context, llm_request=None):
 api_caller_agent = LlmAgent(
     name="api_caller_agent",
     description="Agent that makes actual API calls using entity-specific endpoints from dynamic configuration",
-    model="gemini-2.5-flash",
+    model=config_manager.framework_config['runtime']['gemini_model'],
     instruction="""
     🚀 **API CALLER AGENT**
     

@@ -10,6 +10,7 @@ from google.genai import types
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional, Union
 from .callback import format_response_before_model, dynamic_response_instruction
+from ai_assistant.config_manager import config_manager
 
 
 class ResponseItem(BaseModel):
@@ -21,11 +22,21 @@ class ResponseItem(BaseModel):
     entity: Optional[str] = None
 
 
+class SourceItem(BaseModel):
+    """
+    Source information for responses
+    """
+    title: str
+    url: str
+    description: Optional[str] = None
+
+
 class FormattedResponse(BaseModel):
     """
     Structured response format for frontend rendering
     """
     result: List[ResponseItem]
+    sources: Optional[List[SourceItem]] = []
     followUps: List[str] = []
 
 def create_response_agent():    
@@ -35,7 +46,7 @@ def create_response_agent():
     return LlmAgent(
         name="response_formatter_agent",
         description="Formats API responses into structured JSON responses with appropriate display types for frontend rendering",
-        model="gemini-2.5-flash",
+        model=config_manager.framework_config['runtime']['gemini_model'],
         instruction=dynamic_response_instruction,  # Use dynamic instruction
         output_key="formatted_response",
         output_schema=FormattedResponse,

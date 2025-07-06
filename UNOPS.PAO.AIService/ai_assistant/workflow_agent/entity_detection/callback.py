@@ -8,6 +8,14 @@ from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
 from ...config_manager import config_manager
 
+# Add Vertex AI imports for Gemini function
+import vertexai
+from vertexai.generative_models import GenerativeModel, GenerationConfig, HarmBlockThreshold, HarmCategory
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def extract_entity_intent_before_model(callback_context: CallbackContext, llm_request=None) -> None:
     """
@@ -174,3 +182,142 @@ Return ONLY a JSON array, no other text or explanations:
 ```
 
 **IMPORTANT:** Analyze the user's current message immediately and respond with the JSON array. Do not wait for further instructions.""" 
+
+
+def call_gemini_direct(prompt: str, model_name: str = "gemini-1.5-flash", max_tokens: int = 100, temperature: float = 0.7) -> str:
+    """
+    Make a direct call to Gemini via Vertex AI.
+    
+    Args:
+        prompt (str): The prompt to send to Gemini
+        model_name (str): The Gemini model to use (default: "gemini-1.5-flash")
+        max_tokens (int): Maximum output tokens (default: 100)
+        temperature (float): Temperature for generation (0.0 to 1.0, default: 0.7)
+    
+    Returns:
+        str: The generated response from Gemini
+        
+    Raises:
+        Exception: If there's an error with the Gemini call
+    """
+    try:
+        # Get configuration from config manager
+        config = config_manager.framework_config
+        google_cloud_config = config.get('google_cloud', {})
+        
+        # Get project ID and location from config
+        project_id = google_cloud_config.get('project', os.getenv("GOOGLE_CLOUD_PROJECT_ID"))
+        location = google_cloud_config.get('location', os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1"))
+
+        
+        if not project_id:
+            raise ValueError("Google Cloud Project ID not found in configuration or environment variables")
+        
+        logger.info(f"🔧 Initializing Vertex AI for project: {project_id}, location: {location}")
+        
+        # Initialize Vertex AI
+        vertexai.init(project=project_id, location=location)
+
+        safety_settings = {
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        }
+        
+        # Create generation config
+        generation_config = GenerationConfig(
+            temperature=temperature,
+            max_output_tokens=max_tokens,
+            top_p=0.8,
+            top_k=40
+        )
+        
+        # Create model and generate content
+        model = GenerativeModel(model_name)
+        logger.info(f"🤖 Sending prompt to Gemini model: {model_name}")
+        
+        response = model.generate_content(
+            prompt,
+            generation_config=generation_config,
+            safety_settings=safety_settings
+        )
+
+        print(response)
+        
+        # Extract the generated text
+        if response.candidates and response.candidates[0].content.parts:
+            generated_text = response.candidates[0].content.parts[0].text.strip()
+            logger.info(f"✅ Gemini response generated successfully: {generated_text[:50]}...")
+            return generated_text
+        else:
+            # Handle cases where no valid response was generated
+            print(f"🔍 DEBUG: Response object details:")
+            print(f"  - Response type: {type(response)}")
+            print(f"  - Has candidates: {hasattr(response, 'candidates')}")
+            print(f"  - Candidates: {getattr(response, 'candidates', 'N/A')}")
+            print(f"  - Response attributes: {dir(response)}")
+            
+            if response.prompt_feedback and response.prompt_feedback.block_reason:
+                error_msg = f"Gemini blocked the response due to: {response.prompt_feedback.block_reason}"
+                logger.warning(f"⚠️ {error_msg}")
+                print(f"🔍 DEBUG: Prompt feedback details:")
+                print(f"  - Block reason: {response.prompt_feedback.block_reason}")
+                print(f"  - Safety ratings: {getattr(response.prompt_feedback, 'safety_ratings', 'N/A')}")
+                raise Exception(error_msg)
+            else:
+                error_msg = "No valid response could be generated from Gemini"
+                logger.warning(f"⚠️ {error_msg}")
+                print(f"🔍 DEBUG: No prompt feedback available")
+                print(f"  - Response text: {getattr(response, 'text', 'N/A')}")
+                print(f"  - Response content: {getattr(response, 'content', 'N/A')}")
+                raise Exception(error_msg)
+                
+    except Exception as e:
+        logger.error(f"❌ Error calling Gemini: {str(e)}")
+        raise Exception(f"Gemini API call failed: {str(e)}")
+
+
+def generate_conversation_title(formatted_conversation: str) -> str:
+    """
+    Generate a concise title for a conversation using Gemini.
+    
+    Args:
+        formatted_conversation (str): The formatted conversation text
+        
+    Returns:
+        str: A concise title (3-5 words) for the conversation
+    """
+    try:
+        # Create the prompt for title generation
+        title_prompt = f"""
+Please provide a concise and descriptive title for the following conversation snippet, limited to **3-5 words**. The title should quickly explain the user's intent of the conversation:
+
+{formatted_conversation}
+
+The response should just be the title, no explanations.
+"""
+        
+        # Call Gemini with specific parameters for title generation
+        from ...config_manager import config_manager
+        gemini_model = config_manager.framework_config['runtime']['gemini_adhoc_model']
+        title = call_gemini_direct(
+            prompt=title_prompt,
+            model_name=gemini_model,
+            max_tokens=20,  # Keep it small for a 3-5 word title
+            temperature=0.3  # Lower temperature for more consistent titles
+        )
+        
+        logger.info(f"📝 Generated conversation title: {title}")
+        return title
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating conversation title: {str(e)}")
+        print(f"🔍 DEBUG: Full exception details:")
+        print(f"  - Exception type: {type(e)}")
+        print(f"  - Exception message: {str(e)}")
+        import traceback
+        print(f"  - Full traceback:")
+        traceback.print_exc()
+        # Return a fallback title if Gemini fails
+        return "Conversation" 
