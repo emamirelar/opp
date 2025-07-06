@@ -105,8 +105,6 @@ user_detail_agent = Agent(
     You are the first agent to be called and hence the user information is ALWAYS necessary to do any such above operations. No exceptions.
     
     Do this immediately without any conversation.
-
-    After calling the function, respond with: "User profile retrieved successfully"
     """,
     tools=[FunctionTool(func=get_user_profile)],
     output_key="user_profile",

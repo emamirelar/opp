@@ -431,8 +431,6 @@ screen_context_agent = Agent(
     
     The screen URL will be injected into your instruction by the callback.
     Do this immediately without any conversation.
-
-    After calling the function, respond with: "Screen context retrieved successfully"
     """,
     tools=[FunctionTool(func=gather_screen_context)],
     output_key="screen_context",

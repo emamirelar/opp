@@ -291,7 +291,7 @@ def generate_conversation_title(formatted_conversation: str) -> str:
     try:
         # Create the prompt for title generation
         title_prompt = f"""
-Please provide a concise and descriptive title for the following conversation snippet, limited to **3-5 words**. The title should quickly explain the user's intent of the conversation:
+Please generate a concise and descriptive title for the following conversation, limited to 3-5 words. The title should capture the core topic or outcome of the interaction. Ensure the title is neutral or positive in tone, avoiding any negative connotations.
 
 {formatted_conversation}
 

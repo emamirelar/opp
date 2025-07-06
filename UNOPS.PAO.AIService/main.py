@@ -8,7 +8,7 @@ import uvicorn
 import asyncio
 import logging
 import uuid
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from contextlib import asynccontextmanager
 from google.adk.cli.fast_api import get_fast_api_app
 from google.adk.sessions import DatabaseSessionService
@@ -36,6 +36,204 @@ logger = logging.getLogger(__name__)
 
 # Global variables
 google_drive_tool = None
+
+
+def validate_iap_headers(headers: dict) -> dict:
+    """
+    Validate IAP (Identity-Aware Proxy) headers from incoming requests.
+    
+    This function validates the presence and format of Google Cloud IAP headers
+    and returns validation results with extracted user information.
+    
+    Args:
+        headers: Dictionary of request headers
+        
+    Returns:
+        dict: Validation result with the following structure:
+        {
+            "valid": bool,
+            "user_email": str or None,
+            "user_id": str or None,
+            "is_development": bool,
+            "validation_errors": list,
+            "extracted_headers": dict
+        }
+    """
+    validation_result = {
+        "valid": False,
+        "user_email": None,
+        "user_id": None,
+        "is_development": False,
+        "validation_errors": [],
+        "extracted_headers": {}
+    }
+    
+    try:
+        # Convert headers to lowercase for case-insensitive comparison
+        headers_lower = {k.lower(): v for k, v in headers.items()}
+        
+        # Define expected IAP headers
+        expected_iap_headers = [
+            'x-goog-authenticated-user-email',
+            'x-goog-authenticated-user-id',
+            'x-forwarded-user',
+            'x-forwarded-email'
+        ]
+        
+        # Check for development mode indicators
+        is_dev_simulation = headers_lower.get('x-dev-iap-simulation', '').lower() == 'true'
+        dev_timestamp = headers_lower.get('x-dev-auth-timestamp')
+        
+        if is_dev_simulation:
+            validation_result["is_development"] = True
+            logger.info("🧪 Development IAP simulation detected")
+        
+        # Extract and validate IAP headers
+        extracted_headers = {}
+        
+        for header_name in expected_iap_headers:
+            header_value = headers_lower.get(header_name)
+            if header_value:
+                extracted_headers[header_name] = header_value
+                logger.info(f"✅ Found IAP header: {header_name}")
+            else:
+                validation_result["validation_errors"].append(f"Missing required IAP header: {header_name}")
+                logger.warning(f"❌ Missing IAP header: {header_name}")
+        
+        # Validate user email format
+        user_email_header = headers_lower.get('x-goog-authenticated-user-email')
+        if user_email_header:
+            # IAP format: "accounts.google.com:user@domain.com"
+            if ':' in user_email_header:
+                _, email = user_email_header.split(':', 1)
+                if '@' in email and '.' in email.split('@')[1]:
+                    validation_result["user_email"] = email
+                    logger.info(f"✅ Valid user email extracted: {email}")
+                else:
+                    validation_result["validation_errors"].append("Invalid email format in x-goog-authenticated-user-email")
+                    logger.warning(f"❌ Invalid email format: {user_email_header}")
+            else:
+                validation_result["validation_errors"].append("Invalid format for x-goog-authenticated-user-email (missing ':' separator)")
+                logger.warning(f"❌ Invalid header format: {user_email_header}")
+        
+        # Validate user ID format
+        user_id_header = headers_lower.get('x-goog-authenticated-user-id')
+        if user_id_header:
+            # IAP format: "accounts.google.com:123456789"
+            if ':' in user_id_header:
+                _, user_id = user_id_header.split(':', 1)
+                validation_result["user_id"] = user_id
+                logger.info(f"✅ Valid user ID extracted: {user_id}")
+            else:
+                validation_result["validation_errors"].append("Invalid format for x-goog-authenticated-user-id (missing ':' separator)")
+                logger.warning(f"❌ Invalid header format: {user_id_header}")
+        
+        # Check for forwarded headers as fallback
+        if not validation_result["user_email"]:
+            forwarded_email = headers_lower.get('x-forwarded-email')
+            if forwarded_email and '@' in forwarded_email:
+                validation_result["user_email"] = forwarded_email
+                logger.info(f"✅ Using forwarded email as fallback: {forwarded_email}")
+        
+        if not validation_result["user_id"]:
+            forwarded_user = headers_lower.get('x-forwarded-user')
+            if forwarded_user:
+                validation_result["user_id"] = forwarded_user
+                logger.info(f"✅ Using forwarded user as fallback: {forwarded_user}")
+        
+        # Determine if validation is successful
+        # In development mode, we're more lenient
+        if validation_result["is_development"]:
+            # For development, we only need basic email validation
+            if validation_result["user_email"]:
+                validation_result["valid"] = True
+                logger.info("✅ Development mode validation successful")
+            else:
+                validation_result["validation_errors"].append("Development mode requires valid user email")
+                logger.warning("❌ Development mode validation failed - missing user email")
+        else:
+            # For production, require all standard IAP headers
+            required_for_production = ['x-goog-authenticated-user-email', 'x-goog-authenticated-user-id']
+            missing_required = [h for h in required_for_production if h not in extracted_headers]
+            
+            if not missing_required and validation_result["user_email"]:
+                validation_result["valid"] = True
+                logger.info("✅ Production IAP validation successful")
+            else:
+                if missing_required:
+                    validation_result["validation_errors"].extend([f"Missing required header for production: {h}" for h in missing_required])
+                if not validation_result["user_email"]:
+                    validation_result["validation_errors"].append("Valid user email required for production")
+                logger.warning("❌ Production IAP validation failed")
+        
+        validation_result["extracted_headers"] = extracted_headers
+        
+        # Log validation summary
+        if validation_result["valid"]:
+            logger.info(f"✅ IAP validation successful - User: {validation_result['user_email']}")
+        else:
+            logger.warning(f"❌ IAP validation failed - Errors: {validation_result['validation_errors']}")
+        
+        return validation_result
+        
+    except Exception as e:
+        error_msg = f"Error during IAP header validation: {str(e)}"
+        validation_result["validation_errors"].append(error_msg)
+        logger.error(f"❌ {error_msg}")
+        return validation_result
+
+
+def extract_iap_headers_for_forwarding(headers: dict) -> dict:
+    """
+    Extract IAP headers from incoming request for forwarding to other services.
+    
+    This function extracts the relevant IAP headers that should be forwarded
+    to backend services or other API calls.
+    
+    Args:
+        headers: Dictionary of request headers
+        
+    Returns:
+        dict: Dictionary of IAP headers to forward
+    """
+    try:
+        # Convert headers to lowercase for case-insensitive comparison
+        headers_lower = {k.lower(): v for k, v in headers.items()}
+        
+        # Define IAP headers to forward
+        iap_headers_to_forward = [
+            'x-goog-authenticated-user-email',
+            'x-goog-authenticated-user-id',
+            'x-forwarded-user',
+            'x-forwarded-email',
+            'x-goog-iap-jwt-assertion',  # JWT token if present
+            'x-goog-iap-jwt-assertion-verified'  # Verification status
+        ]
+        
+        # Extract headers that exist in the request
+        forwarded_headers = {}
+        for header_name in iap_headers_to_forward:
+            header_value = headers_lower.get(header_name)
+            if header_value:
+                # Preserve original case from the request
+                original_key = next((k for k in headers.keys() if k.lower() == header_name), header_name)
+                forwarded_headers[original_key] = header_value
+                logger.info(f"📤 Forwarding IAP header: {original_key}")
+        
+        # Add development headers if in development mode
+        is_dev_simulation = headers_lower.get('x-dev-iap-simulation', '').lower() == 'true'
+        if is_dev_simulation:
+            dev_timestamp = headers_lower.get('x-dev-auth-timestamp')
+            if dev_timestamp:
+                forwarded_headers['X-Dev-Auth-Timestamp'] = dev_timestamp
+                logger.info("📤 Forwarding development auth timestamp")
+        
+        logger.info(f"📤 Total IAP headers to forward: {len(forwarded_headers)}")
+        return forwarded_headers
+        
+    except Exception as e:
+        logger.error(f"❌ Error extracting IAP headers for forwarding: {str(e)}")
+        return {}
 
 
 class ChatRequest(BaseModel):
@@ -145,6 +343,28 @@ def add_framework_endpoints(app: FastAPI):
         if google_drive_tool:
             tools.append(google_drive_tool.get_tool_info())
         return {"available_tools": tools, "total_tools": len(tools)}
+    
+    @app.get("/framework/iap-test")
+    async def test_iap_validation(request: Request):
+        """Test endpoint to demonstrate IAP header validation"""
+        try:
+            headers = dict(request.headers)
+            
+            # Validate IAP headers
+            iap_validation = validate_iap_headers(headers)
+            
+            # Extract headers for forwarding
+            iap_headers_to_forward = extract_iap_headers_for_forwarding(headers)
+            
+            return {
+                "message": "IAP validation test completed",
+                "validation_result": iap_validation,
+                "headers_to_forward": iap_headers_to_forward,
+                "all_headers": headers
+            }
+        except Exception as e:
+            logger.error(f"❌ Error in IAP test endpoint: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 def add_chat_endpoint(app: FastAPI):
@@ -153,28 +373,57 @@ def add_chat_endpoint(app: FastAPI):
     database_config = config.get('database', {})
     
     @app.post("/chat")
-    async def chat_endpoint(request: ChatRequest):
+    async def chat_endpoint(request_body: ChatRequest, request: Request):
         """
         Custom chat endpoint that handles current_url context and state updates
         """
         try:
-            logger.info("="*50)
-            logger.info("📥 INCOMING CHAT REQUEST")
-            logger.info("="*50)
-            logger.info(f"🔍 Request Details:")
-            logger.info(f"  - app_name: {request.app_name}")
-            logger.info(f"  - user_id: {request.user_id}")
-            logger.info(f"  - session_id: {request.session_id}")
-            logger.info(f"  - message: {request.message}")
-            logger.info(f"  - streaming: {request.streaming}")
-            logger.info(f"  - state: {request.state}")
-            logger.info("="*50)
+            # Access headers
+            headers = dict(request.headers)
+            logger.info(f"📋 Request headers: {headers}")
+            
+            # Validate IAP headers
+            iap_validation = validate_iap_headers(headers)
+            logger.info(f"🔐 IAP validation result: {iap_validation}")
+            
+            # Handle IAP validation results
+            if not iap_validation["valid"]:
+                logger.warning(f"⚠️ IAP validation failed: {iap_validation['validation_errors']}")
+                # You can choose to continue or return an error
+                # For now, we'll log the warning but continue processing
+                # In production, you might want to return an HTTP 401 or 403 here
+            
+            # Extract user information from IAP headers
+            user_email = iap_validation.get("user_email")
+            user_id = iap_validation.get("user_id")
+            is_development = iap_validation.get("is_development", False)
+            
+            if user_email:
+                logger.info(f"👤 Authenticated user: {user_email}")
+            if user_id:
+                logger.info(f"🆔 User ID: {user_id}")
+            if is_development:
+                logger.info("🧪 Running in development mode")
+            
+            # Extract IAP headers for forwarding to other services
+            iap_headers_to_forward = extract_iap_headers_for_forwarding(headers)
+            if iap_headers_to_forward:
+                logger.info(f"📤 IAP headers available for forwarding: {list(iap_headers_to_forward.keys())}")
+            
+            # You can access specific headers like this:
+            authorization = request.headers.get("authorization")
+            user_agent = request.headers.get("user-agent")
+            content_type = request.headers.get("content-type")
+            
+            logger.info(f"🔑 Authorization: {authorization}")
+            logger.info(f"🌐 User-Agent: {user_agent}")
+            logger.info(f"📄 Content-Type: {content_type}")
             
             # Import here to avoid circular imports
             from ai_assistant.agent import root_agent
             
             # Handle null or empty session_id by generating a new one
-            session_id = request.session_id
+            session_id = request_body.session_id
             if not session_id or session_id.strip() == "":
                 session_id = str(uuid.uuid4())
                 logger.info(f"🆔 Generated new session_id: {session_id}")
@@ -186,20 +435,20 @@ def add_chat_endpoint(app: FastAPI):
             logger.info(f"🔧 Created session service with DB: {database_config.get('url', 'sqlite:///./ai_agent.db')}")
             
             # Get or create session
-            logger.info(f"🔍 Getting session for app: {request.app_name}, user: {request.user_id}, session: {session_id}")
+            logger.info(f"🔍 Getting session for app: {request_body.app_name}, user: {request_body.user_id}, session: {session_id}")
             session = await session_service.get_session(
-                app_name=request.app_name,
-                user_id=request.user_id,
+                app_name=request_body.app_name,
+                user_id=request_body.user_id,
                 session_id=session_id
             )
             
             if not session:
                 logger.info("🆕 Creating new session...")
                 # Create new session if it doesn't exist
-                initial_state = request.state or {}
+                initial_state = request_body.state or {}
                 session = await session_service.create_session(
-                    app_name=request.app_name,
-                    user_id=request.user_id,
+                    app_name=request_body.app_name,
+                    user_id=request_body.user_id,
                     session_id=session_id,
                     state=initial_state
                 )
@@ -208,11 +457,11 @@ def add_chat_endpoint(app: FastAPI):
                 logger.info(f"📋 Found existing session with state: {session.state}")
                 
                 # Update existing session state if provided
-                if request.state:
-                    logger.info(f"🔄 Updating session state with new data: {request.state}")
+                if request_body.state:
+                    logger.info(f"🔄 Updating session state with new data: {request_body.state}")
                     
                     # Merge new state with existing state
-                    updated_state = {**session.state, **request.state}
+                    updated_state = {**session.state, **request_body.state}
                     logger.info(f"🔀 Merged state: {updated_state}")
                     
                     try:
@@ -233,6 +482,18 @@ def add_chat_endpoint(app: FastAPI):
                 else:
                     logger.info("ℹ️ No state update provided, using existing state")
             
+            # Add header_email to session state if available from IAP headers
+            if user_email:
+                # Ensure session state exists
+                if not hasattr(session, 'state') or session.state is None:
+                    session.state = {}
+                
+                # Add header_email to session state
+                session.state['header_email'] = user_email
+                logger.info(f"📧 Added header_email to session state: {user_email}")
+            else:
+                logger.info("⚠️ No user email found in IAP headers - header_email not added to session")
+            
             logger.info(f"📊 Final session state before processing: {session.state}")
             
             # Ensure state is properly set before creating runner
@@ -243,7 +504,7 @@ def add_chat_endpoint(app: FastAPI):
             # Create runner
             logger.info(f"🏃 Creating runner for agent: {root_agent.name}")
             runner = Runner(
-                app_name=request.app_name,
+                app_name=request_body.app_name,
                 agent=root_agent,
                 session_service=session_service
             )
@@ -251,16 +512,16 @@ def add_chat_endpoint(app: FastAPI):
             
             # Create user message with proper role
             user_message = types.Content(
-                parts=[types.Part(text=request.message)],
+                parts=[types.Part(text=request_body.message)],
                 role="user"
             )
-            logger.info(f"💬 Created user message: {request.message} (role: user)")
+            logger.info(f"💬 Created user message: {request_body.message} (role: user)")
             
             logger.info("\n🚀 STARTING AGENT PROCESSING...")
             logger.info("="*50)
             
             # Handle streaming vs non-streaming
-            if request.streaming:
+            if request_body.streaming:
                 logger.info("🌊 Using streaming mode")
                 # Return streaming response
                 async def event_generator():
@@ -268,7 +529,7 @@ def add_chat_endpoint(app: FastAPI):
                         stream_mode = StreamingMode.SSE
                         logger.info(f"🔄 Starting streaming with mode: {stream_mode}")
                         async for event in runner.run_async(
-                            user_id=request.user_id,
+                            user_id=request_body.user_id,
                             session_id=session_id,
                             new_message=user_message,
                             run_config=RunConfig(streaming_mode=stream_mode),
@@ -303,7 +564,7 @@ def add_chat_endpoint(app: FastAPI):
                             logger.info(f"    Part {i}: {part.text if hasattr(part, 'text') else 'No text'}")
                     
                     async for event in runner.run_async(
-                        user_id=request.user_id,
+                        user_id=request_body.user_id,
                         session_id=session_id,
                         new_message=user_message,
                     ):
@@ -362,7 +623,11 @@ def add_title_endpoint(app: FastAPI):
     database_config = config.get('database', {})
     
     @app.get("/title")
-    async def get_session_title(session_id: str = Query(..., description="Session ID to retrieve conversations from"), user_id: str = Query(..., description="User ID to retrieve conversations from")):
+    async def get_session_title(
+        session_id: str = Query(..., description="Session ID to retrieve conversations from"), 
+        user_id: str = Query(..., description="User ID to retrieve conversations from"),
+        request: Request = None
+    ):
         """
         Get the first 2 conversations from a session and generate a title using Gemini
         """
@@ -372,7 +637,42 @@ def add_title_endpoint(app: FastAPI):
             logger.info("="*50)
             logger.info(f"🔍 Request Details:")
             logger.info(f"  - session_id: {session_id}")
+            logger.info(f"  - user_id: {user_id}")
             logger.info("="*50)
+            
+            # Access and validate IAP headers if request is available
+            if request:
+                headers = dict(request.headers)
+                logger.info(f"📋 Request headers: {headers}")
+                
+                # Validate IAP headers
+                iap_validation = validate_iap_headers(headers)
+                logger.info(f"🔐 IAP validation result: {iap_validation}")
+                
+                # Handle IAP validation results
+                if not iap_validation["valid"]:
+                    logger.warning(f"⚠️ IAP validation failed: {iap_validation['validation_errors']}")
+                    # You can choose to continue or return an error
+                    # For now, we'll log the warning but continue processing
+                
+                # Extract user information from IAP headers
+                iap_user_email = iap_validation.get("user_email")
+                iap_user_id = iap_validation.get("user_id")
+                is_development = iap_validation.get("is_development", False)
+                
+                if iap_user_email:
+                    logger.info(f"👤 Authenticated user from IAP: {iap_user_email}")
+                if iap_user_id:
+                    logger.info(f"🆔 User ID from IAP: {iap_user_id}")
+                if is_development:
+                    logger.info("🧪 Running in development mode")
+                
+                # Extract IAP headers for forwarding to other services
+                iap_headers_to_forward = extract_iap_headers_for_forwarding(headers)
+                if iap_headers_to_forward:
+                    logger.info(f"📤 IAP headers available for forwarding: {list(iap_headers_to_forward.keys())}")
+            else:
+                logger.info("⚠️ No request object available for IAP validation")
             
             # Validate session_id
             if not session_id or session_id.strip() == "":

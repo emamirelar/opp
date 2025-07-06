@@ -6,11 +6,13 @@ import asyncio
 # Framework imports
 try:
     from framework_config import get_config
-    from ai_assistant.tools import GoogleDriveTool, create_google_drive_tool
+    from ai_assistant.tools import GoogleDriveTool, create_google_drive_tool, GoogleSheetTool, create_google_sheet_tool, GoogleDocTool, create_google_doc_tool
     GOOGLE_DRIVE_AVAILABLE = True
+    GOOGLE_SHEETS_AVAILABLE = True
 except ImportError as e:
     GOOGLE_DRIVE_AVAILABLE = False
-    logging.warning(f"Google Drive tools not available - check framework_config and tools setup: {e}")
+    GOOGLE_SHEETS_AVAILABLE = False
+    logging.warning(f"Google Drive/Sheets tools not available - check framework_config and tools setup: {e}")
     # Still try to import get_config separately
     try:
         from framework_config import get_config
@@ -29,6 +31,8 @@ from datetime import datetime
 from google.adk.agents import Agent, SequentialAgent
 from google.adk.tools import FunctionTool
 from google.adk.tools import agent_tool as AgentTool
+from google.adk.tools.base_tool import BaseTool
+from google.adk.tools.tool_context import ToolContext
 from google.genai import types
 
 from .workflow_agent.agent import workflow_agent
@@ -44,16 +48,370 @@ from ai_assistant.config_manager import config_manager
 
 # Initialize Google Drive tool
 google_drive_tool = None
-try:
-    config = get_config()
-    if config.get('google_drive', {}).get('enabled', False):
-        # Note: create_google_drive_tool returns a coroutine, we'll await it when needed
-        logging.info("Google Drive tool will be initialized on first use")
-except Exception as e:
-    logging.error(f"Failed to initialize Google Drive tool: {e}")
+
+# Initialize Google Sheet and Doc tools
+google_sheet_tool = None
+google_doc_tool = None
+
+class GoogleSheetToolWrapper(BaseTool):
+    """Wrapper for Google Sheet operations with session state access"""
+    
+    def __init__(self):
+        super().__init__(
+            name="google_sheet_tool",
+            description="Create Google Sheets with data and manage permissions"
+        )
+        self.sheet_tool = None
+        self._initialize_tool()
+    
+    def _initialize_tool(self):
+        """Initialize the Google Sheet tool"""
+        try:
+            if GOOGLE_SHEETS_AVAILABLE:
+                # Don't initialize here - do it lazily when first used
+                self.sheet_tool = None
+                logging.info("✅ Google Sheet tool wrapper initialized (will initialize on first use)")
+            else:
+                logging.warning("⚠️ Google Sheets not available")
+        except Exception as e:
+            logging.error(f"❌ Failed to initialize Google Sheet tool: {e}")
+    
+    async def _get_sheet_tool(self):
+        """Get or create the Google Sheet tool instance"""
+        if self.sheet_tool is None:
+            try:
+                # Ensure configuration is initialized
+                from framework_config import initialize_config
+                config = initialize_config('dev')  # Initialize config if not already done
+                
+                google_drive_config = config.get('google_drive', {})
+                if not google_drive_config.get('enabled', False):
+                    logging.warning("⚠️ Google Drive not enabled in config")
+                    return None
+                
+                logging.info("🔧 Initializing Google Sheet tool...")
+                self.sheet_tool = await create_google_sheet_tool()
+                
+                if self.sheet_tool is None:
+                    logging.error("❌ create_google_sheet_tool returned None")
+                    return None
+                
+                logging.info("🔐 Authenticating Google Sheet tool...")
+                auth_success = await self.sheet_tool.initialize()
+                
+                if not auth_success:
+                    logging.error("❌ Google Sheet tool authentication failed")
+                    self.sheet_tool = None
+                    return None
+                
+                logging.info("✅ Google Sheet tool initialized and authenticated successfully")
+                
+            except Exception as e:
+                logging.error(f"❌ Failed to initialize Google Sheet tool: {str(e)}")
+                self.sheet_tool = None
+                return None
+        
+        return self.sheet_tool
+    
+    def create_spreadsheet_from_list(self, tool_context: ToolContext, title: str, data: List[Dict[str, Any]], folder_id: str = "") -> str:
+        """Create a Google Sheet from list data with session state access"""
+        try:
+            # Get header_email from session state
+            header_email = None
+            if tool_context and hasattr(tool_context, 'state') and tool_context.state:
+                header_email = tool_context.state.get('header_email')
+                logging.info(f"📧 Using header_email for permissions: {header_email}")
+            
+            # Initialize tool if needed
+            if not self.sheet_tool:
+                # Run async initialization in sync context
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, self._get_sheet_tool())
+                        self.sheet_tool = future.result()
+                else:
+                    self.sheet_tool = asyncio.run(self._get_sheet_tool())
+            
+            if not self.sheet_tool:
+                return json.dumps({"error": "Google Sheet tool not available"})
+            
+            # Create the spreadsheet - handle async call properly
+            async def create_sheet():
+                return await self.sheet_tool.create_spreadsheet_from_list_data(
+                    title=title,
+                    data=data,
+                    folder_id=folder_id if folder_id else None,
+                    header_email=header_email
+                )
+            
+            # Run the async function in sync context
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, create_sheet())
+                    result = future.result()
+            else:
+                result = asyncio.run(create_sheet())
+            
+            logging.info(f"✅ Created Google Sheet: {title}")
+            return json.dumps(result)
+            
+        except Exception as e:
+            logging.error(f"❌ Error creating Google Sheet: {e}")
+            return json.dumps({"error": f"Failed to create Google Sheet: {str(e)}"})
+    
+    def create_spreadsheet_with_headers(self, tool_context: ToolContext, title: str, headers: List[str], data: List[List[Any]], folder_id: str = "") -> str:
+        """Create a Google Sheet with headers and data with session state access"""
+        try:
+            # Get header_email from session state
+            header_email = None
+            if tool_context and hasattr(tool_context, 'state') and tool_context.state:
+                header_email = tool_context.state.get('header_email')
+                logging.info(f"📧 Using header_email for permissions: {header_email}")
+            
+            # Initialize tool if needed
+            if not self.sheet_tool:
+                # Run async initialization in sync context
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, self._get_sheet_tool())
+                        self.sheet_tool = future.result()
+                else:
+                    self.sheet_tool = asyncio.run(self._get_sheet_tool())
+            
+            if not self.sheet_tool:
+                return json.dumps({"error": "Google Sheet tool not available"})
+            
+            # Create the spreadsheet - handle async call properly
+            async def create_sheet():
+                return await self.sheet_tool.create_spreadsheet_with_headers(
+                    title=title,
+                    headers=headers,
+                    data_rows=data,
+                    folder_id=folder_id if folder_id else None,
+                    header_email=header_email
+                )
+            
+            # Run the async function in sync context
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, create_sheet())
+                    result = future.result()
+            else:
+                result = asyncio.run(create_sheet())
+            
+            logging.info(f"✅ Created Google Sheet with headers: {title}")
+            return json.dumps(result)
+            
+        except Exception as e:
+            logging.error(f"❌ Error creating Google Sheet with headers: {e}")
+            return json.dumps({"error": f"Failed to create Google Sheet: {str(e)}"})
+
+
+class GoogleDocToolWrapper(BaseTool):
+    """Wrapper for Google Doc operations with session state access"""
+    
+    def __init__(self):
+        super().__init__(
+            name="google_doc_tool",
+            description="Create Google Docs with content and manage permissions"
+        )
+        self.doc_tool = None
+        self._initialize_tool()
+    
+    def _initialize_tool(self):
+        """Initialize the Google Doc tool"""
+        try:
+            if GOOGLE_SHEETS_AVAILABLE:  # This should be GOOGLE_DRIVE_AVAILABLE for docs
+                # Don't initialize here - do it lazily when first used
+                self.doc_tool = None
+                logging.info("✅ Google Doc tool wrapper initialized (will initialize on first use)")
+            else:
+                logging.warning("⚠️ Google Docs not available")
+        except Exception as e:
+            logging.error(f"❌ Failed to initialize Google Doc tool: {e}")
+    
+    async def _get_doc_tool(self):
+        """Get or create the Google Doc tool instance"""
+        if self.doc_tool is None:
+            try:
+                # Ensure configuration is initialized
+                from framework_config import initialize_config
+                config = initialize_config('dev')  # Initialize config if not already done
+                
+                google_drive_config = config.get('google_drive', {})
+                if not google_drive_config.get('enabled', False):
+                    logging.warning("⚠️ Google Drive not enabled in config")
+                    return None
+                
+                logging.info("🔧 Initializing Google Doc tool...")
+                self.doc_tool = await create_google_doc_tool()
+                
+                if self.doc_tool is None:
+                    logging.error("❌ create_google_doc_tool returned None")
+                    return None
+                
+                logging.info("🔐 Authenticating Google Doc tool...")
+                auth_success = await self.doc_tool.initialize()
+                
+                if not auth_success:
+                    logging.error("❌ Google Doc tool authentication failed")
+                    self.doc_tool = None
+                    return None
+                
+                logging.info("✅ Google Doc tool initialized and authenticated successfully")
+                
+            except Exception as e:
+                logging.error(f"❌ Failed to initialize Google Doc tool: {str(e)}")
+                self.doc_tool = None
+                return None
+        
+        return self.doc_tool
+    
+    def create_document_from_text(self, tool_context: ToolContext, title: str, content: str, folder_id: str = "") -> str:
+        """Create a Google Doc from text with session state access"""
+        try:
+            # Get header_email from session state
+            header_email = None
+            if tool_context and hasattr(tool_context, 'state') and tool_context.state:
+                header_email = tool_context.state.get('header_email')
+                logging.info(f"📧 Using header_email for permissions: {header_email}")
+            
+            # Initialize tool if needed
+            if not self.doc_tool:
+                # Run async initialization in sync context
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    import concurrent.futures
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(asyncio.run, self._get_doc_tool())
+                        self.doc_tool = future.result()
+                else:
+                    self.doc_tool = asyncio.run(self._get_doc_tool())
+            
+            if not self.doc_tool:
+                return json.dumps({"error": "Google Doc tool not available"})
+            
+            # Create the document - handle async call properly
+            async def create_doc():
+                return await self.doc_tool.create_document_from_data(
+                    title=title,
+                    data={"content": content},
+                    folder_id=folder_id if folder_id else None,
+                    header_email=header_email
+                )
+            
+            # Run the async function in sync context
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(asyncio.run, create_doc())
+                    result = future.result()
+            else:
+                result = asyncio.run(create_doc())
+            
+            logging.info(f"✅ Created Google Doc: {title}")
+            return json.dumps(result)
+            
+        except Exception as e:
+            logging.error(f"❌ Error creating Google Doc: {e}")
+            return json.dumps({"error": f"Failed to create Google Doc: {str(e)}"})
+
+
+# Initialize tool wrappers
+google_sheet_wrapper = GoogleSheetToolWrapper()
+google_doc_wrapper = GoogleDocToolWrapper()
+
+# Create function tools for Google Sheet operations
+def create_google_sheet_from_list_data(tool_context: ToolContext, title: str, data: str, folder_id: str = "") -> str:
+    """Create a Google Sheet from list data with session state access
+    
+    Args:
+        tool_context: Tool context with session state
+        title: The title of the spreadsheet
+        data: JSON string containing list of dictionaries
+        folder_id: Optional folder ID to create the sheet in (empty string for root)
+        
+    Returns:
+        JSON string with result or error
+    """
+    try:
+        # Parse the JSON data
+        data_list = json.loads(data)
+        if not isinstance(data_list, list):
+            return json.dumps({"error": "Data must be a JSON array of objects"})
+        
+        return google_sheet_wrapper.create_spreadsheet_from_list(tool_context, title, data_list, folder_id)
+    except json.JSONDecodeError as e:
+        return json.dumps({"error": f"Invalid JSON data: {str(e)}"})
+    except Exception as e:
+        logging.error(f"Error in create_google_sheet_from_list_data: {e}")
+        return json.dumps({"error": f"Failed to create Google Sheet: {str(e)}"})
+
+def create_google_sheet_with_headers_data(tool_context: ToolContext, title: str, headers: str, data: str, folder_id: str = "") -> str:
+    """Create a Google Sheet with headers and data with session state access
+    
+    Args:
+        tool_context: Tool context with session state
+        title: The title of the spreadsheet
+        headers: JSON string containing list of header strings
+        data: JSON string containing list of data rows (each row is a list of values)
+        folder_id: Optional folder ID to create the sheet in (empty string for root)
+        
+    Returns:
+        JSON string with result or error
+    """
+    try:
+        # Parse the JSON data
+        headers_list = json.loads(headers)
+        data_rows_list = json.loads(data)
+        
+        if not isinstance(headers_list, list):
+            return json.dumps({"error": "Headers must be a JSON array of strings"})
+        if not isinstance(data_rows_list, list):
+            return json.dumps({"error": "Data rows must be a JSON array of arrays"})
+        
+        return google_sheet_wrapper.create_spreadsheet_with_headers(tool_context, title, headers_list, data_rows_list, folder_id)
+    except json.JSONDecodeError as e:
+        return json.dumps({"error": f"Invalid JSON data: {str(e)}"})
+    except Exception as e:
+        logging.error(f"Error in create_google_sheet_with_headers_data: {e}")
+        return json.dumps({"error": f"Failed to create Google Sheet: {str(e)}"})
+
+# Create function tools for Google Doc operations
+def create_google_doc_from_text_data(tool_context: ToolContext, title: str, content: str, folder_id: str = "") -> str:
+    """Create a Google Doc from text with session state access
+    
+    Args:
+        tool_context: Tool context with session state
+        title: The title of the document
+        content: The text content for the document
+        folder_id: Optional folder ID to create the doc in (empty string for root)
+        
+    Returns:
+        JSON string with result or error
+    """
+    return google_doc_wrapper.create_document_from_text(tool_context, title, content, folder_id)
 
 ROOT_PROMPT = f"""
 You are a friendly AI assistant for the {config_manager.framework_config['branding']['project_name']}.
+
+YOUR CAPABILITIES:
+- You have access to Google Drive, Google Sheets, and Google Docs
+- You can search for documents in Google Drive
+- You can create documents in Google Docs
+- You can create spreadsheets in Google Sheets
+- You can read content from Google Drive documents
+- You can read content from Google Sheets
+- You can make API calls
 
 **YOUR TASKS:**
 
@@ -72,7 +430,13 @@ You are a friendly AI assistant for the {config_manager.framework_config['brandi
 5. **Handle Google Drive Operations** - Search, read, and manage Google Drive files (when enabled)
    → Use Google Drive tools for file operations
 
-6. **Delegate Everything Else** - Data operations, preference changes, entity requests
+6. **Handle Google Sheets Operations** - Create spreadsheets, export data, or generate reports in Google Sheets (when enabled)
+   → Use Google Sheets tools for spreadsheet operations (e.g., create a sheet from a list, export tabular data, generate reports)
+
+7. **Handle Google Docs Operations** - Create documents, export text, or generate reports in Google Docs (when enabled)
+   → Use Google Docs tools for document operations (e.g., create a doc from text, export notes, generate reports)
+
+8. **Delegate Everything Else** - Data operations, preference changes, entity requests
    → Use workflow_agent sub-agent
 
 **CRITICAL RULE - ALWAYS DELEGATE DATA REQUESTS:**
@@ -97,8 +461,52 @@ Even if you have screen context or background information, if the user is asking
 - User needs to find files based on content
 - User asks about documents, spreadsheets, or other files
 - User asks knowledge questions that might be answered by documents in Google Drive
+- Call the relevant tool
 
-**NEVER say "I don't know" or "I don't have information" unless it is completely unrelated - ALWAYS try workflow_agent first!**
+**WHEN TO USE GOOGLE SHEETS TOOLS:**
+- User asks to create a spreadsheet, export data to Google Sheets, or generate a report in spreadsheet format
+- User wants to save tabular data, lists, or reports as a Google Sheet
+- User asks for a spreadsheet version of data, table, or report
+- User asks to convert a particular information into a sheet
+- **Available tools:**
+  - `create_google_sheet_from_list_data(title, data, folder_id)` - Create sheet from JSON string of list of dictionaries
+  - `create_google_sheet_with_headers_data(title, headers, data, folder_id)` - Create sheet with JSON string of headers and data rows
+- Call the relevant tool
+
+**WHEN TO USE GOOGLE DOCS TOOLS:**
+- If the user asks to create, generate, export, or write a document, summary, report, or notes in Google Docs format
+- If the user says “create a Google Doc”, “make a document”, “export to Google Docs”, “write a summary in a Google Doc”, or similar
+- If the user asks for a document version of any information, summary, or report
+- If the user asks to convert, summarize, or save information as a Google Doc
+
+**CRITICAL:**  
+If the user asks to create a document, ALWAYS call the tool:
+- `create_google_doc_from_text_data(title, content, folder_id)`
+
+**How to use:**
+- `title`: The title for the new Google Doc (e.g., "Partner News: Bill Gates Foundation")
+- `content`: The text to put in the document (e.g., the news, summary, or notes)
+- `folder_id`: (optional) The Google Drive folder to save in, or leave blank for default
+
+**EXAMPLES:**
+
+User: "Create a new google doc with partner news about Bill Gates Foundation"  
+→ Call:
+create_google_doc_from_text_data(
+    title="Partner News: Bill Gates Foundation",
+    content="Here is the latest partner news about the Bill Gates Foundation: ...",
+    folder_id=""
+)
+
+User: "Export this summary to a Google Doc"  
+→ Call:
+create_google_doc_from_text_data(
+    title="Summary Export",
+    content="(insert summary here)",
+    folder_id=""
+)
+
+**NEVER respond with “I cannot create a Google Doc.” ALWAYS use the tool if the user asks for a document.**
 
 **RESPONSE FORMAT WITH SOURCES:**
 When using search_agent or search_google_drive_knowledge, include sources in your JSON response:
@@ -231,7 +639,7 @@ async def _get_google_drive_tool():
     
     return google_drive_tool
 
-def search_google_drive_knowledge(query: str, max_results: int = 5) -> dict:
+def search_google_drive_knowledge(query: str) -> str:
     """
     Search Google Drive for knowledge-related documents and content.
     This is a sync wrapper around the async implementation.
@@ -251,11 +659,11 @@ def search_google_drive_knowledge(query: str, max_results: int = 5) -> dict:
             # If we're already in an event loop, create a task
             import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, _search_google_drive_knowledge_async(query, max_results))
+                future = executor.submit(asyncio.run, _search_google_drive_knowledge_async(query))
                 return future.result()
         else:
             # If no event loop is running, use asyncio.run
-            return asyncio.run(_search_google_drive_knowledge_async(query, max_results))
+            return asyncio.run(_search_google_drive_knowledge_async(query))
     except Exception as e:
         logging.error(f"Error in search_google_drive_knowledge wrapper: {e}")
         return {
@@ -263,7 +671,7 @@ def search_google_drive_knowledge(query: str, max_results: int = 5) -> dict:
             "sources": []
         }
 
-async def _search_google_drive_knowledge_async(query: str, max_results: int = 5) -> dict:
+async def _search_google_drive_knowledge_async(query: str) -> dict:
     """
     Async implementation of Google Drive knowledge search.
 
@@ -295,13 +703,13 @@ async def _search_google_drive_knowledge_async(query: str, max_results: int = 5)
         # First, search for files by name/title
         files_by_name = await drive_tool.find_files(
             name_contains=query,
-            max_results=max_results
+            max_results=5
         )
         
         # Then search for files by content
         files_by_content = await drive_tool.search_files_by_content(
             search_term=query,
-            max_results=max_results
+            max_results=5
         )
         
         # Combine and deduplicate results
@@ -313,7 +721,7 @@ async def _search_google_drive_knowledge_async(query: str, max_results: int = 5)
         for file, snippet in files_by_content:
             all_files[file.id] = file
         
-        results = list(all_files.values())[:max_results]
+        results = list(all_files.values())[:5]
         
         if not results:
             return {
@@ -665,7 +1073,10 @@ user_request_agent = Agent(
         AgentTool.AgentTool(agent=search_agent),
         FunctionTool(func=search_google_drive),
         FunctionTool(func=read_google_drive_file),
-        FunctionTool(func=search_google_drive_content)
+        FunctionTool(func=search_google_drive_content),
+        FunctionTool(func=create_google_sheet_from_list_data),
+        FunctionTool(func=create_google_sheet_with_headers_data),
+        FunctionTool(func=create_google_doc_from_text_data)
     ],
     sub_agents=[workflow_agent]
 )    
