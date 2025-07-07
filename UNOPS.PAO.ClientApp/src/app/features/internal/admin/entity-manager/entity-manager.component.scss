@@ -1,3 +1,8 @@
+// PrimeNG Tabs styling - consistent with other components
+:host ::ng-deep {
+  --p-tabs-tablist-background: transparent;
+}
+
 // CDK Drag & Drop styles
 .cdk-drag-preview {
   box-sizing: border-box;
@@ -188,6 +193,68 @@
   }
   100% {
     transform: scale(1);
+  }
+}
+
+// IDE-style template autocomplete styling
+.template-input-container {
+  .template-suggestions {
+    // High z-index to appear above dialogs and other elements
+    z-index: 9999;
+    
+    // Smooth animations
+    animation: fadeInDown 0.15s ease-out;
+    
+    // Custom scrollbar for suggestions
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 2px;
+    }
+    
+    // Individual suggestion items
+    .suggestion-item {
+      transition: all 0.1s ease;
+      
+      &:hover {
+        background-color: #f0f9ff;
+        color: #1e40af;
+      }
+      
+      &.selected {
+        background-color: #dbeafe;
+        color: #1e40af;
+      }
+      
+      // Field type badge
+      .field-type {
+        font-size: 10px;
+        font-weight: 500;
+        padding: 2px 6px;
+        border-radius: 3px;
+        background-color: #f1f5f9;
+        color: #64748b;
+      }
+    }
+  }
+}
+
+// Animation for suggestions appearing
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -405,4 +472,57 @@
 
 .flex-footer {
   flex-shrink: 0;
+}
+
+// Styles pour la preview de carte
+.card-preview-container {
+  .listview-card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb;
+    
+    &:hover {
+      box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.1) !important;
+    }
+  }
+}
+
+// Style pour le conteneur de preview
+.preview-highlight {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
+  border: 1px solid #93c5fd;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+    border-radius: 6px 6px 0 0;
+  }
+}
+
+// Animation pour la preview
+@keyframes fadeInPreview {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-preview-section {
+  animation: fadeInPreview 0.3s ease-out;
+}
+
+// Styles pour les états d'erreur
+.preview-error-state {
+  .material-symbols-outlined {
+    font-size: 2rem;
+  }
 } 

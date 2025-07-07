@@ -1,7 +1,7 @@
 import { Component, OnInit, signal, computed, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { Observable, of, catchError, shareReplay, startWith } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -22,9 +22,14 @@ import { ChipModule } from 'primeng/chip';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { ToggleButtonModule } from 'primeng/togglebutton';
+import { Tab, TabList, Tabs } from 'primeng/tabs';
 
 // CDK Drag & Drop
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+
+// Listview components
+import { ListviewCardComponent } from '../../../../common/pages/components/listview/card/listview-card.component';
+import { ListViewColumn, ListViewConfig } from '../../../../common/pages/components/listview/listview.model';
 
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { 
@@ -36,6 +41,7 @@ import {
   EntityPermissionsModel,
   RelatedFieldOption
 } from '../../services/entity-configuration.service';
+import { InteractionIconService } from '../../../../common/services/interaction-icon.service';
 
 @Component({
   selector: 'app-entity-manager',
@@ -59,7 +65,11 @@ import {
     TagModule,
     DragDropModule,
     DialogModule,
-    ToggleButtonModule
+    ToggleButtonModule,
+    Tabs,
+    TabList,
+    Tab,
+    ListviewCardComponent
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './entity-manager.component.html',
@@ -71,6 +81,11 @@ export class EntityManagerComponent implements OnInit {
   private confirmationService = inject(ConfirmationService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private translateService = inject(TranslateService);
+  private interactionIconService = inject(InteractionIconService);
+
+  // Auto-save timer for debounced saving
+  private autoSaveTimer?: ReturnType<typeof setTimeout>;
 
   // State signals
   entities = signal<EntityDropdownModel[]>([]);
@@ -82,6 +97,9 @@ export class EntityManagerComponent implements OnInit {
   entitiesLoading = signal<boolean>(false);
   configLoading = signal<boolean>(false);
   saving = signal<boolean>(false);
+  fieldSaving = signal<boolean>(false);
+  configSaving = signal<boolean>(false);
+  autoSaving = signal<boolean>(false);
   permissionsLoading = signal<boolean>(true);
 
   // Additional loading state
@@ -110,13 +128,7 @@ export class EntityManagerComponent implements OnInit {
 
   // Dialog states
   showFieldEditDialog = signal<boolean>(false);
-  showListViewDialog = signal<boolean>(false);
   showEntityConfigDialog = signal<boolean>(false);
-
-  // Temporary state for list view management (doesn't affect main working fields until saved)
-  tempListViewFields = signal<EntityFieldConfigurationDto[]>([]);
-  tempAvailableFields = signal<EntityFieldConfigurationDto[]>([]);
-  listViewHasChanges = signal<boolean>(false);
 
   // Dialog title computed property
   fieldDialogTitle = computed(() => {
@@ -129,6 +141,15 @@ export class EntityManagerComponent implements OnInit {
   showOnlyListViewFields = signal<boolean>(false);
   showListViewFieldsOnTop = signal<boolean>(false);
   selectedField = signal<EntityFieldConfigurationDto | null>(null);
+
+  // Sample data for template preview
+  sampleData = signal<any>(null);
+
+  // IDE-style autocompletion for templates
+  templateAvailableFields = signal<string[]>([]);
+  templateFilteredFields = signal<string[]>([]);
+  showTemplateSuggestions = signal<boolean>(false);
+  selectedSuggestionIndex = signal<number>(0);
 
   // Data type options for dropdown
   dataTypeOptions = [
@@ -170,6 +191,15 @@ export class EntityManagerComponent implements OnInit {
     }))
   );
 
+  // Computed values for responsive tabs
+  entityTabs = computed(() => 
+    this.entities().map(entity => ({
+      label: entity.entityName,
+      value: entity.entityName,
+      translatedLabel: entity.entityName
+    }))
+  );
+
   // List view management computed values
   availableFields = computed(() => 
     this.workingFields().filter(field => !field.showInListView && field.isActive)
@@ -180,6 +210,40 @@ export class EntityManagerComponent implements OnInit {
       .filter(field => field.showInListView && field.isActive)
       .sort((a, b) => (a.listViewOrder ?? 0) - (b.listViewOrder ?? 0))
   );
+
+  // Preview configuration for the card
+  previewCardColumns = computed(() => {
+    const fields = this.getListViewFields();
+    if (!fields || fields.length === 0) {
+      return [];
+    }
+
+    return fields.map(field => this.convertFieldToColumn(field));
+  });
+
+  previewCardConfig = computed<ListViewConfig>(() => ({
+    pageSize: 1,
+    enableSelection: false,
+    enablePagination: false,
+    enableSorting: false,
+    enableSearch: false,
+    enableExport: false,
+    showViewModeToggle: false,
+    defaultViewMode: 'card',
+    forceMobileMode: true
+  }));
+
+  previewCardData = computed(() => {
+    const sample = this.sampleData();
+    return sample ? [sample] : [];
+  });
+
+  // Computed property to check if preview should be shown
+  showCardPreview = computed(() => {
+    const hasFields = this.getListViewFields().length > 0;
+    const hasSampleData = this.sampleData() !== null;
+    return hasFields && hasSampleData && this.selectedEntityName() && !this.configLoading();
+  });
 
   // Filtered fields computed value
   filteredFields = computed(() => {
@@ -221,7 +285,6 @@ export class EntityManagerComponent implements OnInit {
   ngOnInit() {
     this.loadPermissions();
     this.resetDialogStates();
-    setTimeout(() => this.cdr.detectChanges(), 0);
   }
 
   private resetDialogStates() {
@@ -230,7 +293,6 @@ export class EntityManagerComponent implements OnInit {
     this.showListViewPanel.set(false);
     this.showFieldEditPanel.set(false);
     this.showFieldEditDialog.set(false);
-    this.showListViewDialog.set(false);
     this.showEntityConfigDialog.set(false);
     this.entityConfigForm.set(null);
   }
@@ -253,7 +315,6 @@ export class EntityManagerComponent implements OnInit {
         }
         
         this.loadEntities();
-        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading permissions:', error);
@@ -271,8 +332,16 @@ export class EntityManagerComponent implements OnInit {
     this.entitiesLoading.set(true);
     this.entityConfigService.getEntities().subscribe({
       next: (entities) => {
-        this.entities.set(entities);
+        // Filter out PartnerTree from the entities list
+        const filteredEntities = entities.filter(entity => entity.entityName !== 'PartnerTree');
+        this.entities.set(filteredEntities);
         this.entitiesLoading.set(false);
+        
+        // Sélectionner automatiquement la première entité si aucune n'est sélectionnée
+        if (filteredEntities.length > 0 && !this.selectedEntityName()) {
+          this.selectedEntityName.set(filteredEntities[0].entityName);
+          this.onEntityChange();
+        }
       },
       error: (error) => {
         console.error('Error loading entities:', error);
@@ -296,11 +365,37 @@ export class EntityManagerComponent implements OnInit {
       this.originalEntityConfig.set(null);
       this.workingFields.set([]);
       this.relatedFieldsCache.clear();
+      this.sampleData.set(null);
       return;
     }
 
     this.relatedFieldsCache.clear();
     this.loadEntityConfiguration(entityName);
+    // Note: loadSampleData is called in loadEntityConfiguration after config is loaded
+  }
+
+  // Method to handle tab selection (non-routing)
+  onEntityTabChange(entityName: string): void {
+    if (entityName !== this.selectedEntityName()) {
+      this.selectedEntityName.set(entityName);
+      this.onEntityChange();
+      this.loadSampleData();
+    }
+  }
+  
+  // Method to handle mobile dropdown change
+  onEntityDropdownChange(event: any): void {
+    const selectedEntity = event.value;
+    if (selectedEntity && selectedEntity !== this.selectedEntityName()) {
+      this.selectedEntityName.set(selectedEntity);
+      this.onEntityChange();
+      this.loadSampleData();
+    }
+  }
+  
+  // Get current selected entity for dropdown
+  getSelectedEntityForDropdown(): any {
+    return this.entityTabs().find(tab => tab.value === this.selectedEntityName());
   }
 
   private loadEntityConfiguration(entityName: string) {
@@ -324,6 +419,9 @@ export class EntityManagerComponent implements OnInit {
         
         this.configLoading.set(false);
         this.hasUnsavedChanges.set(false);
+        
+        // Load sample data for template preview
+        this.loadSampleData();
       },
       error: (error) => {
         console.error('Error loading entity configuration:', error);
@@ -407,6 +505,7 @@ export class EntityManagerComponent implements OnInit {
       
       this.workingFields.set(updatedFields);
       this.hasUnsavedChanges.set(true);
+      this.scheduleAutoSave();
     }
   }
 
@@ -416,6 +515,15 @@ export class EntityManagerComponent implements OnInit {
 
   removeFieldFromListView(fieldId: number | undefined) {
     this.onFieldShowInListViewChange(fieldId, false);
+  }
+
+  // Alias methods for the new two-column interface
+  addFieldToListView(fieldId: number | undefined) {
+    this.moveFieldToListView(fieldId);
+  }
+
+  removeFieldFromListViewByStringId(fieldId: number | undefined) {
+    this.removeFieldFromListView(fieldId);
   }
 
   onListViewFieldDrop(event: CdkDragDrop<EntityFieldConfigurationDto[]>) {
@@ -435,6 +543,7 @@ export class EntityManagerComponent implements OnInit {
     
     this.workingFields.set(allFields);
     this.hasUnsavedChanges.set(true);
+    this.scheduleAutoSave();
   }
 
   // TrackBy functions for ngFor performance
@@ -456,51 +565,17 @@ export class EntityManagerComponent implements OnInit {
     return relationshipTypes.includes(dataType);
   }
 
+  // Helper method to get data type label for display
+  getDataTypeLabel(dataType: string): string {
+    const option = this.dataTypeOptions.find(opt => opt.value === dataType);
+    return option ? option.label : dataType;
+  }
+
   // Get available display properties for a related entity type
   getRelatedEntityFields(entityType: string): Observable<RelatedFieldOption[]> {
     return this.entityConfigService.getRelatedEntityFields(entityType);
   }
 
-  // Helper method to convert field names to proper camelCase
-  private toCamelCase(fieldName: string): string {
-    if (fieldName.includes('.')) {
-      const parts = fieldName.split('.');
-      return parts.map(part => this.toCamelCase(part)).join('.');
-    }
-    
-    const fieldMappings: { [key: string]: string } = {
-      'shortname': 'shortName',
-      'firstname': 'firstName',
-      'lastname': 'lastName',
-      'middlename': 'middleName',
-      'fullname': 'fullName',
-      'partnercode': 'partnerCode',
-      'organizationname': 'organizationName',
-      'businessunit': 'businessUnit',
-      'contactperson': 'contactPerson',
-      'phonenumber': 'phoneNumber',
-      'mobilenumber': 'mobileNumber',
-      'emailaddress': 'emailAddress',
-      'postalcode': 'postalCode',
-      'createdate': 'createDate',
-      'updatedate': 'updateDate',
-      'createdby': 'createdBy',
-      'updatedby': 'updatedBy',
-      'isactive': 'isActive',
-      'isdeleted': 'isDeleted'
-    };
-    
-    const lowerFieldName = fieldName.toLowerCase();
-    
-    if (fieldMappings[lowerFieldName]) {
-      return fieldMappings[lowerFieldName];
-    }
-    
-    return fieldName
-      .toLowerCase()
-      .replace(/[_-](.)/g, (_, char) => char.toUpperCase())
-      .replace(/^(.)/, (match) => match.toLowerCase());
-  }
 
   // Helper method to get dropdown options for display field path (for ALL field types)
   getRelatedDisplayOptions(dataType: string): Observable<any[]> {
@@ -528,8 +603,8 @@ export class EntityManagerComponent implements OnInit {
     const options$ = this.getRelatedEntityFields(entityType).pipe(
       map(options => options.map(opt => {
         const fieldPath = isSameEntity 
-          ? this.toCamelCase(opt.value)
-          : opt.fieldPath || `${entityType.toLowerCase()}.${this.toCamelCase(opt.value)}`;
+          ? opt.value
+          : opt.fieldPath || `${entityType.toLowerCase()}.${opt.value}`;
         
         return {
           label: `${entityType} - ${opt.label}`,
@@ -566,20 +641,6 @@ export class EntityManagerComponent implements OnInit {
     return options$;
   }
 
-  // Handle display field path changes from dropdown
-  onDisplayFieldPathChange(fieldId: number | undefined, value: string) {
-    const fields = this.workingFields();
-    const fieldIndex = fields.findIndex(f => f.id === fieldId);
-    if (fieldIndex !== -1) {
-      const updatedFields = [...fields];
-      updatedFields[fieldIndex] = {
-        ...updatedFields[fieldIndex],
-        displayFieldPath: value
-      };
-      this.workingFields.set(updatedFields);
-      this.hasUnsavedChanges.set(true);
-    }
-  }
 
   // Handle enable change log checkbox change
   onEnableChangeLogChange(event: any) {
@@ -618,6 +679,7 @@ export class EntityManagerComponent implements OnInit {
       };
       this.workingFields.set(updatedFields);
       this.hasUnsavedChanges.set(true);
+      this.scheduleAutoSave();
     }
   }
 
@@ -636,20 +698,21 @@ export class EntityManagerComponent implements OnInit {
         this.getRelatedEntityFields(baseEntityType).subscribe(options => {
           const selectedOption = options.find(opt => opt.value === value);
           
-          const fieldPath = isSameEntity 
-            ? this.toCamelCase(value)
-            : selectedOption?.fieldPath || `${baseEntityType.toLowerCase()}.${this.toCamelCase(value)}`;
+          // Generate template path instead of fieldPath
+          const templatePath = isSameEntity 
+            ? `{${value}}`
+            : `{${selectedOption?.fieldPath || `${baseEntityType.toLowerCase()}.${value}`}}`;
           
           updatedFields[fieldIndex] = {
             ...updatedFields[fieldIndex],
             relatedDisplayProperty: value,
-            displayFieldPath: fieldPath,
-            displayTemplate: selectedOption?.isTemplate ? selectedOption.templatePattern : undefined,
-            listViewType: selectedOption?.isTemplate ? 'template' : 'text'
+            displayTemplate: selectedOption?.isTemplate ? selectedOption.templatePattern : templatePath,
+            listViewType: 'template' // Always use template since we're using displayTemplate
           };
           
           this.workingFields.set(updatedFields);
           this.hasUnsavedChanges.set(true);
+          this.scheduleAutoSave();
         });
       }
     }
@@ -666,6 +729,7 @@ export class EntityManagerComponent implements OnInit {
       };
       this.workingFields.set(updatedFields);
       this.hasUnsavedChanges.set(true);
+      this.scheduleAutoSave();
     }
   }
 
@@ -686,7 +750,8 @@ export class EntityManagerComponent implements OnInit {
       { label: 'Multiple Avatars', value: 'multiple-avatars' },
       { label: 'Template', value: 'template' },
       { label: 'Link', value: 'link' },
-      { label: 'Button', value: 'button' }
+      { label: 'Button', value: 'button' },
+      { label: 'Interaction Icon', value: 'interactionIcon' }
     ];
   }
 
@@ -701,15 +766,6 @@ export class EntityManagerComponent implements OnInit {
 
   getListViewFields(): EntityFieldConfigurationDto[] {
     return this.listViewFields();
-  }
-
-  // Helper methods for temporary list view data (used in dialog)
-  getTempListViewFields(): EntityFieldConfigurationDto[] {
-    return this.tempListViewFields();
-  }
-
-  getTempAvailableFields(): EntityFieldConfigurationDto[] {
-    return this.tempAvailableFields();
   }
 
   isFieldValid(): boolean {
@@ -767,183 +823,12 @@ export class EntityManagerComponent implements OnInit {
     this.editingField.set(null);
   }
 
-  openListViewManagementDialog() {
-    // Initialize temporary state with current field states
-    const allFields = this.workingFields();
-    const currentListViewFields = allFields
-      .filter(field => field.showInListView && field.isActive)
-      .sort((a, b) => (a.listViewOrder ?? 0) - (b.listViewOrder ?? 0));
-    const currentAvailableFields = allFields.filter(field => !field.showInListView && field.isActive);
-    
-    this.tempListViewFields.set([...currentListViewFields]);
-    this.tempAvailableFields.set([...currentAvailableFields]);
-    this.listViewHasChanges.set(false);
-    this.showListViewDialog.set(true);
-  }
-
-  closeListViewDialog() {
-    this.showListViewDialog.set(false);
-    this.listViewHasChanges.set(false);
-  }
-
-  // Temporary list view field management (doesn't save until saveListViewChanges is called)
-  tempMoveFieldToListView(fieldId: number | undefined) {
-    const availableFields = this.tempAvailableFields();
-    const listViewFields = this.tempListViewFields();
-    
-    const fieldIndex = availableFields.findIndex(f => f.id === fieldId);
-    if (fieldIndex !== -1) {
-      const field = availableFields[fieldIndex];
-      const updatedAvailable = availableFields.filter(f => f.id !== fieldId);
-      
-      // Calculate new list view order
-      const maxListViewOrder = listViewFields.length > 0
-        ? Math.max(...listViewFields.map(f => f.listViewOrder || 0))
-        : 0;
-      
-      const updatedField = {
-        ...field,
-        showInListView: true,
-        listViewOrder: maxListViewOrder + 1
-      };
-      
-      this.tempAvailableFields.set(updatedAvailable);
-      this.tempListViewFields.set([...listViewFields, updatedField]);
-      this.listViewHasChanges.set(true);
-    }
-  }
-
-  tempRemoveFieldFromListView(fieldId: number | undefined) {
-    const listViewFields = this.tempListViewFields();
-    const availableFields = this.tempAvailableFields();
-    
-    const fieldIndex = listViewFields.findIndex(f => f.id === fieldId);
-    if (fieldIndex !== -1) {
-      const field = listViewFields[fieldIndex];
-      const updatedListView = listViewFields.filter(f => f.id !== fieldId);
-      
-      // Recalculate list view orders for remaining fields
-      updatedListView.forEach((f, index) => {
-        f.listViewOrder = index + 1;
-      });
-      
-      const updatedField = {
-        ...field,
-        showInListView: false,
-        listViewOrder: undefined
-      };
-      
-      this.tempListViewFields.set(updatedListView);
-      this.tempAvailableFields.set([...availableFields, updatedField]);
-      this.listViewHasChanges.set(true);
-    }
-  }
-
-  tempOnListViewFieldDrop(event: CdkDragDrop<EntityFieldConfigurationDto[]>) {
-    const listViewFields = [...this.tempListViewFields()];
-    moveItemInArray(listViewFields, event.previousIndex, event.currentIndex);
-    
-    // Update list view order based on new positions
-    listViewFields.forEach((field, index) => {
-      field.listViewOrder = index + 1;
-    });
-    
-    this.tempListViewFields.set(listViewFields);
-    this.listViewHasChanges.set(true);
-  }
-
-  // Save list view changes to working fields and persist to database
-  saveListViewChanges() {
-    const allFields = [...this.workingFields()];
-    const tempListView = this.tempListViewFields();
-    const tempAvailable = this.tempAvailableFields();
-    
-    // Update all affected fields
-    [...tempListView, ...tempAvailable].forEach(tempField => {
-      const fieldIndex = allFields.findIndex(f => f.id === tempField.id);
-      if (fieldIndex !== -1) {
-        allFields[fieldIndex] = {
-          ...allFields[fieldIndex],
-          showInListView: tempField.showInListView,
-          listViewOrder: tempField.listViewOrder
-        };
-      }
-    });
-    
-    // Update working fields first
-    this.workingFields.set(allFields);
-    
-    // Now persist the changes to the database
-    this.saving.set(true);
-    const entityName = this.selectedEntityName();
-    
-    // Prepare fields for API call
-    const fieldsForApi = allFields.map((f, index) => ({
-      id: f.id,
-      fieldName: f.fieldName,
-      dataType: f.dataType,
-      description: f.description,
-      isRequired: f.isRequired,
-      isActive: f.isActive,
-      enableChangeLog: f.enableChangeLog || false,
-      defaultValue: f.defaultValue,
-      maxLength: f.maxLength,
-      displayOrder: index + 1,
-      showInListView: f.showInListView,
-      listViewOrder: f.showInListView ? f.listViewOrder : undefined,
-      relatedDisplayProperty: f.relatedDisplayProperty,
-      displayFieldPath: f.displayFieldPath,
-      displayTemplate: f.displayTemplate,
-      listViewLabel: f.listViewLabel,
-      listViewType: f.listViewType || 'text',
-      listViewWidth: f.listViewWidth,
-      listViewEllipsis: f.listViewEllipsis || false,
-      listViewSortable: f.listViewSortable !== false,
-      firstLetterFallbackField: f.firstLetterFallbackField,
-      helperText: f.helperText
-    }));
-
-    const saveRequest = {
-      entityName: entityName,
-      description: this.workingEntityConfig().description,
-      fields: fieldsForApi
-    };
-
-    this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.hasUnsavedChanges.set(false);
-        this.listViewHasChanges.set(false);
-        
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'List view configuration saved successfully'
-        });
-        
-        this.closeListViewDialog();
-        
-        // Reload the configuration to get updated data
-        this.loadEntityConfiguration(entityName);
-      },
-      error: (error) => {
-        console.error('Error saving list view changes:', error);
-        this.saving.set(false);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to save list view changes'
-        });
-      }
-    });
-  }
-
   // Save field changes directly to API
   saveFieldChanges() {
     const field = this.editingField();
     if (!field) return;
 
-    this.saving.set(true);
+    this.fieldSaving.set(true);
     const entityName = this.selectedEntityName();
 
     // Get current fields and update/add the field
@@ -961,7 +846,6 @@ export class EntityManagerComponent implements OnInit {
       showInListView: f.showInListView,
       listViewOrder: f.showInListView ? f.listViewOrder : undefined,
       relatedDisplayProperty: f.relatedDisplayProperty,
-      displayFieldPath: f.displayFieldPath,
       displayTemplate: f.displayTemplate,
       listViewLabel: f.listViewLabel,
       listViewType: f.listViewType || 'text',
@@ -987,7 +871,6 @@ export class EntityManagerComponent implements OnInit {
       showInListView: field.showInListView,
       listViewOrder: field.showInListView ? field.listViewOrder : undefined,
       relatedDisplayProperty: field.relatedDisplayProperty,
-      displayFieldPath: field.displayFieldPath,
       displayTemplate: field.displayTemplate,
       listViewLabel: field.listViewLabel,
       listViewType: field.listViewType || 'text',
@@ -1023,21 +906,27 @@ export class EntityManagerComponent implements OnInit {
     };
 
     this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).subscribe({
-      next: () => {
+      next: (response) => {
+        // Optimistic update: update local state instead of full reload
+        this.updateLocalFieldState(field, fieldRequest);
+        
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
           detail: `Field ${field.fieldName} saved successfully`
         });
-        this.saving.set(false);
+        this.fieldSaving.set(false);
+        this.hasUnsavedChanges.set(false);
         this.closeFieldEditDialog();
         
-        // Reload the configuration to get updated data
-        this.loadEntityConfiguration(entityName);
+        // Only reload sample data if template fields were changed
+        if (field.listViewType === 'template' || field.displayTemplate) {
+          this.loadSampleData();
+        }
       },
       error: (error) => {
         console.error('Error saving field:', error);
-        this.saving.set(false);
+        this.fieldSaving.set(false);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -1045,6 +934,381 @@ export class EntityManagerComponent implements OnInit {
         });
       }
     });
+  }
+
+  // Helper method to update local field state optimistically
+  private updateLocalFieldState(editedField: EntityFieldConfigurationDto, fieldRequest: any) {
+    const fields = [...this.workingFields()];
+    
+    if (editedField.id && editedField.id > 0) {
+      // Update existing field
+      const fieldIndex = fields.findIndex(f => f.id === editedField.id);
+      if (fieldIndex !== -1) {
+        fields[fieldIndex] = {
+          ...fields[fieldIndex],
+          ...fieldRequest,
+          id: editedField.id // Ensure ID is preserved
+        };
+      }
+    } else {
+      // Add new field - simulate server response with a temporary ID
+      const newField = {
+        ...fieldRequest,
+        id: Date.now() // Temporary ID until next full reload
+      };
+      fields.push(newField);
+    }
+    
+    this.workingFields.set(fields);
+    
+    // Update current entity config if available
+    const currentConfig = this.currentEntityConfig();
+    if (currentConfig) {
+      const updatedConfig = {
+        ...currentConfig,
+        fields: fields
+      };
+      this.currentEntityConfig.set(updatedConfig);
+    }
+  }
+
+  // Template preview methods
+  private loadSampleData() {
+    const entityName = this.selectedEntityName();
+    if (entityName) {
+      this.entityConfigService.getSampleData(entityName).subscribe({
+        next: (data) => {
+          this.sampleData.set(data);
+          this.updateTemplateAvailableFields(); // Update available fields for autocompletion
+        },
+        error: (error) => {
+          console.warn('Could not load sample data from API:', error);
+          this.sampleData.set(null);
+          this.templateAvailableFields.set([]); // Clear available fields on error
+        }
+      });
+    }
+  }
+
+  // Extract available fields from sample data for autocompletion
+  private extractFieldsFromSampleData(obj: any, prefix: string = ''): string[] {
+    const fields: string[] = [];
+    
+    if (!obj || typeof obj !== 'object') {
+      return fields;
+    }
+
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const fieldName = prefix ? `${prefix}.${key}` : key;
+        const value = obj[key];
+        
+        // Add the current field
+        fields.push(fieldName);
+        
+        // If it's an object (but not null, Array, or Date), explore recursively
+        if (value && 
+            typeof value === 'object' && 
+            !Array.isArray(value) && 
+            !(value instanceof Date) && 
+            Object.keys(value).length > 0) {
+          
+          // Limit depth to avoid circular references
+          if (prefix.split('.').length < 3) {
+            fields.push(...this.extractFieldsFromSampleData(value, fieldName));
+          }
+        }
+      }
+    }
+    
+    return fields;
+  }
+
+  // Update available fields when sample data changes
+  private updateTemplateAvailableFields() {
+    const sample = this.sampleData();
+    if (sample) {
+      const fields = this.extractFieldsFromSampleData(sample);
+      this.templateAvailableFields.set(fields.sort());
+    } else {
+      this.templateAvailableFields.set([]);
+    }
+  }
+
+  // Auto-save methods
+  private scheduleAutoSave(): void {
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+    
+    this.autoSaveTimer = setTimeout(() => {
+      if (this.hasUnsavedChanges() && !this.saving() && !this.fieldSaving() && !this.autoSaving()) {
+        this.saveAllFields();
+      }
+    }, 3000); // 3 seconds debounce
+  }
+
+  private saveAllFields(): void {
+    const entityName = this.selectedEntityName();
+    if (!entityName || this.saving() || this.fieldSaving() || this.autoSaving()) return;
+
+    this.autoSaving.set(true);
+
+    const allFields = this.workingFields().map((f, index) => ({
+      id: f.id,
+      fieldName: f.fieldName,
+      dataType: f.dataType,
+      description: f.description,
+      isRequired: f.isRequired,
+      isActive: f.isActive,
+      enableChangeLog: f.enableChangeLog || false,
+      defaultValue: f.defaultValue,
+      maxLength: f.maxLength,
+      displayOrder: index + 1,
+      showInListView: f.showInListView,
+      listViewOrder: f.showInListView ? f.listViewOrder : undefined,
+      relatedDisplayProperty: f.relatedDisplayProperty,
+      displayTemplate: f.displayTemplate,
+      listViewLabel: f.listViewLabel,
+      listViewType: f.listViewType || 'text',
+      listViewWidth: f.listViewWidth,
+      listViewEllipsis: f.listViewEllipsis || false,
+      listViewSortable: f.listViewSortable !== false,
+      firstLetterFallbackField: f.firstLetterFallbackField,
+      helperText: f.helperText
+    }));
+
+    const saveRequest = {
+      entityName: entityName,
+      description: this.workingEntityConfig().description,
+      fields: allFields
+    };
+
+    this.entityConfigService.saveEntityConfiguration(entityName, saveRequest).subscribe({
+      next: () => {
+        this.hasUnsavedChanges.set(false);
+        this.autoSaving.set(false);
+        
+        // No need to reload - optimistic update already done
+        // Only show success for manual saves, not auto-saves
+      },
+      error: (error) => {
+        console.error('Auto-save failed:', error);
+        this.autoSaving.set(false);
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Auto-save Failed',
+          detail: 'Changes could not be saved automatically. Please save manually.',
+          life: 5000
+        });
+      }
+    });
+  }
+
+  // IDE-style autocompletion methods
+  onTemplateInputKeydown(event: KeyboardEvent, inputElement: any) {
+    if (!this.showTemplateSuggestions()) {
+      // Show suggestions on Ctrl+Space
+      if (event.ctrlKey && event.code === 'Space') {
+        event.preventDefault();
+        this.showAllSuggestions();
+        return;
+      }
+      return;
+    }
+
+    const filteredFields = this.templateFilteredFields();
+    const currentIndex = this.selectedSuggestionIndex();
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (currentIndex < filteredFields.length - 1) {
+          this.selectedSuggestionIndex.set(currentIndex + 1);
+        }
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        if (currentIndex > 0) {
+          this.selectedSuggestionIndex.set(currentIndex - 1);
+        }
+        break;
+      case 'Enter':
+        event.preventDefault();
+        if (filteredFields[currentIndex]) {
+          this.selectSuggestion(filteredFields[currentIndex], inputElement);
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        this.hideTemplateSuggestions();
+        break;
+    }
+  }
+
+  onTemplateInputChange(event: any, inputElement: any) {
+    const value = event.target.value;
+    const cursorPosition = inputElement.selectionStart || 0;
+    
+    // Check if user just typed '{'
+    if (value[cursorPosition - 1] === '{') {
+      this.showAllSuggestions();
+    } else if (this.showTemplateSuggestions()) {
+      // Filter suggestions based on current word
+      const currentWord = this.getCurrentWord(value, cursorPosition);
+      this.filterSuggestions(currentWord);
+    }
+  }
+
+  private getCurrentWord(text: string, cursorPosition: number): string {
+    // Find the word being typed after the last '{'
+    const beforeCursor = text.substring(0, cursorPosition);
+    const lastBraceIndex = beforeCursor.lastIndexOf('{');
+    
+    if (lastBraceIndex === -1) return '';
+    
+    const wordStart = lastBraceIndex + 1;
+    const currentWord = beforeCursor.substring(wordStart);
+    
+    // Only return the word if we're still inside braces (no closing '}' found)
+    const afterBrace = text.substring(lastBraceIndex);
+    const closingBraceIndex = afterBrace.indexOf('}');
+    
+    if (closingBraceIndex !== -1 && closingBraceIndex < cursorPosition - lastBraceIndex) {
+      return '';
+    }
+    
+    return currentWord;
+  }
+
+  private showAllSuggestions() {
+    this.templateFilteredFields.set(this.templateAvailableFields());
+    this.selectedSuggestionIndex.set(0);
+    this.showTemplateSuggestions.set(true);
+  }
+
+  private filterSuggestions(query: string) {
+    const fields = this.templateAvailableFields();
+    const filtered = fields.filter(field => 
+      field.toLowerCase().includes(query.toLowerCase())
+    );
+    this.templateFilteredFields.set(filtered);
+    this.selectedSuggestionIndex.set(0);
+    
+    if (filtered.length === 0) {
+      this.showTemplateSuggestions.set(false);
+    }
+  }
+
+  hideTemplateSuggestions() {
+    // Use setTimeout to allow click events to fire before hiding
+    setTimeout(() => {
+      this.showTemplateSuggestions.set(false);
+    }, 150);
+  }
+
+  selectSuggestion(field: string, inputElement: any) {
+    const currentValue = this.editingField()?.displayTemplate || '';
+    const cursorPosition = inputElement.selectionStart || 0;
+    
+    // Find the position where we should insert the field
+    const beforeCursor = currentValue.substring(0, cursorPosition);
+    const lastBraceIndex = beforeCursor.lastIndexOf('{');
+    
+    let newValue: string;
+    let newCursorPosition: number;
+    
+    if (lastBraceIndex !== -1) {
+      // Replace the partial field name
+      const beforeBrace = currentValue.substring(0, lastBraceIndex);
+      const afterCursor = currentValue.substring(cursorPosition);
+      newValue = beforeBrace + `{${field}}` + afterCursor;
+      newCursorPosition = beforeBrace.length + field.length + 2; // +2 for {}
+    } else {
+      // Insert at cursor position
+      const beforeCursor = currentValue.substring(0, cursorPosition);
+      const afterCursor = currentValue.substring(cursorPosition);
+      newValue = beforeCursor + `{${field}}` + afterCursor;
+      newCursorPosition = cursorPosition + field.length + 2; // +2 for {}
+    }
+    
+    // Update the model
+    const editingField = this.editingField();
+    if (editingField) {
+      editingField.displayTemplate = newValue;
+      this.onTemplatePatternChange(editingField.id, newValue);
+    }
+    
+    // Hide suggestions and reset focus
+    this.showTemplateSuggestions.set(false);
+    
+    setTimeout(() => {
+      inputElement.focus();
+      inputElement.setSelectionRange(newCursorPosition, newCursorPosition);
+    }, 10);
+  }
+
+  // Get field type from sample data for display
+  getFieldTypeFromSampleData(fieldPath: string): string {
+    const sample = this.sampleData();
+    if (!sample) return 'unknown';
+    
+    try {
+      const value = this.getNestedProperty(sample, fieldPath);
+      if (value === null || value === undefined) return 'null';
+      if (typeof value === 'string') return 'string';
+      if (typeof value === 'number') return 'number';
+      if (typeof value === 'boolean') return 'boolean';
+      if (value instanceof Date) return 'date';
+      if (Array.isArray(value)) return 'array';
+      if (typeof value === 'object') return 'object';
+      return typeof value;
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      if (!templatePattern) return '';
+      
+      return templatePattern.replace(/\{([^}]+)\}/g, (match, expression) => {
+        try {
+          const value = this.getNestedProperty(rowData, expression.trim());
+          return value !== null && value !== undefined ? String(value) : '';
+        } catch (error) {
+          return '';
+        }
+      });
+    };
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    if (!obj || !path) return null;
+    
+    return path.split('.').reduce((current, prop) => {
+      return current && current[prop] !== undefined ? current[prop] : null;
+    }, obj);
+  }
+
+  getTemplatePreview(templatePattern: string | undefined): string {
+    if (!templatePattern || templatePattern.trim() === '') {
+      return '';
+    }
+
+    const sample = this.sampleData();
+    if (!sample) {
+      return this.translateService.instant('entityManager.noDataAvailable');
+    }
+
+    try {
+      const templateFn = this.createTemplateFunction(templatePattern);
+      const result = templateFn(sample);
+      return result || this.translateService.instant('entityManager.templateValid');
+    } catch (error) {
+      console.error('Template preview error:', error);
+      return this.translateService.instant('entityManager.templateError');
+    }
   }
 
   deleteField(field: EntityFieldConfigurationDto) {
@@ -1072,6 +1336,7 @@ export class EntityManagerComponent implements OnInit {
         
         this.workingFields.set(updatedFields);
         this.hasUnsavedChanges.set(true);
+        this.scheduleAutoSave();
         
         this.messageService.add({
           severity: 'success',
@@ -1114,7 +1379,7 @@ export class EntityManagerComponent implements OnInit {
     const form = this.entityConfigForm();
     if (!form || !this.isEntityConfigValid()) return;
 
-    this.saving.set(true);
+    this.configSaving.set(true);
 
     this.entityConfigService.updateEntityConfiguration(form.id, form).subscribe({
       next: (response) => {
@@ -1134,7 +1399,7 @@ export class EntityManagerComponent implements OnInit {
           this.currentEntityConfig.set(updatedConfig);
         }
 
-        this.saving.set(false);
+        this.configSaving.set(false);
         this.showEntityConfigDialog.set(false);
         this.entityConfigForm.set(null);
         
@@ -1146,7 +1411,7 @@ export class EntityManagerComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error updating entity configuration:', error);
-        this.saving.set(false);
+        this.configSaving.set(false);
         this.messageService.add({
           severity: 'error',
           summary: 'Error',
@@ -1155,4 +1420,97 @@ export class EntityManagerComponent implements OnInit {
       }
     });
   }
-} 
+
+  // Helper method to convert EntityFieldConfigurationDto to ListViewColumn
+  private convertFieldToColumn(field: EntityFieldConfigurationDto): ListViewColumn {
+    let columnType: ListViewColumn['type'] = 'text';
+    
+    // Map listViewType to column type
+    switch (field.listViewType) {
+      case 'avatar':
+        columnType = 'avatar';
+        break;
+      case 'template':
+        columnType = 'template';
+        break;
+      case 'multiple-avatars':
+        columnType = 'multiple-avatars';
+        break;
+      case 'interactionIcon':
+        columnType = 'interactionIcon';
+        break;
+      default:
+        // Map based on data type
+        columnType = this.getColumnTypeFromDataType(field.dataType);
+        break;
+    }
+
+    const column: ListViewColumn = {
+      label: field.listViewLabel || field.fieldName,
+      field: field.fieldName.toLowerCase(), // Normalize to lowercase for consistent data access
+      type: columnType,
+      sortable: field.listViewSortable || false,
+      ellipsis: true, // Enable ellipsis for better card display
+    };
+
+    // Add template function for any field that has displayTemplate defined
+    if (field.displayTemplate && field.displayTemplate.trim() !== '') {
+      column.templateFn = this.createTemplateFunction(field.displayTemplate);
+      // Override type to template when displayTemplate is used
+      column.type = 'template';
+    }
+
+    // Add firstLetterFallbackField for multiple-avatars
+    if (field.listViewType === 'multiple-avatars' && field.firstLetterFallbackField) {
+      column.firstLetterFallbackField = field.firstLetterFallbackField;
+    }
+
+    // Add interaction icon function if it's an interactionIcon type
+    if (field.listViewType === 'interactionIcon') {
+      const iconData = this.createInteractionIconFunction(field.fieldName);
+      column.iconClassFn = (rowData: any) => iconData(rowData).icon;
+      column.iconColorFn = (rowData: any) => iconData(rowData).color;
+    }
+
+    // Add specific avatar configuration
+    if (field.listViewType === 'avatar') {
+      // For avatar fields, ensure the firstLetterFallbackField is set if not already configured
+      if (field.firstLetterFallbackField) {
+        column.firstLetterFallbackField = field.firstLetterFallbackField;
+      }
+      // Enable ellipsis specifically for avatar columns to handle long names
+      column.ellipsis = true;
+    }
+
+    return column;
+  }
+
+  // Helper method to create interaction icon function
+  private createInteractionIconFunction(fieldName: string): (rowData: any) => { icon: string; color: string } {
+    return (rowData: any) => {
+      const fieldValue = this.getNestedProperty(rowData, fieldName);
+      const interactionType = fieldValue || 'default';
+      
+      return {
+        icon: this.interactionIconService.getInteractionMaterialIcon(interactionType),
+        color: this.interactionIconService.getInteractionColor(interactionType)
+      };
+    };
+  }
+
+  // Helper method to get column type from data type
+  private getColumnTypeFromDataType(dataType: string): ListViewColumn['type'] {
+    switch (dataType) {
+      case 'datetime':
+      case 'date':
+        return 'date';
+      case 'int':
+      case 'number':
+        return 'number';
+      case 'boolean':
+        return 'text'; // Could be enhanced to show as badge
+      default:
+        return 'text';
+    }
+  }
+}

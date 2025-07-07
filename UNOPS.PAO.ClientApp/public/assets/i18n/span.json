@@ -338,5 +338,14 @@
         "city": "Ciudad",
         "country": "País",
         "partner": "Socio"
+    },
+    "entityManager": {
+        "templatePattern": "Patrón de Template",
+        "templatePatternHelper": "Use llaves para referenciar campos: {nombreDelCampo}",
+        "templatePreview": "Vista previa",
+        "noDataAvailable": "No hay datos disponibles para la vista previa",
+        "templateValid": "Template válido pero sin resultado",
+        "templateError": "Error en el template",
+        "examplePlaceholder": "ej. {nombre} ({nombreCorto})"
     }
 }

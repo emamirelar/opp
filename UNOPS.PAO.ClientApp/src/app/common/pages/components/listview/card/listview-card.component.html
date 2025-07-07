@@ -2,20 +2,32 @@
 <ng-template #fieldTemplate let-item="item" let-column="column" let-context="context">
   @switch (column.type) {
     @case ('email') {
-      <a href="mailto:{{ getFieldValue(item, column.field) }}"
-         (click)="$event.stopPropagation()"
-         [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')"
-         [title]="getFieldTooltip(item, column)">
-        {{ getFieldValue(item, column.field) }}
-      </a>
+      @if (hasFieldValue(item, column)) {
+        <a href="mailto:{{ getFieldValue(item, column.field) }}"
+           (click)="$event.stopPropagation()"
+           [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')"
+           [title]="getFieldTooltip(item, column)">
+          {{ getFieldValue(item, column.field) }}
+        </a>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
     }
     @case ('link') {
-      <a [routerLink]="getRouterLink(item, column)"
-         (click)="$event.stopPropagation()"
-         [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')"
-         [title]="getFieldTooltip(item, column)">
-        {{ formatValue(item, column) }}
-      </a>
+      @if (hasFieldValue(item, column)) {
+        <a [routerLink]="getRouterLink(item, column)"
+           (click)="$event.stopPropagation()"
+           [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')"
+           [title]="getFieldTooltip(item, column)">
+          {{ formatValue(item, column) }}
+        </a>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
     }
     @case ('conditionalIcon') {
       <div class="flex items-center gap-1">
@@ -57,20 +69,71 @@
       </div>
     }
     @case ('template') {
-      <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')" [innerHTML]="getTemplateValue(item, column)"></span>
+      @if (hasFieldValue(item, column)) {
+        <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate block' : '')" [innerHTML]="getTemplateValue(item, column)"></span>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
+    }
+    @case ('interactionIcon') {
+      @if (hasFieldValue(item, column)) {
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-lg"
+                [style.color]="getInteractionColor(item, column)">
+            {{ getInteractionMaterialIcon(item, column) }}
+          </span>
+          <span [class]="getFieldClasses(column, context)"
+                [title]="getFieldTooltip(item, column)">
+            {{ getFieldValue(item, column.field) }}
+          </span>
+        </div>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context)" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
     }
     @case ('avatar') {
-      <!-- Avatar type is handled separately in the main template -->
+      <div class="flex items-center gap-2">
+        @if (getFieldValue(item, column.field)) {
+          <p-avatar [image]="getAvatarUrl(item, column.field)"
+                    shape="circle"
+                    size="normal"
+                    [title]="getFieldTooltip(item, column)">
+          </p-avatar>
+        } @else {
+          <p-avatar [label]="getAvatarInitials(item, column.firstLetterFallbackField || column.field)"
+                    shape="circle"
+                    size="normal"
+                    styleClass="bg-primary text-white"
+                    [title]="getFieldTooltip(item, column)">
+          </p-avatar>
+        }
+        @if (context !== 'avatar-only') {
+          <span [class]="getFieldClasses(column, context) + ' truncate'"
+                [title]="getFieldTooltip(item, column)">
+            {{ getAvatarTitle(item, column.firstLetterFallbackField || column.field) }}
+          </span>
+        }
+      </div>
     }
     @default {
-      <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">{{ formatValue(item, column) }}</span>
+      @if (hasFieldValue(item, column)) {
+        <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">{{ formatValue(item, column) }}</span>
+      } @else {
+        @if (context !== 'field5') {
+          <span [class]="getFieldClasses(column, context) + (context === 'field2' || context === 'field3' ? ' truncate' : '')" [title]="getFieldTooltip(item, column)">--</span>
+        }
+      }
     }
   }
 </ng-template>
 
 <div class="flex flex-col gap-4 ">
   @if (loading()) {
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 gap-6" [class.lg:grid-cols-2]="!config().forceMobileMode">
       @for (i of [1, 2, 3, 4, 5, 6]; track i) {
           <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse">
             <div class="flex gap-4">
@@ -128,7 +191,7 @@
 
   <!-- Card grid -->
   @if (!loading() && !error() && data() && data().length > 0 && canRenderContent()) {
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6" [class.lg:grid-cols-2]="!config().forceMobileMode">
         @for (item of data(); track trackByFn($index, item)) {
             <div class="group relative bg-white cursor-pointer shadow-sm border border-gray-100  hover:shadow-lg rounded-xl p-5 transition-all duration-300 ease-out hover:-translate-y-1 overflow-hidden"
               (click)="onCardClick(item)">
@@ -185,8 +248,8 @@
                         </ng-container>
                       </div>
                     }
-                    @if (cardFields().field5) {
-                      <div class="text-gray-500 text-xs ml-3 flex-shrink-0 font-medium bg-gray-50 px-2 py-1 rounded-md">
+                    @if (cardFields().field5 && hasFieldValue(item, cardFields().field5)) {
+                      <div class="text-gray-500 text-xs ml-3 max-w-[25%] font-medium bg-gray-50 px-2 py-1 rounded-md truncate flex-shrink-0">
                         <ng-container [ngTemplateOutlet]="fieldTemplate"
                                       [ngTemplateOutletContext]="{ item: item, column: cardFields().field5, context: 'field5' }">
                         </ng-container>
@@ -251,7 +314,7 @@
 
       <!-- Load more skeletons - match the grid layout -->
       @if (isLoadingMore()) {
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 gap-6" [class.lg:grid-cols-2]="!config().forceMobileMode">
           @for (i of Array(loadMoreSkeletonsCount()).fill(0); track $index) {
             <div class="bg-white border border-gray-100 rounded-xl p-5 animate-pulse shadow-sm">
               <div class="flex gap-4">

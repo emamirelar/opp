@@ -23,8 +23,7 @@ export interface EntityFieldConfigurationDto {
   showInListView: boolean;
   listViewOrder?: number;
   relatedDisplayProperty?: string; // For relationship fields, specifies which property of related entity to display
-  displayFieldPath?: string; // Field path for accessing the value in list views
-  displayTemplate?: string; // Template pattern for combining multiple fields
+  displayTemplate?: string; // Template pattern for combining multiple fields and accessing field paths
   listViewLabel?: string; // Custom label for the list view column
   listViewType?: string; // Type of list view column: text, avatar, template, multiple-avatars
   listViewWidth?: string; // Column width in list view
@@ -65,7 +64,6 @@ export interface UpdateEntityFieldRequest {
   showInListView: boolean;
   listViewOrder?: number;
   relatedDisplayProperty?: string;
-  displayFieldPath?: string;
   displayTemplate?: string;
   listViewLabel?: string;
   listViewType?: string;
@@ -105,7 +103,6 @@ export interface ListViewColumn {
   width?: string;          // Column width (e.g., '15%', '200px')
   ellipsis?: boolean;      // Whether to show ellipsis for long text
   templatePattern?: string; // Template pattern for 'template' type
-  displayFieldPath?: string; // Field path for accessing data
   firstLetterFallbackField?: string; // Field for avatar initials fallback
   helperText?: string;     // Helper text to show in column header tooltip
 }
@@ -218,5 +215,43 @@ export class EntityConfigurationService {
     return this.http.get<ListViewColumn[]>(`${this.apiUrl}/${encodeURIComponent(entityName)}/list-view`, {
       headers: this.getHeaders()
     });
+  }
+
+  /**
+   * Get sample data for template preview (using existing APIs)
+   */
+  getSampleData(entityName: string): Observable<any> {
+    const entityLower = entityName.toLowerCase();
+    let apiUrl = '';
+    
+    switch (entityLower) {
+      case 'partner':
+        apiUrl = '/api/partner?page=1&pageSize=1';
+        break;
+      case 'contact':
+        apiUrl = '/api/contact?page=1&pageSize=1';
+        break;
+      case 'interaction':
+        apiUrl = '/api/interactions?page=1&pageSize=1';
+        break;
+      default:
+        apiUrl = `/api/${entityLower}?page=1&pageSize=1`;
+    }
+
+    return this.http.get<any>(apiUrl, {
+      headers: this.getHeaders()
+    }).pipe(
+      map((response: any) => {
+        // Extract first record based on response structure
+        if (response.data && response.data.length > 0) {
+          return response.data[0];
+        } else if (response.records && response.records.length > 0) {
+          return response.records[0];
+        } else if (Array.isArray(response) && response.length > 0) {
+          return response[0];
+        }
+        return null;
+      })
+    );
   }
 } 
