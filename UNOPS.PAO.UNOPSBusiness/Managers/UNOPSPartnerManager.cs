@@ -3,6 +3,8 @@ using UNOPS.PAO.Domain.Specifications;
 using System.Linq;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -29,12 +31,14 @@ using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using static Google.Cloud.Vision.V1.ProductSearchResults.Types;
 
 public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 {
     private readonly IMapper _mapper;
     private readonly UNOPSAppDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<UNOPSPartnerManager> _logger;
 
     private BaseRepository<UNOPSPartner> PartnerRepository;
     private BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
@@ -81,6 +85,37 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return await MapEntityToModelWithPermissionsAsync(result, userContext); ;
     }
 
+    /*private async Task<PartnerModel> MapEntityToModelWithPermissionsAsync(UNOPSPartner entity, IMapper mapper, ClaimsPrincipal? user = null)
+    {
+        var result = await MapEntityToModelAsync(entity, mapper);
+        
+        // Add permissions if user context is available
+        if (user != null && _securityService != null)
+        {
+            var permissions = await _securityService.GetEntityPermissionsAsync(entity, user);
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = ((dynamic)permissions).canRead,
+                CanCreate = await _securityService.CanUserAccessEntityAsync(entity, user, "create"),
+                CanUpdate = await _securityService.CanUserAccessEntityAsync(entity, user, "update"),
+                CanDelete = await _securityService.CanUserAccessEntityAsync(entity, user, "delete")
+            };
+        }
+        else
+        {
+            // Default permissions when no user context available
+            result.Permissions = new EntityPermissionsModel
+            {
+                CanRead = true, // Assume readable if no security context
+                CanCreate = false,
+                CanUpdate = false, // Default to no write access
+                CanDelete = false
+            };
+        }
+
+        return result;
+    }*/
+
     private PartnerModel MapEntityToModel(UNOPSPartner entity, IMapper mapper)
     {
         // Use AutoMapper with the updated configuration
@@ -107,12 +142,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return MapModelToEntity(model, new UNOPSPartner());
     }
 
-    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
+    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, ILogger<UNOPSPartnerManager> logger, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
         : base(mapper, context, configuration, null, "Partner", permissionService, httpContextAccessor)
     {
         _mapper = mapper;
         _context = context;
         _configuration = configuration;
+        _logger = logger;
        // _securityService = securityService;
         PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
         PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
@@ -221,14 +257,19 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .AsQueryable();
 
         var filteredQuery = query.ApplySpecification(specification);
-
+        
+        // OrgUnit filtering is now handled by the specification created by OrgUnitFilterService
+        // No need for duplicate logic here
+        
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
         
         // If filteredData is a list, we need to handle pagination manually
-        if (filteredData is IEnumerable<UNOPSPartner> partnerList)
+        // Note: ApplyAccessControlFilters returns List<Partner> but we need to handle it as Partner
+        if (filteredData is IEnumerable<Partner> basePartnerList)
         {
-            var partnerArray = partnerList.ToArray();
+            // Cast back to UNOPSPartner since we know all items in the query are UNOPSPartner
+            var partnerArray = basePartnerList.Cast<UNOPSPartner>().ToArray();
             var totalCount = partnerArray.Length;
             var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
             var excludedRows = (pageIndex - 1) * pagination.PageSize;
@@ -1069,6 +1110,112 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         // Use the original implementation but fix to match the interface
         return await GetPartnerAsync(id);
+    }
+
+    public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
+    {
+        var partners = PartnerRepository
+            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .AsQueryable()
+            .Where(p => input.partnerIds.Contains(p.Id))
+            .Cast<UNOPSPartner>()
+            .ToList();
+
+        // Get all partner IDs to load interactions and contacts
+        var allPartnerIds = partners.Select(p => p.Id).ToList();
+
+        // Get all contacts for these partners
+        var allContacts = await _context.Contacts
+            .Where(c => allPartnerIds.Contains(c.PartnerId))
+            .Cast<UNOPSContact>()
+            .ToListAsync();
+
+        // Group contacts by partner ID for efficient lookup
+        var contactsByPartner = allContacts
+            .GroupBy(c => c.PartnerId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Get interactions through the InteractionPartners junction table with full interaction entities for permission checking
+        var interactionPartners = await _context.InteractionPartners
+            .Where(ip => allPartnerIds.Contains(ip.PartnerId))
+            .Include(ip => ip.Interaction)
+            .Select(ip => new
+            {
+                ip.PartnerId,
+                Interaction = ip.Interaction
+            })
+            .ToListAsync();
+
+        // Group interactions by partner ID for efficient lookup
+        var interactionsByPartner = interactionPartners
+            .GroupBy(ip => ip.PartnerId)
+            .ToDictionary(g => g.Key, g => g.Select(ip => ip.Interaction).ToList());
+
+        // Batch permission lookup once for all partners
+        var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
+        var userInteractionPermissions = await GetEntityPermissionsAsync(user, "Interaction");
+        // Batch permission lookup once for all contacts
+        //var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
+
+        var mappedPartners = new List<PartnerModel>();
+        foreach (var partner in partners)
+        {
+            var model = await MapEntityToModelAsync(partner, _mapper);
+
+            // Add interactions directly to the partner with only Id, Type, Description, and Permissions
+            if (interactionsByPartner.TryGetValue(partner.Id, out var partnerInteractions))
+            {
+                var interactionModels = new List<InteractionModel>();
+                foreach (var interaction in partnerInteractions)
+                {
+                    var interactionModel = new InteractionModel
+                    {
+                        Id = interaction.Id,
+                        Type = interaction.Type,
+                        Description = interaction.Description,
+                        Date = interaction.Date,
+                        Permissions = new EntityPermissionsModel
+                        {
+                            CanRead = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "read"),
+                            CanCreate = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "create"),
+                            CanUpdate = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "update"),
+                            CanDelete = await _permissionService.HasInstanceAccessAsync("Interaction", interaction, user, "delete")
+                        }
+                    };
+                    interactionModels.Add(interactionModel);
+                }
+                model.Interactions = interactionModels;
+            }
+
+            // Add all contacts for this partner (not just first 5)
+            if (contactsByPartner.TryGetValue(partner.Id, out var partnerContacts))
+            {
+                var contactModels = new List<ContactModel>();
+                foreach (var contact in partnerContacts)
+                {
+                    // Map each contact to ContactModel
+                    var contactModel = _mapper.Map<ContactModel>(contact);
+                    
+                    // Add permissions for each contact using direct permission service calls
+                    contactModel.Permissions = new EntityPermissionsModel
+                    {
+                        CanRead = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "read"),
+                        CanCreate = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "create"),
+                        CanUpdate = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "update"),
+                        CanDelete = await _permissionService.HasInstanceAccessAsync("Contact", contact, user, "delete")
+                    };
+                    
+                    contactModels.Add(contactModel);
+                }
+                
+                model.Contacts = contactModels;
+            }
+
+            mappedPartners.Add(model);
+        }
+
+
+        return mappedPartners;
     }
 
     #endregion

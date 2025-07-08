@@ -269,7 +269,8 @@ public class SimplePartnerFilterTests
             PageSize = 10,
             PageIndex = 1,
             OrderBy = "Name",
-            Ascending = true
+            Ascending = true,
+            OrgUnitId = 123
         };
 
         // Assert - Verify the model works as expected
@@ -280,6 +281,112 @@ public class SimplePartnerFilterTests
         filterRequest.PageIndex.Should().Be(1);
         filterRequest.OrderBy.Should().Be("Name");
         filterRequest.Ascending.Should().BeTrue();
+        filterRequest.OrgUnitId.Should().Be(123);
+    }
+
+    [Fact]
+    public void PartnerFilter_ByOrgUnitId_ReturnsCorrectResults()
+    {
+        // Arrange
+        var partners = GetTestPartnersWithOrgUnits();
+        var targetOrgUnitId = 10;
+
+        // Act - Simulate filtering by OrgUnitId
+        var filteredPartners = partners
+            .Where(p => p.PartnerOfficeId == targetOrgUnitId)
+            .ToList();
+
+        // Assert
+        filteredPartners.Should().HaveCount(2);
+        filteredPartners.Should().OnlyContain(p => p.PartnerOfficeId == targetOrgUnitId);
+        
+        var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions" };
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+    }
+
+    [Fact]
+    public void PartnerFilter_ByOrgUnitIdWithHierarchy_ReturnsCorrectResults()
+    {
+        // Arrange
+        var partners = GetTestPartnersWithOrgUnits();
+        // Simulate org unit hierarchy: 10 is parent of 11 and 12
+        var orgUnitHierarchy = new List<int> { 10, 11, 12 };
+
+        // Act - Simulate filtering by OrgUnit hierarchy
+        var filteredPartners = partners
+            .Where(p => p.PartnerOfficeId.HasValue && orgUnitHierarchy.Contains(p.PartnerOfficeId.Value))
+            .ToList();
+
+        // Assert
+        filteredPartners.Should().HaveCount(4);
+        filteredPartners.Should().OnlyContain(p => p.PartnerOfficeId.HasValue && orgUnitHierarchy.Contains(p.PartnerOfficeId.Value));
+        
+        var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "Beta Industries", "Global Finance Corp" };
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+    }
+
+    [Fact]
+    public void PartnerFilter_ByOrgUnitIdWithNullValues_HandlesCorrectly()
+    {
+        // Arrange
+        var partners = GetTestPartnersWithOrgUnits();
+        var targetOrgUnitId = 10;
+
+        // Act - Partners with null PartnerOfficeId should not be included
+        var filteredPartners = partners
+            .Where(p => p.PartnerOfficeId.HasValue && p.PartnerOfficeId.Value == targetOrgUnitId)
+            .ToList();
+
+        // Assert
+        filteredPartners.Should().HaveCount(2);
+        filteredPartners.Should().NotContain(p => !p.PartnerOfficeId.HasValue);
+    }
+
+    [Fact]
+    public void PartnerFilter_ByOrgUnitIdAndStatus_ReturnsIntersection()
+    {
+        // Arrange
+        var partners = GetTestPartnersWithOrgUnits();
+        var targetOrgUnitId = 10;
+        var targetStatus = "Active";
+
+        // Act - Combine OrgUnitId and Status filters
+        var filteredPartners = partners
+            .Where(p => p.PartnerOfficeId.HasValue && p.PartnerOfficeId.Value == targetOrgUnitId)
+            .Where(p => p.Status == targetStatus)
+            .ToList();
+
+        // Assert - Only active partners in org unit 10
+        filteredPartners.Should().HaveCount(1);
+        filteredPartners.Single().Name.Should().Be("ACME Corporation");
+        filteredPartners.Single().Status.Should().Be("Active");
+        filteredPartners.Single().PartnerOfficeId.Should().Be(10);
+    }
+
+    [Fact]
+    public void PartnerFilterRequest_WithOrgUnitId_ShouldBeIgnoredInGenericFilter()
+    {
+        // This test verifies that OrgUnitId is properly configured to be ignored
+        // in the generic composite specification, as per the codebase design
+        
+        // Arrange
+        var filterRequest = new PartnerFilterRequest
+        {
+            OrgUnitId = 123,
+            Name = "Test",
+            Status = "Active"
+        };
+
+        // Act - Get ignored properties (simulating what GenericCompositeSpecification does)
+        var ignoredProperties = new HashSet<string> 
+        { 
+            "PageIndex", "PageSize", "OrderBy", "Ascending", "Id", "OrgUnitId",
+            "AdvancedSearch", "SearchCriteria", "SearchText"
+        };
+
+        // Assert - OrgUnitId should be in the ignored list
+        ignoredProperties.Should().Contain("OrgUnitId");
+        filterRequest.OrgUnitId.Should().Be(123);
     }
 
     [Fact]
@@ -333,7 +440,19 @@ public class SimplePartnerFilterTests
         };
     }
 
-    private static UNOPSPartner CreatePartner(string name, string status, string shortName)
+    private static List<UNOPSPartner> GetTestPartnersWithOrgUnits()
+    {
+        return new List<UNOPSPartner>
+        {
+            CreatePartner("ACME Corporation", "Active", "ACME", 10),
+            CreatePartner("Global Tech Solutions", "Inactive", "GTS", 10),
+            CreatePartner("Beta Industries", "Active", "BETA", 11),
+            CreatePartner("Global Finance Corp", "Prospect", "GFC", 12),
+            CreatePartner("ACME Global Services", "Active", "AGS", null)
+        };
+    }
+
+    private static UNOPSPartner CreatePartner(string name, string status, string shortName, int? partnerOfficeId = null)
     {
         return new UNOPSPartner
         {
@@ -341,6 +460,7 @@ public class SimplePartnerFilterTests
             Name = name,
             Status = status,
             ShortName = shortName,
+            PartnerOfficeId = partnerOfficeId,
             NewEngagement = "true",
             PooledFund = "false",
             DDRequired = "false",

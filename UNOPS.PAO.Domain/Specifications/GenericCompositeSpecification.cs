@@ -20,7 +20,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
 {
     private static readonly HashSet<string> IgnoredProperties = new() 
     { 
-        "PageIndex", "PageSize", "OrderBy", "Ascending", "Direction", "MyOfficeOnly" 
+        "PageIndex", "PageSize", "OrderBy", "Ascending", "Direction", "OrgUnitId" 
     };
 
     protected GenericCompositeSpecification(TFilter filter)
@@ -579,7 +579,15 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             {
                 var currentType = expression.Type;
                 
-                var property = currentType.GetProperty(part, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                // Try declared only first to avoid ambiguous matches
+                var property = currentType.GetProperty(part, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly);
+                
+                // If not found in declared members, try base type
+                if (property == null)
+                {
+                    property = currentType.GetProperty(part, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                }
+                
                 if (property == null)
                 {
                     return null;
@@ -625,7 +633,15 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
         for (int i = 0; i < parts.Length - 1; i++)
         {
             var currentType = currentExpression.Type;
-            var property = currentType.GetProperty(parts[i], BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            
+            // Try declared only first to avoid ambiguous matches
+            var property = currentType.GetProperty(parts[i], BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly);
+            
+            // If not found in declared members, try base type
+            if (property == null)
+            {
+                property = currentType.GetProperty(parts[i], BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+            }
             
             if (property != null)
             {
@@ -680,7 +696,27 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             return searchableProperties;
         }
 
-        // For other types, use reflection to find string properties
+        // Define core searchable properties for Partner - don't include navigation properties
+        if (type.Name == "Partner" || type.Name == "UNOPSPartner")
+        {
+            searchableProperties.AddRange(new[]
+            {
+                "Name",
+                "ShortName",
+                "Status",
+                "Phone",
+                "Website",
+                "Address1City",
+                "Address1StateProvince",
+                "Address1PostalCode",
+                "Address1Country",
+                "PartnerCode"
+            });
+
+            return searchableProperties;
+        }
+
+        // For other types, use reflection to find string properties - but don't traverse navigation properties
         foreach (var property in type.GetProperties())
         {
             var propertyPath = string.IsNullOrEmpty(prefix) ? property.Name : $"{prefix}.{property.Name}";
@@ -689,11 +725,7 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             {
                 searchableProperties.Add(propertyPath);
             }
-            else if (property.PropertyType.IsClass && property.PropertyType != typeof(string) && prefix.Split('.').Length < 2)
-            {
-                // Limit nesting to avoid infinite recursion
-                searchableProperties.AddRange(GetSearchableProperties(property.PropertyType, propertyPath));
-            }
+            // Removed the traversal into navigation properties to avoid null reference issues
         }
 
         return searchableProperties;
@@ -725,7 +757,14 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             {
                 var currentType = propertyAccess.Type;
                 var currentProperty = currentType.GetProperty(pathPart, 
-                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly);
+                
+                // If not found in declared members, try base type
+                if (currentProperty == null)
+                {
+                    currentProperty = currentType.GetProperty(pathPart, 
+                        BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+                }
                 
                 if (currentProperty == null)
                 {
@@ -741,51 +780,79 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             {
                 var nullCheck = Expression.NotEqual(propertyAccess, Expression.Constant(null));
                 
-                // Use EF.Functions.Like with fallback to Contains
+                // Properties that should use exact matching
+                var exactMatchProperties = new[] { "Status", "NewEngagement", "PooledFund", "DDRequired", 
+                                                   "DDEACDone", "LevyPotentiallyApplies", "PartnerGroupCode" };
+                
                 Expression stringComparisonExpr;
-                try
+                
+                if (exactMatchProperties.Contains(property.Name))
                 {
-                    var efType = typeof(EF);
-                    var functionsProperty = efType.GetProperty("Functions");
-                    var functionsExpression = Expression.Property(null, functionsProperty);
-                    var likeMethod = functionsProperty.PropertyType.GetMethod("Like", new[] { typeof(string), typeof(string) });
-                    
-                    if (likeMethod != null)
-                    {
-                        var pattern = $"%{value}%";
-                        stringComparisonExpr = Expression.Call(
-                            functionsExpression,
-                            likeMethod,
-                            propertyAccess,
-                            Expression.Constant(pattern)
-                        );
-                    }
-                    else
-                    {
-                        // Fallback to case-insensitive Contains using ToLower()
-                        var toLowerMethodProp = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-                        var propertyToLowerProp = Expression.Call(propertyAccess, toLowerMethodProp);
-                        var valueToLowerProp = value.ToString().ToLower();
-                        var containsMethodProp = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                        stringComparisonExpr = Expression.Call(propertyToLowerProp, containsMethodProp, Expression.Constant(valueToLowerProp));
-                    }
+                    // Use exact matching for certain properties
+                    stringComparisonExpr = Expression.Equal(propertyAccess, Expression.Constant(value.ToString()));
                 }
-                catch
+                else
                 {
-                    // Fallback to case-insensitive Contains using ToLower() if EF.Functions is not available
-                    var toLowerMethodCatch = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
-                    var propertyToLowerCatch = Expression.Call(propertyAccess, toLowerMethodCatch);
-                    var valueToLowerCatch = value.ToString().ToLower();
-                    var containsMethodCatch = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                    stringComparisonExpr = Expression.Call(propertyToLowerCatch, containsMethodCatch, Expression.Constant(valueToLowerCatch));
+                    // Use Contains/LIKE pattern matching for other properties
+                    try
+                    {
+                        var efType = typeof(EF);
+                        var functionsProperty = efType.GetProperty("Functions");
+                        var functionsExpression = Expression.Property(null, functionsProperty);
+                        var likeMethod = functionsProperty.PropertyType.GetMethod("Like", new[] { typeof(string), typeof(string) });
+                        
+                        if (likeMethod != null)
+                        {
+                            var pattern = $"%{value}%";
+                            stringComparisonExpr = Expression.Call(
+                                functionsExpression,
+                                likeMethod,
+                                propertyAccess,
+                                Expression.Constant(pattern)
+                            );
+                        }
+                        else
+                        {
+                            // Fallback to case-insensitive Contains using ToLower()
+                            var toLowerMethodProp = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                            var propertyToLowerProp = Expression.Call(propertyAccess, toLowerMethodProp);
+                            var valueToLowerProp = value.ToString().ToLower();
+                            var containsMethodProp = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                            stringComparisonExpr = Expression.Call(propertyToLowerProp, containsMethodProp, Expression.Constant(valueToLowerProp));
+                        }
+                    }
+                    catch
+                    {
+                        // Fallback to case-insensitive Contains using ToLower() if EF.Functions is not available
+                        var toLowerMethodCatch = typeof(string).GetMethod("ToLower", Type.EmptyTypes);
+                        var propertyToLowerCatch = Expression.Call(propertyAccess, toLowerMethodCatch);
+                        var valueToLowerCatch = value.ToString().ToLower();
+                        var containsMethodCatch = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                        stringComparisonExpr = Expression.Call(propertyToLowerCatch, containsMethodCatch, Expression.Constant(valueToLowerCatch));
+                    }
                 }
                 
                 comparison = Expression.AndAlso(nullCheck, stringComparisonExpr);
             }
             else
             {
-                // For non-string types, use equality comparison
-                comparison = Expression.Equal(propertyAccess, Expression.Constant(value));
+                // For non-string types, use equality comparison with type conversion
+                object convertedValue = value;
+                
+                // Convert the value to the target type if needed
+                if (value != null && propertyAccess.Type != value.GetType())
+                {
+                    try
+                    {
+                        convertedValue = Convert.ChangeType(value, Nullable.GetUnderlyingType(propertyAccess.Type) ?? propertyAccess.Type);
+                    }
+                    catch
+                    {
+                        // If conversion fails, use the original value
+                    }
+                }
+                
+                comparison = Expression.Equal(propertyAccess, Expression.Constant(convertedValue, propertyAccess.Type));
             }
 
             return Expression.Lambda<Func<TEntity, bool>>(comparison, parameter);
@@ -1051,6 +1118,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
     /// </summary>
     private static Expression CreateStringContainsExpression(Expression propertyAccess, string searchTerm)
     {
+        // Add null check for the property
+        var nullCheck = Expression.NotEqual(propertyAccess, Expression.Constant(null));
+        
         try
         {
             // Try to use EF.Functions.Like for case-insensitive search
@@ -1062,7 +1132,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             if (likeMethod != null)
             {
                 var pattern = $"%{searchTerm}%";
-                return Expression.Call(functionsExpression, likeMethod, propertyAccess, Expression.Constant(pattern));
+                var likeExpression = Expression.Call(functionsExpression, likeMethod, propertyAccess, Expression.Constant(pattern));
+                // Combine null check with the LIKE expression
+                return Expression.AndAlso(nullCheck, likeExpression);
             }
             else
             {
@@ -1071,7 +1143,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
                 var propertyToLowerString = Expression.Call(propertyAccess, toLowerMethodString);
                 var searchTermToLower = searchTerm.ToLower();
                 var containsMethodString = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                return Expression.Call(propertyToLowerString, containsMethodString, Expression.Constant(searchTermToLower));
+                var containsExpression = Expression.Call(propertyToLowerString, containsMethodString, Expression.Constant(searchTermToLower));
+                // Combine null check with the contains expression
+                return Expression.AndAlso(nullCheck, containsExpression);
             }
         }
         catch
@@ -1081,7 +1155,9 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             var propertyToLowerFinalCatch = Expression.Call(propertyAccess, toLowerMethodFinalCatch);
             var searchTermToLowerFinalCatch = searchTerm.ToLower();
             var containsMethodFinalCatch = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-            return Expression.Call(propertyToLowerFinalCatch, containsMethodFinalCatch, Expression.Constant(searchTermToLowerFinalCatch));
+            var containsExpressionFallback = Expression.Call(propertyToLowerFinalCatch, containsMethodFinalCatch, Expression.Constant(searchTermToLowerFinalCatch));
+            // Combine null check with the contains expression
+            return Expression.AndAlso(nullCheck, containsExpressionFallback);
         }
     }
 

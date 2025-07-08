@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, HostListener, inject, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, inject, ViewChild, AfterViewInit, OnDestroy, SimpleChanges, input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
@@ -34,10 +34,6 @@ import { InteractionIconService } from '../../../../services/interaction-icon.se
       width: 100%;
     }
 
-    .ellipsis-text:hover {
-      cursor: help;
-    }
-
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -50,14 +46,14 @@ import { InteractionIconService } from '../../../../services/interaction-icon.se
 })
 export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit, OnDestroy {
   // Inputs
-  @Input() columns: ListViewColumn[] = [];
-  @Input() config!: ListViewConfig;
-  @Input() data: T[] = [];
-  @Input() totalRecords: number = 0;
-  @Input() loading: boolean = false;
-  @Input() error: boolean = false;
-  @Input() hasMoreData: boolean = true;
-  @Input() isLoadingMore: boolean = false;
+  columns = input<ListViewColumn[]>([]);
+  config = input.required<ListViewConfig>();
+  data = input<T[]>([]);
+  totalRecords = input(0);
+  loading = input(false);
+  error = input(false);
+  hasMoreData = input(true);
+  isLoadingMore = input(false);
 
   // Events
   @Output() loadMore = new EventEmitter<void>();
@@ -67,126 +63,125 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   // Scroll detection
   private elementRef = inject(ElementRef);
-  private cdr = inject(ChangeDetectorRef);
   private interactionIconService = inject(InteractionIconService);
 
   // Custom template references
   @ContentChild('cardActionsTemplate') actionsTemplate?: TemplateRef<any>;
-  
+
   // ViewChild for intersection observer sentinel
   @ViewChild('loadMoreSentinel') loadMoreSentinel?: ElementRef<HTMLDivElement>;
 
   // Computed values
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
-  
+
   // Load more skeletons count - show a few placeholder cards
   loadMoreSkeletonsCount = computed(() => {
     // Show 2-4 skeletons based on page size, but keep it reasonable
-    const pageSize = this.config?.pageSize || 20;
+    const pageSize = this.config()?.pageSize || 20;
     return Math.min(Math.max(Math.floor(pageSize / 5), 2), 4);
   });
 
   // Array constructor for template access
   Array = Array;
-  
+
   // Intersection Observer for infinite scroll
   private intersectionObserver?: IntersectionObserver;
-  
+  private hasViewInitialized = false;
+  private observeSentinelScheduled = false;
+
+  // Effect to handle data changes
+  private dataChangeEffect = effect(() => {
+    // Watch for data changes and re-observe sentinel
+    this.data();
+    if (this.hasViewInitialized) {
+      this.scheduleObserveSentinel();
+    }
+  });
+
   // Loading management
   private lastLoadMoreTime = 0;
   private readonly LOAD_MORE_DEBOUNCE_MS = 500; // Prevent rapid calls
 
   // Add computed property to check if safe to render content
   canRenderContent = computed(() => {
-    const hasColumns = this.columns && this.columns.length > 0;
-    const hasConfig = this.config;
-    const hasData = this.data && this.data.length > 0;
-    const notLoading = !this.loading;
-    
-    return hasColumns && hasConfig && (hasData || notLoading) && !this.error;
+    const hasColumns = this.columns() && this.columns().length > 0;
+    const hasConfig = this.config();
+    const hasData = this.data() && this.data().length > 0;
+    const notLoading = !this.loading();
+
+    return hasColumns && hasConfig && (hasData || notLoading) && !this.error();
   });
 
   // Computed property to get avatar column
   avatarColumn = computed(() => {
-    if (!this.columns || this.columns.length === 0) {
+    const columns = this.columns();
+    if (!columns || columns.length === 0) {
       return null;
     }
-    return this.columns.find(col => col.type === 'avatar') || null;
+    return columns.find(col => col.type === 'avatar') || null;
   });
 
   // Computed property to get interaction icon column (for avatar display)
   interactionIconColumn = computed(() => {
-    if (!this.columns || this.columns.length === 0) {
+    const columns = this.columns();
+    if (!columns || columns.length === 0) {
       return null;
     }
-    return this.columns.find(col => col.type === 'interactionIcon') || null;
+    return columns.find(col => col.type === 'interactionIcon') || null;
   });
 
   // Computed property to determine if we should show interaction icon in avatar position
   shouldShowInteractionAvatar = computed(() => {
-    return this.interactionIconColumn() && !this.avatarColumn();
+    const interactionIconColumn = this.interactionIconColumn();
+    const avatarColumn = this.avatarColumn()
+    return interactionIconColumn && !avatarColumn;
   });
 
   // Computed property to get ordered card fields (excluding avatar and interaction icons shown as avatar)
   orderedCardFields = computed(() => {
-    if (!this.columns || this.columns.length === 0) {
+    const columns = this.columns();
+    if (!columns || columns.length === 0) {
       return [];
     }
-    
+
     // Filter out avatar columns and interaction icon columns when they're shown as avatars
-    return this.columns.filter(col => {
+    return columns.filter(col => {
       if (col.type === 'avatar') return false;
       if (col.type === 'interactionIcon' && this.shouldShowInteractionAvatar()) return false;
       return true;
     });
   });
 
-  // Computed property to get field 1 (position 0 - main title)
-  field1 = computed(() => {
+  // Computed property to get all card fields at once
+  cardFields = computed(() => {
     const fields = this.orderedCardFields();
-    return fields.length > 0 ? fields[0] : null;
-  });
-
-  // Computed property to get field 2 (position 1 - secondary info)
-  field2 = computed(() => {
-    const fields = this.orderedCardFields();
-    return fields.length > 1 ? fields[1] : null;
-  });
-
-  // Computed property to get field 3 (position 2 - content)
-  field3 = computed(() => {
-    const fields = this.orderedCardFields();
-    return fields.length > 2 ? fields[2] : null;
-  });
-
-  // Computed property to get field 4 (position 3 - top right)
-  field4 = computed(() => {
-    const fields = this.orderedCardFields();
-    return fields.length > 3 ? fields[3] : null;
-  });
-
-  // Computed property to get field 5 (position 4 - content area)
-  field5 = computed(() => {
-    const fields = this.orderedCardFields();
-    return fields.length > 4 ? fields[4] : null;
+    return {
+      field1: fields.length > 0 ? fields[0] : null, // main title
+      field2: fields.length > 1 ? fields[1] : null, // secondary info
+      field3: fields.length > 2 ? fields[2] : null, // additional info
+      field4: fields.length > 3 ? fields[3] : null, // content/description
+      field5: fields.length > 4 ? fields[4] : null  // metadata/badge
+    };
   });
 
   /**
-   * Handle input changes and force change detection if needed
+   * Handle input changes
    */
-  ngOnChanges(): void {
-    // Force change detection when data or columns change
-    setTimeout(() => {
-      this.cdr.detectChanges();
-      // Reobserve the sentinel when data changes
-      this.observeLoadMoreSentinel();
-    }, 0);
+  ngOnChanges(changes: SimpleChanges): void {
+    // OnPush strategy will automatically detect input changes
+    // No need to manually trigger change detection
+
+    // Re-observe sentinel if columns change structure
+    if (changes['columns'] && !changes['columns'].firstChange && this.hasViewInitialized) {
+      this.scheduleObserveSentinel();
+    }
   }
 
   /**
    * AfterViewInit - Setup intersection observer
    */
   ngAfterViewInit(): void {
+    this.hasViewInitialized = true;
     this.setupIntersectionObserver();
     this.observeLoadMoreSentinel();
   }
@@ -195,6 +190,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
    * OnDestroy - Cleanup intersection observer
    */
   ngOnDestroy(): void {
+    this.hasViewInitialized = false;
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
@@ -222,7 +218,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
       (entries) => {
         entries.forEach(entry => {
           // When the sentinel becomes visible, load more data
-          if (entry.isIntersecting && this.hasMoreData && !this.isLoadingMore) {
+          if (entry.isIntersecting && this.hasMoreData() && !this.isLoadingMore()) {
             this.onLoadMore();
           }
         });
@@ -234,6 +230,20 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
         threshold: 0
       }
     );
+  }
+
+  /**
+   * Schedule observation of the load more sentinel element
+   * Uses requestAnimationFrame for optimal timing
+   */
+  private scheduleObserveSentinel(): void {
+    if (!this.observeSentinelScheduled) {
+      this.observeSentinelScheduled = true;
+      requestAnimationFrame(() => {
+        this.observeLoadMoreSentinel();
+        this.observeSentinelScheduled = false;
+      });
+    }
   }
 
   /**
@@ -253,7 +263,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
    */
   onLoadMore(): void {
     const now = Date.now();
-    
+
     // Multiple layers of protection
     if (!this.canLoadMore() || !this.shouldAllowLoadMore(now)) {
       return;
@@ -261,7 +271,7 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
     // Update last load time for debouncing
     this.lastLoadMoreTime = now;
-    
+
     // Emit the load more event
     this.loadMore.emit();
   }
@@ -271,10 +281,10 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
    */
   private canLoadMore(): boolean {
     return (
-      this.hasMoreData && 
-      !this.isLoadingMore && 
-      this.data && 
-      this.data.length > 0
+      this.hasMoreData() &&
+      !this.isLoadingMore() &&
+      this.data() &&
+      this.data().length > 0
     );
   }
 
@@ -336,6 +346,21 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   }
 
   /**
+   * Track by function for @for loops - uses id field or index as fallback
+   */
+  trackByFn(index: number, item: T): any {
+    if (!item) {
+      return index;
+    }
+
+    // Try to get id field value
+    const id = this.getFieldValue(item, 'id');
+
+    // Use id if available, otherwise fall back to index
+    return id !== null && id !== undefined ? id : index;
+  }
+
+  /**
    * Safely get the avatar image URL from the item
    */
   getAvatarUrl(item: T, field: string): string | undefined {
@@ -377,6 +402,39 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
     const name = String(item[fieldName]).trim();
     return name.charAt(0).toUpperCase();
+  }
+
+  /**
+   * Get first letter of Field 1 for avatar fallback
+   */
+  getField1Initial(item: T): string {
+    const firstField = this.cardFields().field1;
+    if (firstField) {
+      const value = this.getFieldValue(item, firstField.field);
+      if (value && typeof value === 'string' && value.trim()) {
+        return value.trim().charAt(0).toUpperCase();
+      }
+    }
+    return '?';
+  }
+
+  /**
+   * Get tooltip text for field - shows field description or full value if ellipsis
+   */
+  getFieldTooltip(item: T, column: ListViewColumn): string {
+    // If column has a description/label, use that
+    if (column.label) {
+      return column.label;
+    }
+
+    // If ellipsis is enabled, show the full value
+    if (column.ellipsis) {
+      const value = this.getFieldValue(item, column.field);
+      return value ? String(value) : '';
+    }
+
+    // Otherwise, return empty string (no tooltip)
+    return '';
   }
 
   /**
@@ -538,5 +596,29 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   getInteractionShadowColor(item: T, column: ListViewColumn): string {
     const type = this.getFieldValue(item, column.field);
     return this.interactionIconService.getInteractionShadowColor(String(type || ''));
+  }
+
+  /**
+   * Check if a field has a non-empty value for the given item
+   */
+  hasFieldValue(item: T, column: ListViewColumn | null): boolean {
+    if (!column) return false;
+    
+    // For template type, check the actual template output
+    if (column.type === 'template' && column.templateFn) {
+      const templateValue = column.templateFn(item);
+      // Check if template returns meaningful content
+      if (!templateValue) return false;
+      // Remove HTML tags and check if there's actual text
+      const textContent = templateValue.replace(/<[^>]*>/g, '').trim();
+      return textContent !== '';
+    }
+    
+    // For other types, use formatValue
+    const value = this.formatValue(item, column);
+    if (value === null || value === undefined) return false;
+    
+    const stringValue = value.toString().trim();
+    return stringValue !== '' && stringValue !== 'null' && stringValue !== 'undefined';
   }
 }

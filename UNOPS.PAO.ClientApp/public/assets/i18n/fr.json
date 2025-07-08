@@ -1,4 +1,7 @@
 {
+    "global": {
+        "filter": "Filtre global"
+    },
     "title": {
         "countries": "Pays",
         "currency": "Monnaie",
@@ -22,6 +25,8 @@
         "newInteraction": "Nouvelle Interaction",
         "editInteraction": "Éditer une Interaction",
         "scanBusinessCard": "Scanner une Carte de Visite",
+        "newContact": "Nouveau Contact",
+        "editContact": "Modifier le Contact",
         "confirmation": "Confirmation",
         "links": "Liens",
         "editLink": "Modifier le lien",
@@ -206,7 +211,15 @@
         "dropUrlToAddLink": "Déposez une URL ou un fichier pour ajouter un lien",
         "failedToLoadImage": "Échec du chargement de l'image",
         "failedToUploadImage": "Échec de l'envoi de l'image",
-        "comingSoon": "Bientôt Disponible"
+        "comingSoon": "Bientôt Disponible",
+        "noPermissionToDelete": "Vous n'avez pas l'autorisation de supprimer des contacts",
+        "noPermissionToEdit": "Vous n'avez pas l'autorisation de modifier des contacts",
+        "noPermissionToCreate": "Vous n'avez pas l'autorisation de créer des contacts",
+        "noPermissionToImport": "Vous n'avez pas l'autorisation d'importer des contacts",
+        "permissionDenied": "Autorisation refusée",
+        "recordDeletedSuccessfully": "Enregistrement supprimé avec succès !",
+        "failedToDeleteRecord": "Échec de la suppression de l'enregistrement",
+        "anErrorOccurred": "Une erreur s'est produite"
     },
     "errors": {
         "failedToLoad": "Erreur lors du chargement",
@@ -275,6 +288,7 @@
     },
     "search": {
         "placeholder": "Rechercher...",
+        "contactsPlaceholder": "Rechercher des contacts...",
         "recentSearches": "Recherches récentes",
         "results": "Résultats de recherche pour",
         "showAllResults": "Afficher tous les résultats",

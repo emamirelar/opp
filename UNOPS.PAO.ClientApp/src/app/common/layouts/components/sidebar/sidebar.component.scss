@@ -1,0 +1,11 @@
+.layout-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+:host ::ng-deep {
+  .layout-sidebar {
+    display: flex;
+    flex-direction: column;
+  }
+}

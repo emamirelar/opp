@@ -77,64 +77,64 @@ export class ContactListComponent implements OnInit, OnDestroy {
     entityName: 'Contact',
     scrollable: true,
     scrollHeight: 'flex',
-    searchConfig: {
-      useAdvancedSearch: true,
-      placeholder: 'Search contacts...',
-      searchableFields: [
-        {
-          field: 'firstName',
-          label: 'First Name',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'lastName',
-          label: 'Last Name',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'email',
-          label: 'Email',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'mobile',
-          label: 'Mobile',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'phone',
-          label: 'Phone',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'title',
-          label: 'Title',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'mailingCity',
-          label: 'City',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        },
-        {
-          field: 'mailingCountry',
-          label: 'Country',
-          type: 'string',
-          operators: ['is', 'is not']
-        },
-        {
-          field: 'partner.name',
-          label: 'Partner Name',
-          type: 'string',
-          operators: ['is', 'is not', 'like', 'not like']
-        }
+          searchConfig: {
+        useAdvancedSearch: true,
+        placeholder: 'search.contactsPlaceholder',
+                searchableFields: [
+          {
+            field: 'firstName',
+            label: 'label.contact.firstName',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'lastName',
+            label: 'label.contact.lastName',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'email',
+            label: 'label.contact.email',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'mobile',
+            label: 'label.contact.mobile',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'phone',
+            label: 'label.contact.phone',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'title',
+            label: 'label.contact.title',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'mailingCity',
+            label: 'label.contact.mailingCity',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'mailingCountry',
+            label: 'label.contact.mailingCountry',
+            type: 'string',
+            operators: ['is', 'is not']
+          },
+          {
+            field: 'partner.name',
+            label: 'label.partner.partner',
+            type: 'string',
+            operators: ['is', 'is not', 'like', 'not like']
+          }
       ] as SearchField[]
     }
   }));
@@ -293,22 +293,22 @@ export class ContactListComponent implements OnInit, OnDestroy {
     // Check if user has delete permission
     if (!this.permissionUtilityService.canDelete(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to delete contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToDelete',
+        summary: 'message.permissionDenied'
       });
       return;
     }
 
     this.contactService.deleteContactById(record.id).subscribe({
       next: () => {
-        this.feedbackDialogService.showSuccessToast({ detail: 'Record deleted successfully!' });
+        this.feedbackDialogService.showSuccessToast({ detail: 'message.recordDeletedSuccessfully' });
         // Trigger a refresh for the listview
         window.dispatchEvent(new CustomEvent('refresh-listview'));
       },
       error: (error: any) => {
         this.feedbackDialogService.showErrorToast({
-          detail: 'Failed to delete record',
-          summary: error.message || 'An error occurred'
+          detail: 'message.failedToDeleteRecord',
+          summary: error.message || 'message.anErrorOccurred'
         });
       }
     });
@@ -330,20 +330,20 @@ export class ContactListComponent implements OnInit, OnDestroy {
     // Check if user has appropriate permission
     if (contactData.id && !this.permissionUtilityService.canUpdate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to edit contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToEdit',
+        summary: 'message.permissionDenied'
       });
       return;
     } else if (!contactData.id && !this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to create contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToCreate',
+        summary: 'message.permissionDenied'
       });
       return;
     }
 
     const ref = this.dialogService.open(ContactEditDialogComponent, {
-      header: contactData.id ? 'Edit Contact' : 'New Contact',
+      header: contactData.id ? 'title.editContact' : 'title.newContact',
       width: '40vw',
       breakpoints: { '960px': '95vw' },
       closable: true,
@@ -369,14 +369,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to create contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToCreate',
+        summary: 'message.permissionDenied'
       });
       return;
     }
 
     const ref = this.dialogService.open(BusinessCardScannerComponent, {
-      header: 'Scan Business Card',
+      header: 'title.scanBusinessCard',
       width: '95vw',
       style: { maxWidth: '800px' },
       closable: true
@@ -393,8 +393,8 @@ export class ContactListComponent implements OnInit, OnDestroy {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
       this.feedbackDialogService.showErrorToast({
-        detail: 'You do not have permission to import contacts',
-        summary: 'Permission Denied'
+        detail: 'message.noPermissionToImport',
+        summary: 'message.permissionDenied'
       });
       return;
     }

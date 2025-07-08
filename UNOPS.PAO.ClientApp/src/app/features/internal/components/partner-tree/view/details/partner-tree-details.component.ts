@@ -3,6 +3,7 @@ import { CachedDataService } from '../../../../../../common/services/cached-data
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, delay } from 'rxjs';
+import { EntityConfigurationService } from '../../../../services/entity-configuration.service';
 
 import { PanelModule } from 'primeng/panel';
 import { DropdownModule } from "primeng/dropdown";
@@ -165,6 +166,7 @@ export class PartnerTreeDetailsComponent implements OnInit {
   activatedRoute = inject(ActivatedRoute);
   documentService = inject(DocumentService);
   dialogService = inject(DialogService);
+  entityConfigurationService = inject(EntityConfigurationService);
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
@@ -238,6 +240,9 @@ export class PartnerTreeDetailsComponent implements OnInit {
         this.isLoading.set(false);
       }
     });
+
+    // Load dynamic columns for partners list
+    this.loadPartnerColumns();
   }
 
   private updatePartnerTreeData(partnerTreeData: any): void {
@@ -258,7 +263,12 @@ export class PartnerTreeDetailsComponent implements OnInit {
     this.isLoading.set(false);
   }
 
-  partnerColumns: ListViewColumn[] = [
+  // Dynamic columns for partners list
+  partnerColumns = signal<ListViewColumn[]>([]);
+  partnerColumnsLoading = signal(true);
+
+  // Fallback columns
+  private fallbackPartnerColumns: ListViewColumn[] = [
     {
       field: 'name',
       label: 'label.name',
@@ -308,6 +318,85 @@ export class PartnerTreeDetailsComponent implements OnInit {
         });
       }
     });
+  }
+
+  private loadPartnerColumns() {
+    this.partnerColumnsLoading.set(true);
+    this.entityConfigurationService.getEntityListViewConfiguration('Partner')
+      .subscribe({
+        next: (columns) => {
+          // In partner tree context, we might want to filter out certain columns
+          // Since this is showing partners within a tree structure, we keep most columns
+          // but could filter based on specific needs
+          const filteredColumns = columns.filter(col => 
+            // Filter any columns that might be redundant in this context
+            !['partnerTree.name', 'partnerTreeName'].includes(col.field)
+          );
+          
+          // Process columns and handle nested fields
+          const processedColumns = filteredColumns.map(col => this.processColumn(col));
+          this.partnerColumns.set(processedColumns);
+          this.partnerColumnsLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load partner columns:', error);
+          // Use fallback columns if API fails
+          this.setFallbackPartnerColumns();
+          this.partnerColumnsLoading.set(false);
+        }
+      });
+  }
+
+  private processColumn(column: any): ListViewColumn {
+    const processedColumn: ListViewColumn = {
+      field: column.field,
+      label: column.label,
+      type: column.type,
+      sortable: column.sortable,
+      width: column.width,
+      ellipsis: column.ellipsis,
+      helperText: column.helperText
+    };
+
+    // Handle nested field paths (fields with dots) by adding a template function
+    if (column.field && column.field.includes('.') && column.type !== 'template') {
+      processedColumn.templateFn = (rowData: any) => {
+        const value = this.getNestedProperty(rowData, column.field);
+        return value !== undefined && value !== null ? String(value) : '';
+      };
+      // Change type to template since we're using a template function
+      processedColumn.type = 'template';
+    }
+
+    // Add template function for template type columns
+    const templatePattern = column.templatePattern || column.TemplatePattern;
+    if (column.type === 'template' && templatePattern) {
+      processedColumn.templateFn = this.createTemplateFunction(templatePattern);
+    }
+
+    return processedColumn;
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      return templatePattern.replace(/\{([^}]+)\}/g, (match, expression) => {
+        try {
+          const value = this.getNestedProperty(rowData, expression.trim());
+          return value !== null && value !== undefined ? String(value) : '';
+        } catch (error) {
+          console.warn(`Template expression error: ${expression}`, error);
+          return '';
+        }
+      });
+    };
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((current, prop) => current?.[prop], obj);
+  }
+
+  private setFallbackPartnerColumns() {
+    this.partnerColumns.set(this.fallbackPartnerColumns);
   }
 
 }

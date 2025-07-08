@@ -18,21 +18,30 @@
 
 	<div class="flex items-center justify-end">
       <app-language-selector></app-language-selector>
-	  <button (click)="onAIAssistantToggle()"
+	  <p-button
+			(onClick)="layoutService.onAIAssistantToggle()"
 			type="button"
+			[rounded]="true"
+			[text]="true"
 			aria-label="AI Assistant Toggle"
 			data-ai-assistant-toggle
-			class="layout-topbar-action p-button-text">
-			<img src="images/AI_visual_64.svg" alt="AI Assistant" class="size-6" />
-		</button>
-      <button type="button"
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center">
+			<ng-template pTemplate="content">
+				<img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-6 h-6" />
+			</ng-template>
+		</p-button>
+      <p-button
+			type="button"
+			[rounded]="true"
+			[text]="true"
 			aria-label="Notifications"
-			class="layout-topbar-action p-button-text"
-      pButton
-      (click)="notificationPanel.toggle($event)">
-			<i class="pi pi-bell"></i>
-        <span *ngIf="unreadCount > 0" class="notification-badge">{{unreadCount}}</span>
-		</button>
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative"
+			(onClick)="notificationPanel.toggle($event)">
+			<ng-template pTemplate="content">
+				<i class="pi pi-bell text-xl"></i>
+				<span *ngIf="unreadCount > 0" class="notification-badge">{{unreadCount}}</span>
+			</ng-template>
+		</p-button>
       <p-overlayPanel #notificationPanel [style]="{width: '400px'}">
         <div class="notification-panel">
           <div class="notification-header">
@@ -78,11 +87,16 @@
       </p-overlayPanel>
       <div class="ml-auto">
         <div class="flex items-center gap-2">
-          <button type="button"
-                class="p-button-text layout-topbar-action cursor-pointer"
-                (click)="menu.toggle($event)">
-            <i class="pi pi-user"></i>
-          </button>
+          <p-button
+                type="button"
+                [rounded]="true"
+                [text]="true"
+                styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
+                (onClick)="menu.toggle($event)">
+            <ng-template pTemplate="content">
+              <i class="pi pi-user text-xl"></i>
+            </ng-template>
+          </p-button>
           <p-menu #menu [popup]="true" [model]="profileMenuItems"></p-menu>
         </div>
       </div>

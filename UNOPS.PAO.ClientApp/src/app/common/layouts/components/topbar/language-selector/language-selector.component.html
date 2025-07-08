@@ -1,12 +1,16 @@
 <p-menu #menu
 	[model]="languageItems"
 	[popup]="true"></p-menu>
-<button (click)="menu.toggle($event)"
+<p-button
+	(onClick)="menu.toggle($event)"
 	type="button"
+	[rounded]="true"
+	[text]="true"
 	aria-label="Language Selector"
-	class="layout-topbar-action p-button-text">
-	<i class="pi pi-globe"></i>
-	<span>{{ "button.language" | translate }}</span>
-</button>
+	styleClass="!w-10 !h-10 !p-0 flex items-center justify-center">
+	<ng-template pTemplate="content">
+		<i class="pi pi-globe text-xl"></i>
+	</ng-template>
+</p-button>
 
 

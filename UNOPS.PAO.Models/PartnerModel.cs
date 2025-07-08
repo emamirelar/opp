@@ -57,6 +57,8 @@ public class PartnerModel
     /// Permissions for this specific partner
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }
+    public List<InteractionModel>? Interactions { get; set; }
+    public List<ContactModel>? Contacts { get; set; }
 }
 
 /// <summary>

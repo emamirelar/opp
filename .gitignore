@@ -240,7 +240,6 @@ _Pvt_Extensions
 
 */.cursor/*
 .vscode/
-
 # Python
 # Virtual Environments
 venv/

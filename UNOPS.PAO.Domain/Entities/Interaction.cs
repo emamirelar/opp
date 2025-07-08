@@ -48,5 +48,6 @@ namespace UNOPS.PAO.Domain.Entities
         public int? OrgUnitId { get; set; }
 
         public List<Document>? Documents { get; set; }
+        public string? GmailThreadId { get; set; }
     }
-}
+} 

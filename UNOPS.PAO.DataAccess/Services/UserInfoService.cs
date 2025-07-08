@@ -29,10 +29,13 @@ public class UserInfoService : IUserInfoService
         // Convert both the input email and database email to lowercase for case-insensitive comparison
         var result = await _context.UserInfos
             .Where(u => u.UserEmail.ToLower() == email.ToLower())
-            .Join(_context.OrganizationHierarchies.Where(oh => oh.Type == OrganizationUnitType.OrgUnit),
+            .GroupJoin(_context.OrganizationHierarchies.Where(oh => oh.Type == OrganizationUnitType.OrgUnit),
                 userInfo => userInfo.OrgUnit,
                 orgHierarchy => orgHierarchy.Code,
-                (userInfo, orgHierarchy) => new { userInfo, orgHierarchy })
+                (userInfo, orgHierarchies) => new { userInfo, orgHierarchies })
+            .SelectMany(
+                temp => temp.orgHierarchies.DefaultIfEmpty(),
+                (temp, orgHierarchy) => new { temp.userInfo, orgHierarchy })
             .GroupJoin(_context.UserInfos,
                 combined => combined.userInfo.SupervisorId,
                 supervisor => supervisor.UserId,
@@ -45,11 +48,11 @@ public class UserInfoService : IUserInfoService
                     Name = temp.userInfo.Name,
                     UserEmail = temp.userInfo.UserEmail,
                     OrgUnit = temp.userInfo.OrgUnit,
-                    OrgUnitDescription = temp.orgHierarchy.Description,
+                    OrgUnitDescription = temp.orgHierarchy != null ? temp.orgHierarchy.Description : null,
                     SupervisorId = temp.userInfo.SupervisorId,
                     SupervisorName = supervisor != null ? supervisor.Name : null,
                     SupervisorEmail = supervisor != null ? supervisor.UserEmail : null,
-                    IsSelfManagementEnabled = temp.orgHierarchy.IsSelfManagementEnabled,
+                    IsSelfManagementEnabled = temp.orgHierarchy != null ? temp.orgHierarchy.IsSelfManagementEnabled : false,
                     CreatedDate = temp.userInfo.CreatedDate,
                     LastModifiedDate = temp.userInfo.LastModifiedDate,
                     CreatedBy = temp.userInfo.CreatedBy,

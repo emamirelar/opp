@@ -586,4 +586,149 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             return await GetInteractionDetailsAsync(entityId);
         }
     }
-} 
+
+    public virtual async Task<InteractionModel> FindGmailInteractionAsync(GmailInteractionRequest model)
+    {
+        var entity = await interactionRepository.GetAll().AsQueryable()
+            .FirstOrDefaultAsync(x => x.GmailThreadId == model.GmailThreadId && !x.IsDeleted);
+
+        return mapper.Map<InteractionModel>(entity);
+    }
+
+    public virtual async Task<InteractionModel?> CreateGmailInteractionAsync(InteractionRequest model)
+    {
+        await using var transaction = await context.Database.BeginTransactionAsync();
+
+        if(model.EmailAddresses != null && model.EmailAddresses.Count > 0)
+        {
+            model.EmailAddresses = model.EmailAddresses.Distinct().ToList();
+        }
+
+        var entity = await MapModelToEntity(model);
+
+        try
+        {
+            entity.Name = model.ContactId + " - " + model.Date;
+
+            await interactionRepository.AddAsync(entity);
+            await context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+
+        await ProcessGmailInteractionJunctionTables(entity, model);
+        return mapper.Map<InteractionModel>(entity);
+    }
+
+    public virtual async Task<InteractionModel?> UpdateGmailInteractionAsync(UpdateInteractionRequest model)
+    {
+        var entity = await interactionRepository.GetByIdAsync(model.Id, includes: new[]
+            {
+                "OrgUnit",
+                "InteractionContacts",
+                "InteractionPartners",
+                "InteractionUsers",
+                "InteractionContacts.Contact",
+                "InteractionContacts.Contact.Partner",
+                "InteractionContacts.Contact.Partner.PartnerOffice",
+                "InteractionPartners.Partner",
+                "InteractionUsers.User",
+                "Documents"
+            });
+        if (entity == null)
+        {
+            throw new BusinessException($"Interaction {model.Id} does not exist.");
+        }
+
+        if (model.EmailAddresses != null && model.EmailAddresses.Count > 0)
+        {
+            model.EmailAddresses = model.EmailAddresses.Distinct().ToList();
+        }
+
+        entity = MapModelToEntity(model, entity);
+
+        // Update emails/phones
+        entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
+        entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
+
+        // Update junction tables
+        await ProcessGmailInteractionJunctionTables(entity, model);
+
+        await interactionRepository.UpdateAsync(entity);
+
+        return mapper.Map<InteractionModel>(entity);
+    }
+
+    private async Task ProcessGmailInteractionJunctionTables(Interaction interaction, InteractionRequest model)
+    {
+        await using var jtTransaction = await context.Database.BeginTransactionAsync();
+        try
+        {
+            // Process email-based Contact lookups
+            if (model.EmailAddresses?.Any() == true)
+            {
+                var matchingContacts = await context.Contacts
+                    .Where(c => model.EmailAddresses.Contains(c.Email))
+                    .ToListAsync();
+
+                var existingEmailContacts = await context.InteractionContacts
+                    .Where(ic => ic.InteractionId == interaction.Id)
+                    .Include(ic => ic.Contact)
+                    .ToListAsync();
+
+                // Add new contacts found by email
+                foreach (var contact in matchingContacts)
+                {
+                    if (!existingEmailContacts.Any(ec => ec.ContactId == contact.Id))
+                    {
+                        await context.InteractionContacts.AddAsync(new InteractionContact
+                        {
+                            InteractionId = interaction.Id,
+                            ContactId = contact.Id,
+                            Contact = contact
+                        });
+                    }
+                }
+            }
+
+            // Process email-based User lookups
+            if (model.EmailAddresses?.Any() == true)
+            {
+                var matchingUsers = await context.GrantUsers
+                    .Where(u => model.EmailAddresses.Contains(u.Email))
+                    .ToListAsync();
+
+                var existingEmailUsers = await context.InteractionUsers
+                    .Where(iu => iu.InteractionId == interaction.Id)
+                    .Include(iu => iu.User)
+                    .ToListAsync();
+
+                // Add new users found by email
+                foreach (var user in matchingUsers)
+                {
+                    if (!existingEmailUsers.Any(eu => eu.UserId == user.Id))
+                    {
+                        await context.InteractionUsers.AddAsync(new InteractionUser
+                        {
+                            InteractionId = interaction.Id,
+                            UserId = user.Id,
+                            User = user
+                        });
+                    }
+                }
+            }
+
+            await context.SaveChangesAsync();
+            await jtTransaction.CommitAsync();
+        }
+        catch
+        {
+            await jtTransaction.RollbackAsync();
+            throw;
+        }
+    }
+}

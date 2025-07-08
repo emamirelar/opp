@@ -1,12 +1,33 @@
-<div class="layout-sidebar bg-white">
+<div class="layout-sidebar bg-white flex flex-col h-full">
+    <!-- Wrapper scrollable contenant tout -->
+    <div class="flex-1 overflow-y-auto flex flex-col">
+        <!-- Section Menu -->
+        <div class="">
+            <img src="images/PNG/Opportunity Horizontal1000px.png"
+            class="p-4 flex-1 lg:hidden w-48"
+            alt="UNOPS Opportunity+ Logo">
 
-        <img src="images/PNG/Opportunity Horizontal1000px.png"
-        class="p-4 flex-1 lg:hidden w-48"
-        alt="UNOPS Opportunity+ Logo">
+            <!-- Display all menu items -->
+            <app-menu [model]="menuItems"></app-menu>
+            <!-- Display admin menu items -->
+            <app-menu [model]="adminMenuItems"></app-menu>
+        </div>
 
+        <!-- Global Filter Section -->
+        <div class=" border-t border-gray-200 pt-4 pb-4 mt-auto">
+            <div class="px-2 flex items-center mb-1 gap-1 justify-between">
+              <span class="text-">{{ 'global.filter' | translate }} :</span>
+              <p-button
+                rounded text
+                [size]="'small'"
+                (click)="toggleGlobalFilter()"
+                [icon]="globalFilterEnabled() ? 'pi pi-filter' : 'pi pi-filter-slash'">
+              </p-button>
 
-    <!-- Display all menu items -->
-    <app-menu [model]="menuItems"></app-menu>
-    <!-- Display admin menu items -->
-    <app-menu [model]="adminMenuItems"></app-menu>
+            </div>
+            <div class="px-2">
+                <app-org-unit-selector></app-org-unit-selector>
+            </div>
+        </div>
+    </div>
 </div>

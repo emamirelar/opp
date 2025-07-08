@@ -1,4 +1,7 @@
 {
+  "global": {
+    "filter": "Global Filter"
+  },
   "title": {
     "countries": "Countries",
     "currency": "Currency",
@@ -7,6 +10,7 @@
     "doc": "Document",
     "docs": "Documents",
     "newContact": "New Contact",
+    "editContact": "Edit Contact",
     "partner": "Partner",
     "newPartner": "New Partner",
     "home": "Home",
@@ -333,7 +337,15 @@
     "otherRolesReadOnly": "These roles can only be modified by system administrators",
     "selfManagementDescription": "Allow users in this organization unit to manage their own partnership access",
     "loadingPermissions": "Loading permissions...",
-    "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access role impersonation."
+    "userManagementAccessDenied": "Only Partnership Global Admins and Organization Unit Admins can access role impersonation.",
+    "noPermissionToDelete": "You do not have permission to delete contacts",
+    "noPermissionToEdit": "You do not have permission to edit contacts",
+    "noPermissionToCreate": "You do not have permission to create contacts",
+    "noPermissionToImport": "You do not have permission to import contacts",
+    "permissionDenied": "Permission Denied",
+    "recordDeletedSuccessfully": "Record deleted successfully!",
+    "failedToDeleteRecord": "Failed to delete record",
+    "anErrorOccurred": "An error occurred"
   },
   "errors": {
     "failedToLoad": "Error al cargar",
@@ -459,6 +471,7 @@
   },
   "search": {
     "placeholder": "Search...",
+    "contactsPlaceholder": "Search contacts...",
     "recentSearches": "Recent Searches",
     "results": "Search Results for",
     "showAllResults": "Show All Results",
