@@ -11,6 +11,7 @@ import { LanguageService } from '../../../services/language.service';
 import { SplitterComponent, SplitterPanel, SplitterResizeEvent } from '../../../reusables/components/splitter/splitter.component';
 import { AiAssistantPanelComponent } from '../../../reusables/widgets/ai-assistant/ai-assistant-panel.component';
 import { LoadingOverlayComponent, LoadingOverlayService } from '../../../reusables/components/loading-overlay/loading-overlay.component';
+import { EntityDetailsPanelComponent } from '../../../components/entity-details-panel/entity-details-panel.component';
 
 @Component({
   selector: 'app-layout',
@@ -23,7 +24,8 @@ import { LoadingOverlayComponent, LoadingOverlayService } from '../../../reusabl
     SplitterComponent,
     AiAssistantPanelComponent,
     NgClass,
-    LoadingOverlayComponent
+    LoadingOverlayComponent,
+    EntityDetailsPanelComponent
   ],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',

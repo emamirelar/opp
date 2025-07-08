@@ -54,72 +54,30 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("PartnerProjects", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("EntityType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MediaType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("MediaUrl")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("RawMessage")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RequestType")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Sender")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("SessionId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("TimeStamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SessionId");
-
-                    b.ToTable("AiChatHistory", "public");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatSession", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
 
-                    b.Property<DateTime?>("EndTime")
+                    b.Property<bool>("AiGenerateTitle")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("Archived")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("StartTime")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<bool>("Starred")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("TextToSpeech")
-                        .HasColumnType("boolean");
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -136,6 +94,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AdminCanChange")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("ContentConfig")
                         .IsRequired()
@@ -1249,6 +1210,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Language")
+                        .HasColumnType("text");
+
                     b.Property<int>("LastModifiedBy")
                         .HasColumnType("integer");
 
@@ -1268,6 +1232,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.Property<int?>("SupervisorId")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("TextToSpeech")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("UserEmail")
                         .HasMaxLength(256)
@@ -1940,15 +1907,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatHistory", b =>
-                {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.AiChatSession", "Session")
-                        .WithMany("Chats")
-                        .HasForeignKey("SessionId");
-
-                    b.Navigation("Session");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Contact", b =>
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.Partner", "Partner")
@@ -2165,11 +2123,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired();
 
                     b.Navigation("EntityManager");
-                });
-
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.AiChatSession", b =>
-                {
-                    b.Navigation("Chats");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Contact", b =>

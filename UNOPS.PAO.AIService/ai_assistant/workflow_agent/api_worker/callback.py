@@ -60,8 +60,8 @@ def prepare_api_worker_before_model(callback_context: CallbackContext, llm_reque
             print("⚠️ WARNING: No entity detections found!")
             print(f"🔍 DEBUG: Available state keys: {list(ctx.state.keys())}")
         
-        # Load API base URL from environment or config
-        api_base_url = os.getenv('API_BASE_URL', 'https://localhost:44426')
+        # Load API base URL from framework configuration instead of environment
+        api_base_url = config_manager.get_api_base_url()
         
         # Load entities configuration from tools.json
         entities_config = config_manager.get_entities()

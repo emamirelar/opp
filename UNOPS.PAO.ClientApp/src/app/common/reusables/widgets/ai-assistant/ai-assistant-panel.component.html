@@ -1,36 +1,137 @@
-<div class="h-full flex flex-col bg-[var(--surface-card)] border-l border-[var(--surface-border)] rounded-2xl overflow-hidden w-full">
+<div *ngIf="aiAssistantData.isLoadingSession()" class="absolute inset-0 z-50 flex items-center justify-center bg-white bg-opacity-60">
+  <i class="pi pi-spin pi-spinner text-4xl text-[var(--primary-color)]"></i>
+</div>
+<div class="h-full flex flex-col min-h-0 bg-[var(--surface-card)] border-l border-[var(--surface-border)] rounded-2xl overflow-hidden w-full"
+     [ngClass]="{'border-l-0 rounded-none': hideHeader}">
   
   <!-- Header section with a clean design like Google Chat -->
-  <div class="flex items-center justify-between p-4 border-b border-[var(--surface-border)] bg-[var(--surface-ground)]">
-    <div class="flex items-center gap-3">
+  <div *ngIf="!hideHeader" class="flex items-center justify-between p-4 border-b border-[var(--surface-border)] bg-[var(--surface-ground)]">
+    <div class="flex items-center gap-3 flex-1">
       <div class="flex items-center justify-center w-8 h-8 rounded-full">
         <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-5 h-5" />
       </div>
 
-        <div class="text-lg font-semibold text-[var(--text-color)]">
-          {{ 'aiAssistant.dialogHeader' | translate }}
+      <div class="flex-1 min-w-0">
+        <!-- Session title - only show when there's an active session -->
+        <div *ngIf="aiAssistantData.currentSessionId()">
+          <!-- Editable title -->
+          <div *ngIf="!isEditingTitle()" 
+               class="text-lg font-semibold text-[var(--text-color)] cursor-pointer hover:bg-[var(--surface-hover)] px-2 py-1 rounded truncate"
+               (click)="startEditingTitle()"
+               pTooltip="Click to edit title">
+            {{ aiAssistantData.sessionTitle() }}
+          </div>
+          
+          <!-- Title editing input -->
+          <div *ngIf="isEditingTitle()" class="flex items-center gap-2">
+            <input 
+              #titleInput
+              type="text"
+              [value]="editingTitle()"
+              (input)="editingTitle.set($any($event.target).value)"
+              (keydown.enter)="saveTitle()"
+              (keydown.escape)="cancelEditingTitle()"
+              (blur)="saveTitle()"
+              class="flex-1 px-2 py-1 text-lg font-semibold bg-transparent border border-[var(--primary-color)] rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
+              placeholder="Enter title">
+            <p-button
+              icon="pi pi-check"
+              (onClick)="saveTitle()"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              severity="success">
+            </p-button>
+            <p-button
+              icon="pi pi-times"
+              (onClick)="cancelEditingTitle()"
+              [text]="true"
+              [rounded]="true"
+              size="small"
+              severity="secondary">
+            </p-button>
+          </div>
         </div>
+      </div>
     </div>
     
     <div class="flex items-center gap-1">
+      <!-- Session-specific buttons - only show when there's an active session -->
+      <div *ngIf="aiAssistantData.currentSessionId()" class="flex items-center gap-1">
+        <p-button 
+          [icon]="aiAssistantData.sessionStarred() ? 'pi pi-star-fill' : 'pi pi-star'"
+          [text]="true"
+          [rounded]="true"
+          size="small"
+          [ngClass]="{'text-yellow-500': aiAssistantData.sessionStarred()}"
+          pTooltip="{{ 'aiAssistant.toggleStar' | translate }}"
+          (onClick)="toggleStar()"
+          tooltipPosition="left">
+        </p-button>
+
+        <p-button 
+          [icon]="aiAssistantData.sessionArchived() ? 'pi pi-folder-open' : 'pi pi-archive'"
+          [text]="true"
+          [rounded]="true"
+          size="small"
+          pTooltip="{{ 'aiAssistant.toggleArchive' | translate }}"
+          (onClick)="toggleArchive()"
+          tooltipPosition="left">
+        </p-button>
+
+        <p-button 
+          [icon]="aiAssistantData.textToSpeech() ? 'pi pi-volume-up' : 'pi pi-volume-off'"
+          [text]="true"
+          [rounded]="true"
+          size="small"
+          pTooltip="{{ 'aiAssistant.textToSpeech' | translate }}"
+          (onClick)="aiAssistantData.onTextToSpeechToggle()"
+          tooltipPosition="left">
+        </p-button>
+      </div>
+
+      <!-- Chat History Dropdown -->
+      <div class="relative">
+        <p-button 
+          #historyButton
+          label="{{ 'aiAssistant.chatHistory' | translate }}"
+          icon="pi pi-history"
+          [text]="true"
+          [rounded]="true"
+          size="small"
+          (onClick)="toggleSessionMenu($event)"
+          [loading]="aiAssistantData.isLoadingSessions()"
+          tooltipPosition="left">
+        </p-button>
+        
+        <p-menu 
+          #sessionMenu
+          [model]="sessionMenuItems()"
+          [popup]="true"
+          appendTo="body">
+        </p-menu>
+      </div>
+
+      <!-- Fullscreen button -->
       <p-button 
-        [icon]="aiAssistantData.textToSpeech() ? 'pi pi-volume-up' : 'pi pi-volume-off'"
+        icon="pi pi-external-link"
         [text]="true"
         [rounded]="true"
         size="small"
-        pTooltip="{{ 'aiAssistant.textToSpeech' | translate }}"
-        (onClick)="aiAssistantData.onTextToSpeechToggle()"
+        pTooltip="{{ 'aiAssistant.openFullscreen' | translate }}"
+        (onClick)="openFullscreen()"
         tooltipPosition="left">
       </p-button>
 
+      <!-- New Chat button - show when there's chat history -->
       <p-button 
-        icon="pi pi-refresh"
+        *ngIf="aiAssistantData.chatHistory().length > 0"
+        icon="pi pi-plus"
         (onClick)="aiAssistantData.clearConversation()"
         [text]="true"
         [rounded]="true"
         size="small"
         pTooltip="{{ 'aiAssistant.newConversation' | translate }}"
-        [disabled]="aiAssistantData.chatHistory().length === 0"
         tooltipPosition="left">
       </p-button>
 
@@ -48,23 +149,15 @@
 
   <!-- Chat messages section -->
   <div #chatContainer 
-       class="flex-1 p-4 space-y-4 overflow-y-auto min-h-0"
+       class="flex-1 p-4 space-y-4 overflow-y-auto min-h-0 ai-chat-container"
        [ngClass]="{
          'bg-blue-50/20 border-2 border-dashed border-blue-300': isDragging(),
-         'bg-transparent': !isDragging()
+         'bg-transparent': !isDragging(),
+         'p-6': hideHeader
        }"
        (dragover)="onDragOver($event)"
        (dragleave)="onDragLeave($event)"
        (drop)="onDrop($event)">
-
-    <!-- Loading overlay -->
-    <div *ngIf="aiAssistantData.isLoading()"
-         class="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-sm z-10">
-      <div class="flex flex-col items-center gap-2">
-        <i class="pi pi-spin pi-spinner text-2xl text-blue-600"></i>
-        <span class="text-sm text-gray-600">{{ 'aiAssistant.thinking' | translate }}</span>
-      </div>
-    </div>
 
     <!-- Drag and drop overlay -->
     <div *ngIf="isDragging()"
@@ -76,61 +169,63 @@
     </div>
 
     <!-- Welcome state -->
-    <div *ngIf="aiAssistantData.chatHistory().length === 0" class="flex flex-col items-center justify-center h-full text-center p-6">
-      <div class="mb-6">
-        <div class="flex justify-center mb-4">
-          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-8 h-8" />
+    <div *ngIf="aiAssistantData.chatHistory().length === 0" class="flex flex-col items-center justify-center h-full text-center px-6 py-8">
+      <div class="mb-8 max-w-2xl">
+        <div class="flex justify-center mb-6">
+          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-10 h-10" />
           </div>
         </div>
-        <h3 class="text-xl font-semibold text-[var(--text-color)] mb-2">
+        <h3 class="text-2xl font-semibold text-[var(--text-color)] mb-3">
           {{ 'aiAssistant.welcomeTitle' | translate }}
         </h3>
-        <p class="text-[var(--text-color-secondary)] mb-6 max-w-sm">
+        <p class="text-[var(--text-color-secondary)] mb-8 max-w-lg leading-relaxed">
           {{ 'aiAssistant.welcomeMessage' | translate }}
         </p>
       </div>
 
       <!-- Example prompts -->
-      <div class="w-full max-w-sm space-y-2">
-        <p class="text-sm font-medium text-[var(--text-color-secondary)] mb-3">
+      <div class="w-full max-w-2xl space-y-3">
+        <p class="text-base font-medium text-[var(--text-color-secondary)] mb-4">
           {{ 'aiAssistant.examplePromptsTitle' | translate }}
         </p>
-        <div *ngFor="let prompt of examplePrompts; let i = index" 
-             class="cursor-pointer group transition-all duration-200"
-             (click)="selectExamplePrompt(prompt.text)">
-          <div class="flex items-center gap-3 p-3 bg-[var(--surface-hover)] hover:bg-[var(--primary-color)] hover:text-white rounded-lg transition-all duration-200 group-hover:shadow-md">
-            <i [class]="prompt.icon + ' text-current opacity-70'"></i>
-            <span class="text-sm flex-1 text-left">
-              {{ prompt.text | translate }}
-            </span>
-            <i class="pi pi-arrow-right text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200"></i>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div *ngFor="let prompt of examplePrompts; let i = index" 
+               class="cursor-pointer group transition-all duration-200"
+               (click)="selectExamplePrompt(prompt.text)">
+            <div class="flex items-center gap-4 p-4 bg-[var(--surface-hover)] hover:bg-[var(--primary-color)] hover:text-white rounded-xl transition-all duration-200 group-hover:shadow-lg group-hover:scale-105">
+              <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-white bg-opacity-20 flex items-center justify-center">
+                <i [class]="prompt.icon + ' text-current text-lg'"></i>
+              </div>
+              <div class="flex-1 text-left">
+                <span class="text-sm font-medium block">
+                  {{ prompt.text | translate }}
+                </span>
+              </div>
+              <i class="pi pi-arrow-right text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200"></i>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Drag and drop info -->
-      <div class="mt-6 text-xs text-[var(--text-color-secondary)] flex items-center gap-2">
+      <div class="mt-8 text-sm text-[var(--text-color-secondary)] flex items-center gap-2 bg-[var(--surface-card)] px-4 py-3 rounded-lg border border-[var(--surface-border)]">
         <i class="pi pi-info-circle"></i>
         <span>{{ 'aiAssistant.dragDropInfo' | translate }}</span>
       </div>
     </div>
 
     <!-- Chat messages -->
-    <div *ngFor="let message of aiAssistantData.chatHistory()"
+    <div *ngFor="let message of aiAssistantData.chatHistory(); let messageIndex = index"
          class="flex flex-col animate-in fade-in-0 slide-in-from-bottom-2 duration-300"
          [ngClass]="message.isUser ? 'items-end' : 'items-start'">
 
-      <div class="max-w-[85%] rounded-2xl p-3 break-words"
-           [ngClass]="{
-             'bg-[var(--primary-color)] text-white rounded-br-sm': message.isUser,
-             'bg-[var(--surface-ground)] text-[var(--text-color)] rounded-bl-sm': !message.isUser
-           }">
+      <!-- User message -->
+      <div *ngIf="message.isUser" class="max-w-[85%] rounded-2xl p-3 break-words bg-[var(--primary-color)] text-white rounded-br-sm">
         <div class="whitespace-pre-line">{{ message.text }}</div>
         
         <!-- Display files if any -->
-        <div *ngIf="message.files && message.files.length > 0" class="mt-2 pt-2 border-t border-opacity-20"
-             [ngClass]="message.isUser ? 'border-white' : 'border-gray-300'">
+        <div *ngIf="message.files && message.files.length > 0" class="mt-2 pt-2 border-t border-white border-opacity-20">
           <div *ngFor="let file of message.files" class="mt-1.5 flex items-center gap-2">
             <div [ngSwitch]="file.mediaType">
               <!-- Audio File -->
@@ -148,15 +243,102 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Typing indicator -->
-    <div *ngIf="isWaitingResponse()" class="flex items-start">
-      <div class="flex items-center justify-center p-3">
-        <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-          <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-3 h-3 animate-pulse" />
+      <!-- Model message with copy button -->
+      <div *ngIf="!message.isUser" class="max-w-[85%] group">
+        <!-- AI Indicator (butterfly icon) -->
+        <div class="flex justify-start mb-1">
+          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-3 h-3" />
+          </div>
+        </div>
+        
+        <!-- Message bubble -->
+        <div class="rounded-2xl p-4 break-words bg-white dark:bg-gray-100 text-gray-900 dark:text-gray-800 rounded-bl-sm border border-gray-200 dark:border-gray-300 shadow-sm">
+          <!-- Structured content (new format) -->
+          <div *ngIf="message.result && message.result.length > 0">
+            <app-content-renderer 
+              *ngFor="let item of message.result; let itemIndex = index" 
+              [item]="item"
+              [shouldShow]="shouldShowContentItem(messageIndex, itemIndex)"
+              [isNewMessage]="isNewMessage(messageIndex)"
+              (contentComplete)="onContentItemComplete(messageIndex, itemIndex)"
+              (cardClicked)="onCardClicked($event)">
+            </app-content-renderer>
+          </div>
+          
+          <!-- Legacy text content -->
+          <div *ngIf="!message.result && message.text" class="whitespace-pre-line">{{ message.text }}</div>
+          
+          <!-- Display files if any -->
+          <div *ngIf="message.files && message.files.length > 0" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-300 border-opacity-50">
+            <div *ngFor="let file of message.files" class="mt-1.5 flex items-center gap-2">
+              <div [ngSwitch]="file.mediaType">
+                <!-- Audio File -->
+                <div *ngSwitchCase="'audio'" class="flex items-center">
+                  <audio controls class="h-8 max-w-[200px]">
+                    <source [src]="file.mediaUrl" type="audio/mpeg">
+                  </audio>
+                </div>
+                <!-- Image File -->
+                <img *ngSwitchCase="'image'" [src]="file.mediaUrl" alt="Uploaded Image" 
+                     class="max-w-[200px] max-h-[150px] rounded-lg object-cover"/>
+                <!-- Other File Types -->
+                <span *ngSwitchDefault class="text-sm">{{ file.name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Copy button below message -->
+        <div class="flex justify-start mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <p-button
+            icon="pi pi-copy"
+            [text]="true"
+            [rounded]="true"
+            size="small"
+            class="copy-button-below-white"
+            severity="secondary"
+            pTooltip="{{ 'aiAssistant.copyMessage' | translate }}"
+            (onClick)="copyMessageText(message)">
+          </p-button>
         </div>
       </div>
+    </div>
+
+    <!-- Thinking indicator -->
+    <div *ngIf="isWaitingResponse()" class="flex items-start animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
+      <div class="max-w-[85%]">
+        <!-- AI Indicator (butterfly icon) -->
+        <div class="flex justify-start mb-1">
+          <div class="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+            <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-3 h-3 animate-pulse" />
+          </div>
+        </div>
+        
+        <!-- Generating bubble -->
+        <div class="rounded-2xl p-4 break-words bg-white dark:bg-gray-100 text-gray-900 dark:text-gray-800 rounded-bl-sm border border-gray-200 dark:border-gray-300 shadow-sm generating-message">
+          <div class="flex items-center gap-2">
+            <span class="text-base font-medium">Generating{{ getGeneratingDotsText() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Follow-up suggestions for the most recent message -->
+  <div *ngIf="getLatestFollowUps().length > 0 && !isWaitingResponse()" class="px-4 pb-3 border-t border-[var(--surface-border)] bg-[var(--surface-ground)]">
+    <div class="flex flex-wrap gap-2 follow-up-buttons-container">
+      <p-button
+        *ngFor="let followUp of getLatestFollowUps()"
+        [label]="followUp"
+        [text]="true"
+        [rounded]="true"
+        size="small"
+        class="follow-up-button"
+        severity="secondary"
+        (onClick)="selectFollowUp(followUp)">
+      </p-button>
     </div>
   </div>
 
@@ -212,7 +394,6 @@
           (ngModelChange)="updateMessage($event)"
           placeholder="{{ 'aiAssistant.typeMessage' | translate }}"
           [rows]="1"
-
           class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent text-sm"
           (keydown.enter)="$event.preventDefault(); sendMessage()">
         </textarea>

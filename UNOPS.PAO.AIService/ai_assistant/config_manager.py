@@ -10,10 +10,6 @@ import os
 from typing import Dict, Any, Optional, List
 from functools import lru_cache
 
-# Load base URL from environment variable
-API_BASE_URL = os.getenv('API_BASE_URL', 'https://localhost:44426')
-
-
 class ConfigManager:
     """Singleton configuration manager for tools.json and framework_config.json"""
     
@@ -102,6 +98,11 @@ class ConfigManager:
     def get_defaults(self) -> Dict[str, Any]:
         return self.framework_config.get("defaults", {})
     
+    def get_api_base_url(self) -> str:
+        """Get API base URL from framework configuration"""
+        server_config = self.framework_config.get("server", {})
+        return server_config.get("api_base_url", "https://localhost:44426")
+    
     def get_entity_specific_tools(self, entity_name: str) -> str:
         """
         Generate API endpoints summary filtered for a specific entity
@@ -113,7 +114,7 @@ class ConfigManager:
             str: Formatted summary of endpoints for the specific entity
         """
         entities = self.tools_config.get('entities', [])
-        base_url = API_BASE_URL
+        base_url = self.get_api_base_url()
         
         # Find the specific entity
         target_entity = None
@@ -180,7 +181,7 @@ class ConfigManager:
         summary = "**📡 Available API Endpoints (All Entities):**\n\n"
         
         entities = self.tools_config.get('entities', [])
-        base_url = API_BASE_URL
+        base_url = self.get_api_base_url()
         
         if entities:
             for entity in entities:
@@ -332,4 +333,9 @@ class ConfigManager:
 
 
 # Global singleton instance
-config_manager = ConfigManager() 
+config_manager = ConfigManager()
+
+# Export API_BASE_URL for backward compatibility
+@property
+def API_BASE_URL():
+    return config_manager.get_api_base_url() 

@@ -17,6 +17,7 @@ interface LayoutState {
     menuHoverActive?: boolean;
     aiAssistantActive?: boolean;
     aiAssistantPanelSize?: number;
+    aiAssistantSidebarCollapsed?: boolean;
 }
 
 interface MenuChangeEvent {
@@ -30,6 +31,7 @@ interface MenuChangeEvent {
 export class LayoutService {
     private readonly AI_ASSISTANT_ACTIVE_KEY = 'aiAssistantActive';
     private readonly AI_ASSISTANT_PANEL_SIZE_KEY = 'aiAssistantPanelSize';
+    private readonly AI_ASSISTANT_SIDEBAR_COLLAPSED_KEY = 'aiAssistantSidebarCollapsed';
 
     _config: layoutConfig = {
         preset: 'UnopsPreset',
@@ -45,7 +47,8 @@ export class LayoutService {
         staticMenuMobileActive: false,
         menuHoverActive: false,
         aiAssistantActive: this.getStoredAiAssistantActive(),
-        aiAssistantPanelSize: this.getStoredAiAssistantPanelSize()
+        aiAssistantPanelSize: this.getStoredAiAssistantPanelSize(),
+        aiAssistantSidebarCollapsed: this.getStoredAiAssistantSidebarCollapsed()
     };
 
     layoutConfig = signal<layoutConfig>(this._config);
@@ -79,6 +82,9 @@ export class LayoutService {
     getSurface = computed(() => this.layoutConfig().surface);
 
     isOverlay = computed(() => this.layoutConfig().menuMode === 'overlay');
+
+    // AI Assistant sidebar collapse state
+    aiAssistantSidebarCollapsed = computed(() => this.layoutState().aiAssistantSidebarCollapsed);
 
     transitionComplete = signal<boolean>(false);
 
@@ -126,9 +132,19 @@ export class LayoutService {
         return stored ? JSON.parse(stored) : 30; // 30 par défaut
     }
 
+    private getStoredAiAssistantSidebarCollapsed(): boolean {
+        try {
+            const stored = localStorage.getItem(this.AI_ASSISTANT_SIDEBAR_COLLAPSED_KEY);
+            return stored ? JSON.parse(stored) : false; // false par défaut
+        } catch {
+            return false;
+        }
+    }
+
     private saveAiAssistantState(state: LayoutState): void {
         localStorage.setItem(this.AI_ASSISTANT_ACTIVE_KEY, JSON.stringify(state.aiAssistantActive));
         localStorage.setItem(this.AI_ASSISTANT_PANEL_SIZE_KEY, JSON.stringify(state.aiAssistantPanelSize));
+        localStorage.setItem(this.AI_ASSISTANT_SIDEBAR_COLLAPSED_KEY, JSON.stringify(state.aiAssistantSidebarCollapsed));
     }
 
 
@@ -190,9 +206,16 @@ export class LayoutService {
     }
 
     onAIAssistantToggle() {
-        this.layoutState.update((prev) => ({ 
-            ...prev, 
-            aiAssistantActive: !this.layoutState().aiAssistantActive 
+        this.layoutState.update(state => ({
+            ...state,
+            aiAssistantActive: !state.aiAssistantActive
+        }));
+    }
+
+    onAiSidebarToggle() {
+        this.layoutState.update(state => ({
+            ...state,
+            aiAssistantSidebarCollapsed: !state.aiAssistantSidebarCollapsed
         }));
     }
 

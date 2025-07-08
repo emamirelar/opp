@@ -364,8 +364,15 @@ def get_entity_cache():
         entity_cache = EntityAwareCache()
     return entity_cache
 
-def get_user_email() -> str:
-    """Get user email from environment or default."""
+def get_user_email(session_state: Optional[dict] = None) -> str:
+    """Get user email from session state or environment fallback."""
+    # First try to get email from session state
+    if session_state and 'header_email' in session_state:
+        email = session_state['header_email']
+        if email and '@' in email:
+            return email
+    
+    # Fallback to environment variable for development
     return os.getenv('DEV_EMAIL', 'anushas@unops.org')
 
 # Auto-cleanup function

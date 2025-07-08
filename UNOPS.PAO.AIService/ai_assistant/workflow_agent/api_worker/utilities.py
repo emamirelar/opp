@@ -144,37 +144,55 @@ def exit_loop_on_success(tool_context: ToolContext):
     }
 
 
-def extract_iap_headers_from_context() -> Dict[str, str]:
+def extract_iap_headers_from_context(tool_context: Optional[ToolContext] = None) -> Dict[str, str]:
     """
-    Extract IAP headers from environment or development mode.
-    Since Google ADK context access is not available, we use environment variables.
+    Extract IAP headers from the current context (session state).
     
+    This function tries to get IAP headers from the session state first,
+    then falls back to environment variables for development.
+    
+    Args:
+        tool_context: Tool context containing session state
+        
     Returns:
         Dict[str, str]: Dictionary of IAP headers to forward to backend
     """
     try:
         iap_headers = {}
         
-        # Check if we're in development mode
-        is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
-        dev_email = os.getenv('DEV_EMAIL', '')
+        # First try to get email from session state
+        user_email = None
+        if tool_context and hasattr(tool_context, 'state') and tool_context.state:
+            user_email = tool_context.state.get('header_email')
+            if user_email and '@' in user_email:
+                print(f"📧 Using header_email from session state: {user_email}")
         
-        if is_development and dev_email:
-            print("🧪 Development mode - Creating IAP headers from environment...")
+        # If no email in session state, check environment variables
+        if not user_email:
+            is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
+            dev_email = os.getenv('DEV_EMAIL', '')
+            
+            if is_development and dev_email:
+                user_email = dev_email
+                print(f"📧 Using DEV_EMAIL from environment: {user_email}")
+        
+        # Create IAP headers if we have a valid email
+        if user_email and '@' in user_email:
+            print("🧪 Creating IAP headers from user email...")
             import time
             current_timestamp = str(int(time.time()))
             
             iap_headers = {
-                'x-goog-authenticated-user-email': f'accounts.google.com:{dev_email}',
-                'x-goog-authenticated-user-id': f'accounts.google.com:dev-user-id-{current_timestamp}',
-                'x-forwarded-user': dev_email,
-                'x-forwarded-email': dev_email,
+                'x-goog-authenticated-user-email': f'accounts.google.com:{user_email}',
+                'x-goog-authenticated-user-id': f'accounts.google.com:user-id-{current_timestamp}',
+                'x-forwarded-user': user_email,
+                'x-forwarded-email': user_email,
                 'X-Dev-IAP-Simulation': 'true',
                 'X-Dev-Auth-Timestamp': current_timestamp
             }
-            print(f"✅ Created development IAP headers for email: {dev_email}")
+            print(f"✅ Created IAP headers for email: {user_email}")
         else:
-            print("⚠️ Not in development mode or DEV_EMAIL not set - no IAP headers created")
+            print("⚠️ No valid user email found - no IAP headers created")
         
         return iap_headers
             
@@ -246,7 +264,7 @@ def test_api_connectivity(base_url: str) -> dict:
         }
 
 
-def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] = None) -> dict:
+def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] = None, tool_context: Optional[ToolContext] = None) -> dict:
     """
     Invoke an API endpoint with real HTTP requests using configuration from tools.json
     
@@ -255,269 +273,225 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
         method: HTTP method (GET, POST, PUT, DELETE)
         body: Request body/parameters
         headers: Optional additional headers (e.g., IAP headers for authentication)
+        tool_context: Optional tool context containing session state
     
     Returns:
         dict: API response or error information
     """
-    print("\n" + "="*60)
-    print("🚀🚨 INVOKE_API_TOOL FUNCTION CALLED!!!")
-    print("🚨 This proves the LLM is using the correct tool!")
-    print("🚀 INVOKING API CALL")
-    print("="*60)
-    print(f"📍 URL: {url}")
-    print(f"🔧 Method: {method.upper()}")
-    print(f"📦 Body/Parameters: {body}")
-    print(f"📊 Body Type: {type(body)}")
-    print(f"📏 Body Length: {len(str(body))}")
-    
-    # Pre-flight connectivity check for connection issues
-    from urllib.parse import urlparse
-    parsed = urlparse(url)
-    base_url = f"{parsed.scheme}://{parsed.netloc}"
-    
-    print(f"\n🔍 Pre-flight connectivity check...")
-    print(f"📍 Base URL: {base_url}")
-    
     try:
-        import socket
-        host = parsed.hostname or 'localhost'
-        port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+        # If tool_context is not provided, try to extract it from the current execution context
+        if tool_context is None:
+            try:
+                import inspect
+                # Get the current frame and look for tool_context in the calling frames
+                frame = inspect.currentframe()
+                while frame:
+                    # Look for tool_context in the local variables
+                    if 'tool_context' in frame.f_locals:
+                        tool_context = frame.f_locals['tool_context']
+                        print(f"📧 Auto-extracted tool_context from execution context")
+                        break
+                    frame = frame.f_back
+            except Exception as e:
+                print(f"⚠️ Could not auto-extract tool_context: {e}")
         
-        # Quick socket test
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        result = sock.connect_ex((host, port))
-        sock.close()
+        print(f"🌐 [API] Making {method} request to: {url}")
+        print(f"📦 [API] Request body: {json.dumps(body, indent=2)}")
         
-        if result == 0:
-            print(f"✅ Pre-flight check passed - {host}:{port} is reachable")
-        else:
-            print(f"⚠️ Pre-flight check failed - {host}:{port} is not reachable (error: {result})")
-            print(f"💡 This likely means the backend server is not running!")
+        # Pre-flight connectivity check
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
             
-    except Exception as e:
-        print(f"⚠️ Pre-flight check error: {e}")
-        print(f"💡 Proceeding with request anyway...")
-    
-    try:
-        # Prepare request headers - start with default headers
-        request_headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        
-        # Automatically extract and add IAP headers from current context
-        print("\n🔐 Extracting IAP headers for authentication...")
-        iap_headers = extract_iap_headers_from_context()
-        
-        # If no IAP headers found and we're in development mode, add development headers
-        if not iap_headers:
-            is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
-            dev_email = os.getenv('DEV_EMAIL', '')
+            import socket
+            host = parsed.hostname or 'localhost'
+            port = parsed.port or (443 if parsed.scheme == 'https' else 80)
             
-            if is_development and dev_email:
-                print("🧪 No IAP headers found - Adding development IAP headers...")
-                import time
-                current_timestamp = str(int(time.time()))
+            # Quick socket test
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            result = sock.connect_ex((host, port))
+            sock.close()
+            
+            if result == 0:
+                print(f"✅ Pre-flight check passed - {host}:{port} is reachable")
+            else:
+                print(f"⚠️ Pre-flight check failed - {host}:{port} is not reachable (error: {result})")
+                print(f"💡 This likely means the backend server is not running!")
                 
-                iap_headers = {
-                    'x-goog-authenticated-user-email': f'accounts.google.com:{dev_email}',
-                    'x-goog-authenticated-user-id': f'accounts.google.com:dev-user-id-{current_timestamp}',
-                    'x-forwarded-user': dev_email,
-                    'x-forwarded-email': dev_email,
-                    'X-Dev-IAP-Simulation': 'true',
-                    'X-Dev-Auth-Timestamp': current_timestamp
+        except Exception as e:
+            print(f"⚠️ Pre-flight check error: {e}")
+            print(f"💡 Proceeding with request anyway...")
+        
+        try:
+            # Prepare request headers - start with default headers
+            request_headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+            
+            # Automatically extract and add IAP headers from current context
+            print("\n🔐 Extracting IAP headers for authentication...")
+            iap_headers = extract_iap_headers_from_context(tool_context)
+            
+            # If no IAP headers found and we're in development mode, add development headers
+            if not iap_headers:
+                is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
+                dev_email = os.getenv('DEV_EMAIL', '')
+                
+                if is_development and dev_email:
+                    print("🧪 No IAP headers found - Adding development IAP headers...")
+                    import time
+                    current_timestamp = str(int(time.time()))
+                    
+                    iap_headers = {
+                        'x-goog-authenticated-user-email': f'accounts.google.com:{dev_email}',
+                        'x-goog-authenticated-user-id': f'accounts.google.com:dev-user-id-{current_timestamp}',
+                        'x-forwarded-user': dev_email,
+                        'x-forwarded-email': dev_email,
+                        'X-Dev-IAP-Simulation': 'true',
+                        'X-Dev-Auth-Timestamp': current_timestamp
+                    }
+                    print(f"✅ Added development IAP headers for email: {dev_email}")
+            
+            if iap_headers:
+                request_headers.update(iap_headers)
+            
+            # Add any additional headers passed as parameter
+            if headers:
+                print(f"🔐 Adding additional headers: {list(headers.keys())}")
+                request_headers.update(headers)
+            
+            print(f"🔐 Final request headers: {list(request_headers.keys())}")
+            
+            # Prepare request data based on HTTP method
+            if method.upper() == 'GET':
+                # For GET requests, add body parameters as query string
+                if body:
+                    import urllib.parse
+                    query_params = urllib.parse.urlencode(body)
+                    if '?' in url:
+                        url += '&' + query_params
+                    else:
+                        url += '?' + query_params
+                    print(f"🔗 [API] GET URL with query params: {url}")
+                
+                # Make GET request
+                response = requests.get(url, headers=request_headers, timeout=30, verify=False)
+                
+            elif method.upper() == 'POST':
+                # Make POST request with JSON body
+                response = requests.post(url, json=body, headers=request_headers, timeout=30, verify=False)
+                
+            elif method.upper() == 'PUT':
+                # Make PUT request with JSON body
+                response = requests.put(url, json=body, headers=request_headers, timeout=30, verify=False)
+                
+            elif method.upper() == 'DELETE':
+                # Make DELETE request
+                response = requests.delete(url, headers=request_headers, timeout=30, verify=False)
+                
+            else:
+                return {
+                    "status": "error",
+                    "error": f"Unsupported HTTP method: {method}",
+                    "supported_methods": ["GET", "POST", "PUT", "DELETE"]
                 }
-                print(f"✅ Added development IAP headers for email: {dev_email}")
-        
-        if iap_headers:
-            request_headers.update(iap_headers)
-        
-        # Add any additional headers passed as parameter
-        if headers:
-            print(f"🔐 Adding additional headers: {list(headers.keys())}")
-            request_headers.update(headers)
-        
-        print(f"📋 Final Headers ({len(request_headers)} total): {list(request_headers.keys())}")
-        
-        # Show IAP headers specifically (without values for security)
-        iap_header_keys = [k for k in request_headers.keys() if 'iap' in k.lower() or 'auth' in k.lower() or 'user' in k.lower()]
-        if iap_header_keys:
-            print(f"🔐 IAP/Auth Headers being sent: {iap_header_keys}")
-        
-        # Handle different HTTP methods
-        print(f"\n🔄 Executing {method.upper()} request...")
-        
-        # Common request settings for all methods
-        request_kwargs = {
-            'headers': request_headers,
-            'timeout': 200,
-            'verify': False,  # Disable SSL verification for localhost/development
-            'allow_redirects': True
-        }
-        
-        print(f"🔧 Request settings: timeout=200s, verify=False, allow_redirects=True")
-        
-        if method.upper() == 'GET':
-            print("📝 GET Request - Parameters will be sent as query string")
-            print(f"🔗 Full URL with params: {url}?{requests.compat.urlencode(body) if body else 'no-params'}")
-            response = requests.get(url, params=body, **request_kwargs)
-        elif method.upper() == 'POST':
-            print("📝 POST Request - Parameters will be sent as JSON body")
-            print(f"📦 JSON Body: {json.dumps(body, indent=2)}")
-            response = requests.post(url, json=body, **request_kwargs)
-        elif method.upper() == 'PUT':
-            print("📝 PUT Request - Parameters will be sent as JSON body")
-            print(f"📦 JSON Body: {json.dumps(body, indent=2)}")
-            response = requests.put(url, json=body, **request_kwargs)
-        elif method.upper() == 'DELETE':
-            print("📝 DELETE Request - Parameters will be sent as query string")
-            print(f"🔗 Full URL with params: {url}?{requests.compat.urlencode(body) if body else 'no-params'}")
-            response = requests.delete(url, params=body, **request_kwargs)
-        else:
-            error_msg = f"Unsupported HTTP method: {method}"
-            print(f"❌ ERROR: {error_msg}")
+            
+            print(f"📡 [API] Response status: {response.status_code}")
+            
+            # Process response
+            if response.status_code >= 200 and response.status_code < 300:
+                try:
+                    response_data = response.json()
+                    print(f"✅ [API] Success - Response data keys: {list(response_data.keys()) if isinstance(response_data, dict) else 'Not a dict'}")
+                    
+                    # Detect entity from URL for cache invalidation
+                    detected_entity = detect_entity_from_url(url)
+                    if detected_entity:
+                        print(f"🔄 [API] Detected entity '{detected_entity}' from URL - invalidating cache")
+                        try:
+                            from ...cache import entity_cache
+                            entity_cache.invalidate_entity_cache(detected_entity)
+                        except Exception as cache_error:
+                            print(f"⚠️ Cache invalidation failed: {cache_error}")
+                    
+                    return {
+                        "status": "success",
+                        "status_code": response.status_code,
+                        "response": response_data,
+                        "api_call": f"{method.upper()} {url}",
+                        "headers_sent": list(request_headers.keys())
+                    }
+                    
+                except json.JSONDecodeError as json_error:
+                    print(f"⚠️ [API] Response is not JSON: {json_error}")
+                    return {
+                        "status": "success",
+                        "status_code": response.status_code,
+                        "response": {"text": response.text},
+                        "api_call": f"{method.upper()} {url}",
+                        "headers_sent": list(request_headers.keys()),
+                        "note": "Response was not JSON"
+                    }
+                    
+            else:
+                error_message = f"HTTP {response.status_code}"
+                try:
+                    error_data = response.json()
+                    if isinstance(error_data, dict):
+                        error_message = error_data.get('message', error_data.get('error', error_message))
+                except:
+                    error_message = response.text if response.text else error_message
+                
+                print(f"❌ [API] Error {response.status_code}: {error_message}")
+                
+                return {
+                    "status": "error",
+                    "status_code": response.status_code,
+                    "error": error_message,
+                    "api_call": f"{method.upper()} {url}",
+                    "headers_sent": list(request_headers.keys())
+                }
+                
+        except requests.exceptions.ConnectionError as conn_error:
+            error_msg = f"Connection error: {str(conn_error)}"
+            print(f"❌ [API] {error_msg}")
             return {
                 "status": "error",
                 "error": error_msg,
-                "api_call": f"{method} {url}"
+                "api_call": f"{method.upper()} {url}",
+                "connection_error": True
             }
-        
-        print(f"\n📡 RESPONSE RECEIVED:")
-        print(f"📊 Status Code: {response.status_code}")
-        print(f"📋 Response Headers: {dict(response.headers)}")
-        print(f"⏱️ Response Time: {response.elapsed.total_seconds():.3f} seconds")
-        print(f"📏 Response Size: {len(response.content)} bytes")
-        
-        # Parse response
-        print(f"\n🔍 PARSING RESPONSE:")
-        print(f"📄 Raw Response Text (first 500 chars): {response.text[:500]}...")
-        
-        try:
-            response_data = response.json()
-            print(f"✅ Successfully parsed JSON response")
-            print(f"📊 JSON Keys: {list(response_data.keys()) if isinstance(response_data, dict) else 'Not a dict'}")
-        except json.JSONDecodeError as e:
-            print(f"⚠️ Failed to parse JSON: {e}")
-            response_data = {"text": response.text}
-            print(f"📝 Using raw text response instead")
-        
-        success = response.status_code < 400
-        result = {
-            "status": "success" if success else "error",
-            "status_code": response.status_code,
-            "api_call": f"{method} {url}",
-            "parameters": body,
-            "response": response_data,
-            "headers": dict(response.headers)
-        }
-        
-        # Trigger cache invalidation for successful data-modifying operations
-        if success and method.upper() in ['POST', 'PUT', 'DELETE', 'PATCH']:
-            print(f"\n🔄 Triggering cache invalidation for successful {method.upper()} operation...")
-            invalidate_cache_after_api_success(url, method, response_data)
-        
-        print(f"\n📋 FINAL RESULT:")
-        print(f"✅ Status: {result['status']}")
-        print(f"📊 Status Code: {result['status_code']}")
-        print(f"📦 Response Data Type: {type(result['response'])}")
-        if isinstance(result['response'], dict) and 'data' in result['response']:
-            data = result['response']['data']
-            if isinstance(data, list):
-                print(f"📊 Data Array Length: {len(data)}")
-            else:
-                print(f"📊 Data Type: {type(data)}")
-        print("="*60)
-        
-        return result
-        
-    except requests.exceptions.Timeout as e:
-        error_msg = f"Request timeout (200 seconds): {str(e)}"
-        print(f"❌ TIMEOUT ERROR: {error_msg}")
-        print("="*60)
-        return {
-            "status": "error",
-            "error": error_msg,
-            "api_call": f"{method} {url}",
-            "parameters": body
-        }
-    except requests.exceptions.SSLError as e:
-        error_msg = f"SSL Certificate error: {str(e)}"
-        print(f"❌ SSL ERROR: {error_msg}")
-        print(f"🔍 Common fixes for SSL errors:")
-        print(f"   1. Backend server SSL certificate may be self-signed or invalid")
-        print(f"   2. Already using verify=False to bypass SSL verification")
-        print(f"   3. Check if server is running with proper SSL configuration")
-        print(f"🌐 URL: {url}")
-        print("="*60)
-        return {
-            "status": "error",
-            "error": error_msg,
-            "api_call": f"{method} {url}",
-            "parameters": body
-        }
-    except requests.exceptions.ConnectionError as e:
-        error_msg = f"Connection error - API server may be unavailable: {str(e)}"
-        print(f"❌ CONNECTION ERROR: {error_msg}")
-        print(f"🔍 Detailed diagnostics:")
-        print(f"   📍 Target URL: {url}")
-        print(f"   🔧 Method: {method}")
-        print(f"   ⏱️ Timeout: 200 seconds")
-        print(f"   🔐 SSL Verify: False (disabled for localhost)")
-        
-        # Parse URL to provide specific guidance
-        from urllib.parse import urlparse
-        parsed = urlparse(url)
-        print(f"   🌐 Scheme: {parsed.scheme}")
-        print(f"   🏠 Hostname: {parsed.hostname}")
-        print(f"   🚪 Port: {parsed.port}")
-        
-        print(f"\n💡 Troubleshooting steps:")
-        if parsed.hostname in ['localhost', '127.0.0.1']:
-            print(f"   1. ✅ Localhost detected - Check if backend server is running")
-            print(f"   2. 🚪 Verify port {parsed.port or ('443' if parsed.scheme == 'https' else '80')} is correct")
-            print(f"   3. 🔄 Try starting the backend server")
-        else:
-            print(f"   1. 🌐 Remote server - Check network connectivity")
-            print(f"   2. 🔥 Check firewall settings")
-            print(f"   3. 🌍 Verify DNS resolution")
-        
-        print(f"   4. 🔍 Check if the API endpoint path is correct")
-        print(f"   5. 📋 Verify the backend server logs for any startup errors")
-        print("="*60)
-        return {
-            "status": "error", 
-            "error": error_msg,
-            "api_call": f"{method} {url}",
-            "parameters": body,
-            "troubleshooting": {
-                "parsed_url": {
-                    "scheme": parsed.scheme,
-                    "hostname": parsed.hostname,
-                    "port": parsed.port,
-                    "path": parsed.path
-                },
-                "is_localhost": parsed.hostname in ['localhost', '127.0.0.1'],
-                "suggestions": [
-                    "Check if backend server is running",
-                    f"Verify port {parsed.port or ('443' if parsed.scheme == 'https' else '80')}",
-                    "Check firewall settings",
-                    "Verify API endpoint path"
-                ]
+            
+        except requests.exceptions.Timeout as timeout_error:
+            error_msg = f"Request timeout: {str(timeout_error)}"
+            print(f"❌ [API] {error_msg}")
+            return {
+                "status": "error",
+                "error": error_msg,
+                "api_call": f"{method.upper()} {url}",
+                "timeout_error": True
             }
-        }
+            
+        except Exception as request_error:
+            error_msg = f"Request failed: {str(request_error)}"
+            print(f"❌ [API] {error_msg}")
+            return {
+                "status": "error",
+                "error": error_msg,
+                "api_call": f"{method.upper()} {url}",
+                "traceback": traceback.format_exc()
+            }
+            
     except Exception as e:
-        error_msg = f"Unexpected error: {str(e)}"
-        print(f"❌ UNEXPECTED ERROR: {error_msg}")
-        print(f"🔍 Exception Type: {type(e).__name__}")
-        import traceback
-        print(f"📋 Traceback: {traceback.format_exc()}")
-        print("="*60)
+        error_msg = f"Function error: {str(e)}"
+        print(f"❌ [API] {error_msg}")
         return {
             "status": "error",
             "error": error_msg,
-            "api_call": f"{method} {url}",
-            "parameters": body
+            "api_call": f"{method.upper()} {url}",
+            "traceback": traceback.format_exc()
         }
 
 

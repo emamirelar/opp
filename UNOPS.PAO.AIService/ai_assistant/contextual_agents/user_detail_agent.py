@@ -3,50 +3,51 @@ from google.adk.tools import FunctionTool
 from google.adk.tools.tool_context import ToolContext
 from ..agent_callbacks import user_detail_agent_callback
 from ai_assistant.config_manager import config_manager
+import json
+import os
 
 def get_user_profile(tool_context: ToolContext) -> dict:
     """
-    Get current user's profile information from the API.
-    This function only runs when cache is not available.
+    Get user profile from the API using the user's email from session state.
+    
+    Args:
+        tool_context: Tool context containing session state
+        
+    Returns:
+        dict: User profile data
     """
     try:
-        # Get session state from tool context  
-        session_state = tool_context.state
+        # Get user email from session state
+        user_email = None
+        if tool_context and hasattr(tool_context, 'state') and tool_context.state:
+            user_email = tool_context.state.get('header_email')
+            print(f"📧 Using header_email from session state: {user_email}")
         
-        # Import here to avoid circular imports
-        from ai_assistant.config_manager import config_manager, API_BASE_URL
-        from ..workflow_agent.api_worker.utilities import invoke_api_tool, construct_api_url
-        import os
+        # Fallback to environment variable if not in session state
+        if not user_email:
+            user_email = os.getenv('DEV_EMAIL', 'anushas@unops.org')
+            print(f"📧 Using DEV_EMAIL fallback: {user_email}")
         
-        print("📡 [FUNCTION] Fetching fresh user profile from API...")
-        
-        # Load entities configuration from tools.json
-        entities_config = config_manager.get_entities()
-        
-        # Find the UserData entity configuration
-        profile_entity = None
-        for entity in entities_config:
-            if entity.get('entity', '').lower() == 'userdata':
-                profile_entity = entity
-                break
-        
-        if not profile_entity:
-            print("⚠️ UserData entity not found in tools.json")
-            return {}
+        # Load tools configuration
+        tools_config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'tools.json')
+        with open(tools_config_path, 'r') as f:
+            tools_config = json.load(f)
         
         # Find the GetUserContext endpoint
         get_profile_endpoint = None
-        for endpoint in profile_entity.get('endpoints', []):
-            if endpoint.get('name') == 'GetUserContext':
-                get_profile_endpoint = endpoint
-                break
+        for entity in tools_config.get('entities', []):
+            for endpoint in entity.get('endpoints', []):
+                if endpoint.get('name') == 'GetUserContext':
+                    get_profile_endpoint = endpoint
+                    break
         
         if not get_profile_endpoint:
             print("⚠️ GetUserContext endpoint not found in tools.json")
             return {}
         
-        # GetUserContext requires email parameter - get from environment or use dev email
-        user_email = os.getenv('DEV_EMAIL', 'anushas@unops.org')
+        # Import here to avoid circular imports
+        from ai_assistant.config_manager import config_manager, API_BASE_URL
+        from ..workflow_agent.api_worker.utilities import invoke_api_tool, construct_api_url
         
         # Construct the full API URL using the utilities
         api_url = construct_api_url(API_BASE_URL, get_profile_endpoint['url'])
@@ -61,7 +62,8 @@ def get_user_profile(tool_context: ToolContext) -> dict:
         result = invoke_api_tool(
             url=api_url,
             method=method,
-            body=parameters
+            body=parameters,
+            tool_context=tool_context
         )
         
         if result.get('status') == 'success':
@@ -72,8 +74,8 @@ def get_user_profile(tool_context: ToolContext) -> dict:
             
             # Store in session state and cache
             try:
-                if session_state is not None:
-                    session_state['user_profile'] = user_profile
+                if tool_context and hasattr(tool_context, 'state') and tool_context.state is not None:
+                    tool_context.state['user_profile'] = user_profile
                     
                 # Cache the result for future use
                 from ..cache import entity_cache

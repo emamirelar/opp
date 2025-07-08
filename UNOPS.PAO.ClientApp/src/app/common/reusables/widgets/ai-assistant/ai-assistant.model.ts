@@ -1,8 +1,19 @@
 export interface ChatMessage {
-  text: string;
+  text?: string;
   isUser: boolean;
   timestamp: Date;
-  files?: ChatFile[];
+  files: ChatFile[];
+  // New properties for structured content
+  result?: ResultItem[];
+  entity?: string;
+  followUps?: string[];
+}
+
+export interface ResultItem {
+  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card';
+  message: string | any[]; // string for text/markdown/code, array for grid/card data
+  language?: string; // for code blocks
+  entity?: string; // for grid/card data
 }
 
 export interface ChatFile {

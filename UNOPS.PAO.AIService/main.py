@@ -84,6 +84,26 @@ def validate_iap_headers(headers: dict) -> dict:
         is_dev_simulation = headers_lower.get('x-dev-iap-simulation', '').lower() == 'true'
         dev_timestamp = headers_lower.get('x-dev-auth-timestamp')
         
+        # Check for DevIAPAuth cookie in development mode
+        dev_iap_auth_cookie = headers_lower.get('cookie', '')
+        if 'deviapauth=' in dev_iap_auth_cookie.lower():
+            # Extract email from DevIAPAuth cookie
+            import re
+            cookie_match = re.search(r'deviapauth=([^;]+)', dev_iap_auth_cookie, re.IGNORECASE)
+            if cookie_match:
+                dev_email_encoded = cookie_match.group(1)
+                try:
+                    import urllib.parse
+                    dev_email = urllib.parse.unquote(dev_email_encoded)
+                    if '@' in dev_email and '.' in dev_email.split('@')[1]:
+                        validation_result["user_email"] = dev_email
+                        validation_result["is_development"] = True
+                        logger.info(f"🧪 Development mode - Email extracted from DevIAPAuth cookie: {dev_email}")
+                    else:
+                        logger.warning(f"❌ Invalid email format in DevIAPAuth cookie: {dev_email}")
+                except Exception as e:
+                    logger.warning(f"❌ Error decoding DevIAPAuth cookie: {e}")
+        
         if is_dev_simulation:
             validation_result["is_development"] = True
             logger.info("🧪 Development IAP simulation detected")
@@ -100,21 +120,22 @@ def validate_iap_headers(headers: dict) -> dict:
                 validation_result["validation_errors"].append(f"Missing required IAP header: {header_name}")
                 logger.warning(f"❌ Missing IAP header: {header_name}")
         
-        # Validate user email format
-        user_email_header = headers_lower.get('x-goog-authenticated-user-email')
-        if user_email_header:
-            # IAP format: "accounts.google.com:user@domain.com"
-            if ':' in user_email_header:
-                _, email = user_email_header.split(':', 1)
-                if '@' in email and '.' in email.split('@')[1]:
-                    validation_result["user_email"] = email
-                    logger.info(f"✅ Valid user email extracted: {email}")
+        # Validate user email format from IAP headers (if not already set from cookie)
+        if not validation_result["user_email"]:
+            user_email_header = headers_lower.get('x-goog-authenticated-user-email')
+            if user_email_header:
+                # IAP format: "accounts.google.com:user@domain.com"
+                if ':' in user_email_header:
+                    _, email = user_email_header.split(':', 1)
+                    if '@' in email and '.' in email.split('@')[1]:
+                        validation_result["user_email"] = email
+                        logger.info(f"✅ Valid user email extracted from IAP header: {email}")
+                    else:
+                        validation_result["validation_errors"].append("Invalid email format in x-goog-authenticated-user-email")
+                        logger.warning(f"❌ Invalid email format: {user_email_header}")
                 else:
-                    validation_result["validation_errors"].append("Invalid email format in x-goog-authenticated-user-email")
-                    logger.warning(f"❌ Invalid email format: {user_email_header}")
-            else:
-                validation_result["validation_errors"].append("Invalid format for x-goog-authenticated-user-email (missing ':' separator)")
-                logger.warning(f"❌ Invalid header format: {user_email_header}")
+                    validation_result["validation_errors"].append("Invalid format for x-goog-authenticated-user-email (missing ':' separator)")
+                    logger.warning(f"❌ Invalid header format: {user_email_header}")
         
         # Validate user ID format
         user_id_header = headers_lower.get('x-goog-authenticated-user-id')
@@ -622,7 +643,7 @@ def add_title_endpoint(app: FastAPI):
     config = get_config()
     database_config = config.get('database', {})
     
-    @app.get("/title")
+    @app.get("/generate-title")
     async def get_session_title(
         session_id: str = Query(..., description="Session ID to retrieve conversations from"), 
         user_id: str = Query(..., description="User ID to retrieve conversations from"),

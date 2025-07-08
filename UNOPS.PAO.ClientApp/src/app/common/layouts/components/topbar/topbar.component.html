@@ -1,6 +1,6 @@
 <div class="layout-topbar flex justify-between gap-4 items-center">
 	<div class="layout-topbar-logo-container flex items-center">
-		<button pButton pRipple type="button" text class="p-link layout-menu-button flex-shrink-0" (click)="layoutService.onMenuToggle()">
+		<button pButton pRipple type="button" text class="p-link layout-menu-button flex-shrink-0" (click)="onMenuButtonClick()">
 			<i class="pi pi-bars"></i>
 		</button>
 		<a class="flex-shrink-0"
@@ -18,7 +18,7 @@
 
 	<div class="flex items-center justify-end">
       <app-language-selector></app-language-selector>
-	  <button (click)="layoutService.onAIAssistantToggle()"
+	  <button (click)="onAIAssistantToggle()"
 			type="button"
 			aria-label="AI Assistant Toggle"
 			data-ai-assistant-toggle

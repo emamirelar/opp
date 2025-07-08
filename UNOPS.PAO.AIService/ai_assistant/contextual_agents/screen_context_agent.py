@@ -322,7 +322,8 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
         result = invoke_api_tool(
             url=api_url,
             method=method,
-            body=parameters
+            body=parameters,
+            tool_context=tool_context
         )
         
         if result.get('status') == 'success':

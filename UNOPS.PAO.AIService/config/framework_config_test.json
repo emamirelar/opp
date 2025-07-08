@@ -20,53 +20,54 @@
       "preferences": "UserPreferences"
     },
     "ttl": {
-      "user_profile": 300,
-      "screen_context": 600,
-      "general": 180
+      "user_profile": 3600,
+      "screen_context": 7200,
+      "general": 1800
     },
     "enable_cache": true,
     "cache_backend": "memory"
   },
   "google_cloud": {
-    "use_vertex_ai": false,
-    "project": "test-project",
-    "location": "us-central1"
+    "use_vertex_ai": true,
+    "project": "unops-partneropportunity",
+    "location": "europe-west4"
   },
   "database": {
-    "url": "postgresql://test:test@localhost:5432/test_db"
+    "url": "postgresql://postgres:0Y%2FX3YNxHLL0fL4T@localhost:5433/partneropportunity-qa-db"
   },
   "server": {
-    "serve_web_interface": false,
-    "api_base_url": "http://localhost:8080",
-    "is_development": false,
-    "host": "127.0.0.1",
-    "port": 8080,
+    "serve_web_interface": true,
+    "api_base_url": "https://test-opportunityplus.unops.org",
+    "is_development": true,
+    "host": "0.0.0.0",
+    "port": 8000,
     "allow_origins": [
-      "http://localhost:8080",
-      "http://127.0.0.1:8080"
+      "https://test-opportunityplus.unops.org",
+      "https://localhost:44426/"
     ]
   },
   "google_drive": {
-    "enabled": false,
-    "project_id": "test-project",
-    "secret_name": "test-secret",
-    "service_account_email": "test-service-account@test-project.iam.gserviceaccount.com",
+    "enabled": true,
+    "project_id": "unops-partneropportunity",
+    "secret_name": "GoogleDriveAI",
+    "service_account_email": "google-drive-ai@unops-partneropportunity.iam.gserviceaccount.com",
     "scopes": [
-      "https://www.googleapis.com/auth/drive.readonly"
+      "https://www.googleapis.com/auth/drive.readonly",
+      "https://www.googleapis.com/auth/drive.file"
     ],
-    "max_file_size": 1048576,
-    "search_page_size": 5,
-    "batch_size": 2,
-    "cache_ttl": 300,
-    "timeout": 10,
-    "max_retries": 1,
-    "chunk_size": 512,
-    "max_search_results": 10,
+    "max_file_size": 10485760,
+    "search_page_size": 20,
+    "batch_size": 5,
+    "cache_ttl": 1800,
+    "timeout": 30,
+    "max_retries": 3,
+    "chunk_size": 1024,
+    "max_search_results": 100,
     "default_export_format": "text/plain",
-    "rate_limit_requests_per_second": 5,
-    "rate_limit_burst": 10,
-    "enable_content_search": false,
-    "enable_file_caching": false,
+    "rate_limit_requests_per_second": 10,
+    "rate_limit_burst": 20,
+    "enable_content_search": true,
+    "enable_file_caching": true,
     "search_operators": {
       "name": "name contains",
       "fullText": "fullText contains",
@@ -79,70 +80,108 @@
     },
     "supported_mime_types": [
       "application/vnd.google-apps.document",
-      "text/plain"
+      "application/vnd.google-apps.spreadsheet",
+      "application/vnd.google-apps.presentation",
+      "application/pdf",
+      "text/plain",
+      "text/csv",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/rtf",
+      "text/html",
+      "application/epub+zip"
     ],
     "export_formats": {
-      "application/vnd.google-apps.document": "text/plain"
+      "application/vnd.google-apps.document": "text/plain",
+      "application/vnd.google-apps.spreadsheet": "text/csv",
+      "application/vnd.google-apps.presentation": "text/plain"
     },
     "file_extensions": {
-      "document": [".txt"],
-      "other": [".txt"]
+      "document": [".docx", ".doc", ".txt", ".rtf", ".pdf"],
+      "spreadsheet": [".xlsx", ".xls", ".csv"],
+      "presentation": [".pptx", ".ppt"],
+      "other": [".pdf", ".txt", ".html", ".epub"]
     }
   },
   "developer": {
-    "email": "test@example.com"
+    "email": "anushas@unops.org"
   },
   "agent": {
-    "enable_google_drive_agent": false,
+    "enable_google_drive_agent": true,
     "enable_workflow_agent": true,
     "enable_search_agent": true,
-    "enable_contextual_agent": false
+    "enable_contextual_agent": true
   },
   "support": {
-    "email": "test@example.com",
-    "response_template": "Test support template for {application_name}",
-    "hours": "Test hours",
-    "response_time": "Immediate"
+    "email": "larsj@unops.org",
+    "response_template": "For technical support with {application_name}, please send an email to {support_email}. Include details about your issue, steps to reproduce the problem, your username, organizational unit, and any error messages. Support tickets are typically responded to within 24-48 hours during business hours.",
+    "hours": "During business hours",
+    "response_time": "24-48 hours"
   },
   "branding": {
-    "application_name": "Test AI Agent",
-    "project_name": "Test Project",
-    "organization": "Test Org",
-    "organization_full": "Test Organization",
-    "description": "Test environment configuration"
+    "application_name": "Opportunity+ AI Agent",
+    "project_name": "Opportunity+",
+    "organization": "UNOPS",
+    "organization_full": "United Nations Office for Project Services",
+    "description": "A comprehensive partner and opportunity management system"
   },
   "roles": {
-    "TEST_USER": {
-      "description": "Test user with basic permissions",
-      "permissions": ["view_all", "search"],
+    "UNOPS_GEN_USER": {
+      "description": "General UNOPS user with read-only access",
+      "permissions": ["view_all", "search", "filter", "reports_readonly"],
       "restrictions": ["no_create", "no_update", "no_delete"],
-      "use_cases": ["Testing basic functionality"]
+      "use_cases": ["Staff members who need to reference partner information but don't manage partnerships directly"]
+    },
+    "PARTNER_GLOBAL_ADMIN": {
+      "description": "Global administrator with full system access",
+      "permissions": ["full_crud", "manage_partners_global", "assign_roles", "system_config"],
+      "restrictions": ["none"],
+      "use_cases": ["System administrators", "global partnership managers"]
+    },
+    "PARTNER_USER": {
+      "description": "Standard partner management user with organizational restrictions",
+      "permissions": ["read_global", "create_new", "update_org_unit", "delete_org_unit"],
+      "restrictions": ["update_org_unit_only", "delete_org_unit_only", "no_admin"],
+      "use_cases": ["Regional partnership officers", "country office staff"]
+    },
+    "ORG_UNIT_ADMIN": {
+      "description": "Organizational unit administrator with unit-specific management rights",
+      "permissions": ["read_global", "create_new", "update_org_unit", "delete_org_unit", "manage_users_org_unit"],
+      "restrictions": ["no_global_settings"],
+      "use_cases": ["Country office managers", "regional directors"]
+    },
+    "GMAIL_GEN_USER": {
+      "description": "External user accessing through Gmail add-on",
+      "permissions": ["view_contextual", "search", "gmail_integration"],
+      "restrictions": ["no_modify", "contextual_only"],
+      "use_cases": ["External partners", "consultants with Gmail integration"]
     }
   },
   "defaults": {
-    "email": "test@example.com",
-    "timeout": 10,
-    "page_size": 5,
-    "max_retries": 1,
-    "max_parallel_agents": 2,
-    "file_size_limit": 1048576
+    "email": "larsj@unops.org",
+    "timeout": 30,
+    "page_size": 10,
+    "max_retries": 3,
+    "max_parallel_agents": 5,
+    "file_size_limit": 10485760
   },
   "runtime": {
     "gemini_model": "gemini-2.5-flash",
     "gemini_adhoc_model": "gemini-2.0-flash-001",
     "api_timeout": 300,
-    "default_page_size": 5,
-    "max_retries": 1,
-    "default_cache_ttl": 300,
-    "user_profile_cache_ttl": 300,
-    "screen_context_cache_ttl": 600,
-    "default_agent_timeout": 30,
-    "max_parallel_agents": 2,
-    "google_drive_max_file_size": 1048576,
-    "google_drive_search_page_size": 5,
-    "google_drive_batch_size": 2,
-    "default_host": "127.0.0.1",
-    "default_port": 8080
+    "default_page_size": 10,
+    "max_retries": 3,
+    "default_cache_ttl": 1800,
+    "user_profile_cache_ttl": 3600,
+    "screen_context_cache_ttl": 7200,
+    "default_agent_timeout": 60,
+    "max_parallel_agents": 5,
+    "google_drive_max_file_size": 10485760,
+    "google_drive_search_page_size": 20,
+    "google_drive_batch_size": 5,
+    "default_host": "0.0.0.0",
+    "default_port": 8000
   },
-  "description": "Test environment configuration for the AI Agent Framework"
+  "description": "Development environment configuration for the AI Agent Framework"
 } 

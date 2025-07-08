@@ -106,8 +106,6 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<UNOPSLink> Links { get; set; }
 
     public new DbSet<AiChatSession> AiChatSession { get; set; }
-
-    public new DbSet<AiChatHistory> AiChatHistory { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
     public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
 

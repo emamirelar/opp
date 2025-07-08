@@ -12,6 +12,18 @@
   }
 }
 
+/* Thinking dots animation */
+@keyframes thinking-bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
 /* Recording button animation */
 .recording {
   color: #ff4444 !important;
@@ -214,4 +226,264 @@
 
 .whitespace-pre-line {
   white-space: pre-line;
+}
+
+/* Copy button styling - positioned below white message */
+.copy-button-below-white {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #6b7280 !important;
+  backdrop-filter: blur(4px);
+  margin-left: 8px;
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+}
+
+.copy-button-below-white:hover {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  color: #374151 !important;
+  transform: scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Dark theme copy button for white messages */
+:host-context(.app-dark) .copy-button-below-white {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  color: #6b7280 !important;
+}
+
+:host-context(.app-dark) .copy-button-below-white:hover {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  color: #374151 !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Model message styling improvements */
+.group:hover .copy-button-below-white {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* Follow-up suggestion buttons - Chat-like pill style */
+.follow-up-button {
+  background-color: #f1f3f4 !important;
+  border: 1px solid #e8eaed !important;
+  color: #3c4043 !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  padding: 8px 16px !important;
+  margin: 4px 4px 4px 0 !important;
+  border-radius: 20px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: none !important;
+  line-height: 1.2 !important;
+}
+
+.follow-up-button:hover {
+  background-color: #e8f0fe !important;
+  border-color: #1976d2 !important;
+  color: #1976d2 !important;
+  transform: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.follow-up-button:focus {
+  background-color: #e8f0fe !important;
+  border-color: #1976d2 !important;
+  color: #1976d2 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2) !important;
+}
+
+.follow-up-button:active {
+  background-color: #d2e3fc !important;
+  transform: scale(0.98) !important;
+}
+
+/* Dark theme follow-up buttons */
+:host-context(.app-dark) .follow-up-button {
+  background-color: #303134 !important;
+  border: 1px solid #5f6368 !important;
+  color: #e8eaed !important;
+}
+
+:host-context(.app-dark) .follow-up-button:hover {
+  background-color: #1a73e8 !important;
+  border-color: #1a73e8 !important;
+  color: #ffffff !important;
+}
+
+:host-context(.app-dark) .follow-up-button:focus {
+  background-color: #1a73e8 !important;
+  border-color: #1a73e8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.3) !important;
+}
+
+/* AI message indicator styling */
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.from-blue-500 {
+  --tw-gradient-from: #3b82f6;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(59, 130, 246, 0));
+}
+
+.to-purple-600 {
+  --tw-gradient-to: #9333ea;
+}
+
+/* Typewriter effect enhancements */
+.typewriter-content {
+  min-height: 1.2em; /* Prevent layout shifts during typing */
+}
+
+/* Smooth transitions for follow-up buttons appearing */
+.follow-up-buttons-container {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced generating animation */
+.generating-message {
+  opacity: 0.8;
+  animation: pulse-generating 2s infinite;
+}
+
+@keyframes pulse-generating {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Fullscreen layout enhancements */
+.ai-chat-container {
+  position: relative;
+}
+
+/* Add to the root panel */
+:host {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Ensure chat container fills available space */
+.ai-chat-container {
+  flex: 1 1 0%;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+  /* No top padding/margin */
+}
+
+/* Enhanced welcome state for better space utilization */
+.ai-chat-container:has(.flex.flex-col.items-center.justify-center.h-full) {
+  min-height: calc(100vh - 310px);
+}
+
+/* Enhanced grid layout for example prompts */
+.grid-cols-1 .group:hover {
+  transform: translateY(-2px);
+}
+
+/* Better hover effects for fullscreen */
+:host-context(.ai-fullscreen) .group:hover .group-hover\:scale-105 {
+  transform: scale(1.02) translateY(-2px);
+}
+
+/* Improved shadows and depth */
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Smooth transitions for grid items */
+.grid .group {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced welcome content spacing */
+.max-w-2xl {
+  width: 100%;
+  max-width: 48rem;
+}
+
+/* Better responsive design for fullscreen */
+@media (min-width: 768px) {
+  .ai-chat-container {
+    padding: 3rem;
+  }
+  
+  .grid-cols-1.md\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .ai-chat-container {
+    padding: 6rem;
+  }
+  .ai-layout-wrapper .ai-chat-container {
+    padding: 0 !important;
+  }
+}
+
+/* Improved icon containers */
+.bg-white.bg-opacity-20 {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+/* Enhanced prompt cards */
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+
+/* Better visual hierarchy for welcome content */
+.text-2xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.leading-relaxed {
+  line-height: 1.625;
+}
+
+/* Improved info box styling */
+.bg-\[var\(--surface-card\)\] {
+  backdrop-filter: blur(10px);
+}
+
+/* Dark theme enhancements */
+:host-context(.app-dark) .bg-white.bg-opacity-20 {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+:host-context(.app-dark) .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+} 
+
+:host-context(.ai-fullscreen) .ai-chat-container {
+  padding: 0 !important;
+} 
+
+.ai-layout-wrapper .ai-chat-container {
+  padding: 0 !important;
 } 

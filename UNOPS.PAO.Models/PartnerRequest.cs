@@ -10,7 +10,7 @@ using UNOPS.PAO.Domain.Entities;
 
 public class PartnerRequest : ExtensibleModel
 {
-    public string Name { get; set; }
+    public string? Name { get; set; }
     public string Status { get; set; } = "Active";
     public string? NewEngagement { get; set; }
     public string? Phone { get; set; }
@@ -29,8 +29,8 @@ public class PartnerRequest : ExtensibleModel
     public string? DDRequired { get; set; }
     public string? DDEACDone { get; set; }
     public string? EACReference { get; set; }
-    public bool GlobalKeyAccount { get; set; } = false;
-    public bool UNSecretariatEntity { get; set; } = false;
+    public bool? GlobalKeyAccount { get; set; } = false;
+    public bool? UNSecretariatEntity { get; set; } = false;
     public string? LevyPotentiallyApplies { get; set; }
     public string? ReasonForLevyNotApplying { get; set; }
     public string? LevyTreatment { get; set; }

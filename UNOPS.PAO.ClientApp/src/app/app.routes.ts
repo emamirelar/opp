@@ -4,10 +4,15 @@ import { NotFoundComponent } from './common/pages/components/not-found/not-found
 import { AccessDeniedComponent } from './common/pages/components/access-denied/access-denied.component';
 import { InternalRoutingModule } from './features/internal/internal-routing.module';
 
+
 export const routes: Routes = [
   {
     path: '',
     loadChildren: () => InternalRoutingModule,
+  },
+  { 
+    path: 'ai', 
+    loadComponent: () => import('./features/ai/ai-layout.component').then(m => m.AiLayoutComponent)
   },
   { path: 'login', component: LoginComponent },
   { path: 'not-found', component: NotFoundComponent },
