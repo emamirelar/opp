@@ -237,7 +237,14 @@
         "examplePrompt1": "Analyser les données des partenaires et générer des insights",
         "examplePrompt2": "Aider à rédiger une proposition de partenariat",
         "examplePrompt3": "Résumer les interactions récentes avec les partenaires",
-        "learnMore": "En savoir plus sur ce que vous pouvez utiliser l'Assistant IA pour"
+        "learnMore": "En savoir plus sur ce que vous pouvez utiliser l'Assistant IA pour",
+        "copyMessage": "Copier le message",
+        "toggleStar": "Marquer la conversation",
+        "toggleArchive": "Archiver la conversation",
+        "close": "Fermer l'Assistant IA",
+        "thinking": "Réflexion en cours...",
+        "chatHistory": "Historique des conversations",
+        "noOldChats": "Aucune ancienne conversation"
     },
     "common": {
         "cancel": "Annuler",

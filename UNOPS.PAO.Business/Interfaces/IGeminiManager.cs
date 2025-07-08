@@ -10,23 +10,18 @@ public interface IGeminiManager
     AiPrompt MapModelToEntity(GeminiProcessDataRequest req);
     Task<IEnumerable<AiPrompt>> GetPromptData(string type);
     Task<string> FetchResultFromGemini(AiPrompt promptData, string relatedJsonData);
-    IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId);
+    Task<SessionWithChats> GetSessionDataWithChats(Guid sessionId, int userId);
     Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId);
-    IEnumerable<AiChatSession> GetUserSessions(int userId);
-    Guid CreateNewSession(int userId);
-    bool EndSession(Guid sessionId);
-    Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type);
-    Task<dynamic> EntityDetectionThroughGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string fileUrl, string fileType);
-    Task<dynamic> FetchDetailedResponseFromGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType, string fileUrl, string fileType);
-    JObject GetDetailsFromGeminiResponse(string modelResponse);
-    Task<AiChatSession> UpdateCurrentSessionIfInactive(int userId, Guid sessionId);
+    Task<IEnumerable<AiChatSession>> GetUserSessions(int userId);
     Task<string> ExtractDataFromFile(IFormFile file);
     string FindFileType(IFormFile file);
     Task<string> UploadFileToGCS(IFormFile file);
-    Task<dynamic> ProcessChatWithGemini(GeminiAssistantRequest req, int currentUserId);
     Task<string> ScanFileForGeminiProcessing(GeminiFileRequest req);
     Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req);
     Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req);
+    Task<bool> UpdateSessionStar(Guid sessionId, bool starred);
+    Task<bool> UpdateSessionArchive(Guid sessionId, bool archived);
+    Task<bool> UpdateSessionTitle(Guid sessionId, string title);
     Task<dynamic> GenerateEmbeddings(string? entityName);
 
     Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId);

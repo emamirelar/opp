@@ -46,7 +46,7 @@ public class GeminiManager : IGeminiManager
         return entity;
     }
 
-    public IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId)
+    public Task<SessionWithChats> GetSessionDataWithChats(Guid sessionId, int userId)
     {
         throw new NotImplementedException();
     }
@@ -56,7 +56,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public IEnumerable<AiChatSession> GetUserSessions(int userId) {
+    public Task<IEnumerable<AiChatSession>> GetUserSessions(int userId) {
         throw new NotImplementedException();
     }
 
@@ -65,11 +65,6 @@ public class GeminiManager : IGeminiManager
     }
 
     public bool EndSession(Guid sessionId) {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type)
-    {
         throw new NotImplementedException();
     }
 
@@ -125,6 +120,21 @@ public class GeminiManager : IGeminiManager
     }
 
     public Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> UpdateSessionStar(Guid sessionId, bool starred)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> UpdateSessionArchive(Guid sessionId, bool archived)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> UpdateSessionTitle(Guid sessionId, string title)
     {
         throw new NotImplementedException();
     }
