@@ -121,6 +121,60 @@ class ConfigManager:
             print(f"❌ Failed to retrieve secret {secret_name}: {e}")
             return None
     
+    def _convert_connection_string_to_sqlalchemy_url(self, connection_string: str) -> str:
+        """
+        Convert .NET connection string format to SQLAlchemy URL format
+        
+        Args:
+            connection_string: .NET format like "Username=postgres;Password=pass;Host=host;Port=5432;Database=db;"
+        
+        Returns:
+            str: SQLAlchemy URL format like "postgresql://postgres:pass@host:5432/db"
+        """
+        try:
+            print(f"🔄 Converting connection string to SQLAlchemy URL format...")
+            
+            # Parse the connection string
+            params = {}
+            for pair in connection_string.split(';'):
+                if '=' in pair and pair.strip():
+                    key, value = pair.split('=', 1)
+                    params[key.strip().lower()] = value.strip()
+            
+            print(f"📋 Parsed connection parameters: {list(params.keys())}")
+            
+            # Extract required components
+            username = params.get('username', '')
+            password = params.get('password', '')
+            host = params.get('host', 'localhost')
+            port = params.get('port', '5432')
+            database = params.get('database', '')
+            
+            if not username or not password or not host or not database:
+                missing = []
+                if not username: missing.append('username')
+                if not password: missing.append('password') 
+                if not host: missing.append('host')
+                if not database: missing.append('database')
+                raise ValueError(f"Missing required connection parameters: {missing}")
+            
+            # URL encode the password to handle special characters like '/'
+            from urllib.parse import quote_plus
+            encoded_password = quote_plus(password)
+            
+            # Build SQLAlchemy URL
+            url = f"postgresql://{username}:{encoded_password}@{host}:{port}/{database}"
+            
+            print(f"✅ Successfully converted to SQLAlchemy URL")
+            print(f"🔗 Final URL format: postgresql://{username}:***@{host}:{port}/{database}")
+            return url
+            
+        except Exception as e:
+            print(f"❌ Error converting connection string: {e}")
+            print(f"⚠️ Original connection string format: {connection_string[:100]}...")
+            # Return original string as fallback - let SQLAlchemy give its own error
+            return connection_string
+
     def get_database_url(self) -> str:
         """Get database URL, with Secret Manager support for test/prod environments"""
         try:
@@ -128,9 +182,13 @@ class ConfigManager:
             environment = os.getenv('CURRENT_ENV', 'dev')
             db_config = self.framework_config.get("database", {})
             
+            print(f"🌍 Environment: {environment}")
+            
             # For development, use the config file directly
             if environment == 'dev':
-                return db_config.get("url", "sqlite:///./ai_agent.db")
+                dev_url = db_config.get("url", "sqlite:///./ai_agent.db")
+                print(f"🛠️ Development environment - using config file URL")
+                return dev_url
             
             # For test/prod environments, try Secret Manager first if secret_name is configured
             if environment in ['test', 'prod']:
@@ -141,8 +199,17 @@ class ConfigManager:
                     secret_url = self.get_secret_from_secret_manager(secret_name)
                     
                     if secret_url:
-                        print(f"✅ Using database URL from Secret Manager ({secret_name}) for {environment} environment")
-                        return secret_url
+                        print(f"✅ Retrieved database URL from Secret Manager ({secret_name})")
+                        print(f"📋 Raw secret format (first 50 chars): {secret_url[:50]}...")
+                        
+                        # Check if it's a .NET connection string format (contains semicolons and equals)
+                        if ';' in secret_url and '=' in secret_url:
+                            print("🔄 Detected .NET connection string format - converting to SQLAlchemy URL...")
+                            converted_url = self._convert_connection_string_to_sqlalchemy_url(secret_url)
+                            return converted_url
+                        else:
+                            print("✅ Already in SQLAlchemy URL format")
+                            return secret_url
                     else:
                         print(f"⚠️ Failed to get database URL from Secret Manager ({secret_name}), falling back to config")
                 else:
@@ -155,6 +222,7 @@ class ConfigManager:
             
         except Exception as e:
             print(f"❌ Error getting database URL: {e}")
+            print("🔄 Falling back to SQLite...")
             return "sqlite:///./ai_agent.db"
     
     def get_roles(self) -> Dict[str, Any]:
