@@ -599,5 +599,14 @@
     "createPromptNotice": "Important Notice",
     "createPromptDescription": "Creating a prompt from this screen has no effect on any application feature unless programmatic code is added to invoke this prompt by type. This is an administrative tool for prompt management only.",
     "descriptionPlaceholder": "Enter a brief description of what this prompt does..."
+  },
+  "entityManager": {
+    "templatePattern": "Template Pattern",
+    "templatePatternHelper": "Use curly braces to reference fields: {fieldName}",
+    "templatePreview": "Preview",
+    "noDataAvailable": "No data available for preview",
+    "templateValid": "Template valid but no result",
+    "templateError": "Template error",
+    "examplePlaceholder": "e.g., {name} ({shortName})"
   }
 }

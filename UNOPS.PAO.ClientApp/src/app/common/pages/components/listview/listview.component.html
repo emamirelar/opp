@@ -10,7 +10,6 @@
         <p-iconfield iconPosition="left" class="w-full lg:w-64">
           <p-inputicon class="pi pi-search" />
           <input pInputText type="text"
-
             [(ngModel)]="searchValue"
             [placeholder]="searchPlaceholder()"
             (keyup.enter)="onSearch()"
@@ -48,13 +47,13 @@
         <!-- Sort Dropdown -->
         @if (config.enableSorting && sortableFields().length > 0) {
           <div class="flex items-center gap-2 ml-auto">
-            <label class="text-sm font-medium text-gray-600">{{ 'label.sortBy' | translate }}:</label>
             <p-select
               [options]="sortOptions()"
               [(ngModel)]="currentSortConfig"
               (ngModelChange)="onSortConfigChange($event)"
               optionLabel="label"
               optionValue="value"
+              appendTo="body"
               [placeholder]="'label.selectSort' | translate"
               class="w-48"
               [showClear]="true"

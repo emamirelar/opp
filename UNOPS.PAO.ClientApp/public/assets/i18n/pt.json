@@ -362,5 +362,14 @@
         "city": "Cidade",
         "country": "País",
         "partner": "Parceiro"
+    },
+    "entityManager": {
+        "templatePattern": "Padrão de Template",
+        "templatePatternHelper": "Use chaves para referenciar campos: {nomeDoCampo}",
+        "templatePreview": "Prévia",
+        "noDataAvailable": "Nenhum dado disponível para prévia",
+        "templateValid": "Template válido mas sem resultado",
+        "templateError": "Erro no template",
+        "examplePlaceholder": "ex. {nome} ({nomeAbreviado})"
     }
 }

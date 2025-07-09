@@ -90,17 +90,7 @@ export class PartnerContactsComponent implements OnInit {
     autoSwitchMinWidth: 768,
     defaultViewMode: 'card',
     entityName: 'Contact',
-    cardConfig: {
-      titleField: 'firstName',
-      contentFields: ['lastName', 'title', 'email', 'phone'],
-      cardsPerRow: {
-        xs: 1,
-        sm: 2,
-        md: 2,
-        lg: 3,
-        xl: 4
-      }
-    },
+     
   };
 
   ngOnInit(): void {
