@@ -187,6 +187,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
                                          c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
 
             const email = emailClaim?.value;
+            if (email) {
+              localStorage.setItem('user_email', email);
+            }
             const apiUrl = email ? `/api/user-info/current?email=${encodeURIComponent(email)}` : '/api/user-info/current';
 
             this.http.get<any>(apiUrl).subscribe({

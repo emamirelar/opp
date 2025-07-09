@@ -7,6 +7,14 @@ export interface ChatMessage {
   result?: ResultItem[];
   entity?: string;
   followUps?: string[];
+  sources?: Source[];
+  isFromHistory?: boolean; // Flag to indicate if message is loaded from history
+}
+
+export interface Source {
+  title: string;
+  url: string;
+  description?: string;
 }
 
 export interface ResultItem {

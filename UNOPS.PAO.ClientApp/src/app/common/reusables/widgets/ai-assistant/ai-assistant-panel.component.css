@@ -487,3 +487,54 @@
 .ai-layout-wrapper .ai-chat-container {
   padding: 0 !important;
 } 
+
+/* Sources section styling */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Source item hover effects */
+.source-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+:host-context(.app-dark) .source-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Source icon styling */
+.source-icon {
+  transition: transform 0.2s ease;
+}
+
+.source-item:hover .source-icon {
+  transform: scale(1.1);
+}
+
+/* Source link styling */
+.source-link {
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.source-link:hover {
+  color: #1976d2;
+}
+
+:host-context(.app-dark) .source-link:hover {
+  color: #64b5f6;
+}
+
+/* External link icon animation */
+.external-link-icon {
+  transition: transform 0.2s ease;
+}
+
+.source-item:hover .external-link-icon {
+  transform: translateX(2px);
+}

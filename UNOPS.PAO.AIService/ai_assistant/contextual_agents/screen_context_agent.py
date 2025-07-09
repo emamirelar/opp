@@ -4,149 +4,18 @@ from google.adk.tools import FunctionTool
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.tools.tool_context import ToolContext
 from google.adk.models.llm_response import LlmResponse
-from ..agent_callbacks import url_change_callback, screen_context_agent_callback, screen_context_after_model_callback
+from ..agent_callbacks import screen_context_agent_callback, screen_context_after_model_callback
 from typing import Optional
 from ai_assistant.config_manager import config_manager
 
-def inject_screen_url_before_model(callback_context: CallbackContext, llm_request=None) -> None:
-    """
-    Callback function that extracts screen_url from state, parses the entity from it,
-    and injects explicit instructions telling the agent to use ONLY the detected entity.
-    
-    Args:
-        callback_context: The callback context from Google ADK
-        llm_request: The LLM request object (optional)
-    """
-    ctx = callback_context
-    print(f"🖥️ [URL-INJECT] inject_screen_url_before_model triggered for {ctx.agent_name}")
-    
-    # Only apply to screen context agent
-    if ctx.agent_name != "screen_context_agent":
-        print(f"ℹ️ Skipping URL injection - not screen context agent (current: {ctx.agent_name})")
-        return
-    
-    print("🔧 [URL-INJECT] Parsing entity from screen_url and creating dynamic instruction...")
-    
-    # Use the llm_request parameter if provided, otherwise try to get it from context
-    if not llm_request:
-        llm_request = getattr(ctx, 'llm_request', None)
-    
-    if not llm_request:
-        print("⚠️ No LLM request found in context")
-        return
-    
-    # Extract screen_url from state
-    screen_url = ctx.state.get("screen_url", "")
-    current_url = ctx.state.get("current_url", "")
-    page_url = ctx.state.get("page_url", "")
-    
-    # Use the first available URL
-    url_to_use = screen_url or current_url or page_url or ""
-    
-    print(f"📍 [URL-INJECT] Extracted URL from state: '{url_to_use}'")
-    
-    # Parse entity and ID from URL
-    detected_entity = ""
-    detected_id = -1
-    detected_query = "list"
-    
-    if url_to_use:
-        normalized_url = url_to_use.strip().lower()
-        url_lower = normalized_url.strip('/')
-        
-        # Handle special UI routes first
-        if url_lower in ['notifications', 'notification']:
-            detected_entity = 'notification'
-            detected_query = "list"
-            print(f"📋 [URL-INJECT] Detected special route: notifications")
-        elif url_lower in ['dashboard', 'home', '']:
-            detected_entity = 'dashboard'
-            detected_query = "dashboard"
-            print(f"📋 [URL-INJECT] Detected special route: dashboard")
-        else:
-            # Parse URL like "/partnerships/partners/123" or "/partners/123" or "/contacts" 
-            url_parts = normalized_url.strip('/').split('/')
-            if len(url_parts) >= 1 and url_parts[-1] and not url_parts[-1].isdigit():
-                # Last non-numeric part is the entity
-                detected_entity = url_parts[-1].lower()
-            elif len(url_parts) >= 2 and url_parts[-2]:
-                # Second to last part might be entity if last is numeric
-                detected_entity = url_parts[-2].lower()
-            
-            # Try to extract ID from URL
-            for part in reversed(url_parts):
-                if part.isdigit():
-                    detected_id = int(part)
-                    detected_query = "detail"
-                    break
-            else:
-                detected_query = "list"
-        
-        print(f"📋 [URL-INJECT] Parsed from URL: entity='{detected_entity}', id={detected_id}, query='{detected_query}'")
-    else:
-        print("📭 [URL-INJECT] No URL found - will use empty context")
-    
-    # Trigger URL change callback
-    url_change_callback(callback_context, url_to_use)
-    
-    # Create EXPLICIT dynamic instruction that tells agent to ignore user message
-    enhanced_instruction = f"""
-    **CRITICAL: IGNORE USER MESSAGE CONTENT COMPLETELY**
-    
-    You are a screen context agent. Your ONLY job is to detect what screen the user is currently viewing based on the URL in the system state.
-    
-    **CURRENT SCREEN ANALYSIS:**
-    - Screen URL from state: "{url_to_use}"
-    - Detected Entity: "{detected_entity}"
-    - Detected ID: {detected_id}
-    - Query Type: "{detected_query}"
-    
-    **YOUR TASK:**
-    Call gather_screen_context() with these EXACT parameters detected from the screen URL:
-    - screen_url="{url_to_use}"
-    - entity="{detected_entity}" 
-    - id={detected_id}
-    - query="{detected_query}"
-    
-    **IMPORTANT RULES:**
-    1. DO NOT analyze the user's message content
-    2. DO NOT try to understand what the user is asking for
-    3. ONLY use the entity detected from the screen URL: "{detected_entity}"
-    4. The user could be asking about anything - ignore it completely
-    5. Your job is screen context, not request processing
-    
-    **EXAMPLES OF WHAT TO IGNORE:**
-    - If user asks "show me partners" but screen_url is "/notifications" → Use entity="notification"
-    - If user asks "get contacts" but screen_url is "/partners/123" → Use entity="partners", id=123
-    - If user asks "notifications" but screen_url is "/contacts" → Use entity="contacts"
-    
-    **EXECUTE NOW:**
-    Call gather_screen_context(screen_url="{url_to_use}", entity="{detected_entity}", id={detected_id}, query="{detected_query}")
-    
-    After calling the function, respond with: "Screen context retrieved for {detected_entity if detected_entity else 'current screen'}"
-    """
-    
-    # Inject the enhanced instruction
-    if hasattr(llm_request, 'config') and llm_request.config:
-        if hasattr(llm_request.config, 'system_instruction'):
-            llm_request.config.system_instruction = enhanced_instruction
-            print(f"✅ [URL-INJECT] Injected dynamic instruction with entity='{detected_entity}', id={detected_id}")
-        else:
-            print("⚠️ No system_instruction found in llm_request.config")
-    else:
-        print("⚠️ No config found in llm_request")
 
-def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entity: str = "", id: int = -1, query: str = "list") -> dict:
+def gather_screen_context(tool_context: ToolContext) -> dict:
     """
-    Intelligently gather screen context using the entity detected from screen_url.
-    This function uses the pre-parsed entity from the dynamic instruction, NOT the user's message.
+    Intelligently gather screen context using structured data from session state.
+    Uses screen_url object and user_viewing_panel for entity and ID information.
     
     Args:
-        tool_context: The tool context from Google ADK
-        screen_url: Current screen URL from state (e.g., "/notifications", "/partners/123")
-        entity: Entity name (PRE-PARSED from screen_url by callback)
-        id: Entity ID (PRE-PARSED from screen_url by callback) 
-        query: Query type (PRE-PARSED from screen_url by callback)
+        tool_context: The tool context from Google ADK containing session state
     """
     try:
         # Get session state from tool context
@@ -155,21 +24,32 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
         # Import here to avoid circular imports
         from ..config_manager import config_manager, API_BASE_URL
         from ..workflow_agent.api_worker.utilities import invoke_api_tool, construct_api_url
-        import re
         
-        # Normalize screen_url for comparison
-        normalized_url = screen_url.strip() if screen_url else ""
+        # Extract entity and ID from structured state data
+        screen_url_obj = session_state.get('screen_url', {})
+        user_viewing_panel = session_state.get('user_viewing_panel', {})
         
-        print(f"📡 [FUNCTION] Processing screen context with PRE-PARSED parameters:")
-        print(f"📍 [FUNCTION] screen_url='{normalized_url}'")
-        print(f"📋 [FUNCTION] entity='{entity}' (from URL parsing)")
-        print(f"🔢 [FUNCTION] id={id} (from URL parsing)")
-        print(f"📝 [FUNCTION] query='{query}' (from URL parsing)")
-        print(f"🚫 [FUNCTION] IGNORING user message content completely")
+        # First priority: screen_url object
+        entity = screen_url_obj.get('entity', '')
+        entity_id = screen_url_obj.get('id', None)
+        section = screen_url_obj.get('section', '')
         
-        # Handle empty URL case gracefully
-        if not normalized_url:
-            print("📭 [FUNCTION] No screen URL provided - returning default context")
+        # Second priority: user_viewing_panel if screen_url is empty
+        if not entity and user_viewing_panel:
+            entity = user_viewing_panel.get('entity', '')
+            entity_id = user_viewing_panel.get('entity_id', None)
+            # Convert string ID to int if needed
+            if entity_id and isinstance(entity_id, str) and entity_id.isdigit():
+                entity_id = int(entity_id)
+        
+        print(f"📡 [FUNCTION] Processing screen context with structured data:")
+        print(f"📋 [FUNCTION] entity='{entity}'")
+        print(f"🔢 [FUNCTION] entity_id={entity_id}")
+        print(f"📄 [FUNCTION] section='{section}'")
+        
+        # Handle empty entity case gracefully - no context needed
+        if not entity:
+            print("📭 [FUNCTION] No entity found in screen_url or user_viewing_panel - returning empty context")
             empty_context = {
                 "screen_name": "Application",
                 "screen_url": "",
@@ -181,20 +61,25 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
             }
             return empty_context
         
-        # Use the PRE-PARSED entity from the callback - do NOT re-parse from URL
-        # The entity was already detected from screen_url by inject_screen_url_before_model
         final_entity = entity
-        final_id = id
-        final_query = query
+        final_id = entity_id
+        final_query = "detail" if final_id else "list"
         
-        print(f"📋 [FUNCTION] Using PRE-PARSED parameters: entity='{final_entity}', id={final_id}, query='{final_query}'")
+        print(f"📋 [FUNCTION] Using structured data: entity='{final_entity}', id={final_id}, query='{final_query}'")
+        
+        # Create a display URL for logging and context
+        display_url = f"/{final_entity}"
+        if final_id:
+            display_url += f"/{final_id}"
+        if section:
+            display_url += f"/{section}"
         
         # Handle special cases for non-API entities
         if final_entity in ['dashboard', '']:
             print("📭 [FUNCTION] Dashboard/Home route - returning general context")
             dashboard_context = {
                 "screen_name": "Dashboard",
-                "screen_url": normalized_url,
+                "screen_url": display_url,
                 "screen_type": "dashboard",
                 "screen_data": {
                     "message": "Dashboard screen context",
@@ -204,16 +89,6 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
                 }
             }
             return dashboard_context
-        
-        if not final_entity:
-            print(f"⚠️ [FUNCTION] No entity detected from URL: '{normalized_url}'")
-            error_context = {
-                "screen_name": "Unknown Page",
-                "screen_url": normalized_url,
-                "screen_type": "unknown",
-                "screen_data": {"error": f"Could not determine entity from URL: '{normalized_url}'"}
-            }
-            return error_context
         
         # Load entities configuration from tools.json
         entities_config = config_manager.get_entities()
@@ -259,7 +134,7 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
             print(f"⚠️ [FUNCTION] {final_entity} entity not found in tools.json")
             error_context = {
                 "screen_name": f"{final_entity.title()} Page",
-                "screen_url": normalized_url,
+                "screen_url": display_url,
                 "screen_type": "entity",
                 "screen_data": {"entity": final_entity, "error": "Entity not found in configuration"}
             }
@@ -267,7 +142,7 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
         
         # Use the actual entity name from configuration
         actual_entity_name = entity_config.get('entity', final_entity)
-        print(f"✅ [FUNCTION] Found entity configuration: {actual_entity_name} for screen '{normalized_url}'")
+        print(f"✅ [FUNCTION] Found entity configuration: {actual_entity_name} for entity '{final_entity}'")
         
         # Determine which endpoint to use based on query type and ID presence
         target_endpoint = None
@@ -293,14 +168,14 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
             print(f"⚠️ [FUNCTION] No appropriate endpoint found for {actual_entity_name} (ID: {final_id})")
             error_context = {
                 "screen_name": f"{actual_entity_name} Page",
-                "screen_url": normalized_url,
+                "screen_url": display_url,
                 "screen_type": "entity", 
                 "screen_data": {"entity": actual_entity_name, "entity_id": final_id, "error": "No suitable endpoint found"}
             }
             return error_context
         
         # Construct API URL and prepare parameters
-        api_url = construct_api_url(config_manager.framework_config['runtime']['api_base_url'], target_endpoint['url'])
+        api_url = construct_api_url(config_manager.get_api_base_url(), target_endpoint['url'])
         method = target_endpoint['method']
         
         # Prepare parameters based on endpoint type
@@ -328,7 +203,7 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
         
         if result.get('status') == 'success':
             response_data = result.get('response', {})
-            print(f"✅ [FUNCTION] Successfully retrieved {actual_entity_name} data for screen '{normalized_url}'")
+            print(f"✅ [FUNCTION] Successfully retrieved {actual_entity_name} data for entity '{final_entity}'")
             
             # Format response based on view type
             if final_id != -1:
@@ -341,7 +216,7 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
                     "entity_data": response_data,
                     "view_type": "detail",
                     "intelligent_context": True,
-                    "parsed_from_url": normalized_url,
+                    "parsed_from_state": display_url,
                     "detected_entity": final_entity
                 }
             else:
@@ -358,13 +233,13 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
                     "page_size": len(data_items),
                     "items": data_items,
                     "intelligent_context": True,
-                    "parsed_from_url": normalized_url,
+                    "parsed_from_state": display_url,
                     "detected_entity": final_entity
                 }
             
             screen_context = {
                 "screen_name": screen_name,
-                "screen_url": normalized_url,
+                "screen_url": display_url,
                 "screen_type": screen_type,
                 "screen_data": screen_data
             }
@@ -374,9 +249,11 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
                 if session_state is not None:
                     session_state['screen_context'] = screen_context
                     
-                # Cache the result for future use
+                # Cache the result by entity+id combination for future use
                 from ..cache import entity_cache
-                entity_cache.set_screen_context(normalized_url, screen_context)
+                cache_key = f"{final_entity}:{final_id}" if final_id else f"{final_entity}:list"
+                entity_cache.set_screen_context(cache_key, screen_context)
+                print(f"💾 Cached screen context with key: {cache_key}")
                 
             except Exception as cache_error:
                 print(f"⚠️ Failed to set session state or cache: {cache_error}")
@@ -384,11 +261,11 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
             return screen_context
         else:
             error_msg = result.get('error', 'Unknown error')
-            print(f"❌ API call failed for screen '{normalized_url}': {error_msg}")
+            print(f"❌ API call failed for entity '{final_entity}': {error_msg}")
             
             error_context = {
                 "screen_name": f"{actual_entity_name} Page",
-                "screen_url": normalized_url,
+                "screen_url": display_url,
                 "screen_type": "error",
                 "screen_data": {
                     "entity": actual_entity_name,
@@ -402,40 +279,27 @@ def gather_screen_context(tool_context: ToolContext, screen_url: str = "", entit
         print(f"❌ Error gathering screen context: {e}")
         return {
             "screen_name": "Error Page",
-            "screen_url": screen_url or "unknown", 
+            "screen_url": "unknown", 
             "screen_type": "error",
             "screen_data": {"error": str(e)}
         }
 
-# Define a combined callback that handles both URL injection and cache checking
-def combined_screen_context_callback(callback_context: CallbackContext, llm_request) -> Optional[LlmResponse]:
-    """
-    Combined callback that first injects URL, then checks cache.
-    """
-    # First, inject the screen URL into the instruction
-    inject_screen_url_before_model(callback_context, llm_request)
-    
-    # Then, check if we can skip LLM execution due to cache
-    return screen_context_agent_callback(callback_context, llm_request)
-
 screen_context_agent = Agent(
     name="screen_context_agent",
-    model=config_manager.framework_config['runtime']['gemini_model'],
-    description="Agent that intelligently gathers screen context by analyzing URLs and fetching real data",
+    model=config_manager.get_gemini_model(),
+    description="Agent that gathers screen context using structured data from session state",
     instruction="""
     You are a background data gathering agent.
     
-    Your task: Call gather_screen_context() with the screen URL and return the screen data.
+    Your task: Call gather_screen_context() to get the current screen context data.
 
-    It is not your task to worry about the user's request or message. They could be asking for any information / data operations which is independent of your task.
-    You are the first agent to be called and hence the screen context information is ALWAYS necessary to do any such above operations. No exceptions.
+    You will use the structured screen_url and user_viewing_panel data from the session state.
+    The entity and ID information is already provided in a structured format.
     
-    The screen URL will be injected into your instruction by the callback.
-    Do this immediately without any conversation.
+    Do this immediately without any conversation. You should not respond to the user's request. You should only ALWAYS return the screen context response in JSON format.
     """,
     tools=[FunctionTool(func=gather_screen_context)],
     output_key="screen_context",
-    # Use combined callback that handles both URL injection and cache checking
-    before_model_callback=combined_screen_context_callback,
+    before_model_callback=screen_context_agent_callback,
     after_model_callback=screen_context_after_model_callback
 ) 

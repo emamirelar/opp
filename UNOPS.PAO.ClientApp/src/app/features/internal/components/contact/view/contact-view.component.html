@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-8">
   <div class="flex flex-col xl:flex-row gap-8">
-    <div class="xl:w-1/2 flex flex-col gap-8">
+    <div class="flex flex-col gap-8" [ngClass]="showAiPanel ? 'xl:w-1/2' : 'w-full'">
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} shadow-sm border border-solid border-gray-50 rounded-xl">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
@@ -179,7 +179,7 @@
 
 
     </div>
-    <div class="md:w-1/2 flex flex-col gap-8">
+    <div class="md:w-1/2 flex flex-col gap-8" *ngIf="showAiPanel">
       <app-ai-panel
         class="shadow-sm"
         [title]="'label.contact.summaryOfInteractions'"

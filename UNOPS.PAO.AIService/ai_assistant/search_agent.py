@@ -12,7 +12,7 @@ from ai_assistant.config_manager import config_manager
 
 search_agent = LlmAgent(
     name="search_agent",
-    model=config_manager.framework_config['runtime']['gemini_model'],
+    model=config_manager.get_gemini_model(),
     description="Specialized agent for performing Google searches for current events, external information, and topics not covered in the knowledge base",
     instruction="""
 🔍 **GOOGLE SEARCH AGENT**

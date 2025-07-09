@@ -17,6 +17,7 @@ import { SafeUrlPipe } from './safe-url.pipe';
 import { ContentRendererComponent } from './content-renderer/content-renderer.component';
 import { Router } from '@angular/router';
 import { EntityPanelService } from '../../../services/entity-panel.service';
+import { GlobalFilterService } from '../../../../services/global-filter.service';
 
 @Component({
   selector: 'app-ai-assistant-panel',
@@ -43,6 +44,9 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   @ViewChild('sessionMenu') private sessionMenu!: Menu;
   @Input() viewContainerRef!: ViewContainerRef;
   @Input() hideHeader: boolean = false; // Hide header in fullscreen mode
+  @Input() rightPanelEntityType: string | null = null; // Entity type in right panel
+  @Input() rightPanelEntityId: string | null = null; // Entity ID in right panel
+  @Input() mode: 'overlay' | 'fullscreen' = 'overlay'; // Mode determines card click behavior
   @Output() cardClicked = new EventEmitter<any>();
 
   firstScroll = signal(true);
@@ -79,7 +83,8 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   constructor(
     public aiAssistantData: AiAssistantData,
     private router: Router,
-    private entityPanelService: EntityPanelService
+    private entityPanelService: EntityPanelService,
+    private globalFilterService: GlobalFilterService
   ) {
     effect(() => {
       const chatHistory = this.aiAssistantData.chatHistory();
@@ -256,10 +261,18 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         content: ''
       }));
 
-      // Get current URL including domain
-      const currentUrl = window.location.href;
+      // Build state object with all context information
+      const state = {
+        screen_url: this.extractUrlStructure(),
+        user_email: localStorage.getItem('user_email'),
+        orgUnitId: this.globalFilterService.getSelectedOrgUnitId(),
+        user_viewing_panel: this.rightPanelEntityType && this.rightPanelEntityId ? {
+          entity_id: this.rightPanelEntityId,
+          entity: this.rightPanelEntityType
+        } : null
+      };
 
-      this.aiAssistantData.sendMessage(currentMessage, chatFiles, currentUrl).subscribe({
+      this.aiAssistantData.sendMessage(currentMessage, chatFiles, state).subscribe({
         next: () => {
           this.ngZone.run(() => {
             this.selectedFiles.set([]);
@@ -273,6 +286,71 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
           });
         }
       });
+    }
+  }
+
+  // Extract URL structure generically by skipping prefixes
+  private extractUrlStructure(): {entity: string, id: number|null, section: string|null, queryParams: string} {
+    try {
+      const url = new URL(window.location.href);
+      const pathSegments = url.pathname.split('/').filter(segment => segment.length > 0);
+      const queryParams = url.search;
+      
+      // Skip first segment (prefix) generically
+      const meaningfulSegments = pathSegments.slice(1);
+      
+      let entity = '';
+      let id: number | null = null;
+      let section: string | null = null;
+      
+      if (meaningfulSegments.length > 0) {
+        // First meaningful segment is the entity
+        const rawEntity = meaningfulSegments[0];
+        
+        // Normalize entity name
+        if (rawEntity === 'partners') {
+          entity = 'Partner';
+        } else if (rawEntity === 'contacts') {
+          entity = 'Contact';
+        } else if (rawEntity === 'interactions') {
+          entity = 'Interaction';
+        } else if (rawEntity === 'partner-tree') {
+          entity = 'PartnerTree';
+        } else {
+          // Capitalize first letter for any other entity
+          entity = rawEntity.charAt(0).toUpperCase() + rawEntity.slice(1);
+        }
+        
+        // Second segment might be an ID
+        if (meaningfulSegments.length > 1) {
+          const idSegment = meaningfulSegments[1];
+          const parsedId = parseInt(idSegment, 10);
+          if (!isNaN(parsedId)) {
+            id = parsedId;
+          }
+        }
+        
+        // Third segment might be a section
+        if (meaningfulSegments.length > 2) {
+          section = meaningfulSegments[2];
+        }
+      }
+      
+      return {
+        entity,
+        id,
+        section,
+        queryParams
+      };
+      
+    } catch (error) {
+      console.error('Error extracting URL structure:', error);
+      return {
+        entity: '',
+        id: null,
+        section: null,
+        queryParams: ''
+      };
     }
   }
 
@@ -603,6 +681,30 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     return itemIndex < visibleItems;
   }
 
+  // Check if sources should be displayed (after content is complete)
+  shouldShowSources(messageIndex: number): boolean {
+    const chatHistory = this.aiAssistantData.chatHistory();
+    const message = chatHistory[messageIndex];
+    
+    // If message is from history, always show sources immediately
+    if (message && message.isFromHistory) {
+      return true;
+    }
+    
+    // For new messages, check if it's the most recent and if content is complete
+    if (this.isNewMessage(messageIndex)) {
+      const displayState = this.contentDisplayState();
+      const visibleItems = displayState[messageIndex] || 0;
+      const totalItems = message.result ? message.result.length : 0;
+      
+      // Show sources only when all content items are visible
+      return visibleItems > totalItems;
+    }
+    
+    // For older messages, show sources immediately
+    return true;
+  }
+
   onContentItemComplete(messageIndex: number, itemIndex: number): void {
     const chatHistory = this.aiAssistantData.chatHistory();
     
@@ -621,16 +723,26 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       return;
     }
     
+    const message = chatHistory[messageIndex];
+    const totalItems = message.result ? message.result.length : 0;
+    
     this.contentDisplayState.update(state => {
       const newState = { ...state };
       const currentVisible = newState[messageIndex] || 0;
       
       // Show the next item after a brief delay for sequential effect
       setTimeout(() => {
-        this.contentDisplayState.update(s => ({
-          ...s,
-          [messageIndex]: Math.max(currentVisible, itemIndex + 2) // Show current + next item
-        }));
+        this.contentDisplayState.update(s => {
+          const nextVisible = Math.max(currentVisible, itemIndex + 2);
+          
+          // If this is the last item, add extra count to trigger sources display
+          const finalVisible = (itemIndex + 1 >= totalItems) ? totalItems + 1 : nextVisible;
+          
+          return {
+            ...s,
+            [messageIndex]: finalVisible
+          };
+        });
       }, 200); // 200ms delay between items
       
       return newState;
@@ -662,24 +774,116 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   // Check if a message is the most recent AI message (for typewriter effect)
   isNewMessage(messageIndex: number): boolean {
     const chatHistory = this.aiAssistantData.chatHistory();
+    const message = chatHistory[messageIndex];
+    
+    // If message is from history, never apply typewriter effect
+    if (message && message.isFromHistory) {
+      return false;
+    }
     
     // Find the most recent AI message index
     let mostRecentAiMessageIndex = -1;
     for (let i = chatHistory.length - 1; i >= 0; i--) {
-      const message = chatHistory[i];
-      if (message && !message.isUser && message.result && message.result.length > 0) {
+      const msg = chatHistory[i];
+      if (msg && !msg.isUser && msg.result && msg.result.length > 0) {
         mostRecentAiMessageIndex = i;
         break;
       }
     }
     
-    // Only the most recent AI message should have typewriter effect
+    // Only the most recent AI message should have typewriter effect (and not from history)
     return messageIndex === mostRecentAiMessageIndex;
   }
 
   // Handler for cardClicked event from content-renderer/entity-grid
   onCardClicked(event: { entityType: string, entityId: string, rowData: any }): void {
-    this.entityPanelService.openPanel(event.entityType, event.entityId, event.rowData);
-    this.cardClicked.emit(event);
+    if (this.mode === 'overlay') {
+      // In overlay mode, navigate to the entity page
+      this.navigateToEntity(event.entityType, event.entityId, event.rowData);
+    } else {
+      // In fullscreen mode, use the entity panel service for modal and emit for right panel
+      this.entityPanelService.openPanel(event.entityType, event.entityId, event.rowData);
+      this.cardClicked.emit(event);
+    }
+  }
+
+  // Get appropriate icon for source based on URL or type
+  getSourceIcon(source: any): string {
+    if (!source.url) {
+      return 'pi pi-file';
+    }
+
+    const url = source.url.toLowerCase();
+    const title = source.title?.toLowerCase() || '';
+    const description = source.description?.toLowerCase() || '';
+
+    // Google Drive/Docs
+    if (url.includes('docs.google.com') || url.includes('drive.google.com')) {
+      if (url.includes('/document/') || title.includes('document')) {
+        return 'pi pi-file-edit';
+      } else if (url.includes('/spreadsheets/') || title.includes('spreadsheet')) {
+        return 'pi pi-table';
+      } else if (url.includes('/presentation/') || title.includes('presentation')) {
+        return 'pi pi-chart-bar';
+      }
+      return 'pi pi-google';
+    }
+
+    // PDF files
+    if (url.includes('.pdf') || title.includes('.pdf') || description.includes('pdf')) {
+      return 'pi pi-file-pdf';
+    }
+
+    // Web search
+    if (url.includes('google.com/search') || title.includes('google search')) {
+      return 'pi pi-search';
+    }
+
+    // Local files
+    if (title.includes('file:') || description.includes('file:')) {
+      return 'pi pi-folder';
+    }
+
+    // Default for web links
+    return 'pi pi-globe';
+  }
+
+  // Open source link in a new tab
+  openSourceLink(source: any): void {
+    if (source.url) {
+      window.open(source.url, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  // Navigate to entity page (for overlay mode)
+  private navigateToEntity(entityType: string, entityId: string, rowData: any): void {
+    const route = this.buildEntityRoute(entityType, entityId, rowData);
+    if (route) {
+      console.log('🔗 AI Assistant - Navigating to entity:', route);
+      this.router.navigate([route]);
+    } else {
+      console.warn('🔗 AI Assistant - Could not build route for entity:', entityType, entityId);
+    }
+  }
+
+  // Build entity route (similar to EntityGridComponent.buildEntityUrl)
+  private buildEntityRoute(entityType: string, entityId: number | string, rowData: any): string | null {
+    switch (entityType?.toLowerCase()) {
+      case 'partner':
+        return `/partnerships/partners/${entityId}`;
+      case 'contact':
+        if (rowData.partnerId) {
+          return `/partnerships/partners/${rowData.partnerId}/contacts/${entityId}`;
+        }
+        return `/contacts/${entityId}`;
+      case 'interaction':
+        return `/interactions/${entityId}`;
+      case 'partneragreement':
+      case 'partnership':
+        return `/partnerships/agreements/${entityId}`;
+      default:
+        const routeSegment = entityType.toLowerCase().replace(/\s+/g, '-');
+        return `/${routeSegment}s/${entityId}`;
+    }
   }
 } 

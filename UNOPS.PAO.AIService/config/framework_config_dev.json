@@ -21,7 +21,7 @@
     },
     "ttl": {
       "user_profile": 3600,
-      "screen_context": 7200,
+      "screen_context": 600,
       "general": 1800
     },
     "enable_cache": true,

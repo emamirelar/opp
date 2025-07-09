@@ -282,7 +282,7 @@ pip install -r requirements.txt
 ### 2. **Configuration**
 ```bash
 # Create .env file
-echo "ENVIRONMENT=dev" > .env
+echo "CURRENT_ENV=dev" > .env
 
 # Configuration files are already set up:
 # - config/framework_config_dev.json (development)
@@ -350,9 +350,9 @@ set PORT=8080 && python main.py
 ### 🌍 **Environment-Based Configuration**
 ```bash
 # Set environment in .env file
-ENVIRONMENT=dev    # Loads framework_config_dev.json
-ENVIRONMENT=test   # Loads framework_config_test.json
-ENVIRONMENT=prod   # Loads framework_config_prod.json
+CURRENT_ENV=dev    # Loads framework_config_dev.json
+CURRENT_ENV=test   # Loads framework_config_test.json
+CURRENT_ENV=prod   # Loads framework_config_prod.json
 ```
 
 ### ⚙️ **Key Configuration Sections**

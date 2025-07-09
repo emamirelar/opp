@@ -20,7 +20,7 @@ namespace UNOPS.PAO.Models
         public bool Streaming { get; set; } = false;
 
         [JsonPropertyName("state")]
-        public Dictionary<string, object>? State { get; set; }
+        public dynamic? State { get; set; }
     }
 
 

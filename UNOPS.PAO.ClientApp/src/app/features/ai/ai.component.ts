@@ -11,7 +11,8 @@ import { AiAssistantPanelComponent } from '../../common/reusables/widgets/ai-ass
       <app-ai-assistant-panel
         class="h-full w-full"
         [viewContainerRef]="viewContainerRef"
-        [hideHeader]="true">
+        [hideHeader]="true"
+        mode="fullscreen">
       </app-ai-assistant-panel>
     </div>
   `,

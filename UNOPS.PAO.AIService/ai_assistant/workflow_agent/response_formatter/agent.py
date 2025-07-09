@@ -10,6 +10,7 @@ from google.genai import types
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional, Union
 from .callback import format_response_before_model, dynamic_response_instruction
+from ...agent_callbacks import response_formatter_after_model_callback
 from ai_assistant.config_manager import config_manager
 
 
@@ -46,12 +47,13 @@ def create_response_agent():
     return LlmAgent(
         name="response_formatter_agent",
         description="Formats API responses into structured JSON responses with appropriate display types for frontend rendering",
-        model=config_manager.framework_config['runtime']['gemini_model'],
+        model=config_manager.get_gemini_model(),
         instruction=dynamic_response_instruction,  # Use dynamic instruction
         output_key="formatted_response",
         output_schema=FormattedResponse,
         disallow_transfer_to_parent=True,  # Prevent transfer back to parent agents
-        before_model_callback=format_response_before_model
+        before_model_callback=format_response_before_model,
+        after_model_callback=response_formatter_after_model_callback
     ) 
 
 response_formatter_agent = create_response_agent()

@@ -72,7 +72,11 @@ export class AiAssistantData {
     this.viewContainerRef = viewContainerRef;
   }
 
-  public sendMessage(message: string, files: ChatFile[] = [], screenUrl?: string): Observable<void> {
+  public sendMessage(
+    message: string, 
+    files: ChatFile[] = [], 
+    state?: any
+  ): Observable<void> {
     if (!this.isValidMessage(message, files)) {
       return of();
     }
@@ -82,7 +86,7 @@ export class AiAssistantData {
 
     // Allow empty sessionId for new conversations - backend will create one
     const sessionId = this.currentSessionId() || '';
-    return this.sendMessageToServer(sessionId, message, files[0]?.file, screenUrl);
+    return this.sendMessageToServer(sessionId, message, files[0]?.file, state);
   }
 
   public clearConversation(): void {
@@ -227,7 +231,8 @@ export class AiAssistantData {
         text: chat.text ? this.parseMessageContent(chat.text) : '',
         isUser: chat.role === 'user',
         timestamp: new Date(),
-        files: []
+        files: [],
+        isFromHistory: true // Messages from session history should not have typewriter effect
       };
       // For model messages, check if the text contains structured data
       if (!message.isUser && message.text) {
@@ -237,6 +242,7 @@ export class AiAssistantData {
             message.result = parsed.result;
             message.entity = parsed.entity;
             message.followUps = parsed.followUps || [];
+            message.sources = parsed.sources || []; // Extract sources from historical data
             message.text = ''; // Clear text since we have structured content
           }
         } catch (e) {
@@ -286,7 +292,8 @@ export class AiAssistantData {
       text: message,
       isUser: true,
       timestamp: new Date(),
-      files
+      files,
+      isFromHistory: false // User messages from sendMessage are always new
     });
   }
 
@@ -306,7 +313,8 @@ export class AiAssistantData {
       text: aiResponse.message,
       isUser: false,
       timestamp: new Date(),
-      files: aiResponse.files || []
+      files: aiResponse.files || [],
+      isFromHistory: this._isLoadingPastChat // Set flag based on loading state
     });
   }
 
@@ -365,7 +373,9 @@ export class AiAssistantData {
       files: [],
       result: newResult,
       entity: responseData.entity,
-      followUps: responseData.followUps || []
+      followUps: responseData.followUps || [],
+      sources: responseData.sources || [],
+      isFromHistory: this._isLoadingPastChat // Set flag based on loading state
     };
 
     console.log('   Final message object:', structuredMessage);
@@ -427,15 +437,20 @@ export class AiAssistantData {
     });
   }
 
-  private sendMessageToServer(sessionId: string, message: string, file?: File, screenUrl?: string): Observable<void> {
+  private sendMessageToServer(
+    sessionId: string, 
+    message: string, 
+    file?: File, 
+    state?: any
+  ): Observable<void> {
     const formData = new FormData();
     formData.append("sessionId", sessionId);
     formData.append("message", message);
     if (file) {
         formData.append("file", file);
     }
-    if (screenUrl) {
-        formData.append("screenUrl", screenUrl);
+    if (state) {
+        formData.append("state", JSON.stringify(state));
     }
     // TODO: Add the file to the formData
     return this.aiAssistantService.chat(formData).pipe(
@@ -500,8 +515,32 @@ export class AiAssistantData {
           } else {
             console.error('❌ No result, events or message found in JSON response:', parsedResponse);
             console.log('Available properties:', Object.keys(parsedResponse));
-            // Show raw response as fallback
-            this.addSystemMessage({message: JSON.stringify(parsedResponse, null, 2)});
+            
+            // Try to extract structured data from any possible location
+            let foundStructuredData = false;
+            
+            // Check if any property contains structured data
+            for (const key in parsedResponse) {
+              const value = parsedResponse[key];
+              if (typeof value === 'string') {
+                try {
+                  const possibleJson = JSON.parse(value);
+                  if (possibleJson.result && Array.isArray(possibleJson.result)) {
+                    console.log('✅ EXTRACTED - Found structured data in property:', key);
+                    this.addStructuredMessage(possibleJson);
+                    foundStructuredData = true;
+                    break;
+                  }
+                } catch (e) {
+                  // Not JSON, continue checking other properties
+                }
+              }
+            }
+            
+            if (!foundStructuredData) {
+              // Show raw response as fallback
+              this.addSystemMessage({message: JSON.stringify(parsedResponse, null, 2)});
+            }
           }
         } else {
           console.error('No response received from server');
@@ -686,6 +725,36 @@ export class AiAssistantData {
           } catch (e) {
             console.error('❌ EVENTS - Failed to parse direct JSON after cleaning:', e);
             console.error('❌ EVENTS - Original text:', trimmedText);
+          }
+        }
+        
+        // Additional check: try to find JSON patterns even if not perfectly formatted
+        // This handles cases where the JSON might be wrapped in extra text or not perfectly formatted
+        const jsonPatterns = [
+          /\{[\s\S]*"result"[\s\S]*\}/,           // Look for any JSON with "result" property
+          /\{[\s\S]*"followUps"[\s\S]*\}/,       // Look for any JSON with "followUps" property
+          /\{[\s\S]*"type"[\s\S]*"markdown"[\s\S]*\}/  // Look for markdown type responses
+        ];
+        
+        for (const pattern of jsonPatterns) {
+          const match = userFacingText.match(pattern);
+          if (match) {
+            try {
+              console.log('🔍 EVENTS - Found JSON pattern, attempting to parse...');
+              const potentialJson = match[0];
+              console.log('🔍 EVENTS - Potential JSON:', potentialJson);
+              
+              const structuredData = JSON.parse(potentialJson);
+              
+              if (structuredData.result && Array.isArray(structuredData.result)) {
+                console.log('✅ EVENTS - Successfully parsed pattern-matched JSON:', structuredData);
+                this.addStructuredMessage(structuredData);
+                return;
+              }
+            } catch (e) {
+              console.log('⚠️ EVENTS - Pattern match failed to parse:', e);
+              continue; // Try next pattern
+            }
           }
         }
         

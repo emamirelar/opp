@@ -811,10 +811,7 @@ public class UNOPSGeminiManager : IGeminiManager
             SessionId = req.sessionId?.ToString() ?? "",
             Message = req.Message ?? "",
             Streaming = false,
-            State = new Dictionary<string, object>
-            {
-                { "screen_url", req.ScreenUrl ?? "" }
-            }
+            State = req.State
         };
 
         var apiUrl = $"{serviceUrl}/chat";

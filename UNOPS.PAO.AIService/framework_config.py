@@ -3,7 +3,7 @@
 Simple Configuration Loader
 
 Loads configuration from framework_config_<environment>.json files.
-Environment is determined by the ENVIRONMENT variable.
+Environment is determined by the CURRENT_ENV variable.
 """
 
 import json
@@ -28,8 +28,11 @@ class ConfigLoader:
     
     def load_config(self, environment: str = None) -> Dict[str, Any]:
         """Load configuration for the specified environment"""
+        print(f"Loading config for environment: {os.getenv('CURRENT_ENV')}")
         if environment is None:
-            environment = os.getenv('ENVIRONMENT', 'dev')
+            environment = os.getenv('CURRENT_ENV', 'dev')
+
+        print(f"Loading config for environment: {environment}")
         
         self._environment = environment
         config_file = self.config_dir / f"framework_config_{environment}.json"

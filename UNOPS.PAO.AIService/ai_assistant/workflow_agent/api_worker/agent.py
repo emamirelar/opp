@@ -22,7 +22,7 @@ def combined_before_model_callback(callback_context, llm_request=None):
 api_caller_agent = LlmAgent(
     name="api_caller_agent",
     description="Agent that makes actual API calls using entity-specific endpoints from dynamic configuration",
-    model=config_manager.framework_config['runtime']['gemini_model'],
+    model=config_manager.get_gemini_model(),
     instruction="""
     🚀 **API CALLER AGENT**
     
@@ -35,7 +35,28 @@ api_caller_agent = LlmAgent(
     4. **Map Parameters**: Handle parameter mapping (e.g., "top" → "pageSize")
     5. **Make API Call**: Use `invoke_api_tool(url, method, body)` to make the actual HTTP request
     6. **Handle Response**: Process the response and format it appropriately
-    7. **Exit Loop**: Call `exit_loop_on_success()` after successful completion
+    7. **Fetch Fresh Data**: For CREATE/UPDATE operations, make a follow-up GET call to retrieve the updated entity
+    8. **Exit Loop**: Call `exit_loop_on_success()` after successful completion
+    
+    **🔄 CRITICAL: AUTOMATIC FRESH DATA RETRIEVAL**
+    
+    **For CREATE Operations (POST):**
+    - After successful creation, if the response contains an ID, make a GET call to fetch the complete created entity
+    - Use the entity's detail endpoint (e.g., GET /api/partner/[ID]) to get fresh data
+    - Store both the creation result AND the fresh entity data for the user
+    
+    **For UPDATE Operations (PUT/PATCH):**
+    - After successful update, make a GET call to fetch the updated entity using its ID
+    - Use the entity's detail endpoint (e.g., GET /api/partner/[ID]) to get fresh data
+    - Store both the update result AND the fresh entity data for the user
+    
+    **For SEARCH/GET Operations:**
+    - Make the single API call as normal
+    - No follow-up call needed
+    
+    **For DELETE Operations:**
+    - Make the single DELETE call
+    - No follow-up call needed (entity no longer exists)
     
     **EXECUTION FLOW:**
     1. Look for entity information in the input
@@ -43,7 +64,21 @@ api_caller_agent = LlmAgent(
     3. Build the complete URL and prepare parameters
     4. Call `invoke_api_tool()` to make the HTTP request
     5. Process the response
-    6. Call `exit_loop_on_success()` to complete processing
+    6. **IF CREATE/UPDATE:** Extract entity ID and make follow-up GET call for fresh data
+    7. Store all results in state for response formatting
+    8. Call `exit_loop_on_success()` to complete processing
+    
+    **EXAMPLES:**
+    
+    **CREATE Example:**
+    1. POST /api/partner (create new partner) → returns {id: 123, status: "created"}
+    2. GET /api/partner/123 (fetch fresh data) → returns complete partner details
+    3. Store both results for user response
+    
+    **UPDATE Example:**
+    1. PUT /api/partner/123 (update partner) → returns {id: 123, status: "updated"}
+    2. GET /api/partner/123 (fetch fresh data) → returns updated partner details
+    3. Store both results for user response
     
     **REMEMBER:** You MUST actually call `invoke_api_tool()` - don't just describe what you would do!
     """,

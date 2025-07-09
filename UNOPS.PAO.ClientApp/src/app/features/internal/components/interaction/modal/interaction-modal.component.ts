@@ -72,7 +72,9 @@ export class InteractionModalComponent {
 
   record?: Interaction;
   isSaving = signal(false);
-  recordId: string = '';
+  
+  // Input property for recordId when used in AI layout
+  @Input() recordId: string = '';
 
   formGroup: FormGroup;
 
@@ -163,6 +165,13 @@ export class InteractionModalComponent {
   }
 
   ngOnInit() {
+    // If recordId is provided via Input (AI layout), load data directly
+    if (this.recordId && this.recordId !== '') {
+      this.loadInteractionById(Number(this.recordId));
+      return;
+    }
+
+    // Otherwise, use the dialog-based logic (normal modal usage)
     // Get the record ID from dialog data
     const recordId = this.dialogConfig.data?.id;
     const initialData = this.dialogConfig.data?.initialData;

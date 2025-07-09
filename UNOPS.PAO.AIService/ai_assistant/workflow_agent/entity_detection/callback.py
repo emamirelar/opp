@@ -300,7 +300,7 @@ The response should just be the title, no explanations.
         
         # Call Gemini with specific parameters for title generation
         from ...config_manager import config_manager
-        gemini_model = config_manager.framework_config['runtime']['gemini_adhoc_model']
+        gemini_model = config_manager.get_gemini_adhoc_model()
         title = call_gemini_direct(
             prompt=title_prompt,
             model_name=gemini_model,

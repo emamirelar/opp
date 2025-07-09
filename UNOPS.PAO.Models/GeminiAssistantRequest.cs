@@ -15,4 +15,5 @@ public class GeminiAssistantRequest
     public IFormFile? File { get; set; }
     public string? ExtractedText { get; set; }
     public string? ScreenUrl { get; set; }
+    public string? State { get; set; }
 }

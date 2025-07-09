@@ -1,7 +1,6 @@
 from google.adk.agents import ParallelAgent
 from .user_detail_agent import user_detail_agent
 from .screen_context_agent import screen_context_agent
-from ..agent_callbacks import contextual_agent_gate_callback
 
 
 contextual_agent = ParallelAgent(
@@ -11,5 +10,5 @@ contextual_agent = ParallelAgent(
         user_detail_agent,
         screen_context_agent,
     ],
-    before_agent_callback=contextual_agent_gate_callback
+    # Removed before_agent_callback - each agent now handles its own caching
 ) 

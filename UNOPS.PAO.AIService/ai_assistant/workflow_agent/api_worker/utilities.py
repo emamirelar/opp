@@ -264,6 +264,94 @@ def test_api_connectivity(base_url: str) -> dict:
         }
 
 
+def apply_org_unit_filter(body: dict, tool_context: Optional[ToolContext] = None, url: str = "") -> dict:
+    """
+    Apply orgUnitId filter automatically for entity listing endpoints or when searchText is present.
+    
+    This function checks:
+    1. If tool_context state contains 'orgUnitId'
+    2. If URL ends with entity name in lowercase (like /partners, /contacts) OR body contains 'searchText'
+    3. If conditions are met:
+       - If searchText exists, add orgUnitId
+       - If searchText doesn't exist but URL ends with entity name, add both searchText and orgUnitId
+    
+    Args:
+        body: Request body/parameters dictionary
+        tool_context: Tool context containing session state
+        url: The API URL being called
+        
+    Returns:
+        dict: Enhanced body with orgUnitId added if applicable
+    """
+    
+    # Make a copy to avoid modifying the original body
+    enhanced_body = body.copy() if body else {}
+    
+    try:
+        # Check if we have tool_context and state
+        if not tool_context or not hasattr(tool_context, 'state') or not tool_context.state:
+            print("ℹ️ [ORG-FILTER] No tool context or state available")
+            return enhanced_body
+        
+        # Check if state contains orgUnitId
+        org_unit_id = tool_context.state.get('orgUnitId')
+        if not org_unit_id:
+            print("ℹ️ [ORG-FILTER] No orgUnitId found in state")
+            return enhanced_body
+        
+        # Get entity names dynamically from tools.json configuration
+        try:
+            from ...config_manager import config_manager
+            entities_config = config_manager.get_entities()
+            # Extract entity names from the list of entity dictionaries
+            entity_names = [entity.get('entity', '').lower() for entity in entities_config if entity.get('entity')]
+            print(f"🔧 [ORG-FILTER] Loaded entity names from config: {entity_names}")
+        except Exception as e:
+            print(f"⚠️ [ORG-FILTER] Failed to load entities from config, using defaults: {e}")
+            # Fallback to default entity names
+            entity_names = ['partners', 'contacts', 'interactions', 'opportunities', 'users']
+        
+        # Check if URL ends with entity name (case insensitive, including plural forms)
+        url_lower = url.lower().rstrip('/')  # Remove trailing slash for consistent checking
+        url_ends_with_entity = False
+        
+        for entity in entity_names:
+            # Check singular form
+            if url_lower.endswith(f'/{entity}') or url_lower.endswith(entity):
+                url_ends_with_entity = True
+                break
+            # Check plural form (add 's' if not already ending with 's')
+            plural_entity = entity + 's' if not entity.endswith('s') else entity
+            if url_lower.endswith(f'/{plural_entity}') or url_lower.endswith(plural_entity):
+                url_ends_with_entity = True
+                break
+        
+        # Check if body contains searchText parameter
+        has_search_text = 'searchText' in enhanced_body
+        
+        # Apply filter logic
+        if has_search_text:
+            # Case 1: searchText exists - just add orgUnitId
+            enhanced_body['orgUnitId'] = org_unit_id
+            print(f"✅ [ORG-FILTER] Applied orgUnitId filter: {org_unit_id} (existing searchText: '{enhanced_body.get('searchText')}')")
+            
+        elif url_ends_with_entity:
+            # Case 2: URL ends with entity name but no searchText - add both
+            enhanced_body['searchText'] = ''  # Add empty searchText to enable filtering
+            enhanced_body['orgUnitId'] = org_unit_id
+            print(f"✅ [ORG-FILTER] Applied orgUnitId filter for entity listing: {org_unit_id} (added empty searchText)")
+            
+        else:
+            print("ℹ️ [ORG-FILTER] No searchText and URL doesn't end with entity name - orgUnitId filter not applicable")
+            return enhanced_body
+        
+        return enhanced_body
+        
+    except Exception as e:
+        print(f"⚠️ [ORG-FILTER] Error applying org unit filter: {e}")
+        return enhanced_body
+
+
 def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] = None, tool_context: Optional[ToolContext] = None) -> dict:
     """
     Invoke an API endpoint with real HTTP requests using configuration from tools.json
@@ -296,7 +384,7 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                 print(f"⚠️ Could not auto-extract tool_context: {e}")
         
         print(f"🌐 [API] Making {method} request to: {url}")
-        print(f"📦 [API] Request body: {json.dumps(body, indent=2)}")
+        print(f"📦 [API] Original request body: {json.dumps(body, indent=2)}")
         
         # Pre-flight connectivity check
         try:
@@ -364,12 +452,19 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
             
             print(f"🔐 Final request headers: {list(request_headers.keys())}")
             
+            # Apply orgUnitId filter automatically for entity endpoints or when searchText is present
+            enhanced_body = apply_org_unit_filter(body, tool_context, url)
+            
+            # Log enhanced body if it was modified
+            if enhanced_body != body:
+                print(f"📦 [API] Enhanced request body: {json.dumps(enhanced_body, indent=2)}")
+            
             # Prepare request data based on HTTP method
             if method.upper() == 'GET':
                 # For GET requests, add body parameters as query string
-                if body:
+                if enhanced_body:
                     import urllib.parse
-                    query_params = urllib.parse.urlencode(body)
+                    query_params = urllib.parse.urlencode(enhanced_body)
                     if '?' in url:
                         url += '&' + query_params
                     else:
@@ -381,11 +476,11 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                 
             elif method.upper() == 'POST':
                 # Make POST request with JSON body
-                response = requests.post(url, json=body, headers=request_headers, timeout=30, verify=False)
+                response = requests.post(url, json=enhanced_body, headers=request_headers, timeout=30, verify=False)
                 
             elif method.upper() == 'PUT':
                 # Make PUT request with JSON body
-                response = requests.put(url, json=body, headers=request_headers, timeout=30, verify=False)
+                response = requests.put(url, json=enhanced_body, headers=request_headers, timeout=30, verify=False)
                 
             elif method.upper() == 'DELETE':
                 # Make DELETE request

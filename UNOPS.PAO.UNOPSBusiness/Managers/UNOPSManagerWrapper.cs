@@ -52,7 +52,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor);
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, httpClient);
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);

@@ -1,7 +1,7 @@
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 from google.adk.tools.tool_context import ToolContext
-from ..agent_callbacks import user_detail_agent_callback
+from ..agent_callbacks import user_detail_agent_callback, user_detail_after_model_callback
 from ai_assistant.config_manager import config_manager
 import json
 import os
@@ -17,21 +17,39 @@ def get_user_profile(tool_context: ToolContext) -> dict:
         dict: User profile data
     """
     try:
-        # Get user email from session state
+        # Get user email from state with proper fallback chain
         user_email = None
         if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-            user_email = tool_context.state.get('header_email')
-            print(f"📧 Using header_email from session state: {user_email}")
+            # First priority: user_email from new state format
+            user_email = tool_context.state.get('user_email')
+            if user_email:
+                print(f"📧 Using user_email from session state: {user_email}")
+            else:
+                # Second priority: header_email from IAP headers (fallback)
+                user_email = tool_context.state.get('header_email')
+                if user_email:
+                    print(f"📧 Using header_email from IAP headers: {user_email}")
         
-        # Fallback to environment variable if not in session state
+        # Final fallback to environment variable
         if not user_email:
             user_email = os.getenv('DEV_EMAIL', 'anushas@unops.org')
             print(f"📧 Using DEV_EMAIL fallback: {user_email}")
+
+        # Check cache FIRST before making API call
+        from ..cache import get_entity_cache
+        entity_cache = get_entity_cache()
+        
+        cached_profile = entity_cache.get_user_profile(user_email)
+        if cached_profile:
+            print(f"✅ Cache HIT: Using cached user profile for {user_email}")
+            return cached_profile
         
         # Load tools configuration
         tools_config_path = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'tools.json')
         with open(tools_config_path, 'r') as f:
             tools_config = json.load(f)
+
+        print("About to get profile endpoint")
         
         # Find the GetUserContext endpoint
         get_profile_endpoint = None
@@ -75,10 +93,14 @@ def get_user_profile(tool_context: ToolContext) -> dict:
             # Store in session state and cache
             try:
                 if tool_context and hasattr(tool_context, 'state') and tool_context.state is not None:
-                    tool_context.state['user_profile'] = user_profile
+                    #tool_context.state['user_profile'] = user_profile
+                    print(f"✅ [FUNCTION] Set user_profile in tool_context.state")
+                else:
+                    print(f"⚠️ [FUNCTION] Could not set user_profile - no valid tool_context.state")
                     
                 # Cache the result for future use
-                from ..cache import entity_cache
+                from ..cache import get_entity_cache
+                entity_cache = get_entity_cache()
                 entity_cache.set_user_profile(user_email, user_profile)
                 
             except Exception as cache_error:
@@ -96,7 +118,7 @@ def get_user_profile(tool_context: ToolContext) -> dict:
 
 user_detail_agent = Agent(
     name="user_detail_agent",
-    model=config_manager.framework_config['runtime']['gemini_model'],
+    model=config_manager.get_gemini_model(),
     description="Agent that gathers user details from the API",
     instruction="""
     You are a background data gathering agent.
@@ -106,9 +128,12 @@ user_detail_agent = Agent(
     It is not your task to worry about the user's request or message. They could be asking for any information / data operations which is independent of your task.
     You are the first agent to be called and hence the user information is ALWAYS necessary to do any such above operations. No exceptions.
     
-    Do this immediately without any conversation.
+    Do this immediately without any conversation. 
+    
+    NOTE: You should not respond to the user's request. You should only ALWAYS return the user profile response in JSON format.
     """,
     tools=[FunctionTool(func=get_user_profile)],
     output_key="user_profile",
-    before_model_callback=user_detail_agent_callback
+    before_model_callback=user_detail_agent_callback,
+    after_model_callback=user_detail_after_model_callback
 ) 

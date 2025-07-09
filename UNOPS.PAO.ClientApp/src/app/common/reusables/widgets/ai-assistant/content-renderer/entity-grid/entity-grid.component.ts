@@ -11,72 +11,8 @@ import { Router } from '@angular/router';
   selector: 'app-entity-grid',
   standalone: true,
   imports: [CommonModule, ListviewCardComponent],
-  template: `
-    <div class="entity-grid-container">
-      <div class="entity-grid-header" *ngIf="entityType">
-        <h4>{{ entityType }}s ({{ gridData?.length || 0 }})</h4>
-      </div>
-      
-      <div class="entity-grid-loading" *ngIf="isLoading()">
-        <p>Loading column configuration...</p>
-      </div>
-      
-      <div class="entity-grid-content" *ngIf="!isLoading() && gridData && gridData.length > 0 && columns().length > 0">
-        <app-listview-card
-          [columns]="columns()"
-          [data]="gridData"
-          [config]="cardConfig()"
-          [totalRecords]="gridData.length"
-          [loading]="false"
-          [error]="false"
-          [hasMoreData]="false"
-          [isLoadingMore]="false"
-          (rowClick)="handleRowClick($event)">
-        </app-listview-card>
-      </div>
-      
-      <!-- Fallback: Show raw data if cards fail to render -->
-      <div *ngIf="!isLoading() && gridData && gridData.length > 0 && columns().length === 0" class="p-4 bg-yellow-50 border border-yellow-200 rounded">
-        <h5 class="font-semibold mb-2">⚠️ Column Configuration Missing</h5>
-        <p class="text-sm mb-2">No column configuration found for {{ entityType }}. Raw data:</p>
-        <pre class="text-xs bg-white p-2 rounded border overflow-auto max-h-32">{{ gridData | json }}</pre>
-      </div>
-      
-      <div class="entity-grid-empty" *ngIf="!isLoading() && (!gridData || gridData.length === 0)">
-        <p>No {{ entityType?.toLowerCase() }} data available</p>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .entity-grid-container {
-      margin: 1rem 0;
-    }
-    
-    .entity-grid-header h4 {
-      margin: 0 0 0.75rem 0;
-      font-weight: 600;
-      color: #374151;
-      font-size: 1.1rem;
-    }
-    
-    .entity-grid-loading,
-    .entity-grid-empty {
-      text-align: center;
-      padding: 2rem;
-      color: #6b7280;
-      font-style: italic;
-    }
-    
-    /* Dark theme styling */
-    :host-context(.app-dark) .entity-grid-header h4 {
-      color: #e5e7eb;
-    }
-    
-    :host-context(.app-dark) .entity-grid-loading,
-    :host-context(.app-dark) .entity-grid-empty {
-      color: #9ca3af;
-    }
-  `]
+  templateUrl: './entity-grid.component.html',
+  styleUrls: ['./entity-grid.component.css']
 })
 export class EntityGridComponent implements OnInit {
   @Input() entityType!: string;

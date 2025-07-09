@@ -41,7 +41,8 @@ from .search_agent import search_agent
 from .agent_callbacks import (
     get_cache_performance_stats,
     force_cache_refresh,
-    api_success_callback
+    api_success_callback,
+    user_request_after_model_callback
 )
 from .cache import entity_cache, auto_cleanup
 from ai_assistant.config_manager import config_manager
@@ -116,11 +117,18 @@ class GoogleSheetToolWrapper(BaseTool):
     def create_spreadsheet_from_list(self, tool_context: ToolContext, title: str, data: List[Dict[str, Any]], folder_id: str = "") -> str:
         """Create a Google Sheet from list data with session state access"""
         try:
-            # Get header_email from session state
-            header_email = None
+            # Get user_email from session state with proper fallback chain
+            user_email = None
             if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                header_email = tool_context.state.get('header_email')
-                logging.info(f"📧 Using header_email for permissions: {header_email}")
+                # First priority: user_email from new state format
+                user_email = tool_context.state.get('user_email')
+                if user_email:
+                    logging.info(f"📧 Using user_email for permissions: {user_email}")
+                else:
+                    # Second priority: header_email from IAP headers (fallback)
+                    user_email = tool_context.state.get('header_email')
+                    if user_email:
+                        logging.info(f"📧 Using header_email for permissions: {user_email}")
             
             # Initialize tool if needed
             if not self.sheet_tool:
@@ -143,7 +151,7 @@ class GoogleSheetToolWrapper(BaseTool):
                     title=title,
                     data=data,
                     folder_id=folder_id if folder_id else None,
-                    header_email=header_email
+                    header_email=user_email
                 )
             
             # Run the async function in sync context
@@ -166,11 +174,18 @@ class GoogleSheetToolWrapper(BaseTool):
     def create_spreadsheet_with_headers(self, tool_context: ToolContext, title: str, headers: List[str], data: List[List[Any]], folder_id: str = "") -> str:
         """Create a Google Sheet with headers and data with session state access"""
         try:
-            # Get header_email from session state
-            header_email = None
+            # Get user_email from session state with proper fallback chain
+            user_email = None
             if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                header_email = tool_context.state.get('header_email')
-                logging.info(f"📧 Using header_email for permissions: {header_email}")
+                # First priority: user_email from new state format
+                user_email = tool_context.state.get('user_email')
+                if user_email:
+                    logging.info(f"📧 Using user_email for permissions: {user_email}")
+                else:
+                    # Second priority: header_email from IAP headers (fallback)
+                    user_email = tool_context.state.get('header_email')
+                    if user_email:
+                        logging.info(f"📧 Using header_email for permissions: {user_email}")
             
             # Initialize tool if needed
             if not self.sheet_tool:
@@ -194,7 +209,7 @@ class GoogleSheetToolWrapper(BaseTool):
                     headers=headers,
                     data_rows=data,
                     folder_id=folder_id if folder_id else None,
-                    header_email=header_email
+                    header_email=user_email
                 )
             
             # Run the async function in sync context
@@ -278,11 +293,18 @@ class GoogleDocToolWrapper(BaseTool):
     def create_document_from_text(self, tool_context: ToolContext, title: str, content: str, folder_id: str = "") -> str:
         """Create a Google Doc from text with session state access"""
         try:
-            # Get header_email from session state
-            header_email = None
+            # Get user_email from session state with proper fallback chain
+            user_email = None
             if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                header_email = tool_context.state.get('header_email')
-                logging.info(f"📧 Using header_email for permissions: {header_email}")
+                # First priority: user_email from new state format
+                user_email = tool_context.state.get('user_email')
+                if user_email:
+                    logging.info(f"📧 Using user_email for permissions: {user_email}")
+                else:
+                    # Second priority: header_email from IAP headers (fallback)
+                    user_email = tool_context.state.get('header_email')
+                    if user_email:
+                        logging.info(f"📧 Using header_email for permissions: {user_email}")
             
             # Initialize tool if needed
             if not self.doc_tool:
@@ -305,7 +327,7 @@ class GoogleDocToolWrapper(BaseTool):
                     title=title,
                     data={"content": content},
                     folder_id=folder_id if folder_id else None,
-                    header_email=header_email
+                    header_email=user_email
                 )
             
             # Run the async function in sync context
@@ -402,7 +424,7 @@ def create_google_doc_from_text_data(tool_context: ToolContext, title: str, cont
     return google_doc_wrapper.create_document_from_text(tool_context, title, content, folder_id)
 
 ROOT_PROMPT = f"""
-You are a friendly AI assistant for the {config_manager.framework_config['branding']['project_name']}.
+You are a friendly AI assistant for the {config_manager.get_project_name()}.
 
 **YOUR CAPABILITIES:**
 - Access to Google Drive, Sheets, and Docs
@@ -1052,7 +1074,7 @@ def notify_api_success(entity_type: str, operation: str, result: dict) -> None:
     
 user_request_agent = Agent(
     name="user_request_agent",
-    model=config_manager.framework_config['runtime']['gemini_model'],
+    model=config_manager.get_gemini_model(),
     description="Main AI assistant for Opportunity+ system with comprehensive workflow capabilities",
     instruction=ROOT_PROMPT,
     tools=[
@@ -1068,7 +1090,8 @@ user_request_agent = Agent(
         FunctionTool(func=create_google_sheet_with_headers_data),
         FunctionTool(func=create_google_doc_from_text_data)
     ],
-    sub_agents=[workflow_agent]
+    sub_agents=[workflow_agent],
+    after_model_callback=user_request_after_model_callback
 )    
     
 root_agent = SequentialAgent(

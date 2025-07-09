@@ -92,7 +92,7 @@ class EntityAwareCache:
     def __init__(self):
         # Initialize with default values, load config lazily
         self.user_cache = SmartCache("user_profile", ttl_seconds=3600)  # Default 1 hour
-        self.screen_cache = SmartCache("screen_context", ttl_seconds=7200)  # Default 2 hours
+        self.screen_cache = SmartCache("screen_context", ttl_seconds=600)  # Default 10 minutes
         self.general_cache = SmartCache("general", ttl_seconds=1800)  # Default 30 minutes
         self.current_screen_url = None
         
@@ -113,7 +113,7 @@ class EntityAwareCache:
         
         # Cache TTL configurations (defaults, will be updated when config loads)
         self.USER_PROFILE_TTL = 3600
-        self.SCREEN_CONTEXT_TTL = 7200
+        self.SCREEN_CONTEXT_TTL = 600
         self.GENERAL_TTL = 1800
         
         # Flag to track if config has been loaded
@@ -129,7 +129,7 @@ class EntityAwareCache:
                 
                 # Update TTL values
                 self.USER_PROFILE_TTL = ttl_config.get("user_profile", 3600)
-                self.SCREEN_CONTEXT_TTL = ttl_config.get("screen_context", 7200)
+                self.SCREEN_CONTEXT_TTL = ttl_config.get("screen_context", 600)
                 self.GENERAL_TTL = ttl_config.get("general", 1800)
                 
                 # Recreate caches with correct TTL

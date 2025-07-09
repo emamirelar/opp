@@ -9,6 +9,7 @@ import json
 import os
 from typing import Dict, Any, Optional, List
 from functools import lru_cache
+from google.cloud import secretmanager
 
 class ConfigManager:
     """Singleton configuration manager for tools.json and framework_config.json"""
@@ -49,7 +50,7 @@ class ConfigManager:
                     # Fallback to direct file loading if framework_config system isn't initialized
                     if framework_config_path is None:
                         import os
-                        environment = os.getenv('ENVIRONMENT', 'dev')
+                        environment = os.getenv('CURRENT_ENV', 'dev')
                         framework_config_path = f'config/framework_config_{environment}.json'
                     
                     with open(framework_config_path, 'r', encoding='utf-8') as f:
@@ -92,6 +93,70 @@ class ConfigManager:
     def get_branding(self) -> Dict[str, str]:
         return self.framework_config.get("branding", {})
     
+    def get_project_name(self) -> str:
+        """Get project name from branding configuration with safe fallback"""
+        try:
+            branding = self.framework_config.get("branding", {})
+            return branding.get("project_name", "AI Assistant")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not load project_name from config, using default: {e}")
+            return "AI Assistant"
+    
+    def get_secret_from_secret_manager(self, secret_name: str, project_id: str = None) -> Optional[str]:
+        """Get secret value from Google Secret Manager"""
+        try:
+            if not project_id:
+                project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+            
+            client = secretmanager.SecretManagerServiceClient()
+            name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+            
+            print(f"🔐 Retrieving secret: {secret_name} from project: {project_id}")
+            response = client.access_secret_version(request={"name": name})
+            secret_value = response.payload.data.decode("UTF-8")
+            print(f"✅ Successfully retrieved secret: {secret_name}")
+            return secret_value
+            
+        except Exception as e:
+            print(f"❌ Failed to retrieve secret {secret_name}: {e}")
+            return None
+    
+    def get_database_url(self) -> str:
+        """Get database URL, with Secret Manager support for test/prod environments"""
+        try:
+            # Get environment
+            environment = os.getenv('CURRENT_ENV', 'dev')
+            db_config = self.framework_config.get("database", {})
+            
+            # For development, use the config file directly
+            if environment == 'dev':
+                return db_config.get("url", "sqlite:///./ai_agent.db")
+            
+            # For test/prod environments, try Secret Manager first if secret_name is configured
+            if environment in ['test', 'prod']:
+                secret_name = db_config.get("secret_name")
+                
+                if secret_name:
+                    print(f"🔐 Looking for database secret: {secret_name}")
+                    secret_url = self.get_secret_from_secret_manager(secret_name)
+                    
+                    if secret_url:
+                        print(f"✅ Using database URL from Secret Manager ({secret_name}) for {environment} environment")
+                        return secret_url
+                    else:
+                        print(f"⚠️ Failed to get database URL from Secret Manager ({secret_name}), falling back to config")
+                else:
+                    print(f"⚠️ No secret_name configured for {environment} environment, using config file")
+            
+            # Fallback to config file
+            config_url = db_config.get("url", "sqlite:///./ai_agent.db")
+            print(f"ℹ️ Using database URL from config file: {config_url[:50]}...")
+            return config_url
+            
+        except Exception as e:
+            print(f"❌ Error getting database URL: {e}")
+            return "sqlite:///./ai_agent.db"
+    
     def get_roles(self) -> Dict[str, Any]:
         return self.framework_config.get("roles", {})
     
@@ -102,6 +167,24 @@ class ConfigManager:
         """Get API base URL from framework configuration"""
         server_config = self.framework_config.get("server", {})
         return server_config.get("api_base_url", "https://localhost:44426")
+    
+    def get_gemini_model(self) -> str:
+        """Get Gemini model from framework configuration with safe fallback"""
+        try:
+            runtime_config = self.framework_config.get("runtime", {})
+            return runtime_config.get("gemini_model", "gemini-2.5-flash")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not load gemini_model from config, using default: {e}")
+            return "gemini-2.5-flash"
+    
+    def get_gemini_adhoc_model(self) -> str:
+        """Get Gemini adhoc model from framework configuration with safe fallback"""
+        try:
+            runtime_config = self.framework_config.get("runtime", {})
+            return runtime_config.get("gemini_adhoc_model", "gemini-2.0-flash-001")
+        except Exception as e:
+            print(f"⚠️ Warning: Could not load gemini_adhoc_model from config, using default: {e}")
+            return "gemini-2.0-flash-001"
     
     def get_entity_specific_tools(self, entity_name: str) -> str:
         """
@@ -336,6 +419,8 @@ class ConfigManager:
 config_manager = ConfigManager()
 
 # Export API_BASE_URL for backward compatibility
-@property
-def API_BASE_URL():
-    return config_manager.get_api_base_url() 
+def get_api_base_url():
+    return config_manager.get_api_base_url()
+
+# Create a module-level variable for direct access
+API_BASE_URL = config_manager.get_api_base_url() 

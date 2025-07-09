@@ -244,17 +244,36 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
     // No sorting needed - flattenTreeNodes already provides correct hierarchical order
 
     this.filterOrgUnits();
-
-    // Select the default org unit if exists
-    if (this.defaultOrgUnitId) {
-      this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.defaultOrgUnitId) || null;
-    } else if (this.orgUnitOptions.length > 0) {
-      this.selectedOrgUnit = this.orgUnitOptions.find(u => u.level === 0) || this.orgUnitOptions[0];
+    
+    const savedOrgUnitId = this.globalFilterService.getSelectedOrgUnitId();
+    
+    if (savedOrgUnitId) {
+      // First priority: use previously saved selection
+      this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === savedOrgUnitId) || null;
+      console.log('Loaded saved org unit selection:', this.selectedOrgUnit);
     }
     
-    // Update the global filter service with the initial selection
+    if (!this.selectedOrgUnit && this.defaultOrgUnitId) {
+      // Second priority: use user's default org unit
+      this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.defaultOrgUnitId) || null;
+      console.log('Using default org unit:', this.selectedOrgUnit);
+    }
+    
+    if (!this.selectedOrgUnit && this.orgUnitOptions.length > 0) {
+      // Third priority: use first level 0 unit or first available
+      this.selectedOrgUnit = this.orgUnitOptions.find(u => u.level === 0) || this.orgUnitOptions[0];
+      console.log('Using fallback org unit:', this.selectedOrgUnit);
+    }
+    
+    // Update the global filter service with the final selection
     if (this.selectedOrgUnit) {
       this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnit.id);
+      
+      // Auto-enable the global filter when an org unit is loaded
+      if (!this.globalFilterService.isFilterEnabled()) {
+        this.globalFilterService.setFilterEnabled(true);
+        console.log('Auto-enabled global filter because org unit was loaded');
+      }
     }
   }
 
@@ -342,6 +361,12 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
       console.log('Selected org unit:', this.selectedOrgUnit);
       // Update the global filter service with the selected org unit
       this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnit.id);
+      
+      // Auto-enable the global filter when an org unit is selected
+      if (!this.globalFilterService.isFilterEnabled()) {
+        this.globalFilterService.setFilterEnabled(true);
+        console.log('Auto-enabled global filter because org unit was selected');
+      }
     }
   }
 
