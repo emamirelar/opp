@@ -1,36 +1,33 @@
 <div class="layout-wrapper ai-layout-wrapper">
   <app-topbar></app-topbar>
   <div class="ai-layout-container" [ngStyle]="{ 'display': 'flex', 'flexDirection': 'row', 'height': '100%' }">
+    
+    <!-- Mobile Backdrop -->
+    <div *ngIf="isMobile() && sidebarOpen()" 
+         class="mobile-backdrop"
+         (click)="closeMobileSidebar()"></div>
+
     <!-- Sidebar -->
     <div class="ai-sidebar" 
-      [class.sidebar-collapsed]="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered()"
-      (mouseenter)="sidebarHovered.set(true)"
-      (mouseleave)="sidebarHovered.set(false)">
-      <div class="sidebar-header">
-        <button 
-          (click)="layoutService.onAiSidebarToggle()"
-          class="sidebar-toggle-btn"
-          type="button">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <span class="debug-text" *ngIf="!layoutService.aiAssistantSidebarCollapsed() || sidebarHovered()">Sidebar: {{ layoutService.aiAssistantSidebarCollapsed() ? 'Collapsed' : 'Expanded' }}</span>
-      </div>
+      [class.sidebar-collapsed]="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()"
+      [class.mobile-sidebar-open]="isMobile() && sidebarOpen()"
+      [class.mobile-sidebar-closed]="isMobile() && !sidebarOpen()"
+      (mouseenter)="!isMobile() && sidebarHovered.set(true)"
+      (mouseleave)="!isMobile() && sidebarHovered.set(false)">
       
-      <div class="sidebar-content" [style.display]="(layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered()) ? 'block' : 'block'" [ngClass]="{'sidebar-content-collapsed': layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered()}" >
+              <div class="sidebar-content" [style.display]="(layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()) ? 'block' : 'block'" [ngClass]="{'sidebar-content-collapsed': layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()}" >
         <!-- New Chat Button (collapsed: icon only, top-aligned) -->
-        <div class="p-4 border-b border-[var(--surface-border)] flex items-center" *ngIf="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered()">
+        <div class="p-4 border-b border-[var(--surface-border)] flex items-center" *ngIf="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()">
           <button 
             (click)="startNewChat()"
-            class="new-chat-button rounded-full p-3 flex items-center justify-center font-bold new-chat-collapsed"
+            class="new-chat-button rounded-full py-4 m-2 flex items-center justify-center font-bold new-chat-collapsed"
             [disabled]="selectedChatId() === null"
             [title]="'New Chat'">
             <i class="pi pi-plus text-3xl font-extrabold text-[var(--primary-color)]"></i>
           </button>
         </div>
         <!-- Full sidebar content when expanded -->
-        <ng-container *ngIf="!layoutService.aiAssistantSidebarCollapsed() || sidebarHovered()">
+        <ng-container *ngIf="!layoutService.aiAssistantSidebarCollapsed() || sidebarHovered() || isMobile()">
           <!-- New Chat Button -->
           <div class="p-4 border-b border-[var(--surface-border)]">
             <button 
@@ -123,7 +120,8 @@
     </div>
     
     <!-- AI Assistant Panel (Fullscreen Mode) -->
-    <div class="ai-content-area">
+    <div class="ai-content-area" 
+         [class.mobile-content-hidden]="isMobile() && sidebarOpen()">
       <app-ai-assistant-panel 
         [hideHeader]="true"
         [viewContainerRef]="viewContainerRef"
@@ -139,6 +137,7 @@
     <div class="ai-right-panel" 
          [class.panel-visible]="rightPanelVisible" 
          [class.resizing]="resizing"
+         [class.mobile-content-hidden]="isMobile() && sidebarOpen()"
          [style.flex-basis]="rightPanelVisible ? rightPanelWidth + 'px' : '0px'"
          [style.min-width]="rightPanelVisible ? '500px' : '0px'"
          [style.max-width]="rightPanelVisible ? '60vw' : '0px'"

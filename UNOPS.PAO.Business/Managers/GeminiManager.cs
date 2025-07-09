@@ -164,7 +164,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId)
+    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId, IHeaderDictionary headers = null)
     {
         throw new NotImplementedException();
     }

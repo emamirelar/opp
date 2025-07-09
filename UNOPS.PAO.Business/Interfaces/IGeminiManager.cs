@@ -29,6 +29,6 @@ public interface IGeminiManager
     Task<string> BulkInsertRecordsAsync(BulkUploadRequest request);
     Task<bool> CanGenerateTitle(string sessionId);
     Task UpdateSessionTitleAndFlag(string sessionId, string title);
-    Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId);
+    Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId, IHeaderDictionary headers = null);
     Task<string> GenerateTitle(string sessionId, int userId);
 }

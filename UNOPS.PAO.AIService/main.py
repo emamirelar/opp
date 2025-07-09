@@ -217,54 +217,36 @@ def validate_iap_headers(headers: dict) -> dict:
 
 def extract_iap_headers_for_forwarding(headers: dict) -> dict:
     """
-    Extract IAP headers from incoming request for forwarding to other services.
+    Extract ALL headers from incoming request for forwarding to other services.
 
-    This function extracts the relevant IAP headers that should be forwarded
-    to backend services or other API calls.
+    This function just returns all headers as-is, no filtering or processing.
 
     Args:
         headers: Dictionary of request headers
 
     Returns:
-        dict: Dictionary of IAP headers to forward
+        dict: Dictionary of ALL headers to forward (exactly as received)
     """
     try:
-        # Convert headers to lowercase for case-insensitive comparison
-        headers_lower = {k.lower(): v for k, v in headers.items()}
-
-        # Define IAP headers to forward
-        iap_headers_to_forward = [
-            'x-goog-authenticated-user-email',
-            'x-goog-authenticated-user-id',
-            'x-forwarded-user',
-            'x-forwarded-email',
-            'x-goog-iap-jwt-assertion',  # JWT token if present
-            'x-goog-iap-jwt-assertion-verified'  # Verification status
-        ]
-
-        # Extract headers that exist in the request
-        forwarded_headers = {}
-        for header_name in iap_headers_to_forward:
-            header_value = headers_lower.get(header_name)
-            if header_value:
-                # Preserve original case from the request
-                original_key = next((k for k in headers.keys() if k.lower() == header_name), header_name)
-                forwarded_headers[original_key] = header_value
-                logger.info(f"📤 Forwarding IAP header: {original_key}")
-
-        # Add development headers if in development mode
-        is_dev_simulation = headers_lower.get('x-dev-iap-simulation', '').lower() == 'true'
-        if is_dev_simulation:
-            dev_timestamp = headers_lower.get('x-dev-auth-timestamp')
-            if dev_timestamp:
-                forwarded_headers['X-Dev-Auth-Timestamp'] = dev_timestamp
-                logger.info("📤 Forwarding development auth timestamp")
-
-        logger.info(f"📤 Total IAP headers to forward: {len(forwarded_headers)}")
-        return forwarded_headers
+        logger.info(f"📤 Forwarding ALL headers as-is: {len(headers)} headers")
+        logger.info(f"📋 Header keys received: {list(headers.keys())}")
+        
+        # Log header values safely (mask sensitive data)
+        for key, value in headers.items():
+            if any(sensitive in key.lower() for sensitive in ['authorization', 'token', 'jwt', 'secret', 'password']):
+                masked_value = f"{value[:10]}..." if len(value) > 10 else "***"
+                logger.info(f"   {key}: {masked_value} (masked)")
+            elif 'email' in key.lower():
+                logger.info(f"   {key}: {value}")
+            elif len(value) > 100:
+                logger.info(f"   {key}: {value[:50]}... (truncated, length: {len(value)})")
+            else:
+                logger.info(f"   {key}: {value}")
+        
+        return headers
 
     except Exception as e:
-        logger.error(f"❌ Error extracting IAP headers for forwarding: {str(e)}")
+        logger.error(f"❌ Error forwarding headers: {str(e)}")
         return {}
 
 
@@ -564,26 +546,32 @@ def add_chat_endpoint(app: FastAPI):
                     else:
                         logger.info("ℹ️ No state update provided, using existing state")
 
-            # Add user_email to session state if available from IAP headers
-            if user_email:
+            # Add user_email and IAP headers to session state if available
+            if user_email or iap_headers_to_forward:
                 # Ensure session state exists
                 if not hasattr(session, 'state') or session.state is None:
                     session.state = {}
 
                 # Add user_email to session state (primary field)
-                session.state['user_email'] = user_email
-                # Also keep header_email for backward compatibility
-                session.state['header_email'] = user_email
-                logger.info(f"📧 Added user_email to session state: {user_email}")
+                if user_email:
+                    session.state['user_email'] = user_email
+                    # Also keep header_email for backward compatibility
+                    session.state['header_email'] = user_email
+                    logger.info(f"📧 Added user_email to session state: {user_email}")
+
+                # Store the complete IAP headers for API calls
+                if iap_headers_to_forward:
+                    session.state['iap_headers'] = iap_headers_to_forward
+                    logger.info(f"🔐 Stored IAP headers in session state: {list(iap_headers_to_forward.keys())}")
                 
-                # Save the session with user_email updates
+                # Save the session with user_email and IAP headers updates
                 try:
                     await session_service.update_session(session)
-                    logger.info(f"💾 Session saved with user_email: {user_email}")
-                except Exception as email_save_error:
-                    logger.error(f"❌ Failed to save session with user_email: {email_save_error}")
+                    logger.info(f"💾 Session saved with user_email: {user_email} and IAP headers: {list(iap_headers_to_forward.keys()) if iap_headers_to_forward else 'None'}")
+                except Exception as save_error:
+                    logger.error(f"❌ Failed to save session with user_email and IAP headers: {save_error}")
             else:
-                logger.info("⚠️ No user email found in IAP headers - user_email not added to session")
+                logger.info("⚠️ No user email or IAP headers found - session not updated")
 
             logger.info(f"📊 Final session state before processing: {session.state}")
 
