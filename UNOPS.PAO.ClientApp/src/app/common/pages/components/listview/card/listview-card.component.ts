@@ -338,7 +338,14 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
       if (!item || !field) {
         return null;
       }
-      return item[field as keyof T] ?? null;
+
+      // Handle nested properties using dot notation (e.g., 'contact.profilePicture')
+      if (field.includes('.')) {
+        return this.getNestedProperty(item, field);
+      }
+
+      // Handle simple properties (case insensitive)
+      return this.getCaseInsensitiveProperty(item, field) ?? null;
     } catch (error) {
       console.warn(`Error accessing field ${field}:`, error);
       return null;
@@ -544,10 +551,38 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   }
 
   /**
-   * Get nested property value from an object using dot notation
+   * Get property value from an object in a case insensitive way
+   * Uses Object.getOwnPropertyNames to avoid conflicts with inherited properties like HTML 'title'
+   */
+  private getCaseInsensitiveProperty(obj: any, prop: string): any {
+    if (!obj || typeof obj !== 'object') {
+      return undefined;
+    }
+    
+    // Try direct access first (case sensitive) using hasOwnProperty to check own properties only
+    if (Object.prototype.hasOwnProperty.call(obj, prop)) {
+      return obj[prop];
+    }
+    
+    // Search case insensitive among own properties only (not inherited ones)
+    const ownKeys = Object.getOwnPropertyNames(obj);
+    const matchingKey = ownKeys.find(key => 
+      key.toLowerCase() === prop.toLowerCase()
+    );
+    
+    if (matchingKey) {
+      return obj[matchingKey];
+    }
+    
+    return undefined;
+  }
+
+  /**
+   * Get nested property value from an object using dot notation (case insensitive)
    */
   private getNestedProperty(obj: any, path: string): any {
-    return path.split('.').reduce((current, prop) => current?.[prop], obj);
+    return path.split('.').reduce((current, prop) => 
+      current ? this.getCaseInsensitiveProperty(current, prop) : undefined, obj);
   }
 
   /**
@@ -583,27 +618,11 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
   }
 
   /**
-   * Get gradient background for interactionIcon type columns
-   */
-  getInteractionGradient(item: T, column: ListViewColumn): string {
-    const type = this.getFieldValue(item, column.field);
-    return this.interactionIconService.getInteractionGradient(String(type || ''));
-  }
-
-  /**
-   * Get shadow color for interactionIcon type columns
-   */
-  getInteractionShadowColor(item: T, column: ListViewColumn): string {
-    const type = this.getFieldValue(item, column.field);
-    return this.interactionIconService.getInteractionShadowColor(String(type || ''));
-  }
-
-  /**
    * Check if a field has a non-empty value for the given item
    */
   hasFieldValue(item: T, column: ListViewColumn | null): boolean {
     if (!column) return false;
-    
+
     // For template type, check the actual template output
     if (column.type === 'template' && column.templateFn) {
       const templateValue = column.templateFn(item);
@@ -613,11 +632,11 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
       const textContent = templateValue.replace(/<[^>]*>/g, '').trim();
       return textContent !== '';
     }
-    
+
     // For other types, use formatValue
     const value = this.formatValue(item, column);
     if (value === null || value === undefined) return false;
-    
+
     const stringValue = value.toString().trim();
     return stringValue !== '' && stringValue !== 'null' && stringValue !== 'undefined';
   }

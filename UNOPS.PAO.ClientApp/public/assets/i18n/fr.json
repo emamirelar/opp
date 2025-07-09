@@ -375,5 +375,14 @@
         "city": "Ville",
         "country": "Pays",
         "partner": "Partenaire"
+    },
+    "entityManager": {
+        "templatePattern": "Modèle de Template",
+        "templatePatternHelper": "Utilisez des accolades pour référencer les champs : {nomDuChamp}",
+        "templatePreview": "Prévisualisation",
+        "noDataAvailable": "Aucune donnée disponible pour la prévisualisation",
+        "templateValid": "Template valide mais aucun résultat",
+        "templateError": "Erreur dans le template",
+        "examplePlaceholder": "ex. {nom} ({nomCourt})"
     }
 }
