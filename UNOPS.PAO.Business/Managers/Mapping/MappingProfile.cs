@@ -28,8 +28,7 @@ public class MappingProfile : Profile
         // AI Prompt mappings
         CreateMap<AiPrompt, AiPromptModel>();
         CreateMap<AiPromptModel, AiPrompt>();
-        
-        CreateMap<AiChatHistoryModel, AiChatHistory>();
+
         CreateMap<AiChatSessionModel, AiChatSession>();
         CreateMap<Document, DocumentModel>();
         CreateMap<DocumentModel, Document>();

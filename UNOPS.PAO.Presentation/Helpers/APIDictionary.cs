@@ -70,6 +70,9 @@ public class APIDictionary
     public const string AiAssistantChat = APIPrefix + "ai-assistant/chat";
     public const string GeminiFileScan = APIPrefix + "scan-data";
     public const string AiAssistantAccessibility = APIPrefix + "ai-assistant/accessibility";
+    public const string AiAssistantUpdateStar = APIPrefix + "ai-assistant/update-star";
+    public const string AiAssistantUpdateArchive = APIPrefix + "ai-assistant/update-archive";
+    public const string AiAssistantUpdateTitle = APIPrefix + "ai-assistant/update-title";
     public const string GenerateEmbeddings = APIPrefix + "generate-embeddings";
     public const string AnalyseFile = APIPrefix + "import/analyse-file";
 
@@ -94,6 +97,8 @@ public class APIDictionary
     public const string UserInfo = APIPrefix + "user-info/by-email";
     public const string CurrentUserInfo = APIPrefix + "user-info/current";
 
+    public const string UserInfoUpdate = APIPrefix + "user-info/update";
+
     // AI Prompts
     public const string AiPrompts = APIPrefix + "ai-prompt-management";
     public const string AiPromptsTypes = AiPrompts + "/types";
@@ -116,4 +121,6 @@ public class APIDictionary
     public const string UserManagementUsers = UserManagement + "/users";
     public const string UserManagementRoles = UserManagement + "/roles";
     public const string UserManagementCurrentUserOrgUnit = UserManagement + "/current-user-org-unit";
+
+    public const string AiAssistantGenerateTitle = APIPrefix + "ai-assistant/generate-title";
 }

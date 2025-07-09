@@ -58,7 +58,7 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GeminiSessionService _sessionService;
     private readonly AiContextualService _aiService;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, HttpClient httpClient)
     {
         _mapper = mapper;
         _context = context;
@@ -69,7 +69,7 @@ public class UNOPSGeminiManager : IGeminiManager
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
         _textExtractionService = new TextExtractionService();
         _gcsService = new GoogleCloudStorageService(configuration);
-        _sessionService = new GeminiSessionService(context);
+        _sessionService = new GeminiSessionService(context, httpClient, configuration);
         _ttsService = new GoogleTextToSpeechService();
         _aiService = new AiContextualService(configuration, _context, _credentials);
     }
@@ -87,103 +87,10 @@ public class UNOPSGeminiManager : IGeminiManager
         return await _aiService.GetPromptData(type);
     }
 
-    // Fetch detailed response from Gemini
-    public async Task<dynamic> FetchDetailedResponseFromGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request, string promptType
-                                                                , string fileUrl, string fileType) {
-        var geminiResponse = await ChatWithGemini(session, request, promptType, formattedChatHistory, fileUrl, fileType);
-        return geminiResponse;
-    }
-
-    // Entity detection through Gemini
-    public async Task<dynamic> EntityDetectionThroughGemini(AiChatSession session, IEnumerable<dynamic> formattedChatHistory, GeminiAssistantRequest request
-                                                                , string fileUrl, string fileType) {
-        var geminiResponse = await ChatWithGemini(session, request, "entity_intent_detection", formattedChatHistory, fileUrl, fileType);
-        return geminiResponse;
-    }
-    
-    // Get details from Gemini response
-    public JObject GetDetailsFromGeminiResponse(string modelResponse) {
-        return _aiService.GetDetailsFromGeminiResponse(modelResponse);
-    }
-
     // Chat with Gemini
     private async Task<dynamic> ChatWithGemini(AiChatSession session, GeminiAssistantRequest req, string promptType, IEnumerable<dynamic> formattedChatHistory, string fileUrl, string fileType)
     {
-        var chatHistoryList = formattedChatHistory?.ToList() ?? new List<dynamic>();
-        Guid sessionId = req.sessionId;
-        string message = req.Message;
-        string extractedText = req.ExtractedText ?? "";
-        string finalPrompt = (string.IsNullOrEmpty(extractedText) ? message : extractedText);
-        var promptData = (await GetPromptData(promptType)).FirstOrDefault();
-
-        if (promptData == null)
-        {
-            promptType = "general_information";
-            promptData = (await GetPromptData(promptType)).FirstOrDefault();
-        }
-
-        if (chatHistoryList.Count == 0)
-        {
-            string promptTemplate = promptData.Prompt;
-            finalPrompt = promptTemplate.Replace("{promptData}", message);
-        }
-
-        chatHistoryList.Add(new
-        {
-            role = "user",
-            parts = new[] { new { text = finalPrompt } }
-        });
-
-        string response = await _aiService.CallGeminiApi(chatHistoryList, promptData);
-        var parsedResponse = GetDetailsFromGeminiResponse(response);
-        var entity = parsedResponse["Entity"]?.ToString() ?? parsedResponse["Category"]?.ToString();
-        var intent = parsedResponse["Intent"]?.ToString() ?? parsedResponse["ResponseType"]?.ToString();
-        var forward = parsedResponse["Forward"]?.ToString() ?? "No";
-
-        if (intent == "Action" && forward == "No" && promptType == "entity_intent_detection")
-        {
-            intent = "Information";
-        }
-
-        string responseInString = JsonConvert.SerializeObject(parsedResponse);
-        _sessionService.UpdateChatHistoryTable(sessionId, "user", message, finalPrompt, entity, intent, promptType, fileUrl, fileType);
-        message = parsedResponse["Message"]?.ToString();
-
-        if (session.TextToSpeech == true)
-        {
-            byte[] audioBytes = await _ttsService.ConvertTextToAudio(message);
-            fileUrl = await _gcsService.UploadAudioToGCS(audioBytes);
-            fileType = "audio";
-        }
-        else
-        {
-            fileUrl = null;
-            fileType = null;
-        }
-
-        if (parsedResponse["Forward"]?.ToString() == "No")
-        {
-            _sessionService.UpdateChatHistoryTable(sessionId, "model", message, responseInString, entity, intent, promptType, fileUrl, fileType);
-        }
-
-        var finalResponse = new
-        {
-            Entity = entity,
-            Intent = intent,
-            Message = parsedResponse["Message"]?.ToString() ?? "",
-            Type = parsedResponse["Type"]?.ToString() ?? "",
-            Summary = parsedResponse["Summary"]?.ToString() ?? "",
-            Forward = parsedResponse["Forward"]?.ToString() ?? "No",
-            RawMessage = responseInString,
-            MediaUrl = fileUrl,
-            MediaType = fileType,
-            ShortSummary = parsedResponse["ShortSummary"]?.ToString() ?? "",
-            Dependents = parsedResponse["dependents"]?.ToString() ?? "",
-            Url = parsedResponse["URL"]?.ToString() ?? "",
-            Files = new[] { new { MediaUrl = fileUrl, MediaType = fileType } }
-        };
-
-        return finalResponse;
+        throw new NotImplementedException();
     }
 
     // Updated FetchResultFromGemini to use CallGeminiApi
@@ -346,131 +253,101 @@ public class UNOPSGeminiManager : IGeminiManager
         return extractedText;
     }
 
-    public async Task<dynamic> ProcessChatWithGemini(GeminiAssistantRequest req, int currentUserId)
+    public async Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId) 
     {
-        string extractedText = "";
-        string fileUrl = "";
-        string fileType = "";
-
-        if (string.IsNullOrEmpty(req?.Message)) {
-            req.Message = "";
-        }
-
-        // If any other session is active, mark it as inactive and activate this session (if required)
-        var session = await UpdateCurrentSessionIfInactive(currentUserId, req.sessionId);
-
-        if (req.File != null) {
-            fileType = FindFileType(req.File);
-            extractedText = await ExtractDataFromFile(req.File);
-            fileUrl = await UploadFileToGCS(req.File);
-
-        }
-
-        var chatHistory = await GetChatHistory(req.sessionId, "entity_intent_detection");
-
-        if (!string.IsNullOrEmpty(extractedText)) 
-        {
-            if (!string.IsNullOrEmpty(req.Message))
-            {
-                req.ExtractedText = req.Message + "\\n";
-            }
-            req.ExtractedText = req.ExtractedText + extractedText + ".\\n"; 
-        }
-
-        var formattedChatHistory = chatHistory.Select(x => new {
-            role = x.Sender,
-            parts = new[] { new { text = x.RawMessage } }
-        }).ToList();
-
-        // Entity detection and intent classification to be done
-        var entityResponse = await EntityDetectionThroughGemini(session, formattedChatHistory, req, fileUrl, fileType);
-        var forward = entityResponse.Forward.ToString();
-        if (forward == string.Empty || forward == "No") {
-            return entityResponse;
-        }
-
-        var promptType = entityResponse.Type.ToString();
-        var summary = entityResponse.Summary.ToString();
-        var shortSummary = entityResponse.ShortSummary.ToString();
-
-        var content = "";
-
-        chatHistory = await GetChatHistory(req.sessionId, promptType);
-
-        if (forward == "Yes" && promptType.StartsWith("retrieve"))
-        {
-            var embeddingString = await _aiService.CreateEmbeddingForText(shortSummary);
-            var entityId = await _aiService.RetrieveEntityId(entityResponse.Entity.ToString(), embeddingString, shortSummary);
-            content = await _aiService.RetrieveContent(promptType, entityId);
-            req.Message = "Summary of the conversation with the user: " + summary + ". Content: " + content;
-        } else {
-            req.Message = "Summary: " + summary;
-        }
-
-        formattedChatHistory = chatHistory.Select(x => new {
-            role = x.Sender,
-            parts = new[] { new { text = x.RawMessage } }
-        }).ToList();
-
-        var detailedResponse = await FetchDetailedResponseFromGemini(session, formattedChatHistory, req, promptType, fileUrl, fileType);
-        var updatedMessage = await _aiService.GetDependentDropdownValues(detailedResponse?.Dependents, JsonConvert.DeserializeObject(detailedResponse.RawMessage), null);
-        var updatedDetailedResponse = new
-        {
-            detailedResponse.Entity,
-            detailedResponse.Intent,
-            detailedResponse.Message,
-            detailedResponse.Type,
-            detailedResponse.Summary,
-            detailedResponse.Forward,
-            RawMessage = JsonConvert.SerializeObject(updatedMessage),
-            detailedResponse.MediaUrl,
-            detailedResponse.MediaType,
-            detailedResponse.ShortSummary,
-            detailedResponse.Dependents,
-            detailedResponse.Url,
-            detailedResponse.Files
-        };
-
-        _sessionService.UpdateChatHistoryTable(req.sessionId, "model", updatedDetailedResponse.Message.ToString(), updatedDetailedResponse.RawMessage
-                                        , updatedDetailedResponse.Entity, updatedDetailedResponse.Intent, "entity_intent_detection", updatedDetailedResponse.MediaUrl, updatedDetailedResponse.MediaType);
-        
-        return updatedDetailedResponse;
-
+        return await _sessionService.GetSessionDataWithChats(sessionId, userId);
     }
 
-    public IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId) 
-    {
-        return _sessionService.GetSessionDataWithChats(sessionId, userId);
-    }
-
-    public async Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId) 
+    public async Task<IEnumerable<AiChatSession>> GetSessionData(string sessionId, int userId) 
     {
         return await _sessionService.GetSessionData(sessionId, userId);
     }
 
-    public IEnumerable<AiChatSession> GetUserSessions(int userId) 
+    public async Task<IEnumerable<AiChatSession>> GetUserSessions(int userId) 
     {
-        return _sessionService.GetUserSessions(userId);
-    }
-
-    public Guid CreateNewSession(int userId) 
-    {
-        return _sessionService.CreateNewSession(userId);
-    }
-
-    public bool EndSession(Guid sessionId) 
-    {
-        return _sessionService.EndSession(sessionId);
-    }
-
-    public async Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type) 
-    {
-        return await _sessionService.GetChatHistory(sessionId, type);
-    }
-
-    public async Task<AiChatSession> UpdateCurrentSessionIfInactive(int userId, Guid sessionId)
-    {
-        return await _sessionService.UpdateCurrentSessionIfInactive(userId, sessionId);
+        try
+        {
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
+            
+            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+            {
+                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+            }
+            
+            var apiUrl = $"{serviceUrl}/apps/{appName}/users/{userId}/sessions";
+            
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var response = await httpClient.GetAsync(apiUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var externalSessions = JsonConvert.DeserializeObject<IEnumerable<AiChatSession>>(jsonContent);
+                
+                if (externalSessions == null || !externalSessions.Any())
+                {
+                    return new List<AiChatSession>();
+                }
+                
+                // Get session IDs from external API response
+                var sessionIds = externalSessions.Select(s => s.Id).ToList();
+                
+                // Query AiChatSession table to get additional details
+                var dbSessions = await _context.AiChatSession
+                    .Where(x => sessionIds.Contains(x.Id) && x.UserId == userId)
+                    .ToListAsync();
+                
+                // Join external sessions with database sessions to combine data
+                var joinedSessions = externalSessions.Select(extSession =>
+                {
+                    var dbSession = dbSessions.FirstOrDefault(db => db.Id == extSession.Id);
+                    if (dbSession != null)
+                    {
+                        // Use database session data for fields like Title, Starred, Archived, etc.
+                        // but keep external session data for chat-related fields
+                        return new AiChatSession
+                        {
+                            Id = extSession.Id,
+                            UserId = extSession.UserId,
+                            Status = extSession.Status,
+                            LastUpdated = DateTime.UtcNow,
+                            Title = dbSession.Title ?? "New Chat",
+                            Starred = dbSession.Starred,
+                            Archived = dbSession.Archived,
+                            AiGenerateTitle = dbSession.AiGenerateTitle
+                        };
+                    }
+                    else
+                    {
+                        // If no database record found, use external session data with defaults
+                        return new AiChatSession
+                        {
+                            Id = extSession.Id,
+                            UserId = extSession.UserId,
+                            Status = extSession.Status,
+                            LastUpdated = DateTime.UtcNow,
+                            Title = "New Chat",
+                            Starred = false,
+                            Archived = false,
+                            AiGenerateTitle = true
+                        };
+                    }
+                }).ToList();
+                
+                return joinedSessions.OrderByDescending(s => s.LastUpdated);
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to fetch sessions from external API. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error calling external API for user sessions: {ex.Message}", ex);
+        }
     }
 
     public async Task<string> ExtractDataFromFile(IFormFile file) {
@@ -491,6 +368,32 @@ public class UNOPSGeminiManager : IGeminiManager
     public async Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
     {
         return await _sessionService.UpdateAiAssistantAccessibility(req);
+    }
+
+    public async Task<bool> UpdateSessionStar(string sessionId, bool starred)
+    {
+        return await _sessionService.UpdateSessionStar(sessionId, starred);
+    }
+
+    public async Task<bool> UpdateSessionArchive(string sessionId, bool archived)
+    {
+        return await _sessionService.UpdateSessionArchive(sessionId, archived);
+    }
+
+    public async Task<bool> UpdateSessionTitle(string sessionId, string title)
+    {
+        return await _sessionService.UpdateSessionTitle(sessionId, title);
+    }
+
+    public async Task UpdateSessionTitleAndFlag(string sessionId, string title)
+    {
+        var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
+        if (session != null)
+        {
+            session.Title = title;
+            session.AiGenerateTitle = false;
+            await _context.SaveChangesAsync();
+        }
     }
 
     public async Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId)
@@ -890,5 +793,108 @@ public class UNOPSGeminiManager : IGeminiManager
             Formatting = Formatting.Indented,
             Converters = new List<JsonConverter> { new Newtonsoft.Json.Converters.StringEnumConverter() }
         });
+    }
+
+    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId)
+    {
+        var appName = _configuration.GetValue<string>("AgenticAi:AppName");
+        var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+        if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+        {
+            throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+        }
+
+        var aiChatRequest = new AiChatRequest
+        {
+            AppName = appName,
+            UserId = currentUserId.ToString(),
+            SessionId = req.sessionId?.ToString() ?? "",
+            Message = req.Message ?? "",
+            Streaming = false,
+            State = req.State
+        };
+
+        var apiUrl = $"{serviceUrl}/chat";
+        var jsonContent = System.Text.Json.JsonSerializer.Serialize(aiChatRequest);
+        var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+        using var httpClient = new HttpClient();
+        var response = await httpClient.PostAsync(apiUrl, httpContent);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"AI service call failed. Status: {response.StatusCode}");
+        }
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        // Extract sessionId from req or responseContent
+        string sessionId = req.sessionId;
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            try
+            {
+                var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
+                sessionId = responseObj["session_id"]?.ToString();
+            }
+            catch { /* ignore parse errors, sessionId will remain null if not found */ }
+        }
+
+        if (!string.IsNullOrEmpty(sessionId))
+        {
+            var session = await _context.AiChatSession.FirstOrDefaultAsync(s => s.Id == sessionId);
+            if (session != null)
+            {
+                session.LastUpdated = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                var newSession = new AiChatSession
+                {
+                    Id = sessionId,
+                    UserId = currentUserId,
+                    Status = "Active",
+                    Title = "New Chat",
+                    LastUpdated = DateTime.UtcNow,
+                    AiGenerateTitle = true,
+                    Archived = false,
+                    Starred = false
+                };
+                _context.AiChatSession.Add(newSession);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        return responseContent;
+    }
+
+    public async Task<string> GenerateTitle(string sessionId, int userId)
+    {
+        // If sessionId is null or empty, throw
+        if (string.IsNullOrEmpty(sessionId))
+            throw new ArgumentException("SessionId is required");
+
+        var canGenerate = await CanGenerateTitle(sessionId);
+        if (!canGenerate)
+            throw new InvalidOperationException("Title generation is not allowed for this session.");
+
+        var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+        var apiUrl = $"{serviceUrl}/generate-title?session_id={sessionId}&user_id={userId}";
+        using var httpClient = new HttpClient();
+        var response = await httpClient.GetAsync(apiUrl);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException("Failed to generate title");
+
+        var content = await response.Content.ReadAsStringAsync();
+        var result = Newtonsoft.Json.Linq.JObject.Parse(content);
+        string title = result["title"]?.ToString();
+        await UpdateSessionTitleAndFlag(sessionId, title);
+        return title;
+    }
+
+    public async Task<bool> CanGenerateTitle(string sessionId)
+    {
+        var session = await _context.AiChatSession.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId);
+        return session != null && session.AiGenerateTitle;
     }
 }

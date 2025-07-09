@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 
@@ -49,6 +50,7 @@ import { GoBackComponent } from '../../../../../common/reusables/components/go-b
 @Component({
   selector: 'app-partner-view',
   imports: [
+    CommonModule,
     TranslateModule,
     InputTextModule,
     DropdownModule,
@@ -110,13 +112,24 @@ export class PartnerViewComponent implements OnInit {
   private langChangeSubscription: Subscription = new Subscription();
   onRecordCreationSuccess = output();
 
+  // Input property for recordId when used in AI layout
+  @Input() recordId: string = '';
+  
+  // Input property to control AI panel visibility
+  private _showAiPanel: boolean = true;
+  @Input() 
+  get showAiPanel(): boolean {
+    return this._showAiPanel;
+  }
+  set showAiPanel(value: boolean | null | undefined) {
+    this._showAiPanel = value === false ? false : true; // Default to true unless explicitly false
+  }
+
   showValidationFailedError = signal<boolean>(false);
-  recordId: string = '';
   recordData = signal<Partner>({});
   showCommentDialog = false;
   entityTypePartner = EntityType.Partner;
   infoLoading = signal<boolean>(false);
-
 
   //To be handled by permissions later so that only PRM Admin has this value set to true
   showAdditionalInfo = signal<boolean>(true);
@@ -138,6 +151,16 @@ export class PartnerViewComponent implements OnInit {
   }
 
   ngOnInit() {
+    console.log('PartnerView ngOnInit - showAiPanel value:', this.showAiPanel);
+    
+    // If recordId is provided via Input (AI layout), load data directly
+    if (this.recordId && this.recordId !== '') {
+      console.log('Using input recordId:', this.recordId);
+      this._loadRecordDetails();
+      return;
+    }
+
+    // Otherwise, use the route-based logic (normal navigation)
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';

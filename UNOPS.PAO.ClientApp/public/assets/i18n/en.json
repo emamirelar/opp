@@ -370,13 +370,21 @@
     "expand": "Expand AI Assistant",
     "fullscreen": "Fullscreen mode",
     "exitFullscreen": "Exit fullscreen",
+    "openFullscreen": "Open in new tab",
     "welcomeTitle": "Welcome to AI Assistant",
     "welcomeMessage": "I'm here to help you with partner management, proposal drafting, data analysis, and more. How can I assist you today?",
     "examplePromptsTitle": "Try asking me about:",
     "examplePrompt1": "Analyze partner data and generate insights",
     "examplePrompt2": "Help draft a partnership proposal",
     "examplePrompt3": "Summarize recent partner interactions",
-    "learnMore": "Learn more about what you can use AI Assistant for"
+    "learnMore": "Learn more about what you can use AI Assistant for",
+    "copyMessage": "Copy message",
+    "toggleStar": "Star conversation",
+    "toggleArchive": "Archive conversation",
+    "close": "Close AI Assistant",
+    "thinking": "Thinking...",
+    "chatHistory": "Chat history",
+    "noOldChats": "No old chats"
   },
   "actions": {
     "loadMore": "Load More"

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, output, signal, computed, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 
@@ -48,6 +49,7 @@ import { GoBackComponent } from '../../../../../common/reusables/components/go-b
 @Component({
   selector: 'app-contact-view',
   imports: [
+    CommonModule,
     TranslateModule,
     PanelModule,
     DocumentComponent,
@@ -59,7 +61,8 @@ import { GoBackComponent } from '../../../../../common/reusables/components/go-b
     DatePipe,
     CheckboxModule,
     AiPanelComponent,
-    RouterModule
+    RouterModule,
+    GoBackComponent
   ],
   templateUrl: './contact-view.component.html',
   standalone: true,
@@ -114,7 +117,20 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   recordPermissions = this.permissionUtils.recordPermissions;
 
   private langChangeSubscription: Subscription = new Subscription();
-  recordId: string = '';
+  
+  // Input property for recordId when used in AI layout
+  @Input() recordId: string = '';
+  
+  // Input property to control AI panel visibility
+  private _showAiPanel: boolean = true;
+  @Input() 
+  get showAiPanel(): boolean {
+    return this._showAiPanel;
+  }
+  set showAiPanel(value: boolean | null | undefined) {
+    this._showAiPanel = value === false ? false : true; // Default to true unless explicitly false
+  }
+  
   recordData = signal<Contact>({});
 
   readonly entityTypeContact = EntityType.Contact;
@@ -124,6 +140,16 @@ export class ContactViewComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    console.log('ContactView ngOnInit - showAiPanel value:', this.showAiPanel);
+    
+    // If recordId is provided via Input (AI layout), load data directly
+    if (this.recordId && this.recordId !== '') {
+      console.log('Using input recordId:', this.recordId);
+      this._loadRecordDetails();
+      return;
+    }
+
+    // Otherwise, use the route-based logic (normal navigation)
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';

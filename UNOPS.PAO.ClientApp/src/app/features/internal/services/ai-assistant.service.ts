@@ -84,6 +84,41 @@ export class AiAssistantService {
     );
   }
 
+  // Update session star status
+  updateSessionStar(sessionId: string, starred: boolean): Observable<HttpResponse<{ success: boolean }>> {
+    return this.http.post<{ success: boolean }>(
+      `${this.aiAssistantUrl}/update-star`,
+      { sessionId, starred },
+      { observe: 'response' }
+    );
+  }
+
+  // Update session archive status
+  updateSessionArchive(sessionId: string, archived: boolean): Observable<HttpResponse<{ success: boolean }>> {
+    return this.http.post<{ success: boolean }>(
+      `${this.aiAssistantUrl}/update-archive`,
+      { sessionId, archived },
+      { observe: 'response' }
+    );
+  }
+
+  // Update session title
+  updateSessionTitle(sessionId: string, title: string): Observable<HttpResponse<{ success: boolean }>> {
+    return this.http.post<{ success: boolean }>(
+      `${this.aiAssistantUrl}/update-title`,
+      { sessionId, title },
+      { observe: 'response' }
+    );
+  }
+
+  // Generate a title for a session (GET, sessionId as query param)
+  generateTitle(sessionId: string): Observable<HttpResponse<{ title: string }>> {
+    return this.http.get<{ title: string }>(
+      `${this.aiAssistantUrl}/generate-title?sessionId=${encodeURIComponent(sessionId)}`,
+      { observe: 'response' }
+    );
+  }
+
   // Helper method for IAP retry strategy
   private addIapRetryStrategy<T>() {
     return retryWhen<T>(errors => 

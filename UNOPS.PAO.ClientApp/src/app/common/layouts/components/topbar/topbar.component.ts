@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ViewChild, ElementRef, computed, effect } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
@@ -258,9 +258,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   private startNotificationPolling() {
-    this.loadNotifications();
+   // this.loadNotifications();
 
-    this.notificationSubscription = interval(15000)
+    /*this.notificationSubscription = interval(15000)
       .pipe(
         switchMap(() => this.notificationService.getNotifications(this.userId))
       )
@@ -274,7 +274,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         error: (error: any) => {
           // Error loading notifications
         }
-      });
+      });*/
   }
 
   private handleNewNotifications(newNotifications: Notification[]) {
@@ -522,6 +522,21 @@ export class TopbarComponent implements OnInit, OnDestroy {
         supervisorEmail: ''
       };
       this.profileDialog.show(tempUserInfo);
+    }
+  }
+
+  onAIAssistantToggle() {
+    this.layoutService.onAIAssistantToggle();
+  }
+
+  onMenuButtonClick() {
+    // Check if we're on the AI route
+    if (this.router.url.startsWith('/ai')) {
+      // On AI route, toggle the AI sidebar collapse
+      this.layoutService.onAiSidebarToggle();
+    } else {
+      // On regular routes, toggle the main sidebar
+      this.layoutService.onMenuToggle();
     }
   }
 }

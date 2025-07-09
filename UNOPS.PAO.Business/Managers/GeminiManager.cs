@@ -46,30 +46,25 @@ public class GeminiManager : IGeminiManager
         return entity;
     }
 
-    public IEnumerable<AiChatSession> GetSessionDataWithChats(Guid sessionId, int userId)
+    public Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId)
     {
         throw new NotImplementedException();
     }
 
-    public Task<IEnumerable<AiChatSession>> GetSessionData(Guid sessionId, int userId)
+    public Task<IEnumerable<AiChatSession>> GetSessionData(string sessionId, int userId)
     {
         throw new NotImplementedException();
     }
 
-    public IEnumerable<AiChatSession> GetUserSessions(int userId) {
+    public Task<IEnumerable<AiChatSession>> GetUserSessions(int userId) {
         throw new NotImplementedException();
     }
 
-    public Guid CreateNewSession(int userId) {
+    public string CreateNewSession(int userId) {
         throw new NotImplementedException();
     }
 
-    public bool EndSession(Guid sessionId) {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<AiChatHistory>> GetChatHistory(Guid sessionId, string type)
-    {
+    public bool EndSession(string sessionId) {
         throw new NotImplementedException();
     }
 
@@ -85,7 +80,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public Task<AiChatSession> UpdateCurrentSessionIfInactive(int userId, Guid sessionId) {
+    public Task<AiChatSession> UpdateCurrentSessionIfInactive(int userId, string sessionId) {
         throw new NotImplementedException();
     }
 
@@ -129,6 +124,21 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
+    public Task<bool> UpdateSessionStar(string sessionId, bool starred)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> UpdateSessionArchive(string sessionId, bool archived)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> UpdateSessionTitle(string sessionId, string title)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task<dynamic> GenerateEmbeddings(string? entityName)
     {
         throw new NotImplementedException();
@@ -140,6 +150,31 @@ public class GeminiManager : IGeminiManager
     }
 
     public async Task<string> BulkInsertRecordsAsync(BulkUploadRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<bool> CanGenerateTitle(string sessionId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task UpdateSessionTitleAndFlag(string sessionId, string title)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<string> GenerateTitle(string sessionId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> GenerateTitle(string sessionId, int userId)
     {
         throw new NotImplementedException();
     }

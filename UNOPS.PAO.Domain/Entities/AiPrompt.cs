@@ -14,4 +14,5 @@ public class AiPrompt : BaseBusinessEntity
     public string Project { get; set; }
     public string Location { get; set; }
     public string Model { get; set; }
+    public bool AdminCanChange { get; set; } = false;
 }

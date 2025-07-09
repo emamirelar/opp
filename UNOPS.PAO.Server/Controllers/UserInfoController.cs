@@ -29,8 +29,15 @@ public class UserInfoController : ControllerBase
         _userManager = userManager;
     }
 
+    [HttpPut(APIDictionary.UserInfoUpdate)]
+    public async Task<ActionResult<UserInfo>> UpdateUserInfo([FromBody] UserInfo userInfo)
+    {
+        var result = await _userInfoService.UpdateUserInfoAsync(userInfo);
+        return Ok(result);
+    }
+
     [HttpGet(APIDictionary.CurrentUserInfo)]
-    public async Task<ActionResult> GetCurrentUserInfo([FromQuery] string? email = null)
+    public async Task<ActionResult<UserInfo>> GetCurrentUserInfo([FromQuery] string? email = null)
     {
         string currentEmail;
         
