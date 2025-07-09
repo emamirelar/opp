@@ -31,6 +31,8 @@ import { RoleService } from '../../../../essentials/services/role.service';
 import { RoleDialogComponent } from './role-dialog/role-dialog.component';
 import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
 import { OrgUnitSelectorComponent } from './org-unit-selector/org-unit-selector.component';
+import { TranslateModule } from '@ngx-translate/core';
+import { GlobalFilterService } from '../../../../services/global-filter.service';
 
 interface UserInfo {
   userId: number;
@@ -64,7 +66,8 @@ interface UserInfo {
     AvatarModule,
     GlobalSearchBarComponent,
     RoleDialogComponent,
-    ProfileDialogComponent
+    ProfileDialogComponent,
+    TranslateModule
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -75,6 +78,7 @@ interface UserInfo {
 export class TopbarComponent implements OnInit, OnDestroy {
   @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
   @ViewChild(ProfileDialogComponent) profileDialog!: ProfileDialogComponent;
+  @ViewChild(OrgUnitSelectorComponent) orgUnitSelector!: OrgUnitSelectorComponent;
 
   items!: MenuItem[];
   notifications: Notification[] = [];
@@ -96,6 +100,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
   userRoles: string[] = [];
   roleMenuItems: MenuItem[] = [];
 
+  // Propriété pour le filtre d'unité organisationnelle
+  isOrgUnitFilterActive: boolean = false;
+  private globalFilterSubscription?: Subscription;
+
   constructor(
     public layoutService: LayoutService,
     private notificationService: NotificationService,
@@ -103,7 +111,8 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private globalFilterService: GlobalFilterService
   ) {
     // Check if we're in development mode
     this.isDevelopment = this.checkIfDevelopment();
@@ -140,6 +149,26 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
     this.profileMenuItems = [];
     this.setupProfileMenu();
+    
+    // Debug: Vérifier l'état initial du service
+    console.log('Initial GlobalFilter state:', {
+      filterEnabled: this.globalFilterService.isFilterEnabled(),
+      selectedOrgUnitId: this.globalFilterService.getSelectedOrgUnitId(),
+      activeOrgUnitId: this.globalFilterService.getActiveOrgUnitId()
+    });
+    
+    // Souscrire aux changements du filtre d'unité organisationnelle
+    this.globalFilterSubscription = this.globalFilterService.activeOrgUnitId$.subscribe({
+      next: (activeOrgUnitId) => {
+        console.log('GlobalFilter - activeOrgUnitId changed:', activeOrgUnitId);
+        this.isOrgUnitFilterActive = activeOrgUnitId !== null;
+        console.log('GlobalFilter - isOrgUnitFilterActive set to:', this.isOrgUnitFilterActive);
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error subscribing to global filter changes:', error);
+      }
+    });
   }
 
   private setupProfileMenu() {
@@ -255,6 +284,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.stopNotificationPolling();
+    if (this.globalFilterSubscription) {
+      this.globalFilterSubscription.unsubscribe();
+    }
   }
 
   private startNotificationPolling() {
@@ -523,6 +555,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
       };
       this.profileDialog.show(tempUserInfo);
     }
+  }
+
+  openOrgUnitSelector() {
+    this.orgUnitSelector.showDialog();
   }
 
   onAIAssistantToggle() {
