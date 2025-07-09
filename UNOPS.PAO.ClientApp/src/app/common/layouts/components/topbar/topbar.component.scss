@@ -207,4 +207,51 @@
   }
 }
 
+/* Org Unit Filter Badge */
+.org-unit-filter-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background-color: #d92a1c;
+  color: white;
+  border-radius: 50%;
+  width: 5px;
+  height: 5px;
+  text-align: center;
+  z-index: 1;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 600;
+  content: '';
+}
+
+/* Tune button hover effects */
+:host ::ng-deep {
+  .p-button.p-button-text:hover {
+    background-color: var(--surface-hover);
+  }
+  
+  .p-button.p-button-text .pi-sliders-h {
+    color: var(--text-color-secondary);
+    transition: color 0.2s;
+  }
+  
+  .p-button.p-button-text:hover .pi-sliders-h {
+    color: var(--text-color);
+  }
+  
+  /* Responsive adjustments for search bar and tune button container */
+  @media screen and (max-width: 991px) {
+    .layout-topbar {
+      .flex-1.max-w-2xl {
+        flex: 1;
+        max-width: none;
+      }
+    }
+  }
+}
+
 

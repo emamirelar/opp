@@ -14,7 +14,25 @@
 		</a>
 	</div>
 
-  <app-global-search-bar></app-global-search-bar>
+	<!-- Search bar and Tune button container -->
+	<div class="flex items-center gap-2 flex-1 max-w-2xl">
+		<app-global-search-bar></app-global-search-bar>
+		
+		<!-- Tune button -->
+		<p-button
+			type="button"
+			[rounded]="true"
+			[text]="true"
+			aria-label="Organization Unit Filter"
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative"
+			(onClick)="openOrgUnitSelector()"
+			[title]="'label.selectOrgUnit' | translate">
+			<ng-template pTemplate="content">
+				<i class="pi pi-sliders-h text-xl"></i>
+				<span *ngIf="isOrgUnitFilterActive" class="org-unit-filter-badge"></span>
+			</ng-template>
+		</p-button>
+	</div>
 
 	<div class="flex items-center justify-end">
       <app-language-selector></app-language-selector>
@@ -105,3 +123,6 @@
 <p-toast position="bottom-right"></p-toast>
 <app-role-dialog></app-role-dialog>
 <app-profile-dialog></app-profile-dialog>
+
+<!-- Org Unit Selector Component (hidden, used for dialog only) -->
+<app-org-unit-selector #orgUnitSelector></app-org-unit-selector>
