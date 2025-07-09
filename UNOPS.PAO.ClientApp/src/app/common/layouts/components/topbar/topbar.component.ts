@@ -103,6 +103,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   // Propriété pour le filtre d'unité organisationnelle
   isOrgUnitFilterActive: boolean = false;
   private globalFilterSubscription?: Subscription;
+  
+  // Mobile detection
+  isMobile: boolean = false;
 
   constructor(
     public layoutService: LayoutService,
@@ -131,6 +134,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Initialize mobile detection
+    this.detectMobile();
+    
     this.authService.user().subscribe({
       next: (claims) => {
         const userIdClaim = claims.find(c => c.type === 'userId');
@@ -574,5 +580,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
       // On regular routes, toggle the main sidebar
       this.layoutService.onMenuToggle();
     }
+  }
+
+  private detectMobile() {
+    this.isMobile = window.innerWidth <= 768;
+  }
+
+  isOnAiPage(): boolean {
+    return this.isMobile && this.router.url.includes('/ai');
   }
 }

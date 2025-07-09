@@ -43,7 +43,8 @@
 			[text]="true"
 			aria-label="AI Assistant Toggle"
 			data-ai-assistant-toggle
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center">
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center ai-assistant-toggle-btn"
+			[class.hidden-on-mobile]="isOnAiPage()">
 			<ng-template pTemplate="content">
 				<img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-6 h-6" />
 			</ng-template>

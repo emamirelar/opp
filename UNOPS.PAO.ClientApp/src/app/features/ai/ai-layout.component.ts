@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed, ViewContainerRef, effect, ViewChildren, QueryList, Type, Injector, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, OnInit, computed, ViewContainerRef, effect, ViewChildren, QueryList, Type, Injector, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -55,7 +55,7 @@ interface ChatSession {
   templateUrl: './ai-layout.component.html',
   styleUrls: ['./ai-layout.component.css']
 })
-export class AiLayoutComponent implements OnInit {
+export class AiLayoutComponent implements OnInit, OnDestroy {
   layoutService = inject(LayoutService);
   router = inject(Router);
   http = inject(HttpClient);
@@ -69,6 +69,10 @@ export class AiLayoutComponent implements OnInit {
   chatSessions = signal<ChatSession[]>([]);
   isLoadingSessions = signal(false);
 
+  // Mobile responsiveness
+  isMobile = signal(false);
+  sidebarOpen = signal(false);
+  
   // Add a signal for hover state
   sidebarHovered = signal(false);
 
@@ -120,6 +124,9 @@ export class AiLayoutComponent implements OnInit {
   ngOnInit() {
     this.loadUserSessions();
     
+    // Initialize mobile detection
+    this.detectMobile();
+    
     // Initialize global filter state from service
     this.globalFilterEnabled.set(this.globalFilterService.isFilterEnabled());
     
@@ -138,6 +145,37 @@ export class AiLayoutComponent implements OnInit {
         this.loadUserSessions();
       }
     });
+
+    // Listen for layout service sidebar changes to sync mobile state
+    effect(() => {
+      const sidebarCollapsed = this.layoutService.aiAssistantSidebarCollapsed();
+      if (this.isMobile()) {
+        // On mobile, when sidebar is "uncollapsed" it means it should be open
+        this.sidebarOpen.set(!sidebarCollapsed);
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    // Clean up any subscriptions if needed
+  }
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event: any) {
+    this.detectMobile();
+  }
+
+  private detectMobile() {
+    const isMobileDevice = window.innerWidth <= 768;
+    this.isMobile.set(isMobileDevice);
+    
+    // Auto-collapse sidebar on mobile
+    if (isMobileDevice) {
+      if (!this.layoutService.aiAssistantSidebarCollapsed()) {
+        this.layoutService.onAiSidebarToggle();
+      }
+      this.sidebarOpen.set(false);
+    }
   }
 
   async loadUserSessions(): Promise<void> {
@@ -163,6 +201,20 @@ export class AiLayoutComponent implements OnInit {
     console.log('Starting new chat...');
     this.aiAssistantData.clearConversation();
     this.selectedChatId.set(null);
+    
+    // Close sidebar on mobile after starting new chat
+    if (this.isMobile()) {
+      this.closeMobileSidebar();
+    }
+  }
+
+  closeMobileSidebar() {
+    if (this.isMobile()) {
+      // Close sidebar by making it collapsed
+      if (!this.layoutService.aiAssistantSidebarCollapsed()) {
+        this.layoutService.onAiSidebarToggle();
+      }
+    }
   }
 
   openChat(chat: ChatSession) {
@@ -171,6 +223,11 @@ export class AiLayoutComponent implements OnInit {
     this.aiAssistantData.switchToSession(chat.id).subscribe({
       error: (error) => console.error('Failed to switch session:', error)
     });
+    
+    // Close sidebar on mobile after opening chat
+    if (this.isMobile()) {
+      this.closeMobileSidebar();
+    }
   }
 
   formatDate(dateString: string): string {

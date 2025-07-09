@@ -795,7 +795,7 @@ public class UNOPSGeminiManager : IGeminiManager
         });
     }
 
-    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId)
+    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId, IHeaderDictionary headers = null)
     {
         var appName = _configuration.GetValue<string>("AgenticAi:AppName");
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
@@ -819,6 +819,28 @@ public class UNOPSGeminiManager : IGeminiManager
         var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
         using var httpClient = new HttpClient();
+        
+        // Add all request headers to the HTTP client
+        if (headers != null)
+        {
+            foreach (var header in headers)
+            {
+                try
+                {
+                    // Skip headers that are set automatically by HttpClient or are restricted
+                    if (!IsRestrictedHeader(header.Key))
+                    {
+                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value.AsEnumerable());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log and continue if a header cannot be added
+                    Console.WriteLine($"Warning: Could not add header '{header.Key}': {ex.Message}");
+                }
+            }
+        }
+        
         var response = await httpClient.PostAsync(apiUrl, httpContent);
         if (!response.IsSuccessStatusCode)
         {
@@ -866,6 +888,26 @@ public class UNOPSGeminiManager : IGeminiManager
         }
 
         return responseContent;
+    }
+
+    private static bool IsRestrictedHeader(string headerName)
+    {
+        // List of headers that should not be forwarded or are set automatically by HttpClient
+        var restrictedHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Content-Length",
+            "Content-Type",
+            "Host",
+            "Connection",
+            "Transfer-Encoding",
+            "Expect",
+            "If-Modified-Since",
+            "Range",
+            "Referer",
+            "User-Agent"
+        };
+        
+        return restrictedHeaders.Contains(headerName);
     }
 
     public async Task<string> GenerateTitle(string sessionId, int userId)

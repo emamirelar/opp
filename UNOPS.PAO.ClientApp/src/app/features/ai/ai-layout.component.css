@@ -568,4 +568,217 @@
 :host ::ng-deep body.resizing * {
   user-select: none !important;
   cursor: ew-resize !important;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .ai-layout-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+
+
+  .mobile-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    backdrop-filter: blur(2px);
+  }
+
+  .ai-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    background: var(--surface-card);
+    border-right: none;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .ai-sidebar.mobile-sidebar-open {
+    transform: translateX(0);
+  }
+
+  .ai-sidebar.mobile-sidebar-closed {
+    transform: translateX(-100%);
+  }
+
+  .ai-content-area {
+    width: 100%;
+    padding: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .ai-content-area.mobile-content-hidden {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  .ai-right-panel {
+    display: none !important;
+  }
+
+  .ai-right-panel.mobile-content-hidden {
+    display: none !important;
+  }
+
+  /* Sidebar content adjustments for mobile */
+  .sidebar-content {
+    padding: 1rem;
+    height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+
+  .sidebar-content-collapsed {
+    padding: 1rem;
+    display: block !important;
+  }
+
+  /* Chat items touch-friendly */
+  .chat-item {
+    padding: 1rem 0.75rem;
+    min-height: 60px;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+  }
+
+  .chat-title {
+    font-size: 1rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+  }
+
+  .chat-date {
+    font-size: 0.875rem;
+  }
+
+  /* New chat button mobile optimization */
+  .new-chat-button {
+    min-height: 48px;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+  }
+
+  .new-chat-button span {
+    font-size: 0.9rem;
+  }
+
+  .new-chat-button i {
+    font-size: 1.25rem;
+  }
+
+  /* Search input mobile optimization */
+  .search-input {
+    min-height: 44px;
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border-radius: 8px;
+  }
+
+  .search-icon {
+    font-size: 1rem;
+    left: 0.875rem;
+  }
+
+  .clear-search-btn {
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.875rem;
+  }
+
+  /* Section titles mobile optimization */
+  .section-title {
+    font-size: 1rem;
+    padding: 1rem 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Global filter section mobile optimization */
+  .border-t {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  /* Menu buttons mobile optimization */
+  .chat-menu-btn {
+    width: 32px;
+    height: 32px;
+    opacity: 1;
+    padding: 0.5rem;
+  }
+
+  .chat-menu-btn:hover {
+    background: var(--surface-hover);
+    transform: scale(1.1);
+  }
+
+  /* Loading and empty states mobile optimization */
+  .loading-message {
+    padding: 2rem 1rem;
+    font-size: 1rem;
+  }
+
+  .no-chats-message {
+    padding: 2rem 1rem;
+    font-size: 1rem;
+  }
+
+  /* Disable hover states on mobile */
+  .ai-sidebar:hover {
+    background: var(--surface-card);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Ensure proper z-index stacking */
+  .layout-wrapper {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Tablet and small desktop adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ai-sidebar {
+    width: 280px;
+  }
+
+  .ai-right-panel {
+    min-width: 400px;
+  }
+
+  .right-panel-content {
+    padding: 1rem;
+  }
+}
+
+  /* Global mobile adjustments */
+  .layout-wrapper {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+
+  .ai-layout-container {
+    height: calc(100vh - 64px); /* Adjust for mobile topbar height (4rem = 64px) */
+    max-height: calc(100vh - 64px);
+  }
+}
+
+/* Large desktop optimizations */
+@media (min-width: 1025px) {
+  .mobile-backdrop {
+    display: none;
+  }
 } 

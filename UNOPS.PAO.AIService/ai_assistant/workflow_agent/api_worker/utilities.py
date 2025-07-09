@@ -148,56 +148,43 @@ def extract_iap_headers_from_context(tool_context: Optional[ToolContext] = None)
     """
     Extract IAP headers from the current context (session state).
     
-    This function tries to get IAP headers from the session state first,
-    then falls back to environment variables for development.
+    Simply returns the exact IAP headers that were stored from the original /chat request.
+    No reconstruction - just pass through what we received.
     
     Args:
         tool_context: Tool context containing session state
         
     Returns:
-        Dict[str, str]: Dictionary of IAP headers to forward to backend
+        Dict[str, str]: Dictionary of IAP headers to forward to backend (exact headers from /chat)
     """
     try:
-        iap_headers = {}
-        
-        # First try to get email from session state
-        user_email = None
+        # Get the exact IAP headers that were stored from /chat endpoint
         if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-            user_email = tool_context.state.get('header_email')
-            if user_email and '@' in user_email:
-                print(f"📧 Using header_email from session state: {user_email}")
+            stored_iap_headers = tool_context.state.get('iap_headers')
+            if stored_iap_headers and isinstance(stored_iap_headers, dict):
+                print(f"🔐 Using exact headers from /chat request: {len(stored_iap_headers)} headers")
+                print(f"📋 Header keys from session state: {list(stored_iap_headers.keys())}")
+                
+                # Log header values safely (mask sensitive data)
+                for key, value in stored_iap_headers.items():
+                    if any(sensitive in key.lower() for sensitive in ['authorization', 'token', 'jwt', 'secret', 'password']):
+                        masked_value = f"{value[:10]}..." if len(value) > 10 else "***"
+                        print(f"   {key}: {masked_value} (masked)")
+                    elif 'email' in key.lower():
+                        print(f"   {key}: {value}")
+                    elif len(str(value)) > 100:
+                        print(f"   {key}: {str(value)[:50]}... (truncated, length: {len(str(value))})")
+                    else:
+                        print(f"   {key}: {value}")
+                
+                return stored_iap_headers
         
-        # If no email in session state, check environment variables
-        if not user_email:
-            is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
-            dev_email = os.getenv('DEV_EMAIL', '')
-            
-            if is_development and dev_email:
-                user_email = dev_email
-                print(f"📧 Using DEV_EMAIL from environment: {user_email}")
-        
-        # Create IAP headers if we have a valid email
-        if user_email and '@' in user_email:
-            print("🧪 Creating IAP headers from user email...")
-            import time
-            current_timestamp = str(int(time.time()))
-            
-            iap_headers = {
-                'x-goog-authenticated-user-email': f'accounts.google.com:{user_email}',
-                'x-goog-authenticated-user-id': f'accounts.google.com:user-id-{current_timestamp}',
-                'x-forwarded-user': user_email,
-                'x-forwarded-email': user_email,
-                'X-Dev-IAP-Simulation': 'true',
-                'X-Dev-Auth-Timestamp': current_timestamp
-            }
-            print(f"✅ Created IAP headers for email: {user_email}")
-        else:
-            print("⚠️ No valid user email found - no IAP headers created")
-        
-        return iap_headers
+        # No stored headers found - return empty (no reconstruction)
+        print("⚠️ No headers found in session state - sending request without headers")
+        return {}
             
     except Exception as e:
-        print(f"⚠️ Could not create IAP headers: {e}")
+        print(f"⚠️ Error getting IAP headers from session state: {e}")
         return {}
 
 
@@ -444,13 +431,32 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
             
             if iap_headers:
                 request_headers.update(iap_headers)
+                print(f"🔐 Added {len(iap_headers)} headers from session state")
+            else:
+                print("⚠️ No headers found from session state")
             
             # Add any additional headers passed as parameter
             if headers:
                 print(f"🔐 Adding additional headers: {list(headers.keys())}")
                 request_headers.update(headers)
             
-            print(f"🔐 Final request headers: {list(request_headers.keys())}")
+            print(f"🔐 Final request headers being sent to backend:")
+            print(f"📋 Total headers: {len(request_headers)}")
+            print(f"📋 Header keys: {list(request_headers.keys())}")
+            
+            # Log final headers safely
+            for key, value in request_headers.items():
+                if any(sensitive in key.lower() for sensitive in ['authorization', 'token', 'jwt', 'secret', 'password']):
+                    masked_value = f"{value[:10]}..." if len(value) > 10 else "***"
+                    print(f"   {key}: {masked_value} (masked)")
+                elif 'email' in key.lower():
+                    print(f"   {key}: {value}")
+                elif len(str(value)) > 100:
+                    print(f"   {key}: {str(value)[:50]}... (truncated)")
+                elif key.lower() in ['content-type', 'accept', 'user-agent']:
+                    print(f"   {key}: {value}")
+                else:
+                    print(f"   {key}: {value}")
             
             # Apply orgUnitId filter automatically for entity endpoints or when searchText is present
             enhanced_body = apply_org_unit_filter(body, tool_context, url)
