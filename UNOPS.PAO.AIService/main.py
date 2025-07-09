@@ -453,12 +453,15 @@ def add_chat_endpoint(app: FastAPI):
             # Import here to avoid circular imports
             from ai_assistant.agent import root_agent
 
-            # Handle null or empty session_id by generating a new one
-            session_id = request_body.session_id
-            if not session_id or session_id.strip() == "":
+            # Handle session creation vs retrieval
+            original_session_id = request_body.session_id
+            is_new_session_request = not original_session_id or original_session_id.strip() == ""
+            
+            if is_new_session_request:
                 session_id = str(uuid.uuid4())
-                logger.info(f"🆔 Generated new session_id: {session_id}")
+                logger.info(f"🆔 Empty session_id provided - generating new session: {session_id}")
             else:
+                session_id = original_session_id
                 logger.info(f"🆔 Using provided session_id: {session_id}")
 
             # Create session service
@@ -489,17 +492,10 @@ def add_chat_endpoint(app: FastAPI):
 
             print(f"Parsed state: {parsed_state}")
 
-            # Get or create session
-            logger.info(f"🔍 Getting session for app: {request_body.app_name}, user: {request_body.user_id}, session: {session_id}")
-            session = await session_service.get_session(
-                app_name=request_body.app_name,
-                user_id=request_body.user_id,
-                session_id=session_id
-            )
-
-            if not session:
-                logger.info("🆕 Creating new session...")
-                # Create new session if it doesn't exist
+            # Handle session creation vs retrieval
+            if is_new_session_request:
+                # Always create a new session for empty session_id
+                logger.info("🆕 Creating new session (empty session_id provided)...")
                 initial_state = parsed_state or {}
                 session = await session_service.create_session(
                     app_name=request_body.app_name,
@@ -509,45 +505,85 @@ def add_chat_endpoint(app: FastAPI):
                 )
                 logger.info(f"✅ New session created with state: {session.state}")
             else:
-                logger.info(f"📋 Found existing session with state: {session.state}")
+                # Try to get existing session first
+                logger.info(f"🔍 Getting existing session for app: {request_body.app_name}, user: {request_body.user_id}, session: {session_id}")
+                session = await session_service.get_session(
+                    app_name=request_body.app_name,
+                    user_id=request_body.user_id,
+                    session_id=session_id
+                )
 
-                # Update existing session state if provided
-                if parsed_state:
-                    logger.info(f"🔄 Updating session state with new data: {parsed_state}")
-
-                    # Merge new state with existing state
-                    updated_state = {**session.state, **parsed_state}
-                    logger.info(f"🔀 Merged state: {updated_state}")
-
-                    try:
-                        # Update session state directly on the session object
-                        session.state.update(updated_state)
-                        logger.info(f"✅ Session state updated successfully: {session.state}")
-
-                    except Exception as state_error:
-                        logger.warning(f"⚠️ State update failed: {state_error}")
-                        logger.info("🔄 Falling back to basic state initialization...")
-
-                        # Fallback: ensure session has a state dict
-                        if not hasattr(session, 'state') or session.state is None:
-                            session.state = {}
-                        session.state.update(updated_state)
-                        logger.info(f"✅ Fallback state update completed: {session.state}")
-
+                if not session:
+                    logger.info("🆕 Session not found - creating new session...")
+                    # Create new session if it doesn't exist
+                    initial_state = parsed_state or {}
+                    session = await session_service.create_session(
+                        app_name=request_body.app_name,
+                        user_id=request_body.user_id,
+                        session_id=session_id,
+                        state=initial_state
+                    )
+                    logger.info(f"✅ New session created with state: {session.state}")
                 else:
-                    logger.info("ℹ️ No state update provided, using existing state")
+                    logger.info(f"📋 Found existing session with state: {session.state}")
 
-            # Add header_email to session state if available from IAP headers
+                    # Update existing session state if provided
+                    if parsed_state:
+                        logger.info(f"🔄 Updating session state with new data: {parsed_state}")
+
+                        # Merge new state with existing state
+                        updated_state = {**session.state, **parsed_state}
+                        logger.info(f"🔀 Merged state: {updated_state}")
+
+                        try:
+                            # Update session state directly on the session object
+                            session.state.update(updated_state)
+                            logger.info(f"✅ Session state updated in memory: {session.state}")
+                            
+                            # Save the updated session back to the database
+                            await session_service.update_session(session)
+                            logger.info(f"💾 Session state saved to database successfully")
+
+                        except Exception as state_error:
+                            logger.warning(f"⚠️ State update failed: {state_error}")
+                            logger.info("🔄 Falling back to basic state initialization...")
+
+                            # Fallback: ensure session has a state dict
+                            if not hasattr(session, 'state') or session.state is None:
+                                session.state = {}
+                            session.state.update(updated_state)
+                            logger.info(f"✅ Fallback state update completed: {session.state}")
+                            
+                            # Try to save the fallback state as well
+                            try:
+                                await session_service.update_session(session)
+                                logger.info(f"💾 Fallback session state saved to database")
+                            except Exception as save_error:
+                                logger.error(f"❌ Failed to save fallback session state: {save_error}")
+
+                    else:
+                        logger.info("ℹ️ No state update provided, using existing state")
+
+            # Add user_email to session state if available from IAP headers
             if user_email:
                 # Ensure session state exists
                 if not hasattr(session, 'state') or session.state is None:
                     session.state = {}
 
-                # Add header_email to session state
+                # Add user_email to session state (primary field)
+                session.state['user_email'] = user_email
+                # Also keep header_email for backward compatibility
                 session.state['header_email'] = user_email
-                logger.info(f"📧 Added header_email to session state: {user_email}")
+                logger.info(f"📧 Added user_email to session state: {user_email}")
+                
+                # Save the session with user_email updates
+                try:
+                    await session_service.update_session(session)
+                    logger.info(f"💾 Session saved with user_email: {user_email}")
+                except Exception as email_save_error:
+                    logger.error(f"❌ Failed to save session with user_email: {email_save_error}")
             else:
-                logger.info("⚠️ No user email found in IAP headers - header_email not added to session")
+                logger.info("⚠️ No user email found in IAP headers - user_email not added to session")
 
             logger.info(f"📊 Final session state before processing: {session.state}")
 

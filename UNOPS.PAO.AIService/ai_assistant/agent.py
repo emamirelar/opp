@@ -117,18 +117,14 @@ class GoogleSheetToolWrapper(BaseTool):
     def create_spreadsheet_from_list(self, tool_context: ToolContext, title: str, data: List[Dict[str, Any]], folder_id: str = "") -> str:
         """Create a Google Sheet from list data with session state access"""
         try:
-            # Get user_email from session state with proper fallback chain
+            # Get user_email from session state
             user_email = None
             if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                # First priority: user_email from new state format
                 user_email = tool_context.state.get('user_email')
                 if user_email:
                     logging.info(f"📧 Using user_email for permissions: {user_email}")
                 else:
-                    # Second priority: header_email from IAP headers (fallback)
-                    user_email = tool_context.state.get('header_email')
-                    if user_email:
-                        logging.info(f"📧 Using header_email for permissions: {user_email}")
+                    logging.warning("⚠️ No user_email found in session state - permissions may not be granted")
             
             # Initialize tool if needed
             if not self.sheet_tool:
@@ -174,18 +170,14 @@ class GoogleSheetToolWrapper(BaseTool):
     def create_spreadsheet_with_headers(self, tool_context: ToolContext, title: str, headers: List[str], data: List[List[Any]], folder_id: str = "") -> str:
         """Create a Google Sheet with headers and data with session state access"""
         try:
-            # Get user_email from session state with proper fallback chain
+            # Get user_email from session state
             user_email = None
             if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                # First priority: user_email from new state format
                 user_email = tool_context.state.get('user_email')
                 if user_email:
                     logging.info(f"📧 Using user_email for permissions: {user_email}")
                 else:
-                    # Second priority: header_email from IAP headers (fallback)
-                    user_email = tool_context.state.get('header_email')
-                    if user_email:
-                        logging.info(f"📧 Using header_email for permissions: {user_email}")
+                    logging.warning("⚠️ No user_email found in session state - permissions may not be granted")
             
             # Initialize tool if needed
             if not self.sheet_tool:
@@ -293,18 +285,14 @@ class GoogleDocToolWrapper(BaseTool):
     def create_document_from_text(self, tool_context: ToolContext, title: str, content: str, folder_id: str = "") -> str:
         """Create a Google Doc from text with session state access"""
         try:
-            # Get user_email from session state with proper fallback chain
+            # Get user_email from session state
             user_email = None
             if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                # First priority: user_email from new state format
                 user_email = tool_context.state.get('user_email')
                 if user_email:
                     logging.info(f"📧 Using user_email for permissions: {user_email}")
                 else:
-                    # Second priority: header_email from IAP headers (fallback)
-                    user_email = tool_context.state.get('header_email')
-                    if user_email:
-                        logging.info(f"📧 Using header_email for permissions: {user_email}")
+                    logging.warning("⚠️ No user_email found in session state - permissions may not be granted")
             
             # Initialize tool if needed
             if not self.doc_tool:

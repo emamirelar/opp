@@ -458,8 +458,9 @@ export class AiAssistantData {
         this.isLoading.set(false);
         const serverResponse: any = response.body;
         
-        console.log('Raw server response:', serverResponse);
-        console.log('Response type:', typeof serverResponse);
+        console.log('🔍 RAW SERVER RESPONSE:', serverResponse);
+        console.log('🔍 RESPONSE TYPE:', typeof serverResponse);
+        console.log('🔍 RESPONSE KEYS:', serverResponse ? Object.keys(serverResponse) : 'No keys');
         
         // Model response is always expected to be in JSON format
         if (serverResponse) {
@@ -467,28 +468,43 @@ export class AiAssistantData {
           
           // Handle direct JSON object response (Angular HTTP client auto-parses JSON)
           if (typeof serverResponse === 'object') {
-            console.log('Processing JSON object response directly');
+            console.log('✅ Processing JSON object response directly');
             parsedResponse = serverResponse;
           }
           // Handle response as string (need to parse JSON)
           else if (typeof serverResponse === 'string') {
-            console.log('Parsing JSON string response');
+            console.log('🔧 Parsing JSON string response');
             try {
               parsedResponse = JSON.parse(serverResponse);
             } catch (e) {
-              console.error('Error parsing JSON response:', e);
+              console.error('❌ Error parsing JSON response:', e);
+              console.error('❌ Raw string that failed to parse:', serverResponse);
               // If it's not valid JSON, treat it as plain text
               this.addSystemMessage({message: serverResponse});
               return;
             }
           }
           else {
-            console.error('Unexpected response type:', typeof serverResponse);
+            console.error('❌ Unexpected response type:', typeof serverResponse);
             this.addSystemMessage({message: 'Sorry, I received an unexpected response format. Please try again.'});
             return;
           }
           
-          console.log('Parsed response structure:', parsedResponse);
+          console.log('✅ PARSED RESPONSE STRUCTURE:', parsedResponse);
+          console.log('✅ PARSED RESPONSE KEYS:', Object.keys(parsedResponse));
+          
+          // Check what we have in the parsed response
+          if (parsedResponse.result) {
+            console.log('✅ FOUND RESULT PROPERTY:', parsedResponse.result);
+            console.log('✅ RESULT IS ARRAY:', Array.isArray(parsedResponse.result));
+          }
+          if (parsedResponse.events) {
+            console.log('✅ FOUND EVENTS PROPERTY:', parsedResponse.events);
+            console.log('✅ EVENTS IS ARRAY:', Array.isArray(parsedResponse.events));
+          }
+          if (parsedResponse.message) {
+            console.log('✅ FOUND MESSAGE PROPERTY:', parsedResponse.message);
+          }
           
           // Check if response contains a new sessionId (for new conversations)
           if (parsedResponse.session_id && !this.currentSessionId()) {
