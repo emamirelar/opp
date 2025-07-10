@@ -68,6 +68,6 @@ public class GmailRelatedInteraction
 public class UnmatchedEmailModel
 {
     public string UnmatchedEmail { get; set; }
-    public int PartnerId { get; set; }
+    public int? PartnerId { get; set; }
     public string PartnerName { get; set; }
 }

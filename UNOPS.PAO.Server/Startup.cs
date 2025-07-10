@@ -211,7 +211,7 @@ public class Startup
         ConfigureAuthorization(services);
 
         // Register IAuthService
-        services.AddScoped<UNOPS.PAO.Identity.Services.IGoogleAuthService, UNOPS.PAO.Identity.Services.GoogleAuthService>();
+        services.AddScoped<UNOPS.PAO.Identity.Services.IGmailAddonAuthService, UNOPS.PAO.Identity.Services.GmailAddonAuthService>();
 
         // Get JWT secret from Secret Manager
         var projectId = Configuration["AppConfig:ProjectId"];

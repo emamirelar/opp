@@ -62,8 +62,8 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
       Logger.log('In unmatchedEmailsData');
       unmatchedEmailsData.forEach(function(unmatchedEmailObj) {
         var emailAddress = unmatchedEmailObj.unmatchedEmail;
-        var partnerName = unmatchedEmailObj.partnerName;
         var partnerId = unmatchedEmailObj.partnerId;
+        var partnerName = partnerId !== undefined && partnerId !== null ? unmatchedEmailObj.partnerName : unmatchedEmailObj.partnerName + ' (Powered By AI)';
         
         // Determine checkbox state - use checkboxStates if provided, otherwise default to false
         var checkboxValue = false;
@@ -126,14 +126,18 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
         CardService.newButtonSet()
           .addButton(
             CardService.newTextButton()
-              .setText('Add Selected')
-              .setMaterialIcon(CardService.newMaterialIcon().setName('add'))
-              .setBackgroundColor('#adedff')
-              .setTextButtonStyle(CardService.TextButtonStyle.FILLED_TONAL)
-              .setOnClickAction(
-                CardService.newAction()
-                  .setFunctionName('handleAddSelected')
-              )
+            .setText('Add Selected')
+            .setMaterialIcon(CardService.newMaterialIcon().setName('add'))
+            .setBackgroundColor('#adedff')
+            .setTextButtonStyle(CardService.TextButtonStyle.FILLED_TONAL)
+            .setOnClickAction(
+            CardService.newAction()
+              .setFunctionName('handleAddSelected')
+              .setParameters({ 
+                relatedRecords: JSON.stringify(relatedRecords),
+                messageData: JSON.stringify(messageData)
+              })
+            )
           )
       );
     }
@@ -308,10 +312,55 @@ function onClickPrimaryButton(e) {
 }
 
 function handleAddSelected(e) {
-  return CardService.newActionResponseBuilder()
-    .setNotification(CardService.newNotification()
-      .setText('Selected items added'))
-    .build();
+  try {
+    // Get form inputs to see which checkboxes are selected
+    var formInputs = e.formInputs || {};
+    
+    // Get the parameters passed from the action
+    var relatedRecords = JSON.parse(e.parameters.relatedRecords);
+    var messageData = JSON.parse(e.parameters.messageData);
+    
+    // Collect selected emails
+    var selectedEmails = [];
+    var unmatchedEmailsData = relatedRecords.unmatchedEmails;
+    Logger.log('unmatchedEmailsData: ' + JSON.stringify(unmatchedEmailsData));
+    
+    for (var i = 0; i < unmatchedEmailsData.length; i++) {
+      var emailAddress = unmatchedEmailsData[i].unmatchedEmail;
+      var fieldName = 'cb' + emailAddress;
+      
+      
+      // Check if this checkbox is selected
+      if (formInputs[fieldName] && formInputs[fieldName].length > 0) {
+        selectedEmails.push({
+          emailAddress: emailAddress,
+          partnerName: unmatchedEmailsData[i].partnerName || '',
+          partnerId: unmatchedEmailsData[i].partnerId !== undefined && unmatchedEmailsData[i].partnerId !== null 
+                    ? unmatchedEmailsData[i].partnerId 
+                    : null
+        });
+      }
+    }
+    
+    if (selectedEmails.length === 0) {
+      return CardService.newActionResponseBuilder()
+        .setNotification(CardService.newNotification()
+          .setText('Please select at least one email to add'))
+        .build();
+    }
+    
+    Logger.log('Selected emails: ' + JSON.stringify(selectedEmails));
+    
+    // Send selected emails to backend
+    return createContactsFromSelectedEmails(selectedEmails, messageData);
+    
+  } catch (error) {
+    Logger.log('Error in handleAddSelected: ' + error.toString());
+    return CardService.newActionResponseBuilder()
+      .setNotification(CardService.newNotification()
+        .setText('Error processing selected items: ' + error.toString()))
+      .build();
+  }
 }
 
 function handleSelectAll(e) {
@@ -337,7 +386,6 @@ function handleSelectAll(e) {
       var emailAddress = unmatchedEmailsData[i].unmatchedEmail;
       checkboxStates['cb' + emailAddress] = selectAllState;
     }
-    
     
     Logger.log('checkboxStates: ' + JSON.stringify(checkboxStates));
     // Rebuild the card with updated checkbox states

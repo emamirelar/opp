@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace UNOPS.PAO.Identity.Services;
 
-public class GoogleAuthService : IGoogleAuthService
+public class GmailAddonAuthService : IGmailAddonAuthService
 {
     private readonly IConfiguration _configuration;
     private readonly string _googleClientId;
@@ -26,7 +26,7 @@ public class GoogleAuthService : IGoogleAuthService
     private readonly SecretManagerServiceClient _secretManager;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public GoogleAuthService(
+    public GmailAddonAuthService(
         IConfiguration configuration, 
         UserManager<PAOIdentityUser> userManager,
         RoleManager<PAOIdentityRole> roleManager,
@@ -34,7 +34,7 @@ public class GoogleAuthService : IGoogleAuthService
     {
         _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
-        _googleClientId = _configuration["GmailAppScriptAuthSettings:clientId"];
+        _googleClientId = _configuration["GmailAddonAuthSettings:clientId"];
         _jwtIssuer = _configuration["JWTSettings:validIssuer"];
         _jwtAudience = new GmailAddonHelper(_configuration, _httpContextAccessor).GetValidAudienceForCurrentHost();
         _userManager = userManager;
@@ -48,7 +48,7 @@ public class GoogleAuthService : IGoogleAuthService
         _jwtSecret = secret.Payload.Data.ToStringUtf8();
     }
 
-    public async Task<GoogleAuthResponse> AuthenticateWithGoogleAsync(GoogleSignInRequest request)
+    public async Task<GmailAddonAuthResponse> AuthenticateForGmailAddonAsync(GmailAddonSignInRequest request)
     {
         try
         {
@@ -117,7 +117,7 @@ public class GoogleAuthService : IGoogleAuthService
             //user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // Example: Refresh token valid for 7 days
             //await _userManager.UpdateAsync(user);
 
-            return new GoogleAuthResponse
+            return new GmailAddonAuthResponse
             {
                 AccessToken = token,
                 RefreshToken = refreshToken,
@@ -133,7 +133,7 @@ public class GoogleAuthService : IGoogleAuthService
         }
     }
 
-    public async Task<GoogleAuthResponse> RefreshTokenAsync(string refreshToken)
+    public async Task<GmailAddonAuthResponse> RefreshTokenAsync(string refreshToken)
     {
         //TO-DO: Implement refresh token logic
         // 1. Validate the refresh token

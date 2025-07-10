@@ -43,6 +43,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private GoogleCloudStorageService googleCloudStorageService;
     private CommonEntityRepository commonRepository;
     private readonly ILogger<UNOPSContactManager>? _logger;
+    private readonly DataRepository<AiPrompt> promptRepository;
 
     private async Task<ContactModel> MapEntityToModel(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
     {
@@ -136,6 +137,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
         userInfoRepository = new BaseRepository<UserInfo>(context, configuration);
         organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
+        promptRepository = new DataRepository<AiPrompt>(context);
         commonRepository = new CommonEntityRepository(context);
         googleCloudStorageService = new GoogleCloudStorageService(configuration);
         _logger = logger;
@@ -709,7 +711,10 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     public async Task<List<UnmatchedEmailModel>> GetUnmatchedEmailsWithPartnerSuggestionsAsync(List<string> emailAddresses, ClaimsPrincipal user = null)
     {
         var unmatchedEmails = new List<UnmatchedEmailModel>();
+        var domainsForGemini = new List<string>();
+        var emailDomainMapping = new Dictionary<string, string>();
         
+        // First pass: Check database for existing matches and collect domains for Gemini lookup
         foreach (var email in emailAddresses)
         {
             var unmatchedEmail = new UnmatchedEmailModel
@@ -724,6 +729,8 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 unmatchedEmails.Add(unmatchedEmail);
                 continue;
             }
+            
+            emailDomainMapping[email] = emailDomain;
             
             // Look up contacts with the same domain
             var contactsWithSameDomain = await contactRepository.GetAll(["Partner"])
@@ -753,106 +760,135 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             }
             else
             {
-                // No contacts found with same domain, use Gemini to lookup potential partner name
-                try
+                // No contacts found with same domain, collect for Gemini lookup
+                if (!domainsForGemini.Contains(emailDomain))
                 {
-                    var potentialPartnerName = await GetPartnerNameFromGeminiAsync(emailDomain);
-                    if (!string.IsNullOrEmpty(potentialPartnerName))
-                    {
-                        unmatchedEmail.PartnerName = potentialPartnerName;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogWarning($"Failed to get partner name from Gemini for domain {emailDomain}: {ex.Message}");
+                    domainsForGemini.Add(emailDomain);
                 }
             }
             
             unmatchedEmails.Add(unmatchedEmail);
         }
         
+        // Second pass: Batch Gemini lookup for all domains without database matches
+        if (domainsForGemini.Any())
+        {
+            try
+            {
+                var geminiResults = await GetPartnerNamesFromGeminiAsync(domainsForGemini);
+                
+                // Apply Gemini results to unmatched emails
+                foreach (var unmatchedEmail in unmatchedEmails)
+                {
+                    if (string.IsNullOrEmpty(unmatchedEmail.PartnerName) && 
+                        emailDomainMapping.TryGetValue(unmatchedEmail.UnmatchedEmail, out var domain) &&
+                        geminiResults.TryGetValue(domain, out var organizationName))
+                    {
+                        unmatchedEmail.PartnerName = organizationName;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning($"Failed to get partner names from Gemini for domains: {ex.Message}");
+            }
+        }
+        
         return unmatchedEmails;
     }
     
-    private async Task<string> GetPartnerNameFromGeminiAsync(string domain)
+    private async Task<Dictionary<string, string>> GetPartnerNamesFromGeminiAsync(List<string> domains)
     {
-        /*try
+        var result = new Dictionary<string, string>();
+        
+        // Initialize with fallback values
+        foreach (var domain in domains)
         {
-            // Create a simple prompt for organization name lookup
-            var promptData = new AiPrompt
+            result[domain] = $"Organization for {domain}";
+        }
+        
+        if (!domains.Any())
+        {
+            return result;
+        }
+        
+        try
+        {
+            // Get the prompt configuration from the AiPrompt table
+            var promptConfig = promptRepository.GetAll()
+                .Where(p => p.Type == "domain_organization_lookup" && p.Status == EntityStatus.Active)
+                .FirstOrDefault();
+            
+            if (promptConfig == null)
             {
-                Type = "domain_organization_lookup",
-                Prompt = "Based on the email domain '{promptData}', what is the most likely organization or company name? Please respond with ONLY the organization name, nothing else. If you cannot determine a likely organization name, respond with 'Unknown'.",
-                Project = _configuration["AISettings:ProjectId"],
-                Location = _configuration["AISettings:Location"] ?? "us-central1",
-                Model = _configuration["AISettings:GeminiModelName"] ?? "gemini-1.5-flash-001",
-                GenerationConfig = """
-                {
-                    "temperature": 0.1,
-                    "topP": 0.8,
-                    "topK": 40,
-                    "maxOutputTokens": 50,
-                    "responseMimeType": "text/plain"
-                }
-                """,
-                ContentConfig = """
-                {
-                    "role": "user",
-                    "parts": [{"text": ""}]
-                }
-                """,
-                SafetySettings = """
-                [
-                    {
-                        "category": "HARM_CATEGORY_HARASSMENT",
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                    },
-                    {
-                        "category": "HARM_CATEGORY_HATE_SPEECH", 
-                        "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                    }
-                ]
-                """
-            };
-
+                _logger?.LogWarning("No active AiPrompt found for domain_organization_lookup");
+                return result;
+            }
+            
+            // Create the prompt data as JSON array of domains
+            var domainsJson = System.Text.Json.JsonSerializer.Serialize(domains);
+            
             // Use the existing AI service to make the call
             var aiService = new AiContextualService(_configuration, _context, null);
-            var response = await aiService.FetchResultFromGemini(promptData, domain);
+            var response = await aiService.FetchResultFromGemini(promptConfig, domainsJson);
             
-            // Parse the response - for simple text responses, it might just be the text
+            // Parse the response - expecting a JSON array
             try
             {
                 var parsedResponse = aiService.GetDetailsFromGeminiResponse(response);
-                var organizationName = parsedResponse["text"]?.ToString() ?? 
-                                     parsedResponse["content"]?.ToString() ?? 
-                                     response.Trim();
+                var responseText = parsedResponse["Message"]?.ToString() ??
+                                    parsedResponse["text"]?.ToString() ?? 
+                                    parsedResponse["content"]?.ToString() ?? 
+                                    response.Trim();
                 
-                // Clean up the response
-                organizationName = organizationName?.Trim()?.Trim('"');
+                // Clean up the response text
+                responseText = responseText?.Trim()?.Trim('"');
                 
-                // Return the organization name or fallback
-                return !string.IsNullOrEmpty(organizationName) && 
-                       organizationName != "Unknown" && 
-                       !organizationName.Contains("cannot") &&
-                       !organizationName.Contains("unable") 
-                    ? organizationName 
-                    : $"Organization for {domain}";
+                // Parse the JSON response
+                if (!string.IsNullOrEmpty(responseText))
+                {
+                    var organizationResults = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, string>>>(responseText);
+                    
+                    if (organizationResults != null)
+                    {
+                        foreach (var orgResult in organizationResults)
+                        {
+                            if (orgResult.TryGetValue("domain", out var domain) && 
+                                orgResult.TryGetValue("organization", out var organization))
+                            {
+                                if (!string.IsNullOrEmpty(organization) && 
+                                    organization != "Unknown" && 
+                                    !organization.Contains("cannot") &&
+                                    !organization.Contains("unable"))
+                                {
+                                    result[domain] = organization;
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            catch
+            catch (Exception parseEx)
             {
-                // If parsing fails, try to extract text directly from response
+                _logger?.LogWarning($"Failed to parse Gemini response for domain lookup: {parseEx.Message}. Response: {response}");
+                
+                // Try to extract text directly from response if JSON parsing fails
                 var cleanResponse = response?.Trim()?.Trim('"');
-                return !string.IsNullOrEmpty(cleanResponse) && 
-                       cleanResponse != "Unknown" 
-                    ? cleanResponse 
-                    : $"Organization for {domain}";
+                if (!string.IsNullOrEmpty(cleanResponse) && cleanResponse != "Unknown")
+                {
+                    // If single domain and simple text response, use it
+                    if (domains.Count == 1)
+                    {
+                        result[domains[0]] = cleanResponse;
+                    }
+                }
             }
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning($"Failed to get organization name from Gemini for domain {domain}: {ex.Message}");
-            return $"Organization for {domain}";
-        }*/
-        return String.Empty;
+            _logger?.LogWarning($"Failed to get organization names from Gemini for domains: {ex.Message}");
+        }
+        
+        return result;
     }
 }
