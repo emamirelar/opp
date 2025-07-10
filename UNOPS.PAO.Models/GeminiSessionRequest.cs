@@ -9,5 +9,5 @@ using System.Threading.Tasks;
 
 public class GeminiSessionRequest
 {
-    public Guid sessionId { get; set; }
+    public string sessionId { get; set; }
 }

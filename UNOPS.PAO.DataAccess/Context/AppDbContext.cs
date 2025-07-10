@@ -162,12 +162,6 @@ public class AppDbContext : AuditableDbContext<int, int>
             .Entity<AiPrompt>();
 
         modelBuilder
-            .Entity<AiChatHistory>()
-            .HasOne(a => a.Session)
-            .WithMany(a => a.Chats)
-            .HasForeignKey(a => a.SessionId);
-
-        modelBuilder
             .Entity<AiChatSession>();
 
         modelBuilder.Entity<Document>(doc =>

@@ -1,8 +1,10 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Infrastructure;
 
 namespace UNOPS.PAO.DataAccess.Services;
 
@@ -55,10 +57,60 @@ public class UserInfoService : IUserInfoService
                     LastModifiedDate = temp.userInfo.LastModifiedDate,
                     CreatedBy = temp.userInfo.CreatedBy,
                     LastModifiedBy = temp.userInfo.LastModifiedBy,
-                    IsDeleted = temp.userInfo.IsDeleted
+                    IsDeleted = temp.userInfo.IsDeleted,
+                    TextToSpeech = temp.userInfo.TextToSpeech,
+                    Language = temp.userInfo.Language
                 })
             .FirstOrDefaultAsync();
 
         return result;
+    }
+
+    public async Task<UserInfo?> UpdateUserInfoAsync(UserInfo userInfo)
+    {
+        var existingUserInfo = await _context.UserInfos.FindAsync(userInfo.UserId);
+        if (existingUserInfo == null)
+        {
+            throw new BusinessException("UserInfo not found");
+        }
+        PatchNonNullProperties(userInfo, existingUserInfo);
+        _context.UserInfos.Update(existingUserInfo);
+        await _context.SaveChangesAsync();
+        return existingUserInfo;
+    }
+
+    public void PatchNonNullProperties<TSource, TTarget>(TSource source, TTarget target)
+    {
+        var sourceProperties = typeof(TSource).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        
+        // Handle duplicate property names by grouping and taking the first one
+        var targetProperties = typeof(TTarget).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                              .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+                                              .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var sourceProp in sourceProperties)
+        {
+            if (!targetProperties.TryGetValue(sourceProp.Name, out var targetProp)) continue;
+            if (!targetProp.CanWrite || !sourceProp.CanRead) continue;
+
+            var value = sourceProp.GetValue(source);
+
+            // Only set if value is not null (or not empty string for strings)
+            if (value != null && (!(value is string str) || !string.IsNullOrWhiteSpace(str)))
+            {
+                // Special handling for ID columns: don't update if source is 0 and target already has a value
+                if (sourceProp.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase) && 
+                    value.Equals(0))
+                {
+                    var existingValue = targetProp.GetValue(target);
+                    if (existingValue != null && !existingValue.Equals(0))
+                    {
+                        continue; // Skip updating ID if target already has a non-zero value
+                    }
+                }
+
+                targetProp.SetValue(target, value);
+            }
+        }
     }
 } 

@@ -140,32 +140,14 @@ export interface ListViewConfig {
    */
   autoSwitchMinWidth?: number;
   /**
-   * Configuration for card view display
+   * Force mobile mode regardless of screen size or component width
+   * When true, the component will always behave as if it's in mobile mode
+   * This overrides autoSwitchToCardView and component width detection
+   * @default false
    */
-  cardConfig?: {
-    /**
-     * Field to use as the card title (defaults to first column)
-     */
-    titleField?: string;
-    /**
-     * Field to use as the card subtitle (defaults to first text column after title)
-     */
-    subtitleField?: string;
-    /**
-     * Fields to display in card content (defaults to first 4 columns after title)
-     */
-    contentFields?: string[];
-    /**
-     * Number of cards per row on different screen sizes
-     */
-    cardsPerRow?: {
-      xs?: number; // Extra small screens
-      sm?: number; // Small screens
-      md?: number; // Medium screens
-      lg?: number; // Large screens
-      xl?: number; // Extra large screens
-    };
-  };
+  forceMobileMode?: boolean;
+  
+
   searchConfig?: {
     /**
      * Searchable fields to display in the advanced search dropdown

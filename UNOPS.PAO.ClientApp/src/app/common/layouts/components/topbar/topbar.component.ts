@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRef, inject, ViewChild, ElementRef, computed, effect } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
@@ -31,6 +31,8 @@ import { RoleService } from '../../../../essentials/services/role.service';
 import { RoleDialogComponent } from './role-dialog/role-dialog.component';
 import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
 import { OrgUnitSelectorComponent } from './org-unit-selector/org-unit-selector.component';
+import { TranslateModule } from '@ngx-translate/core';
+import { GlobalFilterService } from '../../../../services/global-filter.service';
 
 interface UserInfo {
   userId: number;
@@ -64,7 +66,8 @@ interface UserInfo {
     AvatarModule,
     GlobalSearchBarComponent,
     RoleDialogComponent,
-    ProfileDialogComponent
+    ProfileDialogComponent,
+    TranslateModule
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -75,6 +78,7 @@ interface UserInfo {
 export class TopbarComponent implements OnInit, OnDestroy {
   @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
   @ViewChild(ProfileDialogComponent) profileDialog!: ProfileDialogComponent;
+  @ViewChild(OrgUnitSelectorComponent) orgUnitSelector!: OrgUnitSelectorComponent;
 
   items!: MenuItem[];
   notifications: Notification[] = [];
@@ -96,6 +100,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   userRoles: string[] = [];
   roleMenuItems: MenuItem[] = [];
 
+  // Propriété pour le filtre d'unité organisationnelle
+  isOrgUnitFilterActive: boolean = false;
+  private globalFilterSubscription?: Subscription;
+  
+  // Mobile detection
+  isMobile: boolean = false;
+
   constructor(
     public layoutService: LayoutService,
     private notificationService: NotificationService,
@@ -103,7 +114,8 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private globalFilterService: GlobalFilterService
   ) {
     // Check if we're in development mode
     this.isDevelopment = this.checkIfDevelopment();
@@ -122,6 +134,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    // Initialize mobile detection
+    this.detectMobile();
+    
     this.authService.user().subscribe({
       next: (claims) => {
         const userIdClaim = claims.find(c => c.type === 'userId');
@@ -140,6 +155,26 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
     this.profileMenuItems = [];
     this.setupProfileMenu();
+    
+    // Debug: Vérifier l'état initial du service
+    console.log('Initial GlobalFilter state:', {
+      filterEnabled: this.globalFilterService.isFilterEnabled(),
+      selectedOrgUnitId: this.globalFilterService.getSelectedOrgUnitId(),
+      activeOrgUnitId: this.globalFilterService.getActiveOrgUnitId()
+    });
+    
+    // Souscrire aux changements du filtre d'unité organisationnelle
+    this.globalFilterSubscription = this.globalFilterService.activeOrgUnitId$.subscribe({
+      next: (activeOrgUnitId) => {
+        console.log('GlobalFilter - activeOrgUnitId changed:', activeOrgUnitId);
+        this.isOrgUnitFilterActive = activeOrgUnitId !== null;
+        console.log('GlobalFilter - isOrgUnitFilterActive set to:', this.isOrgUnitFilterActive);
+        this.cdr.markForCheck();
+      },
+      error: (error) => {
+        console.error('Error subscribing to global filter changes:', error);
+      }
+    });
   }
 
   private setupProfileMenu() {
@@ -255,12 +290,15 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.stopNotificationPolling();
+    if (this.globalFilterSubscription) {
+      this.globalFilterSubscription.unsubscribe();
+    }
   }
 
   private startNotificationPolling() {
-    this.loadNotifications();
+   // this.loadNotifications();
 
-    this.notificationSubscription = interval(15000)
+    /*this.notificationSubscription = interval(15000)
       .pipe(
         switchMap(() => this.notificationService.getNotifications(this.userId))
       )
@@ -274,7 +312,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
         error: (error: any) => {
           // Error loading notifications
         }
-      });
+      });*/
   }
 
   private handleNewNotifications(newNotifications: Notification[]) {
@@ -523,5 +561,32 @@ export class TopbarComponent implements OnInit, OnDestroy {
       };
       this.profileDialog.show(tempUserInfo);
     }
+  }
+
+  openOrgUnitSelector() {
+    this.orgUnitSelector.showDialog();
+  }
+
+  onAIAssistantToggle() {
+    this.layoutService.onAIAssistantToggle();
+  }
+
+  onMenuButtonClick() {
+    // Check if we're on the AI route
+    if (this.router.url.startsWith('/ai')) {
+      // On AI route, toggle the AI sidebar collapse
+      this.layoutService.onAiSidebarToggle();
+    } else {
+      // On regular routes, toggle the main sidebar
+      this.layoutService.onMenuToggle();
+    }
+  }
+
+  private detectMobile() {
+    this.isMobile = window.innerWidth <= 768;
+  }
+
+  isOnAiPage(): boolean {
+    return this.isMobile && this.router.url.includes('/ai');
   }
 }

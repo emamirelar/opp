@@ -11,7 +11,9 @@ using System.Threading.Tasks;
 public class GeminiAssistantRequest
 {
     public string? Message { get; set; }
-    public Guid sessionId { get; set; }
+    public string? sessionId { get; set; }
     public IFormFile? File { get; set; }
     public string? ExtractedText { get; set; }
+    public string? ScreenUrl { get; set; }
+    public string? State { get; set; }
 }

@@ -9,6 +9,6 @@ using System.Threading.Tasks;
 
 public class GeminiAccessibilityRequest
 {
-    public Guid SessionId { get; set; }
+    public string SessionId { get; set; }
     public bool? TextToSpeech { get; set; } = false;
 }

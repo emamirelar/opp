@@ -33,6 +33,13 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using System.Reflection;
 
+public class SearchResult
+{
+    public int EntityId { get; set; }
+    public float Score { get; set; }
+    public string SearchType { get; set; }
+}
+
 namespace UNOPS.PAO.UNOPSBusiness.Managers
 {
     public class AiContextualService
@@ -122,9 +129,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return "No content found - screen mappings functionality has been removed";
         }
 
-        public async Task<dynamic> RetrieveEntityId(string entityName, string? vectorEmbedding, string? searchText=null, int? limit=5, string? where="1=1")
+        public async Task<dynamic> RetrieveEntityId(string entityName, string? vectorEmbedding, string? searchText=null, float similarityThreshold=0.3f, float embeddingThreshold=0.7f, string? where=null)
         {
-            var sql = "SELECT entityId from public.retrieve_similarity_results(@entityName, @searchText, @embedding, @limit, @where)";
+            var sql = "SELECT entityId from public.retrieve_similarity_results(@entityName, @searchText, @embedding, @similarityThreshold, @embeddingThreshold, @where) LIMIT 1";
 
             entityName = entityName.Pluralize();
 
@@ -133,8 +140,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 new NpgsqlParameter("@entityName", NpgsqlTypes.NpgsqlDbType.Text) { Value = entityName },
                 new NpgsqlParameter("@searchText", NpgsqlTypes.NpgsqlDbType.Text) { Value = searchText },
                 new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)vectorEmbedding ?? DBNull.Value },
-                new NpgsqlParameter("@limit", NpgsqlTypes.NpgsqlDbType.Integer) { Value = limit },
-                new NpgsqlParameter("@where", NpgsqlTypes.NpgsqlDbType.Text) { Value = where }
+                new NpgsqlParameter("@similarityThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = similarityThreshold },
+                new NpgsqlParameter("@embeddingThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = embeddingThreshold },
+                new NpgsqlParameter("@where", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)where ?? DBNull.Value }
             };
 
             // Execute the stored procedure using ExecuteSqlRaw
@@ -153,22 +161,23 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             return result;
         }
 
-        public async Task<dynamic> RetrieveSimilarityIds(string entityName, string similarityCriteria, string vectorEmbedding=null, int limitCount=5, string whereCondition=null)
+        public async Task<List<SearchResult>> RetrieveSimilarityIds(string entityName, string similarityCriteria, string vectorEmbedding=null, float similarityThreshold=0.3f, float embeddingThreshold=0.7f, string whereCondition=null)
         {
-            var sql = "SELECT public.Retrieve_Similarity_Results(@entityName, @text, @embedding, @limit, @where)";
+            var sql = "SELECT entityId, score, search_type FROM public.retrieve_similarity_results(@entityName, @text, @embedding, @similarityThreshold, @embeddingThreshold, @where)";
 
             entityName = entityName.Pluralize();
 
             var parameters = new[] 
             {
                 new NpgsqlParameter("@entityName", NpgsqlTypes.NpgsqlDbType.Text) { Value = entityName },
-                new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) { Value = vectorEmbedding },
                 new NpgsqlParameter("@text", NpgsqlTypes.NpgsqlDbType.Text) { Value = similarityCriteria },
-                new NpgsqlParameter("@limit", NpgsqlTypes.NpgsqlDbType.Integer) { Value = limitCount },
-                new NpgsqlParameter("@where", NpgsqlTypes.NpgsqlDbType.Text) { Value = whereCondition }
+                new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)vectorEmbedding ?? DBNull.Value },
+                new NpgsqlParameter("@similarityThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = similarityThreshold },
+                new NpgsqlParameter("@embeddingThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = embeddingThreshold },
+                new NpgsqlParameter("@where", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)whereCondition ?? DBNull.Value }
             };
 
-            // Execute the stored procedure using ExecuteSqlRaw
+            // Execute the query and return all matching results
             var connection = _context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
             {
@@ -179,9 +188,20 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             command.CommandText = sql;
             command.Parameters.AddRange(parameters);
 
-            var result = await command.ExecuteScalarAsync();
+            var results = new List<SearchResult>();
+            using var reader = await command.ExecuteReaderAsync();
+            
+            while (await reader.ReadAsync())
+            {
+                results.Add(new SearchResult
+                {
+                    EntityId = reader.GetInt32("entityId"),
+                    Score = reader.GetFloat("score"),
+                    SearchType = reader.GetString("search_type")
+                });
+            }
 
-            return result;
+            return results;
         }
 
         public async Task<string> ReadFileData(string fileId)
@@ -770,7 +790,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = entityName.Pluralize();
             }
             
-            return await RetrieveEntityId(entityName, null, text, 1, whereCondition);
+            return await RetrieveEntityId(entityName, null, text, 0.3f, 0.7f, whereCondition);
         }
         
         private async Task AddEmailToResponse(dynamic responseObject, dynamic entityId)

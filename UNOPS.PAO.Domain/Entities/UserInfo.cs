@@ -8,4 +8,8 @@ public class UserInfo : ModifiableDeletableEntity
     public string? UserEmail { get; set; }
     public string? OrgUnit { get; set; }
     public int? SupervisorId { get; set; }
+
+    public bool TextToSpeech { get; set; } = false;
+
+    public string? Language { get; set; } = "en";
 }

@@ -202,6 +202,9 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         // RBAC interceptor handles security enforcement
         var query = _promptRepository.GetAll().AsQueryable();
 
+        // Only show prompts that can be changed by admins
+        query = query.Where(p => p.AdminCanChange == true);
+
         // Apply search if provided
         if (!string.IsNullOrEmpty(request.SearchText))
         {

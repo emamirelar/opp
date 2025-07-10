@@ -14,6 +14,8 @@ using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
 using System.Text.Json;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSBusiness.Managers;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -32,7 +34,9 @@ namespace UNOPS.PAO.Presentation.Controllers
             ILogger logger,
             IAuthorizationService authorizationService,
             UserResolverService<int> userResolverService,
-            IPermissionService permissionService = null)
+            IPermissionService permissionService = null,
+            UNOPSAppDbContext context = null,
+            AiContextualService aiService = null)
         {
             _logger = logger;
             _authorizationService = authorizationService;

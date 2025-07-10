@@ -39,6 +39,7 @@ using System.IO;
 using UNOPS.PAO.Presentation.Security;
 using UNOPS.PAO.Business.Services;
 using UNOPS.PAO.UNOPSBusiness.Managers;
+using Google.Apis.Auth.OAuth2;
 
 namespace UNOPS.PAO.Server;
 
@@ -368,6 +369,25 @@ public class Startup
         
         // Register Secure Specification Factory for RBAC-aware database filtering
         services.AddScoped<ISecureSpecificationFactory, SecureSpecificationFactory>();
+        
+        // Register Google Credential for AI services
+        services.AddSingleton<GoogleCredential>(provider =>
+        {
+            var configuration = provider.GetRequiredService<IConfiguration>();
+            var credentialParams = configuration.GetSection("AISettings")
+                .Get<JsonCredentialParameters>();
+            if (credentialParams == null)
+                throw new Exception("AISettings configuration is missing.");
+        
+            var secretName = configuration.GetValue<string>("AISettings:AIServiceAccountJSONSecretName");
+            
+            var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
+            var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
+            return GoogleCredential.FromJson(secretValue);
+        });
+        
+        // Register AI Contextual Service for similarity search and embeddings
+        services.AddScoped<AiContextualService>();
         
         // Add data seeding services
         services.AddDataSeeding();

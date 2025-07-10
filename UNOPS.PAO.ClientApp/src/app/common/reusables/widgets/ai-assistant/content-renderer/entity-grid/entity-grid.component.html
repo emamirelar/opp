@@ -1,0 +1,34 @@
+<div class="entity-grid-container">
+  <div class="entity-grid-header" *ngIf="entityType">
+    <h4>{{ entityType }}s ({{ gridData?.length || 0 }})</h4>
+  </div>
+  
+  <div class="entity-grid-loading" *ngIf="isLoading()">
+    <p>Loading column configuration...</p>
+  </div>
+  
+  <div class="entity-grid-content" *ngIf="!isLoading() && gridData && gridData.length > 0 && columns().length > 0">
+    <app-listview-card
+      [columns]="columns()"
+      [data]="gridData"
+      [config]="cardConfig()"
+      [totalRecords]="gridData.length"
+      [loading]="false"
+      [error]="false"
+      [hasMoreData]="false"
+      [isLoadingMore]="false"
+      (rowClick)="handleRowClick($event)">
+    </app-listview-card>
+  </div>
+  
+  <!-- Fallback: Show raw data if cards fail to render -->
+  <div *ngIf="!isLoading() && gridData && gridData.length > 0 && columns().length === 0" class="p-4 bg-yellow-50 border border-yellow-200 rounded">
+    <h5 class="font-semibold mb-2">⚠️ Column Configuration Missing</h5>
+    <p class="text-sm mb-2">No column configuration found for {{ entityType }}. Raw data:</p>
+    <pre class="text-xs bg-white p-2 rounded border overflow-auto max-h-32">{{ gridData | json }}</pre>
+  </div>
+  
+  <div class="entity-grid-empty" *ngIf="!isLoading() && (!gridData || gridData.length === 0)">
+    <p>No {{ entityType?.toLowerCase() }} data available</p>
+  </div>
+</div> 

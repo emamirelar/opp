@@ -31,11 +31,11 @@ public class NotificationController : ControllerBase
     private int CurrentUserId => _userResolverService.GetCurrentUserId();
 
     [HttpGet(APIDictionary.Notifications)]
-    public async Task<ActionResult<List<NotificationModel>>> GetNotifications()
+    public async Task<ActionResult<List<NotificationModel>>> GetNotifications([FromQuery] bool? unreadOnly = null)
     {
         try
         {
-            var notifications = await _notificationManager.GetNotifications(CurrentUserId);
+            var notifications = await _notificationManager.GetNotifications(CurrentUserId, unreadOnly);
             return Ok(notifications);
         }
         catch (Exception ex)

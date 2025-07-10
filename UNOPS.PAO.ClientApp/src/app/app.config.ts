@@ -23,6 +23,8 @@ import { GoogleLoginProvider } from '@abacritt/angularx-social-login';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import { MarkdownModule } from 'ngx-markdown';
+import { SecurityContext } from '@angular/core';
 
 /******* Services *********/
 
@@ -94,6 +96,9 @@ export const appConfig: ApplicationConfig = {
           useFactory: httpLoaderFactory,
           deps: [HttpClient],
         },
+      }),
+      MarkdownModule.forRoot({
+        sanitize: SecurityContext.HTML,
       }),
     ]),
     provideAnimationsAsync(),

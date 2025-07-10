@@ -22,10 +22,23 @@ public class NotificationManager : IApplicationService
         this.userResolverService = userResolverService;
     }
 
-    public async Task<List<NotificationModel>> GetNotifications(int userId)
+    public async Task<List<NotificationModel>> GetNotifications(int userId, bool? unreadOnly = null)
     {
-        var notifications = await appDbContext.Notifications
-            .Where(n => n.UserId == userId && !n.IsRead)
+        var query = appDbContext.Notifications
+            .Where(n => n.UserId == userId);
+
+        // Apply unreadOnly filter if specified
+        if (unreadOnly.HasValue)
+        {
+            query = query.Where(n => n.IsRead == !unreadOnly.Value);
+        }
+        else
+        {
+            // Default behavior: show only unread notifications
+            query = query.Where(n => !n.IsRead);
+        }
+
+        var notifications = await query
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();
 

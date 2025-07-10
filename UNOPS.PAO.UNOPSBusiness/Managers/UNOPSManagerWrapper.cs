@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using System.Net.Http;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -34,7 +35,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSEntityConfigurationManager entityConfigurationManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
-                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, ILoggerFactory loggerFactory) : base(mapper, context, userManager, httpContextAccessor)
+                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, HttpClient httpClient, ILoggerFactory loggerFactory) : base(mapper, context, userManager, httpContextAccessor)
     {
         // Create a MemoryCache instance for services that need it
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -51,7 +52,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor);
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration);
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, httpClient);
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);

@@ -117,6 +117,25 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     (this.config.searchConfig?.useAdvancedSearch ? 'Search by field...' : 'Search...')
   );
 
+  // Computed property to determine if mobile mode is active
+  readonly isMobileMode = computed(() => {
+    const config = this.config;
+    const { componentWidth } = this.state();
+    
+    // Force mobile mode if configured
+    if (config.forceMobileMode) {
+      return true;
+    }
+    
+    // Check auto-switch conditions
+    if (config.autoSwitchToCardView && componentWidth > 0) {
+      const minWidth = config.autoSwitchMinWidth || 768;
+      return componentWidth < minWidth;
+    }
+    
+    return false;
+  });
+
   // Search handling
   private readonly searchSubject = new Subject<string>();
   private readonly loadDataSubject = new Subject<void>();
@@ -185,7 +204,8 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     scrollHeight: 'flex',
     autoSwitchToCardView: false,
     autoSwitchMinWidth: 768,
-    defaultViewMode: 'card'
+    defaultViewMode: 'card',
+    forceMobileMode: false
   };
 
   @Input() set searchDebounceTime(value: number) {
