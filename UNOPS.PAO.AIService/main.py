@@ -19,6 +19,8 @@ from google.genai import types
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
 from fastapi.responses import StreamingResponse
+from sqlalchemy import update
+from sqlalchemy.orm import sessionmaker
 
 # Load environment variables from .env file
 try:
@@ -41,6 +43,43 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+async def update_session_state_in_database(session_service: DatabaseSessionService, app_name: str, user_id: str, session_id: str, state_updates: Dict[str, Any]) -> None:
+    """
+    Update session state directly in the database for existing sessions.
+    
+    Args:
+        session_service: The database session service instance
+        app_name: Application name
+        user_id: User ID
+        session_id: Session ID
+        state_updates: Dictionary of state updates to apply
+    """
+    try:
+        # Access the database session factory from the service
+        with session_service.database_session_factory() as db_session:
+            # Import the StorageSession model from the session service module
+            from google.adk.sessions.database_session_service import StorageSession
+            
+            # Get the existing session
+            storage_session = db_session.get(StorageSession, (app_name, user_id, session_id))
+            
+            if storage_session:
+                # Update the state with new data
+                if not storage_session.state:
+                    storage_session.state = {}
+                
+                storage_session.state.update(state_updates)
+                
+                # Commit the changes
+                db_session.commit()
+                logger.info(f"💾 Successfully updated session state in database")
+            else:
+                logger.warning(f"⚠️ Session not found in database for update")
+                
+    except Exception as e:
+        logger.error(f"❌ Error updating session state in database: {e}")
+        raise
 
 # Global variables
 google_drive_tool = None
@@ -474,18 +513,30 @@ def add_chat_endpoint(app: FastAPI):
 
             print(f"Parsed state: {parsed_state}")
 
+            # Prepare initial state with IAP headers and user info
+            initial_state = parsed_state or {}
+            
+            # Add user_email and IAP headers to initial state
+            if user_email:
+                initial_state['user_email'] = user_email
+                initial_state['header_email'] = user_email  # backward compatibility
+                logger.info(f"📧 Adding user_email to initial state: {user_email}")
+
+            if iap_headers_to_forward:
+                initial_state['iap_headers'] = iap_headers_to_forward
+                logger.info(f"🔐 Adding IAP headers to initial state: {list(iap_headers_to_forward.keys())}")
+
             # Handle session creation vs retrieval
             if is_new_session_request:
                 # Always create a new session for empty session_id
                 logger.info("🆕 Creating new session (empty session_id provided)...")
-                initial_state = parsed_state or {}
                 session = await session_service.create_session(
                     app_name=request_body.app_name,
                     user_id=request_body.user_id,
                     session_id=session_id,
                     state=initial_state
                 )
-                logger.info(f"✅ New session created with state: {session.state}")
+                logger.info(f"✅ New session created with IAP headers and user info")
             else:
                 # Try to get existing session first
                 logger.info(f"🔍 Getting existing session for app: {request_body.app_name}, user: {request_body.user_id}, session: {session_id}")
@@ -498,80 +549,38 @@ def add_chat_endpoint(app: FastAPI):
                 if not session:
                     logger.info("🆕 Session not found - creating new session...")
                     # Create new session if it doesn't exist
-                    initial_state = parsed_state or {}
                     session = await session_service.create_session(
                         app_name=request_body.app_name,
                         user_id=request_body.user_id,
                         session_id=session_id,
                         state=initial_state
                     )
-                    logger.info(f"✅ New session created with state: {session.state}")
+                    logger.info(f"✅ New session created with IAP headers and user info")
                 else:
-                    logger.info(f"📋 Found existing session with state: {session.state}")
-
-                    # Update existing session state if provided
-                    if parsed_state:
-                        logger.info(f"🔄 Updating session state with new data: {parsed_state}")
-
-                        # Merge new state with existing state
-                        updated_state = {**session.state, **parsed_state}
-                        logger.info(f"🔀 Merged state: {updated_state}")
-
+                    logger.info(f"📋 Found existing session")
+                    
+                    # For existing sessions, update both in-memory and database
+                    if not hasattr(session, 'state') or session.state is None:
+                        session.state = {}
+                    
+                    # Update the in-memory session state with new data
+                    session.state.update(initial_state)
+                    logger.info(f"✅ Updated existing session in-memory with current request data")
+                    
+                    # Also persist the IAP headers to database for future requests
+                    if iap_headers_to_forward or user_email:
                         try:
-                            # Update session state directly on the session object
-                            session.state.update(updated_state)
-                            logger.info(f"✅ Session state updated in memory: {session.state}")
-                            
-                            # Save the updated session back to the database
-                            await session_service.update_session(session)
-                            logger.info(f"💾 Session state saved to database successfully")
-
-                        except Exception as state_error:
-                            logger.warning(f"⚠️ State update failed: {state_error}")
-                            logger.info("🔄 Falling back to basic state initialization...")
-
-                            # Fallback: ensure session has a state dict
-                            if not hasattr(session, 'state') or session.state is None:
-                                session.state = {}
-                            session.state.update(updated_state)
-                            logger.info(f"✅ Fallback state update completed: {session.state}")
-                            
-                            # Try to save the fallback state as well
-                            try:
-                                await session_service.update_session(session)
-                                logger.info(f"💾 Fallback session state saved to database")
-                            except Exception as save_error:
-                                logger.error(f"❌ Failed to save fallback session state: {save_error}")
-
-                    else:
-                        logger.info("ℹ️ No state update provided, using existing state")
-
-            # Add user_email and IAP headers to session state if available
-            if user_email or iap_headers_to_forward:
-                # Ensure session state exists
-                if not hasattr(session, 'state') or session.state is None:
-                    session.state = {}
-
-                # Add user_email to session state (primary field)
-                if user_email:
-                    session.state['user_email'] = user_email
-                    # Also keep header_email for backward compatibility
-                    session.state['header_email'] = user_email
-                    logger.info(f"📧 Added user_email to session state: {user_email}")
-
-                # Store the complete IAP headers for API calls
-                if iap_headers_to_forward:
-                    session.state['iap_headers'] = iap_headers_to_forward
-                    logger.info(f"🔐 Stored IAP headers in session state: {list(iap_headers_to_forward.keys())}")
-                
-                # Save the session with user_email and IAP headers updates
-                try:
-                    await session_service.update_session(session)
-                    logger.info(f"💾 Session saved with user_email: {user_email} and IAP headers: {list(iap_headers_to_forward.keys()) if iap_headers_to_forward else 'None'}")
-                except Exception as save_error:
-                    logger.error(f"❌ Failed to save session with user_email and IAP headers: {save_error}")
-            else:
-                logger.info("⚠️ No user email or IAP headers found - session not updated")
+                            await update_session_state_in_database(
+                                session_service, 
+                                request_body.app_name, 
+                                request_body.user_id, 
+                                session_id, 
+                                initial_state
+                            )
+                            logger.info(f"✅ Persisted IAP headers and user info to database for future requests")
+                        except Exception as db_update_error:
+                            logger.warning(f"⚠️ Failed to persist to database (will work for current request): {db_update_error}")
+                            logger.info("🔄 In-memory state is still available for current request")
 
             logger.info(f"📊 Final session state before processing: {session.state}")
 

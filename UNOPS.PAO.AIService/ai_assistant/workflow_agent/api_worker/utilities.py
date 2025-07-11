@@ -608,23 +608,41 @@ def construct_api_url(base_url: str, endpoint_path: str, path_params: Dict[str, 
     Returns:
         str: Complete URL with path parameters substituted
     """
+    print(f"🔧 [URL] Constructing URL from base: '{base_url}' + path: '{endpoint_path}'")
+    
     # Remove trailing slash from base_url if present
     base_url = base_url.rstrip('/')
+    print(f"🔧 [URL] Base URL after rstrip: '{base_url}'")
     
     # Ensure endpoint_path starts with /
     if not endpoint_path.startswith('/'):
         endpoint_path = '/' + endpoint_path
+    print(f"🔧 [URL] Endpoint path after ensuring slash: '{endpoint_path}'")
     
     # Construct base URL
     full_url = base_url + endpoint_path
+    print(f"🔧 [URL] Combined URL: '{full_url}'")
+    
+    # Fix any double slashes (except after protocol)
+    # Keep protocol slashes (https://) but fix any other double slashes
+    if '://' in full_url:
+        protocol_part, rest_part = full_url.split('://', 1)
+        rest_part = rest_part.replace('//', '/')
+        full_url = protocol_part + '://' + rest_part
+        print(f"🔧 [URL] Fixed double slashes: '{full_url}'")
     
     # Substitute path parameters if provided
     if path_params:
+        print(f"🔧 [URL] Substituting path parameters: {path_params}")
         for param_name, param_value in path_params.items():
             # Replace both {param} and [param] patterns
+            old_url = full_url
             full_url = full_url.replace(f'{{{param_name}}}', str(param_value))
             full_url = full_url.replace(f'[{param_name}]', str(param_value))
+            if old_url != full_url:
+                print(f"🔧 [URL] Replaced {param_name}: '{old_url}' → '{full_url}'")
     
+    print(f"🔧 [URL] Final constructed URL: '{full_url}'")
     return full_url
 
 

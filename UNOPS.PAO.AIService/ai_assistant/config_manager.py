@@ -484,7 +484,7 @@ class ConfigManager:
 
 
 # Global singleton instance
-config_manager = ConfigManager()
+config_manager = ConfigManager() 
 
 # Export API_BASE_URL for backward compatibility
 def get_api_base_url():

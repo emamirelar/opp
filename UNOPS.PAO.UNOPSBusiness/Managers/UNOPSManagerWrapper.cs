@@ -43,6 +43,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         // Create logger for UNOPSPartnerManager
         var partnerManagerLogger = loggerFactory.CreateLogger<UNOPSPartnerManager>();
         
+        // Create logger for UNOPSGeminiManager
+        var geminiManagerLogger = loggerFactory.CreateLogger<UNOPSGeminiManager>();
+        
         // Create a PartnerTreeService instance
         var partnerTreeRepository = new DataRepository<UNOPSPartnerTree>(opsContext);
         var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
@@ -52,7 +55,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor);
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, httpClient);
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, httpClient, geminiManagerLogger);
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);
