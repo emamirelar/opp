@@ -279,7 +279,7 @@ def screen_context_after_model_callback(callback_context: CallbackContext, llm_r
         # First priority: screen_url object
         entity = screen_url_obj.get('entity', '')
         entity_id = screen_url_obj.get('id', None)
-        
+            
         # Second priority: user_viewing_panel if screen_url is empty
         if not entity and user_viewing_panel:
             entity = user_viewing_panel.get('entity', '')
@@ -292,7 +292,7 @@ def screen_context_after_model_callback(callback_context: CallbackContext, llm_r
             # Cache screen context using entity+id key
             cache_key = f"{entity}:{entity_id}" if entity_id else f"{entity}:list"
             entity_cache.set_screen_context(cache_key, screen_context)
-            
+                
             print(f"✅ [SCREEN] Cached screen context successfully for {cache_key}")
         
         return None  # Use original response

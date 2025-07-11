@@ -41,6 +41,7 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using Z.EntityFramework.Plus;
 using System.Text.Json;
 using UNOPS.PAO.Utilities.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -57,13 +58,15 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GoogleCloudStorageService _gcsService;
     private readonly GeminiSessionService _sessionService;
     private readonly AiContextualService _aiService;
+    private readonly ILogger<UNOPSGeminiManager> _logger;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, HttpClient httpClient)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, HttpClient httpClient, ILogger<UNOPSGeminiManager> logger)
     {
         _mapper = mapper;
         _context = context;
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
+        _logger = logger;
         _credentials = GetCredentials()
                         .CreateScoped("https://www.googleapis.com/auth/spreadsheets.readonly");
         _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
@@ -224,7 +227,7 @@ public class UNOPSGeminiManager : IGeminiManager
             catch (Exception ex)
             {
                 // Log error and fallback to empty response
-                Console.WriteLine($"Error calling function {promptData.PromptFunction}: {ex.Message}");
+                _logger.LogError(ex, "Error calling function {PromptFunction}: {ErrorMessage}", promptData.PromptFunction, ex.Message);
                 return $"Error retrieving data: {ex.Message}";
             }
         }
@@ -486,14 +489,14 @@ public class UNOPSGeminiManager : IGeminiManager
 
             if (dbSetProperty == null)
             {
-                Console.WriteLine($"DbSet for table '{tableName}' not found.");
+                _logger.LogWarning("DbSet for table '{TableName}' not found.", tableName);
                 continue;
             }
 
             var dbSet = dbSetProperty.GetValue(_context) as IQueryable<object>;
             if (dbSet == null)
             {
-                Console.WriteLine($"Unable to retrieve DbSet for table '{tableName}'.");
+                _logger.LogWarning("Unable to retrieve DbSet for table '{TableName}'.", tableName);
                 continue;
             }
 
@@ -523,7 +526,7 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 if (entityId == 0)
                 {
-                    Console.WriteLine($"No valid Id found for record in table '{tableName}'.");
+                    _logger.LogWarning("No valid Id found for record in table '{TableName}'.", tableName);
                     continue;
                 }
 
@@ -533,7 +536,7 @@ public class UNOPSGeminiManager : IGeminiManager
 
                 if (exists)
                 {
-                    Console.WriteLine($"Embedding already exists for Entity '{tableName}' with Id '{entityId}'. Skipping...");
+                    _logger.LogInformation("Embedding already exists for Entity '{TableName}' with Id '{EntityId}'. Skipping...", tableName, entityId);
                     continue;
                 }
 
@@ -773,7 +776,7 @@ public class UNOPSGeminiManager : IGeminiManager
             catch (Exception ex)
             {
                 // Log the error but don't fail the operation
-                Console.WriteLine($"Error publishing entity processing messages to PubSub: {ex.Message}");
+                _logger.LogError(ex, "Error publishing entity processing messages to PubSub: {ErrorMessage}", ex.Message);
             }
         }
 
@@ -820,6 +823,20 @@ public class UNOPSGeminiManager : IGeminiManager
 
         using var httpClient = new HttpClient();
         
+        // Log incoming headers for debugging
+        _logger.LogInformation("ChatWithGemini - Total incoming headers count: {HeaderCount}", headers?.Count ?? 0);
+        if (headers != null)
+        {
+            foreach (var header in headers)
+            {
+                _logger.LogInformation("ChatWithGemini - Incoming header: '{HeaderKey}' = '{HeaderValue}'", header.Key, string.Join(", ", header.Value.ToArray()));
+            }
+        }
+        else
+        {
+            _logger.LogInformation("ChatWithGemini - No headers provided to method");
+        }
+        
         // Add all request headers to the HTTP client
         if (headers != null)
         {
@@ -830,15 +847,27 @@ public class UNOPSGeminiManager : IGeminiManager
                     // Skip headers that are set automatically by HttpClient or are restricted
                     if (!IsRestrictedHeader(header.Key))
                     {
+                        _logger.LogInformation("ChatWithGemini - Adding header to HttpClient: '{HeaderKey}' = '{HeaderValue}'", header.Key, string.Join(", ", header.Value.ToArray()));
                         httpClient.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value.AsEnumerable());
+                    }
+                    else
+                    {
+                        _logger.LogInformation("ChatWithGemini - Skipping restricted header: '{HeaderKey}'", header.Key);
                     }
                 }
                 catch (Exception ex)
                 {
                     // Log and continue if a header cannot be added
-                    Console.WriteLine($"Warning: Could not add header '{header.Key}': {ex.Message}");
+                    _logger.LogError(ex, "ChatWithGemini - Could not add header '{HeaderKey}': {ErrorMessage}", header.Key, ex.Message);
                 }
             }
+        }
+        
+        // Log final headers that will be sent
+        _logger.LogInformation("ChatWithGemini - Final HttpClient headers count: {HeaderCount}", httpClient.DefaultRequestHeaders.Count());
+        foreach (var header in httpClient.DefaultRequestHeaders)
+        {
+            _logger.LogInformation("ChatWithGemini - Final header: '{HeaderKey}' = '{HeaderValue}'", header.Key, string.Join(", ", header.Value.ToArray()));
         }
         
         var response = await httpClient.PostAsync(apiUrl, httpContent);
