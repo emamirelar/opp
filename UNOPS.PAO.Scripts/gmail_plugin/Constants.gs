@@ -31,9 +31,11 @@ function getApiBaseUrl() {
 }
 
 const API_BASE_URL = getApiBaseUrl();
-const AUTH_ENDPOINT = `${API_BASE_URL}/auth/google`;
+//const API_BASE_URL = 'https://test-opportunityplus.unops.org/api';
+const AUTH_ENDPOINT = `${API_BASE_URL}/gmail-addon/auth`;
 const CONTACT_ENDPOINT = `${API_BASE_URL}/api/contact`;
 const INTERACTION_API_ENDPOINT = `${API_BASE_URL}/gmail-addon/interactions`;
+const CREATE_RECORDS_ENDPOINT = `${API_BASE_URL}/gmail-addon/create-records`;
 const OPPORTUNITY_PLUS_ENDPOINT = `https://localhost:44426/#`;
 const ICON_URL = 'https://storage.googleapis.com/opportunity_plus_logo/Opportunity%20Logo%20Graphic1000px.png';
 const CONTACT_READ_ERROR_MSG = 'Insufficient permission to view';

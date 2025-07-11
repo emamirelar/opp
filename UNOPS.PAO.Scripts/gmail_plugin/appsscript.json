@@ -30,14 +30,18 @@
     ],
     "urlFetchWhitelist": [
         "https://www.googleapis.com/oauth2/v3/userinfo",
-        "https://swift-legible-raven.ngrok-free.app/api/auth/google",
-        "https://swift-legible-raven.ngrok-free.app/api/api/auth/refresh",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/auth",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/refresh",
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/revoke",
         "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions",
         "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/interactions/*",
-        "https://test-opportunityplus.unops.org/api/auth/google",
-        "https://test-opportunityplus.unops.org/api/api/auth/refresh",
-        "https://test-opportunityplus.unops.org/gmail-addon/interactions",
-        "https://test-opportunityplus.unops.org/gmail-addon/interactions/*"
+        "https://swift-legible-raven.ngrok-free.app/api/gmail-addon/create-records",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/auth",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/refresh",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/revoke",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/interactions",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/interactions/*",
+        "https://test-opportunityplus.unops.org/api/gmail-addon/create-records"
     ],
     "addOns": {
         "common": {

@@ -4,24 +4,28 @@ using UNOPS.PAO.Identity.Models;
 using UNOPS.PAO.Identity.Services;
 
 namespace UNOPS.PAO.Identity.Controllers;
-
+/*************************************************************************************************************************************
+ * This controller is already authorized by IAP as public URLs seem to be protected by GCP / Cloudflare for the test server. 
+ * Will look into optimizing the overall authentication and session flow if this approach works on the test server.
+ * ***********************************************************************************************************************************/
 [Route("/")]
+[Authorize(AuthenticationSchemes = "IAP")]  
 [ApiController]
-public class GoogleAuthController : ControllerBase
+public class GmailAddonAuthController : ControllerBase
 {
-    private readonly IGoogleAuthService _authService;
+    private readonly IGmailAddonAuthService _authService;
 
-    public GoogleAuthController(IGoogleAuthService authService)
+    public GmailAddonAuthController(IGmailAddonAuthService authService)
     {
         _authService = authService;
     }
 
-    [HttpPost("api/auth/google")]
-    public async Task<IActionResult> GoogleSignIn([FromBody] GoogleSignInRequest request)
+    [HttpPost("api/gmail-addon/auth")]
+    public async Task<IActionResult> GmailAddonAuthAsync([FromBody] GmailAddonSignInRequest request)
     {
         try
         {
-            var response = await _authService.AuthenticateWithGoogleAsync(request);
+            var response = await _authService.AuthenticateForGmailAddonAsync(request);
             return Ok(response);
         }
         catch (Exception ex)
@@ -30,7 +34,7 @@ public class GoogleAuthController : ControllerBase
         }
     }
 
-    [HttpPost("api/auth/refresh")]
+    [HttpPost("api/gmail-addon/refresh")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
         try
@@ -44,8 +48,7 @@ public class GoogleAuthController : ControllerBase
         }
     }
 
-    [Authorize(AuthenticationSchemes = "Bearer")]
-    [HttpPost("api/auth/revoke")]
+    [HttpPost("api/gmail-addon/revoke")]
     public async Task<IActionResult> RevokeToken([FromBody] RefreshTokenRequest request)
     {
         try

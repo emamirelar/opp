@@ -252,4 +252,9 @@ public class ContactManager : IContactManager
             PageSize = pagination.PageSize
         };
     }
+
+    public virtual async Task<List<UnmatchedEmailModel>> GetUnmatchedEmailsWithPartnerSuggestionsAsync(List<string> emailAddresses, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException("Use UNOPSContactManager for UNOPS-specific implementation");
+    }
 }

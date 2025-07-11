@@ -54,24 +54,27 @@ function authenticate() {
     const userEmail = Session.getActiveUser().getEmail();
 
     const idToken = ScriptApp.getIdentityToken(); 
+    Logger.log('idToken: ' + idToken);
 
     if (!idToken) {
       throw new Error("Could not obtain Google ID Token.");
     }
     
-    // Authenticate with our API using the user's email
+    // For IAP-protected endpoints, send token in Authorization header
     const response = UrlFetchApp.fetch(AUTH_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`,  // Add this for IAP
+        'X-Goog-IAP-JWT-Assertion': idToken    // Alternative IAP header
       },
       payload: JSON.stringify({
         provider: 'UNOPS.PAO',
         idToken: idToken
-        //email: userEmail
       })
     });
 
+    Logger.log('response: ' + response);
     const result = JSON.parse(response.getContentText());
     
     // Store the tokens

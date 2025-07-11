@@ -9,7 +9,7 @@ public class GmailRelatedRecordsResponse
     public List<GmailRelatedContact> Contacts { get; set; }
     public List<GmailRelatedPartner> Partners { get; set; }
     public List<GmailRelatedUser> Users { get; set; }
-    public List<string> UnmatchedEmails { get; set; }
+    public List<UnmatchedEmailModel> UnmatchedEmails { get; set; }
     public bool CanCreateContacts { get; set; }
 
     public GmailRelatedRecordsResponse()
@@ -17,7 +17,7 @@ public class GmailRelatedRecordsResponse
         Contacts = new List<GmailRelatedContact>();
         Partners = new List<GmailRelatedPartner>();
         Users = new List<GmailRelatedUser>();
-        UnmatchedEmails = new List<string>();
+        UnmatchedEmails = new List<UnmatchedEmailModel>();
     }
 }
 
@@ -63,4 +63,11 @@ public class GmailRelatedInteraction
     public string Description { get; set; }
     public DateTime Date { get; set; }
     public bool CanRead { get; set; }
+}
+
+public class UnmatchedEmailModel
+{
+    public string UnmatchedEmail { get; set; }
+    public int? PartnerId { get; set; }
+    public string PartnerName { get; set; }
 }
