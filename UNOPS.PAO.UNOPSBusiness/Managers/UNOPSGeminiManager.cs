@@ -863,6 +863,10 @@ public class UNOPSGeminiManager : IGeminiManager
             }
         }
         
+        // Add dummy header for testing
+        httpClient.DefaultRequestHeaders.TryAddWithoutValidation("X-Test-Header", "test-value-123");
+        _logger.LogInformation("ChatWithGemini - Added dummy test header");
+        
         // Log final headers that will be sent
         _logger.LogInformation("ChatWithGemini - Final HttpClient headers count: {HeaderCount}", httpClient.DefaultRequestHeaders.Count());
         foreach (var header in httpClient.DefaultRequestHeaders)
