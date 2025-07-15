@@ -181,12 +181,12 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                             verifiedEmail, extractedEmail);
                         
                         // In production, this would be suspicious and might indicate tampering
-                        if (!_environment.IsDevelopment())
-                        {
-                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            await context.Response.WriteAsync("Unauthorized: Identity mismatch");
-                            return;
-                        }
+                        // if (!_environment.IsDevelopment())
+                        // {
+                        //     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        //     await context.Response.WriteAsync("Unauthorized: Identity mismatch");
+                        //     return;
+                        // }
                     }
                     else
                     {
