@@ -13,9 +13,11 @@ export class GlobalFilterService {
 
   private filterEnabledSubject = new BehaviorSubject<boolean>(this.loadFilterEnabled());
   private selectedOrgUnitIdSubject = new BehaviorSubject<number | null>(this.loadSelectedOrgUnitId());
+  private filtersChangedSubject = new BehaviorSubject<void>(undefined);
 
   filterEnabled$ = this.filterEnabledSubject.asObservable();
   selectedOrgUnitId$ = this.selectedOrgUnitIdSubject.asObservable();
+  filtersChanged$ = this.filtersChangedSubject.asObservable();
 
   // Combined observable that emits the org unit ID only when filter is enabled
   activeOrgUnitId$: Observable<number | null> = combineLatest([
@@ -30,11 +32,18 @@ export class GlobalFilterService {
   setFilterEnabled(enabled: boolean): void {
     this.filterEnabledSubject.next(enabled);
     this.saveFilterEnabled(enabled);
+    this.filtersChangedSubject.next();
   }
 
   setSelectedOrgUnitId(orgUnitId: number | null): void {
     this.selectedOrgUnitIdSubject.next(orgUnitId);
     this.saveSelectedOrgUnitId(orgUnitId);
+    this.filtersChangedSubject.next();
+  }
+
+  // Method to trigger a refresh when global filters are saved
+  triggerFiltersChanged(): void {
+    this.filtersChangedSubject.next();
   }
 
   isFilterEnabled(): boolean {

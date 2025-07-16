@@ -1,41 +1,104 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, HostListener, inject, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, filter, Subject, takeUntil, forkJoin } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
+import { debounceTime, distinctUntilChanged, filter, Subject, takeUntil } from 'rxjs';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
+import { ListviewCardComponent } from '../../../../pages/components/listview/card/listview-card.component';
 import { Router, ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { ContactService } from '../../../../../features/internal/services/contact.service';
-import { PartnerService } from '../../../../../features/internal/services/partner.service';
+import { HttpClient } from '@angular/common/http';
+import { EntityConfigurationService } from '../../../../../features/internal/services/entity-configuration.service';
+import { ListViewColumn, ListViewConfig } from '../../../../pages/components/listview/listview.model';
 
-interface SearchResult {
-  id: string;
-  title: string;
-  subtitle?: string;
-  type: string;
-  [key: string]: any;
+interface SearchMetadata {
+  matchedField?: string;
+  searchType?: string;
+  matchCriteria?: string;
+  score?: number;
+  snippet?: string;
+}
+
+interface EnhancedSearchResult {
+  id: number;
+  _searchMetadata?: SearchMetadata;
+  [key: string]: any; // Allow all original entity properties to flow through
+}
+
+interface SearchResponse {
+  availableEntities: string[];
+  results: {
+    [entityType: string]: EnhancedSearchResult[];
+  };
+}
+
+interface EntityTab {
+  key: string;
+  label: string;
+  count: number;
+  icon: string;
+  color: string;
 }
 
 @Component({
   selector: 'app-global-search-bar',
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule, ListviewCardComponent],
   templateUrl: './global-search-bar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  styles: `:host {
-    display: block;
-    width: 100%;
-    max-width: 740px;
-  }`
-
+  styles: `
+    :host {
+      display: block;
+      width: 100%;
+      max-width: 740px;
+    }
+    
+    .search-highlight {
+      background-color: #fef3c7;
+      background-image: linear-gradient(120deg, #fef3c7 0%, #fde047 100%);
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      color: #854d0e;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .entity-tab {
+      transition: all 0.2s ease;
+    }
+    
+    .entity-tab:hover {
+      transform: translateY(-1px);
+    }
+    
+    .snippet-text {
+      line-height: 1.4;
+      max-height: 2.8em;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    
+    .mobile-dropdown {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.3s ease;
+    }
+  `
 })
 export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
-  private contactService = inject(ContactService);
-  private partnerService = inject(PartnerService);
+  private entityConfigurationService = inject(EntityConfigurationService);
   private readonly breakpoint = 992;
 
   translateService = inject(TranslateService);
@@ -44,27 +107,77 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   showResults = false;
   isExpanded = false;
   recentSearches: string[] = [];
-  filteredResults: SearchResult[] = [];
   isLoading = signal(false);
   private isUserInteracting = false;
 
+  // Enhanced search state
+  searchResponse: SearchResponse | null = null;
+  entityTabs: EntityTab[] = [];
+  activeTabKey: string = 'all';
+  showMobileDropdown = signal(false);
+  
+  // Entity columns loaded from configuration service
+  contactColumns = signal<ListViewColumn[]>([]);
+  partnerColumns = signal<ListViewColumn[]>([]);
+  interactionColumns = signal<ListViewColumn[]>([]);
+  columnsLoading = signal(false);
+  
+  // Current results based on active tab
+  get currentResults(): EnhancedSearchResult[] {
+    if (!this.searchResponse) return [];
+    
+    return this.searchResponse.results[this.activeTabKey] || [];
+  }
 
+  // Get columns for the active tab
+  get currentColumns(): ListViewColumn[] {
+    switch (this.activeTabKey) {
+      case 'contacts':
+        return this.contactColumns();
+      case 'partners':
+        return this.partnerColumns();
+      case 'interactions':
+        return this.interactionColumns();
+      default:
+        return [];
+    }
+  }
 
-  allResults: SearchResult[] = [];
+  // Card configuration for search results
+  get cardConfig(): ListViewConfig {
+    return {
+      pageSize: 3,
+      enablePagination: false,
+      enableSorting: false,
+      enableSearch: false,
+      enableExport: false,
+      defaultViewMode: 'card',
+      showViewModeToggle: false,
+      autoSwitchToCardView: false,
+      forceMobileMode: false
+    };
+  }
+
+  // Check if we're on mobile
+  get isMobile(): boolean {
+    return window.innerWidth < this.breakpoint;
+  }
 
   private destroy$ = new Subject<void>();
 
   @ViewChild('searchContainer') searchContainer!: ElementRef;
 
   ngOnInit(): void {
-    // Load recent searches from localStorage
     this.loadRecentSearches();
+    this.loadAllEntityColumns();
 
     // Read query parameters from URL
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
-        this.searchControl.setValue(params['q']);
+        if (params['q']) {
+          this.searchControl.setValue(params['q']);
+        }
       });
 
     // Subscribe to search input changes
@@ -75,13 +188,12 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(term => {
       if (term && term.length > 2) {
-        this.fetchSearchResults(term as string);
+        this.performUnifiedSearch(term as string);
       } else {
-        this.filteredResults = [];
+        this.clearResults();
       }
     });
 
-    // Set initial expanded state based on screen size
     this.checkScreenSize();
   }
 
@@ -93,57 +205,57 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   onSearchFocus(): void {
     this.isUserInteracting = true;
     this.showResults = true;
-    if (this.searchControl.value) {
-      this.fetchSearchResults(this.searchControl.value);
+    
+    if (this.searchControl.value && this.searchControl.value.length > 2) {
+      this.performUnifiedSearch(this.searchControl.value);
     }
     
-    // Clear the interaction flag after a short delay
     setTimeout(() => {
       this.isUserInteracting = false;
     }, 300);
   }
 
   onKeydown(event: KeyboardEvent): void {
-    // User is actively typing, prevent auto-close
     this.isUserInteracting = true;
     
-    // Clear the interaction flag after user stops typing
     setTimeout(() => {
       this.isUserInteracting = false;
     }, 500);
   }
 
   onTouchStart(): void {
-    // User is interacting via touch, prevent auto-close
     this.isUserInteracting = true;
     
-    // Clear the interaction flag after touch interaction
     setTimeout(() => {
       this.isUserInteracting = false;
     }, 300);
   }
 
-
   toggleExpand(): void {
     this.isExpanded = true;
-    // When expanded, also show the search focus
     setTimeout(() => {
       this.onSearchFocus();
     }, 100);
   }
 
   closeSearch(): void {
-    // On mobile, collapse the search bar
-    if (window.innerWidth < this.breakpoint) {
+    if (this.isMobile) {
       this.isExpanded = false;
     }
-    // Always hide the results panel (including recent searches)
     this.showResults = false;
+    this.showMobileDropdown.set(false);
     this.clearSearch();
   }
 
   clearSearch(): void {
     this.searchControl.setValue('');
+    this.clearResults();
+  }
+
+  private clearResults(): void {
+    this.searchResponse = null;
+    this.entityTabs = [];
+    this.activeTabKey = 'all';
     this.showResults = false;
   }
 
@@ -152,41 +264,137 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
     this.goToResultsPage();
   }
 
-  selectResult(result: SearchResult): void {
-    this.addToRecentSearches(result.title);
-    this.clearSearch();
-    // On mobile, collapse the search bar
-    if (window.innerWidth < this.breakpoint) {
+  selectResult(result: EnhancedSearchResult): void {
+    // Use the entity's title for recent searches
+    const entityName = this.getEntityTitle(result);
+    this.addToRecentSearches(entityName);
+    this.clearResults();
+    
+    if (this.isMobile) {
       this.isExpanded = false;
     }
-    // Navigate to the appropriate detail page based on result type
-    if (result.type === 'contact') {
+
+    debugger;
+
+    // Navigate based on the active tab (entity type) instead of result.type
+    if (this.activeTabKey === 'contacts') {
       this.router.navigate(['/partnerships/contacts', result.id]);
-    } else if (result.type === 'partner') {
+    } else if (this.activeTabKey === 'partners') {
       this.router.navigate(['/partner', result.id]);
+    } else if (this.activeTabKey === 'interactions') {
+      this.router.navigate(['/interactions', result.id]);
     }
   }
 
   goToResultsPage(): void {
     const currentSearchTerm = this.searchControl.value || '';
 
-    // Only navigate if we have an active search term
     if (currentSearchTerm.length > 0) {
-      // Add to recent searches
       this.addToRecentSearches(currentSearchTerm);
-      this.clearSearch();
-      // On mobile, collapse the search bar
-      if (window.innerWidth < this.breakpoint) {
+      this.clearResults();
+      
+      if (this.isMobile) {
         this.isExpanded = false;
       }
-      // Navigate to search page with query parameter
+      
       this.router.navigate(['/search'], {
         queryParams: { q: currentSearchTerm }
       });
     }
   }
 
+  // Enhanced search using the new unified endpoint
+  private performUnifiedSearch(term: string): void {
+    if (!term || term.length < 2) {
+      this.clearResults();
+      return;
+    }
+
+    this.isLoading.set(true);
+
+    // Call the new unified search endpoint
+    this.http.get<SearchResponse>('/api/global/search', {
+      params: { q: term }
+    }).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (response) => {
+        this.processUnifiedSearchResults(response);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error fetching unified search results', err);
+        this.isLoading.set(false);
+        this.clearResults();
+      }
+    });
+  }
+
+  private processUnifiedSearchResults(response: SearchResponse): void {
+    this.searchResponse = response;
+    this.buildEntityTabs();
+    
+    // Show results if we have any
+    if (Object.keys(response.results).length > 0) {
+      this.showResults = true;
+    }
+  }
+
+  private buildEntityTabs(): void {
+    if (!this.searchResponse) return;
+
+    const tabs: EntityTab[] = [];
+
+    // Add entity-specific tabs only (no "All" tab)
+    Object.entries(this.searchResponse.results).forEach(([entityType, results]) => {
+      if (results.length > 0) {
+        tabs.push({
+          key: entityType,
+          label: this.capitalizeFirstLetter(entityType),
+          count: results.length,
+          icon: this.getEntityIcon(entityType),
+          color: this.getEntityColor(entityType)
+        });
+      }
+    });
+
+    this.entityTabs = tabs;
+    
+    // Set active tab to first available entity type
+    if (tabs.length > 0) {
+      this.activeTabKey = tabs[0].key;
+    }
+  }
+
+  selectTab(tabKey: string): void {
+    this.activeTabKey = tabKey;
+    this.showMobileDropdown.set(false);
+  }
+
+  toggleMobileDropdown(): void {
+    this.showMobileDropdown.set(!this.showMobileDropdown());
+  }
+
+  private getEntityIcon(entityType: string): string {
+    switch (entityType) {
+      case 'contacts': return 'contacts';
+      case 'partners': return 'corporate_fare';
+      case 'interactions': return 'chat';
+      default: return 'help';
+    }
+  }
+
+  private getEntityColor(entityType: string): string {
+    switch (entityType) {
+      case 'contacts': return 'blue';
+      case 'partners': return 'green';
+      case 'interactions': return 'purple';
+      default: return 'gray';
+    }
+  }
+
   getInitials(name: string): string {
+    if (!name) return 'N/A';
     return name
       .split(' ')
       .map(part => part.charAt(0))
@@ -195,64 +403,143 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       .toUpperCase();
   }
 
-  private fetchSearchResults(term: string): void {
-    if (!term || term.length < 2) {
-      this.filteredResults = [];
-      return;
+  // Get search type indicator
+  getSearchTypeLabel(metadata?: SearchMetadata): string {
+    if (!metadata?.searchType) return '';
+    
+    switch (metadata.searchType) {
+      case 'semantic-search': return 'AI Search';
+      case 'field-search': return 'Exact Match';
+      default: return 'Search';
     }
-
-    this.isLoading.set(true);
-
-    // Create params for API calls
-    const params = new HttpParams()
-      .set('pageIndex', '1')
-      .set('pageSize', '5')
-      .set('searchText', term);
-
-    // Make two parallel API calls
-    forkJoin({
-      contacts: this.http.get(this.contactService.getClassicSearchUrl(), { params }),
-      partners: this.http.get(this.partnerService.getClassicSearchUrl(), { params })
-    }).pipe(
-      takeUntil(this.destroy$)
-    ).subscribe({
-      next: (results) => {
-        this.processSearchResults(results, term);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error fetching search results', err);
-        this.isLoading.set(false);
-        this.filteredResults = [];
-      }
-    });
   }
 
-  private processSearchResults(results: any, term: string): void {
-    const contactResults = results.contacts?.records || [];
-    const partnerResults = results.partners?.records || [];
+  // Get search type color
+  getSearchTypeColor(metadata?: SearchMetadata): string {
+    if (!metadata?.searchType) return 'gray';
+    
+    switch (metadata.searchType) {
+      case 'semantic-search': return 'purple';
+      case 'field-search': return 'green';
+      default: return 'gray';
+    }
+  }
 
-    // Map contact results to SearchResult format
-    const mappedContacts: SearchResult[] = contactResults.map((contact: any) => ({
-      id: contact.id,
-      title: `${contact.firstName} ${contact.lastName}`,
-      subtitle: contact.email || contact.mobile,
-      type: 'contact',
-      ...contact
-    }));
+  // Highlight search terms in snippet
+  highlightSearchTerms(text: string, searchTerm: string): string {
+    if (!text || !searchTerm) return text;
+    
+    // Escape special regex characters in search term
+    const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    
+    // Split search term into individual words for better highlighting
+    const words = escapedSearchTerm.split(/\s+/).filter(word => word.length > 0);
+    
+    let highlightedText = text;
+    
+    // Highlight each word separately
+    words.forEach(word => {
+      if (word.length > 1) { // Only highlight words with 2+ characters
+        const regex = new RegExp(`(${word})`, 'gi');
+        highlightedText = highlightedText.replace(regex, '<span class="search-highlight">$1</span>');
+      }
+    });
+    
+    return highlightedText;
+  }
 
-    // Map partner results to SearchResult format
-    const mappedPartners: SearchResult[] = partnerResults.map((partner: any) => ({
-      id: partner.id,
-      title: partner.name,
-      subtitle: partner.type || '',
-      type: 'partner',
-      ...partner
-    }));
+  // Get active tab details for mobile dropdown
+  get activeTabDetails(): EntityTab | undefined {
+    return this.entityTabs.find(t => t.key === this.activeTabKey);
+  }
 
-    // Combine and limit to top 5 results
-    this.allResults = [...mappedContacts, ...mappedPartners];
-    this.filteredResults = this.allResults.slice(0, 5);
+  // Get entity type display name (without 's' and capitalized)
+  getEntityTypeDisplayName(type: string): string {
+    if (!type || typeof type !== 'string') return '';
+    const singular = type.slice(0, -1);
+    return this.capitalizeFirstLetter(singular);
+  }
+
+  // Capitalize the first letter of a string
+  capitalizeFirstLetter(str: string): string {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // Check if result has search metadata
+  hasSearchMetadata(result: EnhancedSearchResult): boolean {
+    return !!result._searchMetadata;
+  }
+
+  // Check if metadata has search type
+  hasSearchType(metadata?: SearchMetadata): boolean {
+    return !!metadata?.searchType;
+  }
+
+  // Check if metadata has matched field
+  hasMatchedField(metadata?: SearchMetadata): boolean {
+    return !!metadata?.matchedField;
+  }
+
+  // Check if metadata has score
+  hasScore(metadata?: SearchMetadata): boolean {
+    return !!metadata?.score;
+  }
+
+  // Check if metadata has snippet
+  hasSnippet(metadata?: SearchMetadata): boolean {
+    return !!metadata?.snippet;
+  }
+
+  // Get matched field from metadata
+  getMatchedField(metadata?: SearchMetadata): string {
+    return metadata?.matchedField || '';
+  }
+
+  // Get score percentage
+  getScorePercentage(metadata?: SearchMetadata): number {
+    if (!metadata?.score) return 0;
+    
+    // Convert score to percentage and cap at 100%
+    // PostgreSQL similarity scores can vary in range, so we normalize them
+    const percentage = Math.round(metadata.score * 100);
+    return Math.min(percentage, 100);
+  }
+
+  // Get snippet from metadata
+  getSnippet(metadata?: SearchMetadata): string {
+    return metadata?.snippet || '';
+  }
+
+  // Get result avatar CSS classes
+  getResultAvatarClasses(resultType: string): string {
+    switch (resultType) {
+      case 'contacts': return 'bg-blue-100 text-blue-600';
+      case 'partners': return 'bg-green-100 text-green-600';
+      case 'interactions': return 'bg-purple-100 text-purple-600';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  }
+
+  // Get entity type badge CSS classes
+  getEntityTypeBadgeClasses(resultType: string): string {
+    switch (resultType) {
+      case 'contacts': return 'bg-blue-100 text-blue-700';
+      case 'partners': return 'bg-green-100 text-green-700';
+      case 'interactions': return 'bg-purple-100 text-purple-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  }
+
+  // Check if active tab matches key
+  isActiveTab(tabKey: string): boolean {
+    return this.activeTabKey === tabKey;
+  }
+
+  // Get search type badge CSS classes
+  getSearchTypeBadgeClasses(metadata?: SearchMetadata): string {
+    const color = this.getSearchTypeColor(metadata);
+    return `px-2 py-1 text-xs rounded-full bg-${color}-100 text-${color}-700`;
   }
 
   private loadRecentSearches(): void {
@@ -265,17 +552,100 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
     }
   }
 
+  private loadAllEntityColumns(): void {
+    this.columnsLoading.set(true);
+    
+    // Load Contact columns
+    this.entityConfigurationService.getEntityListViewConfiguration('Contact')
+      .subscribe({
+        next: (columns) => {
+          this.contactColumns.set(this.processColumns(columns, 'Contact'));
+        },
+        error: (error) => {
+          console.error('Failed to load contact columns:', error);
+        }
+      });
+    
+    // Load Partner columns
+    this.entityConfigurationService.getEntityListViewConfiguration('Partner')
+      .subscribe({
+        next: (columns) => {
+          this.partnerColumns.set(this.processColumns(columns, 'Partner'));
+        },
+        error: (error) => {
+          console.error('Failed to load partner columns:', error);
+        }
+      });
+    
+    // Load Interaction columns
+    this.entityConfigurationService.getEntityListViewConfiguration('Interaction')
+      .subscribe({
+        next: (columns) => {
+          this.interactionColumns.set(this.processColumns(columns, 'Interaction'));
+          this.columnsLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load interaction columns:', error);
+          this.columnsLoading.set(false);
+        }
+      });
+  }
+
+  private processColumns(columns: any[], entityType: string): ListViewColumn[] {
+    return columns.map(col => {
+      const processedColumn: ListViewColumn = {
+        field: col.field,
+        label: col.label,
+        type: col.type,
+        sortable: col.sortable,
+        width: col.width,
+        ellipsis: col.ellipsis,
+        helperText: col.helperText
+      };
+
+      // Handle nested field paths for template functions
+      if (col.field && col.field.includes('.') && col.type !== 'template') {
+        processedColumn.templateFn = (rowData: any) => {
+          const value = this.getNestedProperty(rowData, col.field);
+          return value !== undefined && value !== null ? String(value) : '';
+        };
+        processedColumn.type = 'template';
+      }
+
+      // Add template function for template type columns
+      if (col.type === 'template' && col.templatePattern) {
+        processedColumn.templateFn = this.createTemplateFunction(col.templatePattern);
+      }
+
+      // Handle interaction type columns
+      if (entityType === 'Interaction' && col.field === 'type' && col.type === 'text') {
+        processedColumn.type = 'interactionIcon';
+      }
+
+      return processedColumn;
+    });
+  }
+
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((current, key) => current && current[key], obj);
+  }
+
+  private createTemplateFunction(templatePattern: string): (rowData: any) => string {
+    return (rowData: any) => {
+      let result = templatePattern;
+      const regex = /\{\{([^}]+)\}\}/g;
+      return result.replace(regex, (match, fieldPath) => {
+        const value = this.getNestedProperty(rowData, fieldPath.trim());
+        return value !== undefined && value !== null ? String(value) : '';
+      });
+    };
+  }
+
   private addToRecentSearches(term: string): void {
-    // Remove if already exists (to bring to top)
     this.recentSearches = this.recentSearches.filter(t => t !== term);
-
-    // Add to beginning of array
     this.recentSearches.unshift(term);
-
-    // Keep only the most recent 5 searches
     this.recentSearches = this.recentSearches.slice(0, 5);
 
-    // Save to localStorage
     try {
       localStorage.setItem('recentSearches', JSON.stringify(this.recentSearches));
     } catch (e) {
@@ -283,13 +653,21 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
     }
   }
 
+  clearRecentSearches(): void {
+    this.recentSearches = [];
+    try {
+      localStorage.removeItem('recentSearches');
+    } catch (e) {
+      console.error('Failed to clear recent searches', e);
+    }
+  }
+
   @HostListener('window:resize')
   checkScreenSize(): void {
-    // Auto-expand on larger screens
     if (window.innerWidth >= this.breakpoint) {
       this.isExpanded = true;
+      this.showMobileDropdown.set(false);
     } else if (!this.searchControl.value) {
-      // On small screens, collapse if no search text
       this.isExpanded = false;
     }
   }
@@ -299,19 +677,14 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     
     if (this.searchContainer && !this.searchContainer.nativeElement.contains(target)) {
+      this.showMobileDropdown.set(false);
+      
       if (this.showResults) {
         this.showResults = false;
       }
 
-      // On mobile, collapse the search bar only if:
-      // 1. Search is empty AND
-      // 2. User clicked outside the search container AND
-      // 3. User is not currently interacting with the search AND
-      // 4. The clicked element is not a focusable element
-      if (window.innerWidth < this.breakpoint && this.isExpanded && !this.searchControl.value?.trim() && !this.isUserInteracting) {
-        // Don't close immediately if the user just clicked on an input or focusable element
+      if (this.isMobile && this.isExpanded && !this.searchControl.value?.trim() && !this.isUserInteracting) {
         if (!target.matches('input, textarea, [contenteditable], button')) {
-          // Add a small delay to prevent closing when user is trying to interact with the search
           setTimeout(() => {
             if (!this.searchControl.value?.trim() && !this.showResults && !this.isUserInteracting) {
               this.isExpanded = false;
@@ -320,5 +693,64 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
         }
       }
     }
+  }
+
+  // Helper methods to extract display values from original entities
+  getEntityTitle(entity: EnhancedSearchResult): string {
+    if (this.activeTabKey === 'contacts') {
+      const firstName = entity['firstName'] || '';
+      const lastName = entity['lastName'] || '';
+      return `${firstName} ${lastName}`.trim() || 'Unknown Contact';
+    } else if (this.activeTabKey === 'partners') {
+      return entity['name'] || 'Unknown Partner';
+    } else if (this.activeTabKey === 'interactions') {
+      return entity['subject'] || entity['description'] || 'Unknown Interaction';
+    }
+    return 'Unknown';
+  }
+
+  getEntitySubtitle(entity: EnhancedSearchResult): string | null {
+    if (this.activeTabKey === 'contacts') {
+      const title = entity['title'] || '';
+      const partnerName = entity['partner']?.['name'] || '';
+      if (title && partnerName) {
+        return `${title} at ${partnerName}`;
+      }
+      return title || partnerName || null;
+    } else if (this.activeTabKey === 'partners') {
+      const categoryName = entity['partnerCategoryName'] || '';
+      const groupName = entity['partnerGroupName'] || '';
+      const officeName = entity['partnerOffice']?.['name'] || '';
+      const city = entity['address1City'] || '';
+      const country = entity['address1Country'] || '';
+      
+      const type = categoryName || groupName;
+      const location = officeName || (city && country ? `${city}, ${country}` : city || country);
+      
+      if (type && location) {
+        return `${type} • ${location}`;
+      }
+      return type || location || null;
+    } else if (this.activeTabKey === 'interactions') {
+      const interactionType = entity['type'] || '';
+      const date = entity['date'] ? new Date(entity['date']).toLocaleDateString() : '';
+      return date ? `${interactionType} • ${date}` : interactionType;
+    }
+    return null;
+  }
+
+  getEntityInitials(entity: EnhancedSearchResult): string {
+    const title = this.getEntityTitle(entity);
+    if (!title) return 'N/A';
+    return title
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  }
+
+  getEntityDisplayName(entityType: string): string {
+    return this.capitalizeFirstLetter(entityType.slice(0, -1)); // Remove 's' and capitalize
   }
 }

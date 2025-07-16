@@ -8,7 +8,7 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<GrantUser, ApplicantModel>();
+        CreateMap<PAOUser, ApplicantModel>();
         CreateMap<Currency, CurrencyModel>();
         CreateMap<EligibleEntity, EligibleEntityModel>();
         CreateMap<Country, CountryModel>();
@@ -53,8 +53,8 @@ public class MappingProfile : Profile
         CreateMap<Partner, PartnerValueModel>();
         CreateMap<PartnerTree, PartnerTreeModel>();
         CreateMap<PartnerTreeModel, PartnerTree>();
-        CreateMap<GrantUser, UserValueModel>();
-        CreateMap<GrantUser, PAOUserModel>();
+        CreateMap<PAOUser, UserValueModel>();
+        CreateMap<PAOUser, PAOUserModel>();
         CreateMap<UserProfile, UserProfileValueModel>();
     }
 }

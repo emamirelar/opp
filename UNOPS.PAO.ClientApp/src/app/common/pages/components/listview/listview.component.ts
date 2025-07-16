@@ -28,6 +28,9 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { SavedFilter } from '../../../interfaces/saved-filter.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { UserPreferenceService, GlobalFilters } from '../../../../services/user-preference.service';
+import { OrganizationHierarchyService } from '../../../../services/organization-hierarchy.service';
+import { AuthService } from '../../../../essentials/services/auth.service';
 
 interface ListViewState<T> {
   loading: boolean;
@@ -80,6 +83,9 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly globalFilterService = inject(GlobalFilterService);
+  private readonly userPreferenceService = inject(UserPreferenceService);
+  private readonly organizationHierarchyService = inject(OrganizationHierarchyService);
+  private readonly authService = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -140,6 +146,13 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private readonly searchSubject = new Subject<string>();
   private readonly loadDataSubject = new Subject<void>();
   private resizeObserver: ResizeObserver | null = null;
+
+  // Global filter information
+  isGlobalFilterActive = signal(false);
+  activeOrgUnitName = signal<string>('');
+  globalFilters = signal<GlobalFilters | null>(null);
+  currentUserId = signal<string>('');
+  activeFilterLabels = signal<string[]>([]);
 
   // Template references
   @ContentChild('actionsTemplate') actionsTemplate?: TemplateRef<any>;
@@ -250,11 +263,34 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   constructor() {
     this.setupSearchDebounce();
     this.setupLoadDataStream();
+    this.loadGlobalFilterInfo();
 
     // Subscribe to global filter changes
     this.globalFilterService.activeOrgUnitId$
       .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((activeOrgUnitId) => {
+        this.isGlobalFilterActive.set(activeOrgUnitId !== null || this.hasOtherActiveFilters());
+        if (activeOrgUnitId) {
+          this.loadOrgUnitName(activeOrgUnitId);
+        } else {
+          this.activeOrgUnitName.set('');
+        }
+        this.updateActiveFilterLabels();
+        
+        if (this._dataUrl) {
+          this.state.update(s => ({ ...s, pageIndex: 1, data: [], hasMoreData: true }));
+          this.loadData();
+        }
+      });
+
+    // Subscribe to global filter changes (when filters are saved)
+    this.globalFilterService.filtersChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
+        // Reload global filter information
+        this.loadGlobalFilterInfo();
+        
+        // Refresh data if we have a data URL
         if (this._dataUrl) {
           this.state.update(s => ({ ...s, pageIndex: 1, data: [], hasMoreData: true }));
           this.loadData();
@@ -926,5 +962,116 @@ export class ListviewComponent<T = any> implements AfterViewInit {
       queryParams,
       replaceUrl: true
     }).catch(error => console.error('Navigation error:', error));
+  }
+
+  // Load global filter information
+  private loadGlobalFilterInfo(): void {
+    // Get current user ID
+    this.authService.user().subscribe({
+      next: (claims) => {
+        const userIdClaim = claims.find(c => c.type === 'userId');
+        if (userIdClaim) {
+          this.currentUserId.set(userIdClaim.value);
+          
+          // Load user's global filters
+          this.userPreferenceService.getGlobalFilters(userIdClaim.value)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (filters) => {
+                this.globalFilters.set(filters);
+                this.updateActiveFilterLabels();
+              },
+              error: (error) => {
+                console.error('Error loading global filters:', error);
+              }
+            });
+        }
+      },
+      error: (error) => {
+        console.error('Error getting user claims:', error);
+      }
+    });
+  }
+
+  // Load organization unit name
+  private loadOrgUnitName(orgUnitId: number): void {
+    this.organizationHierarchyService.getOrganizationHierarchy()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (hierarchy) => {
+          const orgUnit = this.findOrgUnitInHierarchy(hierarchy, orgUnitId);
+          if (orgUnit) {
+            this.activeOrgUnitName.set(orgUnit.data.name);
+          } else {
+            this.activeOrgUnitName.set(`Org Unit ${orgUnitId}`);
+          }
+        },
+        error: (error) => {
+          console.error('Error loading organization hierarchy:', error);
+          this.activeOrgUnitName.set(`Org Unit ${orgUnitId}`);
+        }
+      });
+  }
+
+  // Helper method to find org unit in hierarchy
+  private findOrgUnitInHierarchy(nodes: any[], orgUnitId: number): any {
+    for (const node of nodes) {
+      if (node.data && node.data.id === orgUnitId) {
+        return node;
+      }
+      if (node.children && node.children.length > 0) {
+        const found = this.findOrgUnitInHierarchy(node.children, orgUnitId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // Check if any global filters (other than org unit) are active
+  private hasOtherActiveFilters(): boolean {
+    const filters = this.globalFilters();
+    if (!filters) return false;
+    
+    return !!(
+      filters.relatedToMe ||
+      filters.dateOn ||
+      filters.dateFrom ||
+      filters.dateTo
+    );
+  }
+
+  // Update active filter labels for display
+  private updateActiveFilterLabels(): void {
+    const labels: string[] = [];
+    const filters = this.globalFilters();
+    
+    // Add org unit filter
+    if (this.globalFilterService.getActiveOrgUnitId() && this.activeOrgUnitName()) {
+      labels.push(this.activeOrgUnitName());
+    }
+    
+    if (filters) {
+      // Add related to me filter
+      if (filters.relatedToMe) {
+        labels.push('Related to Me');
+      }
+      
+      // Add date filters
+      if (filters.dateOn) {
+        labels.push(`Date: ${new Date(filters.dateOn).toLocaleDateString()}`);
+      } else if (filters.dateFrom || filters.dateTo) {
+        const from = filters.dateFrom ? new Date(filters.dateFrom).toLocaleDateString() : '';
+        const to = filters.dateTo ? new Date(filters.dateTo).toLocaleDateString() : '';
+        if (from && to) {
+          labels.push(`Date: ${from} - ${to}`);
+        } else if (from) {
+          labels.push(`Date: from ${from}`);
+        } else if (to) {
+          labels.push(`Date: until ${to}`);
+        }
+      }
+    }
+    
+    this.activeFilterLabels.set(labels);
   }
 }

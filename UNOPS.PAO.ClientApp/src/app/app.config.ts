@@ -38,6 +38,7 @@ import { AuthService } from './essentials/services/auth.service';
 import { ConfigurationService } from './essentials/services/configuration.service';
 import { HasPermissionDirective } from './essentials/directives/has-permission.directive';
 import { PermissionService } from './essentials/services/permission.service';
+import { LanguageService } from './common/services/language.service';
 
 /******* PrimeNG specifc imports *********/
 import { providePrimeNG } from 'primeng/config';
@@ -77,6 +78,11 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       const configService = inject(ConfigurationService);
       return configService.loadConfig();
+    }),
+    // Language initialization - load preferred language before app starts
+    provideAppInitializer(() => {
+      const languageService = inject(LanguageService);
+      return languageService.initializeLanguage();
     }),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient(

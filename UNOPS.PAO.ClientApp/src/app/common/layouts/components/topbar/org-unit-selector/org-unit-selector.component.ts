@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -46,7 +46,10 @@ interface OrgUnitOption {
   styleUrls: ['./org-unit-selector.component.scss'],
   providers: [MessageService]
 })
-export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
+export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
+  @Input() preselectedOrgUnitId: number | null = null;
+  @Output() orgUnitSelected = new EventEmitter<OrgUnitOption | null>();
+  
   selectedOrgUnit: OrgUnitOption | null = null;
   tempSelectedOrgUnit: OrgUnitOption | null = null;
   orgUnitOptions: OrgUnitOption[] = [];
@@ -68,6 +71,13 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadData();
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    // React to changes in preselectedOrgUnitId
+    if (changes['preselectedOrgUnitId'] && this.orgUnitOptions.length > 0) {
+      this.updateSelectedOrgUnit();
+    }
   }
 
   ngOnDestroy() {
@@ -245,36 +255,7 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
 
     this.filterOrgUnits();
     
-    const savedOrgUnitId = this.globalFilterService.getSelectedOrgUnitId();
-    
-    if (savedOrgUnitId) {
-      // First priority: use previously saved selection
-      this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === savedOrgUnitId) || null;
-      console.log('Loaded saved org unit selection:', this.selectedOrgUnit);
-    }
-    
-    if (!this.selectedOrgUnit && this.defaultOrgUnitId) {
-      // Second priority: use user's default org unit
-      this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.defaultOrgUnitId) || null;
-      console.log('Using default org unit:', this.selectedOrgUnit);
-    }
-    
-    if (!this.selectedOrgUnit && this.orgUnitOptions.length > 0) {
-      // Third priority: use first level 0 unit or first available
-      this.selectedOrgUnit = this.orgUnitOptions.find(u => u.level === 0) || this.orgUnitOptions[0];
-      console.log('Using fallback org unit:', this.selectedOrgUnit);
-    }
-    
-    // Update the global filter service with the final selection
-    if (this.selectedOrgUnit) {
-      this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnit.id);
-      
-      // Auto-enable the global filter when an org unit is loaded
-      if (!this.globalFilterService.isFilterEnabled()) {
-        this.globalFilterService.setFilterEnabled(true);
-        console.log('Auto-enabled global filter because org unit was loaded');
-      }
-    }
+    this.updateSelectedOrgUnit();
   }
 
 
@@ -359,13 +340,34 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy {
   private onOrgUnitChange() {
     if (this.selectedOrgUnit) {
       console.log('Selected org unit:', this.selectedOrgUnit);
-      // Update the global filter service with the selected org unit
-      this.globalFilterService.setSelectedOrgUnitId(this.selectedOrgUnit.id);
+      // Only emit the selected org unit for parent components listening
+      // Don't automatically update global filter service or trigger page refresh
+      this.orgUnitSelected.emit(this.selectedOrgUnit);
+    } else {
+      this.orgUnitSelected.emit(null);
+    }
+  }
+
+  private updateSelectedOrgUnit() {
+    // Only set selectedOrgUnit if no explicit selection has been made
+    // This prevents overriding user's choice from global filters dialog
+    if (!this.selectedOrgUnit) {
+      // Priority 1: Use preselected org unit ID from global filters dialog
+      if (this.preselectedOrgUnitId) {
+        this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.preselectedOrgUnitId) || null;
+        console.log('Using preselected org unit from global filters:', this.selectedOrgUnit);
+      }
       
-      // Auto-enable the global filter when an org unit is selected
-      if (!this.globalFilterService.isFilterEnabled()) {
-        this.globalFilterService.setFilterEnabled(true);
-        console.log('Auto-enabled global filter because org unit was selected');
+      // Priority 2: Use user's default org unit
+      if (!this.selectedOrgUnit && this.defaultOrgUnitId) {
+        this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.defaultOrgUnitId) || null;
+        console.log('Using default org unit:', this.selectedOrgUnit);
+      }
+      
+      // Priority 3: Fallback to first available
+      if (!this.selectedOrgUnit && this.orgUnitOptions.length > 0) {
+        this.selectedOrgUnit = this.orgUnitOptions.find(u => u.level === 0) || this.orgUnitOptions[0];
+        console.log('Using fallback org unit:', this.selectedOrgUnit);
       }
     }
   }

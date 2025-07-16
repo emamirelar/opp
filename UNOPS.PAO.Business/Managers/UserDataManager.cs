@@ -22,7 +22,7 @@ public class UserDataManager : IUserDataManager
 
     public Task<PAOUserModel?> GetUserByIdAsync(int id)
     {
-        var user = context.GrantUsers.FirstOrDefault(u => u.Id == id);
+        var user = context.PAOUsers.FirstOrDefault(u => u.Id == id);
         if (user == null)
             return Task.FromResult<PAOUserModel?>(null);
         return Task.FromResult(mapper.Map<PAOUserModel>(user));
@@ -30,7 +30,7 @@ public class UserDataManager : IUserDataManager
 
     public Task<PAOUserModel?> GetUserByEmailAsync(string email)
     {
-        var user = context.GrantUsers.FirstOrDefault(u => u.Email == email);
+        var user = context.PAOUsers.FirstOrDefault(u => u.Email == email);
         if (user == null)
             return Task.FromResult<PAOUserModel?>(null);
         return Task.FromResult(mapper.Map<PAOUserModel>(user));

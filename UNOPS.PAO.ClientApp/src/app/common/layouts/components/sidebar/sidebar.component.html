@@ -13,21 +13,6 @@
             <app-menu [model]="adminMenuItems"></app-menu>
         </div>
 
-        <!-- Global Filter Section -->
-        <div class=" border-t border-gray-200 pt-4 pb-4 mt-auto">
-            <div class="px-2 flex items-center mb-1 gap-1 justify-between">
-              <span class="text-">{{ 'global.filter' | translate }} :</span>
-              <p-button
-                rounded text
-                [size]="'small'"
-                (click)="toggleGlobalFilter()"
-                [icon]="globalFilterEnabled() ? 'pi pi-filter' : 'pi pi-filter-slash'">
-              </p-button>
 
-            </div>
-            <div class="px-2">
-                <app-org-unit-selector></app-org-unit-selector>
-            </div>
-        </div>
     </div>
 </div>
