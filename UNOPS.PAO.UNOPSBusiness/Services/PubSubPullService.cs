@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Text;
 using System.Threading;
@@ -24,6 +25,7 @@ using Humanizer;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using System.Reflection;
 using System.Linq.Expressions;
+using UNOPS.PAO.Business.Interfaces;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services
 {
@@ -34,14 +36,16 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         private readonly string ProjectId;
         private readonly string SubscriptionId;
         private readonly IDbContextFactory<UNOPSAppDbContext> _dbContextFactory;
+        private readonly UNOPSManagerWrapper _managerWrapper;
 
-        public PubSubPullService(ILogger<PubSubPullService> logger, IConfiguration configuration, IDbContextFactory<UNOPSAppDbContext> dbContextFactory)
+        public PubSubPullService(ILogger<PubSubPullService> logger, IConfiguration configuration, IDbContextFactory<UNOPSAppDbContext> dbContextFactory, UNOPSManagerWrapper managerWrapper)
         {
             _logger = logger;
             _configuration = configuration;
             ProjectId = configuration.GetSection("PubSub")["ProjectId"];
             SubscriptionId = configuration.GetSection("PubSub")["SubscriptionId"];
             _dbContextFactory = dbContextFactory;
+            _managerWrapper = managerWrapper;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -107,6 +111,71 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             await Task.Delay(Timeout.Infinite, stoppingToken);
         }
 
+        private BaseUNOPSManager GetUNOPSManagerByEntityName(string entityName)
+        {
+            // Create manager field name: entityName + "Manager" (e.g., "contact" -> "contactManager")
+            var entityType = entityName.ToLower().TrimEnd('s'); // Remove plural 's' if present
+            var fieldName = $"{entityType}Manager";
+            
+            // Get the private field from UNOPSManagerWrapper that contains the actual UNOPS manager instance
+            var field = _managerWrapper.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            var manager = field?.GetValue(_managerWrapper) as BaseUNOPSManager;
+            
+            return manager ?? throw new ArgumentException($"Manager not found or doesn't inherit from BaseUNOPSManager: {fieldName}");
+        }
+
+        private string ConvertEntityDataToReadableString(object entityData)
+        {
+            if (entityData == null) return string.Empty;
+
+            var properties = entityData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var readableLines = new List<string>();
+
+            foreach (var property in properties)
+            {
+                try
+                {
+                    var value = property.GetValue(entityData);
+                    
+                    // Skip null values, empty collections, and complex navigation properties
+                    if (value == null) continue;
+                    
+                    // Handle different value types
+                    string formattedValue = value switch
+                    {
+                        string str when string.IsNullOrWhiteSpace(str) => null, // Skip empty strings
+                        string str => str,
+                        DateTime dateTime when dateTime == DateTime.MinValue => null, // Skip default dates
+                        DateTime dateTime => dateTime.ToString("yyyy-MM-dd"),
+                        bool boolean => boolean.ToString(),
+                        int number when number == 0 => null, // Skip zero values
+                        int number => number.ToString(),
+                        decimal dec when dec == 0 => null, // Skip zero values  
+                        decimal dec => dec.ToString("0.##"),
+                        Enum enumValue => enumValue.ToString(),
+                        // Skip complex objects and collections
+                        System.Collections.IEnumerable => null,
+                        _ when value.GetType().IsClass && value.GetType() != typeof(string) => null,
+                        _ => value.ToString()
+                    };
+
+                    // Add to readable format if we have a meaningful value
+                    if (!string.IsNullOrWhiteSpace(formattedValue))
+                    {
+                        // Convert property name from PascalCase to readable format
+                        var readablePropertyName = Regex.Replace(property.Name, "([a-z])([A-Z])", "$1 $2");
+                        readableLines.Add($"{readablePropertyName}: {formattedValue}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"Error processing property {property.Name}: {ex.Message}");
+                }
+            }
+
+            return string.Join("\n", readableLines);
+        }
+
         private async Task ProcessEntityMessage(MyPubSubMessage msg, UNOPSAppDbContext dbContext, AiContextualService contextService)
         {
             if (!msg.EntityId.HasValue)
@@ -115,118 +184,47 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 return;
             }
 
-            // Get the entity type and fetch the content
-            var entityType = dbContext.Model.GetEntityTypes()
-                .FirstOrDefault(e => e.GetTableName().Equals(msg.EntityName, StringComparison.OrdinalIgnoreCase));
-            
-            if (entityType != null)
+            try
             {
-                try
+                // Get the appropriate UNOPS manager for this entity type
+                var manager = GetUNOPSManagerByEntityName(msg.EntityName);
+                
+                // Call GetBasicEntityDataAsync to get the entity data
+                var entityData = await manager.GetBasicEntityDataAsync(msg.EntityId.Value);
+                
+                if (entityData != null)
                 {
-                    // Use specific binding flags to avoid ambiguous matches
-                    var dbSetProperty = dbContext.GetType()
-                        .GetProperty(msg.EntityName, 
-                            BindingFlags.Public | 
-                            BindingFlags.Instance | 
-                            BindingFlags.DeclaredOnly);
+                    // Convert entity data to human-readable format for better embeddings
+                    var readableContent = ConvertEntityDataToReadableString(entityData);
                     
-                    if (dbSetProperty == null)
+                    if (!string.IsNullOrWhiteSpace(readableContent))
                     {
-                        // Try getting the property by type if name fails
-                        var entityClrType = entityType.ClrType;
-                        var dbSetType = typeof(DbSet<>).MakeGenericType(entityClrType);
+                        // Generate embedding with human-readable content
+                        await contextService.GenerateEmbeddingAsync(msg.EntityName, msg.EntityId.Value, readableContent);
                         
-                        dbSetProperty = dbContext.GetType()
-                            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
-                            .FirstOrDefault(p => 
-                                p.PropertyType == dbSetType && 
-                                p.Name.Equals(msg.EntityName, StringComparison.OrdinalIgnoreCase));
-                    }
+                        _logger.LogInformation($"Generated embedding for {msg.EntityName} with ID {msg.EntityId.Value}");
+                        _logger.LogDebug($"Embedding content: {readableContent}");
                         
-                    if (dbSetProperty != null)
-                    {
-                        var dbSet = dbSetProperty.GetValue(dbContext) as IQueryable<object>;
-                        if (dbSet != null)
-                        {
-                            // Add Include('All') to ensure all related entities are loaded
-                            var queryWithIncludes = dbSet.AsQueryable();
-                            
-                            // Get all navigation properties for the entity type to include them
-                            var navigationProperties = entityType.GetNavigations().Select(n => n.Name).ToArray();
-                            foreach (var navProp in navigationProperties)
-                            {
-                                queryWithIncludes = queryWithIncludes.Include(navProp);
-                            }
-                            
-                            var entities = await queryWithIncludes.ToListAsync();
-                            var entity = entities.Where(e => 
-                            {
-                                try 
-                                {
-                                    // Try to get the ID property with more specific binding flags
-                                    var idProperty = e.GetType().GetProperty("Id", 
-                                        BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-                                    
-                                    if (idProperty == null)
-                                    {
-                                        // Try to find any property named "Id" using case-insensitive search
-                                        idProperty = e.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                            .FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase) && 
-                                                            p.PropertyType == typeof(int));
-                                    }
-                                    
-                                    return idProperty != null && (int)idProperty.GetValue(e) == msg.EntityId.Value;
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError($"Error getting ID property: {ex.Message}");
-                                    return false;
-                                }
-                            }).FirstOrDefault();
-                            
-                            if (entity != null)
-                            {
-                                // Configure JSON serialization to avoid circular references but include related data
-                                var jsonSettings = new JsonSerializerSettings
-                                {
-                                    Formatting = Formatting.Indented,
-                                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                                    NullValueHandling = NullValueHandling.Ignore,
-                                    DateFormatHandling = DateFormatHandling.IsoDateFormat
-                                };
-                                
-                                // Serialize the entity to JSON with all related data
-                                var content = JsonConvert.SerializeObject(entity, jsonSettings);
-                                
-                                // Get the prompt data for summarization
-                                var promptData = (await contextService.GetPromptData("summarize_information")).FirstOrDefault();
-                                if (promptData != null)
-                                {
-                                    // Summarize the content using Gemini
-                                    string response = await contextService.FetchResultFromGemini(promptData, content);
-                                    var responseMessage = contextService.GetDetailsFromGeminiResponse(response)["Message"]?.ToString() ?? string.Empty;
-                                    
-                                    // Generate embedding with the summarized content
-                                    await contextService.GenerateEmbeddingAsync(msg.EntityName, msg.EntityId.Value, responseMessage);
-                                    // Add a delay of 1 second after each embedding generation
-                                    await Task.Delay(1000); // 1 second delay
-                                }
-                            }
-                        }
+                        // Add a delay of 1 second after each embedding generation
+                        await Task.Delay(1000); // 1 second delay
                     }
                     else
                     {
-                        _logger.LogWarning($"DbSet property not found for entity {msg.EntityName}");
+                        _logger.LogWarning($"No meaningful content found for {msg.EntityName} with ID {msg.EntityId.Value}");
                     }
                 }
-                catch (AmbiguousMatchException ex)
+                else
                 {
-                    _logger.LogError($"Ambiguous property match for {msg.EntityName}: {ex.Message}");
+                    _logger.LogWarning($"Entity data not found for {msg.EntityName} with ID {msg.EntityId.Value}");
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error processing entity {msg.EntityName}: {ex.Message}");
-                }
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"No manager available for entity {msg.EntityName}: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing entity {msg.EntityName} with ID {msg.EntityId.Value}: {ex.Message}");
             }
         }
 

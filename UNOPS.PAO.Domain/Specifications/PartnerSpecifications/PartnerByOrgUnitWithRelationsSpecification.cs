@@ -10,7 +10,7 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
 {
     public PartnerByOrgUnitWithRelationsSpecification(
         List<int> orgUnitHierarchyIds, 
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
         : base(BuildCriteria(orgUnitHierarchyIds, orgUnitUserIds))
     {
         // Include related entities for the query
@@ -23,7 +23,7 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
 
     private static Expression<Func<Partner, bool>> BuildCriteria(
         List<int> orgUnitHierarchyIds, 
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
     {
         // If both lists are empty, return no results for security
         if ((orgUnitHierarchyIds == null || orgUnitHierarchyIds.Count == 0) && 
@@ -46,6 +46,6 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
              p.Contacts.Any(c => 
                 c.Interactions.Any(i => 
                     i.InteractionUsers.Any(iu => 
-                        orgUnitUserIds.Contains(iu.UserId)))));
+                        orgUnitUserIds.Contains(iu.UserId.ToString())))));
     }
 }

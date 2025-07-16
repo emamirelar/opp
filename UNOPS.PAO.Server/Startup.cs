@@ -86,10 +86,7 @@ public class Startup
         // Add diagnostic logging middleware to check headers FIRST
         app.UseMiddleware<AuthenticationLoggingMiddleware>();
         
-        // Add IAP verification middleware second - will log headers in original form
-        app.UseIAPVerification();
-        
-        // Add IAP simulation in development THIRD - it may modify the headers
+        // Add IAP simulation in development BEFORE verification - must add headers first
         if (env.IsDevelopment())
         {
             // Development login page middleware
@@ -98,10 +95,16 @@ public class Startup
                 appBuilder => appBuilder.UseMiddleware<DevelopmentLoginPageMiddleware>()
             );
             
-            // Set IAP headers for development
+            // Set IAP headers for development BEFORE verification
             app.UseMiddleware<DevelopmentIAPAuthHandler>();
-            
-            // Add a second instance of logging AFTER development middleware to see modified headers
+        }
+        
+        // Add IAP verification middleware AFTER development headers are set
+        app.UseIAPVerification();
+        
+        // Add a second instance of logging AFTER development middleware to see modified headers in development
+        if (env.IsDevelopment())
+        {
             app.Use(async (context, next) =>
             {
                 if (context.Request.Path.StartsWithSegments("/api"))

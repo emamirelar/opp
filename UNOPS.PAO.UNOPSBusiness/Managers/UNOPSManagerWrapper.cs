@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Business.Interfaces;
 using UNOPS.PAO.Business.Managers;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -35,13 +36,16 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSEntityConfigurationManager entityConfigurationManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
-                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, HttpClient httpClient, ILoggerFactory loggerFactory) : base(mapper, context, userManager, httpContextAccessor)
+                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider) : base(mapper, context, userManager, httpContextAccessor)
     {
         // Create a MemoryCache instance for services that need it
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
         
         // Create logger for UNOPSPartnerManager
         var partnerManagerLogger = loggerFactory.CreateLogger<UNOPSPartnerManager>();
+        
+        // Create logger for UNOPSContactManager
+        var contactManagerLogger = loggerFactory.CreateLogger<UNOPSContactManager>();
         
         // Create logger for UNOPSGeminiManager
         var geminiManagerLogger = loggerFactory.CreateLogger<UNOPSGeminiManager>();
@@ -51,10 +55,10 @@ public class UNOPSManagerWrapper : ManagerWrapper
         var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
         
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
-        contactManager = new UNOPSContactManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
-        interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor);
+        contactManager = new UNOPSContactManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, contactManagerLogger, serviceProvider);
+        interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, serviceProvider);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
-        partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor);
+        partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor, serviceProvider);
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, httpClient, geminiManagerLogger);
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);

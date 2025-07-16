@@ -13,7 +13,7 @@ public class UNOPSPartnerCompositeWithOrgUnitAndRelationsSpecification : BaseCom
     public UNOPSPartnerCompositeWithOrgUnitAndRelationsSpecification(
         IPartnerSearchFilter filter, 
         List<int> orgUnitHierarchyIds,
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
         : base(BuildCombinedCriteria(filter, orgUnitHierarchyIds, orgUnitUserIds))
     {
         // Create base specification to copy includes
@@ -41,7 +41,7 @@ public class UNOPSPartnerCompositeWithOrgUnitAndRelationsSpecification : BaseCom
     private static Expression<Func<UNOPSPartner, bool>> BuildCombinedCriteria(
         IPartnerSearchFilter filter, 
         List<int> orgUnitHierarchyIds,
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
     {
         // Create base composite specification
         var baseSpec = new UNOPSPartnerCompositeSpecification(filter);
