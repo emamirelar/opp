@@ -339,7 +339,6 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
 
   private onOrgUnitChange() {
     if (this.selectedOrgUnit) {
-      console.log('Selected org unit:', this.selectedOrgUnit);
       // Only emit the selected org unit for parent components listening
       // Don't automatically update global filter service or trigger page refresh
       this.orgUnitSelected.emit(this.selectedOrgUnit);
@@ -355,19 +354,16 @@ export class OrgUnitSelectorComponent implements OnInit, OnDestroy, OnChanges {
       // Priority 1: Use preselected org unit ID from global filters dialog
       if (this.preselectedOrgUnitId) {
         this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.preselectedOrgUnitId) || null;
-        console.log('Using preselected org unit from global filters:', this.selectedOrgUnit);
       }
       
       // Priority 2: Use user's default org unit
       if (!this.selectedOrgUnit && this.defaultOrgUnitId) {
         this.selectedOrgUnit = this.orgUnitOptions.find(ou => ou.id === this.defaultOrgUnitId) || null;
-        console.log('Using default org unit:', this.selectedOrgUnit);
       }
       
       // Priority 3: Fallback to first available
       if (!this.selectedOrgUnit && this.orgUnitOptions.length > 0) {
         this.selectedOrgUnit = this.orgUnitOptions.find(u => u.level === 0) || this.orgUnitOptions[0];
-        console.log('Using fallback org unit:', this.selectedOrgUnit);
       }
     }
   }
