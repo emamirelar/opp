@@ -565,11 +565,11 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 .ToArray();
 
             // Get all unique user IDs from the contacts for user info lookup
-            var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy.ToString()).Distinct().ToList();
+            var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
             
             // Fetch all user info in one query
             var userInfoLookup = userInfoRepository.GetAll()
-                .Where(u => userIds.Contains(u.UserId.ToString()))
+                .Where(u => userIds.Contains(u.UserId))
                 .ToDictionary(u => u.UserId);
             
             // Get all unique org units from user info

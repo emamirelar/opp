@@ -89,6 +89,9 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     /// </summary>
     private string? GetCurrentUserId()
     {
+        if (_serviceProvider == null)
+            return null;
+            
         var httpContextAccessor = _serviceProvider.GetService<IHttpContextAccessor>();
         return httpContextAccessor?.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
@@ -118,6 +121,10 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     {
         var currentUserId = GetCurrentUserId();
         if (string.IsNullOrEmpty(currentUserId))
+            return queryable;
+
+        // Check if service provider is available before attempting to resolve services
+        if (_serviceProvider == null)
             return queryable;
 
         var userPreferenceService = _serviceProvider.GetService<IUserPreferenceService>();
@@ -391,7 +398,7 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     public IEnumerable<TEntity> GetAll(string[] includes)
     {
         var set = ApplyIncludes(_dbSet, includes);
-        var filteredSet = ApplyGlobalFiltersAsync(set).Result;
+        var filteredSet = ApplyGlobalFiltersAsync(set).ConfigureAwait(false).GetAwaiter().GetResult();
         return filteredSet.AsEnumerable();
     }
 

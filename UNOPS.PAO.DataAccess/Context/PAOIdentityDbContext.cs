@@ -50,7 +50,7 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
         // Then create related entities after the users are saved
         if (addedPaoUsers.Any())
         {
-            CreateRelatedEntitiesAsync(addedPaoUsers).GetAwaiter().GetResult();
+            CreateRelatedEntitiesAsync(addedPaoUsers).ConfigureAwait(false).GetAwaiter().GetResult();
         }
         
         return result;
