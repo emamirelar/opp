@@ -144,8 +144,13 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
     public async Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, string userId)
     {
         // RBAC interceptor handles security enforcement
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            return null; // Invalid userId format
+        }
+        
         var userInfo = await _context.UserInfos
-            .Where(u => u.UserId == int.Parse(userId) && !u.IsDeleted)
+            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
         if (userInfo == null) return null;
@@ -182,8 +187,13 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
     public async Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, string userId, UpdateUserRolesRequest request)
     {
         // RBAC interceptor handles security enforcement
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            throw new ArgumentException("Invalid userId format. UserId must be a valid integer.", nameof(userId));
+        }
+        
         var userInfo = await _context.UserInfos
-            .Where(u => u.UserId == int.Parse(userId) && !u.IsDeleted)
+            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
         if (userInfo == null)
@@ -373,8 +383,13 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         }
         
         // Fallback for cases without user context
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            return null; // Invalid userId format
+        }
+        
         var userInfo = await _context.UserInfos
-            .Where(u => u.UserId == int.Parse(userId) && !u.IsDeleted)
+            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
         if (userInfo == null) return null;

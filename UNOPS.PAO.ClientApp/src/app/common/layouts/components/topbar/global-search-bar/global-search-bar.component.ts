@@ -274,8 +274,6 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       this.isExpanded = false;
     }
 
-    debugger;
-
     // Navigate based on the active tab (entity type) instead of result.type
     if (this.activeTabKey === 'contacts') {
       this.router.navigate(['/partnerships/contacts', result.id]);

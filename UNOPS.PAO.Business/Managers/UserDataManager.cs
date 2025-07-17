@@ -56,6 +56,12 @@ public class UserDataManager : IUserDataManager
             }
             return Task.FromResult<PAOUserModel?>(null);
         }
-        return GetUserByIdAsync(int.Parse(userId));
+        
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            return Task.FromResult<PAOUserModel?>(null); // Invalid userId format
+        }
+        
+        return GetUserByIdAsync(userIdInt);
     }
 }
