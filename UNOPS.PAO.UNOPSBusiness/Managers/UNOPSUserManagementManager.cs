@@ -114,7 +114,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
             userModels.Add(new UserManagementModel
             {
-                UserId = userInfo.UserId,
+                UserId = userInfo.UserId.ToString(),
                 Name = userInfo.Name ?? "N/A",
                 Email = userInfo.UserEmail ?? "N/A",
                 OrgUnit = userInfo.OrgUnit ?? "N/A",
@@ -141,11 +141,16 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         };
     }
 
-    public async Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, int userId)
+    public async Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, string userId)
     {
         // RBAC interceptor handles security enforcement
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            return null; // Invalid userId format
+        }
+        
         var userInfo = await _context.UserInfos
-            .Where(u => u.UserId == userId && !u.IsDeleted)
+            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
         if (userInfo == null) return null;
@@ -167,7 +172,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
         return new UserManagementModel
         {
-            UserId = userInfo.UserId,
+            UserId = userInfo.UserId.ToString(),
             Name = userInfo.Name ?? "N/A",
             Email = userInfo.UserEmail ?? "N/A",
             OrgUnit = userInfo.OrgUnit ?? "N/A",
@@ -179,11 +184,16 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         };
     }
 
-    public async Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, int userId, UpdateUserRolesRequest request)
+    public async Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, string userId, UpdateUserRolesRequest request)
     {
         // RBAC interceptor handles security enforcement
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            throw new ArgumentException("Invalid userId format. UserId must be a valid integer.", nameof(userId));
+        }
+        
         var userInfo = await _context.UserInfos
-            .Where(u => u.UserId == userId && !u.IsDeleted)
+            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
         if (userInfo == null)
@@ -363,21 +373,30 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
     /// </summary>
     public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
     {
+        // For user management, we need to convert int to string
+        // This is a temporary compatibility layer
+        var userId = entityId.ToString();
+        
         if (user != null)
         {
-            return await GetUserByIdAsync(user, entityId);
+            return await GetUserByIdAsync(user, userId);
         }
         
         // Fallback for cases without user context
+        if (!int.TryParse(userId, out int userIdInt))
+        {
+            return null; // Invalid userId format
+        }
+        
         var userInfo = await _context.UserInfos
-            .Where(u => u.UserId == entityId && !u.IsDeleted)
+            .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
         if (userInfo == null) return null;
 
         return new UserManagementModel
         {
-            UserId = userInfo.UserId,
+            UserId = userInfo.UserId.ToString(),
             Name = userInfo.Name ?? "N/A",
             Email = userInfo.UserEmail ?? "N/A",
             OrgUnit = userInfo.OrgUnit ?? "N/A",

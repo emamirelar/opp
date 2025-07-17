@@ -10,11 +10,39 @@ export interface DefaultOrgUnitResponse {
   defaultOrgUnitId: number | null;
 }
 
+export interface GlobalFilters {
+  orgUnitId?: number | null;
+  relatedToMe?: boolean;
+  dateOn?: string | null;
+  dateFrom?: string | null;
+  dateTo?: string | null;
+  preferredLanguage?: string;
+  theme?: string;
+}
+
+export interface UserPreference {
+  id?: number;
+  userId: number;
+  globalFilterJson?: string | null;
+  globalFilters?: GlobalFilters;
+  additionalSettingsJson?: string | null;
+  name?: string;
+  status?: number;
+  createdBy?: number;
+  createdDate?: string;
+  lastModifiedBy?: number;
+  lastModifiedDate?: string;
+  isDeleted?: boolean;
+  deletedBy?: number;
+  deletedDate?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class UserPreferenceService {
   private apiUrl = '/api/user-preferences';
+  private globalApiUrl = '/api/global';
   private defaultOrgUnitSubject = new BehaviorSubject<number | null>(null);
   public defaultOrgUnit$ = this.defaultOrgUnitSubject.asObservable();
 
@@ -47,5 +75,69 @@ export class UserPreferenceService {
 
   getCurrentDefaultOrgUnitId(): number | null {
     return this.defaultOrgUnitSubject.value;
+  }
+
+  // New Global Filters Methods
+  getGlobalFilters(userId: string): Observable<GlobalFilters> {
+    return this.http.get<GlobalFilters>(`${this.globalApiUrl}/filters`, {
+      params: { id: userId }
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching global filters:', error);
+        return of({
+          orgUnitId: null,
+          relatedToMe: false,
+          dateOn: null,
+          dateFrom: null,
+          dateTo: null,
+          preferredLanguage: 'en',
+          theme: 'light'
+        });
+      })
+    );
+  }
+
+  updateGlobalFilters(userId: string, globalFilters: GlobalFilters): Observable<any> {
+    return this.http.put(`${this.globalApiUrl}/filters`, globalFilters, {
+      params: { id: userId }
+    }).pipe(
+      catchError(error => {
+        console.error('Error updating global filters:', error);
+        throw error;
+      })
+    );
+  }
+
+  resetGlobalFilters(userId: string): Observable<any> {
+    return this.http.post(`${this.globalApiUrl}/filters/reset`, {}, {
+      params: { id: userId }
+    }).pipe(
+      catchError(error => {
+        console.error('Error resetting global filters:', error);
+        throw error;
+      })
+    );
+  }
+
+  getUserPreferences(userId: string): Observable<UserPreference> {
+    return this.http.get<UserPreference>(`${this.globalApiUrl}/user-preferences`, {
+      params: { id: userId }
+    }).pipe(
+      catchError(error => {
+        console.error('Error fetching user preferences:', error);
+        throw error;
+      })
+    );
+  }
+
+  updateUserPreferences(userId: string, userPreferences: UserPreference): Observable<any> {
+    return this.http.put(`${this.globalApiUrl}/user-preferences`, userPreferences, {
+      params: { id: userId }
+    }).pipe(
+      catchError(error => {
+        console.error('Error updating user preferences:', error);
+        throw error;
+      })
+    );
   }
 }

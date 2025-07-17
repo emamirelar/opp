@@ -10,8 +10,8 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
 {
     public PartnerByOrgUnitWithRelationsSpecification(
         List<int> orgUnitHierarchyIds, 
-        List<int> orgUnitUserIds)
-        : base(BuildCriteria(orgUnitHierarchyIds, orgUnitUserIds))
+        List<string> orgUnitUserIds)
+        : base(BuildCriteria(orgUnitHierarchyIds, ConvertUserIdsToIntegers(orgUnitUserIds)))
     {
         // Include related entities for the query
         AddInclude(p => p.PartnerOffice);
@@ -19,6 +19,20 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}");
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}.{nameof(Interaction.InteractionContacts)}");
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}.{nameof(Interaction.InteractionUsers)}");
+    }
+
+    /// <summary>
+    /// Converts string user IDs to integers, filtering out invalid values
+    /// </summary>
+    private static List<int> ConvertUserIdsToIntegers(List<string> orgUnitUserIds)
+    {
+        if (orgUnitUserIds == null)
+            return new List<int>();
+            
+        return orgUnitUserIds
+            .Where(id => int.TryParse(id, out _))
+            .Select(id => int.Parse(id))
+            .ToList();
     }
 
     private static Expression<Func<Partner, bool>> BuildCriteria(

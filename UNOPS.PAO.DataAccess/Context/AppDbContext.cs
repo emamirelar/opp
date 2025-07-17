@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using UNOPS.PAO.DataAccess.Interfaces;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -21,7 +22,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     {
     }
 
-    public DbSet<GrantUser> GrantUsers { get; set; }
+    public DbSet<PAOUser> PAOUsers { get; set; }
     public DbSet<Currency> Currencies { get; set; }
     public DbSet<Country> Countries { get; set; }
 
@@ -56,6 +57,8 @@ public class AppDbContext : AuditableDbContext<int, int>
             .Ignore(RelationalEventId.PendingModelChangesWarning));
     }
 
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -67,14 +70,24 @@ public class AppDbContext : AuditableDbContext<int, int>
             .ToTable("AspNetUserRoles", t => t.ExcludeFromMigrations())
             .HasKey(ur => new { ur.UserId, ur.RoleId });
 
+        // Configure PAOUser and UserProfile relationship
         modelBuilder
-            .Entity<GrantUser>()
+            .Entity<PAOUser>()
             .ToTable("AspNetUsers", t => t.ExcludeFromMigrations())
             .HasOne(x => x.UserProfile)
             .WithOne()
             .HasForeignKey<UserProfile>(x => x.UserId)
+            .IsRequired(false); // Make it optional to avoid constraint issues during creation
+
+        modelBuilder
+            .Entity<UserProfile>()
+            .Property(up => up.UserId)
             .IsRequired();
 
+        modelBuilder
+            .Entity<UserProfile>()
+            .HasIndex(up => up.UserId)
+            .IsUnique();
 
         modelBuilder
             .Entity<Partner>(p =>
@@ -99,8 +112,6 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .WithMany()
                 .HasForeignKey(x => new { x.UserId, x.RoleId });
         });
-
-
 
         modelBuilder.Entity<Interaction>(entity =>
         {
@@ -250,5 +261,34 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.Property(e => e.OrgUnit)
                 .HasMaxLength(200);
         });
+
+        modelBuilder.Entity<UserPreference>(entity =>
+        {
+            entity.ToTable("UserPreferences", "public");
+            entity.HasKey(e => e.Id);
+            
+            entity.Property(e => e.Id)
+                .ValueGeneratedOnAdd()
+                .UseIdentityByDefaultColumn();
+            
+            entity.Property(e => e.UserId)
+                .IsRequired();
+            
+            // Foreign key relationship to UserProfile
+            entity.HasOne(e => e.UserProfile)
+                .WithOne(up => up.UserPreference)
+                .HasForeignKey<UserPreference>(e => e.UserId)
+                .HasPrincipalKey<UserProfile>(up => up.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(e => e.GlobalFilterJson)
+                .HasColumnType("text");
+            
+            entity.Property(e => e.AdditionalSettingsJson)
+                .HasColumnType("text");
+        });
+
+        // Ignore GlobalFilters class - it's not an entity, just a plain class for JSON serialization
+        modelBuilder.Ignore<GlobalFilters>();
     }
 }

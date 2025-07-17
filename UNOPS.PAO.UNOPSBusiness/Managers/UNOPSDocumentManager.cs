@@ -11,6 +11,7 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
+using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSDomain.Entities.Common;
 using UNOPS.PAO.Utilities.Helpers;
@@ -35,19 +36,20 @@ public class UNOPSDocumentManager : IDocumentManager
         IConfiguration configuration,
         IMapper mapper,
         UNOPSAppDbContext context,
-        UserManager<PAOIdentityUser> userManager
+        UserManager<PAOIdentityUser> userManager,
+        IServiceProvider serviceProvider = null
         )
     {
         _mapper = mapper;
         _unopsAppDbContext = context;
-        _documentRepository = new BaseRepository<UNOPSDocument>(context, configuration);
+        _documentRepository = new BaseRepository<UNOPSDocument>(context, configuration, serviceProvider);
         _driveManager = driveManager;
         _driveConfig = configuration.GetSection($"GoogleDriveSettings:DefaultGoogleDriveFolderIds");
         _userManager = userManager;
         //_projectManager = new DataRepository<Project>(context); ;
-        _contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
-        _partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
-        _partnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
+        _contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
+        _partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
+        _partnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration, serviceProvider);
     }
 
     private DocumentModel MapDocumentModel(UNOPSDocument entity)

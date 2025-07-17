@@ -7,13 +7,13 @@ import { LanguageService } from '../../../services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { OrgUnitSelectorComponent } from '../topbar/org-unit-selector/org-unit-selector.component';
+
 import { ButtonModule } from 'primeng/button';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [MenuComponent, CommonModule, HttpClientModule, OrgUnitSelectorComponent, ButtonModule, TranslateModule],
+  imports: [MenuComponent, CommonModule, HttpClientModule, ButtonModule, TranslateModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
   standalone: true,

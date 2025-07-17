@@ -18,7 +18,7 @@ import { ConfirmationService } from 'primeng/api';
 import { PartnerViewComponent } from '../../features/internal/components/partner/view/partner-view.component';
 import { ContactViewComponent } from '../../features/internal/components/contact/view/contact-view.component';
 import { InteractionModalComponent } from '../../features/internal/components/interaction/modal/interaction-modal.component';
-import { OrgUnitSelectorComponent } from '../../common/layouts/components/topbar/org-unit-selector/org-unit-selector.component';
+
 import { GlobalFilterService } from '../../services/global-filter.service';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -49,7 +49,7 @@ interface ChatSession {
     PartnerViewComponent,
     ContactViewComponent,
     InteractionModalComponent,
-    OrgUnitSelectorComponent,
+
     TranslateModule
   ],
   templateUrl: './ai-layout.component.html',

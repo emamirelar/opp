@@ -23,6 +23,18 @@ public class UserPreferenceController : BaseController
         _userPreferenceService = userPreferenceService;
     }
 
+    /// <summary>
+    /// Retrieves the current user's default organizational unit preference for filtering and access control.
+    /// </summary>
+    /// <example_uses>
+    /// Get my default organizational unit setting
+    /// What's my default org unit preference?
+    /// Show my default office assignment
+    /// Get current organizational unit filter
+    /// Check my default org unit setting
+    /// </example_uses>
+    /// <when_to_use>Use this when loading user's default organizational unit for filtering or when determining the user's default office context.</when_to_use>
+    /// <returns>Default organizational unit ID for the current user</returns>
     [HttpGet("default-org-unit")]
     public async Task<ActionResult> GetDefaultOrgUnit()
     {
@@ -33,6 +45,20 @@ public class UserPreferenceController : BaseController
         });
     }
 
+    /// <summary>
+    /// Updates the current user's default organizational unit preference for filtering and access control.
+    /// </summary>
+    /// <param name="request">Default org unit request containing the new setting</param>
+    /// <param name="request.orgUnitId">Organizational unit ID to set as default (null to clear)</param>
+    /// <example_uses>
+    /// Set my default org unit to Headquarters
+    /// Change my default office to Field Office 123
+    /// Update my organizational unit preference
+    /// Set default org unit filter to my office
+    /// Clear my default org unit setting
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to change their default organizational unit for filtering and access control purposes.</when_to_use>
+    /// <returns>Success confirmation</returns>
     [HttpPut("default-org-unit")]
     public async Task<ActionResult> SetDefaultOrgUnit([FromBody] DefaultOrgUnitRequest request)
     {

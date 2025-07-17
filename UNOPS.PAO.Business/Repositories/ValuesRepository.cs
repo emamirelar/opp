@@ -105,8 +105,8 @@ public class ValuesRepository
     public IEnumerable<Contact> GetContacts()
         => context.Contacts.Where(x => !x.IsDeleted);
 
-    public IEnumerable<GrantUser> GetUsers()
-        => context.GrantUsers;
+    public IEnumerable<PAOUser> GetUsers()
+        => context.PAOUsers;
 
     // Get organization hierarchy optimized for PrimeNG organization chart
     public async Task<IEnumerable<OrganizationHierarchyPrimeModel>> GetOrganizationHierarchyPrime()

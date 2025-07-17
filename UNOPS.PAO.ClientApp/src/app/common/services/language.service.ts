@@ -1,15 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { MenuItem } from 'primeng/api';
 import { HttpClient } from '@angular/common/http';
+import { MenuItem } from 'primeng/api';
 import { AuthService } from '../../essentials/services/auth.service';
-import { catchError, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { switchMap, catchError, of, Observable, tap } from 'rxjs';
 
 export interface Language {
   code: string;
   name: string;
 }
+
 @Injectable({
   providedIn: 'root'
 })
@@ -22,16 +22,50 @@ export class LanguageService {
 
   constructor(public translationService: TranslateService) {
     this.translationService.addLangs(['en', 'fr', 'span', 'pt']);
-    this.currentLanguage = this.getCurrentLanguage();
-    this.translationService.setDefaultLang(this.currentLanguage.code);
+    this.translationService.setDefaultLang('en');
+    this.currentLanguage = { code: 'en', name: 'EN' }; // Temporary until server responds
+  }
 
-    this.translationService.use(this.currentLanguage.code);
+  initializeLanguage(): Promise<void> {
+    return new Promise((resolve) => {
+      this.authService.user().pipe(
+        switchMap(() => this.http.get<{ language: string }>('/api/global/preferred-language')),
+        catchError((error) => {
+          console.log('Could not load preferred language, falling back to localStorage:', error);
+          // Fall back to localStorage if server call fails
+          const savedLanguage = this.getCurrentLanguage();
+          return of({ language: savedLanguage.code });
+        })
+      ).subscribe({
+        next: (response) => {
+          const preferredLanguage = this.getLanguages().find(lang => lang.code === response.language) 
+            || { code: 'en', name: 'EN' };
+          
+          // Set the language from server (or localStorage fallback)
+          localStorage.setItem(this.languageKey, JSON.stringify(preferredLanguage));
+          this.currentLanguage = preferredLanguage;
+          this.translationService.use(preferredLanguage.code).subscribe(() => {
+            console.log('Language initialized to:', preferredLanguage.code);
+            resolve();
+          });
+        },
+        error: (error) => {
+          console.log('Error loading preferred language:', error);
+          // Final fallback to localStorage
+          const fallbackLanguage = this.getCurrentLanguage();
+          this.currentLanguage = fallbackLanguage;
+          this.translationService.use(fallbackLanguage.code).subscribe(() => {
+            console.log('Language initialized to fallback:', fallbackLanguage.code);
+            resolve();
+          });
+        }
+      });
+    });
   }
 
   getCurrentLanguage(): Language {
-    const defaultLanguage = {code: 'en', name: 'en'};
-    const cookieLanguage = localStorage.getItem(this.languageKey);
-    return cookieLanguage ? JSON.parse(cookieLanguage) : defaultLanguage;
+    const saved = localStorage.getItem(this.languageKey);
+    return saved ? JSON.parse(saved) : { code: 'en', name: 'EN' };
   }
 
   switchLanguage(language: Language) {
@@ -40,7 +74,7 @@ export class LanguageService {
     this.translationService.use(language.code);
     
     // Update user language preference in the database
-    this.updateUserLanguagePreference(language.code).subscribe({
+    this.updatePreferredLanguage(language.code).subscribe({
       next: () => {
         console.log('User language preference updated successfully');
       },
@@ -51,42 +85,15 @@ export class LanguageService {
     });
   }
 
-  private updateUserLanguagePreference(languageCode: string) {
-    // First get the current user's email to fetch their userId
-    return this.authService.user().pipe(
-      switchMap((claims) => {
-        const emailClaim = claims.find(c => c.type === 'email' || 
-                                     c.type === 'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress');
-        
-        const email = emailClaim?.value;
-        if (!email) {
-          throw new Error('User email not found in claims');
-        }
 
-        // Get current user info to extract userId
-        const apiUrl = `/api/user-info/current?email=${encodeURIComponent(email)}`;
-        return this.http.get<any>(apiUrl);
-      }),
-      switchMap((userInfoResponse) => {
-        // Extract userId from the response
-        const userInfo = userInfoResponse.userInfoWithOrgSettings || userInfoResponse;
-        const userId = userInfo.userId;
-        
-        if (!userId) {
-          throw new Error('User ID not found in user info response');
-        }
 
-        // Update the user's language preference
-        const updatePayload = {
-          userId: userId,
-          language: languageCode
-        };
-
-        return this.http.put('/api/user-info/update', updatePayload);
-      }),
+  private updatePreferredLanguage(languageCode: string): Observable<any> {
+    return this.http.put('/api/global/preferred-language', `"${languageCode}"`, {
+      headers: { 'Content-Type': 'application/json' }
+    }).pipe(
       catchError((error) => {
-        console.error('Error in updateUserLanguagePreference:', error);
-        return of(null); // Return observable that completes without error to prevent breaking the UI
+        console.error('Error updating preferred language:', error);
+        return of(null);
       })
     );
   }

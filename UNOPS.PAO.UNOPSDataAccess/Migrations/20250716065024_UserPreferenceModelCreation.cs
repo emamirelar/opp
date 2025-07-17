@@ -7,11 +7,17 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class AddUserPreferences : Migration
+    public partial class UserPreferenceModelCreation : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddUniqueConstraint(
+                name: "AK_UserProfile_UserId",
+                schema: "public",
+                table: "UserProfile",
+                column: "UserId");
+
             migrationBuilder.CreateTable(
                 name: "UserPreferences",
                 schema: "public",
@@ -20,8 +26,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<int>(type: "integer", nullable: false),
-                    DefaultOrgUnitId = table.Column<int>(type: "integer", nullable: true),
-                    PreferencesJson = table.Column<string>(type: "text", nullable: true),
+                    GlobalFilterJson = table.Column<string>(type: "text", nullable: true),
+                    AdditionalSettingsJson = table.Column<string>(type: "text", nullable: true),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedBy = table.Column<int>(type: "integer", nullable: false),
@@ -36,50 +42,20 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 {
                     table.PrimaryKey("PK_UserPreferences", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_UserPreferences_OrganizationHierarchies_DefaultOrgUnitId",
-                        column: x => x.DefaultOrgUnitId,
-                        principalSchema: "public",
-                        principalTable: "OrganizationHierarchies",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_UserPreferences_UserInfos_UserId",
+                        name: "FK_UserPreferences_UserProfile_UserId",
                         column: x => x.UserId,
                         principalSchema: "public",
-                        principalTable: "UserInfos",
+                        principalTable: "UserProfile",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserPreferences_DefaultOrgUnitId",
-                schema: "public",
-                table: "UserPreferences",
-                column: "DefaultOrgUnitId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_UserPreferences_UserId",
                 schema: "public",
                 table: "UserPreferences",
-                column: "UserId");
-                
-            // Migrate existing user preferences based on UserInfo.OrgUnit
-            migrationBuilder.Sql(@"
-                INSERT INTO ""UserPreferences"" (""UserId"", ""DefaultOrgUnitId"", ""Name"", ""Status"", ""CreatedBy"", ""CreatedDate"", ""LastModifiedBy"", ""IsDeleted"", ""DeletedBy"")
-                SELECT 
-                    ui.""UserId"",
-                    oh.""Id"" as ""DefaultOrgUnitId"",
-                    'Auto-generated' as ""Name"",
-                    1 as ""Status"",
-                    ui.""UserId"" as ""CreatedBy"",
-                    CURRENT_TIMESTAMP AT TIME ZONE 'UTC' as ""CreatedDate"",
-                    ui.""UserId"" as ""LastModifiedBy"",
-                    false as ""IsDeleted"",
-                    0 as ""DeletedBy""
-                FROM ""UserInfos"" ui
-                INNER JOIN ""OrganizationHierarchies"" oh ON oh.""Code"" = ui.""OrgUnit""
-                WHERE ui.""OrgUnit"" IS NOT NULL
-                  AND NOT EXISTS (SELECT 1 FROM ""UserPreferences"" up WHERE up.""UserId"" = ui.""UserId"")
-            ");
+                column: "UserId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -88,6 +64,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             migrationBuilder.DropTable(
                 name: "UserPreferences",
                 schema: "public");
+
+            migrationBuilder.DropUniqueConstraint(
+                name: "AK_UserProfile_UserId",
+                schema: "public",
+                table: "UserProfile");
         }
     }
 }

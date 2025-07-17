@@ -4,6 +4,7 @@
 @use './app/common/themes/styles/recordPage.scss';
 
 :root {
+    --p-primary-color: #00669a;
     --p-mask-background: rgba(255, 255, 255, 0.5) !important; /* You can adjust the opacity and color as needed */
     --p-content-background: white !important;
     --p-tabs-tabpanel-background: transparent !important;

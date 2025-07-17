@@ -26,6 +26,7 @@ using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.Utilities.Helpers;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
@@ -142,7 +143,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return MapModelToEntity(model, new UNOPSPartner());
     }
 
-    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, ILogger<UNOPSPartnerManager> logger, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
+    public UNOPSPartnerManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, PartnerTreeService partnerTreeService, ILogger<UNOPSPartnerManager> logger, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null)
         : base(mapper, context, configuration, null, "Partner", permissionService, httpContextAccessor)
     {
         _mapper = mapper;
@@ -150,9 +151,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         _configuration = configuration;
         _logger = logger;
        // _securityService = securityService;
-        PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
-        PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration);
-        OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
+        PartnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
+        PartnerTreeRepository = new BaseRepository<UNOPSPartnerTree>(context, configuration, serviceProvider);
+        OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
         
         PartnerTreeService = partnerTreeService;
         
@@ -1226,5 +1227,67 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
     {
         return await GetPartnerAsync(user, entityId);
+    }
+
+    /// <summary>
+    /// Gets basic partner data by ID without nested entities
+    /// </summary>
+    public override async Task<object> GetBasicEntityDataAsync(int id)
+    {
+        var partner = await PartnerRepository.GetByIdAsync(id);
+        if (partner != null)
+        {
+            return _mapper.Map<UNOPSPartner, PartnerModel>(partner);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Gets multiple partners by their IDs for search results
+    /// </summary>
+    public override async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
+    {
+        if (ids == null || ids.Length == 0)
+            return new List<object>();
+
+        _logger?.LogInformation("UNOPSPartnerManager.GetByIdsAsync called with IDs: [{Ids}]", string.Join(", ", ids));
+
+        var partners = PartnerRepository
+            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .Where(p => ids.Contains(p.Id))
+            .ToList();
+
+        _logger?.LogInformation("Found {Count} partners from database before RBAC filtering", partners.Count);
+
+        // Apply access control if user context is provided
+        if (user != null)
+        {
+            var filteredData = await ApplyAccessControlFilters(partners.AsQueryable(), user, "read");
+            if (filteredData is IEnumerable<UNOPSPartner> partnerList)
+            {
+                partners = partnerList.ToList();
+                _logger?.LogInformation("After RBAC filtering: {Count} partners remaining", partners.Count);
+            }
+            else
+            {
+                _logger?.LogWarning("ApplyAccessControlFilters returned unexpected type: {Type}", filteredData?.GetType().Name ?? "null");
+            }
+        }
+        else
+        {
+            _logger?.LogInformation("No user context provided, skipping RBAC filtering");
+        }
+
+        // Process partners sequentially to avoid DbContext threading issues
+        var results = new List<PartnerModel>();
+        foreach (var partner in partners)
+        {
+            var mappedPartner = await MapEntityToModelAsync(partner, _mapper, user);
+            results.Add(mappedPartner);
+        }
+        
+        _logger?.LogInformation("Successfully mapped {Count} partners to models", results.Count);
+        
+        return results.Cast<object>().ToList();
     }
 }

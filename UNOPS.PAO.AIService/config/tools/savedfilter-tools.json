@@ -1,0 +1,157 @@
+{
+  "entity": "SavedFilter",
+  "description": "Manages the creation, retrieval, update, and deletion of user-defined saved filters, allowing users to store and reuse specific search and display criteria across the application.",
+  "synonyms": [
+    "filter preset",
+    "search template",
+    "custom filter",
+    "saved search",
+    "filter configuration"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "CreateSavedFilter",
+      "url": "api/savedfilter",
+      "method": "POST",
+      "description": "Create a new saved filter. This allows users to store a specific set of filtering criteria for later reuse.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Filter creation request containing the definition of the new filter."
+        }
+      },
+      "example_uses": [
+        "Create a new filter for my project tasks.",
+        "Save my current search criteria for future use.",
+        "Define a new filter named 'Urgent Items' with specific conditions."
+      ],
+      "when_to_use": "When a user wants to persist a specific set of filtering criteria, such as search terms, sorting preferences, or column selections, for later retrieval and application."
+    },
+    {
+      "name": "UpdateSavedFilter",
+      "url": "api/savedfilter",
+      "method": "PUT",
+      "description": "Update an existing saved filter. This allows modification of a previously saved filter's definition.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Filter update request containing the modified definition of the filter."
+        }
+      },
+      "example_uses": [
+        "Modify the 'Urgent Items' filter to include new conditions.",
+        "Update the name of my saved filter from 'Old Name' to 'New Name'.",
+        "Change the sorting order for an existing filter."
+      ],
+      "when_to_use": "When a user needs to modify the definition, name, or properties of an already existing saved filter."
+    },
+    {
+      "name": "DeleteSavedFilter",
+      "url": "api/savedfilter/{id}",
+      "method": "DELETE",
+      "description": "Delete a specific saved filter by its ID. This action permanently removes the filter.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": "The unique identifier of the filter to delete."
+        }
+      },
+      "example_uses": [
+        "Delete the filter with ID 123.",
+        "Remove the 'Completed Tasks' filter from my list.",
+        "I no longer need this saved filter, please delete it."
+      ],
+      "when_to_use": "When a user wants to permanently remove a saved filter that is no longer needed."
+    },
+    {
+      "name": "GetSavedFilter",
+      "url": "api/savedfilter/{id}",
+      "method": "GET",
+      "description": "Retrieve the details of a specific saved filter by its ID.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": "The unique identifier of the filter to retrieve."
+        }
+      },
+      "example_uses": [
+        "Retrieve details for filter ID 456.",
+        "Show me the definition of my 'High Priority' filter.",
+        "Get the saved filter by its unique identifier to see its criteria."
+      ],
+      "when_to_use": "When a user needs to view the specific details or configuration of a single saved filter, such as its criteria or name."
+    },
+    {
+      "name": "GetSavedFilters",
+      "url": "api/savedfilter",
+      "method": "GET",
+      "description": "Retrieve a list of saved filters for the current user, with optional filtering and pagination.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Search and pagination parameters to filter and paginate the list of saved filters."
+        }
+      },
+      "example_uses": [
+        "List all my saved filters.",
+        "Show me all filters I've created, paginated.",
+        "Find saved filters related to 'projects' and sort them by name."
+      ],
+      "when_to_use": "When a user wants to see a list of all their saved filters, potentially searching for specific ones or navigating through a large collection."
+    },
+    {
+      "name": "ApplySavedFilter",
+      "url": "api/savedfilter/{id}/apply",
+      "method": "GET",
+      "description": "Apply a saved filter by its ID and get the configured filter request object, often used to retrieve data based on the filter's criteria.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": "The unique identifier of the filter to apply."
+        },
+        "pageIndex": {
+          "type": "integer",
+          "required": false,
+          "description": "Page index for pagination (default: 1)."
+        },
+        "pageSize": {
+          "type": "integer",
+          "required": false,
+          "description": "Page size for pagination (default: 10)."
+        }
+      },
+      "example_uses": [
+        "Apply filter ID 789 to my current view and get the first page of results.",
+        "Use the 'Active Users' filter and retrieve the data it configures.",
+        "Get the data configured by a saved filter, specifying page 2 with 20 items per page."
+      ],
+      "when_to_use": "When a user wants to apply the criteria defined in a saved filter to retrieve data or configure a view, often with pagination options."
+    },
+    {
+      "name": "GetFilterStatistics",
+      "url": "api/savedfilter/statistics",
+      "method": "GET",
+      "description": "Retrieve usage statistics for saved filters, optionally filtered by entity type.",
+      "parameters": {
+        "entityType": {
+          "type": "string",
+          "required": false,
+          "description": "Optional filter to get statistics for a specific entity type (e.g., 'Projects', 'Tasks')."
+        }
+      },
+      "example_uses": [
+        "Show me the usage statistics for all saved filters.",
+        "How many times has the 'Project X' filter been applied?",
+        "Get statistics for filters related to 'tasks' to see their popularity."
+      ],
+      "when_to_use": "When an administrator or user wants to understand the usage patterns, popularity, or other statistics related to saved filters."
+    }
+  ]
+}

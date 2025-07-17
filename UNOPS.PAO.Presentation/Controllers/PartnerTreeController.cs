@@ -31,6 +31,25 @@ public class PartnerTreeController : BaseController
         _manager = managerWrapper.PartnerTreeManager;
     }
 
+    /// <summary>
+    /// Creates a new partner tree node for organizing partner hierarchies and classifications.
+    /// </summary>
+    /// <param name="req">Partner tree data model with hierarchy information</param>
+    /// <param name="req.name">Partner tree node name (required)</param>
+    /// <param name="req.code">Unique code for the tree node (required)</param>
+    /// <param name="req.description">Description of the partner category/group</param>
+    /// <param name="req.parentCode">Parent node code for hierarchy</param>
+    /// <param name="req.level">Tree level/depth</param>
+    /// <param name="req.isCategory">Whether this is a category (true) or group (false)</param>
+    /// <example_uses>
+    /// Create a new partner category for Government
+    /// Add a partner group under UN Agencies
+    /// Create NGO subcategory classification
+    /// Add new partner hierarchy node
+    /// Set up partner organization structure
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to create, add, or set up new partner categories, groups, or hierarchy structures.</when_to_use>
+    /// <returns>Created partner tree node with ID and metadata</returns>
     [HttpPost(APIDictionary.PartnerTree)]
     [AccessControlled(EntityTypes.PartnerTree, "create")]
     // Internal call: Create a Partner Tree
@@ -47,6 +66,20 @@ public class PartnerTreeController : BaseController
         }, 201);
     }
 
+    /// <summary>
+    /// Retrieves all partner tree nodes (categories and groups) with sorting and access control.
+    /// </summary>
+    /// <param name="sortBy">Field to sort by (default: "Name")</param>
+    /// <param name="ascending">Sort direction (default: true for ascending)</param>
+    /// <example_uses>
+    /// Show all partner categories and groups
+    /// List partner hierarchy structure
+    /// Get partner classification tree
+    /// Show partner organization taxonomy
+    /// List all partner categories sorted by name
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to see partner categories, groups, hierarchy, or classification structure.</when_to_use>
+    /// <returns>List of partner tree nodes with hierarchy information</returns>
     [HttpGet(APIDictionary.PartnerTree)]
     [AccessControlled(EntityTypes.PartnerTree, "read")]
     // Internal call: get partner tree created by logged-in user
@@ -75,6 +108,19 @@ public class PartnerTreeController : BaseController
         }
     }
 
+    /// <summary>
+    /// Retrieves a specific partner tree node by ID with complete hierarchy details and permissions.
+    /// </summary>
+    /// <param name="id">Partner tree node ID</param>
+    /// <example_uses>
+    /// Show me details for partner category ID 123
+    /// Get information about partner group 456
+    /// Display hierarchy node 789
+    /// Show complete partner tree node details
+    /// Get partner classification details
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks for specific partner tree node details by ID or when you need complete hierarchy information.</when_to_use>
+    /// <returns>Complete partner tree node details with hierarchy information</returns>
     [HttpGet(APIDictionary.PartnerTree + "/{id}")]
     [AccessControlled(EntityTypes.PartnerTree, "read")]
     // Internal call: Partner Tree details
@@ -92,7 +138,26 @@ public class PartnerTreeController : BaseController
         });
     }
 
-    [HttpPut(APIDictionary.PartnerTree)]    
+    /// <summary>
+    /// Updates multiple partner tree nodes (categories and groups) with new hierarchy information and properties.
+    /// </summary>
+    /// <param name="req">Array of partner tree data models to update</param>
+    /// <param name="req[].id">Partner tree node ID to update (required)</param>
+    /// <param name="req[].name">Updated node name</param>
+    /// <param name="req[].code">Updated code</param>
+    /// <param name="req[].description">Updated description</param>
+    /// <param name="req[].parentCode">Updated parent node code</param>
+    /// <param name="req[].level">Updated tree level</param>
+    /// <example_uses>
+    /// Update partner category names and descriptions
+    /// Reorganize partner tree hierarchy
+    /// Modify partner group classifications
+    /// Update multiple tree nodes at once
+    /// Restructure partner organization taxonomy
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to update, modify, edit, or reorganize partner tree structure or classifications.</when_to_use>
+    /// <returns>List of updated partner tree nodes</returns>
+    [HttpPut(APIDictionary.PartnerTree)]
     [AccessControlled(EntityTypes.PartnerTree, "update")]
     // Internal call: update Partner Tree
     public async Task<ActionResult> Update([FromBody] PartnerTreeDataModel[] req)
@@ -115,6 +180,19 @@ public class PartnerTreeController : BaseController
         });
     }
 
+    /// <summary>
+    /// Soft deletes a partner tree node from the hierarchy (marks as deleted rather than permanent removal).
+    /// </summary>
+    /// <param name="id">Partner tree node ID to delete</param>
+    /// <example_uses>
+    /// Delete partner category ID 123
+    /// Remove partner group 456 from hierarchy
+    /// Delete obsolete partner classification
+    /// Remove unused tree node
+    /// Clean up partner taxonomy structure
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to delete, remove, or eliminate a partner category, group, or tree node.</when_to_use>
+    /// <returns>No content on successful deletion</returns>
     [HttpDelete(APIDictionary.PartnerTree + "/{id}")]
     [AccessControlled(EntityTypes.PartnerTree, "delete")]
     // Internal call: delete partner tree
@@ -127,6 +205,19 @@ public class PartnerTreeController : BaseController
         });
     }
 
+    /// <summary>
+    /// Retrieves the current user's permissions for a specific partner tree node (read, update, delete).
+    /// </summary>
+    /// <param name="id">Partner tree node ID to check permissions for</param>
+    /// <example_uses>
+    /// Check my permissions for partner category 123
+    /// What can I do with partner group 456?
+    /// Get access rights for this tree node
+    /// Verify tree permissions before editing
+    /// Can I modify this partner classification?
+    /// </example_uses>
+    /// <when_to_use>Use this when you need to check user permissions before performing operations or showing UI elements for partner tree management.</when_to_use>
+    /// <returns>Permission object with CanRead, CanUpdate, CanDelete flags</returns>
     [HttpGet(APIDictionary.PartnerTree + "/{id}/permissions")]
     public async Task<ActionResult> PermissionsGet(int id)
     {
@@ -145,6 +236,19 @@ public class PartnerTreeController : BaseController
         });
     }
 
+    /// <summary>
+    /// Retrieves the complete partner category and group structure as a hierarchical tree for organizational navigation.
+    /// </summary>
+    /// <example_uses>
+    /// Show partner hierarchy structure
+    /// Get complete partner taxonomy tree
+    /// Display partner organization chart
+    /// Show category and group relationships
+    /// Get partner classification structure
+    /// Load partner tree for navigation
+    /// </example_uses>
+    /// <when_to_use>Use this when the user needs to see the complete partner organizational structure, hierarchy, or when building navigation trees.</when_to_use>
+    /// <returns>Hierarchical partner tree structure with categories and groups</returns>
     [HttpGet(APIDictionary.PartnerTree + "-structure")]
     [AccessControlled(EntityTypes.PartnerTree, "read")]
     public async Task<ActionResult> GetCategoryAndGroupStructure()

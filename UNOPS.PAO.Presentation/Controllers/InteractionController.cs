@@ -35,6 +35,28 @@ namespace UNOPS.PAO.Presentation.Controllers
             _orgUnitFilterService = orgUnitFilterService;
         }
 
+        /// <summary>
+        /// Creates a new interaction record with complete details including participants, type, and associated entities.
+        /// </summary>
+        /// <param name="req">Interaction creation request with all required details</param>
+        /// <param name="req.type">Interaction type (required) - e.g., 'Meeting', 'Email', 'Call', 'Conference'</param>
+        /// <param name="req.subject">Interaction subject/title (required)</param>
+        /// <param name="req.description">Detailed description of the interaction</param>
+        /// <param name="req.startDate">Interaction start date and time</param>
+        /// <param name="req.endDate">Interaction end date and time</param>
+        /// <param name="req.location">Meeting location or platform</param>
+        /// <param name="req.status">Interaction status</param>
+        /// <param name="req.participants">List of contact participants</param>
+        /// <param name="req.partners">List of partner organizations involved</param>
+        /// <example_uses>
+        /// Create a new meeting with UNICEF on project planning
+        /// Record email interaction with partner contacts
+        /// Add conference call with multiple stakeholders
+        /// Log face-to-face meeting at headquarters
+        /// Create virtual meeting interaction record
+        /// </example_uses>
+        /// <when_to_use>Use this when the user asks to create, add, record, or log a new interaction, meeting, call, or communication.</when_to_use>
+        /// <returns>Created interaction with ID and metadata</returns>
         [HttpPost(APIDictionary.Interaction)]
         [AccessControlled(EntityTypes.Interaction, "create")]
         public async Task<ActionResult> Create([FromBody] InteractionRequest req)
@@ -57,6 +79,33 @@ namespace UNOPS.PAO.Presentation.Controllers
             }, 201);
         }
 
+        /// <summary>
+        /// Retrieves a list of interactions with advanced filtering, pagination, search capabilities, and access control.
+        /// </summary>
+        /// <param name="request">Interaction filter request containing search and pagination parameters</param>
+        /// <param name="request.pageIndex">Page number (1-based)</param>
+        /// <param name="request.pageSize">Number of items per page</param>
+        /// <param name="request.searchText">Text to search across interaction fields</param>
+        /// <param name="request.orderBy">Field to order results by</param>
+        /// <param name="request.ascending">Sort direction (true for ascending)</param>
+        /// <param name="request.type">Filter by interaction type</param>
+        /// <param name="request.status">Filter by interaction status</param>
+        /// <param name="request.startDate">Filter interactions from this date</param>
+        /// <param name="request.endDate">Filter interactions until this date</param>
+        /// <param name="advancedSearch">Enable advanced search mode</param>
+        /// <param name="searchCriteria">JSON string containing advanced search filters</param>
+        /// <param name="searchText">Text to search across interaction fields (override for request.searchText)</param>
+        /// <example_uses>
+        /// Show me all interactions
+        /// List meetings from last month
+        /// Find interactions with UNICEF partners
+        /// Show email interactions this week
+        /// Get interactions containing 'project' in subject
+        /// List interactions sorted by date
+        /// Find conference calls with specific contacts
+        /// </example_uses>
+        /// <when_to_use>Use this when the user asks to search, list, filter, or browse interactions, meetings, calls, or communications.</when_to_use>
+        /// <returns>Paginated list of interactions with metadata</returns>
         [HttpGet(APIDictionary.Interaction)]
         [AccessControlled(EntityTypes.Interaction, "read")]
         public async Task<ActionResult> GetAll(
@@ -151,6 +200,19 @@ namespace UNOPS.PAO.Presentation.Controllers
             });
         }
 
+        /// <summary>
+        /// Retrieves a specific interaction by ID with complete details including participants, documents, and permissions.
+        /// </summary>
+        /// <param name="id">Interaction ID</param>
+        /// <example_uses>
+        /// Show me details for interaction ID 123
+        /// Get full information about meeting 456
+        /// Display interaction record 789
+        /// Get complete interaction details
+        /// Show meeting with all participants and documents
+        /// </example_uses>
+        /// <when_to_use>Use this when the user asks for specific interaction details by ID or when you need complete interaction information.</when_to_use>
+        /// <returns>Complete interaction details with participants and related information</returns>
         [HttpGet(APIDictionary.Interaction + "/{id}")]
         [AccessControlled(EntityTypes.Interaction, "read")]
         public async Task<ActionResult> Get(int id)
@@ -168,6 +230,28 @@ namespace UNOPS.PAO.Presentation.Controllers
             });
         }
 
+        /// <summary>
+        /// Updates an existing interaction's information including details, participants, scheduling, and metadata.
+        /// </summary>
+        /// <param name="req">Interaction update request containing modified fields</param>
+        /// <param name="req.id">Interaction ID to update (required)</param>
+        /// <param name="req.subject">Updated subject/title</param>
+        /// <param name="req.description">Updated description</param>
+        /// <param name="req.type">Updated interaction type</param>
+        /// <param name="req.startDate">Updated start date and time</param>
+        /// <param name="req.endDate">Updated end date and time</param>
+        /// <param name="req.location">Updated location</param>
+        /// <param name="req.status">Updated status</param>
+        /// <param name="req.participants">Updated participant list</param>
+        /// <example_uses>
+        /// Update meeting 123's time to 2 PM
+        /// Change interaction 456's location to virtual
+        /// Modify meeting description and agenda
+        /// Update participant list for conference call
+        /// Change meeting status to completed
+        /// </example_uses>
+        /// <when_to_use>Use this when the user asks to update, modify, edit, or change interaction information.</when_to_use>
+        /// <returns>Success confirmation</returns>
         [HttpPut(APIDictionary.Interaction)]
         [AccessControlled(EntityTypes.Interaction, "update")]
         public async Task<ActionResult> Update([FromBody] UpdateInteractionRequest req)
@@ -178,6 +262,19 @@ namespace UNOPS.PAO.Presentation.Controllers
             });
         }
 
+        /// <summary>
+        /// Soft deletes an interaction from the system (marks as deleted rather than permanent removal).
+        /// </summary>
+        /// <param name="id">Interaction ID to delete</param>
+        /// <example_uses>
+        /// Delete interaction ID 123
+        /// Remove meeting 456 from the system
+        /// Cancel and delete upcoming meeting
+        /// Remove completed interaction record
+        /// Soft delete interaction entry
+        /// </example_uses>
+        /// <when_to_use>Use this when the user asks to delete, remove, cancel, or eliminate an interaction.</when_to_use>
+        /// <returns>No content on successful deletion</returns>
         [HttpDelete(APIDictionary.Interaction + "/{id}")]
         [AccessControlled(EntityTypes.Interaction, "delete")]
         public async Task<ActionResult> Delete(int id)
@@ -188,6 +285,19 @@ namespace UNOPS.PAO.Presentation.Controllers
             });
         }
 
+        /// <summary>
+        /// Retrieves the current user's permissions for a specific interaction (read, update, delete).
+        /// </summary>
+        /// <param name="id">Interaction ID to check permissions for</param>
+        /// <example_uses>
+        /// Check my permissions for interaction 123
+        /// What can I do with meeting 456?
+        /// Get access rights for this interaction
+        /// Verify interaction permissions before editing
+        /// Can I update this meeting?
+        /// </example_uses>
+        /// <when_to_use>Use this when you need to check user permissions before performing operations or showing UI elements for interaction management.</when_to_use>
+        /// <returns>Permission object with CanRead, CanUpdate, CanDelete flags</returns>
         [HttpGet(APIDictionary.Interaction + "/{id}/permissions")]
         public async Task<ActionResult> PermissionsGet(int id)
         {

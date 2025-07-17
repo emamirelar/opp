@@ -30,6 +30,20 @@ public class NotificationController : ControllerBase
 
     private int CurrentUserId => _userResolverService.GetCurrentUserId();
 
+    /// <summary>
+    /// Retrieves all notifications for the current user with optional filtering for unread notifications only.
+    /// </summary>
+    /// <param name="unreadOnly">Optional filter to show only unread notifications (null returns all)</param>
+    /// <example_uses>
+    /// Show me all my notifications
+    /// Get only unread notifications
+    /// List all system alerts and messages
+    /// Show notification history
+    /// Get latest notifications for user
+    /// Check for new messages and alerts
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to see notifications, alerts, messages, or wants to check for new system updates.</when_to_use>
+    /// <returns>List of notifications with read/unread status and content</returns>
     [HttpGet(APIDictionary.Notifications)]
     public async Task<ActionResult<List<NotificationModel>>> GetNotifications([FromQuery] bool? unreadOnly = null)
     {
@@ -45,6 +59,19 @@ public class NotificationController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Marks a specific notification as read for the current user to update notification status.
+    /// </summary>
+    /// <param name="notificationId">Notification ID to mark as read</param>
+    /// <example_uses>
+    /// Mark notification 123 as read
+    /// Read notification about system update
+    /// Clear unread status for alert 456
+    /// Mark message as seen
+    /// Update notification read status
+    /// </example_uses>
+    /// <when_to_use>Use this when the user opens, reads, or acknowledges a notification to update its status.</when_to_use>
+    /// <returns>No content on successful status update</returns>
     [HttpPut(APIDictionary.NotificationRead)]
     public async Task<ActionResult> MarkAsRead(int notificationId)
     {
@@ -61,6 +88,22 @@ public class NotificationController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Updates a notification's content and status for administrative or system management purposes.
+    /// </summary>
+    /// <param name="notificationId">Notification ID to update</param>
+    /// <param name="request">Update request containing new message and status</param>
+    /// <param name="request.message">Updated notification message content</param>
+    /// <param name="request.status">Updated notification status</param>
+    /// <example_uses>
+    /// Update notification 123's message content
+    /// Change notification status to resolved
+    /// Modify system alert text
+    /// Update notification priority level
+    /// Change notification message and status
+    /// </example_uses>
+    /// <when_to_use>Use this when administrators need to update notification content or status for system management.</when_to_use>
+    /// <returns>No content on successful update</returns>
     [HttpPut("api/notifications/{notificationId}/update")]
     public async Task<ActionResult> UpdateNotification(int notificationId, [FromBody] UpdateNotificationRequest request)
     {
