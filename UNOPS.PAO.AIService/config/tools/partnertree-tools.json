@@ -1,0 +1,46 @@
+{
+  "entity": "PartnerTree",
+  "description": "Manages the retrieval of posted partner tree structures, representing organizational hierarchies or relationships.",
+  "synonyms": [
+    "partner hierarchy",
+    "organizational tree",
+    "posted tree",
+    "partner structure",
+    "tree structure"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetPostedPartnerTrees",
+      "url": "/api/external/partner-tree",
+      "method": "GET",
+      "description": "Retrieves a list of all posted partner tree structures available in the system.",
+      "parameters": {},
+      "example_uses": [
+        "How can I get a list of all available partner trees?",
+        "Show me all the organizational hierarchies that have been published.",
+        "I need to see a comprehensive list of all posted partner structures."
+      ],
+      "when_to_use": "Use this when you need to view or process all available partner tree structures without specifying a particular one."
+    },
+    {
+      "name": "GetPostedPartnerTree",
+      "url": "/api/external/partner-tree/{id}",
+      "method": "GET",
+      "description": "Retrieves a specific posted partner tree structure by its unique identifier.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": "The unique identifier of the partner tree to retrieve."
+        }
+      },
+      "example_uses": [
+        "Can you fetch the partner tree with ID 123?",
+        "I want to see the details of the organizational hierarchy identified by 456.",
+        "Retrieve the specific posted partner structure that has the ID 789."
+      ],
+      "when_to_use": "Use this when you need to retrieve the details of a single, specific partner tree structure, and you know its unique ID."
+    }
+  ]
+}

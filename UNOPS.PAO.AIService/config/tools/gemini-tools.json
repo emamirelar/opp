@@ -1,0 +1,299 @@
+{
+  "entity": "Gemini",
+  "description": "Manages interactions with the AI assistant, including chat sessions, data processing, file analysis, and various session management functionalities.",
+  "synonyms": [
+    "AI Assistant",
+    "Chatbot",
+    "Conversational AI",
+    "AI",
+    "Assistant"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetUserSessions",
+      "url": "/api/ai-assistant/get-user-sessions",
+      "method": "POST",
+      "description": "Retrieves a list of all chat sessions for the current user with the AI assistant.",
+      "parameters": {},
+      "example_uses": [
+        "Show me all my past conversations with the AI.",
+        "Can I see a list of my AI assistant sessions?",
+        "I need to view my chat history with Gemini."
+      ],
+      "when_to_use": "When a user wants to see a list of their previous interactions or chat sessions with the AI assistant."
+    },
+    {
+      "name": "GetSessionDetails",
+      "url": "/api/ai-assistant/get-session",
+      "method": "POST",
+      "description": "Fetches the detailed content and metadata of a specific AI assistant chat session.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing the session identifier to retrieve details for."
+        }
+      },
+      "example_uses": [
+        "Retrieve the full transcript of session ID 123.",
+        "Get the details for my chat with the AI about project Alpha.",
+        "Show me everything from the session where I discussed budget planning."
+      ],
+      "when_to_use": "When a user needs to view the complete conversation or specific details of a particular AI assistant session."
+    },
+    {
+      "name": "ChatWithGemini",
+      "url": "/api/ai-assistant/chat",
+      "method": "POST",
+      "description": "Initiates or continues a conversation with the AI assistant, sending a user message and receiving an AI response.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing the user's message and session context."
+        }
+      },
+      "example_uses": [
+        "Ask the AI assistant a question about the new policy.",
+        "Send a message to Gemini to get a summary of the report.",
+        "Continue my conversation with the AI about the project timeline."
+      ],
+      "when_to_use": "When a user wants to interact conversationally with the AI assistant, sending a query or message."
+    },
+    {
+      "name": "ScanFile",
+      "url": "/api/scan-data",
+      "method": "POST",
+      "description": "Scans a provided file for content analysis or processing by the AI.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing file details for scanning."
+        }
+      },
+      "example_uses": [
+        "Upload this document for the AI to scan.",
+        "Can the AI scan this file for key information?",
+        "Initiate a file scan for the attached report."
+      ],
+      "when_to_use": "When a user wants the AI to process or analyze the content of a file."
+    },
+    {
+      "name": "ProcessDataRelatedSummaryDetails",
+      "url": "/api/process-data",
+      "method": "POST",
+      "description": "Processes specific data to generate summaries or extract related details using the AI.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing data to be processed for summary generation."
+        }
+      },
+      "example_uses": [
+        "Process this dataset to get a summary of key trends.",
+        "Generate detailed insights from the provided financial data.",
+        "Use the AI to summarize the meeting notes."
+      ],
+      "when_to_use": "When a user has structured or unstructured data that needs AI-driven summarization or detailed extraction."
+    },
+    {
+      "name": "UpdateAiAssistantAccessibility",
+      "url": "/api/ai-assistant/accessibility",
+      "method": "POST",
+      "description": "Updates the accessibility settings or preferences for the AI assistant.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing accessibility settings to update."
+        }
+      },
+      "example_uses": [
+        "Change the AI assistant's response verbosity.",
+        "Update my accessibility preferences for Gemini.",
+        "Configure the AI to use a different output format."
+      ],
+      "when_to_use": "When a user wants to modify how the AI assistant interacts with them, such as visual or auditory settings, or response styles."
+    },
+    {
+      "name": "UpdateSessionStar",
+      "url": "/api/ai-assistant/update-star",
+      "method": "POST",
+      "description": "Marks or unmarks an AI assistant chat session as 'starred' for easy retrieval or prioritization.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing session ID and star status."
+        }
+      },
+      "example_uses": [
+        "Star this important AI chat session.",
+        "Mark session 456 as a favorite.",
+        "Unstar the session about the old project."
+      ],
+      "when_to_use": "When a user wants to highlight or unhighlight a specific AI assistant session for future reference."
+    },
+    {
+      "name": "UpdateSessionArchive",
+      "url": "/api/ai-assistant/update-archive",
+      "method": "POST",
+      "description": "Archives or unarchives an AI assistant chat session, moving it to or from an archived state.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing session ID and archive status."
+        }
+      },
+      "example_uses": [
+        "Archive this completed AI chat session.",
+        "Move session 789 to the archives.",
+        "Restore the archived session about the Q1 report."
+      ],
+      "when_to_use": "When a user wants to manage the visibility or retention of AI assistant sessions by archiving them."
+    },
+    {
+      "name": "UpdateSessionTitle",
+      "url": "/api/ai-assistant/update-title",
+      "method": "POST",
+      "description": "Updates the custom title of an AI assistant chat session.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing session ID and new title."
+        }
+      },
+      "example_uses": [
+        "Rename this AI chat session to 'Project X Discussion'.",
+        "Change the title of session 101 to 'Budget Planning'.",
+        "Update the session title for my conversation about marketing strategies."
+      ],
+      "when_to_use": "When a user wants to give a more descriptive or custom title to an AI assistant session."
+    },
+    {
+      "name": "GenerateAndStoreEmbeddings",
+      "url": "/api/generate-embeddings",
+      "method": "GET",
+      "description": "Triggers the generation and storage of vector embeddings for a specified entity, used for semantic search.",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": "The name of the entity for which to generate embeddings (e.g., 'Documents', 'Products')."
+        }
+      },
+      "example_uses": [
+        "Generate embeddings for all product data.",
+        "Create vector representations for the new policy documents.",
+        "Update the embeddings for the 'Partners' entity."
+      ],
+      "when_to_use": "When new data is added or existing data is updated for an entity, and its semantic representations (embeddings) need to be generated or refreshed for search capabilities."
+    },
+    {
+      "name": "BulkUpload",
+      "url": "/api/import/bulk-upload",
+      "method": "POST",
+      "description": "Facilitates the bulk upload of data or files into the system for processing.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing the bulk upload data or file references."
+        }
+      },
+      "example_uses": [
+        "Perform a bulk upload of all new customer records.",
+        "Import multiple documents at once using the bulk upload feature.",
+        "Upload a large dataset for analysis."
+      ],
+      "when_to_use": "When a user needs to import a large volume of data or multiple files into the system efficiently."
+    },
+    {
+      "name": "AnalyseFile",
+      "url": "/api/import/analyse-file",
+      "method": "POST",
+      "description": "Analyzes an uploaded file to extract metadata, content, or prepare it for further processing.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Request body containing file details for analysis."
+        }
+      },
+      "example_uses": [
+        "Analyze the structure and content of the uploaded PDF.",
+        "Perform a preliminary analysis on the new spreadsheet.",
+        "Check the attached document for compliance issues."
+      ],
+      "when_to_use": "When a user has uploaded a file and needs to perform an initial analysis or validation on its content."
+    },
+    {
+      "name": "GetSimilarityResultAsync",
+      "url": "get-similarity-result",
+      "method": "GET",
+      "description": "Performs a semantic or similarity search across entities, optionally filtered by Role-Based Access Control (RBAC).",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": "Name of the entity to search (e.g., 'Partners', 'Contacts')."
+        },
+        "searchText": {
+          "type": "string",
+          "required": false,
+          "description": "Text to search for."
+        },
+        "vectorEmbedding": {
+          "type": "string",
+          "required": false,
+          "description": "Optional vector embedding for semantic search."
+        },
+        "similarityThreshold": {
+          "type": "float",
+          "required": false,
+          "description": "Threshold for similarity search (default: 0.3)."
+        },
+        "embeddingThreshold": {
+          "type": "float",
+          "required": false,
+          "description": "Threshold for embedding search (default: 0.7)."
+        },
+        "whereCondition": {
+          "type": "string",
+          "required": false,
+          "description": "Optional additional WHERE condition."
+        }
+      },
+      "example_uses": [
+        "Find documents similar to 'project proposal' in the 'Documents' entity.",
+        "Search for contacts related to 'sustainable development' using semantic search.",
+        "Retrieve partners that are similar to 'UNICEF' with a high similarity score."
+      ],
+      "when_to_use": "When a user needs to perform an intelligent search based on semantic meaning or similarity, rather than exact keyword matching, across various data entities."
+    },
+    {
+      "name": "GenerateTitle",
+      "url": "/api/ai-assistant/generate-title",
+      "method": "GET",
+      "description": "Generates a descriptive title for an AI assistant chat session based on its content.",
+      "parameters": {
+        "sessionId": {
+          "type": "string",
+          "required": false,
+          "description": "The ID of the session for which to generate a title."
+        }
+      },
+      "example_uses": [
+        "Generate a title for my latest AI chat session.",
+        "Can the AI suggest a title for session 222?",
+        "Create a summary title for the conversation about the new initiative."
+      ],
+      "when_to_use": "When a user wants the AI to automatically create a concise and relevant title for a chat session, typically after the session has concluded or reached a certain length."
+    }
+  ]
+}

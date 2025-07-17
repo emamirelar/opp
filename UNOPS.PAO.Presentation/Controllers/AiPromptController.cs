@@ -28,8 +28,28 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Gets all AI prompts with pagination and search
+    /// Retrieves all AI prompts with advanced filtering, pagination, search capabilities, and access control for prompt management.
     /// </summary>
+    /// <param name="request">AI prompt filter request containing search and pagination parameters</param>
+    /// <param name="request.pageIndex">Page number (1-based)</param>
+    /// <param name="request.pageSize">Number of items per page</param>
+    /// <param name="request.searchText">Text to search across prompt fields</param>
+    /// <param name="request.orderBy">Field to order results by</param>
+    /// <param name="request.ascending">Sort direction (true for ascending)</param>
+    /// <param name="request.type">Filter by prompt type</param>
+    /// <param name="request.model">Filter by AI model</param>
+    /// <param name="request.project">Filter by project</param>
+    /// <param name="request.location">Filter by location</param>
+    /// <example_uses>
+    /// Show me all AI prompts
+    /// List prompts for GPT-4 model
+    /// Find prompts containing 'email' in the name
+    /// Get prompts for specific project
+    /// Show active prompts with pagination
+    /// Search for customer service prompts
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to search, list, filter, or browse AI prompts and prompt templates.</when_to_use>
+    /// <returns>Paginated list of AI prompts with metadata</returns>
     [HttpPost(APIDictionary.AiPromptsList)]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetPromptsAsync([FromBody] AiPromptFilterRequest request)
@@ -40,8 +60,18 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Gets a specific AI prompt by ID
+    /// Retrieves a specific AI prompt by ID with complete details including prompt content, parameters, and configuration.
     /// </summary>
+    /// <param name="id">AI prompt ID</param>
+    /// <example_uses>
+    /// Show me details for AI prompt ID 123
+    /// Get full information about prompt 456
+    /// Display prompt record 789
+    /// Get complete prompt configuration
+    /// Show prompt with all parameters and content
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks for specific AI prompt details by ID or when you need complete prompt information for editing or testing.</when_to_use>
+    /// <returns>Complete AI prompt details with content and configuration</returns>
     [HttpGet(APIDictionary.AiPrompts + "/{id}")]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetPromptByIdAsync(int id)
@@ -56,8 +86,27 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Creates a new AI prompt
+    /// Creates a new AI prompt with complete configuration including content, parameters, model settings, and metadata.
     /// </summary>
+    /// <param name="model">AI prompt creation request with all configuration details</param>
+    /// <param name="model.name">Prompt name (required)</param>
+    /// <param name="model.type">Prompt type/category (required)</param>
+    /// <param name="model.content">Prompt content/template (required)</param>
+    /// <param name="model.description">Description of prompt purpose</param>
+    /// <param name="model.model">AI model to use (GPT-4, GPT-3.5, etc.)</param>
+    /// <param name="model.project">Associated project</param>
+    /// <param name="model.location">Location/region</param>
+    /// <param name="model.temperature">Model temperature setting</param>
+    /// <param name="model.maxTokens">Maximum tokens for response</param>
+    /// <example_uses>
+    /// Create a new email generation prompt
+    /// Add a customer service response template
+    /// Set up a new data analysis prompt
+    /// Create prompt for document summarization
+    /// Add meeting notes generation template
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to create, add, or set up a new AI prompt template.</when_to_use>
+    /// <returns>Created AI prompt with ID and metadata</returns>
     [HttpPost(APIDictionary.AiPrompts)]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> CreatePromptAsync([FromBody] AiPromptModel model)
@@ -73,8 +122,26 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Updates an existing AI prompt
+    /// Updates an existing AI prompt's configuration including content, parameters, model settings, and metadata.
     /// </summary>
+    /// <param name="id">AI prompt ID to update (required)</param>
+    /// <param name="model">Updated AI prompt data</param>
+    /// <param name="model.name">Updated prompt name</param>
+    /// <param name="model.type">Updated prompt type</param>
+    /// <param name="model.content">Updated prompt content/template</param>
+    /// <param name="model.description">Updated description</param>
+    /// <param name="model.model">Updated AI model selection</param>
+    /// <param name="model.temperature">Updated temperature setting</param>
+    /// <param name="model.maxTokens">Updated token limit</param>
+    /// <example_uses>
+    /// Update prompt 123's content with new template
+    /// Change prompt 456's model from GPT-3.5 to GPT-4
+    /// Modify prompt temperature settings
+    /// Update prompt description and metadata
+    /// Change prompt type classification
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to update, modify, edit, or change AI prompt configuration or content.</when_to_use>
+    /// <returns>Updated AI prompt data</returns>
     [HttpPut(APIDictionary.AiPrompts + "/{id}")]
     [AccessControlled(EntityTypes.AiPromptManagement, "update")]
     public async Task<ActionResult> UpdatePromptAsync(int id, [FromBody] AiPromptModel model)
@@ -94,8 +161,18 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Deletes an AI prompt
+    /// Soft deletes an AI prompt from the system (marks as deleted rather than permanent removal).
     /// </summary>
+    /// <param name="id">AI prompt ID to delete</param>
+    /// <example_uses>
+    /// Delete AI prompt ID 123
+    /// Remove prompt 456 from the system
+    /// Deactivate email template prompt
+    /// Delete outdated prompt template
+    /// Remove unused AI prompt
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to delete, remove, or eliminate an AI prompt.</when_to_use>
+    /// <returns>No content on successful deletion</returns>
     [HttpDelete(APIDictionary.AiPrompts + "/{id}")]
     [AccessControlled(EntityTypes.AiPromptManagement, "delete")]
     public async Task<ActionResult> DeletePromptAsync(int id)
@@ -110,8 +187,19 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Gets prompts by type
+    /// Retrieves all AI prompts filtered by specific prompt type with access control.
     /// </summary>
+    /// <param name="type">Prompt type to filter by (e.g., 'email', 'summary', 'analysis', 'translation')</param>
+    /// <example_uses>
+    /// Show all email generation prompts
+    /// List prompts for document summarization
+    /// Get data analysis prompt templates
+    /// Find translation prompts
+    /// Show customer service prompts
+    /// Get meeting notes prompts
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to filter prompts by specific type, category, or functional purpose.</when_to_use>
+    /// <returns>List of AI prompts matching the specified type</returns>
     [HttpGet(APIDictionary.AiPromptsByType + "/{type}")]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetPromptsByTypeAsync(string type)
@@ -122,8 +210,17 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Gets unique prompt types for dropdown/filter
+    /// Retrieves all unique prompt types available in the system for dropdown menus and filtering operations.
     /// </summary>
+    /// <example_uses>
+    /// Get prompt types for dropdown menu
+    /// What types of prompts are available?
+    /// Show all prompt categories
+    /// Get filter options for prompt types
+    /// List available prompt classifications
+    /// </example_uses>
+    /// <when_to_use>Use this when the user needs to see available prompt types for filtering or when building UI dropdown menus.</when_to_use>
+    /// <returns>List of unique prompt types for filtering and selection</returns>
     [HttpGet(APIDictionary.AiPromptsTypes)]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetPromptTypesAsync()
@@ -134,8 +231,17 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Gets unique models for dropdown/filter
+    /// Retrieves all unique AI models available in the system for dropdown menus and filtering operations.
     /// </summary>
+    /// <example_uses>
+    /// Get AI models for dropdown menu
+    /// What AI models are available?
+    /// Show all supported models
+    /// Get filter options for AI models
+    /// List GPT and other model options
+    /// </example_uses>
+    /// <when_to_use>Use this when the user needs to see available AI models for filtering or when configuring prompt model settings.</when_to_use>
+    /// <returns>List of unique AI models for filtering and selection</returns>
     [HttpGet(APIDictionary.AiPromptsModels)]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetModelsAsync()
@@ -146,8 +252,17 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Gets unique projects for dropdown/filter
+    /// Retrieves all unique projects associated with AI prompts for dropdown menus and filtering operations.
     /// </summary>
+    /// <example_uses>
+    /// Get projects for dropdown menu
+    /// What projects have AI prompts?
+    /// Show all project assignments
+    /// Get filter options for projects
+    /// List projects using AI prompts
+    /// </example_uses>
+    /// <when_to_use>Use this when the user needs to see available projects for filtering prompts or when assigning prompts to projects.</when_to_use>
+    /// <returns>List of unique projects for filtering and selection</returns>
     [HttpGet(APIDictionary.AiPromptsProjects)]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetProjectsAsync()
@@ -158,8 +273,17 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Gets unique locations for dropdown/filter
+    /// Retrieves all unique locations/regions associated with AI prompts for dropdown menus and filtering operations.
     /// </summary>
+    /// <example_uses>
+    /// Get locations for dropdown menu
+    /// What locations have AI prompts?
+    /// Show all regional assignments
+    /// Get filter options for locations
+    /// List regions using AI prompts
+    /// </example_uses>
+    /// <when_to_use>Use this when the user needs to see available locations for filtering prompts or when assigning prompts to regions.</when_to_use>
+    /// <returns>List of unique locations for filtering and selection</returns>
     [HttpGet(APIDictionary.AiPromptsLocations)]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> GetLocationsAsync()
@@ -170,8 +294,21 @@ public class AiPromptController : BaseController
     }
 
     /// <summary>
-    /// Tests an AI prompt with provided test data
+    /// Tests an AI prompt with provided test data to validate prompt effectiveness and output quality before deployment.
     /// </summary>
+    /// <param name="request">Test request containing prompt data and test parameters</param>
+    /// <param name="request.promptId">ID of prompt to test</param>
+    /// <param name="request.testData">Test input data for prompt validation</param>
+    /// <param name="request.parameters">Additional parameters for testing</param>
+    /// <example_uses>
+    /// Test email prompt with sample data
+    /// Validate prompt 123 with test input
+    /// Check prompt performance before deployment
+    /// Test prompt output quality
+    /// Verify prompt generates expected results
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to test, validate, or preview AI prompt output before using it in production.</when_to_use>
+    /// <returns>Test results including prompt output and performance metrics</returns>
     [HttpPost(APIDictionary.AiPromptsTest)]
     [AccessControlled(EntityTypes.AiPromptManagement, "read")]
     public async Task<ActionResult> TestPromptAsync([FromBody] TestPromptRequest request)

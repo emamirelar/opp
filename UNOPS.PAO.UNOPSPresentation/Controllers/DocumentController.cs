@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -33,10 +34,11 @@ public class DocumentController : BaseController
         IManagerWrapper managerWrapper, 
         IAuthorizationService authorizationService,
         ILogger<DocumentController> logger,
-        UserResolverService<int> userResolverService)
+        UserResolverService<int> userResolverService,
+        IServiceProvider serviceProvider)
         : base(logger, authorizationService, userResolverService)
     {
-        _manager = new UNOPSDocumentManager(driveManager, configuration, mapper, context, userManager);
+        _manager = new UNOPSDocumentManager(driveManager, configuration, mapper, context, userManager, serviceProvider);
         _managerWrapper = managerWrapper;
     }
 

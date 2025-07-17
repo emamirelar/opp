@@ -1,0 +1,100 @@
+{
+  "entity": "Link",
+  "description": "Manages associations or references between different entities or external resources within the system. This entity allows for linking various data points or external URLs to specific records.",
+  "synonyms": [
+    "Association",
+    "Reference",
+    "Connection",
+    "URL",
+    "Resource"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetLinks",
+      "url": "api/links",
+      "method": "GET",
+      "description": "Retrieves a list of links associated with a specific entity and entity ID, with optional pagination.",
+      "parameters": {
+        "entity": {
+          "type": "string",
+          "required": true,
+          "description": ""
+        },
+        "entityId": {
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        "parameters": {
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Get all links for a project with ID 123.",
+        "List links related to a user with ID 456, paginated.",
+        "Find all associated links for a specific document."
+      ],
+      "when_to_use": "When you need to retrieve a collection of links filtered by a parent entity and its ID, with support for pagination."
+    },
+    {
+      "name": "Create",
+      "url": "api/links",
+      "method": "POST",
+      "description": "Creates a new link entry in the system.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Create a new link for a project.",
+        "Add a new external resource link to a task.",
+        "Register a new internal document link."
+      ],
+      "when_to_use": "When you need to add a brand new link record to the system."
+    },
+    {
+      "name": "Update",
+      "url": "api/links",
+      "method": "PUT",
+      "description": "Updates an existing link's details.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Modify the URL of an existing link.",
+        "Change the description of a previously created link.",
+        "Update the associated entity for a link."
+      ],
+      "when_to_use": "When you need to modify the properties of an already existing link."
+    },
+    {
+      "name": "Delete",
+      "url": "api/links",
+      "method": "DELETE",
+      "description": "Deletes a link by its unique identifier.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Remove a broken link from the system.",
+        "Delete a link that is no longer relevant.",
+        "Permanently remove a specific link record."
+      ],
+      "when_to_use": "When you need to permanently remove a link from the system using its ID."
+    }
+  ]
+}

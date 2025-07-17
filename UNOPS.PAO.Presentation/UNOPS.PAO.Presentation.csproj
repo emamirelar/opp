@@ -4,6 +4,11 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    
+    <!-- Enable XML Documentation Generation for Tools.json Automation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn> <!-- Suppress missing XML comment warnings -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,5 +44,64 @@
     <ProjectReference Include="..\UNOPS.PAO.Models\UNOPS.PAO.Models.csproj" />
     <ProjectReference Include="..\UNOPS.PAO.UNOPSBusiness\UNOPS.PAO.UNOPSBusiness.csproj" />
   </ItemGroup>
+
+  <!-- 🚀 AUTOMATED API METADATA GENERATION -->
+  <Target Name="GenerateApiMetadata" AfterTargets="Build;Publish">
+    <Message Text="🔍 Generating API metadata for AI agent..." Importance="high" />
+    
+    <!-- Configuration Properties (can be overridden) -->
+    <PropertyGroup>
+      <GoogleCloudProject Condition="'$(GoogleCloudProject)' == ''">$(GOOGLE_CLOUD_PROJECT)</GoogleCloudProject>
+      <GoogleCloudLocation Condition="'$(GoogleCloudLocation)' == ''">$(GOOGLE_CLOUD_LOCATION)</GoogleCloudLocation>
+      <GoogleCloudLocation Condition="'$(GoogleCloudLocation)' == ''">us-central1</GoogleCloudLocation>
+      <PAOEnvironment Condition="'$(PAOEnvironment)' == ''">$(PAO_ENVIRONMENT)</PAOEnvironment>
+      <PAOEnvironment Condition="'$(PAOEnvironment)' == ''">dev</PAOEnvironment>
+    </PropertyGroup>
+    
+    <!-- Build the ReflectionExtractor tool first -->
+    <MSBuild Projects="$(MSBuildProjectDirectory)\..\ToolsJsonGenerator\ReflectionExtractor\ReflectionExtractor.csproj" 
+             Targets="Build" 
+             Properties="Configuration=Release" />
+    
+    <!-- Step 1: Run the .NET reflection extraction -->
+    <Exec Command="dotnet run --project &quot;$(MSBuildProjectDirectory)\..\ToolsJsonGenerator\ReflectionExtractor&quot; -- --dll &quot;$(OutputPath)$(AssemblyName).dll&quot; --xml &quot;$(OutputPath)$(AssemblyName).xml&quot; --output &quot;$(MSBuildProjectDirectory)\..\UNOPS.PAO.AIService\api-metadata.json&quot;"
+          WorkingDirectory="$(MSBuildProjectDirectory)" />
+    
+    <Message Text="[SUCCESS] Step 1: API metadata extracted to UNOPS.PAO.AIService\api-metadata.json" Importance="high" />
+    
+    <!-- Step 2: Run Python LLM generation with automatic environment detection -->
+    <Message Text="[AI] Step 2: Generating tools.json with Vertex AI..." Importance="high" />
+    <Message Text="   Environment: $(PAOEnvironment)" Importance="normal" />
+    <Message Text="   Project: $(GoogleCloudProject)" Importance="normal" Condition="'$(GoogleCloudProject)' != ''" />
+    <Message Text="   Location: $(GoogleCloudLocation)" Importance="normal" />
+    
+    <!-- Build Python command with all parameters -->
+    <PropertyGroup>
+      <LLMTimeout Condition="'$(LLMTimeout)' == ''">120</LLMTimeout>
+      <SkipLLM Condition="'$(SkipLLM)' == ''">false</SkipLLM>
+      <PythonCommand>python &quot;$(MSBuildProjectDirectory)\..\ToolsJsonGenerator\llm_generator.py&quot; --input &quot;$(MSBuildProjectDirectory)\..\UNOPS.PAO.AIService\api-metadata.json&quot; --output &quot;$(MSBuildProjectDirectory)\..\UNOPS.PAO.AIService\config\backend_tools.json&quot; --timeout $(LLMTimeout)</PythonCommand>
+      <PythonCommand Condition="'$(PAOEnvironment)' != ''">$(PythonCommand) --environment &quot;$(PAOEnvironment)&quot;</PythonCommand>
+      <PythonCommand Condition="'$(GoogleCloudProject)' != ''">$(PythonCommand) --project &quot;$(GoogleCloudProject)&quot;</PythonCommand>
+      <PythonCommand Condition="'$(GoogleCloudLocation)' != ''">$(PythonCommand) --location &quot;$(GoogleCloudLocation)&quot;</PythonCommand>
+      <PythonCommand Condition="'$(SkipLLM)' == 'true'">$(PythonCommand) --skip-llm</PythonCommand>
+    </PropertyGroup>
+    
+    <Message Text="   [RUN] Running: $(PythonCommand)" Importance="normal" />
+    
+    <Exec Command="$(PythonCommand)"
+          WorkingDirectory="$(MSBuildProjectDirectory)" 
+          ContinueOnError="true" 
+          IgnoreExitCode="true" />
+    
+    <Message Text="" Importance="high" />
+    <Message Text="[INFO] If Step 2 failed, here are some solutions:" Importance="high" />
+    <Message Text="   [TIP] Test environment config: python ToolsJsonGenerator\test_environment.py" Importance="high" />
+    <Message Text="   [TIP] Set environment: -p:PAOEnvironment=dev (or staging, production)" Importance="high" />
+    <Message Text="   [TIP] Manual override: -p:GoogleCloudProject=your-project -p:GoogleCloudLocation=us-central1" Importance="high" />
+    <Message Text="   [TIP] Auth setup: gcloud auth application-default login" Importance="high" />
+    <Message Text="   [TIP] For faster builds: -p:SkipLLM=true (uses basic template)" Importance="high" />
+    <Message Text="   [TIP] Adjust timeout: -p:LLMTimeout=600 (default: 120 seconds)" Importance="high" />
+    <Message Text="" Importance="high" />
+  </Target>
 
 </Project>

@@ -1,0 +1,46 @@
+{
+  "entity": "Profile",
+  "description": "Manages user profile information, including personal details and account settings.",
+  "synonyms": [
+    "user profile",
+    "personal details",
+    "account info",
+    "user settings",
+    "identity"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "Get",
+      "url": "/api/external/profile",
+      "method": "GET",
+      "description": "Retrieves the current user's complete profile information.",
+      "parameters": {},
+      "example_uses": [
+        "How can I view my personal profile details?",
+        "Show me my current account information.",
+        "I need to see my user settings."
+      ],
+      "when_to_use": "Use this endpoint when a user wants to view their own profile details, such as name, contact information, or other personal settings."
+    },
+    {
+      "name": "UpdateProfile",
+      "url": "/api/external/profile",
+      "method": "POST",
+      "description": "Updates the current user's profile information with the provided data.",
+      "parameters": {
+        "profile": {
+          "type": "object",
+          "required": false,
+          "description": "The profile data to update. This typically includes fields like name, email, phone number, etc."
+        }
+      },
+      "example_uses": [
+        "I want to change my email address in my profile.",
+        "Update my personal details, including my phone number.",
+        "Can I modify my user settings?"
+      ],
+      "when_to_use": "Use this endpoint when a user needs to modify or update any of their personal profile details, such as name, contact information, or preferences."
+    }
+  ]
+}

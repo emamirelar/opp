@@ -61,7 +61,7 @@ public class UserManagementController : BaseController
     /// <returns>User details</returns>
     [HttpGet(APIDictionary.UserManagementUsers + "/{userId}")]
     [AccessControlled(EntityTypes.UserManagement, "read")]
-    public async Task<ActionResult<UserManagementModel>> GetUser(int userId)
+    public async Task<ActionResult<UserManagementModel>> GetUser(string userId)
     {
         try
         {
@@ -92,7 +92,7 @@ public class UserManagementController : BaseController
     /// <returns>Updated user details</returns>
     [HttpPut(APIDictionary.UserManagementUsers + "/{userId}/roles")]
     [AccessControlled(EntityTypes.UserManagement, "update")]
-    public async Task<ActionResult<UserManagementModel>> UpdateUserRoles(int userId, [FromBody] UpdateUserRolesRequest request)
+    public async Task<ActionResult<UserManagementModel>> UpdateUserRoles(string userId, [FromBody] UpdateUserRolesRequest request)
     {
         try
         {
