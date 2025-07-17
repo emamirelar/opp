@@ -37,11 +37,6 @@ public class UserProfile : ModifiableDeletableEntity
                 return string.Empty;
             }
         }
-        set
-        {
-            // Allow setting the computed property for EF mapping
-            base.Name = value;
-        }
     }
 
     /// <summary>

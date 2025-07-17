@@ -50,12 +50,88 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
         // Then create related entities after the users are saved
         if (addedPaoUsers.Any())
         {
-            CreateRelatedEntitiesAsync(addedPaoUsers).ConfigureAwait(false).GetAwaiter().GetResult();
+            CreateRelatedEntities(addedPaoUsers);
         }
         
         return result;
     }
 
+    private void CreateRelatedEntities(List<PAOIdentityUser> savedUsers)
+    {
+        // Get AppDbContext to create related entities
+        using var scope = _serviceProvider.CreateScope();
+        var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        foreach (var paoUser in savedUsers)
+        {
+            // Check if UserProfile already exists
+            var existingProfile = appDbContext.Set<UserProfile>()
+                .FirstOrDefault(up => up.UserId == paoUser.Id);
+
+            if (existingProfile == null)
+            {
+                // Create UserProfile automatically with default values
+                var userProfile = new UserProfile
+                {
+                    UserId = paoUser.Id,
+                    FirstName = paoUser.Email.Split('@')[0], // Extract name from email
+                    LastName = "",
+                    // Name property is computed from FirstName and LastName, no need to set it
+                    Status = EntityStatus.Active,
+                    CreatedBy = paoUser.Id,
+                    CreatedDate = DateTime.UtcNow,
+                    LastModifiedBy = paoUser.Id,
+                    IsDeleted = false,
+                    DeletedBy = 0
+                };
+
+                appDbContext.Set<UserProfile>().Add(userProfile);
+            }
+
+            // Check if UserPreference already exists
+            var existingPreference = appDbContext.Set<UserPreference>()
+                .FirstOrDefault(up => up.UserId == paoUser.Id);
+
+            if (existingPreference == null)
+            {
+                // Get user's default org unit ID from UserInfo using email (proper way)
+                int? defaultOrgUnitId = null;
+                var userInfoForOrgUnit = appDbContext.Set<UserInfo>()
+                    .FirstOrDefault(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
+                
+                if (userInfoForOrgUnit?.OrgUnit != null)
+                {
+                    var orgUnit = appDbContext.Set<OrganizationHierarchy>()
+                        .FirstOrDefault(oh => oh.Code == userInfoForOrgUnit.OrgUnit && oh.Type == UNOPS.PAO.Domain.Enums.OrganizationUnitType.OrgUnit);
+                    defaultOrgUnitId = orgUnit?.Id;
+                }
+
+                // Create UserPreference automatically with default values
+                var userPreference = new UserPreference
+                {
+                    UserId = paoUser.Id,
+                    Name = $"UserPreferences_{paoUser.Id}",
+                    Status = EntityStatus.Active,
+                    CreatedBy = paoUser.Id,
+                    CreatedDate = DateTime.UtcNow,
+                    LastModifiedBy = paoUser.Id,
+                    IsDeleted = false,
+                    DeletedBy = 0,
+                    GlobalFilters = new GlobalFilters 
+                    { 
+                        OrgUnitId = defaultOrgUnitId  // Set to user's default org unit from UserInfo
+                    }
+                };
+
+                appDbContext.Set<UserPreference>().Add(userPreference);
+            }
+        }
+
+        // Save the related entities in AppDbContext (synchronously)
+        appDbContext.SaveChanges();
+    }
+
+    // Keep the async version for backwards compatibility and async contexts
     private async Task CreateRelatedEntitiesAsync(List<PAOIdentityUser> savedUsers)
     {
         // Get AppDbContext to create related entities
@@ -76,7 +152,7 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                     UserId = paoUser.Id,
                     FirstName = paoUser.Email.Split('@')[0], // Extract name from email
                     LastName = "",
-                    Name = paoUser.Email.Split('@')[0], // Set the Name field as well
+                    // Name property is computed from FirstName and LastName, no need to set it
                     Status = EntityStatus.Active,
                     CreatedBy = paoUser.Id,
                     CreatedDate = DateTime.UtcNow,

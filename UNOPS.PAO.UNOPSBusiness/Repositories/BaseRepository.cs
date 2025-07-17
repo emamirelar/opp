@@ -85,6 +85,37 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     }
 
     /// <summary>
+    /// Gets all descendant organization unit IDs for a given organization unit ID (Synchronous version)
+    /// </summary>
+    private List<int> GetDescendantOrgUnitIds(int orgUnitId)
+    {
+        var allOrgUnits = _dataDbContext.OrganizationHierarchies
+            .Where(x => !x.IsDeleted && x.Status == EntityStatus.Active)
+            .ToList();
+
+        var descendantIds = new List<int> { orgUnitId };
+        var queue = new Queue<int>();
+        queue.Enqueue(orgUnitId);
+
+        while (queue.Count > 0)
+        {
+            var currentId = queue.Dequeue();
+            var children = allOrgUnits.Where(x => x.ParentId == currentId).ToList();
+            
+            foreach (var child in children)
+            {
+                if (!descendantIds.Contains(child.Id))
+                {
+                    descendantIds.Add(child.Id);
+                    queue.Enqueue(child.Id);
+                }
+            }
+        }
+
+        return descendantIds;
+    }
+
+    /// <summary>
     /// Gets the current user's ID from the HTTP context
     /// </summary>
     private string? GetCurrentUserId()
@@ -378,6 +409,278 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
         return queryable;
     }
 
+    /// <summary>
+    /// Applies global filters to a queryable based on user preferences (Synchronous version)
+    /// </summary>
+    protected IQueryable<TEntity> ApplyGlobalFilters(IQueryable<TEntity> queryable)
+    {
+        var currentUserId = GetCurrentUserId();
+        if (string.IsNullOrEmpty(currentUserId))
+            return queryable;
+
+        // Check if service provider is available before attempting to resolve services
+        if (_serviceProvider == null)
+            return queryable;
+
+        var userPreferenceService = _serviceProvider.GetService<IUserPreferenceService>();
+        if (userPreferenceService == null)
+            return queryable;
+
+        // Get global filters synchronously by querying database directly
+        GlobalFilters? globalFilters = null;
+        if (int.TryParse(currentUserId, out int userIdInt))
+        {
+            var userPreferences = _dataDbContext.UserPreferences
+                .FirstOrDefault(up => up.UserId == userIdInt);
+            globalFilters = userPreferences?.GlobalFilters;
+        }
+        
+        if (globalFilters == null)
+            return queryable;
+
+        var entityType = typeof(TEntity);
+
+        // Apply organization unit filter
+        if (globalFilters.OrgUnitId.HasValue)
+        {
+            var orgUnitIds = GetDescendantOrgUnitIds(globalFilters.OrgUnitId.Value);
+            
+            if (entityType == typeof(Partner))
+            {
+                var partnerQuery = queryable as IQueryable<Partner>;
+                queryable = partnerQuery.Where(p => p.PartnerOfficeId.HasValue && orgUnitIds.Contains(p.PartnerOfficeId.Value)) as IQueryable<TEntity>;
+            }
+            else if (entityType == typeof(Contact))
+            {
+                var contactQuery = queryable as IQueryable<Contact>;
+                queryable = contactQuery.Where(c => c.Partner != null && c.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(c.Partner.PartnerOfficeId.Value)) as IQueryable<TEntity>;
+            }
+            else if (entityType == typeof(Interaction))
+            {
+                var interactionQuery = queryable as IQueryable<Interaction>;
+                queryable = interactionQuery.Where(i => 
+                    (i.OrgUnitId.HasValue && orgUnitIds.Contains(i.OrgUnitId.Value)) ||
+                    (i.InteractionContacts != null && i.InteractionContacts.Any(ic => ic.Contact != null && ic.Contact.Partner != null && ic.Contact.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(ic.Contact.Partner.PartnerOfficeId.Value))) ||
+                    (i.InteractionPartners != null && i.InteractionPartners.Any(ip => ip.Partner != null && ip.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(ip.Partner.PartnerOfficeId.Value)))
+                ) as IQueryable<TEntity>;
+            }
+            else
+            {
+                // For other entities, try to find OrgUnitId property using reflection
+                var orgUnitIdProperty = entityType.GetProperty("OrgUnitId");
+                if (orgUnitIdProperty != null && orgUnitIdProperty.PropertyType == typeof(int?))
+                {
+                    var parameter = Expression.Parameter(entityType, "x");
+                    var property = Expression.Property(parameter, orgUnitIdProperty);
+                    var hasValue = Expression.Property(property, "HasValue");
+                    var value = Expression.Property(property, "Value");
+                    
+                    var orgUnitIdsConstant = Expression.Constant(orgUnitIds);
+                    var containsMethod = typeof(List<int>).GetMethod("Contains", new[] { typeof(int) });
+                    var containsCall = Expression.Call(orgUnitIdsConstant, containsMethod, value);
+                    
+                    var condition = Expression.AndAlso(hasValue, containsCall);
+                    var lambda = Expression.Lambda<Func<TEntity, bool>>(condition, parameter);
+                    
+                    queryable = queryable.Where(lambda);
+                }
+            }
+        }
+
+        // Apply user-based filters
+        var currentUserIdAsInt = GetCurrentUserIdAsInt();
+        if (currentUserIdAsInt.HasValue && globalFilters.RelatedToMe)
+        {
+            // RelatedToMe filter: check both CreatedBy AND LastUpdatedBy
+            var createdByProperty = entityType.GetProperty("CreatedBy");
+            var lastUpdatedByProperty = entityType.GetProperty("LastUpdatedBy");
+            
+            Expression? combinedUserExpression = null;
+            var parameter = Expression.Parameter(entityType, "x");
+            
+            // Check CreatedBy
+            if (createdByProperty != null && (createdByProperty.PropertyType == typeof(int) || createdByProperty.PropertyType == typeof(int?)))
+            {
+                var createdByPropertyAccess = Expression.Property(parameter, createdByProperty);
+                var createdByConstant = Expression.Constant(currentUserIdAsInt.Value, createdByProperty.PropertyType);
+                var createdByEquals = Expression.Equal(createdByPropertyAccess, createdByConstant);
+                combinedUserExpression = createdByEquals;
+            }
+            
+            // Check LastUpdatedBy
+            if (lastUpdatedByProperty != null && (lastUpdatedByProperty.PropertyType == typeof(int) || lastUpdatedByProperty.PropertyType == typeof(int?)))
+            {
+                var lastUpdatedByPropertyAccess = Expression.Property(parameter, lastUpdatedByProperty);
+                var lastUpdatedByConstant = Expression.Constant(currentUserIdAsInt.Value, lastUpdatedByProperty.PropertyType);
+                var lastUpdatedByEquals = Expression.Equal(lastUpdatedByPropertyAccess, lastUpdatedByConstant);
+                
+                if (combinedUserExpression != null)
+                {
+                    // Combine with OR: (CreatedBy == userId) OR (LastUpdatedBy == userId)
+                    combinedUserExpression = Expression.OrElse(combinedUserExpression, lastUpdatedByEquals);
+                }
+                else
+                {
+                    combinedUserExpression = lastUpdatedByEquals;
+                }
+            }
+            
+            // Apply the combined user filter
+            if (combinedUserExpression != null)
+            {
+                var userLambda = Expression.Lambda<Func<TEntity, bool>>(combinedUserExpression, parameter);
+                queryable = queryable.Where(userLambda);
+            }
+        }
+
+        // Apply date filters (applies to both CreatedDate AND LastUpdatedDate)
+        // Single date mode - prioritize single date over range
+        if (globalFilters.DateOn.HasValue)
+        {
+            // Single date mode - filter for this specific date on both CreatedDate and LastUpdatedDate
+            var startOfDay = globalFilters.DateOn.Value.Date;
+            var endOfDay = startOfDay.AddDays(1);
+            
+            var parameter = Expression.Parameter(entityType, "x");
+            Expression? combinedDateExpression = null;
+            
+            // Check CreatedDate
+            var createdDateProperty = entityType.GetProperty("CreatedDate");
+            if (createdDateProperty != null && createdDateProperty.PropertyType == typeof(DateTime))
+            {
+                var createdDatePropertyAccess = Expression.Property(parameter, createdDateProperty);
+                var startConstant = Expression.Constant(startOfDay);
+                var endConstant = Expression.Constant(endOfDay);
+                
+                var createdGreaterThanOrEqual = Expression.GreaterThanOrEqual(createdDatePropertyAccess, startConstant);
+                var createdLessThan = Expression.LessThan(createdDatePropertyAccess, endConstant);
+                var createdDateCondition = Expression.AndAlso(createdGreaterThanOrEqual, createdLessThan);
+                
+                combinedDateExpression = createdDateCondition;
+            }
+            
+            // Check LastUpdatedDate
+            var lastUpdatedDateProperty = entityType.GetProperty("LastUpdatedDate");
+            if (lastUpdatedDateProperty != null && lastUpdatedDateProperty.PropertyType == typeof(DateTime?))
+            {
+                var lastUpdatedDatePropertyAccess = Expression.Property(parameter, lastUpdatedDateProperty);
+                var startConstant = Expression.Constant(startOfDay, typeof(DateTime?));
+                var endConstant = Expression.Constant(endOfDay, typeof(DateTime?));
+                
+                var lastUpdatedGreaterThanOrEqual = Expression.GreaterThanOrEqual(lastUpdatedDatePropertyAccess, startConstant);
+                var lastUpdatedLessThan = Expression.LessThan(lastUpdatedDatePropertyAccess, endConstant);
+                var lastUpdatedDateCondition = Expression.AndAlso(lastUpdatedGreaterThanOrEqual, lastUpdatedLessThan);
+                
+                if (combinedDateExpression != null)
+                {
+                    // Combine with OR: (CreatedDate in range) OR (LastUpdatedDate in range)
+                    combinedDateExpression = Expression.OrElse(combinedDateExpression, lastUpdatedDateCondition);
+                }
+                else
+                {
+                    combinedDateExpression = lastUpdatedDateCondition;
+                }
+            }
+            
+            // Apply the combined date filter
+            if (combinedDateExpression != null)
+            {
+                var dateLambda = Expression.Lambda<Func<TEntity, bool>>(combinedDateExpression, parameter);
+                queryable = queryable.Where(dateLambda);
+            }
+        }
+        else
+        {
+            // Range mode - use DateFrom and DateTo if available (applies to both CreatedDate and LastUpdatedDate)
+            var parameter = Expression.Parameter(entityType, "x");
+            Expression? combinedRangeExpression = null;
+            
+            if (globalFilters.DateFrom.HasValue || globalFilters.DateTo.HasValue)
+            {
+                // Check CreatedDate
+                var createdDateProperty = entityType.GetProperty("CreatedDate");
+                if (createdDateProperty != null && createdDateProperty.PropertyType == typeof(DateTime))
+                {
+                    var createdDatePropertyAccess = Expression.Property(parameter, createdDateProperty);
+                    Expression? createdDateRangeExpression = null;
+                    
+                    if (globalFilters.DateFrom.HasValue)
+                    {
+                        var fromConstant = Expression.Constant(globalFilters.DateFrom.Value);
+                        var createdFromCondition = Expression.GreaterThanOrEqual(createdDatePropertyAccess, fromConstant);
+                        createdDateRangeExpression = createdFromCondition;
+                    }
+                    
+                    if (globalFilters.DateTo.HasValue)
+                    {
+                        var toConstant = Expression.Constant(globalFilters.DateTo.Value.AddDays(1)); // Include the entire day
+                        var createdToCondition = Expression.LessThan(createdDatePropertyAccess, toConstant);
+                        
+                        if (createdDateRangeExpression != null)
+                        {
+                            createdDateRangeExpression = Expression.AndAlso(createdDateRangeExpression, createdToCondition);
+                        }
+                        else
+                        {
+                            createdDateRangeExpression = createdToCondition;
+                        }
+                    }
+                    
+                    combinedRangeExpression = createdDateRangeExpression;
+                }
+                
+                // Check LastUpdatedDate
+                var lastUpdatedDateProperty = entityType.GetProperty("LastUpdatedDate");
+                if (lastUpdatedDateProperty != null && lastUpdatedDateProperty.PropertyType == typeof(DateTime?))
+                {
+                    var lastUpdatedDatePropertyAccess = Expression.Property(parameter, lastUpdatedDateProperty);
+                    Expression? lastUpdatedDateRangeExpression = null;
+                    
+                    if (globalFilters.DateFrom.HasValue)
+                    {
+                        var fromConstant = Expression.Constant(globalFilters.DateFrom.Value, typeof(DateTime?));
+                        var lastUpdatedFromCondition = Expression.GreaterThanOrEqual(lastUpdatedDatePropertyAccess, fromConstant);
+                        lastUpdatedDateRangeExpression = lastUpdatedFromCondition;
+                    }
+                    
+                    if (globalFilters.DateTo.HasValue)
+                    {
+                        var toConstant = Expression.Constant(globalFilters.DateTo.Value.AddDays(1), typeof(DateTime?)); // Include the entire day
+                        var lastUpdatedToCondition = Expression.LessThan(lastUpdatedDatePropertyAccess, toConstant);
+                        
+                        if (lastUpdatedDateRangeExpression != null)
+                        {
+                            lastUpdatedDateRangeExpression = Expression.AndAlso(lastUpdatedDateRangeExpression, lastUpdatedToCondition);
+                        }
+                        else
+                        {
+                            lastUpdatedDateRangeExpression = lastUpdatedToCondition;
+                        }
+                    }
+                    
+                    if (combinedRangeExpression != null && lastUpdatedDateRangeExpression != null)
+                    {
+                        // Combine with OR: (CreatedDate in range) OR (LastUpdatedDate in range)
+                        combinedRangeExpression = Expression.OrElse(combinedRangeExpression, lastUpdatedDateRangeExpression);
+                    }
+                    else if (lastUpdatedDateRangeExpression != null)
+                    {
+                        combinedRangeExpression = lastUpdatedDateRangeExpression;
+                    }
+                }
+                
+                // Apply the combined range filter
+                if (combinedRangeExpression != null)
+                {
+                    var rangeLambda = Expression.Lambda<Func<TEntity, bool>>(combinedRangeExpression, parameter);
+                    queryable = queryable.Where(rangeLambda);
+                }
+            }
+        }
+
+        return queryable;
+    }
+
     public async Task AddAsync(TEntity entity)
     {
         await _dbSet.AddAsync(entity);
@@ -398,7 +701,7 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     public IEnumerable<TEntity> GetAll(string[] includes)
     {
         var set = ApplyIncludes(_dbSet, includes);
-        var filteredSet = ApplyGlobalFiltersAsync(set).ConfigureAwait(false).GetAwaiter().GetResult();
+        var filteredSet = ApplyGlobalFilters(set);
         return filteredSet.AsEnumerable();
     }
 
