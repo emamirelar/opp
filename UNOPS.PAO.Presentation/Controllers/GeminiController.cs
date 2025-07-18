@@ -91,7 +91,7 @@ public class GeminiController : BaseController
     {
         return await HandleOperationAsync(async () => 
         {
-            return await _manager.ChatWithGemini(req, CurrentUserId, Request.Headers);
+            return await _manager.ChatWithGemini(req, User, Request.Headers);
         });
     }
 

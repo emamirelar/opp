@@ -19,7 +19,6 @@ using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
-using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
 
 public class UNOPSManagerWrapper : ManagerWrapper
@@ -59,9 +58,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, serviceProvider);
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor, serviceProvider);
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, httpClient, geminiManagerLogger);
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, httpClient, geminiManagerLogger, userManagementManager);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);
         entityConfigurationManager = new UNOPSEntityConfigurationManager(mapper, opsContext, configuration, permissionService);
     }

@@ -3,24 +3,22 @@
 Main FastAPI application for Opportunity+ AI Agent with ADK
 """
 
-import os
-import uvicorn
-import asyncio
 import logging
+import os
 import uuid
-from fastapi import FastAPI, HTTPException, Query, Request
 from contextlib import asynccontextmanager
-from google.adk.cli.fast_api import get_fast_api_app
-from google.adk.sessions import DatabaseSessionService
-from google.adk.runners import Runner
+from typing import Any, Dict, Union
+
+import uvicorn
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from google.adk.agents import RunConfig
 from google.adk.agents.run_config import StreamingMode
+from google.adk.cli.fast_api import get_fast_api_app
+from google.adk.runners import Runner
+from google.adk.sessions import DatabaseSessionService
 from google.genai import types
-from typing import Optional, Dict, Any, List
 from pydantic import BaseModel
-from fastapi.responses import StreamingResponse
-from sqlalchemy import update
-from sqlalchemy.orm import sessionmaker
 
 # Load environment variables from .env file
 try:
@@ -31,11 +29,10 @@ except ImportError:
     print("⚠️ python-dotenv not installed, .env file won't be loaded")
 
 # Framework imports
-from framework_config import get_config, validate_config, get_environment_info
-from ai_assistant.tools import create_google_drive_tool
-
 # Import our configuration manager
 from ai_assistant.config_manager import config_manager
+from ai_assistant.tools import create_google_drive_tool
+from framework_config import get_config, get_environment_info, validate_config
 
 # Configure logging
 logging.basicConfig(
@@ -73,9 +70,9 @@ async def update_session_state_in_database(session_service: DatabaseSessionServi
                 
                 # Commit the changes
                 db_session.commit()
-                logger.info(f"💾 Successfully updated session state in database")
+                logger.info("💾 Successfully updated session state in database")
             else:
-                logger.warning(f"⚠️ Session not found in database for update")
+                logger.warning("⚠️ Session not found in database for update")
                 
     except Exception as e:
         logger.error(f"❌ Error updating session state in database: {e}")
@@ -293,10 +290,11 @@ class ChatRequest(BaseModel):
     """Request model for chat endpoint"""
     app_name: str
     user_id: str
+    user_email: str
     session_id: str
     message: str
     streaming: bool = False
-    state: str = ""
+    state: Union[str, Dict[str, Any]] = ""
 
 
 @asynccontextmanager
@@ -433,43 +431,47 @@ def add_chat_endpoint(app: FastAPI):
             # Access headers
             headers = dict(request.headers)
             logger.info(f"📋 Request headers: {headers}")
-
-            # Validate IAP headers
-            iap_validation = validate_iap_headers(headers)
-            logger.info(f"🔐 IAP validation result: {iap_validation}")
-
+            body = await request.json()
+            logger.info(f"📋 Request body: {body}")
+            #
+            # Below left for reference if we move this service behind IAP
+            #
+            # # Validate IAP headers
+            # iap_validation = validate_iap_headers(headers)
+            # logger.info(f"🔐 IAP validation result: {iap_validation}")
+            #
             # Handle IAP validation results
-            if not iap_validation["valid"]:
-                logger.warning(f"⚠️ IAP validation failed: {iap_validation['validation_errors']}")
-                # You can choose to continue or return an error
-                # For now, we'll log the warning but continue processing
-                # In production, you might want to return an HTTP 401 or 403 here
+            # if not iap_validation["valid"]:
+            #     logger.warning(f"⚠️ IAP validation failed: {iap_validation['validation_errors']}")
+            #     # You can choose to continue or return an error
+            #     # For now, we'll log the warning but continue processing
+            #     # In production, you might want to return an HTTP 401 or 403 here
 
-            # Extract user information from IAP headers
-            user_email = iap_validation.get("user_email")
-            user_id = iap_validation.get("user_id")
-            is_development = iap_validation.get("is_development", False)
+            # # Extract user information from IAP headers
+            # user_email = iap_validation.get("user_email")
+            # user_id = iap_validation.get("user_id")
+            # is_development = iap_validation.get("is_development", False)
 
-            if user_email:
-                logger.info(f"👤 Authenticated user: {user_email}")
-            if user_id:
-                logger.info(f"🆔 User ID: {user_id}")
-            if is_development:
-                logger.info("🧪 Running in development mode")
+            # if user_email:
+            #     logger.info(f"👤 Authenticated user: {user_email}")
+            # if user_id:
+            #     logger.info(f"🆔 User ID: {user_id}")
+            # if is_development:
+            #     logger.info("🧪 Running in development mode")
 
-            # Extract IAP headers for forwarding to other services
-            iap_headers_to_forward = extract_iap_headers_for_forwarding(headers)
-            if iap_headers_to_forward:
-                logger.info(f"📤 IAP headers available for forwarding: {list(iap_headers_to_forward.keys())}")
+            # # Extract IAP headers for forwarding to other services
+            # iap_headers_to_forward = extract_iap_headers_for_forwarding(headers)
+            # if iap_headers_to_forward:
+            #     logger.info(f"📤 IAP headers available for forwarding: {list(iap_headers_to_forward.keys())}")
 
-            # You can access specific headers like this:
-            authorization = request.headers.get("authorization")
-            user_agent = request.headers.get("user-agent")
-            content_type = request.headers.get("content-type")
+            # # You can access specific headers like this:
+            # authorization = request.headers.get("authorization")
+            # user_agent = request.headers.get("user-agent")
+            # content_type = request.headers.get("content-type")
 
-            logger.info(f"🔑 Authorization: {authorization}")
-            logger.info(f"🌐 User-Agent: {user_agent}")
-            logger.info(f"📄 Content-Type: {content_type}")
+            # logger.info(f"🔑 Authorization: {authorization}")
+            # logger.info(f"🌐 User-Agent: {user_agent}")
+            # logger.info(f"📄 Content-Type: {content_type}")
 
             # Import here to avoid circular imports
             from ai_assistant.agent import root_agent
@@ -490,41 +492,55 @@ def add_chat_endpoint(app: FastAPI):
             session_service = DatabaseSessionService(db_url=db_url)
             logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
 
-            # Parse state if it's a JSON string
+            # Parse state - can be either a JSON string or a dict
+            user_email = request_body.user_email
             parsed_state = None
-            print(f"Request body state: {request_body.state}")
+            logger.info(f"📄 Request body state: {request_body.state}")
+            logger.info(f"📄 Request body state type: {type(request_body.state)}")
+            
             if request_body.state:
                 if isinstance(request_body.state, str):
-                    try:
-                        import json
-                        print(f"Request body state inside try: {request_body.state}")
-                        parsed_state = json.loads(request_body.state)
-                        logger.info(f"📄 Parsed JSON state: {parsed_state}")
-                    except json.JSONDecodeError as e:
-                        logger.warning(f"⚠️ Failed to parse state JSON: {e}")
-                        logger.info(f"🔍 Raw state value: {request_body.state}")
+                    # State is a JSON string, try to parse it
+                    if request_body.state.strip():  # Only parse non-empty strings
+                        try:
+                            import json
+                            parsed_state = json.loads(request_body.state)
+                            logger.info(f"📄 Parsed JSON state: {parsed_state}")
+                        except json.JSONDecodeError as e:
+                            logger.warning(f"⚠️ Failed to parse state JSON: {e}")
+                            logger.info(f"🔍 Raw state value: {request_body.state}")
+                            parsed_state = {}
+                    else:
+                        logger.info("📄 Empty state string, using empty dict")
                         parsed_state = {}
                 elif isinstance(request_body.state, dict):
+                    # State is already a dict, use it directly
                     parsed_state = request_body.state
                     logger.info(f"📊 Using dict state: {parsed_state}")
                 else:
                     logger.warning(f"⚠️ Unexpected state type: {type(request_body.state)}")
-                    parsed_state = {}
+                    raise HTTPException(status_code=400, detail="Invalid state type")
+            else:
+                logger.info("📄 No state provided, using empty dict")
+                parsed_state = {}
 
-            print(f"Parsed state: {parsed_state}")
+            logger.info(f"📊 Final parsed state: {parsed_state}")
 
             # Prepare initial state with IAP headers and user info
             initial_state = parsed_state or {}
-            
+            #! Ensure state always has the correct user_email from the request, as it set from the .NET backend
+            initial_state['user_email'] = user_email
+          
             # Add user_email and IAP headers to initial state
-            if user_email:
-                initial_state['user_email'] = user_email
-                initial_state['header_email'] = user_email  # backward compatibility
-                logger.info(f"📧 Adding user_email to initial state: {user_email}")
+            # if not initial_state.get('user_email'):
+            #     logger.error(f"📧 Adding user_email to initial state: {initial_state['user_email']}")
+            #     raise HTTPException(status_code=400, detail="User email is required")
+            #     initial_state['user_email'] = headers.get('x-unops-impersonated-user-email')
 
-            if iap_headers_to_forward:
-                initial_state['iap_headers'] = iap_headers_to_forward
-                logger.info(f"🔐 Adding IAP headers to initial state: {list(iap_headers_to_forward.keys())}")
+            # if iap_headers_to_forward:
+            #     initial_state['iap_headers'] = iap_headers_to_forward
+            #     logger.info(f"🔐 Adding IAP headers to initial state: {list(iap_headers_to_forward.keys())}")
+
 
             # Handle session creation vs retrieval
             if is_new_session_request:
@@ -536,7 +552,7 @@ def add_chat_endpoint(app: FastAPI):
                     session_id=session_id,
                     state=initial_state
                 )
-                logger.info(f"✅ New session created with IAP headers and user info")
+                logger.info("✅ New session created with IAP headers and user info")
             else:
                 # Try to get existing session first
                 logger.info(f"🔍 Getting existing session for app: {request_body.app_name}, user: {request_body.user_id}, session: {session_id}")
@@ -555,9 +571,9 @@ def add_chat_endpoint(app: FastAPI):
                         session_id=session_id,
                         state=initial_state
                     )
-                    logger.info(f"✅ New session created with IAP headers and user info")
+                    logger.info("✅ New session created with IAP headers and user info")
                 else:
-                    logger.info(f"📋 Found existing session")
+                    logger.info("📋 Found existing session")
                     
                     # For existing sessions, update both in-memory and database
                     if not hasattr(session, 'state') or session.state is None:
@@ -565,10 +581,10 @@ def add_chat_endpoint(app: FastAPI):
                     
                     # Update the in-memory session state with new data
                     session.state.update(initial_state)
-                    logger.info(f"✅ Updated existing session in-memory with current request data")
+                    logger.info("✅ Updated existing session in-memory with current request data")
                     
-                    # Also persist the IAP headers to database for future requests
-                    if iap_headers_to_forward or user_email:
+                    # Update the user info in database for future requests
+                    if user_email:
                         try:
                             await update_session_state_in_database(
                                 session_service, 
@@ -577,7 +593,7 @@ def add_chat_endpoint(app: FastAPI):
                                 session_id, 
                                 initial_state
                             )
-                            logger.info(f"✅ Persisted IAP headers and user info to database for future requests")
+                            logger.info("✅ Persisted user info to database for future requests")
                         except Exception as db_update_error:
                             logger.warning(f"⚠️ Failed to persist to database (will work for current request): {db_update_error}")
                             logger.info("🔄 In-memory state is still available for current request")
@@ -596,7 +612,7 @@ def add_chat_endpoint(app: FastAPI):
                 agent=root_agent,
                 session_service=session_service
             )
-            logger.info(f"✅ Runner created successfully")
+            logger.info("✅ Runner created successfully")
 
             # Create user message with proper role
             user_message = types.Content(
@@ -641,10 +657,10 @@ def add_chat_endpoint(app: FastAPI):
                 # Return regular response
                 try:
                     events = []
-                    logger.info(f"🔄 Starting agent run...")
+                    logger.info("🔄 Starting agent run...")
 
                     # Add detailed debugging for the agent run
-                    logger.info(f"🔍 Debug info:")
+                    logger.info("🔍 Debug info:")
                     logger.info(f"   - User message: {user_message}")
                     logger.info(f"   - User message parts: {user_message.parts if hasattr(user_message, 'parts') else 'No parts'}")
                     if hasattr(user_message, 'parts') and user_message.parts:
@@ -722,7 +738,7 @@ def add_title_endpoint(app: FastAPI):
             logger.info("="*50)
             logger.info("📋 INCOMING TITLE REQUEST")
             logger.info("="*50)
-            logger.info(f"🔍 Request Details:")
+            logger.info("🔍 Request Details:")
             logger.info(f"   - session_id: {session_id}")
             logger.info(f"   - user_id: {user_id}")
             logger.info("="*50)
@@ -848,7 +864,9 @@ def add_title_endpoint(app: FastAPI):
                         formatted_display.append("---")
                     formatted_conversation = "\n".join(formatted_display[:-1])
                 try:
-                    from ai_assistant.workflow_agent.entity_detection.callback import generate_conversation_title
+                    from ai_assistant.workflow_agent.entity_detection.callback import (
+                        generate_conversation_title,
+                    )
                     title = generate_conversation_title(formatted_conversation)
                     logger.info(f"📝 Generated title: {title}")
                 except Exception as title_error:
@@ -918,6 +936,7 @@ def add_google_drive_endpoints(app: FastAPI):
 
 # Initialize configuration and create the FastAPI app globally
 from framework_config import initialize_config
+
 config = initialize_config()  # This will load config based on ENVIRONMENT variable
 
 app = create_fastapi_app_instance()  # Assign the app instance to the global 'app' variable
@@ -936,14 +955,15 @@ if __name__ == "__main__":
         logger.info(f"🔌 Port: {server_config.get('port', 8000)}")
         logger.info(f"🌐 Web Interface: {server_config.get('serve_web_interface', True)}")
         logger.info(f"💾 Database: {database_config.get('url', 'sqlite:///./ai_agent.db')}")
-        logger.info(f"🔧 Development Mode: {server_config.get('is_development', True)}")
+        logger.info(f"🔧 Development Mode: {server_config.get('is_development', False)}")
         logger.info(f"🏢 Application: {branding_config.get('application_name', 'AI Service')}")
 
         # Use the global 'app' instance
         uvicorn.run(
-            app,
+            'main:app',
             host=server_config.get('host', '0.0.0.0'),
             port=server_config.get('port', 8000),
+            reload=server_config.get('is_development', False),
             log_level="info"
         )
 

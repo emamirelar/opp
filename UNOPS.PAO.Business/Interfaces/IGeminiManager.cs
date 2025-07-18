@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
 using Newtonsoft.Json.Linq;
+using System.Security.Claims;
 
 namespace UNOPS.PAO.Business.Interfaces;
 
@@ -29,6 +30,6 @@ public interface IGeminiManager
     Task<string> BulkInsertRecordsAsync(BulkUploadRequest request);
     Task<bool> CanGenerateTitle(string sessionId);
     Task UpdateSessionTitleAndFlag(string sessionId, string title);
-    Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId, IHeaderDictionary headers = null);
+    Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null);
     Task<string> GenerateTitle(string sessionId, int userId);
 }

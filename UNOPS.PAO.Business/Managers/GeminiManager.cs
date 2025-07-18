@@ -15,6 +15,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.DataAccess.Context;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Models;
+using System.Security.Claims;
 
 public class GeminiManager : IGeminiManager
 {
@@ -164,7 +165,7 @@ public class GeminiManager : IGeminiManager
         throw new NotImplementedException();
     }
 
-    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId, IHeaderDictionary headers = null)
+    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)
     {
         throw new NotImplementedException();
     }

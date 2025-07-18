@@ -1,10 +1,17 @@
+import json
+import os
+
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 from google.adk.tools.tool_context import ToolContext
-from ..agent_callbacks import user_detail_agent_callback, user_detail_after_model_callback
+
 from ai_assistant.config_manager import config_manager
-import json
-import os
+
+from ..agent_callbacks import (
+    user_detail_after_model_callback,
+    user_detail_agent_callback,
+)
+
 
 def get_user_profile(tool_context: ToolContext) -> dict:
     """
@@ -64,8 +71,12 @@ def get_user_profile(tool_context: ToolContext) -> dict:
             return {}
         
         # Import here to avoid circular imports
-        from ai_assistant.config_manager import config_manager, API_BASE_URL
-        from ..workflow_agent.api_worker.utilities import invoke_api_tool, construct_api_url
+        from ai_assistant.config_manager import API_BASE_URL
+
+        from ..workflow_agent.api_worker.utilities import (
+            construct_api_url,
+            invoke_api_tool,
+        )
         
         # Construct the full API URL using the utilities
         api_url = construct_api_url(API_BASE_URL, get_profile_endpoint['url'])
@@ -86,7 +97,7 @@ def get_user_profile(tool_context: ToolContext) -> dict:
         
         if result.get('status') == 'success':
             response_data = result.get('response', {})
-            print(f"✅ [FUNCTION] Successfully retrieved user profile from API")
+            print("✅ [FUNCTION] Successfully retrieved user profile from API")
 
             user_profile = response_data
             
@@ -94,9 +105,9 @@ def get_user_profile(tool_context: ToolContext) -> dict:
             try:
                 if tool_context and hasattr(tool_context, 'state') and tool_context.state is not None:
                     #tool_context.state['user_profile'] = user_profile
-                    print(f"✅ [FUNCTION] Set user_profile in tool_context.state")
+                    print("✅ [FUNCTION] Set user_profile in tool_context.state")
                 else:
-                    print(f"⚠️ [FUNCTION] Could not set user_profile - no valid tool_context.state")
+                    print("⚠️ [FUNCTION] Could not set user_profile - no valid tool_context.state")
                     
                 # Cache the result for future use
                 from ..cache import get_entity_cache

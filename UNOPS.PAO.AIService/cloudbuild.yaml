@@ -24,7 +24,6 @@ steps:
       '--image', 'gcr.io/$PROJECT_ID/opportunity-plus-ai:$SHORT_SHA',
       '--platform', 'managed',
       '--region', 'europe-west4',
-      '--allow-unauthenticated',
       '--port', '8080',
       '--memory', '2Gi',
       '--cpu', '1',

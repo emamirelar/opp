@@ -10,6 +10,9 @@ namespace UNOPS.PAO.Models
         [JsonPropertyName("user_id")]
         public string UserId { get; set; }
 
+        [JsonPropertyName("user_email")]
+        public string UserEmail { get; set; }
+
         [JsonPropertyName("session_id")]
         public string SessionId { get; set; }
 
@@ -20,7 +23,7 @@ namespace UNOPS.PAO.Models
         public bool Streaming { get; set; } = false;
 
         [JsonPropertyName("state")]
-        public dynamic? State { get; set; }
+        public string? State { get; set; }
     }
 
 
