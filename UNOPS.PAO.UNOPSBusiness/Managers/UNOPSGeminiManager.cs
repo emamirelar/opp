@@ -821,11 +821,12 @@ public class UNOPSGeminiManager : IGeminiManager
         // var currentUser = await ((UNOPSUserManagementManager)_userManagementManager).GetBasicEntityAsync(currentUserId) as UserManagementModel;
         // TODO: In DEV mode, somehow the currentUserId is set to 90, but the email in the database is empty
         var currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+        
         if (string.IsNullOrEmpty(currentUserEmail) || string.IsNullOrEmpty(currentUserId))
         {
           throw new InvalidOperationException($"Unable to lookup both current user email {currentUserEmail} and current user id {currentUserId}");
         }
-        
+        currentUserEmail = currentUserEmail.Contains(':') ? currentUserEmail.Split(':').Last() : currentUserEmail;
         var aiChatRequest = new AiChatRequest
         {
             AppName = appName,
