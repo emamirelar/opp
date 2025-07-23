@@ -14,7 +14,8 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
         : base(BuildCriteria(orgUnitHierarchyIds, orgUnitUserIds))
     {
         // Include related entities for the query
-        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.OrganizationUnitRelationships);
+        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
         AddInclude(p => p.Contacts);
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}");
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}.{nameof(Interaction.InteractionContacts)}");
@@ -34,11 +35,11 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
 
         // Build the criteria expression
         return p => 
-            // Case 1: Partner directly linked to org unit hierarchy
+            // Case 1: Partner directly linked to org unit hierarchy via OrganizationUnitRelationships
             (orgUnitHierarchyIds != null && 
              orgUnitHierarchyIds.Count > 0 && 
-             p.PartnerOfficeId.HasValue && 
-             orgUnitHierarchyIds.Contains(p.PartnerOfficeId.Value))
+             p.OrganizationUnitRelationships.Any(r => 
+                orgUnitHierarchyIds.Contains(r.OrganizationHierarchyId)))
             ||
             // Case 2: Partner has contacts with interactions involving org unit users
             (orgUnitUserIds != null && 

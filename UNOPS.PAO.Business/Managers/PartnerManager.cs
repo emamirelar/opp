@@ -41,13 +41,19 @@ public class PartnerManager : IPartnerManager
     {
         var entity = mapper.Map<Partner>(model);
 
-        // Verify that the selected PartnerOffice is of type OrgUnit
-        if (entity.PartnerOfficeId.HasValue)
+        // Handle organization unit relationships if specified
+        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
         {
-            var office = await OrganizationHierarchyRepository.GetByIdAsync(entity.PartnerOfficeId.Value);
-            if (office == null || office.Type != OrganizationUnitType.OrgUnit)
+            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
             {
-                throw new BusinessException("Partner Office must be of type OrgUnit");
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                if (orgUnit == null || orgUnit.Type != OrganizationUnitType.OrgUnit)
+                {
+                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                }
+                
+                // Add the organization unit relationship
+                entity.AddOrganizationUnitRelationship(orgUnit);
             }
         }
 
@@ -59,8 +65,10 @@ public class PartnerManager : IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
-            .Where(x => !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup", "Contacts"])
+            .Where(x => !x.IsDeleted && 
+                   (x.OrganizationUnitRelationships.Count == 0 || 
+                    x.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchy.Type == OrganizationUnitType.OrgUnit)))
             .AsQueryable();
 
         // Get total count
@@ -96,7 +104,8 @@ public class PartnerManager : IPartnerManager
         // Apply the specification to the query
         var query = PartnerRepository.GetAll().AsQueryable();
         var filteredQuery = query.ApplySpecification(specification)
-            .Where(x => x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit);
+            .Where(x => x.OrganizationUnitRelationships.Count == 0 || 
+                       x.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchy.Type == OrganizationUnitType.OrgUnit));
         
         // Get total count
         var totalCount = await filteredQuery.CountAsync();
@@ -141,23 +150,14 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id);
+        var item = await PartnerRepository
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"])
+            .Where(x => x.Id == id)
+            .FirstOrDefaultAsync();
 
         if (item == null)
         {
             return default;
-        }
-
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository
-                .GetAll()
-                .Where(x => x.Id == item.PartnerOfficeId.Value && x.Type == OrganizationUnitType.OrgUnit)
-                .FirstOrDefaultAsync();
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
         }
 
         return mapper.Map<PartnerModel>(item);
@@ -184,24 +184,41 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model)
     {
-        var entity = await PartnerRepository.GetByIdAsync(model.Id);
+        var entity = await PartnerRepository
+            .GetAll(["OrganizationUnitRelationships"])
+            .Where(x => x.Id == model.Id)
+            .FirstOrDefaultAsync();
 
         if (entity == null)
         {
             return default;
         }
 
-        // Verify that the selected PartnerOffice is of type OrgUnit
-        if (model.PartnerOfficeId.HasValue)
+        // Handle organization unit relationship updates
+        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
         {
-            var office = await OrganizationHierarchyRepository
-                .GetAll()
-                .Where(x => x.Id == model.PartnerOfficeId.Value && x.Type == OrganizationUnitType.OrgUnit)
-                .FirstOrDefaultAsync();
-            if (office == null)
+            // Clear existing relationships first
+            entity.OrganizationUnitRelationships.Clear();
+            
+            // Add new relationships
+            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
             {
-                throw new BusinessException("Partner Office must be of type OrgUnit");
+                var orgUnit = await OrganizationHierarchyRepository
+                    .GetAll()
+                    .Where(x => x.Id == relationshipRequest.OrganizationHierarchyId && x.Type == OrganizationUnitType.OrgUnit)
+                    .FirstOrDefaultAsync();
+                if (orgUnit == null)
+                {
+                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                }
+                
+                entity.AddOrganizationUnitRelationship(orgUnit);
             }
+        }
+        else
+        {
+            // Clear all organization unit relationships if none specified
+            entity.OrganizationUnitRelationships.Clear();
         }
 
         mapper.Map<UpdatePartnerRequest, Partner>(model, entity);
@@ -242,11 +259,13 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
+        string[] includes = ["Documents", "OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup", "Contacts"];
 
         var item = await PartnerRepository
             .GetAll(includes)
-            .Where(x => x.Id == id && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
+            .Where(x => x.Id == id && 
+                   (x.OrganizationUnitRelationships.Count == 0 || 
+                    x.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchy.Type == OrganizationUnitType.OrgUnit)))
             .FirstOrDefaultAsync();
 
         if (item == null)
@@ -263,11 +282,13 @@ public class PartnerManager : IPartnerManager
     public async Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id)
     {
         // Include contacts and their interactions using standard Entity Framework includes
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts", "Contacts.Interactions"];
+        string[] includes = ["Documents", "OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup", "Contacts", "Contacts.Interactions"];
 
         var partner = await PartnerRepository
             .GetAll(includes)
-            .Where(x => x.Id == id && !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
+            .Where(x => x.Id == id && !x.IsDeleted && 
+                   (x.OrganizationUnitRelationships.Count == 0 || 
+                    x.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchy.Type == OrganizationUnitType.OrgUnit)))
             .FirstOrDefaultAsync();
 
         if (partner == null)
@@ -290,7 +311,7 @@ public class PartnerManager : IPartnerManager
         var partnerTreeCode = partnerTreeId;
         
         var query = PartnerRepository
-            .GetAll(["PartnerOffice"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"])
             .Where(x => !x.IsDeleted && x.PartnerGroupCode == partnerTreeCode)
             .AsQueryable();
 
@@ -325,7 +346,7 @@ public class PartnerManager : IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"])
             .Where(x => !x.IsDeleted && x.PartnerGroup != null && x.PartnerGroup.PartnerCategoryCode == partnerCategoryCode)
             .AsQueryable();
 

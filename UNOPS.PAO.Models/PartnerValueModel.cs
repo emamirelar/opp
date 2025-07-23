@@ -6,5 +6,5 @@ public class PartnerValueModel
 {
     public int Id { get; set; }
     public string Name { get; set; }
-    public int? PartnerOfficeId { get; set; }
+    public int? OrganizationHierarchyId { get; set; }
 }

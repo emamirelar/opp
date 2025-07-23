@@ -13,7 +13,8 @@ public class UNOPSPartnerByOrgUnitHierarchySpecification : BaseSpecification<UNO
         : base(BuildCriteria(orgUnitHierarchyIds))
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.OrganizationUnitRelationships);
+        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
     }
 
     private static Expression<Func<UNOPSPartner, bool>> BuildCriteria(List<int> orgUnitHierarchyIds)
@@ -24,8 +25,8 @@ public class UNOPSPartnerByOrgUnitHierarchySpecification : BaseSpecification<UNO
             return p => false;
         }
 
-        // Filter by any PartnerOfficeId in the hierarchy
-        return p => p.PartnerOfficeId.HasValue && 
-                   orgUnitHierarchyIds.Contains(p.PartnerOfficeId.Value);
+        // Filter by any OrganizationUnitRelationships with OrganizationHierarchyId in the hierarchy
+        return p => p.OrganizationUnitRelationships.Any(r => 
+                   orgUnitHierarchyIds.Contains(r.OrganizationHierarchyId));
     }
 }

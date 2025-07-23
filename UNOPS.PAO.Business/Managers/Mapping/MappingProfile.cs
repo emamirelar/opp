@@ -14,8 +14,10 @@ public class MappingProfile : Profile
         CreateMap<Country, CountryModel>();
         CreateMap<Interaction, InteractionModel>();
         CreateMap<InteractionRequest, Interaction>();
-        CreateMap<PartnerRequest, Partner>();
-        CreateMap<UpdatePartnerRequest, Partner>();
+        CreateMap<PartnerRequest, Partner>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
+        CreateMap<UpdatePartnerRequest, Partner>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<Partner, PartnerModel>()
             .ForMember(dest => dest.First5ContactsByDate, opt => opt.MapFrom(src => src.First5ContactsByDate));
         CreateMap<PartnerModel, Partner>();
@@ -56,5 +58,8 @@ public class MappingProfile : Profile
         CreateMap<GrantUser, UserValueModel>();
         CreateMap<GrantUser, PAOUserModel>();
         CreateMap<UserProfile, UserProfileValueModel>();
+        
+        // OrganizationUnitRelationship mappings
+        CreateMap<OrganizationUnitRelationship, OrganizationUnitRelationshipModel>().ReverseMap();
     }
 }

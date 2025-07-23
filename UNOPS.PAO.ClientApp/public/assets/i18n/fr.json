@@ -98,7 +98,8 @@
         "partner": {
             "partner": "Partenaire",
             "selectPartner": "Sélectionner un Partenaire",
-            "selectPartnerOffice": "Sélectionner un Bureau de Partenaire",
+            "organizationUnit": "Unité d'Organisation",
+            "selectOrganizationUnit": "Sélectionner une Unité d'Organisation",
             "selectPartnerGroup": "Sélectionner un Groupe de Partenaires",
             "summaryOfInteractions": "Résumé IA des Interactions",
             "categoryNews": "Actualités de Catégorie",
@@ -365,7 +366,7 @@
     "aria": {
         "selectPartner": "Sélectionner un Partenaire",
         "selectNewEngagement": "Sélectionner un Nouvel Engagement",
-        "selectPartnerOffice": "Sélectionner un Bureau de Partenaire",
+        "selectOrganizationUnits": "Sélectionner des Unités d'Organisation",
         "selectPartnerGroup": "Sélectionner un Groupe de Partenaires",
         "selectPooledFund": "Sélectionner un Fonds Commun",
         "selectDDRequired": "Sélectionner DD Requis",

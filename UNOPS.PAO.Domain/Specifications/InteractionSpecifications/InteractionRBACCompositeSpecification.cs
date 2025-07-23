@@ -30,7 +30,8 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
         AddInclude("InteractionContacts.Contact");
         AddInclude(i => i.InteractionPartners);
         AddInclude("InteractionPartners.Partner");
-        AddInclude("InteractionPartners.Partner.PartnerOffice");
+        AddInclude("InteractionPartners.Partner.OrganizationUnitRelationships");
+        AddInclude("InteractionPartners.Partner.OrganizationUnitRelationships.OrganizationHierarchy");
         AddInclude(i => i.InteractionUsers);
         
         // Apply security-based filtering BEFORE any other filtering
@@ -66,8 +67,9 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             {
                 securityExpression = i => i.InteractionPartners.Any(ip => 
                     ip.Partner != null && 
-                    ip.Partner.PartnerOffice != null && 
-                    ip.Partner.PartnerOffice.Code == _userOrgUnit);
+                    ip.Partner.OrganizationUnitRelationships.Any(r => 
+                        r.OrganizationHierarchy != null && 
+                        r.OrganizationHierarchy.Code == _userOrgUnit));
             }
             else
             {
@@ -89,8 +91,9 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             {
                 securityExpression = i => i.InteractionPartners.Any(ip => 
                     ip.Partner != null && 
-                    ip.Partner.PartnerOffice != null && 
-                    ip.Partner.PartnerOffice.Code == _userOrgUnit);
+                    ip.Partner.OrganizationUnitRelationships.Any(r => 
+                        r.OrganizationHierarchy != null && 
+                        r.OrganizationHierarchy.Code == _userOrgUnit));
             }
             else
             {
@@ -106,8 +109,9 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
                 securityExpression = i => i.InteractionContacts.Any(ic => 
                     ic.Contact != null && 
                     ic.Contact.Partner != null &&
-                    ic.Contact.Partner.PartnerOffice != null &&
-                    ic.Contact.Partner.PartnerOffice.Code == _userOrgUnit) ||
+                    ic.Contact.Partner.OrganizationUnitRelationships.Any(r => 
+                        r.OrganizationHierarchy != null && 
+                        r.OrganizationHierarchy.Code == _userOrgUnit)) ||
                     i.CreatedBy == userId;
             }
             else

@@ -20,7 +20,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
     /// <param name="phone">Optional phone number to filter by</param>
     /// <param name="website">Optional website to filter by</param>
     /// <param name="shortName">Optional short name to filter by</param>
-    /// <param name="partnerOfficeId">Optional partner office ID to filter by</param>
+    /// <param name="organizationHierarchyId">Optional organization hierarchy ID to filter by</param>
     /// <param name="partnerCategoryId">Optional partner category ID to filter by</param>
     /// <param name="addressCity">Optional city to filter by</param>
     /// <param name="addressStateProvince">Optional state/province to filter by</param>
@@ -35,7 +35,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         string? phone = null,
         string? website = null,
         string? shortName = null,
-        int? partnerOfficeId = null,
+        int? organizationHierarchyId = null,
         int? partnerCategoryId = null,
         string? addressCity = null,
         string? addressStateProvince = null,
@@ -43,11 +43,12 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         string? addressCountry = null,
         string? searchText = null)
         : base(BuildExpression(id, name, status, newEngagement, phone, website, shortName, 
-                              partnerOfficeId, partnerCategoryId, addressCity, addressStateProvince, 
+                              organizationHierarchyId, partnerCategoryId, addressCity, addressStateProvince, 
                               addressPostalCode, addressCountry, searchText))
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.OrganizationUnitRelationships);
+        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
         
         // Default ordering is by name
         ApplyOrderBy(p => p.Name);
@@ -64,7 +65,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         string? phone,
         string? website,
         string? shortName,
-        int? partnerOfficeId,
+        int? organizationHierarchyId,
         int? partnerCategoryId,
         string? addressCity,
         string? addressStateProvince,
@@ -124,11 +125,11 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
             predicate = CombineExpressions(predicate, shortNameFilter);
         }
         
-        // Add partner office filter if specified
-        if (partnerOfficeId.HasValue)
+        // Add organization hierarchy filter if specified
+        if (organizationHierarchyId.HasValue)
         {
-            Expression<Func<Partner, bool>> partnerOfficeFilter = p => p.PartnerOfficeId == partnerOfficeId.Value;
-            predicate = CombineExpressions(predicate, partnerOfficeFilter);
+            Expression<Func<Partner, bool>> organizationHierarchyFilter = p => p.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchyId == organizationHierarchyId.Value);
+            predicate = CombineExpressions(predicate, organizationHierarchyFilter);
         }
         
         // Add address city filter if specified

@@ -42,7 +42,7 @@ import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
-import { Partner } from '../../../models/partner.model';
+import { Partner, getPrimaryOrganizationUnit } from '../../../models/partner.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
@@ -145,6 +145,9 @@ export class PartnerViewComponent implements OnInit {
   shouldShowSeeLessButton = computed(() => {
     return this.showAdditionalInfo() && this.showFullContent();
   });
+
+  // Helper method to get primary organization unit
+  getPrimaryOrganizationUnit = getPrimaryOrganizationUnit;
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();

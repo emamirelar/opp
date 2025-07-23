@@ -13,7 +13,8 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
     {
         // Include related entities
         AddInclude(c => c.Partner);
-        AddInclude($"{nameof(Contact.Partner)}.{nameof(Partner.PartnerOffice)}");
+        AddInclude($"{nameof(Contact.Partner)}.{nameof(Partner.OrganizationUnitRelationships)}");
+        AddInclude($"{nameof(Contact.Partner)}.{nameof(Partner.OrganizationUnitRelationships)}.{nameof(OrganizationUnitRelationship.OrganizationHierarchy)}");
     }
 
     private static Expression<Func<Contact, bool>> BuildCriteria(List<int> orgUnitHierarchyIds)
@@ -24,9 +25,9 @@ public class ContactByOrgUnitHierarchySpecification : BaseSpecification<Contact>
             return c => false;
         }
 
-        // Filter by Partner's PartnerOfficeId in the hierarchy
+        // Filter by Partner's OrganizationUnitRelationships in the hierarchy
         return c => c.Partner != null && 
-                   c.Partner.PartnerOfficeId.HasValue && 
-                   orgUnitHierarchyIds.Contains(c.Partner.PartnerOfficeId.Value);
+                   c.Partner.OrganizationUnitRelationships.Any(r => 
+                       orgUnitHierarchyIds.Contains(r.OrganizationHierarchyId));
     }
 }

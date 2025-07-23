@@ -51,7 +51,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             specification.Should().NotBeNull();
             specification.Criteria.Should().NotBeNull();
             specification.Includes.Should().HaveCount(1);
-            specification.IncludeStrings.Should().Contain("Partner.PartnerOffice");
+            specification.IncludeStrings.Should().Contain("Partner.OrganizationUnitRelationships");
         }
 
         [Fact]
@@ -66,7 +66,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             // Assert
             specification.Includes.Should().HaveCount(1);
             specification.Includes.Should().Contain(include => include.Body.ToString().Contains("Partner"));
-            specification.IncludeStrings.Should().Contain("Partner.PartnerOffice");
+            specification.IncludeStrings.Should().Contain("Partner.OrganizationUnitRelationships");
         }
 
         [Fact]
@@ -254,9 +254,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             results.Should().NotContain(c => c.Id == contact2.Id);
         }
 
-        private static Partner CreateTestPartner(int id, string name, int? partnerOfficeId)
+        private static Partner CreateTestPartner(int id, string name, int? organizationHierarchyId)
         {
-            return new Partner
+            var partner = new Partner
             {
                 Id = id,
                 Name = name,
@@ -267,10 +267,25 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 DDRequired = "No",
                 DDEACDone = "No",
                 LevyPotentiallyApplies = "No",
-                PartnerOfficeId = partnerOfficeId,
                 CreatedBy = 1,
                 CreatedDate = DateTime.UtcNow
             };
+
+            // Add organization unit relationship if specified
+            if (organizationHierarchyId.HasValue)
+            {
+                partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+                {
+                    new OrganizationUnitRelationship
+                    {
+                        OrganizationHierarchyId = organizationHierarchyId.Value,
+                        EntityId = partner.Id,
+                        EntityType = nameof(Partner)
+                    }
+                };
+            }
+
+            return partner;
         }
 
         private static Contact CreateTestContact(int id, string firstName, string lastName, int partnerId)

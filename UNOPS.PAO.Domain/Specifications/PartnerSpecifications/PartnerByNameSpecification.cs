@@ -15,6 +15,7 @@ public class PartnerByNameSpecification : BaseSpecification<Partner>
         : base(p => p.Name != null && p.Name.ToLower().Contains(name.ToLower()))
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.OrganizationUnitRelationships);
+        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
     }
 } 

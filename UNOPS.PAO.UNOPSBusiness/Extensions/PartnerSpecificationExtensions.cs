@@ -34,8 +34,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Extensions
             // Get the hierarchy of org units
             var hierarchyIds = await hierarchyService.GetDescendantIdsAsync(filter.OrgUnitId.Value);
             
-            // Apply the filter
-            query = query.Where(p => p.PartnerOfficeId.HasValue && hierarchyIds.Contains(p.PartnerOfficeId.Value));
+            // Apply the filter using OrganizationUnitRelationships
+            query = query.Where(p => p.OrganizationUnitRelationships.Any(r => hierarchyIds.Contains(r.OrganizationHierarchyId)));
             
             return query;
         }

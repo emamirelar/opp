@@ -59,7 +59,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result.Records.Should().NotBeNull();
             // Should only return partners linked to orgUnitId
-            result.Records.Should().OnlyContain(p => p.PartnerOfficeId == orgUnitId || 
+            result.Records.Should().OnlyContain(p => (p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || 
                                                     p.Name == "Indirect Partner"); // Indirect partner has contact relation
         }
 
@@ -101,7 +101,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.Should().NotBeNull();
             // Should filter by both name and org unit
             result.Records.Should().OnlyContain(p => p.Name.Contains("Partner") && 
-                                                    (p.PartnerOfficeId == orgUnitId || p.Name == "Indirect Partner"));
+                                                    ((p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || p.Name == "Indirect Partner"));
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -142,8 +142,8 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result.Records.Should().NotBeNull();
             // Should include partners from both parent and child org units
-            result.Records.Should().Contain(p => p.PartnerOfficeId == parentOrgUnitId);
-            result.Records.Should().Contain(p => p.PartnerOfficeId == childOrgUnitId);
+            result.Records.Should().Contain(p => p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == parentOrgUnitId);
+            result.Records.Should().Contain(p => p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == childOrgUnitId);
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -242,8 +242,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             var partner1 = new UNOPSPartner 
             { 
                 Id = partnerId1, 
-                Name = "Direct Partner", 
-                PartnerOfficeId = orgUnitId,
+                Name = "Direct Partner",
                 Status = "Active",
                 ShortName = "DP",
                 NewEngagement = "true",
@@ -252,11 +251,21 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                 DDEACDone = "false",
                 LevyPotentiallyApplies = "false"
             };
+            // Add organization unit relationship
+            partner1.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = orgUnitId,
+                    EntityId = partnerId1,
+                    EntityType = nameof(UNOPSPartner)
+                }
+            };
+            
             var partner2 = new UNOPSPartner 
             { 
                 Id = partnerId2, 
-                Name = "Other Partner", 
-                PartnerOfficeId = 999,
+                Name = "Other Partner",
                 Status = "Active",
                 ShortName = "OP",
                 NewEngagement = "true",
@@ -265,6 +274,17 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                 DDEACDone = "false",
                 LevyPotentiallyApplies = "false"
             };
+            // Add organization unit relationship for different org unit
+            partner2.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = 999,
+                    EntityId = partnerId2,
+                    EntityType = nameof(UNOPSPartner)
+                }
+            };
+            
             var partner3 = new UNOPSPartner 
             { 
                 Id = partnerId3, 
@@ -277,6 +297,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                 DDEACDone = "false",
                 LevyPotentiallyApplies = "false"
             };
+            // No organization unit relationship for indirect partner
             
             await context.Partners.AddRangeAsync(partner1, partner2, partner3);
 
@@ -373,8 +394,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             var parentPartner = new UNOPSPartner 
             { 
                 Id = partnerId1, 
-                Name = "Parent Partner", 
-                PartnerOfficeId = parentOrgUnitId,
+                Name = "Parent Partner",
                 Status = "Active",
                 ShortName = "PP",
                 NewEngagement = "true",
@@ -383,11 +403,21 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                 DDEACDone = "false",
                 LevyPotentiallyApplies = "false"
             };
+            // Add organization unit relationship for parent
+            parentPartner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = parentOrgUnitId,
+                    EntityId = partnerId1,
+                    EntityType = nameof(UNOPSPartner)
+                }
+            };
+            
             var childPartner = new UNOPSPartner 
             { 
                 Id = partnerId2, 
-                Name = "Child Partner", 
-                PartnerOfficeId = childOrgUnitId,
+                Name = "Child Partner",
                 Status = "Active",
                 ShortName = "CP",
                 NewEngagement = "true",
@@ -395,6 +425,16 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                 DDRequired = "false",
                 DDEACDone = "false",
                 LevyPotentiallyApplies = "false"
+            };
+            // Add organization unit relationship for child
+            childPartner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = childOrgUnitId,
+                    EntityId = partnerId2,
+                    EntityType = nameof(UNOPSPartner)
+                }
             };
             
             await context.Partners.AddRangeAsync(parentPartner, childPartner);
@@ -451,6 +491,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                 DDEACDone = "false",
                 LevyPotentiallyApplies = "false"
             };
+            // No organization unit relationship - this partner is linked through contact interactions
             
             await context.Partners.AddAsync(partner);
             

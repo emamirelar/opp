@@ -13,9 +13,13 @@ public class OrganizationHierarchy : ModifiableDeletableEntity
     public bool IsSelfManagementEnabled { get; set; } = false;
     public virtual OrganizationHierarchy Parent { get; set; }
     public virtual ICollection<OrganizationHierarchy> Children { get; set; }
+    
+    // Navigation property for entity relationships
+    public virtual ICollection<OrganizationUnitRelationship> EntityRelationships { get; set; }
 
     public OrganizationHierarchy()
     {
         Children = new HashSet<OrganizationHierarchy>();
+        EntityRelationships = new HashSet<OrganizationUnitRelationship>();
     }
 } 

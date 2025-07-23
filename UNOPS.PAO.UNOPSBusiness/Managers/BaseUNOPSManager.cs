@@ -444,6 +444,11 @@ public abstract class BaseUNOPSManager
 
     public void PatchNonNullProperties<TSource, TTarget>(TSource source, TTarget target)
     {
+        PatchNonNullPropertiesExcept(source, target);
+    }
+
+    public void PatchNonNullPropertiesExcept<TSource, TTarget>(TSource source, TTarget target, params string[] excludeProperties)
+    {
         var sourceProperties = typeof(TSource).GetProperties(BindingFlags.Public | BindingFlags.Instance);
         
         // Handle duplicate property names by grouping and taking the first one
@@ -451,10 +456,27 @@ public abstract class BaseUNOPSManager
                                               .GroupBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
                                               .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
 
+        // Create a set of excluded properties for fast lookup
+        var excludeSet = new HashSet<string>(excludeProperties ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+
+        // Add common properties that typically need manual handling
+        var commonExclusions = GetCommonExcludedProperties();
+        foreach (var exclusion in commonExclusions)
+        {
+            excludeSet.Add(exclusion);
+        }
+        
         foreach (var sourceProp in sourceProperties)
         {
+            // Skip excluded properties
+            if (excludeSet.Contains(sourceProp.Name)) continue;
+            
             if (!targetProperties.TryGetValue(sourceProp.Name, out var targetProp)) continue;
             if (!targetProp.CanWrite || !sourceProp.CanRead) continue;
+
+            // Skip properties with incompatible types that can't be directly assigned
+            if (!IsCompatibleForDirectAssignment(sourceProp.PropertyType, targetProp.PropertyType))
+                continue;
 
             var value = sourceProp.GetValue(source);
 
@@ -472,8 +494,59 @@ public abstract class BaseUNOPSManager
                     }
                 }
 
-                targetProp.SetValue(target, value);
+                try
+                {
+                    targetProp.SetValue(target, value);
+                }
+                catch
+                {
+                    // Skip properties that fail to set (type conversion issues, etc.)
+                    continue;
+                }
             }
         }
+    }
+
+    /// <summary>
+    /// Gets a list of property names that commonly need manual handling and should be excluded from automatic patching
+    /// </summary>
+    private HashSet<string> GetCommonExcludedProperties()
+    {
+        return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "OrganizationUnitRelationships",
+            "InteractionContacts", 
+            "InteractionPartners",
+            "InteractionUsers",
+            "Projects",
+            "Documents" // Navigation properties that usually need special handling
+        };
+    }
+
+    /// <summary>
+    /// Checks if two types are compatible for direct assignment without conversion
+    /// </summary>
+    private bool IsCompatibleForDirectAssignment(Type sourceType, Type targetType)
+    {
+        // Same type is always compatible
+        if (sourceType == targetType) return true;
+        
+        // Nullable to non-nullable of same underlying type
+        if (Nullable.GetUnderlyingType(sourceType) == targetType) return true;
+        if (Nullable.GetUnderlyingType(targetType) == sourceType) return true;
+        
+        // Check if target type is assignable from source type
+        if (targetType.IsAssignableFrom(sourceType)) return true;
+        
+        // Skip complex collection types that likely need manual handling
+        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(sourceType) && 
+            sourceType != typeof(string) && 
+            typeof(System.Collections.IEnumerable).IsAssignableFrom(targetType) &&
+            targetType != typeof(string))
+        {
+            return false; // Collections usually need manual mapping
+        }
+        
+        return true;
     }
 } 

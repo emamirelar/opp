@@ -18,7 +18,8 @@ public class UNOPSPartnerCompositeWithOrgUnitSpecification : BaseCompositeSpecif
         var baseSpec = new UNOPSPartnerCompositeSpecification(filter);
         
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.OrganizationUnitRelationships);
+        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
         
         // Copy includes from base specification
         foreach (var include in baseSpec.Includes)

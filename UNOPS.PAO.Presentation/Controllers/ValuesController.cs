@@ -82,7 +82,7 @@ public class ValuesController : BaseController
             {
                 Id = p.Id,
                 Name = p.Name,
-                PartnerOfficeId = p.PartnerOfficeId
+                OrganizationHierarchyId = p.GetPrimaryOrganizationUnit()?.Id
             }).ToList();
         });
     }

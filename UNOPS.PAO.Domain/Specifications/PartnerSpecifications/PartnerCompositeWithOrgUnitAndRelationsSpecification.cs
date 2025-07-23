@@ -19,7 +19,8 @@ public class PartnerCompositeWithOrgUnitAndRelationsSpecification : BaseComposit
         var baseSpec = new PartnerCompositeSpecification(filter);
         
         // Include related entities for org unit relations
-        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.OrganizationUnitRelationships);
+        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
         AddInclude(p => p.Contacts);
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}");
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}.{nameof(Interaction.InteractionUsers)}");

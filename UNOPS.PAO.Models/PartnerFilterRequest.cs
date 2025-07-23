@@ -10,8 +10,8 @@ public class PartnerFilterRequest : PaginationRequest, IPartnerSearchFilter
     public string? Phone { get; set; }
     public string? Website { get; set; }
     public string? ShortName { get; set; }
-    public int? PartnerOfficeId { get; set; }
-    public string? PartnerOfficeName { get; set; }
+    public int? OrganizationHierarchyId { get; set; }
+    public string? OrganizationHierarchyName { get; set; }
     public int? PartnerCategoryId { get; set; }
     public string? PartnerCategoryName { get; set; }
     public string? AddressCity { get; set; }

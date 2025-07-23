@@ -2,6 +2,7 @@ namespace UNOPS.PAO.UNOPSDomain.Specifications;
 
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Specifications.Interfaces;
+using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using System.Linq.Expressions;
 
@@ -18,7 +19,8 @@ public class UNOPSContactCompositeWithOrgUnitSpecification : BaseCompositeSpecif
         
         // Include related entities
         AddInclude(c => c.Partner);
-        AddInclude($"{nameof(UNOPSContact.Partner)}.{nameof(UNOPSPartner.PartnerOffice)}");
+        AddInclude($"{nameof(UNOPSContact.Partner)}.{nameof(UNOPSPartner.OrganizationUnitRelationships)}");
+        AddInclude($"{nameof(UNOPSContact.Partner)}.{nameof(UNOPSPartner.OrganizationUnitRelationships)}.{nameof(OrganizationUnitRelationship.OrganizationHierarchy)}");
         
         // Copy includes from base specification
         foreach (var include in baseSpec.Includes)

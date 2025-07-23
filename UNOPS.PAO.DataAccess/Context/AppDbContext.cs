@@ -36,6 +36,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<PartnerTree> PartnerTrees { get; set; }
     public DbSet<Document> Documents { get; set; }
     public DbSet<DocumentRelationship> DocumentRelationships { get; set; }
+    public DbSet<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; }
     public DbSet<DocumentType> DocumentTypes { get; set; }
     public DbSet<UNOPS.PAO.Domain.Entities.Link> Links { get; set; }
     public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
@@ -79,14 +80,17 @@ public class AppDbContext : AuditableDbContext<int, int>
         modelBuilder
             .Entity<Partner>(p =>
             {
-                p.HasOne(x => x.PartnerOffice)
-                    .WithMany()
-                    .HasForeignKey(x => x.PartnerOfficeId);
-                
                 // Configure one-to-many relationship with Contacts
                 p.HasMany(x => x.Contacts)
                     .WithOne(c => c.Partner)
                     .HasForeignKey(c => c.PartnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                    
+                // Configure one-to-many relationship with OrganizationUnitRelationships
+                p.HasMany(x => x.OrganizationUnitRelationships)
+                    .WithOne()
+                    .HasForeignKey(r => r.EntityId)
+                    .HasPrincipalKey(p => p.Id)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -181,6 +185,25 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasOne(e => e.Document)
                 .WithMany(d => d.DocumentRelationships)
                 .HasForeignKey(e => e.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.EntityId)
+                .IsRequired();
+
+            entity.Property(e => e.EntityType)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.HasIndex(e => new { e.EntityId, e.EntityType });
+        });
+
+        modelBuilder.Entity<OrganizationUnitRelationship>(entity =>
+        {
+            entity.HasKey(e => new { e.OrganizationHierarchyId, e.EntityId, e.EntityType });
+
+            entity.HasOne(e => e.OrganizationHierarchy)
+                .WithMany(o => o.EntityRelationships)
+                .HasForeignKey(e => e.OrganizationHierarchyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(e => e.EntityId)

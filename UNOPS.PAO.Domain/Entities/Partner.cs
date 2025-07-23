@@ -36,8 +36,9 @@ public class Partner : ModifiableDeletableEntity
     public string? LevyTreatment { get; set; }
     public string? LogoUrl { get; set; }
     public List<Document>? Documents { get; set; }
-    public OrganizationHierarchy? PartnerOffice { get; set; }
-    public int? PartnerOfficeId { get; set; }
+    
+    // Navigation property for organization unit relationships
+    public virtual ICollection<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; } = new HashSet<OrganizationUnitRelationship>();
     
     [ForeignKey("PartnerGroupCode")]
     public PartnerTree? PartnerGroup { get; set; }
@@ -128,6 +129,60 @@ public class Partner : ModifiableDeletableEntity
         var lastInteractionDate = GetLastInteractionDate();
 
         return (contactsCount, interactionsCount, lastInteractionDate);
+    }
+
+    /// <summary>
+    /// Gets all organization units related to this partner
+    /// </summary>
+    public IEnumerable<OrganizationHierarchy> GetOrganizationUnits()
+    {
+        if (OrganizationUnitRelationships == null || !OrganizationUnitRelationships.Any())
+            return Enumerable.Empty<OrganizationHierarchy>();
+
+        return OrganizationUnitRelationships
+            .Where(r => r.OrganizationHierarchy != null)
+            .Select(r => r.OrganizationHierarchy);
+    }
+
+    /// <summary>
+    /// Gets the primary organization unit (first relationship)
+    /// </summary>
+    public OrganizationHierarchy? GetPrimaryOrganizationUnit()
+    {
+        return GetOrganizationUnits().FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Adds an organization unit relationship
+    /// </summary>
+    public void AddOrganizationUnitRelationship(OrganizationHierarchy organizationHierarchy)
+    {
+        if (organizationHierarchy == null) return;
+
+        var relationship = new OrganizationUnitRelationship
+        {
+            OrganizationHierarchy = organizationHierarchy,
+            EntityId = this.Id,
+            EntityType = nameof(Partner),
+            Name = $"Partner-{this.Id}-{organizationHierarchy.Code}",
+            Status = EntityStatus.Active
+        };
+
+        OrganizationUnitRelationships.Add(relationship);
+    }
+
+    /// <summary>
+    /// Removes an organization unit relationship
+    /// </summary>
+    public void RemoveOrganizationUnitRelationship(int organizationHierarchyId)
+    {
+        var relationshipsToRemove = OrganizationUnitRelationships
+            .Where(r => r.OrganizationHierarchyId == organizationHierarchyId);
+
+        foreach (var relationship in relationshipsToRemove.ToList())
+        {
+            OrganizationUnitRelationships.Remove(relationship);
+        }
     }
 }
 

@@ -54,10 +54,9 @@ public static class TestDataSeeder
         context.SaveChanges();
     }
     
-    public static UNOPSPartner CreatePartnerWithValidRelations(int? officeId = 1, string? status = "Active")
+    public static UNOPSPartner CreatePartnerWithValidRelations(int? organizationHierarchyId = 1, string? status = "Active")
     {
         var partner = TestDataBuilder.GetPartnerFaker().Generate();
-        partner.PartnerOfficeId = officeId;
         partner.Status = status ?? "Active";
         
         // Ensure required fields are set
@@ -67,19 +66,35 @@ public static class TestDataSeeder
         if (string.IsNullOrEmpty(partner.DDEACDone)) partner.DDEACDone = "false";
         if (string.IsNullOrEmpty(partner.LevyPotentiallyApplies)) partner.LevyPotentiallyApplies = "false";
         
+        // Add organization unit relationship if specified
+        if (organizationHierarchyId.HasValue)
+        {
+            partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = organizationHierarchyId.Value,
+                    EntityId = partner.Id,
+                    EntityType = nameof(UNOPSPartner),
+                    Name = $"Partner-{partner.Id}-TestOrgUnit",
+                    Status = EntityStatus.Active
+                }
+            };
+        }
+        
         return partner;
     }
     
-    public static List<UNOPSPartner> CreatePartnersWithOffices(int count, params int[] officeIds)
+    public static List<UNOPSPartner> CreatePartnersWithOrganizationUnits(int count, params int[] organizationHierarchyIds)
     {
         var partners = new List<UNOPSPartner>();
-        var officeIndex = 0;
+        var orgIndex = 0;
         
         for (int i = 0; i < count; i++)
         {
-            var officeId = officeIds.Length > 0 ? officeIds[officeIndex % officeIds.Length] : 1;
-            partners.Add(CreatePartnerWithValidRelations(officeId));
-            officeIndex++;
+            var orgId = organizationHierarchyIds.Length > 0 ? organizationHierarchyIds[orgIndex % organizationHierarchyIds.Length] : 1;
+            partners.Add(CreatePartnerWithValidRelations(orgId));
+            orgIndex++;
         }
         
         return partners;

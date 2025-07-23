@@ -59,8 +59,10 @@ public class MappingProfile : Profile
         CreateMap<DocumentLinkModel, UNOPSDocument>();
         CreateMap<UpdateDocumentRequest, UNOPSDocument>();
         
-        CreateMap<PartnerRequest, UNOPSPartner>();
-        CreateMap<UpdatePartnerRequest, UNOPSPartner>();
+        CreateMap<PartnerRequest, UNOPSPartner>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
+        CreateMap<UpdatePartnerRequest, UNOPSPartner>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         
         CreateMap<UNOPSPartner, PartnerModel>()
             .ForMember(dest => dest.First5ContactsByDate, opt => opt.MapFrom((src, dest, destMember, context) => 

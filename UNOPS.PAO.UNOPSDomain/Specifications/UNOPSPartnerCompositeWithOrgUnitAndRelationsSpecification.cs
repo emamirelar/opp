@@ -20,7 +20,8 @@ public class UNOPSPartnerCompositeWithOrgUnitAndRelationsSpecification : BaseCom
         var baseSpec = new UNOPSPartnerCompositeSpecification(filter);
         
         // Include related entities for org unit relations
-        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.OrganizationUnitRelationships);
+        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
         AddInclude(p => p.Contacts);
         AddInclude($"{nameof(UNOPSPartner.Contacts)}.{nameof(UNOPSContact.Interactions)}");
         AddInclude($"{nameof(UNOPSPartner.Contacts)}.{nameof(UNOPSContact.Interactions)}.{nameof(UNOPSInteraction.InteractionUsers)}");

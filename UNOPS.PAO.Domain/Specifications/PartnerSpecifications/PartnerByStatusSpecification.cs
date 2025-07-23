@@ -15,6 +15,7 @@ public class PartnerByStatusSpecification : BaseSpecification<Partner>
         : base(p => p.Status == status)
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
+        AddInclude(p => p.OrganizationUnitRelationships);
+        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
     }
 } 

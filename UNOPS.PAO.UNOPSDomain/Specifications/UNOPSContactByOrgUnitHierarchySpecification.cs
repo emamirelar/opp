@@ -15,7 +15,7 @@ public class UNOPSContactByOrgUnitHierarchySpecification : BaseSpecification<UNO
     {
         // Include related entities
         AddInclude(c => c.Partner);
-        AddInclude($"{nameof(UNOPSContact.Partner)}.{nameof(UNOPSPartner.PartnerOffice)}");
+        AddInclude($"{nameof(UNOPSContact.Partner)}.{nameof(UNOPSPartner.OrganizationUnitRelationships)}");
     }
 
     private static Expression<Func<UNOPSContact, bool>> BuildCriteria(List<int> orgUnitHierarchyIds)
@@ -26,9 +26,9 @@ public class UNOPSContactByOrgUnitHierarchySpecification : BaseSpecification<UNO
             return c => false;
         }
 
-        // Filter by Partner's PartnerOfficeId in the hierarchy
+        // Filter by Partner's OrganizationUnitRelationships in the hierarchy
         return c => c.Partner != null && 
-                   c.Partner.PartnerOfficeId.HasValue && 
-                   orgUnitHierarchyIds.Contains(c.Partner.PartnerOfficeId.Value);
+                   c.Partner.OrganizationUnitRelationships.Any(r => 
+                       orgUnitHierarchyIds.Contains(r.OrganizationHierarchyId));
     }
 }

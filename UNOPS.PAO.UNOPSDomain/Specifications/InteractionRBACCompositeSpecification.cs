@@ -31,7 +31,8 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
         AddInclude("InteractionContacts.Contact");
         AddInclude(i => i.InteractionPartners);
         AddInclude("InteractionPartners.Partner");
-        AddInclude("InteractionPartners.Partner.PartnerOffice");
+        AddInclude("InteractionPartners.Partner.OrganizationUnitRelationships");
+        AddInclude("InteractionPartners.Partner.OrganizationUnitRelationships.OrganizationHierarchy");
         
         // Apply security-based filtering
         ApplySecurityFilters();
@@ -62,8 +63,10 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             if (!string.IsNullOrEmpty(_userOrgUnit))
             {
                 securityExpression = i => i.InteractionPartners.Any(ip => 
-                    ip.Partner != null && ip.Partner.PartnerOffice != null && 
-                    ip.Partner.PartnerOffice.Code == _userOrgUnit);
+                    ip.Partner != null && 
+                    ip.Partner.OrganizationUnitRelationships.Any(r => 
+                        r.OrganizationHierarchy != null && 
+                        r.OrganizationHierarchy.Code == _userOrgUnit));
             }
         }
         else if (_user.IsInRole("INTERACTION_READ"))
@@ -79,8 +82,10 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             if (!string.IsNullOrEmpty(_userOrgUnit))
             {
                 securityExpression = i => i.InteractionPartners.Any(ip => 
-                    ip.Partner != null && ip.Partner.PartnerOffice != null && 
-                    ip.Partner.PartnerOffice.Code == _userOrgUnit);
+                    ip.Partner != null && 
+                    ip.Partner.OrganizationUnitRelationships.Any(r => 
+                        r.OrganizationHierarchy != null && 
+                        r.OrganizationHierarchy.Code == _userOrgUnit));
             }
         }
         

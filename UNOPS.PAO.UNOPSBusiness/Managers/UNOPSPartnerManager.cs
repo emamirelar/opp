@@ -165,6 +165,22 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         var entity = MapModelToEntity(model);
 
+        // Handle organization unit relationships if specified
+        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
+        {
+            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
+            {
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                if (orgUnit == null || orgUnit.Type != OrganizationUnitType.OrgUnit)
+                {
+                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                }
+                
+                // Add the organization unit relationship
+                entity.AddOrganizationUnitRelationship(orgUnit);
+            }
+        }
+
         await PartnerRepository.AddAsync(entity);
 
         return await MapEntityToModelAsync(entity, _mapper, null);
@@ -173,7 +189,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
+                            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup", "Contacts"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
@@ -252,7 +268,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<object> GetPartnersWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Partner> specification, PaginationRequest pagination)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
@@ -307,20 +323,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id);
+        var item = await PartnerRepository.GetByIdAsync(id, ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"]);
         if (item == null)
         {
             return default;
-        }
-        
-        // Load partner office if needed
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
         }
 
         return await MapEntityToModelAsync(item, _mapper, null);
@@ -331,23 +337,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetBasicPartnerDetailsAsync(int id)
     {
-        string[] includes = ["PartnerOffice", "PartnerGroup"];
+        string[] includes = ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 
         if (item == null)
         {
             return default;
-        }
-
-        // Load partner office if needed
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
         }
 
         return await MapEntityToModelAsync(item, _mapper, null);
@@ -359,7 +355,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id)
     {
         // Get partner with basic includes first
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
+        string[] includes = ["Documents", "OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup", "Contacts"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -394,15 +390,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        // Load partner office if needed
-        if (partner.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                partner.PartnerOffice = partnerOffice;
-            }
-        }
+        // OrganizationUnitRelationships are now loaded via includes
 
         // Now you can use the Partner entity's methods to get interaction data
         // Examples:
@@ -420,7 +408,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<PartnerModel?> GetPartnerWithProjectsAsync(int id)
     {
         // Include the projects through the many-to-many relationship
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Projects"];
+        string[] includes = ["Documents", "OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup", "Projects"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -429,15 +417,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return default;
         }
 
-        // Load partner office if needed
-        if (partner.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                partner.PartnerOffice = partnerOffice;
-            }
-        }
+        // OrganizationUnitRelationships are now loaded via includes
 
         var result = await MapEntityToModelAsync(partner, _mapper, null);
 
@@ -467,24 +447,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerRiskProfileAsync(int id)
     {
-        // Include all relevant data for risk assessment: documents, office, group, contacts, interactions, and projects
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts", "Contacts.Interactions", "Projects"];
+        // Include all relevant data for risk assessment: documents, organization units, group, contacts, interactions, and projects
+        string[] includes = ["Documents", "OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup", "Contacts", "Contacts.Interactions", "Projects"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
         if (partner == null)
         {
             return default;
-        }
-
-        // Load partner office if needed
-        if (partner.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                partner.PartnerOffice = partnerOffice;
-            }
         }
 
         var result = await MapEntityToModelAsync(partner, _mapper, null);
@@ -618,7 +588,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         
         // Get all partners with the matching codes
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
@@ -824,7 +794,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         // RBAC interceptor handles security enforcement
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
@@ -844,7 +814,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerOffice", "PartnerGroup"]);
+        var item = await PartnerRepository.GetByIdAsync(id, ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"]);
         if (item == null)
         {
             return null;
@@ -853,7 +823,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Check if user has permission to access this specific entity
         // Create a single-item query and apply access control filters
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"])
             .Where(x => x.Id == id && !x.IsDeleted)
             .AsQueryable();
 
@@ -881,9 +851,26 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         // RBAC interceptor handles security enforcement
         var entity = MapModelToEntity(model);
+
+        // Handle organization unit relationships if specified
+        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
+        {
+            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
+            {
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                if (orgUnit == null || orgUnit.Type != OrganizationUnitType.OrgUnit)
+                {
+                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                }
+                
+                // Add the organization unit relationship
+                entity.AddOrganizationUnitRelationship(orgUnit);
+            }
+        }
+
         await PartnerRepository.AddAsync(entity);
 
-        var resultModel = MapEntityToModel(entity, _mapper);
+        var resultModel = await MapEntityToModelAsync(entity, _mapper, user);
         
         // Add permissions for frontend UI
         //resultModel.Permissions = await GetEntityPermissionsAsync(entity, user);
@@ -897,12 +884,62 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await PartnerRepository.GetByIdAsync(model.Id, ["PartnerOffice"]);
+        var entity = await PartnerRepository.GetByIdAsync(model.Id, ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"]);
         if (entity == null)
         {
             return null;
         }
 
+        // Handle organization unit relationship updates - work directly with database to avoid EF tracking issues
+        if (model.OrganizationUnitRelationships != null)
+        {
+            // First, completely detach all existing OrganizationUnitRelationship entities from change tracker
+            var trackedRelationships = _context.ChangeTracker.Entries<OrganizationUnitRelationship>().ToList();
+            foreach (var trackedEntity in trackedRelationships)
+            {
+                trackedEntity.State = EntityState.Detached;
+            }
+            
+            // Clear the navigation property
+            entity.OrganizationUnitRelationships.Clear();
+            
+            // Delete existing relationships from database
+            await _context.OrganizationUnitRelationships
+                .Where(r => r.EntityId == entity.Id && r.EntityType == "Partner")
+                .ExecuteDeleteAsync();
+            
+            // Add new relationships if any are specified
+            if (model.OrganizationUnitRelationships.Any())
+            {
+                var newRelationships = new List<OrganizationUnitRelationship>();
+                foreach (var relationshipRequest in model.OrganizationUnitRelationships)
+                {
+                    var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                    if (orgUnit != null && orgUnit.Type == OrganizationUnitType.OrgUnit)
+                    {
+                        // Create relationship entity but don't add to tracked entity yet
+                        var newRelationship = new OrganizationUnitRelationship
+                        {
+                            OrganizationHierarchyId = orgUnit.Id,
+                            EntityId = entity.Id,
+                            EntityType = "Partner",
+                            Name = $"Partner-{entity.Id}-{orgUnit.Code}",
+                            Status = EntityStatus.Active
+                        };
+                        newRelationships.Add(newRelationship);
+                    }
+                }
+                
+                // Add all new relationships directly to context
+                if (newRelationships.Any())
+                {
+                    await _context.OrganizationUnitRelationships.AddRangeAsync(newRelationships);
+                    await _context.SaveChangesAsync(); // Save relationships first
+                }
+            }
+        }
+
+        // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
         await PartnerRepository.UpdateAsync(entity);
 
@@ -920,7 +957,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await PartnerRepository.GetByIdAsync(id, ["PartnerOffice"]);
+        var entity = await PartnerRepository.GetByIdAsync(id, ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"]);
         if (entity == null)
         {
             return false;
@@ -955,7 +992,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var partnerTreesByGroupWithChildrenCodes = GetAllDescendantPartnerTrees(partnerTreesByGroupCodes).Select(pt => pt.Code).ToList();
         
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupWithChildrenCodes.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
@@ -971,7 +1008,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         foreach (var partner in partners.Records)
         {
             /*partner.Permissions = await GetEntityPermissionsAsync(
-                await PartnerRepository.GetByIdAsync(partner.Id, ["PartnerOffice"]), 
+                await PartnerRepository.GetByIdAsync(partner.Id, ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"]), 
                 user
             );
             */
@@ -1005,7 +1042,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var partnerTreesByGroupInCategoryCode = GetAllDescendantPartnerTrees(partnerTreesByCategoryCodes).Select(pt => pt.Code).ToList();
         
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
@@ -1058,7 +1095,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
+        string[] includes = ["Documents", "OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup", "Contacts"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -1067,28 +1104,68 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return default;
         }
 
-        // Load partner office if needed
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
-        }
-
         return await MapEntityToModelAsync(item, _mapper, null);
     }
 
     public async Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model)
     {
-        var entity = await PartnerRepository.GetByIdAsync(model.Id);
+        var entity = await PartnerRepository.GetByIdAsync(model.Id, ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"]);
 
         if (entity == null)
         {
             throw new BusinessException($"Partner {model.Id} does not exist.");
         }
 
+        // Handle organization unit relationship updates - work directly with database to avoid EF tracking issues
+        if (model.OrganizationUnitRelationships != null)
+        {
+            // First, completely detach all existing OrganizationUnitRelationship entities from change tracker
+            var trackedRelationships = _context.ChangeTracker.Entries<OrganizationUnitRelationship>().ToList();
+            foreach (var trackedEntity in trackedRelationships)
+            {
+                trackedEntity.State = EntityState.Detached;
+            }
+            
+            // Clear the navigation property
+            entity.OrganizationUnitRelationships.Clear();
+            
+            // Delete existing relationships from database
+            await _context.OrganizationUnitRelationships
+                .Where(r => r.EntityId == entity.Id && r.EntityType == "Partner")
+                .ExecuteDeleteAsync();
+            
+            // Add new relationships if any are specified
+            if (model.OrganizationUnitRelationships.Any())
+            {
+                var newRelationships = new List<OrganizationUnitRelationship>();
+                foreach (var relationshipRequest in model.OrganizationUnitRelationships)
+                {
+                    var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                    if (orgUnit != null && orgUnit.Type == OrganizationUnitType.OrgUnit)
+                    {
+                        // Create relationship entity but don't add to tracked entity yet
+                        var newRelationship = new OrganizationUnitRelationship
+                        {
+                            OrganizationHierarchyId = orgUnit.Id,
+                            EntityId = entity.Id,
+                            EntityType = "Partner",
+                            Name = $"Partner-{entity.Id}-{orgUnit.Code}",
+                            Status = EntityStatus.Active
+                        };
+                        newRelationships.Add(newRelationship);
+                    }
+                }
+                
+                // Add all new relationships directly to context
+                if (newRelationships.Any())
+                {
+                    await _context.OrganizationUnitRelationships.AddRangeAsync(newRelationships);
+                    await _context.SaveChangesAsync(); // Save relationships first
+                }
+            }
+        }
+
+        // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
 
         await PartnerRepository.UpdateAsync(entity);
@@ -1115,7 +1192,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
     {
         var partners = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy", "PartnerGroup"])
             .AsQueryable()
             .Where(p => input.partnerIds.Contains(p.Id))
             .Cast<UNOPSPartner>()
