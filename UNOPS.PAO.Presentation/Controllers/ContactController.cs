@@ -95,19 +95,52 @@ public class ContactController : BaseController
     /// <param name="request.orderBy">Field to order results by</param>
     /// <param name="request.ascending">Sort direction (true for ascending)</param>
     /// <param name="request.orgUnitId">Filter by organizational unit ID for access control</param>
-    /// <param name="advancedSearch">Enable advanced search mode</param>
-    /// <param name="searchCriteria">JSON string containing advanced search filters</param>
+    /// <param name="advancedSearch">Enable advanced search mode for complex entity relationship searches</param>
+    /// <param name="searchCriteria">JSON string containing advanced search filters with nested entity criteria. Required when advancedSearch=true</param>
     /// <param name="searchText">Text to search across contact fields (override for request.searchText)</param>
     /// <example_uses>
     /// Show me all contacts
     /// List contacts with email domain @unicef.org
-    /// Find contacts working at government partners
+    /// Find contacts working at government partners (use advancedSearch=true, searchCriteria with partner.name)
     /// Search for contacts named John
     /// Show contacts from my office only
     /// Get contacts sorted by last name
-    /// Find technical experts in partner organizations
+    /// Find technical experts in partner organizations (use advancedSearch=true)
+    /// Find contacts from specific interactions (use advancedSearch=true, searchCriteria with interaction.subject)
+    /// Get contacts from UNICEF partner organization (advancedSearch=true)
     /// </example_uses>
-    /// <when_to_use>Use this when the user asks to search, list, filter, or browse contacts.</when_to_use>
+    /// <when_to_use>Use this when the user asks to search, list, filter, or browse contacts. Use advancedSearch=true for relationship-based searches involving partners or interactions.</when_to_use>
+    /// <advanced_search_guidance>
+    /// **CRITICAL: When to use advancedSearch=true:**
+    /// - User searches for contacts BY PARTNER: "contacts from UNICEF", "contacts working at partner X"
+    /// - User searches for contacts BY ORGANIZATION: "contacts from organization Y"
+    /// - User searches for contacts BY INTERACTION: "contacts from meeting Z", "contacts involved in interaction"
+    /// - Any search involving related entities (partners, interactions, organizations)
+    /// 
+            /// **searchCriteria JSON format with operators (CRITICAL - Must use this exact format):**
+        /// searchCriteria must be a JSON array of SearchCriteria objects with field, operator, value, and logicalOperator
+        /// 
+        /// **Available Operators:**
+        /// - "is" (exact match), "is not" (not equal), "like" (contains), "not like" (does not contain)
+        /// - ">", "<", ">=", "<=" (comparisons), "after", "before", "between" (dates)
+        /// 
+        /// **Logical Operators:** "AND", "OR"
+        /// 
+        /// **Examples:**
+        /// - Find contacts from partner "Asian Infrastructure": 
+        ///   searchCriteria=[{"field": "partner.name", "operator": "like", "value": "Asian Infrastructure"}]
+        /// - Find contacts from UNICEF organization: 
+        ///   searchCriteria=[{"field": "partner.name", "operator": "like", "value": "UNICEF"}]
+        /// - Find contacts involved in climate meetings: 
+        ///   searchCriteria=[{"field": "interaction.subject", "operator": "like", "value": "climate", "logicalOperator": "AND"}, {"field": "interaction.type", "operator": "is", "value": "Meeting"}]
+        /// - Find contacts named John from WHO: 
+        ///   searchCriteria=[{"field": "firstName", "operator": "like", "value": "John", "logicalOperator": "AND"}, {"field": "partner.name", "operator": "like", "value": "WHO"}]
+    /// 
+    /// **Simple search (advancedSearch=false) for:**
+    /// - Name/email text search: "contacts named Smith"
+    /// - Basic filtering: "contacts with gmail", "active contacts"
+    /// - Role/title searches: "technical contacts"
+    /// </advanced_search_guidance>
     /// <returns>Paginated list of contacts with metadata</returns>
     [HttpGet(APIDictionary.Contact)]
     [AccessControlled(EntityTypes.Contact, "read")]

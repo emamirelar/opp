@@ -263,14 +263,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // No need for duplicate logic here
         
         // Apply access control filters (row and column filtering) BEFORE pagination
-        var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
+        // Cast the query to UNOPSPartner query for access control to maintain type consistency
+        var unosPartnerQuery = filteredQuery.Cast<UNOPSPartner>();
+        var filteredData = await ApplyAccessControlFilters(unosPartnerQuery, user, "read");
         
         // If filteredData is a list, we need to handle pagination manually
-        // Note: ApplyAccessControlFilters returns List<Partner> but we need to handle it as Partner
-        if (filteredData is IEnumerable<Partner> basePartnerList)
+        if (filteredData is IEnumerable<UNOPSPartner> partnerList)
         {
-            // Cast back to UNOPSPartner since we know all items in the query are UNOPSPartner
-            var partnerArray = basePartnerList.Cast<UNOPSPartner>().ToArray();
+            var partnerArray = partnerList.ToArray();
             var totalCount = partnerArray.Length;
             var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
             var excludedRows = (pageIndex - 1) * pagination.PageSize;

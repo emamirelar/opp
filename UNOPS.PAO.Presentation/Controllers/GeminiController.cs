@@ -91,6 +91,20 @@ public class GeminiController : BaseController
     {
         return await HandleOperationAsync(async () => 
         {
+            // Debug logging for file upload
+            if (req.Files != null && req.Files.Any())
+            {
+                Console.WriteLine($"📎 [CONTROLLER] Received {req.Files.Count()} files:");
+                foreach (var file in req.Files)
+                {
+                    Console.WriteLine($"   - {file.FileName} ({file.ContentType}, {file.Length} bytes)");
+                }
+            }
+            else
+            {
+                Console.WriteLine("📎 [CONTROLLER] No files received in request");
+            }
+            
             return await _manager.ChatWithGemini(req, User, Request.Headers);
         });
     }

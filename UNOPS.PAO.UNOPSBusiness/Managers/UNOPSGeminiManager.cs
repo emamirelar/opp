@@ -827,21 +827,57 @@ public class UNOPSGeminiManager : IGeminiManager
           throw new InvalidOperationException($"Unable to lookup both current user email {currentUserEmail} and current user id {currentUserId}");
         }
         currentUserEmail = currentUserEmail.Contains(':') ? currentUserEmail.Split(':').Last() : currentUserEmail;
-        var aiChatRequest = new AiChatRequest
-        {
-            AppName = appName,
-            UserId = currentUserId.ToString(),
-            UserEmail = currentUserEmail,
-            SessionId = req.sessionId?.ToString() ?? "",
-            Message = req.Message ?? "",
-            Streaming = false,
-            State = req.State
-        };
 
         var apiUrl = $"/chat";
-        var jsonContent = System.Text.Json.JsonSerializer.Serialize(aiChatRequest);
+        HttpContent httpContent;
 
-        var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+        // Check if request has files
+        if (req.Files != null && req.Files.Any())
+        {
+            // Use multipart form data for requests with files
+            var multipartContent = new MultipartFormDataContent();
+            
+            // Add form fields
+            multipartContent.Add(new StringContent(appName), "app_name");
+            multipartContent.Add(new StringContent(currentUserId.ToString()), "user_id");
+            multipartContent.Add(new StringContent(currentUserEmail), "user_email");
+            multipartContent.Add(new StringContent(req.sessionId?.ToString() ?? ""), "session_id");
+            multipartContent.Add(new StringContent(req.Message ?? ""), "message");
+            multipartContent.Add(new StringContent("false"), "streaming");
+            multipartContent.Add(new StringContent(req.State ?? ""), "state");
+            
+            // Add files
+            foreach (var file in req.Files)
+            {
+                if (file != null && file.Length > 0)
+                {
+                    var streamContent = new StreamContent(file.OpenReadStream());
+                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
+                    multipartContent.Add(streamContent, "files", file.FileName);
+                }
+            }
+            
+            httpContent = multipartContent;
+            _logger.LogInformation($"Sending chat request with {req.Files.Count()} files to AI service");
+        }
+        else
+        {
+            // Use JSON for requests without files (backward compatibility)
+            var aiChatRequest = new AiChatRequest
+            {
+                AppName = appName,
+                UserId = currentUserId.ToString(),
+                UserEmail = currentUserEmail,
+                SessionId = req.sessionId?.ToString() ?? "",
+                Message = req.Message ?? "",
+                Streaming = false,
+                State = req.State
+            };
+
+            var jsonContent = System.Text.Json.JsonSerializer.Serialize(aiChatRequest);
+            httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            _logger.LogInformation("Sending chat request without files to AI service");
+        }
 
         using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
 

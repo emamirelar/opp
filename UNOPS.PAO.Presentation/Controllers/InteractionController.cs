@@ -92,17 +92,60 @@ namespace UNOPS.PAO.Presentation.Controllers
         /// <param name="request.status">Filter by interaction status</param>
         /// <param name="request.startDate">Filter interactions from this date</param>
         /// <param name="request.endDate">Filter interactions until this date</param>
-        /// <param name="advancedSearch">Enable advanced search mode</param>
-        /// <param name="searchCriteria">JSON string containing advanced search filters</param>
-        /// <param name="searchText">Text to search across interaction fields (override for request.searchText)</param>
+        /// <param name="advancedSearch">Enable advanced search mode for complex queries with nested entity searches</param>
+        /// <param name="searchCriteria">MANDATORY when advancedSearch=true. JSON array of search criteria objects with field, operator, value, and description</param>
+        /// <param name="searchText">Simple text search across interaction fields (used when advancedSearch=false)</param>
+        /// <advanced_search_guidance>
+        /// CRITICAL DECISION RULES for AI Agent:
+        /// 
+        /// USE searchText (advancedSearch=false) when:
+        /// - Simple keyword searches: "project", "meeting notes", "UNICEF"
+        /// - General text searches across multiple fields
+        /// - Single search terms or phrases
+        /// - User asks: "find interactions containing X", "search for Y", "interactions about Z"
+        /// 
+        /// USE advancedSearch=true when:
+        /// - Searching related entities: "interactions with UNICEF partners", "meetings with John Smith contact"
+        /// - Field-specific searches: "interactions where partner name is UNICEF", "contacts with email containing @unops.org"
+        /// - Complex criteria with operators: date ranges, status filters, type filters
+        /// - User asks: "find interactions with X partner", "meetings with Y contact", "interactions by Z person"
+        /// 
+        /// MANDATORY searchCriteria FORMAT (when advancedSearch=true):
+        /// [
+        ///   {
+        ///     "field": "partner.name",
+        ///     "operator": "like", 
+        ///     "value": "UNICEF",
+        ///     "description": "Find interactions with UNICEF partners"
+        ///   },
+        ///   {
+        ///     "field": "type",
+        ///     "operator": "is",
+        ///     "value": "Meeting",
+        ///     "logicalOperator": "AND",
+        ///     "description": "Must be meeting type interactions"
+        ///   }
+        /// ]
+        /// 
+        /// AVAILABLE FIELDS:
+        /// Direct fields: id, contactId, type, date, fromDate, toDate, description, subject
+        /// Nested fields: contact.firstName, contact.lastName, contact.email, contact.title, contact.department, contact.phone, contact.mobile, partner.name, partner.status, partner.shortName
+        /// 
+        /// AVAILABLE OPERATORS:
+        /// like, is, not, contains, startsWith, endsWith, between, greaterThan, lessThan, greaterThanOrEqual, lessThanOrEqual, on, "not on", "this week", "this month", "this year"
+        /// 
+        /// EXAMPLES:
+        /// Simple: searchText="project updates" (advancedSearch=false)
+        /// Advanced: searchCriteria=[{"field":"partner.name","operator":"like","value":"UNICEF","description":"Find UNICEF partner interactions"}] (advancedSearch=true)
+        /// </advanced_search_guidance>
         /// <example_uses>
-        /// Show me all interactions
-        /// List meetings from last month
-        /// Find interactions with UNICEF partners
-        /// Show email interactions this week
-        /// Get interactions containing 'project' in subject
-        /// List interactions sorted by date
-        /// Find conference calls with specific contacts
+        /// Show me all interactions (no search)
+        /// Find interactions containing "project" (searchText)
+        /// Find interactions with UNICEF partners (advancedSearch)
+        /// Get meetings with John Smith contact (advancedSearch)
+        /// Show email interactions this week (advancedSearch with date)
+        /// List interactions sorted by date (no search, just sorting)
+        /// Find conference calls from Finance department contacts (advancedSearch)
         /// </example_uses>
         /// <when_to_use>Use this when the user asks to search, list, filter, or browse interactions, meetings, calls, or communications.</when_to_use>
         /// <returns>Paginated list of interactions with metadata</returns>
@@ -136,61 +179,49 @@ namespace UNOPS.PAO.Presentation.Controllers
                 // Handle different search scenarios with integrated RBAC filtering
                 if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
                 {
-                    // result = await SecureSearchControllerHelper.ProcessSecureAdvancedSearchAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
-                    //     searchCriteria, 
-                    //     searchText ?? request.SearchText, 
-                    //     request.PageIndex, 
-                    //     request.PageSize, 
-                    //     request.OrderBy, 
-                    //     request.Ascending,
-                    //     request,
-                    //     "Interaction",
-                    //     User,
-                    //     _secureSpecificationFactory.CreateInteractionSpecificationAsync,
-                    //     async (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                    //     CurrentUserId, 
-                    //     _logger);
-                    
-                    // Simplified version without RBAC
-                    var specification = await _orgUnitFilterService.CreateInteractionSpecificationAsync(request, User);
-                    result = await _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
+                    result = await SecureSearchControllerHelper.ProcessSecureAdvancedSearchAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
+                        searchCriteria, 
+                        searchText ?? request.SearchText, 
+                        request.PageIndex, 
+                        request.PageSize, 
+                        request.OrderBy, 
+                        request.Ascending,
+                        request,
+                        "Interaction",
+                        User,
+                        _secureSpecificationFactory.CreateInteractionSpecificationAsync,
+                        async (userId, spec, pagination) => await _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
+                        CurrentUserId, 
+                        _logger);
                 }
                 else if (!string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(request.SearchText))
                 {
-                    // var textToSearch = searchText ?? request.SearchText;
-                    // result = await SecureSearchControllerHelper.ProcessSecureSimpleTextSearchAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
-                    //     textToSearch!, 
-                    //     request.PageIndex, 
-                    //     request.PageSize, 
-                    //     request.OrderBy, 
-                    //     request.Ascending,
-                    //     request,
-                    //     "Interaction",
-                    //     User,
-                    //     _secureSpecificationFactory.CreateInteractionSpecificationAsync,
-                    //     async (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                    //     CurrentUserId, 
-                    //     _logger);
-                    
-                    // Simplified version without RBAC
-                    var specification = await _orgUnitFilterService.CreateInteractionSpecificationAsync(request, User);
-                    result = await _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
+                    var textToSearch = searchText ?? request.SearchText;
+                    result = await SecureSearchControllerHelper.ProcessSecureSimpleTextSearchAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
+                        textToSearch!, 
+                        request.PageIndex, 
+                        request.PageSize, 
+                        request.OrderBy, 
+                        request.Ascending,
+                        request,
+                        "Interaction",
+                        User,
+                        _secureSpecificationFactory.CreateInteractionSpecificationAsync,
+                        async (userId, spec, pagination) => await _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
+                        CurrentUserId, 
+                        _logger);
                 }
                 else
                 {
                     // For no search parameters, return all interactions with secure pagination
-                    // result = await SecureSearchControllerHelper.ProcessSecureListingAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
-                    //     request,
-                    //     "Interaction",
-                    //     User,
-                    //     _secureSpecificationFactory.CreateInteractionSpecificationAsync,
-                    //     async (userId, spec, pagination) => _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
-                    //     CurrentUserId,
-                    //     _logger);
-                    
-                    // Simplified version without RBAC
-                    var specification = await _orgUnitFilterService.CreateInteractionSpecificationAsync(request, User);
-                    result = await _manager.GetInteractionsWithSpecification(CurrentUserId, specification, request);
+                    result = await SecureSearchControllerHelper.ProcessSecureListingAsync<Domain.Entities.Interaction, InteractionFilterRequest, PaginationResponse<InteractionModel>>(
+                        request,
+                        "Interaction",
+                        User,
+                        _secureSpecificationFactory.CreateInteractionSpecificationAsync,
+                        async (userId, spec, pagination) => await _manager.GetInteractionsWithSpecification(userId, spec, (InteractionFilterRequest)pagination),
+                        CurrentUserId,
+                        _logger);
                 }
                 
                 // No need for post-query RBAC filtering anymore - security is integrated at database level

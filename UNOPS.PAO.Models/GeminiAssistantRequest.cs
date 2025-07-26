@@ -13,6 +13,7 @@ public class GeminiAssistantRequest
     public string? Message { get; set; }
     public string? sessionId { get; set; }
     public IFormFile? File { get; set; }
+    public IFormFileCollection? Files { get; set; }
     public string? ExtractedText { get; set; }
     public string? ScreenUrl { get; set; }
     public string? State { get; set; }

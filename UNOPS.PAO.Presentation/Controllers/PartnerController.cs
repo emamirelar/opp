@@ -93,8 +93,8 @@ public class PartnerController : BaseController
     /// <param name="request.partnerOfficeId">Filter by partner office ID</param>
     /// <param name="request.globalKeyAccount">Filter by global key account status</param>
     /// <param name="request.orgUnitId">Filter by organizational unit ID for access control</param>
-    /// <param name="advancedSearch">Enable advanced search mode</param>
-    /// <param name="searchCriteria">JSON string containing advanced search filters</param>
+    /// <param name="advancedSearch">Enable advanced search mode for complex entity relationship searches</param>
+    /// <param name="searchCriteria">JSON string containing advanced search filters with nested entity criteria. Required when advancedSearch=true</param>
     /// <param name="searchText">Text to search across partner fields (override for request.searchText)</param>
     /// <example_uses>
     /// Show me all partners
@@ -104,8 +104,43 @@ public class PartnerController : BaseController
     /// Search for government partners
     /// Get partners sorted by name
     /// Find partners in specific organizational unit
+    /// Find partners with specific contacts (use advancedSearch=true, searchCriteria with contact.name)
+    /// Get partners involved in certain interactions (use advancedSearch=true, searchCriteria with interaction.type)
+    /// Find partners with documents containing keywords (advancedSearch=true)
     /// </example_uses>
-    /// <when_to_use>Use this when the user asks to search, list, filter, or browse partners.</when_to_use>
+    /// <when_to_use>Use this when the user asks to search, list, filter, or browse partners. Use advancedSearch=true for relationship-based searches involving contacts, interactions, or documents.</when_to_use>
+    /// <advanced_search_guidance>
+    /// **CRITICAL: When to use advancedSearch=true:**
+    /// - User searches for partners BY CONTACT: "partners with contact John Smith", "partners having contact X"
+    /// - User searches for partners BY INTERACTION: "partners involved in meeting Y", "partners from interaction Z"
+    /// - User searches for partners BY DOCUMENT: "partners with document about climate"
+    /// - User searches for partners BY OPPORTUNITY: "partners in opportunity X"
+    /// - Any search involving related entities (contacts, interactions, documents, opportunities)
+    /// 
+             /// **searchCriteria JSON format with operators (CRITICAL - Must use this exact format):**
+         /// searchCriteria must be a JSON array of SearchCriteria objects with field, operator, value, and logicalOperator
+         /// 
+         /// **Available Operators:**
+         /// - "is" (exact match), "is not" (not equal), "like" (contains), "not like" (does not contain)
+         /// - ">", "<", ">=", "<=" (comparisons), "after", "before", "between" (dates)
+         /// 
+         /// **Logical Operators:** "AND", "OR"
+         /// 
+         /// **Examples:**
+         /// - Find partners with contact "John Smith": 
+         ///   searchCriteria=[{"field": "contact.firstName", "operator": "like", "value": "John", "logicalOperator": "AND"}, {"field": "contact.lastName", "operator": "like", "value": "Smith"}]
+         /// - Find partners involved in climate meetings: 
+         ///   searchCriteria=[{"field": "interaction.subject", "operator": "like", "value": "climate", "logicalOperator": "AND"}, {"field": "interaction.type", "operator": "is", "value": "Meeting"}]
+         /// - Find partners with documents about infrastructure: 
+         ///   searchCriteria=[{"field": "document.description", "operator": "like", "value": "infrastructure"}]
+         /// - Find active partners NOT like "Asian": 
+         ///   searchCriteria=[{"field": "name", "operator": "not like", "value": "Asian", "logicalOperator": "AND"}, {"field": "status", "operator": "is", "value": "Active"}]
+    /// 
+    /// **Simple search (advancedSearch=false) for:**
+    /// - Partner name/description text search: "partners named UNICEF"
+    /// - Basic filtering: "active partners", "government partners"
+    /// - Status/type searches: "global key account partners"
+    /// </advanced_search_guidance>
     /// <returns>Paginated list of partners with metadata</returns>
     [HttpGet(APIDictionary.Partner)]
     [AccessControlled(EntityTypes.Partner, "read")]

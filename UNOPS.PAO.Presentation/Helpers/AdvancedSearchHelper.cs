@@ -212,8 +212,8 @@ public static class AdvancedSearchHelper
             "contact.department", "contact.phone", "contact.mobile",
             "contactName", "contactFirstName", "contactLastName", "contactEmail",
             
-            // Partner related fields (through contact)
-            "contact.partner.name", "contact.partner.status", "contact.partner.shortName",
+            // Partner related fields
+            "partner.name", "partner.status", "partner.shortName",
             "partnerName", "partnerStatus"
         };
     }
