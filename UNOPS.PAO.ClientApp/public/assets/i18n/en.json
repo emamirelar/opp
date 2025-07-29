@@ -399,7 +399,8 @@
     "close": "Close AI Assistant",
     "thinking": "Thinking...",
     "chatHistory": "Chat history",
-    "noOldChats": "No old chats"
+    "noOldChats": "No old chats",
+    "disclaimer": "AI Assistant can make mistakes. Always double-check it."
   },
   "actions": {
     "loadMore": "Load More"

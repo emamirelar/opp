@@ -236,7 +236,8 @@
         "close": "Cerrar Asistente de IA",
         "thinking": "Pensando...",
         "chatHistory": "Historial de conversaciones",
-        "noOldChats": "No hay conversaciones anteriores"
+        "noOldChats": "No hay conversaciones anteriores",
+        "disclaimer": "El Asistente de IA puede cometer errores. Siempre verifica dos veces."
     },
     "common": {
         "cancel": "Cancelar",

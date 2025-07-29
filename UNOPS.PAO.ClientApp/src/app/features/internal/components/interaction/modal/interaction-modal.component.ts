@@ -32,6 +32,22 @@ import { PanelModule } from 'primeng/panel';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 
+/**
+ * @uiEntity Interaction
+ * @route Modal dialog (no direct route)
+ * @description Create and edit interaction records including meetings, calls, emails, and other communications with partners and contacts. Supports AI transcription and file attachments.
+ * @capabilities create_interaction, edit_interaction, add_participants, upload_documents, ai_transcription, schedule_followup, set_interaction_type
+ * @synonyms meeting, communication, event, activity, engagement, touchpoint
+ * @mandatoryFields type, date, subject, contactId
+ * @help_when_stuck Fill in the interaction type, date, and subject. Add participants using email addresses or selecting contacts. Use the AI transcription feature to quickly populate interaction details from audio or images.
+ * @common_tasks
+ *   - Recording a meeting: Select 'Meeting' type, add date/time, participants, and notes
+ *   - Logging a phone call: Choose 'Phone Call' type, add contact, and conversation summary
+ *   - Adding participants: Use email addresses or select from contact list
+ *   - Using AI transcription: Click the transcribe button to process audio/image files
+ *   - Attaching documents: Use the document section to upload relevant files
+ *   - Setting follow-up: Add future interaction reminders or next steps
+ */
 @Component({
   selector: 'app-interaction-modal',
   templateUrl: './interaction-modal.component.html',
@@ -312,6 +328,14 @@ export class InteractionModalComponent {
     }
   }
 
+  /**
+   * @uiButton save_interaction,create_interaction
+   * @description Saves or creates an interaction record with all form data, including participants, documents, and interaction details
+   * @label Save | Create Interaction
+   * @icon pi pi-check
+   * @when_to_use When all required fields are filled and you want to save the interaction to the system
+   * @permissions INTERACTION_CREATE, INTERACTION_UPDATE
+   */
   onSubmit(): void {
     if (this.formGroup.valid) {
       const formValue = this.formGroup.value;
@@ -391,6 +415,14 @@ export class InteractionModalComponent {
     }
   }
 
+  /**
+   * @uiButton delete_interaction
+   * @description Permanently deletes an interaction record after confirmation dialog
+   * @label Delete
+   * @icon pi pi-trash
+   * @when_to_use When an interaction was recorded incorrectly or is no longer relevant (use with caution)
+   * @permissions INTERACTION_DELETE
+   */
   deleteInteraction(): void {
     // Check if user has delete permission
     if (!this.permissionUtilityService.canDelete(this.recordPermissions())) {
@@ -671,7 +703,14 @@ export class InteractionModalComponent {
     return 'application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.google-apps.document,application/vnd.google-apps.spreadsheet';
   }
 
-  // Handler for transcription completion
+  /**
+   * @uiButton process_transcription
+   * @description Processes AI transcription results and automatically fills form fields with extracted interaction data
+   * @label Process Transcription
+   * @icon pi pi-microphone
+   * @when_to_use After uploading audio, image, or text to extract interaction details automatically using AI
+   * @permissions INTERACTION_UPDATE, AI_SERVICE_ACCESS
+   */
   onTranscriptionCompleted(data: any): void {
     if (data) {
       this.formGroup.patchValue({

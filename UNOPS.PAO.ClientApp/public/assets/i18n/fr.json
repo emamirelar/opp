@@ -257,7 +257,8 @@
         "close": "Fermer l'Assistant IA",
         "thinking": "Réflexion en cours...",
         "chatHistory": "Historique des conversations",
-        "noOldChats": "Aucune ancienne conversation"
+        "noOldChats": "Aucune ancienne conversation",
+        "disclaimer": "L'Assistant IA peut faire des erreurs. Vérifiez toujours deux fois."
     },
     "common": {
         "cancel": "Annuler",

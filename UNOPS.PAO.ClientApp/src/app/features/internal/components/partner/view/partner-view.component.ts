@@ -30,23 +30,40 @@ import { SelectModule } from 'primeng/select';
 import { AutoFocusModule } from 'primeng/autofocus';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
-import { PartnerService } from '../../../services/partner.service';
-import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { PartnerContactsComponent } from '../contacts/partner-contacts.component';
-import { GeminiService } from '../../../services/gemini.service';
-import { LinkListComponent } from "../../../../../common/reusables/components/link/list/link-list.component";
-import { EntityType } from '../../../../../common/models/link.model';
-import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
-import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
-import { DialogService } from 'primeng/dynamicdialog';
-import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
+import { CardModule } from 'primeng/card';
 import { Partner } from '../../../models/partner.model';
-import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { PartnerService } from '../../../services/partner.service';
+import { PartnerContactsComponent } from '../contacts/partner-contacts.component';
+import { LinkListComponent } from '../../../../../common/reusables/components/link/list/link-list.component';
+import { EntityType } from '../../../../../common/models/link.model';
+import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
 import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { GeminiService } from '../../../services/gemini.service';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
+import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 
+/**
+ * @uiEntity Partner
+ * @route /partnerships/partners/:id
+ * @description View and edit detailed partner information including contact details, address, organizational data, and associated documents. Central place for managing all aspects of a partner organization.
+ * @capabilities view_partner_details, edit_partner_info, upload_logo, manage_documents, view_contacts, create_interactions, edit_address, update_status
+ * @synonyms organization_details, partner_profile, entity_view, collaborator_info
+ * @mandatoryFields name, partnerType, status, partnerOfficeId
+ * @help_when_stuck This page shows complete partner information. Click Edit to modify details, use tabs to navigate between sections, or click the logo area to upload a new partner logo. All fields are organized by category for easy access.
+ * @common_tasks
+ *   - Editing partner info: Click the Edit button and modify the form fields
+ *   - Uploading logo: Click on the logo/image area to upload a new partner logo
+ *   - Viewing contacts: Go to the Contacts tab to see people associated with this partner
+ *   - Adding interactions: Go to Interactions tab and click 'Add Interaction'
+ *   - Managing documents: Scroll down to the Documents section to upload or view files
+ *   - Updating address: Edit the address fields in the Contact Information section
+ * @tabs Details:/partnerships/partners/:id, Contacts:/partnerships/partners/:id/contacts, Interactions:/partnerships/partners/:id/interactions, Data:/partnerships/partners/:id/data
+ */
 @Component({
   selector: 'app-partner-view',
   imports: [
@@ -336,6 +353,14 @@ export class PartnerViewComponent implements OnInit {
 
   }
 
+  /**
+   * @uiButton edit_partner
+   * @description Opens the partner editing dialog with form fields for modifying partner organization information
+   * @label Edit Partner
+   * @icon pi pi-pencil
+   * @when_to_use When partner information needs updating, correcting partner details, or adding new organizational information
+   * @permissions PARTNER_UPDATE
+   */
   handleEditClick() {
     // Check if user has update permission
     if (!this.permissionService.canUpdate(this.recordPermissions())) {
@@ -424,5 +449,17 @@ export class PartnerViewComponent implements OnInit {
   toggleFullContent() {
     this.showFullContent.set(!this.showFullContent());
   }
+
+  // Note: To document buttons/actions, add @uiButton JSDoc comments above existing methods
+  // Example for documenting existing methods:
+  // /**
+  //  * @uiButton edit_partner  
+  //  * @description Switches to edit mode for partner information
+  //  * @label Edit Partner
+  //  * @icon pi pi-pencil
+  //  * @when_to_use When partner information needs updating, correcting details, adding new information
+  //  * @permissions PARTNER_UPDATE
+  //  */
+  // existingEditMethod() { ... }
 
 }
