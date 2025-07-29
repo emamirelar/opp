@@ -170,9 +170,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         var entity = MapModelToEntity(model);
 
-        // Handle organization unit relationships if specified
+        // Save the partner first to get its ID
+        await PartnerRepository.AddAsync(entity);
+
+        // Handle organization unit relationships if specified - AFTER saving the partner
         if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
         {
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            
             foreach (var relationshipRequest in model.OrganizationUnitRelationships)
             {
                 var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
@@ -181,12 +186,27 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
                     throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
                 }
                 
-                // Add the organization unit relationship
-                entity.AddOrganizationUnitRelationship(orgUnit);
+                // Create the organization unit relationship with the actual partner ID
+                var newRelationship = new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = orgUnit.Id,
+                    EntityId = entity.Id, // Now entity.Id has the actual saved ID
+                    EntityType = nameof(Partner),
+                    Name = $"Partner-{entity.Id}-{orgUnit.Code}",
+                    Status = EntityStatus.Active
+                };
+                relationshipsToAdd.Add(newRelationship);
+            }
+            
+            if (relationshipsToAdd.Any())
+            {
+                await _context.OrganizationUnitRelationships.AddRangeAsync(relationshipsToAdd);
+                await _context.SaveChangesAsync();
+                
+                _logger?.LogInformation("Added {Count} organization unit relationships for partner {PartnerId}: [{Ids}]", 
+                    relationshipsToAdd.Count, entity.Id, string.Join(", ", relationshipsToAdd.Select(r => r.OrganizationHierarchyId)));
             }
         }
-
-        await PartnerRepository.AddAsync(entity);
 
         return await MapEntityToModelAsync(entity, _mapper, null);
     }
@@ -902,9 +922,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // RBAC interceptor handles security enforcement
         var entity = MapModelToEntity(model);
 
-        // Handle organization unit relationships if specified
+        // Save the partner first to get its ID
+        await PartnerRepository.AddAsync(entity);
+
+        // Handle organization unit relationships if specified - AFTER saving the partner
         if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
         {
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            
             foreach (var relationshipRequest in model.OrganizationUnitRelationships)
             {
                 var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
@@ -913,12 +938,27 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
                     throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
                 }
                 
-                // Add the organization unit relationship
-                entity.AddOrganizationUnitRelationship(orgUnit);
+                // Create the organization unit relationship with the actual partner ID
+                var newRelationship = new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = orgUnit.Id,
+                    EntityId = entity.Id, // Now entity.Id has the actual saved ID
+                    EntityType = nameof(Partner),
+                    Name = $"Partner-{entity.Id}-{orgUnit.Code}",
+                    Status = EntityStatus.Active
+                };
+                relationshipsToAdd.Add(newRelationship);
+            }
+            
+            if (relationshipsToAdd.Any())
+            {
+                await _context.OrganizationUnitRelationships.AddRangeAsync(relationshipsToAdd);
+                await _context.SaveChangesAsync();
+                
+                _logger?.LogInformation("Added {Count} organization unit relationships for partner {PartnerId}: [{Ids}]", 
+                    relationshipsToAdd.Count, entity.Id, string.Join(", ", relationshipsToAdd.Select(r => r.OrganizationHierarchyId)));
             }
         }
-
-        await PartnerRepository.AddAsync(entity);
 
         var resultModel = await MapEntityToModelAsync(entity, _mapper, user);
         
