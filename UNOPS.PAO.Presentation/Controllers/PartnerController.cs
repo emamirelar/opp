@@ -21,9 +21,6 @@ using UNOPS.PAO.UNOPSBusiness.Specifications;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Entities;
 
-// using UNOPS.PAO.UNOPSBusiness.Authorization;
-// using UNOPS.PAO.UNOPSBusiness.Attributes;
-
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]
 public class PartnerController : BaseController
@@ -43,6 +40,33 @@ public class PartnerController : BaseController
         _orgUnitFilterService = orgUnitFilterService;
     }
 
+    /// <summary>
+    /// Creates a new partner organization with complete details including address, contact info, and organizational metadata.
+    /// </summary>
+    /// <param name="req">Partner creation request with required fields</param>
+    /// <param name="req.name">Partner organization name (required)</param>
+    /// <param name="req.shortName">Short/abbreviated name (required)</param>
+    /// <param name="req.status">Partner status (defaults to 'Active')</param>
+    /// <param name="req.website">Partner website URL</param>
+    /// <param name="req.phone">Partner phone number</param>
+    /// <param name="req.address1Street">Street address line 1</param>
+    /// <param name="req.address1City">City</param>
+    /// <param name="req.address1Country">Country</param>
+    /// <param name="req.organizationUnitRelationships">Associated UNOPS office relationships</param>
+    /// <param name="req.partnerGroupCode">Partner group classification code</param>
+    /// <param name="req.globalKeyAccount">Whether this is a global key account</param>
+    /// <param name="req.unSecretariatEntity">Whether this is a UN Secretariat entity</param>
+    /// <param name="req.pooledFund">Pooled fund involvement</param>
+    /// <param name="req.ddRequired">Due diligence requirement status</param>
+    /// <example_uses>
+    /// Create a new partner called UNICEF
+    /// Add a new organization with website www.redcross.org
+    /// Register a new government partner from Bangladesh
+    /// Set up a partner organization with contact details
+    /// Create a global key account partner
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to add, create, register, or set up a new partner.</when_to_use>
+    /// <returns>Created partner with ID and metadata</returns>
     [HttpPost(APIDictionary.Partner)]
     [AccessControlled(EntityTypes.Partner, "create")]
     public async Task<IActionResult> Create([FromBody] PartnerRequest req)
@@ -55,6 +79,33 @@ public class PartnerController : BaseController
         return CreatedAtAction(nameof(Create), result.Id, result);
     }
 
+    /// <summary>
+    /// Retrieves a list of partners with advanced filtering, pagination, search capabilities, and access control.
+    /// </summary>
+    /// <param name="request">Partner filter request containing search and pagination parameters</param>
+    /// <param name="request.pageIndex">Page number (1-based)</param>
+    /// <param name="request.pageSize">Number of items per page</param>
+    /// <param name="request.searchText">Text to search across partner fields</param>
+    /// <param name="request.orderBy">Field to order results by</param>
+    /// <param name="request.ascending">Sort direction (true for ascending)</param>
+    /// <param name="request.status">Filter by partner status</param>
+    /// <param name="request.name">Filter by partner name</param>
+    /// <param name="request.orgUnitId">Filter by organizational unit via OrganizationUnitRelationships for access control</param>
+    /// <param name="request.globalKeyAccount">Filter by global key account status</param>
+    /// <param name="advancedSearch">Enable advanced search mode</param>
+    /// <param name="searchCriteria">JSON string containing advanced search filters</param>
+    /// <param name="searchText">Text to search across partner fields (override for request.searchText)</param>
+    /// <example_uses>
+    /// Show me all partners
+    /// List partners containing 'UNICEF' in the name
+    /// Find partners with global key account status
+    /// Show active partners from my office
+    /// Search for government partners
+    /// Get partners sorted by name
+    /// Find partners in specific organizational unit
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to search, list, filter, or browse partners.</when_to_use>
+    /// <returns>Paginated list of partners with metadata</returns>
     [HttpGet(APIDictionary.Partner)]
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll(
@@ -127,6 +178,19 @@ public class PartnerController : BaseController
         }, "partner search");
     }
 
+    /// <summary>
+    /// Retrieves a specific partner by ID with complete details including documents, contacts, and office information.
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <example_uses>
+    /// Show me details for partner ID 123
+    /// Get full information about partner 456
+    /// Display partner record 789
+    /// Get complete partner profile
+    /// Show partner with all related data
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks for specific partner details by ID or when you need complete partner information.</when_to_use>
+    /// <returns>Complete partner details with related information</returns>
     [HttpGet(APIDictionary.Partner + "/{id}")]
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<IActionResult> Get(int id)
@@ -141,6 +205,27 @@ public class PartnerController : BaseController
         return new JsonResult(partner);
     }
 
+    /// <summary>
+    /// Updates an existing partner's information including contact details, status, and organizational metadata.
+    /// </summary>
+    /// <param name="req">Partner update request containing modified fields</param>
+    /// <param name="req.id">Partner ID to update (required)</param>
+    /// <param name="req.name">Updated partner name</param>
+    /// <param name="req.shortName">Updated short name</param>
+    /// <param name="req.status">Updated status</param>
+    /// <param name="req.website">Updated website</param>
+    /// <param name="req.phone">Updated phone number</param>
+    /// <param name="req.globalKeyAccount">Updated key account status</param>
+    /// <param name="req.organizationUnitRelationships">Updated office assignments via OrganizationUnitRelationships</param>
+    /// <example_uses>
+    /// Update partner 123's name to New UNICEF
+    /// Change partner 456's status to Inactive
+    /// Update the website for partner 789
+    /// Modify partner contact information
+    /// Change partner office assignment
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to update, modify, edit, or change partner information.</when_to_use>
+    /// <returns>Updated partner data</returns>
     [HttpPut(APIDictionary.Partner)]
     [AccessControlled(EntityTypes.Partner, "update")]
     public async Task<IActionResult> Update([FromBody] UpdatePartnerRequest req)
@@ -153,6 +238,18 @@ public class PartnerController : BaseController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Soft deletes a partner from the system (marks as deleted rather than permanent removal).
+    /// </summary>
+    /// <param name="id">Partner ID to delete</param>
+    /// <example_uses>
+    /// Delete partner ID 123
+    /// Remove partner 456 from the system
+    /// Deactivate partner organization
+    /// Soft delete partner record
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to delete, remove, or eliminate a partner.</when_to_use>
+    /// <returns>No content on successful deletion</returns>
     [HttpDelete(APIDictionary.Partner + "/{id}")]
     [AccessControlled(EntityTypes.Partner, "delete")]
     public async Task<IActionResult> Delete(int id)
@@ -165,6 +262,18 @@ public class PartnerController : BaseController
         return NoContent();
     }
 
+    /// <summary>
+    /// Retrieves the current user's permissions for a specific partner (read, update, delete).
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <example_uses>
+    /// Check my permissions for partner 123
+    /// What can I do with partner 456?
+    /// Get access rights for this partner
+    /// Verify partner permissions
+    /// </example_uses>
+    /// <when_to_use>Use this when you need to check user permissions before performing operations or showing UI elements.</when_to_use>
+    /// <returns>Permission object with CanRead, CanUpdate, CanDelete flags</returns>
     [HttpGet(APIDictionary.Partner + "/{id}/permissions")]
     public async Task<IActionResult> PermissionsGet(int id)
     {
@@ -180,6 +289,19 @@ public class PartnerController : BaseController
         return Ok(permissions);
     }
 
+    /// <summary>
+    /// Uploads and associates a logo image with a partner (max 1MB, JPEG/PNG/WEBP only).
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <param name="file">Image file (max 1MB)</param>
+    /// <example_uses>
+    /// Upload a logo for partner 123
+    /// Add organization logo to partner record
+    /// Set partner brand image
+    /// Update partner visual identity
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to add or update a partner's logo/image.</when_to_use>
+    /// <returns>Success confirmation or error details</returns>
     [HttpPost(APIDictionary.Partner + "/{id}/logo")]
     [AccessControlled(EntityTypes.Partner, "update")]
     public async Task<IActionResult> UploadLogo(int id, IFormFile file)
@@ -206,6 +328,24 @@ public class PartnerController : BaseController
         return Ok(new { imageUrl = result });
     }
 
+    /// <summary>
+    /// Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting.
+    /// </summary>
+    /// <param name="code">Partner group code to filter by (e.g., 'GOV', 'NGO', 'UNAGENCY')</param>
+    /// <param name="request">Pagination request containing page size and index</param>
+    /// <param name="request.pageIndex">Page number (1-based)</param>
+    /// <param name="request.pageSize">Number of items per page</param>
+    /// <param name="request.orderBy">Field to order results by</param>
+    /// <param name="request.ascending">Sort direction (true for ascending)</param>
+    /// <example_uses>
+    /// Show all government partners (GOV group)
+    /// List all NGO partners with pagination
+    /// Get UN agency partners sorted by name
+    /// Find partners in a specific partner group classification
+    /// Show commercial partners (COMM group) with 20 per page
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification.</when_to_use>
+    /// <returns>Paginated list of partners belonging to the specified partner group</returns>
     [HttpGet(APIDictionary.Partner + "/by-partner-group-code/{code}")]
     // [AccessControlled(EntityTypes.Partner, "read", applyColumnFiltering: true, applyRowFiltering: true)]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerGroup(string code, [FromQuery] PaginationRequest request)
@@ -221,6 +361,25 @@ public class PartnerController : BaseController
         }
     }
 
+    /// <summary>
+    /// Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting.
+    /// </summary>
+    /// <param name="code">Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')</param>
+    /// <param name="request">Pagination request containing page size and index</param>
+    /// <param name="request.pageIndex">Page number (1-based)</param>
+    /// <param name="request.pageSize">Number of items per page</param>
+    /// <param name="request.orderBy">Field to order results by</param>
+    /// <param name="request.ascending">Sort direction (true for ascending)</param>
+    /// <example_uses>
+    /// Show all national partners in this category
+    /// List international partners with pagination
+    /// Get bilateral partners sorted by name
+    /// Find partners in a specific operational category
+    /// Show multilateral partners with 15 per page
+    /// Filter partners by geographic or operational scope
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification.</when_to_use>
+    /// <returns>Paginated list of partners belonging to the specified partner category</returns>
     [HttpGet(APIDictionary.Partner + "/by-partner-category-code/{code}")]
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetPartnersByPartnerCategory(string code, [FromQuery] PaginationRequest request)

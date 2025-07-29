@@ -1,6 +1,5 @@
 using Google.Apis.Auth.OAuth2;
 using Microsoft.EntityFrameworkCore;
-
 using Microsoft.Extensions.Configuration;
 using UNOPS.PAO.GoogleServices;
 using UNOPS.PAO.Models;
@@ -13,7 +12,6 @@ using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.DataAccess.Context;
 using AutoMapper;
 using UNOPS.PAO.Business.Repositories.Generic;
-using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Linq;
@@ -42,6 +40,8 @@ using Z.EntityFramework.Plus;
 using System.Text.Json;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Caching.Memory; // Add this for IMemoryCache
+using System.Security.Claims;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -52,24 +52,30 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GoogleCredential _credentials;
     private readonly DataRepository<AiPrompt> _promptRepository;
     private readonly UNOPSAppDbContext _context;
-    private readonly string _connectionString;
     private readonly GoogleTextToSpeechService _ttsService;
     private readonly TextExtractionService _textExtractionService;
     private readonly GoogleCloudStorageService _gcsService;
     private readonly GeminiSessionService _sessionService;
     private readonly AiContextualService _aiService;
     private readonly ILogger<UNOPSGeminiManager> _logger;
+    private readonly CloudRunHelper _cloudRunHelper;
+    private readonly IUserManagementManager _userManagementManager;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, HttpClient httpClient, ILogger<UNOPSGeminiManager> logger)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, HttpClient httpClient, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager)
     {
         _mapper = mapper;
         _context = context;
         _promptRepository = new DataRepository<AiPrompt>(context);
         _configuration = configuration;
         _logger = logger;
+        _userManagementManager = userManagementManager;
+        
+        // Initialize CloudRunHelper internally
+        var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
+        _cloudRunHelper = new CloudRunHelper(cloudRunHelperLogger, GetCredentials());
+        
         _credentials = GetCredentials()
                         .CreateScoped("https://www.googleapis.com/auth/spreadsheets.readonly");
-        _connectionString = configuration.GetValue<string>("ConnectionStrings:DbSchema");
         _textExtractionService = new TextExtractionService();
         _gcsService = new GoogleCloudStorageService(configuration);
         _sessionService = new GeminiSessionService(context, httpClient, configuration);
@@ -278,9 +284,9 @@ public class UNOPSGeminiManager : IGeminiManager
                 throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
             }
             
-            var apiUrl = $"{serviceUrl}/apps/{appName}/users/{userId}/sessions";
+            var apiUrl = $"/apps/{appName}/users/{userId}/sessions";
             
-            using var httpClient = new HttpClient();
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
             httpClient.Timeout = TimeSpan.FromSeconds(30);
             
             var response = await httpClient.GetAsync(apiUrl);
@@ -798,7 +804,7 @@ public class UNOPSGeminiManager : IGeminiManager
         });
     }
 
-    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, int currentUserId, IHeaderDictionary headers = null)
+    public async Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null)
     {
         var appName = _configuration.GetValue<string>("AgenticAi:AppName");
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
@@ -806,74 +812,39 @@ public class UNOPSGeminiManager : IGeminiManager
         {
             throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
         }
-
+        
+        // Extract user ID from claims
+        var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
+        // Get user email from currentUserId using UserManagementManager
+        // TODO: may be fix the interface...
+        // var currentUser = await ((UNOPSUserManagementManager)_userManagementManager).GetBasicEntityAsync(currentUserId) as UserManagementModel;
+        // TODO: In DEV mode, somehow the currentUserId is set to 90, but the email in the database is empty
+        var currentUserEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+        
+        if (string.IsNullOrEmpty(currentUserEmail) || string.IsNullOrEmpty(currentUserId))
+        {
+          throw new InvalidOperationException($"Unable to lookup both current user email {currentUserEmail} and current user id {currentUserId}");
+        }
+        currentUserEmail = currentUserEmail.Contains(':') ? currentUserEmail.Split(':').Last() : currentUserEmail;
         var aiChatRequest = new AiChatRequest
         {
             AppName = appName,
             UserId = currentUserId.ToString(),
+            UserEmail = currentUserEmail,
             SessionId = req.sessionId?.ToString() ?? "",
             Message = req.Message ?? "",
             Streaming = false,
             State = req.State
         };
 
-        var apiUrl = $"{serviceUrl}/chat";
+        var apiUrl = $"/chat";
         var jsonContent = System.Text.Json.JsonSerializer.Serialize(aiChatRequest);
+
         var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-        using var httpClient = new HttpClient();
-        
-        // Log incoming headers for debugging
-        _logger.LogInformation("ChatWithGemini - Total incoming headers count: {HeaderCount}", headers?.Count ?? 0);
-        if (headers != null)
-        {
-            foreach (var header in headers)
-            {
-                _logger.LogInformation("ChatWithGemini - Incoming header: '{HeaderKey}' = '{HeaderValue}'", header.Key, string.Join(", ", header.Value.ToArray()));
-            }
-        }
-        else
-        {
-            _logger.LogInformation("ChatWithGemini - No headers provided to method");
-        }
-        
-        // Add all request headers to the HTTP client
-        if (headers != null)
-        {
-            foreach (var header in headers)
-            {
-                try
-                {
-                    // Skip headers that are set automatically by HttpClient or are restricted
-                    if (!IsRestrictedHeader(header.Key))
-                    {
-                        _logger.LogInformation("ChatWithGemini - Adding header to HttpClient: '{HeaderKey}' = '{HeaderValue}'", header.Key, string.Join(", ", header.Value.ToArray()));
-                        httpClient.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value.AsEnumerable());
-                    }
-                    else
-                    {
-                        _logger.LogInformation("ChatWithGemini - Skipping restricted header: '{HeaderKey}'", header.Key);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Log and continue if a header cannot be added
-                    _logger.LogError(ex, "ChatWithGemini - Could not add header '{HeaderKey}': {ErrorMessage}", header.Key, ex.Message);
-                }
-            }
-        }
-        
-        // Add dummy header for testing
-        httpClient.DefaultRequestHeaders.TryAddWithoutValidation("X-Test-Header", "test-value-123");
-        _logger.LogInformation("ChatWithGemini - Added dummy test header");
-        
-        // Log final headers that will be sent
-        _logger.LogInformation("ChatWithGemini - Final HttpClient headers count: {HeaderCount}", httpClient.DefaultRequestHeaders.Count());
-        foreach (var header in httpClient.DefaultRequestHeaders)
-        {
-            _logger.LogInformation("ChatWithGemini - Final header: '{HeaderKey}' = '{HeaderValue}'", header.Key, string.Join(", ", header.Value.ToArray()));
-        }
-        
+        using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+
         var response = await httpClient.PostAsync(apiUrl, httpContent);
         if (!response.IsSuccessStatusCode)
         {
@@ -907,7 +878,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 var newSession = new AiChatSession
                 {
                     Id = sessionId,
-                    UserId = currentUserId,
+                    UserId = int.Parse(currentUserId),
                     Status = "Active",
                     Title = "New Chat",
                     LastUpdated = DateTime.UtcNow,
@@ -954,8 +925,8 @@ public class UNOPSGeminiManager : IGeminiManager
             throw new InvalidOperationException("Title generation is not allowed for this session.");
 
         var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
-        var apiUrl = $"{serviceUrl}/generate-title?session_id={sessionId}&user_id={userId}";
-        using var httpClient = new HttpClient();
+        var apiUrl = $"/generate-title?session_id={sessionId}&user_id={userId}";
+        using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
         var response = await httpClient.GetAsync(apiUrl);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException("Failed to generate title");

@@ -1,6 +1,6 @@
 ﻿namespace UNOPS.PAO.Domain.Entities;
 
-public class GrantUser
+public class PAOUser
 {
     public int Id { get; set; }
     public required string Email { get; set; }

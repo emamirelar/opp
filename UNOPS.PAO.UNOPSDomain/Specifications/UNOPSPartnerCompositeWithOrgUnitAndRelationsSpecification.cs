@@ -12,16 +12,16 @@ using Microsoft.EntityFrameworkCore;
 public class UNOPSPartnerCompositeWithOrgUnitAndRelationsSpecification : BaseCompositeSpecification<UNOPSPartner>
 {
     private readonly List<int> _orgUnitHierarchyIds;
-    private readonly List<int> _orgUnitUserIds;
+    private readonly List<string> _orgUnitUserIds;
     
     public UNOPSPartnerCompositeWithOrgUnitAndRelationsSpecification(
         IPartnerSearchFilter filter, 
         List<int> orgUnitHierarchyIds,
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
         : base(BuildCombinedCriteria(filter, orgUnitHierarchyIds, orgUnitUserIds))
     {
         _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
-        _orgUnitUserIds = orgUnitUserIds ?? new List<int>();
+        _orgUnitUserIds = orgUnitUserIds ?? new List<string>();
         // Create base specification to copy includes
         var baseSpec = new UNOPSPartnerCompositeSpecification(filter);
         
@@ -46,7 +46,7 @@ public class UNOPSPartnerCompositeWithOrgUnitAndRelationsSpecification : BaseCom
     private static Expression<Func<UNOPSPartner, bool>> BuildCombinedCriteria(
         IPartnerSearchFilter filter, 
         List<int> orgUnitHierarchyIds,
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
     {
         // Create base composite specification
         var baseSpec = new UNOPSPartnerCompositeSpecification(filter);

@@ -1,0 +1,40 @@
+{
+  "entity": "OrganizationHierarchy",
+  "description": "Manages and provides access to the hierarchical structure of an organization, detailing relationships between different organizational units or departments.",
+  "synonyms": [
+    "Org Chart",
+    "Organizational Structure",
+    "Department Tree",
+    "Company Structure",
+    "Reporting Lines"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetOrganizationHierarchy",
+      "url": "/api/organization-hierarchy",
+      "method": "GET",
+      "description": "Retrieves the current and complete organizational hierarchy of the system, showing all active organizational units and their relationships.",
+      "parameters": {},
+      "example_uses": [
+        "Show me the current organizational chart.",
+        "I need to see the full structure of the organization.",
+        "What are all the departments and how do they relate?"
+      ],
+      "when_to_use": "Use this endpoint when you need to view the entire, up-to-date organizational structure for planning, reporting, or general information."
+    },
+    {
+      "name": "GetOrganizationHierarchyLegacy",
+      "url": "/api/organization-hierarchy/legacy",
+      "method": "GET",
+      "description": "Retrieves a legacy version of the organizational hierarchy, potentially for historical data access or compatibility with older systems. This might represent a previous structure or a specific data format.",
+      "parameters": {},
+      "example_uses": [
+        "Can I get the old organizational hierarchy?",
+        "I need to access the legacy org chart for a historical report.",
+        "Retrieve the organizational structure as it was in the previous system."
+      ],
+      "when_to_use": "Use this endpoint when you specifically require access to an older or legacy representation of the organizational hierarchy, typically for historical analysis, migration, or compatibility purposes."
+    }
+  ]
+}

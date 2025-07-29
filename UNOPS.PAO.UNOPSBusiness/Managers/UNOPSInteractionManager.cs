@@ -61,13 +61,13 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         return entity;
     }
 
-    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null)
+    public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null)
         : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
         this.context = context;
-        interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration);
-        contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
+        interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration, serviceProvider);
+        contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
     }
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
@@ -593,6 +593,19 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
     }
 
+    /// <summary>
+    /// Gets basic interaction data by ID without nested entities
+    /// </summary>
+    public override async Task<object> GetBasicEntityDataAsync(int id)
+    {
+        var interaction = await interactionRepository.GetByIdAsync(id);
+        if (interaction != null)
+        {
+            return mapper.Map<UNOPSInteraction, InteractionModel>(interaction);
+        }
+        return null;
+    }
+
     public virtual async Task<InteractionModel> FindGmailInteractionAsync(GmailInteractionRequest model)
     {
         var entity = await interactionRepository.GetAll().AsQueryable()
@@ -705,7 +718,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             // Process email-based User lookups
             if (model.EmailAddresses?.Any() == true)
             {
-                var matchingUsers = await context.GrantUsers
+                var matchingUsers = await context.PAOUsers
                     .Where(u => model.EmailAddresses.Contains(u.Email))
                     .ToListAsync();
 
@@ -737,5 +750,39 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             await jtTransaction.RollbackAsync();
             throw;
         }
+    }
+
+    /// <summary>
+    /// Gets multiple interactions by their IDs for search results
+    /// </summary>
+    public override async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
+    {
+        if (ids == null || ids.Length == 0)
+            return new List<object>();
+
+        var interactions = interactionRepository
+            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"])
+            .Where(i => ids.Contains(i.Id))
+            .ToList();
+
+        // Apply access control if user context is provided
+        if (user != null)
+        {
+            var filteredData = await ApplyAccessControlFilters(interactions.AsQueryable(), user, "read");
+            if (filteredData is IEnumerable<UNOPSInteraction> interactionList)
+            {
+                interactions = interactionList.ToList();
+            }
+        }
+
+        // Process interactions sequentially to avoid DbContext threading issues
+        var results = new List<InteractionModel>();
+        foreach (var interaction in interactions)
+        {
+            var mappedInteraction = await MapEntityToModelAsync(interaction, mapper, user);
+            results.Add(mappedInteraction);
+        }
+        
+        return results.Cast<object>().ToList();
     }
 }

@@ -1,0 +1,76 @@
+{
+  "entity": "Document",
+  "description": "Manages the storage, retrieval, and modification of various types of documents and files linked to other entities like partners, contacts, or interactions.",
+  "synonyms": [
+    "file",
+    "attachment",
+    "record",
+    "artifact",
+    "paperwork"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetAll",
+      "url": "/api/document/{entityName}/{entityId}",
+      "method": "GET",
+      "description": "Retrieves all documents associated with a specific entity (partner, contact, or interaction) with access control.",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": "Entity type name (e.g., 'Partner', 'Contact', 'Interaction')"
+        },
+        "entityId": {
+          "type": "integer",
+          "required": true,
+          "description": "Entity ID to get documents for"
+        }
+      },
+      "example_uses": [
+        "Show all documents for partner 123",
+        "Get documents attached to contact 456",
+        "List files for interaction 789"
+      ],
+      "when_to_use": "Use this when the user asks to see documents, files, or attachments for a specific partner, contact, or interaction."
+    },
+    {
+      "name": "Get",
+      "url": "/api/document/{id}",
+      "method": "GET",
+      "description": "Retrieves a specific document by ID with complete details including file information, metadata, and download access.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": "Document ID"
+        }
+      },
+      "example_uses": [
+        "Show me details for document ID 123",
+        "Get document 456 information",
+        "Display document record 789"
+      ],
+      "when_to_use": "Use this when the user asks for specific document details by ID or when you need complete document information for viewing or downloading."
+    },
+    {
+      "name": "Update",
+      "url": "/api/document",
+      "method": "PUT",
+      "description": "Updates an existing document's metadata, description, and properties with permission validation.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "Document update request containing modified fields"
+        }
+      },
+      "example_uses": [
+        "Update document 123's title to \"New Contract\"",
+        "Change document 456's description",
+        "Modify document type to \"Legal Agreement\""
+      ],
+      "when_to_use": "Use this when the user asks to update, modify, edit, or change document information or metadata."
+    }
+  ]
+}

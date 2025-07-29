@@ -196,7 +196,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
 
             // Create specification that includes org unit filtering with relations
             var hierarchyIds = new List<int> { 10, 11, 12 };
-            var userIds = new List<int> { 1, 2 }; // Users in the org units who have interactions
+            var userIds = new List<string> { "1", "2" }; // Users in the org units who have interactions
             var unosSpecification = new UNOPSPartnerByOrgUnitWithRelationsSpecification(hierarchyIds, userIds);
             var adaptedSpecification = new PartnerSpecificationAdapter(unosSpecification);
             
@@ -212,7 +212,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var response = result as PaginationResponse<PartnerModel>;
             response!.Should().NotBeNull();
             
-            // The new org unit filter includes both direct (PartnerOfficeId) and indirect (via contacts) relations
+            // The new org unit filter includes both direct (OrganizationUnitRelationships) and indirect (via contacts) relations
             // Partners 1, 2, 3 (direct) + 4, 5 (indirect via interactions) = 5 total
             response!.TotalCount.Should().Be(5);
             response!.Records.Should().HaveCount(5);
@@ -296,7 +296,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
 
             // Create specification with org unit filtering including relations
             var hierarchyIds = new List<int> { 10, 11 };
-            var userIds = new List<int> { 1 }; // User who may have interactions with contacts
+            var userIds = new List<string> { "1" }; // User who may have interactions with contacts
             var baseSpecification = new PartnerByOrgUnitWithRelationsSpecification(hierarchyIds, userIds);
             var unosSpecification = new UNOPSPartnerByOrgUnitWithRelationsSpecification(hierarchyIds, userIds);
             var adaptedSpecification = new PartnerSpecificationAdapter(unosSpecification);
@@ -353,7 +353,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
 
             // Create specification with single org unit and potential user interactions
             var hierarchyIds = new List<int> { 10 }; // Only the org unit itself
-            var userIds = new List<int> { 1 }; // User who may have interactions
+            var userIds = new List<string> { "1" }; // User who may have interactions
             var baseSpecification = new PartnerByOrgUnitWithRelationsSpecification(hierarchyIds, userIds);
             var unosSpecification = new UNOPSPartnerByOrgUnitWithRelationsSpecification(hierarchyIds, userIds);
             var adaptedSpecification = new PartnerSpecificationAdapter(unosSpecification);

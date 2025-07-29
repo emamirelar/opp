@@ -55,7 +55,6 @@ IS_DEVELOPMENT=true
      --source . \
      --region=$REGION \
      --platform=managed \
-     --allow-unauthenticated \
      --port=8080 \
      --memory=2Gi \
      --cpu=1 \

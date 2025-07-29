@@ -14,14 +14,14 @@ using UNOPS.PAO.Domain.Entities;
 public class UNOPSPartnerByOrgUnitWithRelationsSpecification : BaseSpecification<UNOPSPartner>
 {
     private readonly List<int> _orgUnitHierarchyIds;
-    private readonly List<int> _orgUnitUserIds;
+    //private readonly List<int> _orgUnitUserIds;
     public UNOPSPartnerByOrgUnitWithRelationsSpecification(
         List<int> orgUnitHierarchyIds, 
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
         : base(BuildCriteria(orgUnitHierarchyIds, orgUnitUserIds))
     {
         _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
-        _orgUnitUserIds = orgUnitUserIds ?? new List<int>();
+        //_orgUnitUserIds = orgUnitUserIds ?? new List<int>();
         // Include related entities for the query
         AddInclude(p => p.Contacts);
         AddInclude($"{nameof(UNOPSPartner.Contacts)}.{nameof(Contact.Interactions)}");
@@ -31,7 +31,7 @@ public class UNOPSPartnerByOrgUnitWithRelationsSpecification : BaseSpecification
 
     private static Expression<Func<UNOPSPartner, bool>> BuildCriteria(
         List<int> orgUnitHierarchyIds, 
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
     {
         // If both lists are empty, return no results for security
         if ((orgUnitHierarchyIds == null || orgUnitHierarchyIds.Count == 0) && 
@@ -52,7 +52,7 @@ public class UNOPSPartnerByOrgUnitWithRelationsSpecification : BaseSpecification
              p.Contacts.Any(c => 
                 c.Interactions.Any(i => 
                     i.InteractionUsers.Any(iu => 
-                        orgUnitUserIds.Contains(iu.UserId)))));
+                        orgUnitUserIds.Contains(iu.UserId.ToString())))));
     }
     
     /// <summary>

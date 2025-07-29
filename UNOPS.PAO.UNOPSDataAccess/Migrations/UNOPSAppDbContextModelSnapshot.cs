@@ -609,29 +609,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("EntityUserRoles", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.GrantUser", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsInternal")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AspNetUsers", "public", t =>
-                        {
-                            t.ExcludeFromMigrations();
-                        });
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Interaction", b =>
                 {
                     b.Property<int>("Id")
@@ -926,6 +903,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasIndex("ParentId");
 
                     b.ToTable("OrganizationHierarchies", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PAOUser", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AspNetUsers", "public", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OrganizationUnitRelationship", b =>
@@ -1310,20 +1310,23 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AdditionalSettingsJson")
+                        .HasColumnType("text");
+
                     b.Property<int>("CreatedBy")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("DefaultOrgUnitId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("DeletedBy")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GlobalFilterJson")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -1338,9 +1341,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("PreferencesJson")
-                        .HasColumnType("text");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -1349,9 +1349,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DefaultOrgUnitId");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("UserPreferences", "public");
                 });
@@ -2131,7 +2130,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("UNOPS.PAO.Domain.Entities.GrantUser", "User")
+                    b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2174,28 +2173,21 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UserPreference", b =>
                 {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.OrganizationHierarchy", "DefaultOrgUnit")
-                        .WithMany()
-                        .HasForeignKey("DefaultOrgUnitId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.UserInfo", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                    b.HasOne("UNOPS.PAO.Domain.Entities.UserProfile", "UserProfile")
+                        .WithOne("UserPreference")
+                        .HasForeignKey("UNOPS.PAO.Domain.Entities.UserPreference", "UserId")
+                        .HasPrincipalKey("UNOPS.PAO.Domain.Entities.UserProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("DefaultOrgUnit");
-
-                    b.Navigation("User");
+                    b.Navigation("UserProfile");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UserProfile", b =>
                 {
-                    b.HasOne("UNOPS.PAO.Domain.Entities.GrantUser", null)
+                    b.HasOne("UNOPS.PAO.Domain.Entities.PAOUser", null)
                         .WithOne("UserProfile")
-                        .HasForeignKey("UNOPS.PAO.Domain.Entities.UserProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UNOPS.PAO.Domain.Entities.UserProfile", "UserId");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.Common.Budget", b =>
@@ -2270,11 +2262,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("DocumentRelationships");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.GrantUser", b =>
-                {
-                    b.Navigation("UserProfile");
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Interaction", b =>
                 {
                     b.Navigation("Documents");
@@ -2293,6 +2280,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Navigation("EntityRelationships");
                 });
 
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PAOUser", b =>
+                {
+                    b.Navigation("UserProfile");
+                });
+
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Partner", b =>
                 {
                     b.Navigation("Contacts");
@@ -2303,6 +2295,11 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PartnerTree", b =>
                 {
                     b.Navigation("Partners");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.UserProfile", b =>
+                {
+                    b.Navigation("UserPreference");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.UNOPSDomain.Entities.EntityManager", b =>

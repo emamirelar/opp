@@ -121,7 +121,7 @@ public class OrgUnitFilterService : IOrgUnitFilterService
         return null;
     }
     
-    private async Task<List<int>> GetOrgUnitUserIds(List<int> orgUnitIds)
+    private async Task<List<string>> GetOrgUnitUserIds(List<int> orgUnitIds)
     {
         // Get organization codes for the given IDs
         var orgCodes = await _context.OrganizationHierarchies
@@ -132,7 +132,7 @@ public class OrgUnitFilterService : IOrgUnitFilterService
         // Get users belonging to these org units
         return await _context.UserInfos
             .Where(u => u.OrgUnit != null && orgCodes.Contains(u.OrgUnit))
-            .Select(u => u.UserId)
+            .Select(u => u.UserId.ToString())
             .ToListAsync();
     }
     

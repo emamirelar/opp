@@ -43,7 +43,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         {
             // Arrange
             var orgUnitHierarchyIds = new List<int> { 1, 2, 3 };
-            var orgUnitUserIds = new List<int> { 10, 11, 12 };
+            var orgUnitUserIds = new List<string> { "10", "11", "12" };
 
             // Act
             var specification = new PartnerByOrgUnitWithRelationsSpecification(orgUnitHierarchyIds, orgUnitUserIds);
@@ -60,7 +60,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         {
             // Arrange
             var orgUnitHierarchyIds = new List<int> { 1 };
-            var orgUnitUserIds = new List<int> { 10 };
+            var orgUnitUserIds = new List<string> { "10" };
 
             // Act
             var specification = new PartnerByOrgUnitWithRelationsSpecification(orgUnitHierarchyIds, orgUnitUserIds);
@@ -86,7 +86,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
                 new List<int> { orgUnitId }, 
-                new List<int>()
+                new List<string>()
             );
 
             // Act
@@ -187,7 +187,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
                 new List<int>(), 
-                new List<int> { userId }
+                new List<string> { userId.ToString() }
             );
 
             // Act
@@ -297,7 +297,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
                 new List<int> { orgUnitId }, 
-                new List<int> { userId }
+                new List<string> { userId.ToString() }
             );
 
             // Act
@@ -325,7 +325,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
                 new List<int>(), 
-                new List<int>()
+                new List<string>()
             );
 
             // Act
@@ -370,7 +370,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
 
             var specification = new PartnerByOrgUnitWithRelationsSpecification(
                 orgUnitIds, 
-                new List<int>()
+                new List<string>()
             );
 
             // Act
@@ -386,7 +386,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         public async Task Criteria_WithMultipleUserIds_FiltersCorrectly()
         {
             // Arrange
-            var userIds = new List<int> { 100, 101, 102 };
+            var userIds = new List<string> { "100", "101", "102" };
             
             var partner1 = new Partner 
             { 

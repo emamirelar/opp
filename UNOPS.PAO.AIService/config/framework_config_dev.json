@@ -30,7 +30,12 @@
   "google_cloud": {
     "use_vertex_ai": true,
     "project": "unops-partneropportunity",
-    "location": "europe-west4"
+    "location": "europe-west4",
+    "oauth": {
+      "identity_toolkit_api_key_secret": "IdentityToolkitAPIKey",
+      "client_id": "1069310298210-ubl2naqi5bjeqlqrroiqb4qdm482aans.apps.googleusercontent.com",
+      "target_principal": "pno-ai-service@unops-partneropportunity.iam.gserviceaccount.com"
+    }
   },
   "database": {
     "url": "postgresql://postgres:0Y%2FX3YNxHLL0fL4T@localhost:5433/anusha"

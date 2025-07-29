@@ -367,5 +367,33 @@
         "templateValid": "Template válido pero sin resultado",
         "templateError": "Error en el template",
         "examplePlaceholder": "ej. {nombre} ({nombreCorto})"
+    },
+    "search": {
+        "results": "Resultados de Búsqueda",
+        "totalResults": "resultados totales",
+        "entityTypes": "tipos de entidades",
+        "searching": "Buscando...",
+        "found": "Encontrado",
+        "resultsIn": "resultados en",
+        "totalOf": "total de",
+        "noResultsFound": "No se encontraron resultados",
+        "tryDifferentTerms": "Prueba con términos de búsqueda diferentes",
+        "startSearching": "Comenzar búsqueda",
+        "enterTermsAbove": "Ingrese términos de búsqueda arriba",
+        "matched": "Coincidió",
+        "matchedIn": "Coincidió en",
+        "relevance": "Relevancia",
+        "snippet": "Fragmento",
+        "searchCriteria": "Criterios de Búsqueda",
+        "showMetadata": "Mostrar Metadatos",
+        "placeholder": "Buscar...",
+        "searchButton": "Buscar",
+        "clearSearch": "Limpiar búsqueda",
+        "closeSearch": "Cerrar búsqueda",
+        "recentSearches": "Búsquedas Recientes",
+        "clearAll": "Limpiar Todo",
+        "noResults": "No se encontraron resultados",
+        "viewAllResults": "Ver Todos los Resultados",
+        "filteredBy": "Filtrado por"
     }
 }

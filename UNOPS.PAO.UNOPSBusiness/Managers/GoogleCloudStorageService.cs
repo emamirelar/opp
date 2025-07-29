@@ -26,8 +26,6 @@ using Google.Cloud.Storage.V1;
 using Microsoft.AspNetCore.Http;
 using Google.Cloud.TextToSpeech.V1;
 using Google.Apis.Storage.v1.Data;
-using Google.Apis.Auth.OAuth2;
-using UNOPS.PAO.GoogleServices;
 using System.IO;
 using System.Collections.Generic;
 

@@ -102,21 +102,7 @@
       </div>
       
       <!-- Global Filter Section -->
-      <div class="border-t border-gray-200 pt-4 pb-4 mt-auto">
-        <div class="px-4 flex items-center mb-2 gap-1 justify-between">
-          <span class="text-sm font-medium">{{ 'global.filter' | translate }} :</span>
-          <p-button
-            [rounded]="true" 
-            [text]="true"
-            [size]="'small'"
-            (onClick)="toggleGlobalFilter()"
-            [icon]="globalFilterEnabled() ? 'pi pi-filter' : 'pi pi-filter-slash'">
-          </p-button>
-        </div>
-        <div class="px-4">
-          <app-org-unit-selector></app-org-unit-selector>
-        </div>
-      </div>
+
     </div>
     
     <!-- AI Assistant Panel (Fullscreen Mode) -->

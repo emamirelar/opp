@@ -123,5 +123,13 @@ public class APIDictionary
     public const string UserManagementRoles = UserManagement + "/roles";
     public const string UserManagementCurrentUserOrgUnit = UserManagement + "/current-user-org-unit";
 
+    // Global Filters and User Preferences
+    public const string Global = APIPrefix + "global";
+    public const string GlobalUserPreferences = Global + "/user-preferences";
+    public const string GlobalFilters = Global + "/filters";
+    public const string GlobalFiltersReset = GlobalFilters + "/reset";
+    public const string GlobalSearch = Global + "/search";
+    public const string PreferredLanguage = Global + "/preferred-language";
+
     public const string AiAssistantGenerateTitle = APIPrefix + "ai-assistant/generate-title";
 }

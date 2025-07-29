@@ -7,9 +7,9 @@ public interface IUserManagementManager
 {
     Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request);
     
-    Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, int userId);
+    Task<UserManagementModel?> GetUserByIdAsync(ClaimsPrincipal user, string userId);
     
-    Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, int userId, UpdateUserRolesRequest request);
+    Task<UserManagementModel?> UpdateUserRolesAsync(ClaimsPrincipal user, string userId, UpdateUserRolesRequest request);
     
     Task<IEnumerable<RoleModel>> GetAvailableRolesAsync(ClaimsPrincipal user);
     

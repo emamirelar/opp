@@ -192,6 +192,25 @@ public abstract class BaseUNOPSManager
     public abstract Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null);
 
     /// <summary>
+    /// Gets basic entity data by ID without nested entities - can be overridden by derived managers
+    /// </summary>
+    public virtual async Task<object> GetBasicEntityDataAsync(int id)
+    {
+        throw new NotImplementedException($"GetBasicEntityDataAsync not implemented for {GetType().Name}");
+    }
+
+    /// <summary>
+    /// Gets multiple entities by their IDs for search results - must be implemented by derived managers
+    /// </summary>
+    /// <param name="ids">Array of entity IDs</param>
+    /// <param name="user">Current user context for security</param>
+    /// <returns>List of entity models</returns>
+    public virtual async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
+    {
+        throw new NotImplementedException($"GetByIdsAsync not implemented for {GetType().Name}");
+    }
+
+    /// <summary>
     /// Gets the entity type name for this manager (used for logging/error messages)
     /// </summary>
     protected virtual string GetEntityTypeName()

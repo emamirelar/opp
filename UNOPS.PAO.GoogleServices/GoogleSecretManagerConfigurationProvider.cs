@@ -5,6 +5,7 @@ using Google.Cloud.SecretManager.V1;
 using Google.Apis.Auth.OAuth2;
 using Grpc.Auth;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace UNOPS.PAO.GoogleServices;
 
@@ -12,6 +13,9 @@ public class GoogleSecretManagerConfigurationProvider : ConfigurationProvider
 {
     private string? ProjectId { get; set; }
     private SecretManagerServiceClient Client { get; set; }
+    private readonly IMemoryCache _cache;
+    // Secrets get cached for 1 hour so we don't call the secret manager api on every request, though this could be much longer as they rarely change
+    private readonly TimeSpan _cacheExpiration = TimeSpan.FromHours(1);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GoogleSecretManagerConfigurationProvider"/> class.
@@ -24,6 +28,7 @@ public class GoogleSecretManagerConfigurationProvider : ConfigurationProvider
         ProjectName project = new ProjectName(projectId);
         ProjectId = project.ProjectId;
         Client = SecretManagerServiceClient.Create();
+        _cache = new MemoryCache(new MemoryCacheOptions());
     }
 
     /// <summary>
@@ -38,6 +43,7 @@ public class GoogleSecretManagerConfigurationProvider : ConfigurationProvider
         var platform = Platform.Instance();
         if (platform != null)
             ProjectId = platform.ProjectId;
+        _cache = new MemoryCache(new MemoryCacheOptions());
     }
 
     public string? GetSecretVersion(string secretId, string? secretVersion = "latest")
@@ -55,9 +61,22 @@ public class GoogleSecretManagerConfigurationProvider : ConfigurationProvider
 
     private string? AccessSecretVersion(SecretVersionName secret)
     {
-        var result = Client.AccessSecretVersion(secret);
+        var cacheKey = $"{secret.ProjectId}:{secret.SecretId}:{secret.SecretVersionId}";
+        
+        if (_cache.TryGetValue(cacheKey, out string? cachedResult))
+        {
+            return cachedResult;
+        }
 
-        // Convert the payload to a string. Payloads are bytes by default.
-        return result?.Payload.Data.ToStringUtf8();
+        var result = Client.AccessSecretVersion(secret);
+        var secretValue = result?.Payload.Data.ToStringUtf8();
+        
+        // Cache the result with 1 hour expiration
+        if (secretValue != null)
+        {
+            _cache.Set(cacheKey, secretValue, _cacheExpiration);
+        }
+
+        return secretValue;
     }
 }

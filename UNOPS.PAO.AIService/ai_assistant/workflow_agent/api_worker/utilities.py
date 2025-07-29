@@ -2,12 +2,15 @@
 Utility functions for API Worker Agent
 """
 
-import requests
 import json
-import traceback
 import os
-from typing import Dict, Any, Optional
+import traceback
+from typing import Any, Dict, Optional
+
+import requests
 from google.adk.tools.tool_context import ToolContext
+
+from .auth_helpers import get_service_account_oidc_token
 
 
 def detect_entity_from_url(url: str) -> Optional[str]:
@@ -198,7 +201,7 @@ def test_api_connectivity(base_url: str) -> dict:
     Returns:
         dict: Connectivity test results
     """
-    print(f"\n🔍 TESTING API CONNECTIVITY")
+    print("\n🔍 TESTING API CONNECTIVITY")
     print("="*50)
     print(f"📍 Testing URL: {base_url}")
     
@@ -214,17 +217,17 @@ def test_api_connectivity(base_url: str) -> dict:
         print(f"🚪 Port: {port}")
         
         # Test socket connection
-        print(f"🔌 Testing socket connection...")
+        print("🔌 Testing socket connection...")
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
         result = sock.connect_ex((host, port))
         sock.close()
         
         if result == 0:
-            print(f"✅ Socket connection successful!")
+            print("✅ Socket connection successful!")
             
             # Test HTTP request
-            print(f"📡 Testing HTTP request...")
+            print("📡 Testing HTTP request...")
             response = requests.get(base_url, verify=False, timeout=10)
             print(f"✅ HTTP request successful! Status: {response.status_code}")
             
@@ -338,7 +341,6 @@ def apply_org_unit_filter(body: dict, tool_context: Optional[ToolContext] = None
         print(f"⚠️ [ORG-FILTER] Error applying org unit filter: {e}")
         return enhanced_body
 
-
 def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] = None, tool_context: Optional[ToolContext] = None) -> dict:
     """
     Invoke an API endpoint with real HTTP requests using configuration from tools.json
@@ -364,7 +366,7 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                     # Look for tool_context in the local variables
                     if 'tool_context' in frame.f_locals:
                         tool_context = frame.f_locals['tool_context']
-                        print(f"📧 Auto-extracted tool_context from execution context")
+                        print(f"📧 Auto-extracted tool_context from execution context {tool_context}")
                         break
                     frame = frame.f_back
             except Exception as e:
@@ -392,11 +394,12 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                 print(f"✅ Pre-flight check passed - {host}:{port} is reachable")
             else:
                 print(f"⚠️ Pre-flight check failed - {host}:{port} is not reachable (error: {result})")
-                print(f"💡 This likely means the backend server is not running!")
+                print("💡 This likely means the backend server is not running!")
                 
         except Exception as e:
             print(f"⚠️ Pre-flight check error: {e}")
-            print(f"💡 Proceeding with request anyway...")
+            print("💡 Proceeding with request anyway...")
+        # ? Why the preflight checks if we do not care if they work or not?
         
         try:
             # Prepare request headers - start with default headers
@@ -405,42 +408,54 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                 'Accept': 'application/json'
             }
             
-            # Automatically extract and add IAP headers from current context
-            print("\n🔐 Extracting IAP headers for authentication...")
-            iap_headers = extract_iap_headers_from_context(tool_context)
+            is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
+            dev_email = os.getenv('DEV_EMAIL', '')
             
-            # If no IAP headers found and we're in development mode, add development headers
-            if not iap_headers:
-                is_development = os.getenv('IS_DEVELOPMENT', '').upper() == 'TRUE'
-                dev_email = os.getenv('DEV_EMAIL', '')
+            if is_development and dev_email:
+                print("🧪 Adding development IAP headers...")
+                import time
+                current_timestamp = str(int(time.time()))
                 
-                if is_development and dev_email:
-                    print("🧪 No IAP headers found - Adding development IAP headers...")
-                    import time
-                    current_timestamp = str(int(time.time()))
-                    
-                    iap_headers = {
-                        'x-goog-authenticated-user-email': f'accounts.google.com:{dev_email}',
-                        'x-goog-authenticated-user-id': f'accounts.google.com:dev-user-id-{current_timestamp}',
-                        'x-forwarded-user': dev_email,
-                        'x-forwarded-email': dev_email,
-                        'X-Dev-IAP-Simulation': 'true',
-                        'X-Dev-Auth-Timestamp': current_timestamp
-                    }
-                    print(f"✅ Added development IAP headers for email: {dev_email}")
-            
-            if iap_headers:
+                iap_headers = {
+                    'x-goog-authenticated-user-email': f'accounts.google.com:{dev_email}',
+                    'x-goog-authenticated-user-id': f'accounts.google.com:dev-user-id-{current_timestamp}',
+                    'x-forwarded-user': dev_email,
+                    'x-forwarded-email': dev_email,
+                    'X-Dev-IAP-Simulation': 'true',
+                    'X-Dev-Auth-Timestamp': current_timestamp
+                }
+                print(f"✅ Added development IAP headers for email: {dev_email}")
                 request_headers.update(iap_headers)
-                print(f"🔐 Added {len(iap_headers)} headers from session state")
-            else:
-                print("⚠️ No headers found from session state")
             
             # Add any additional headers passed as parameter
             if headers:
                 print(f"🔐 Adding additional headers: {list(headers.keys())}")
                 request_headers.update(headers)
             
-            print(f"🔐 Final request headers being sent to backend:")
+            # Add IDP token to request headers if not already present
+            if tool_context and not request_headers.get('Authorization'):
+                # Get OAuth configuration from config manager
+                from ...config_manager import config_manager
+                oauth_config = config_manager.get_oauth_config()
+                target_principal = oauth_config.get('target_principal')
+                target_audience = oauth_config.get('client_id')
+                if (target_principal and target_audience):
+                    idp_token = get_service_account_oidc_token(
+                        target_audience,
+                        target_principal,
+                        use_idp=True,
+                        subject=tool_context.state.get('user_email')
+                    ) 
+                    request_headers['Authorization'] = f"Bearer {idp_token}"
+            
+            # Add impersonated user header if user_email is available in state
+            if tool_context and hasattr(tool_context, 'state') and tool_context.state:
+                user_email = tool_context.state.get('user_email')
+                if user_email:
+                    request_headers['x-unops-impersonated-user'] = user_email
+                    print(f"🔐 Added impersonated user header: {user_email}")
+            
+            print("🔐 Final request headers being sent to backend:")
             print(f"📋 Total headers: {len(request_headers)}")
             print(f"📋 Header keys: {list(request_headers.keys())}")
             
@@ -513,7 +528,7 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                         print(f"🔄 [API] Detected entity '{detected_entity}' from URL - invalidating cache")
                         try:
                             from ...cache import entity_cache
-                            entity_cache.invalidate_entity_cache(detected_entity)
+                            entity_cache.invalidate_on_entity_change(detected_entity, 'update')
                         except Exception as cache_error:
                             print(f"⚠️ Cache invalidation failed: {cache_error}")
                     
@@ -596,7 +611,7 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
         }
 
 
-def construct_api_url(base_url: str, endpoint_path: str, path_params: Dict[str, Any] = None) -> str:
+def construct_api_url(base_url: str, endpoint_path: str, path_params: Optional[Dict[str, Any]] = None) -> str:
     """
     Construct a complete API URL with path parameter substitution
     

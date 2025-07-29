@@ -11,20 +11,34 @@ using Microsoft.EntityFrameworkCore;
 public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Partner>
 {
     private readonly List<int> _orgUnitHierarchyIds;
-    private readonly List<int> _orgUnitUserIds;
+    //private readonly List<string> _orgUnitUserIds;
     
     public PartnerByOrgUnitWithRelationsSpecification(
         List<int> orgUnitHierarchyIds, 
-        List<int> orgUnitUserIds)
-        : base(BuildCriteria(orgUnitHierarchyIds, orgUnitUserIds))
+        List<string> orgUnitUserIds)
+        : base(BuildCriteria(orgUnitHierarchyIds, ConvertUserIdsToIntegers(orgUnitUserIds)))
     {
         _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
-        _orgUnitUserIds = orgUnitUserIds ?? new List<int>();
+        //_orgUnitUserIds = orgUnitUserIds;
         // Include related entities for the query
         AddInclude(p => p.Contacts);
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}");
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}.{nameof(Interaction.InteractionContacts)}");
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}.{nameof(Interaction.InteractionUsers)}");
+    }
+
+    /// <summary>
+    /// Converts string user IDs to integers, filtering out invalid values
+    /// </summary>
+    private static List<int> ConvertUserIdsToIntegers(List<string> orgUnitUserIds)
+    {
+        if (orgUnitUserIds == null)
+            return new List<int>();
+            
+        return orgUnitUserIds
+            .Where(id => int.TryParse(id, out _))
+            .Select(id => int.Parse(id))
+            .ToList();
     }
 
     private static Expression<Func<Partner, bool>> BuildCriteria(

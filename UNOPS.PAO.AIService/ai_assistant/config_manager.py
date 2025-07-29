@@ -7,9 +7,11 @@ Based on patterns from UNOPS.PAO.AgenticAi
 
 import json
 import os
-from typing import Dict, Any, Optional, List
-from functools import lru_cache
+import time
+from typing import Any, Dict, List, Optional
+
 from google.cloud import secretmanager
+
 
 class ConfigManager:
     """Singleton configuration manager for tools.json and framework_config.json"""
@@ -17,6 +19,11 @@ class ConfigManager:
     _instance: Optional['ConfigManager'] = None
     _tools_config: Optional[Dict[str, Any]] = None
     _framework_config: Optional[Dict[str, Any]] = None
+    
+    # Cache for Identity Toolkit API key
+    _cached_identity_toolkit_api_key: Optional[str] = None
+    _api_key_cache_expiry: float = 0
+    _api_key_cache_ttl: int = 3600  # 1 hour TTL
     
     def __new__(cls):
         if cls._instance is None:
@@ -37,7 +44,7 @@ class ConfigManager:
                 self._tools_config = {"entities": []}
         return self._tools_config
     
-    def load_framework_config(self, framework_config_path: str = None) -> Dict[str, Any]:
+    def load_framework_config(self, framework_config_path: Optional[str] = None) -> Dict[str, Any]:
         if self._framework_config is None:
             try:
                 # Use environment-based configuration loading
@@ -46,7 +53,7 @@ class ConfigManager:
                     self._framework_config = get_config()
                     environment = get_environment()
                     print(f"✅ Loaded framework configuration from config/framework_config_{environment}.json")
-                except Exception as e:
+                except Exception:
                     # Fallback to direct file loading if framework_config system isn't initialized
                     if framework_config_path is None:
                         import os
@@ -102,12 +109,16 @@ class ConfigManager:
             print(f"⚠️ Warning: Could not load project_name from config, using default: {e}")
             return "AI Assistant"
     
-    def get_secret_from_secret_manager(self, secret_name: str, project_id: str = None) -> Optional[str]:
+    def get_secret_from_secret_manager(self, secret_name: str, project_id: Optional[str] = None) -> Optional[str]:
         """Get secret value from Google Secret Manager"""
         try:
             if not project_id:
                 project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
             
+            if not project_id:
+                print("❌ No project ID available for Secret Manager access")
+                return None
+                
             client = secretmanager.SecretManagerServiceClient()
             name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
             
@@ -132,7 +143,7 @@ class ConfigManager:
             str: SQLAlchemy URL format like "postgresql://postgres:pass@host:5432/db"
         """
         try:
-            print(f"🔄 Converting connection string to SQLAlchemy URL format...")
+            print("🔄 Converting connection string to SQLAlchemy URL format...")
             
             # Parse the connection string
             params = {}
@@ -165,7 +176,7 @@ class ConfigManager:
             # Build SQLAlchemy URL
             url = f"postgresql://{username}:{encoded_password}@{host}:{port}/{database}"
             
-            print(f"✅ Successfully converted to SQLAlchemy URL")
+            print("✅ Successfully converted to SQLAlchemy URL")
             print(f"🔗 Final URL format: postgresql://{username}:***@{host}:{port}/{database}")
             return url
             
@@ -187,7 +198,7 @@ class ConfigManager:
             # For development, use the config file directly
             if environment == 'dev':
                 dev_url = db_config.get("url", "sqlite:///./ai_agent.db")
-                print(f"🛠️ Development environment - using config file URL")
+                print("🛠️ Development environment - using config file URL")
                 return dev_url
             
             # For test/prod environments, try Secret Manager first if secret_name is configured
@@ -481,6 +492,72 @@ class ConfigManager:
         detection_config += "• **delete/remove**: Use for deleting records\n"
         
         return detection_config
+
+    def get_oauth_config(self) -> Dict[str, str]:
+        """Get OAuth configuration from google_cloud section"""
+        try:
+            google_cloud_config = self.framework_config.get("google_cloud", {})
+            oauth_config = google_cloud_config.get("oauth", {})
+            
+            return {
+                "client_id": oauth_config.get("client_id", ""),
+                "target_principal": oauth_config.get("target_principal", "")
+            }
+        except Exception as e:
+            print(f"⚠️ Warning: Could not load OAuth config, using defaults: {e}")
+            return {}
+    
+    def get_identity_toolkit_api_key(self) -> str:
+        """Get Identity Toolkit API key from Google Secret Manager with caching"""
+        try:
+            # Check cache first
+            current_time = time.time()
+            if (self._cached_identity_toolkit_api_key and 
+                current_time < self._api_key_cache_expiry):
+                print(f"✅ Using cached Identity Toolkit API key (expires in {int(self._api_key_cache_expiry - current_time)}s)")
+                return self._cached_identity_toolkit_api_key
+            
+            google_cloud_config = self.framework_config.get("google_cloud", {})
+            oauth_config = google_cloud_config.get("oauth", {})
+            
+            # Get the secret name from configuration
+            secret_name = oauth_config.get("identity_toolkit_api_key_secret")
+            if not secret_name:
+                print("⚠️ Warning: No identity_toolkit_api_key_secret configured")
+                return ""
+            
+            # Get project ID from configuration
+            project_id = google_cloud_config.get("project")
+            if not project_id:
+                print("⚠️ Warning: No project configured for Google Cloud")
+                return ""
+            
+            # Retrieve the secret from Secret Manager
+            print(f"🔐 Retrieving Identity Toolkit API key from secret: {secret_name}")
+            api_key = self.get_secret_from_secret_manager(secret_name, project_id)
+            
+            if api_key:
+                print(f"✅ Successfully retrieved Identity Toolkit API key from secret: {secret_name}")
+                
+                # Cache the result
+                self._cached_identity_toolkit_api_key = api_key
+                self._api_key_cache_expiry = current_time + self._api_key_cache_ttl
+                print(f"💾 Cached Identity Toolkit API key for {self._api_key_cache_ttl}s")
+                
+                return api_key
+            else:
+                print(f"❌ Failed to retrieve Identity Toolkit API key from secret: {secret_name}")
+                return ""
+                
+        except Exception as e:
+            print(f"⚠️ Warning: Could not load Identity Toolkit API key from secret: {e}")
+            return ""
+    
+    def clear_identity_toolkit_api_key_cache(self) -> None:
+        """Clear the cached Identity Toolkit API key to force refresh"""
+        self._cached_identity_toolkit_api_key = None
+        self._api_key_cache_expiry = 0
+        print("🧹 Cleared Identity Toolkit API key cache")
 
 
 # Global singleton instance

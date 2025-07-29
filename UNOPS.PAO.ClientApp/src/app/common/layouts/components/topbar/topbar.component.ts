@@ -30,7 +30,8 @@ import { GlobalSearchBarComponent } from './global-search-bar/global-search-bar.
 import { RoleService } from '../../../../essentials/services/role.service';
 import { RoleDialogComponent } from './role-dialog/role-dialog.component';
 import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.component';
-import { OrgUnitSelectorComponent } from './org-unit-selector/org-unit-selector.component';
+
+import { GlobalFiltersDialogComponent } from './global-filters-dialog/global-filters-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 
@@ -51,7 +52,7 @@ interface UserInfo {
     CommonModule,
     HttpClientModule,
     LanguageSelectorComponent,
-    OrgUnitSelectorComponent,
+
     ProfileMenubarComponent,
     StyleClassModule,
     ButtonModule,
@@ -67,6 +68,7 @@ interface UserInfo {
     GlobalSearchBarComponent,
     RoleDialogComponent,
     ProfileDialogComponent,
+    GlobalFiltersDialogComponent,
     TranslateModule
   ],
   templateUrl: './topbar.component.html',
@@ -78,7 +80,8 @@ interface UserInfo {
 export class TopbarComponent implements OnInit, OnDestroy {
   @ViewChild(RoleDialogComponent) roleDialog!: RoleDialogComponent;
   @ViewChild(ProfileDialogComponent) profileDialog!: ProfileDialogComponent;
-  @ViewChild(OrgUnitSelectorComponent) orgUnitSelector!: OrgUnitSelectorComponent;
+
+  @ViewChild(GlobalFiltersDialogComponent) globalFiltersDialog!: GlobalFiltersDialogComponent;
 
   items!: MenuItem[];
   notifications: Notification[] = [];
@@ -563,9 +566,11 @@ export class TopbarComponent implements OnInit, OnDestroy {
     }
   }
 
-  openOrgUnitSelector() {
-    this.orgUnitSelector.showDialog();
+  openGlobalFilters() {
+    this.globalFiltersDialog.show();
   }
+
+
 
   onAIAssistantToggle() {
     this.layoutService.onAIAssistantToggle();

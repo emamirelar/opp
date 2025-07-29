@@ -264,7 +264,23 @@
         "cancel": "Annuler",
         "capture": "Capturer",
         "save": "Enregistrer",
-        "update": "Modifier"
+        "update": "Modifier",
+        "yes": "Oui",
+        "no": "Non",
+        "apply": "Appliquer",
+        "reset": "Réinitialiser"
+    },
+    "filters": {
+        "globalFilters": "Filtres Globaux",
+        "organizationUnit": "Unité d'Organisation",
+        "createdByMe": "Créé par Moi",
+        "lastUpdatedByMe": "Dernière Mise à Jour par Moi",
+        "createdOn": "Créé Le",
+        "lastUpdatedOn": "Dernière Mise à Jour Le",
+        "singleDate": "Date Unique",
+        "dateRange": "Plage de Dates",
+        "selectDate": "Sélectionner une date",
+        "selectDateRange": "Sélectionner une plage de dates"
     },
     "action": {
         "search": "Rechercher"
@@ -392,5 +408,33 @@
         "templateValid": "Template valide mais aucun résultat",
         "templateError": "Erreur dans le template",
         "examplePlaceholder": "ex. {nom} ({nomCourt})"
+    },
+    "search": {
+        "results": "Résultats de Recherche",
+        "totalResults": "résultats au total",
+        "entityTypes": "types d'entités",
+        "searching": "Recherche en cours...",
+        "found": "Trouvé",
+        "resultsIn": "résultats dans",
+        "totalOf": "total de",
+        "noResultsFound": "Aucun résultat trouvé",
+        "tryDifferentTerms": "Essayez des termes de recherche différents",
+        "startSearching": "Commencer la recherche",
+        "enterTermsAbove": "Saisissez les termes de recherche ci-dessus",
+        "matched": "Correspondance",
+        "matchedIn": "Correspondance dans",
+        "relevance": "Pertinence",
+        "snippet": "Extrait",
+        "searchCriteria": "Critères de Recherche",
+        "showMetadata": "Afficher les Métadonnées",
+        "placeholder": "Rechercher...",
+        "searchButton": "Rechercher",
+        "clearSearch": "Effacer la recherche",
+        "closeSearch": "Fermer la recherche",
+        "recentSearches": "Recherches Récentes",
+        "clearAll": "Tout Effacer",
+        "noResults": "Aucun résultat trouvé",
+        "viewAllResults": "Voir Tous les Résultats",
+        "filteredBy": "Filtré par"
     }
 }

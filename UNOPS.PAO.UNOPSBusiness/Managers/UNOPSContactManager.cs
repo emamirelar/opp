@@ -26,6 +26,8 @@ using UNOPS.PAO.UNOPSBusiness.Models;
 using UNOPS.PAO.UNOPSBusiness.Repositories;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
@@ -132,15 +134,15 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return MapModelToEntity(model, new UNOPSContact());
     }
 
-    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, IHttpContextAccessor httpContextAccessor = null, ILogger<UNOPSContactManager> logger = null)
+    public UNOPSContactManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService, IHttpContextAccessor httpContextAccessor = null, ILogger<UNOPSContactManager> logger = null, IServiceProvider serviceProvider = null)
         : base(mapper, context, configuration, null, "Contact", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
-        _context = context;
-        contactRepository = new BaseRepository<UNOPSContact>(context, configuration);
-        partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration);
-        userInfoRepository = new BaseRepository<UserInfo>(context, configuration);
-        organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration);
+        _context = context; 
+        contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
+        partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
+        userInfoRepository = new BaseRepository<UserInfo>(context, configuration, serviceProvider);
+        organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
         promptRepository = new DataRepository<AiPrompt>(context);
         commonRepository = new CommonEntityRepository(context);
         googleCloudStorageService = new GoogleCloudStorageService(configuration);
@@ -715,12 +717,25 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
     {
-        // Use the provided user, current user from context, or system user context
-        var userContext = user ?? GetCurrentUserOrSystemContext();
-        var entity = await contactRepository.GetByIdAsync(entityId, ["Partner"]);
-        if (entity == null) return null;
+        var contact = await contactRepository.GetByIdAsync(entityId);
+        if (contact != null)
+        {
+            return mapper.Map<UNOPSContact, ContactModel>(contact);
+        }
+        return null;
+    }
 
-        return await MapEntityToModel(entity, mapper, userContext);
+    /// <summary>
+    /// Gets basic contact data by ID without nested entities
+    /// </summary>
+    public override async Task<object> GetBasicEntityDataAsync(int id)
+    {
+        var contact = await contactRepository.GetByIdAsync(id);
+        if (contact != null)
+        {
+            return mapper.Map<UNOPSContact, ContactModel>(contact);
+        }
+        return null;
     }
 
     public async Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
@@ -985,6 +1000,51 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         }
         
         return result;
+    }
+
+    /// <summary>
+    /// Gets multiple contacts by their IDs for search results
+    /// </summary>
+    public override async Task<List<object>> GetByIdsAsync(int[] ids, ClaimsPrincipal user = null)
+    {
+        if (ids == null || ids.Length == 0)
+            return new List<object>();
+
+        var contacts = contactRepository
+            .GetAll(["Partner", "Partner.PartnerGroup"])
+            .Where(c => ids.Contains(c.Id))
+            .ToList();
+
+        // Apply access control if user context is provided
+        if (user != null)
+        {
+            var filteredData = await ApplyAccessControlFilters(contacts.AsQueryable(), user, "read");
+            if (filteredData is IEnumerable<UNOPSContact> contactList)
+            {
+                contacts = contactList.ToList();
+            }
+        }
+
+        // Get all unique user IDs for efficient mapping
+        var userIds = contacts.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
+        
+        var userInfoLookup = userInfoRepository.GetAll()
+            .Where(u => userIds.Contains(u.UserId))
+            .ToDictionary(u => u.UserId);
+        
+        var orgUnits = userInfoLookup.Values
+            .Where(u => !string.IsNullOrEmpty(u.OrgUnit))
+            .Select(u => u.OrgUnit)
+            .Distinct()
+            .ToList();
+        
+        var orgHierarchyLookup = organizationHierarchyRepository.GetAll()
+            .Where(o => !string.IsNullOrEmpty(o.Code) && 
+                       o.Type == OrganizationUnitType.OrgUnit && 
+                       orgUnits.Contains(o.Code))
+            .ToDictionary(o => o.Code);
+
+        return contacts.Select(contact => (object)MapEntityToModelWithUserInfo(contact, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
     }
     
     /// <summary>

@@ -24,7 +24,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
     /// <summary>
     /// Integration tests for PartnerController's org unit filtering functionality.
     /// These tests verify that the org unit filter properly includes:
-    /// 1. Partners directly linked to the org unit (via PartnerOfficeId)
+    /// 1. Partners directly linked to the org unit (via OrganizationUnitRelationships)
     /// 2. Partners from child org units in the hierarchy
     /// 3. Partners with contacts that have interactions with users from the org unit
     /// 

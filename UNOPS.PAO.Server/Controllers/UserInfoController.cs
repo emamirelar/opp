@@ -7,6 +7,7 @@ using UNOPS.PAO.Presentation.Helpers;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
 
 namespace UNOPS.PAO.Server.Controllers;
 
@@ -18,15 +19,18 @@ public class UserInfoController : ControllerBase
     private readonly IUserInfoService _userInfoService;
     private readonly UserResolverService<int> _userResolverService;
     private readonly UserManager<PAOIdentityUser> _userManager;
+    private readonly IUserPreferenceService _userPreferenceService;
 
     public UserInfoController(
         IUserInfoService userInfoService, 
         UserResolverService<int> userResolverService,
-        UserManager<PAOIdentityUser> userManager)
+        UserManager<PAOIdentityUser> userManager,
+        IUserPreferenceService userPreferenceService)
     {
         _userInfoService = userInfoService;
         _userResolverService = userResolverService;
         _userManager = userManager;
+        _userPreferenceService = userPreferenceService;
     }
 
     [HttpPut(APIDictionary.UserInfoUpdate)]
@@ -96,7 +100,22 @@ public class UserInfoController : ControllerBase
             return NotFound($"User info not found for email {currentEmail}");
         }
 
-        // Create response object with additional properties
+        // Get the PAOUser to retrieve user preferences
+        UserPreference? userPreferences = null;
+        try
+        {
+            var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+            if (aspNetUser != null)
+            {
+                userPreferences = await _userPreferenceService.GetUserPreferencesAsync(aspNetUser.Id.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            userPreferences = null;
+        }
+
+        // Create response object with additional properties including user preferences
         var response = new
         {
             userInfoWithOrgSettings,
@@ -104,7 +123,8 @@ public class UserInfoController : ControllerBase
             IsPartnerGlobalAdmin = isPartnerGlobalAdmin,
             // PARTNER_GLOB_ADMIN always has self-management enabled regardless of org setting
             CanManageOffice = isPartnerGlobalAdmin || 
-                             (userInfoWithOrgSettings.GetType().GetProperty("IsSelfManagementEnabled")?.GetValue(userInfoWithOrgSettings) as bool? ?? false)
+                             (userInfoWithOrgSettings.GetType().GetProperty("IsSelfManagementEnabled")?.GetValue(userInfoWithOrgSettings) as bool? ?? false),
+            UserPreferences = userPreferences
         };
 
         return Ok(response);

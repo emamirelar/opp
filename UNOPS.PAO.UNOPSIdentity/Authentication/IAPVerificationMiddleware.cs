@@ -148,6 +148,9 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     {
                         jwtVerified = true;
                         verifiedEmail = jwtPrincipal.FindFirstValue(ClaimTypes.Email);
+                        if (verifiedEmail != null && verifiedEmail.Contains(":")) {
+                            verifiedEmail = verifiedEmail.Split(':').Last();
+                        }
                         _logger.LogDebug("Successfully verified JWT for user: {Email}", verifiedEmail);
                     }
                 }
@@ -558,7 +561,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                 if (subClaim.Contains("@"))
                 {
                     // If subject contains @, it's an email
-                    userEmail = subClaim;
+                    userEmail = subClaim.Contains(":") ? subClaim.Split(':').Last() : subClaim;
                     _logger.LogInformation("IAPVerificationMiddleware - Using subject claim as email: {Email}", userEmail);
                 }
             }
@@ -575,6 +578,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                         if (gcipJson.RootElement.TryGetProperty("email", out var emailElement))
                         {
                             userEmail = emailElement.GetString();
+                            userEmail = userEmail.Contains(":") ? userEmail.Split(':').Last() : userEmail;
                             _logger.LogDebug("Found email in gcip claim: {Email}", userEmail);
                         }
                     }
@@ -593,6 +597,7 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     if (claim.Value.Contains("@") && claim.Value.Contains("."))
                     {
                         userEmail = claim.Value;
+                        userEmail = userEmail.Contains(":") ? userEmail.Split(':').Last() : userEmail;
                         _logger.LogDebug("Found potential email in claim {ClaimType}: {Email}", claim.Type, userEmail);
                         break;
                     }
@@ -621,6 +626,8 @@ namespace UNOPS.PAO.UNOPSIdentity.Authentication
                     jsonToken.Claims.Select(c => new { c.Type, c.Value }));
                 throw new SecurityTokenException("JWT missing email claim");
             }
+            // Remove the account provider prefix if it exists. Should be handled above, but just in case.
+            userEmail = userEmail.Contains(":") ? userEmail.Split(':').Last() : userEmail;
             
             if (!validatedPrincipal.HasClaim(c => c.Type == ClaimTypes.Name))
             {

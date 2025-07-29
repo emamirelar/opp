@@ -1,0 +1,132 @@
+<p-dialog 
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="global-filters-dialog"
+  [style]="{ width: 'min(500px, 95vw)' }"
+  header="Global Filters">
+
+  <div class="filters-container">
+    
+    <!-- Organization Unit Section -->
+    <div class="filter-section org-unit-section">
+      <div class="section-header">
+        <i class="pi pi-building section-icon"></i>
+        <h3 class="section-title">Organization Unit</h3>
+      </div>
+      <div class="section-content">
+        <app-org-unit-selector 
+          [preselectedOrgUnitId]="selectedOrgUnitId"
+          (orgUnitSelected)="onOrgUnitSelected($event)"
+          class="org-unit-selector">
+        </app-org-unit-selector>
+      </div>
+    </div>
+
+    <!-- Related to Me Section -->
+    <div class="filter-section related-section">
+      <div class="section-header">
+        <i class="pi pi-user section-icon"></i>
+        <h3 class="section-title">My Involvement</h3>
+      </div>
+      <div class="section-content">
+        <div class="toggle-wrapper">
+          <p-checkbox 
+            [(ngModel)]="relatedToMe" 
+            [binary]="true" 
+            inputId="relatedToMe"
+            class="modern-checkbox" />
+          <label for="relatedToMe" class="toggle-label">
+            <span class="label-text">Related to Me</span>
+            <span class="label-description">Show records I created or updated</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date Section -->
+    <div class="filter-section date-section">
+      <div class="section-header">
+        <i class="pi pi-calendar section-icon"></i>
+        <h3 class="section-title">Date Filter</h3>
+        <div class="date-mode-toggle">
+          <p-button 
+            [label]="dateRange ? 'Range' : 'Single'"
+            [outlined]="true"
+            size="small"
+            severity="secondary"
+            (onClick)="dateRange = !dateRange; onDateRangeChange()"
+            class="mode-toggle-btn">
+          </p-button>
+        </div>
+      </div>
+      
+      <div class="section-content">
+        <!-- Single Date Mode -->
+        <div *ngIf="!dateRange" class="date-single-mode">
+          <div class="date-input-group">
+            <label class="input-label">Date</label>
+            <p-calendar 
+              [(ngModel)]="dateOn"
+              [showIcon]="true"
+              placeholder="Select date"
+              dateFormat="dd/mm/yy"
+              class="modern-calendar"
+              [style]="{ width: '100%' }" />
+          </div>
+        </div>
+        
+        <!-- Range Date Mode -->
+        <div *ngIf="dateRange" class="date-range-mode">
+          <div class="date-range-grid">
+            <div class="date-input-group">
+              <label class="input-label">From</label>
+              <p-calendar 
+                [(ngModel)]="dateFrom"
+                [showIcon]="true"
+                placeholder="Start date"
+                dateFormat="dd/mm/yy"
+                class="modern-calendar"
+                [style]="{ width: '100%' }" />
+            </div>
+            <div class="date-input-group">
+              <label class="input-label">To</label>
+              <p-calendar 
+                [(ngModel)]="dateTo"
+                [showIcon]="true"
+                placeholder="End date"
+                dateFormat="dd/mm/yy"
+                class="modern-calendar"
+                [style]="{ width: '100%' }" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <div class="action-buttons">
+        <p-button 
+          label="Reset"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="resetting"
+          (onClick)="reset()"
+          class="footer-btn reset-btn" />
+        <p-button 
+          label="Apply Filters"
+          icon="pi pi-check"
+          [loading]="saving"
+          (onClick)="save()"
+          class="footer-btn save-btn" />
+      </div>
+    </div>
+  </ng-template>
+
+</p-dialog> 

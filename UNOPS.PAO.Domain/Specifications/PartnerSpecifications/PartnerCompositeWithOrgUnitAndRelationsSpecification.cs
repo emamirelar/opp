@@ -12,7 +12,7 @@ public class PartnerCompositeWithOrgUnitAndRelationsSpecification : BaseComposit
     public PartnerCompositeWithOrgUnitAndRelationsSpecification(
         IPartnerSearchFilter filter, 
         List<int> orgUnitHierarchyIds,
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
         : base(BuildCombinedCriteria(filter, orgUnitHierarchyIds, orgUnitUserIds))
     {
         // Create base specification to copy includes
@@ -39,7 +39,7 @@ public class PartnerCompositeWithOrgUnitAndRelationsSpecification : BaseComposit
     private static Expression<Func<Partner, bool>> BuildCombinedCriteria(
         IPartnerSearchFilter filter, 
         List<int> orgUnitHierarchyIds,
-        List<int> orgUnitUserIds)
+        List<string> orgUnitUserIds)
     {
         // Create base composite specification
         var baseSpec = new PartnerCompositeSpecification(filter);

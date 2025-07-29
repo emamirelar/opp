@@ -1,0 +1,27 @@
+{
+  "entity": "Configuration",
+  "description": "This entity manages system-wide configuration settings and parameters. It provides access to various application settings that control behavior, features, or external integrations.",
+  "synonyms": [
+    "settings",
+    "parameters",
+    "app config",
+    "system settings",
+    "preferences"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "Get",
+      "url": "api/configuration",
+      "method": "GET",
+      "description": "Retrieves the current system-wide configuration settings. This includes various parameters that dictate application behavior, feature toggles, and integration details.",
+      "parameters": {},
+      "example_uses": [
+        "Get the current application configuration.",
+        "Retrieve all system settings.",
+        "Show me the configuration parameters."
+      ],
+      "when_to_use": "Use this endpoint when you need to fetch the global configuration settings for the application, such as during application startup, for displaying current settings, or for internal system processes that depend on these parameters."
+    }
+  ]
+}

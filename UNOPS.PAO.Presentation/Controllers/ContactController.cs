@@ -45,6 +45,34 @@ public class ContactController : BaseController
         _orgUnitFilterService = orgUnitFilterService;
     }
 
+    /// <summary>
+    /// Creates a new contact with comprehensive personal and professional details.
+    /// </summary>
+    /// <param name="req">Contact creation request with required fields</param>
+    /// <param name="req.firstName">Contact's first name (required)</param>
+    /// <param name="req.lastName">Contact's last name (required)</param>
+    /// <param name="req.email">Primary email address (required)</param>
+    /// <param name="req.partnerId">Associated partner organization ID (required)</param>
+    /// <param name="req.title">Job title/position (required)</param>
+    /// <param name="req.salutation">Title/salutation (Mr., Ms., Dr., etc.)</param>
+    /// <param name="req.middleName">Middle name or initial</param>
+    /// <param name="req.suffix">Name suffix (Jr., Sr., III, etc.)</param>
+    /// <param name="req.department">Department or division</param>
+    /// <param name="req.phone">Primary phone number</param>
+    /// <param name="req.mobile">Mobile phone number</param>
+    /// <param name="req.status">Contact status (defaults to 'Active')</param>
+    /// <param name="req.mailingStreet">Mailing address street</param>
+    /// <param name="req.mailingCity">Mailing address city</param>
+    /// <param name="req.mailingCountry">Mailing address country</param>
+    /// <example_uses>
+    /// Create a contact named John Doe with email john@unicef.org
+    /// Add a new program manager contact for partner 123
+    /// Register Dr. Jane Smith as the technical lead
+    /// Create contact with full address information
+    /// Add executive contact to organization
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to add, create, register, or set up a new contact.</when_to_use>
+    /// <returns>Created contact with ID and metadata</returns>
     [HttpPost(APIDictionary.Contact)]
     [AccessControlled(EntityTypes.Contact, "create")]
     public async Task<ActionResult> Create([FromBody] ContactRequest req)
@@ -57,6 +85,30 @@ public class ContactController : BaseController
         return StatusCode(201, result);
     }
 
+    /// <summary>
+    /// Retrieves a list of contacts with advanced filtering, pagination, search capabilities, and access control.
+    /// </summary>
+    /// <param name="request">Contact filter request containing search and pagination parameters</param>
+    /// <param name="request.pageIndex">Page number (1-based)</param>
+    /// <param name="request.pageSize">Number of items per page</param>
+    /// <param name="request.searchText">Text to search across contact fields</param>
+    /// <param name="request.orderBy">Field to order results by</param>
+    /// <param name="request.ascending">Sort direction (true for ascending)</param>
+    /// <param name="request.orgUnitId">Filter by organizational unit ID for access control</param>
+    /// <param name="advancedSearch">Enable advanced search mode</param>
+    /// <param name="searchCriteria">JSON string containing advanced search filters</param>
+    /// <param name="searchText">Text to search across contact fields (override for request.searchText)</param>
+    /// <example_uses>
+    /// Show me all contacts
+    /// List contacts with email domain @unicef.org
+    /// Find contacts working at government partners
+    /// Search for contacts named John
+    /// Show contacts from my office only
+    /// Get contacts sorted by last name
+    /// Find technical experts in partner organizations
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to search, list, filter, or browse contacts.</when_to_use>
+    /// <returns>Paginated list of contacts with metadata</returns>
     [HttpGet(APIDictionary.Contact)]
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> Get(
@@ -125,6 +177,19 @@ public class ContactController : BaseController
         }, "contact search");
     }
 
+    /// <summary>
+    /// Retrieves a specific contact by ID with complete details including partner information and all contact methods.
+    /// </summary>
+    /// <param name="id">Contact ID</param>
+    /// <example_uses>
+    /// Show me details for contact ID 123
+    /// Get full information about contact 456
+    /// Display contact record 789
+    /// Get complete contact profile
+    /// Show contact with partner information
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks for specific contact details by ID or when you need complete contact information.</when_to_use>
+    /// <returns>Complete contact details with related information</returns>
     [HttpGet(APIDictionary.Contact + "/{id}")]
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> Get(int id)
@@ -138,6 +203,28 @@ public class ContactController : BaseController
         return Ok(contact);
     }
 
+    /// <summary>
+    /// Updates an existing contact's information including personal details, contact methods, and professional information.
+    /// </summary>
+    /// <param name="req">Contact update request containing modified fields</param>
+    /// <param name="req.id">Contact ID to update (required)</param>
+    /// <param name="req.firstName">Updated first name</param>
+    /// <param name="req.lastName">Updated last name</param>
+    /// <param name="req.email">Updated email address</param>
+    /// <param name="req.title">Updated job title</param>
+    /// <param name="req.phone">Updated phone number</param>
+    /// <param name="req.mobile">Updated mobile number</param>
+    /// <param name="req.department">Updated department</param>
+    /// <param name="req.status">Updated status</param>
+    /// <example_uses>
+    /// Update contact 123's email to newemail@unicef.org
+    /// Change contact 456's title to Senior Manager
+    /// Update phone number for contact 789
+    /// Modify contact's department information
+    /// Change contact status to Inactive
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to update, modify, edit, or change contact information.</when_to_use>
+    /// <returns>Updated contact data</returns>
     [HttpPut(APIDictionary.Contact)]
     [AccessControlled(EntityTypes.Contact, "update")]
     public async Task<ActionResult> Update([FromBody] UpdateContactRequest req)
@@ -147,6 +234,18 @@ public class ContactController : BaseController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Soft deletes a contact from the system (marks as deleted rather than permanent removal).
+    /// </summary>
+    /// <param name="id">Contact ID to delete</param>
+    /// <example_uses>
+    /// Delete contact ID 123
+    /// Remove contact 456 from the system
+    /// Deactivate contact record
+    /// Soft delete contact John Doe
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to delete, remove, or eliminate a contact.</when_to_use>
+    /// <returns>No content on successful deletion</returns>
     [HttpDelete(APIDictionary.Contact + "/{id}")]
     [AccessControlled(EntityTypes.Contact, "delete")]
     public async Task<ActionResult> Delete(int id)
@@ -157,6 +256,19 @@ public class ContactController : BaseController
     }
 
 
+    /// <summary>
+    /// Retrieves all contacts associated with a specific partner organization with access control.
+    /// </summary>
+    /// <param name="partnerId">Partner organization ID to get contacts for</param>
+    /// <example_uses>
+    /// Show all contacts for partner organization 123
+    /// Get contact list for UNICEF partner
+    /// Find all people working at partner ID 456
+    /// List contacts belonging to a specific organization
+    /// Get partner's contact directory
+    /// </example_uses>
+    /// <when_to_use>Use this when the user asks to see contacts for a specific partner, organization, or wants to view who works at a particular partner.</when_to_use>
+    /// <returns>List of contacts belonging to the specified partner organization</returns>
     [HttpGet(APIDictionary.PartnerContacts)]
     [AccessControlled(EntityTypes.Contact, "read")]
     public async Task<ActionResult> PartnerContacts(int partnerId)
@@ -164,6 +276,19 @@ public class ContactController : BaseController
         return Ok(_manager.GetPartnerContacts(partnerId));
     }
 
+    /// <summary>
+    /// Retrieves the current user's permissions for a specific contact (read, update, delete).
+    /// </summary>
+    /// <param name="id">Contact ID to check permissions for</param>
+    /// <example_uses>
+    /// Check my permissions for contact 123
+    /// What can I do with contact 456?
+    /// Get access rights for this contact
+    /// Verify contact permissions before editing
+    /// Can I update this contact's information?
+    /// </example_uses>
+    /// <when_to_use>Use this when you need to check user permissions before performing operations or showing UI elements for contact management.</when_to_use>
+    /// <returns>Permission object with CanRead, CanUpdate, CanDelete flags</returns>
     [HttpGet(APIDictionary.Contact + "/{id}/permissions")]
     public async Task<ActionResult> PermissionsGet(int id)
     {
@@ -179,6 +304,20 @@ public class ContactController : BaseController
         return Ok(permissions);
     }
 
+    /// <summary>
+    /// Uploads and associates a profile picture with a contact (max 1MB, JPEG/PNG/WEBP only).
+    /// </summary>
+    /// <param name="id">Contact ID to upload profile picture for</param>
+    /// <param name="file">Image file (max 1MB, JPEG/PNG/WEBP formats only)</param>
+    /// <example_uses>
+    /// Upload a profile picture for contact 123
+    /// Add photo to contact John Doe
+    /// Set contact profile image
+    /// Update contact's profile picture
+    /// Add headshot to contact record
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to add or update a contact's profile picture or photo.</when_to_use>
+    /// <returns>Success confirmation with image URL or error details</returns>
     [HttpPost(APIDictionary.Contact + "/{id}/profile-picture")]
     [AccessControlled(EntityTypes.Contact, "update")]
     public async Task<ActionResult> UploadProfilePicture(int id, IFormFile file)
