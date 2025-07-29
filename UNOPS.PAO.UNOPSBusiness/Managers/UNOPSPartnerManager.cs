@@ -1385,6 +1385,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Where(p => ids.Contains(p.Id))
             .ToList();
 
+        await partners.LoadOrganizationUnitRelationshipsAsync(_context);
+
         _logger?.LogInformation("Found {Count} partners from database before RBAC filtering", partners.Count);
 
         // Apply access control if user context is provided
