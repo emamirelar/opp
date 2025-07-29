@@ -24,8 +24,6 @@ public class ValuesRepository
 
     public IQueryable<Partner> GetPartners()
         => context.Partners
-            .Include(p => p.OrganizationUnitRelationships)
-            .ThenInclude(r => r.OrganizationHierarchy)
             .Where(x => x.Status.Equals("Active") && !x.IsDeleted);
     
     // Get flat list of organization units by type

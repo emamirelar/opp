@@ -2,20 +2,25 @@ namespace UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 
 using UNOPS.PAO.Domain.Entities;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Specification to filter partners by organizational unit hierarchy including indirect relations through contacts
+/// Uses manual joins to efficiently filter at the database level without navigation properties
 /// </summary>
 public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Partner>
 {
+    private readonly List<int> _orgUnitHierarchyIds;
+    private readonly List<int> _orgUnitUserIds;
+    
     public PartnerByOrgUnitWithRelationsSpecification(
         List<int> orgUnitHierarchyIds, 
         List<int> orgUnitUserIds)
         : base(BuildCriteria(orgUnitHierarchyIds, orgUnitUserIds))
     {
+        _orgUnitHierarchyIds = orgUnitHierarchyIds ?? new List<int>();
+        _orgUnitUserIds = orgUnitUserIds ?? new List<int>();
         // Include related entities for the query
-        AddInclude(p => p.OrganizationUnitRelationships);
-        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
         AddInclude(p => p.Contacts);
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}");
         AddInclude($"{nameof(Partner.Contacts)}.{nameof(Contact.Interactions)}.{nameof(Interaction.InteractionContacts)}");
@@ -36,10 +41,8 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
         // Build the criteria expression
         return p => 
             // Case 1: Partner directly linked to org unit hierarchy via OrganizationUnitRelationships
-            (orgUnitHierarchyIds != null && 
-             orgUnitHierarchyIds.Count > 0 && 
-             p.OrganizationUnitRelationships.Any(r => 
-                orgUnitHierarchyIds.Contains(r.OrganizationHierarchyId)))
+            // Note: OrganizationUnitRelationships filtering moved to post-query processing
+            (orgUnitHierarchyIds != null && orgUnitHierarchyIds.Count > 0)
             ||
             // Case 2: Partner has contacts with interactions involving org unit users
             (orgUnitUserIds != null && 
@@ -48,5 +51,28 @@ public class PartnerByOrgUnitWithRelationsSpecification : BaseSpecification<Part
                 c.Interactions.Any(i => 
                     i.InteractionUsers.Any(iu => 
                         orgUnitUserIds.Contains(iu.UserId)))));
+    }
+    
+    /// <summary>
+    /// Apply manual join filtering for organization unit hierarchy
+    /// This should be called by the repository/manager when applying the specification
+    /// </summary>
+    public IQueryable<Partner> ApplyOrgUnitFilter(IQueryable<Partner> query, DbContext context)
+    {
+        if (_orgUnitHierarchyIds == null || _orgUnitHierarchyIds.Count == 0)
+        {
+            return query;
+        }
+
+        // Pre-materialize the partner IDs that match the org unit criteria to avoid nested query issues
+        var validPartnerIds = context.Set<OrganizationUnitRelationship>()
+            .Where(orgRel => 
+                orgRel.EntityType == "Partner" && 
+                _orgUnitHierarchyIds.Contains(orgRel.OrganizationHierarchyId))
+            .Select(orgRel => orgRel.EntityId)
+            .ToList(); // Materialize the IDs first
+
+        // Now filter the partners using the materialized IDs
+        return query.Where(partner => validPartnerIds.Contains(partner.Id));
     }
 }

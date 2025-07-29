@@ -346,7 +346,11 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // Apply the specification to the query
         var query = interactionRepository.GetAll().AsQueryable()
             .Where(x => !x.IsDeleted);
-        var filteredQuery = query.ApplySpecification(specification);
+        
+        // Cast to base type to apply specification, then cast back to derived type
+        var baseQuery = query.Cast<Interaction>();
+        var filteredBaseQuery = baseQuery.ApplySpecification(specification);
+        var filteredQuery = filteredBaseQuery.OfType<UNOPSInteraction>();
         
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, GetCurrentUserOrSystemContext(), "read");

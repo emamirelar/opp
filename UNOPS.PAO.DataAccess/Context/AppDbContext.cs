@@ -85,13 +85,8 @@ public class AppDbContext : AuditableDbContext<int, int>
                     .WithOne(c => c.Partner)
                     .HasForeignKey(c => c.PartnerId)
                     .OnDelete(DeleteBehavior.Cascade);
-                    
-                // Configure one-to-many relationship with OrganizationUnitRelationships
-                p.HasMany(x => x.OrganizationUnitRelationships)
-                    .WithOne()
-                    .HasForeignKey(r => r.EntityId)
-                    .HasPrincipalKey(p => p.Id)
-                    .OnDelete(DeleteBehavior.Cascade);
+
+                p.Ignore(x => x.OrganizationUnitRelationships);
             });
 
         modelBuilder
@@ -199,8 +194,7 @@ public class AppDbContext : AuditableDbContext<int, int>
 
         modelBuilder.Entity<OrganizationUnitRelationship>(entity =>
         {
-            entity.HasKey(e => new { e.OrganizationHierarchyId, e.EntityId, e.EntityType });
-
+            
             entity.HasOne(e => e.OrganizationHierarchy)
                 .WithMany(o => o.EntityRelationships)
                 .HasForeignKey(e => e.OrganizationHierarchyId)
@@ -214,6 +208,11 @@ public class AppDbContext : AuditableDbContext<int, int>
                 .HasMaxLength(100);
 
             entity.HasIndex(e => new { e.EntityId, e.EntityType });
+            
+            // Add unique constraint for the business logic (one relationship per entity/org unit combo)
+            entity.HasIndex(e => new { e.EntityId, e.EntityType, e.OrganizationHierarchyId })
+                .IsUnique();
+
         });
 
         modelBuilder

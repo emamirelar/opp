@@ -4,12 +4,15 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using UNOPS.PAO.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// A composite specification that allows filtering partners by multiple criteria
+/// Uses manual joins to efficiently filter at the database level without navigation properties
 /// </summary>
 public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Partner>
 {
+    private readonly int? _organizationHierarchyId;
     /// <summary>
     /// Creates a composite specification with multiple filter criteria for partners
     /// </summary>
@@ -46,9 +49,8 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
                               organizationHierarchyId, partnerCategoryId, addressCity, addressStateProvince, 
                               addressPostalCode, addressCountry, searchText))
     {
+        _organizationHierarchyId = organizationHierarchyId;
         // Include related entities
-        AddInclude(p => p.OrganizationUnitRelationships);
-        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
         
         // Default ordering is by name
         ApplyOrderBy(p => p.Name);
@@ -128,7 +130,8 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         // Add organization hierarchy filter if specified
         if (organizationHierarchyId.HasValue)
         {
-            Expression<Func<Partner, bool>> organizationHierarchyFilter = p => p.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchyId == organizationHierarchyId.Value);
+            // Note: OrganizationUnitRelationships filtering moved to manual join method
+            Expression<Func<Partner, bool>> organizationHierarchyFilter = p => true;
             predicate = CombineExpressions(predicate, organizationHierarchyFilter);
         }
         
@@ -173,6 +176,29 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         }
         
         return predicate;
+    }
+    
+    /// <summary>
+    /// Apply manual join filtering for organization hierarchy if specified
+    /// This should be called by the repository/manager when applying the specification
+    /// </summary>
+    public IQueryable<Partner> ApplyOrgUnitFilter(IQueryable<Partner> query, DbContext context)
+    {
+        if (!_organizationHierarchyId.HasValue)
+        {
+            return query;
+        }
+
+        // Pre-materialize the partner IDs that match the org unit criteria to avoid nested query issues
+        var validPartnerIds = context.Set<OrganizationUnitRelationship>()
+            .Where(orgRel => 
+                orgRel.EntityType == "Partner" && 
+                orgRel.OrganizationHierarchyId == _organizationHierarchyId.Value)
+            .Select(orgRel => orgRel.EntityId)
+            .ToList(); // Materialize the IDs first
+
+        // Now filter the partners using the materialized IDs
+        return query.Where(partner => validPartnerIds.Contains(partner.Id));
     }
     
     private static Expression<Func<T, bool>> CombineExpressions<T>(

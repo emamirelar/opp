@@ -15,7 +15,5 @@ public class PartnerByNewEngagementSpecification : BaseSpecification<Partner>
         : base(p => p.NewEngagement == newEngagement)
     {
         // Include related entities
-        AddInclude(p => p.OrganizationUnitRelationships);
-        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
     }
 } 

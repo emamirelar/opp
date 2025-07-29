@@ -15,7 +15,5 @@ public class PartnerByWebsiteSpecification : BaseSpecification<Partner>
         : base(p => p.Website != null && p.Website.ToLower().Contains(website.ToLower()))
     {
         // Include related entities
-        AddInclude(p => p.OrganizationUnitRelationships);
-        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
     }
 } 

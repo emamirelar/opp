@@ -81,8 +81,7 @@ public class ValuesController : BaseController
             return allPartners.Select(p => new PartnerValueModel
             {
                 Id = p.Id,
-                Name = p.Name,
-                OrganizationHierarchyId = p.GetPrimaryOrganizationUnit()?.Id
+                Name = p.Name
             }).ToList();
         });
     }

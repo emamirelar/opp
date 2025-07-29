@@ -17,8 +17,6 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
         : base(filter)
     {
         // Include related entities
-        AddInclude(p => p.OrganizationUnitRelationships);
-        AddInclude("OrganizationUnitRelationships.OrganizationHierarchy");
         AddInclude(p => p.PartnerGroup);
         AddInclude(p => p.Projects);
         

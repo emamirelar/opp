@@ -131,27 +131,7 @@ public class Partner : ModifiableDeletableEntity
         return (contactsCount, interactionsCount, lastInteractionDate);
     }
 
-    /// <summary>
-    /// Gets all organization units related to this partner
-    /// </summary>
-    public IEnumerable<OrganizationHierarchy> GetOrganizationUnits()
-    {
-        if (OrganizationUnitRelationships == null || !OrganizationUnitRelationships.Any())
-            return Enumerable.Empty<OrganizationHierarchy>();
-
-        return OrganizationUnitRelationships
-            .Where(r => r.OrganizationHierarchy != null)
-            .Select(r => r.OrganizationHierarchy);
-    }
-
-    /// <summary>
-    /// Gets the primary organization unit (first relationship)
-    /// </summary>
-    public OrganizationHierarchy? GetPrimaryOrganizationUnit()
-    {
-        return GetOrganizationUnits().FirstOrDefault();
-    }
-
+    
     /// <summary>
     /// Adds an organization unit relationship
     /// </summary>
