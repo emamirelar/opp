@@ -15,7 +15,6 @@ public class PartnerByAddressSpecification : BaseSpecification<Partner>
         : base(BuildPredicate(city, stateProvince, postalCode, country))
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
     }
     
     private static System.Linq.Expressions.Expression<Func<Partner, bool>> BuildPredicate(

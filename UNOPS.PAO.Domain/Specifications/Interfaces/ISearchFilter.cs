@@ -56,8 +56,8 @@ public interface IPartnerSearchFilter : ISearchFilter, IOrgUnitFilter
     string? Phone { get; set; }
     string? Website { get; set; }
     string? ShortName { get; set; }
-    int? PartnerOfficeId { get; set; }
-    string? PartnerOfficeName { get; set; }
+    int? OrganizationHierarchyId { get; set; }
+    string? OrganizationHierarchyName { get; set; }
     int? PartnerCategoryId { get; set; }
     string? PartnerCategoryName { get; set; }
     string? AddressCity { get; set; }

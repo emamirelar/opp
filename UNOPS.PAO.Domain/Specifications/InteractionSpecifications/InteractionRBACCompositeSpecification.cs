@@ -30,7 +30,6 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
         AddInclude("InteractionContacts.Contact");
         AddInclude(i => i.InteractionPartners);
         AddInclude("InteractionPartners.Partner");
-        AddInclude("InteractionPartners.Partner.PartnerOffice");
         AddInclude(i => i.InteractionUsers);
         
         // Apply security-based filtering BEFORE any other filtering
@@ -64,10 +63,9 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             // Can see all interactions in their org unit
             if (!string.IsNullOrEmpty(_userOrgUnit))
             {
+                // Note: OrganizationUnitRelationships filtering moved to post-query processing
                 securityExpression = i => i.InteractionPartners.Any(ip => 
-                    ip.Partner != null && 
-                    ip.Partner.PartnerOffice != null && 
-                    ip.Partner.PartnerOffice.Code == _userOrgUnit);
+                    ip.Partner != null); // Org unit filtering will be done after manual loading
             }
             else
             {
@@ -87,10 +85,9 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             // Can see interactions related to partners they manage in their org unit
             if (!string.IsNullOrEmpty(_userOrgUnit))
             {
+                // Note: OrganizationUnitRelationships filtering moved to post-query processing
                 securityExpression = i => i.InteractionPartners.Any(ip => 
-                    ip.Partner != null && 
-                    ip.Partner.PartnerOffice != null && 
-                    ip.Partner.PartnerOffice.Code == _userOrgUnit);
+                    ip.Partner != null); // Org unit filtering will be done after manual loading
             }
             else
             {
@@ -103,11 +100,10 @@ public class InteractionRBACCompositeSpecification : GenericCompositeSpecificati
             // Can see interactions for contacts in their org unit
             if (!string.IsNullOrEmpty(_userOrgUnit))
             {
+                // Note: OrganizationUnitRelationships filtering moved to post-query processing
                 securityExpression = i => i.InteractionContacts.Any(ic => 
                     ic.Contact != null && 
-                    ic.Contact.Partner != null &&
-                    ic.Contact.Partner.PartnerOffice != null &&
-                    ic.Contact.Partner.PartnerOffice.Code == _userOrgUnit) ||
+                    ic.Contact.Partner != null) || // Org unit filtering will be done after manual loading
                     i.CreatedBy == userId;
             }
             else

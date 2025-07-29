@@ -16,7 +16,6 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
         : base(filter)
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
         
         // Default ordering is by name
         ApplyOrderBy(p => p.Name);

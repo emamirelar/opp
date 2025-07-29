@@ -73,10 +73,15 @@
               }
 
 
-          @if(recordData().partnerOffice){
+          @if(getPrimaryOrganizationUnit(recordData())){
           <div class="flex flex-col gap-2">
-            <div class="text-sm">{{ 'label.partner.partnerOffice' | translate }}</div>
-            <div>{{recordData().partnerOffice?.name}}</div>
+            <div class="text-sm">{{ 'label.partner.organizationUnits' | translate }}</div>
+            <div>{{getPrimaryOrganizationUnit(recordData())?.name}}</div>
+            @if(recordData().organizationUnitRelationships && recordData().organizationUnitRelationships!.length > 1) {
+              <div class="text-xs text-gray-500">
+                +{{ recordData().organizationUnitRelationships!.length - 1 }} more
+              </div>
+            }
           </div>
           }
 

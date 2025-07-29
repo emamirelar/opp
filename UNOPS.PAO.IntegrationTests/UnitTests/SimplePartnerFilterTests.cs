@@ -2,6 +2,7 @@ using FluentAssertions;
 using UNOPS.PAO.IntegrationTests.TestData;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Models;
+using UNOPS.PAO.Domain.Entities;
 using Xunit;
 
 namespace UNOPS.PAO.IntegrationTests.UnitTests;
@@ -291,14 +292,15 @@ public class SimplePartnerFilterTests
         var partners = GetTestPartnersWithOrgUnits();
         var targetOrgUnitId = 10;
 
-        // Act - Simulate filtering by OrgUnitId
+        // Act - Simulate filtering by OrganizationHierarchyId using the new relationship structure
         var filteredPartners = partners
-            .Where(p => p.PartnerOfficeId == targetOrgUnitId)
+            .Where(p => p.OrganizationUnitRelationships != null && 
+                       p.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchyId == targetOrgUnitId))
             .ToList();
 
         // Assert
         filteredPartners.Should().HaveCount(2);
-        filteredPartners.Should().OnlyContain(p => p.PartnerOfficeId == targetOrgUnitId);
+        filteredPartners.Should().OnlyContain(p => p.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchyId == targetOrgUnitId));
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions" };
         filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
@@ -312,14 +314,15 @@ public class SimplePartnerFilterTests
         // Simulate org unit hierarchy: 10 is parent of 11 and 12
         var orgUnitHierarchy = new List<int> { 10, 11, 12 };
 
-        // Act - Simulate filtering by OrgUnit hierarchy
+        // Act - Simulate filtering by OrgUnit hierarchy using the new relationship structure
         var filteredPartners = partners
-            .Where(p => p.PartnerOfficeId.HasValue && orgUnitHierarchy.Contains(p.PartnerOfficeId.Value))
+            .Where(p => p.OrganizationUnitRelationships != null && 
+                       p.OrganizationUnitRelationships.Any(r => orgUnitHierarchy.Contains(r.OrganizationHierarchyId)))
             .ToList();
 
         // Assert
         filteredPartners.Should().HaveCount(4);
-        filteredPartners.Should().OnlyContain(p => p.PartnerOfficeId.HasValue && orgUnitHierarchy.Contains(p.PartnerOfficeId.Value));
+        filteredPartners.Should().OnlyContain(p => p.OrganizationUnitRelationships.Any(r => orgUnitHierarchy.Contains(r.OrganizationHierarchyId)));
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "Beta Industries", "Global Finance Corp" };
         filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
@@ -332,14 +335,15 @@ public class SimplePartnerFilterTests
         var partners = GetTestPartnersWithOrgUnits();
         var targetOrgUnitId = 10;
 
-        // Act - Partners with null PartnerOfficeId should not be included
+        // Act - Partners with no organization unit relationships should not be included
         var filteredPartners = partners
-            .Where(p => p.PartnerOfficeId.HasValue && p.PartnerOfficeId.Value == targetOrgUnitId)
+            .Where(p => p.OrganizationUnitRelationships != null && 
+                       p.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchyId == targetOrgUnitId))
             .ToList();
 
         // Assert
         filteredPartners.Should().HaveCount(2);
-        filteredPartners.Should().NotContain(p => !p.PartnerOfficeId.HasValue);
+        filteredPartners.Should().NotContain(p => p.OrganizationUnitRelationships == null || !p.OrganizationUnitRelationships.Any());
     }
 
     [Fact]
@@ -350,9 +354,10 @@ public class SimplePartnerFilterTests
         var targetOrgUnitId = 10;
         var targetStatus = "Active";
 
-        // Act - Combine OrgUnitId and Status filters
+        // Act - Combine OrgUnitId and Status filters using the new relationship structure
         var filteredPartners = partners
-            .Where(p => p.PartnerOfficeId.HasValue && p.PartnerOfficeId.Value == targetOrgUnitId)
+            .Where(p => p.OrganizationUnitRelationships != null && 
+                       p.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchyId == targetOrgUnitId))
             .Where(p => p.Status == targetStatus)
             .ToList();
 
@@ -360,7 +365,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().HaveCount(1);
         filteredPartners.Single().Name.Should().Be("ACME Corporation");
         filteredPartners.Single().Status.Should().Be("Active");
-        filteredPartners.Single().PartnerOfficeId.Should().Be(10);
+        filteredPartners.Single().OrganizationUnitRelationships.Should().Contain(r => r.OrganizationHierarchyId == 10);
     }
 
     [Fact]
@@ -452,15 +457,14 @@ public class SimplePartnerFilterTests
         };
     }
 
-    private static UNOPSPartner CreatePartner(string name, string status, string shortName, int? partnerOfficeId = null)
+    private static UNOPSPartner CreatePartner(string name, string status, string shortName, int? organizationHierarchyId = null)
     {
-        return new UNOPSPartner
+        var partner = new UNOPSPartner
         {
             Id = Random.Shared.Next(1, 1000),
             Name = name,
             Status = status,
             ShortName = shortName,
-            PartnerOfficeId = partnerOfficeId,
             NewEngagement = "true",
             PooledFund = "false",
             DDRequired = "false",
@@ -471,6 +475,22 @@ public class SimplePartnerFilterTests
             CreatedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 100)),
             LastModifiedDate = DateTime.UtcNow
         };
+
+        // Add organization unit relationship if specified
+        if (organizationHierarchyId.HasValue)
+        {
+            partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = organizationHierarchyId.Value,
+                    EntityId = partner.Id,
+                    EntityType = nameof(UNOPSPartner)
+                }
+            };
+        }
+
+        return partner;
     }
 
     #endregion

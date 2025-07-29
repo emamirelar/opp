@@ -205,7 +205,7 @@
       "levyTreatment": "Levy Treatment",
       "partner": "Partner",
       "selectPartner": "Select Partner",
-      "selectPartnerOffice": "Select Partner Office",
+      "selectOrganizationUnit": "Select Organization Unit",
       "selectPartnerGroup": "Select Partner Group",
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",
@@ -213,7 +213,9 @@
       "categoryNews": "Category News",
       "categorySummary": "Category Summary",
       "groupSummary": "Group Summary",
-      "partnerOffice": "Partner Office",
+      "organizationUnits": "Organization Units",
+      "organizationUnit": "Organization Unit",
+      "selectOrganizationUnits": "Select Organization Units",
       "partnerCategory": "Partner Category",
       "partnerTeam": "Partner Team"
     },
@@ -482,7 +484,7 @@
   "aria": {
     "selectPartner": "Select Partner",
     "selectNewEngagement": "Select New Engagement",
-    "selectPartnerOffice": "Select Partner Office",
+    "selectOrganizationUnits": "Select Organization Units",
     "selectPartnerGroup": "Select Partner Group",
     "selectPooledFund": "Select Pooled Fund",
     "selectDDRequired": "Select DD Required",

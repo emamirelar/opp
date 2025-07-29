@@ -92,6 +92,25 @@ public class UNOPSAppDbContext : AppDbContext
             .WithMany(e => e.EntityFields)
             .HasForeignKey(e => e.EntityManagerId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure OrganizationUnitRelationship entity
+        modelBuilder
+            .Entity<OrganizationUnitRelationship>()
+            .HasOne(r => r.OrganizationHierarchy)
+            .WithMany(o => o.EntityRelationships)
+            .HasForeignKey(r => r.OrganizationHierarchyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Create composite index for OrganizationUnitRelationship for better query performance
+        modelBuilder
+            .Entity<OrganizationUnitRelationship>()
+            .HasIndex(r => new { r.EntityId, r.EntityType, r.OrganizationHierarchyId })
+            .IsUnique(); // Prevent duplicate relationships
+
+        // Create index for querying by EntityId and EntityType
+        modelBuilder
+            .Entity<OrganizationUnitRelationship>()
+            .HasIndex(r => new { r.EntityId, r.EntityType });
     }
 
     public DbSet<Project> Projects { get; set; }
@@ -108,6 +127,9 @@ public class UNOPSAppDbContext : AppDbContext
     public new DbSet<AiChatSession> AiChatSession { get; set; }
     public new DbSet<UNOPSDocument> Documents { get; set; }
     public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
+
+    // Add DbSet for OrganizationUnitRelationship
+    public DbSet<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; }
 
     public new DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
     public new DbSet<InteractionContact> InteractionContacts { get; set; }

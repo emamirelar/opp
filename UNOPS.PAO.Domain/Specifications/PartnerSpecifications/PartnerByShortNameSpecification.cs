@@ -15,6 +15,5 @@ public class PartnerByShortNameSpecification : BaseSpecification<Partner>
         : base(p => p.ShortName != null && p.ShortName.ToLower().Contains(shortName.ToLower()))
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
     }
 } 

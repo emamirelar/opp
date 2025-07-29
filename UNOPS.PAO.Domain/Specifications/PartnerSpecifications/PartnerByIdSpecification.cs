@@ -15,7 +15,6 @@ public class PartnerByIdSpecification : BaseSpecification<Partner>
         : base(p => p.Id == id)
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
         AddInclude(p => p.Documents);
     }
 } 

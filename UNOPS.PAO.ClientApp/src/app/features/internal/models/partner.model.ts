@@ -1,5 +1,7 @@
 import { PartnerTree } from "./partner-tree.model";
 import { EntityPermissionSet } from './shared-types';
+import { OrganizationUnitRelationshipModel } from './organization-unit-relationship.model';
+import { OrganizationHierarchyModel } from '../../../models/organization-hierarchy.model';
 
 export interface Partner {
   id?: string | null;
@@ -31,8 +33,8 @@ export interface Partner {
   lastModifiedBy?: string | null;
   lastModifiedDate?: Date | null;
   isDeleted?: boolean | null;
-  partnerOffice?: Office | null;
-  partnerOfficeId?: string | null;
+  // Organization Unit Relationships
+  organizationUnitRelationships?: OrganizationUnitRelationshipModel[] | null;
   partnerCategory?: string | null;
   logoUrl?: string | null;
   deletedBy?: string | null;
@@ -49,6 +51,11 @@ export interface Partner {
   
   // RBAC permissions
   permissions?: EntityPermissionSet;
+}
+
+// Utility function to get the primary organization unit from a partner
+export function getPrimaryOrganizationUnit(partner: Partner): OrganizationHierarchyModel | null {
+  return partner.organizationUnitRelationships?.[0]?.organizationHierarchy || null;
 }
 
 export interface Office {

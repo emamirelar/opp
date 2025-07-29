@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, effect, inject, OnDestroy, Input, OnInit, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, effect, inject, OnDestroy, Input, OnInit, Output, signal, computed } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -19,6 +19,7 @@ import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { AutoFocusModule } from 'primeng/autofocus';
 import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
@@ -48,6 +49,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     TextareaModule,
     PanelModule,
     SelectModule,
+    MultiSelectModule,
     AutoFocusModule,
     BlockUI,
     DialogModule,
@@ -69,7 +71,7 @@ export class PartnerEditDialogComponent implements OnInit {
   recordPermissions = signal<any>({});
 
   public formGroup = new FormGroup({
-      partnerOfficeId: new FormControl(null, {
+      organizationHierarchyIds: new FormControl<number[]>([], {
         validators: [Validators.required]
       }),
       partnerGroupCode: new FormControl(null, {
@@ -144,7 +146,24 @@ export class PartnerEditDialogComponent implements OnInit {
   allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
-  allPartnerOfficesData = this.cachedDataService.allPartnerOffices;
+  // Backend already filters for active organization units
+  allOrganizationUnitsData = this.cachedDataService.allOrganizationUnits;
+
+  // Signal to track form control changes
+  private selectedOrgUnitsSignal = signal<number[]>([]);
+
+  // Custom counter for selected organization units 
+  getSelectedActiveOrgUnitsLabel = computed(() => {
+    const selectedIds = this.selectedOrgUnitsSignal();
+    if (!selectedIds.length) return 'Select organization units';
+    
+    // The backend already filters for active records, so we just count selected items
+    const count = selectedIds.length;
+    
+    return count === 1 
+      ? '1 organization unit selected' 
+      : `${count} organization units selected`;
+  });
   allPartnerCategoriesData = this.cachedDataService.partnerCategoryGroups;
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
   recordId: string = '';
@@ -160,6 +179,15 @@ export class PartnerEditDialogComponent implements OnInit {
         this.handleSave();
       }
     });
+  }
+
+  // Helper methods for organization hierarchy FormControl
+  setOrganizationHierarchyIds(ids: number[]): void {
+    this.formGroup.get('organizationHierarchyIds')?.setValue(ids || []);
+  }
+
+  getSelectedOrganizationHierarchyIds(): number[] {
+    return this.formGroup.get('organizationHierarchyIds')?.value || [];
   }
 
   ngOnInit() {
@@ -181,6 +209,13 @@ export class PartnerEditDialogComponent implements OnInit {
             formData.status = 'Active';
           }
           
+          // Handle organization unit relationships
+          if (formData.organizationUnitRelationships) {
+            const orgIds = formData.organizationUnitRelationships.map((rel: any) => rel.organizationHierarchyId);
+            this.setOrganizationHierarchyIds(orgIds);
+            delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
+          }
+          
           this.formGroup.patchValue(formData);
           
           // Set loading to false after a short delay to ensure form is properly initialized
@@ -190,6 +225,15 @@ export class PartnerEditDialogComponent implements OnInit {
         }
       }
     });
+    
+    // Track form control changes for organization units counter
+    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
+      this.selectedOrgUnitsSignal.set(value || []);
+    });
+    
+    // Initialize the signal with current form value
+    const currentValue = this.formGroup.get('organizationHierarchyIds')?.value || [];
+    this.selectedOrgUnitsSignal.set(currentValue);
   }
 
 
@@ -273,6 +317,13 @@ export class PartnerEditDialogComponent implements OnInit {
           formData.status = 'Active';
         }
         
+        // Handle organization unit relationships
+        if (formData.organizationUnitRelationships) {
+          const orgIds = formData.organizationUnitRelationships.map((rel: any) => rel.organizationHierarchyId);
+          this.setOrganizationHierarchyIds(orgIds);
+          delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
+        }
+        
         this.formGroup.patchValue(formData);
         this.isLoading.set(false);
       },
@@ -302,14 +353,21 @@ export class PartnerEditDialogComponent implements OnInit {
   _getRequestPayload() {
     let valueObj = this.formGroup.value,
     requestJsonObj: any = {};
-    let partnerOfficeId = null;
-    let partnerCategoryId = null;
 
     for (let key in valueObj) {
       if (valueObj.hasOwnProperty(key)) {
         let indexValue = (valueObj as any)[key];
 
         switch (key) {
+          case 'organizationHierarchyIds':
+            // Convert FormArray values to organizationUnitRelationships
+            if (indexValue && Array.isArray(indexValue)) {
+              requestJsonObj['organizationUnitRelationships'] = indexValue.map((id: number) => ({
+                organizationHierarchyId: id,
+                entityType: 'Partner'
+              }));
+            }
+            break;
 
           default:
             requestJsonObj[key] = indexValue;
@@ -338,6 +396,11 @@ export class PartnerEditDialogComponent implements OnInit {
         address1Country: data.address1Country || this.formGroup.get('address1Country')?.value,
         partnerGroupCode: data.partnerGroupCode || this.formGroup.get('partnerGroupCode')?.value,
       });
+
+      // Handle organization hierarchy IDs from AI transcription
+      if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds)) {
+        this.setOrganizationHierarchyIds(data.organizationHierarchyIds);
+      }
 
       this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.preFillSuccess') });
     }

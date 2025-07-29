@@ -77,8 +77,8 @@ export class CachedDataService {
   private allPartnerLevelTypesData = signal([]);
   allPartnerLevelTypes = this.allPartnerLevelTypesData.asReadonly();
 
-  private allPartnerOfficesData = signal([]);
-  allPartnerOffices = this.allPartnerOfficesData.asReadonly();
+  private allOrganizationUnitsData = signal([]);
+  allOrganizationUnits = this.allOrganizationUnitsData.asReadonly();
 
   private allPartnerCategoriesData = signal([]);
   allPartnerCategories = this.allPartnerCategoriesData.asReadonly();
@@ -125,7 +125,7 @@ export class CachedDataService {
     this.loadYesNo();
     this.loadPartners();
     this.loadPartnerLevelTypeData();
-    this.loadPartnerOffices();
+    this.loadOrganizationUnits();
     this.loadPartnerCategoryGroups(); // Load category and group structure
     this.loadContacts();
     this.loadUsers();
@@ -157,7 +157,7 @@ export class CachedDataService {
     this.allPartnerLevyTreatmentData.set([]);
     this.allPartnerScopesData.set([]);
     this.allPartnersData.set([]);
-    this.allPartnerOfficesData.set([]);
+    this.allOrganizationUnitsData.set([]);
     this.allPartnerCategoriesData.set([]);
     this.partnerCategoryGroupData.set([]); // Clear category and group structure
   }
@@ -479,12 +479,12 @@ export class CachedDataService {
     }
   }
 
-  loadPartnerOffices() {
-    if ((this.allPartnerOfficesData() == undefined) || (this.allPartnerOfficesData().length <= 0)) {
+  loadOrganizationUnits() {
+    if ((this.allOrganizationUnitsData() == undefined) || (this.allOrganizationUnitsData().length <= 0)) {
       this.isLoading.set(true);
       this.http.get('/api/values/organization-units').subscribe({
         next: (data: any) => {
-          this.allPartnerOfficesData.set(data);
+          this.allOrganizationUnitsData.set(data);
           this.isLoading.set(false);
         },
         error: (err) => {

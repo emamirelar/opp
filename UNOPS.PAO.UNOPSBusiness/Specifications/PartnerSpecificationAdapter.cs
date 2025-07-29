@@ -70,6 +70,14 @@ public class PartnerSpecificationAdapter : ISpecification<Partner>
     public int Take => _unosPartnerSpecification.Take;
     public bool IsPagingEnabled => _unosPartnerSpecification.IsPagingEnabled;
 
+    /// <summary>
+    /// Gets the original UNOPS specification that was wrapped by this adapter
+    /// </summary>
+    public ISpecification<UNOPSPartner> GetOriginalSpecification()
+    {
+        return _unosPartnerSpecification;
+    }
+
     private Expression<Func<Partner, object>> ConvertInclude(Expression<Func<UNOPSPartner, object>> include)
     {
         var parameter = Expression.Parameter(typeof(Partner), "p");

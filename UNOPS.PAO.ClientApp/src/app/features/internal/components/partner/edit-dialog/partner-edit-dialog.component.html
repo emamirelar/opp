@@ -41,18 +41,25 @@
         }
       </div>
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="partnerOfficeId">{{ 'label.partner.partnerOffice' | translate }}*</label>
-        <p-select formControlName="partnerOfficeId" [options]="allPartnerOfficesData()"
-                  optionLabel="name"
-                  optionValue="id"
-                  [filter]="true"
-                  filterBy="name"
-                  [showClear]="true"
-                  placeholder="{{ 'label.partner.selectPartnerOffice' | translate }}"
-                  [appendTo]="'body'"
-                  fluid="true" id="partnerOfficeId" [ariaLabel]="'aria.selectPartnerOffice' | translate" />
-        @if( formGroup.get("partnerOfficeId")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Partner Office is required.</p-message>
+        <label for="organizationHierarchyIds">{{ 'label.partner.organizationUnits' | translate }}*</label>
+        <p-multiselect 
+          formControlName="organizationHierarchyIds"
+                        [options]="allOrganizationUnitsData()"
+          optionLabel="name"
+          optionValue="id"
+          [filter]="true"
+          filterBy="name"
+          [showClear]="true"
+          [showToggleAll]="true"
+          placeholder="{{ 'label.partner.selectOrganizationUnits' | translate }}"
+          [appendTo]="'body'"
+          fluid="true" 
+          id="organizationHierarchyIds" 
+          [ariaLabel]="'aria.selectOrganizationUnits' | translate"
+          [selectedItemsLabel]="getSelectedActiveOrgUnitsLabel()">
+        </p-multiselect>
+        @if( formGroup.get("organizationHierarchyIds")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">At least one organization unit is required.</p-message>
         }
       </div>
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
@@ -102,12 +109,12 @@
                   [appendTo]="'body'"
                   fluid="true" id="partnerGroupCode" [ariaLabel]="'aria.selectPartnerGroup' | translate"
                   >
-                  <ng-template let-group #group>
-                    <div class="flex items-center font-bold">
-                        <span>{{ group.name }}</span>
-                    </div>
-                </ng-template>
-          </p-select>
+          <ng-template let-group #group>
+            <div class="flex items-center font-bold">
+              <span>{{ group.name }}</span>
+            </div>
+          </ng-template>
+        </p-select>
         @if( formGroup.get("partnerGroupId")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">Partner Group is required.</p-message>
         }

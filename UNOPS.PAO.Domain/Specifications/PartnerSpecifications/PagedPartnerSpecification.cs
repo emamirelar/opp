@@ -23,6 +23,5 @@ public class PagedPartnerSpecification : BaseSpecification<Partner>
             
         ApplyPaging((pageIndex - 1) * pageSize, pageSize);
         ApplyOrderBy(p => p.Name);
-        AddInclude(p => p.PartnerOffice);
     }
 } 

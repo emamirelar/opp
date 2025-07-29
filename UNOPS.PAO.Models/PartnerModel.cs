@@ -1,5 +1,6 @@
 ﻿using UNOPS.PAO.Domain.Entities;
 using System.Text.Json.Serialization;
+using System.Linq;
 
 namespace UNOPS.PAO.Models;
 
@@ -36,8 +37,9 @@ public class PartnerModel
     public List<ContactModel>? First5ContactsByDate { get; set; }
     
     public List<DocumentModel>? Documents { get; set; }
-    public OrganizationHierarchyModel? PartnerOffice { get; set; }
-    public int? PartnerOfficeId { get; set; }
+    
+    // Organization Unit Relationships
+    public List<OrganizationUnitRelationshipModel>? OrganizationUnitRelationships { get; set; }
     
     public string? LogoUrl { get; set; }
     public string? PartnerGroupCode{ get; set; }
@@ -59,6 +61,14 @@ public class PartnerModel
     public EntityPermissionsModel? Permissions { get; set; }
     public List<InteractionModel>? Interactions { get; set; }
     public List<ContactModel>? Contacts { get; set; }
+    
+    /// <summary>
+    /// Gets the primary organization unit (first relationship)
+    /// </summary>
+    public OrganizationHierarchyModel? GetPrimaryOrganizationUnit()
+    {
+        return OrganizationUnitRelationships?.FirstOrDefault()?.OrganizationHierarchy;
+    }
 }
 
 /// <summary>

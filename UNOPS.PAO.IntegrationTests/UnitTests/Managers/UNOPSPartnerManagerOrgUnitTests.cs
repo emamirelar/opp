@@ -121,7 +121,6 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                     Id = p.Id, 
                     Name = p.Name,
                     Status = p.Status,
-                    PartnerOfficeId = p.PartnerOfficeId,
                     PartnerGroupCode = p.PartnerGroupCode,
                     LogoUrl = null // Explicitly set to null to avoid issues
                 });
@@ -167,14 +166,13 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             _dbContext.SaveChanges();
         }
 
-        private UNOPSPartner CreatePartner(int id, string name, int officeId)
+        private UNOPSPartner CreatePartner(int id, string name, int organizationHierarchyId)
         {
-            return new UNOPSPartner
+            var partner = new UNOPSPartner
             {
                 Id = id,
                 Name = name,
                 Status = "Active",
-                PartnerOfficeId = officeId,
                 NewEngagement = "false",
                 PooledFund = "false",
                 DDRequired = "false",
@@ -186,6 +184,19 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
             };
+
+            // Add organization unit relationship
+            partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = organizationHierarchyId,
+                    EntityId = partner.Id,
+                    EntityType = nameof(UNOPSPartner)
+                }
+            };
+
+            return partner;
         }
 
         [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]
