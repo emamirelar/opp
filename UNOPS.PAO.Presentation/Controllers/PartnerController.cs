@@ -54,7 +54,7 @@ public class PartnerController : BaseController
     /// <param name="req.address1Street">Street address line 1</param>
     /// <param name="req.address1City">City</param>
     /// <param name="req.address1Country">Country</param>
-    /// <param name="req.partnerOfficeId">Associated UNOPS office ID</param>
+    /// <param name="req.organizationUnitRelationships">Associated UNOPS office relationships</param>
     /// <param name="req.partnerGroupCode">Partner group classification code</param>
     /// <param name="req.globalKeyAccount">Whether this is a global key account</param>
     /// <param name="req.unSecretariatEntity">Whether this is a UN Secretariat entity</param>
@@ -276,7 +276,7 @@ public class PartnerController : BaseController
     /// <param name="req.website">Updated website</param>
     /// <param name="req.phone">Updated phone number</param>
     /// <param name="req.globalKeyAccount">Updated key account status</param>
-    /// <param name="req.partnerOfficeId">Updated office assignment</param>
+    /// <param name="req.organizationUnitRelationships">Updated office assignments via OrganizationUnitRelationships</param>
     /// <example_uses>
     /// Update partner 123's name to New UNICEF
     /// Change partner 456's status to Inactive

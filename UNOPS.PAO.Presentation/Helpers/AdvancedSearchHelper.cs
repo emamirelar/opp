@@ -188,7 +188,7 @@ public static class AdvancedSearchHelper
         {
             // Partner direct fields
             "id", "name", "status", "newEngagement", "phone", "website", "shortName",
-            "partnerOfficeId", "partnerOfficeName", "partnerCategoryId", "partnerCategoryName",
+            "organizationHierarchyId", "organizationHierarchyName", "partnerCategoryId", "partnerCategoryName",
             "addressCity", "addressStateProvince", "addressPostalCode", "addressCountry",
             
             // Add other partner-specific fields as needed

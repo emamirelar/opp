@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Http;
 using UNOPS.PAO.Domain.Specifications;
+using UNOPS.PAO.Domain.Specifications.PartnerSpecifications;
 using System.Linq;
+using System.Reflection;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Specifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -33,6 +36,7 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using static Google.Cloud.Vision.V1.ProductSearchResults.Types;
+using UNOPS.PAO.UNOPSBusiness.Extensions;
 
 public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 {
@@ -166,7 +170,43 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         var entity = MapModelToEntity(model);
 
+        // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
+
+        // Handle organization unit relationships if specified - AFTER saving the partner
+        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
+        {
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            
+            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
+            {
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                if (orgUnit == null || orgUnit.Type != OrganizationUnitType.OrgUnit)
+                {
+                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                }
+                
+                // Create the organization unit relationship with the actual partner ID
+                var newRelationship = new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = orgUnit.Id,
+                    EntityId = entity.Id, // Now entity.Id has the actual saved ID
+                    EntityType = nameof(Partner),
+                    Name = $"Partner-{entity.Id}-{orgUnit.Code}",
+                    Status = EntityStatus.Active
+                };
+                relationshipsToAdd.Add(newRelationship);
+            }
+            
+            if (relationshipsToAdd.Any())
+            {
+                await _context.OrganizationUnitRelationships.AddRangeAsync(relationshipsToAdd);
+                await _context.SaveChangesAsync();
+                
+                _logger?.LogInformation("Added {Count} organization unit relationships for partner {PartnerId}: [{Ids}]", 
+                    relationshipsToAdd.Count, entity.Id, string.Join(", ", relationshipsToAdd.Select(r => r.OrganizationHierarchyId)));
+            }
+        }
 
         return await MapEntityToModelAsync(entity, _mapper, null);
     }
@@ -174,9 +214,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
+                            .GetAll(["PartnerGroup", "Contacts"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
+
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
 
         // Get total count
         var totalCount = query.Count();
@@ -195,7 +238,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Skip(excludedRows)
             .Take(request.PageSize)
             .ToList();
-        
+
         // Map entities asynchronously
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
@@ -215,7 +258,17 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         // Apply the specification to the query
         var query = PartnerRepository.GetAll(["Contacts"]).AsQueryable();
-        var filteredQuery = query.ApplySpecification(specification);
+
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        // Cast to base type to apply specification, then cast back to derived type
+        var baseQuery = query.Cast<Partner>();
+        var filteredBaseQuery = baseQuery.ApplySpecification(specification);
+        var filteredQuery = filteredBaseQuery.OfType<UNOPSPartner>();
+        
+        // Apply org unit filtering if the specification supports it
+        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
         
         // Get total count
         var totalCount = filteredQuery.Count();
@@ -234,7 +287,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Skip(excludedRows)
             .Take(pagination.PageSize)
             .ToList();
-        
+
         // Map entities asynchronously with default permissions
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
@@ -253,14 +306,22 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<object> GetPartnersWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Partner> specification, PaginationRequest pagination)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["PartnerGroup"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
 
-        var filteredQuery = query.ApplySpecification(specification);
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        // Cast to base type to apply specification, then cast back to derived type
+        var baseQuery = query.Cast<Partner>();
+        var filteredBaseQuery = baseQuery.ApplySpecification(specification);
+        var filteredQuery = filteredBaseQuery.OfType<UNOPSPartner>();
         
-        // OrgUnit filtering is now handled by the specification created by OrgUnitFilterService
-        // No need for duplicate logic here
+        // Apply org unit filtering if the specification supports it
+        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        
+        // OrgUnit filtering is now handled by the specification and our manual join method
         
         // Apply access control filters (row and column filtering) BEFORE pagination
         // Cast the query to UNOPSPartner query for access control to maintain type consistency
@@ -308,21 +369,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id);
+        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup"]);
         if (item == null)
         {
             return default;
         }
-        
-        // Load partner office if needed
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
-        }
+
+        // Load organization unit relationships for single partner
+        await item.LoadOrganizationUnitRelationshipsAsync(_context);
 
         return await MapEntityToModelAsync(item, _mapper, null);
     }
@@ -332,7 +386,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetBasicPartnerDetailsAsync(int id)
     {
-        string[] includes = ["PartnerOffice", "PartnerGroup"];
+        string[] includes = ["PartnerGroup"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -341,15 +395,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return default;
         }
 
-        // Load partner office if needed
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
-        }
+        // Load organization unit relationships for single partner
+        await item.LoadOrganizationUnitRelationshipsAsync(_context);
 
         return await MapEntityToModelAsync(item, _mapper, null);
     }
@@ -360,7 +407,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id)
     {
         // Get partner with basic includes first
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
+        string[] includes = ["Documents", "PartnerGroup", "Contacts"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -368,6 +415,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         {
             return default;
         }
+
+        // Load organization unit relationships for single partner
+        await partner.LoadOrganizationUnitRelationshipsAsync(_context);
 
         // Manually load interactions for each contact through the InteractionContacts junction table
         if (partner.Contacts != null && partner.Contacts.Any())
@@ -395,15 +445,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
-        // Load partner office if needed
-        if (partner.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                partner.PartnerOffice = partnerOffice;
-            }
-        }
+        // OrganizationUnitRelationships are now loaded via includes
 
         // Now you can use the Partner entity's methods to get interaction data
         // Examples:
@@ -421,7 +463,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<PartnerModel?> GetPartnerWithProjectsAsync(int id)
     {
         // Include the projects through the many-to-many relationship
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Projects"];
+        string[] includes = ["Documents", "PartnerGroup", "Projects"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -430,15 +472,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return default;
         }
 
-        // Load partner office if needed
-        if (partner.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                partner.PartnerOffice = partnerOffice;
-            }
-        }
+        // Load organization unit relationships for single partner
+        await partner.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        // OrganizationUnitRelationships are now loaded via includes
 
         var result = await MapEntityToModelAsync(partner, _mapper, null);
 
@@ -468,8 +505,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerRiskProfileAsync(int id)
     {
-        // Include all relevant data for risk assessment: documents, office, group, contacts, interactions, and projects
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts", "Contacts.Interactions", "Projects"];
+        // Include all relevant data for risk assessment: documents, organization units, group, contacts, interactions, and projects
+        string[] includes = ["Documents", "PartnerGroup", "Contacts", "Contacts.Interactions", "Projects"];
 
         var partner = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -478,15 +515,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return default;
         }
 
-        // Load partner office if needed
-        if (partner.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(partner.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                partner.PartnerOffice = partnerOffice;
-            }
-        }
+        // Load organization unit relationships for single partner
+        await partner.LoadOrganizationUnitRelationshipsAsync(_context);
 
         var result = await MapEntityToModelAsync(partner, _mapper, null);
 
@@ -619,9 +649,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         
         // Get all partners with the matching codes
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
             .AsQueryable();
+
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
 
         // Get total count
         var totalCount = query.Count();
@@ -640,7 +673,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             .Skip(excludedRows)
             .Take(request.PageSize)
             .ToList();
-        
+
         // Map entities asynchronously with default permissions
         var mappedEntities = new List<PartnerModel>();
         foreach (var entity in entities)
@@ -825,9 +858,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         // RBAC interceptor handles security enforcement
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["PartnerGroup"])
             .Where(x => !x.IsDeleted)
             .AsQueryable();
+
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
 
         var partners = query.Paginate(
             x => {
@@ -845,7 +881,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// </summary>
     public async Task<PartnerModel?> GetPartnerAsync(ClaimsPrincipal user, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerOffice", "PartnerGroup"]);
+        var item = await PartnerRepository.GetByIdAsync(id, ["PartnerGroup"]);
         if (item == null)
         {
             return null;
@@ -854,13 +890,16 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Check if user has permission to access this specific entity
         // Create a single-item query and apply access control filters
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["PartnerGroup"])
             .Where(x => x.Id == id && !x.IsDeleted)
             .AsQueryable();
 
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
+
         // Apply access control filters (row and column filtering)
         var filteredData = await ApplyAccessControlFilters(query, user, "read");
-        
+
         // If filteredData is a list and contains our entity, user has access
         if (filteredData is IEnumerable<UNOPSPartner> partnerList)
         {
@@ -882,9 +921,46 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         // RBAC interceptor handles security enforcement
         var entity = MapModelToEntity(model);
+
+        // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
 
-        var resultModel = MapEntityToModel(entity, _mapper);
+        // Handle organization unit relationships if specified - AFTER saving the partner
+        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
+        {
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            
+            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
+            {
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                if (orgUnit == null || orgUnit.Type != OrganizationUnitType.OrgUnit)
+                {
+                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                }
+                
+                // Create the organization unit relationship with the actual partner ID
+                var newRelationship = new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = orgUnit.Id,
+                    EntityId = entity.Id, // Now entity.Id has the actual saved ID
+                    EntityType = nameof(Partner),
+                    Name = $"Partner-{entity.Id}-{orgUnit.Code}",
+                    Status = EntityStatus.Active
+                };
+                relationshipsToAdd.Add(newRelationship);
+            }
+            
+            if (relationshipsToAdd.Any())
+            {
+                await _context.OrganizationUnitRelationships.AddRangeAsync(relationshipsToAdd);
+                await _context.SaveChangesAsync();
+                
+                _logger?.LogInformation("Added {Count} organization unit relationships for partner {PartnerId}: [{Ids}]", 
+                    relationshipsToAdd.Count, entity.Id, string.Join(", ", relationshipsToAdd.Select(r => r.OrganizationHierarchyId)));
+            }
+        }
+
+        var resultModel = await MapEntityToModelAsync(entity, _mapper, user);
         
         // Add permissions for frontend UI
         //resultModel.Permissions = await GetEntityPermissionsAsync(entity, user);
@@ -893,17 +969,97 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     /// <summary>
+    /// Efficiently updates organization unit relationships by only adding/removing what's changed
+    /// </summary>
+    private async Task UpdateOrganizationUnitRelationshipsDifferentialAsync(int partnerId, IEnumerable<OrganizationUnitRelationshipRequest> newRelationships)
+    {
+        // Get current relationships from database
+        var currentRelationships = await _context.OrganizationUnitRelationships
+            .Where(r => r.EntityId == partnerId && r.EntityType == "Partner")
+            .ToListAsync();
+
+        var newOrgUnitIds = new HashSet<int>(newRelationships?.Select(r => r.OrganizationHierarchyId) ?? Enumerable.Empty<int>());
+        var currentOrgUnitIds = new HashSet<int>(currentRelationships.Select(r => r.OrganizationHierarchyId));
+
+        // Find relationships to remove (exist in current but not in new)
+        var idsToRemove = currentOrgUnitIds.Except(newOrgUnitIds).ToList();
+        
+        // Find relationships to add (exist in new but not in current)
+        var idsToAdd = newOrgUnitIds.Except(currentOrgUnitIds).ToList();
+
+        // Remove relationships that are no longer needed
+        if (idsToRemove.Any())
+        {
+            await _context.OrganizationUnitRelationships
+                .Where(r => r.EntityId == partnerId && r.EntityType == "Partner" && idsToRemove.Contains(r.OrganizationHierarchyId))
+                .ExecuteDeleteAsync();
+            
+            _logger?.LogInformation("Removed {Count} organization unit relationships for partner {PartnerId}: [{Ids}]", 
+                idsToRemove.Count, partnerId, string.Join(", ", idsToRemove));
+        }
+
+        // Add new relationships
+        if (idsToAdd.Any())
+        {
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            
+            foreach (var orgUnitId in idsToAdd)
+            {
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(orgUnitId);
+                if (orgUnit != null && orgUnit.Type == OrganizationUnitType.OrgUnit)
+                {
+                    var newRelationship = new OrganizationUnitRelationship
+                    {
+                        OrganizationHierarchyId = orgUnit.Id,
+                        EntityId = partnerId,
+                        EntityType = "Partner",
+                        Name = $"Partner-{partnerId}-{orgUnit.Code}",
+                        Status = EntityStatus.Active
+                    };
+                    relationshipsToAdd.Add(newRelationship);
+                }
+                else
+                {
+                    _logger?.LogWarning("Skipping invalid organization unit with ID {OrgUnitId} for partner {PartnerId}", orgUnitId, partnerId);
+                }
+            }
+            
+            if (relationshipsToAdd.Any())
+            {
+                await _context.OrganizationUnitRelationships.AddRangeAsync(relationshipsToAdd);
+                await _context.SaveChangesAsync();
+                
+                _logger?.LogInformation("Added {Count} organization unit relationships for partner {PartnerId}: [{Ids}]", 
+                    relationshipsToAdd.Count, partnerId, string.Join(", ", idsToAdd));
+            }
+        }
+
+        // Log if no changes were needed
+        if (!idsToRemove.Any() && !idsToAdd.Any())
+        {
+            _logger?.LogInformation("No organization unit relationship changes needed for partner {PartnerId}", partnerId);
+        }
+    }
+
+    /// <summary>
     /// Updates a partner with permission validation
     /// </summary>
     public async Task<PartnerModel?> UpdatePartnerAsync(ClaimsPrincipal user, UpdatePartnerRequest model)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await PartnerRepository.GetByIdAsync(model.Id, ["PartnerOffice"]);
+        var entity = await PartnerRepository.GetByIdAsync(model.Id);
         if (entity == null)
         {
             return null;
         }
 
+        // Handle organization unit relationship updates using differential approach
+        if (model.OrganizationUnitRelationships != null)
+        {
+            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationUnitRelationships);
+        }
+
+        // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
         await PartnerRepository.UpdateAsync(entity);
 
@@ -921,11 +1077,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<bool> DeletePartnerAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await PartnerRepository.GetByIdAsync(id, ["PartnerOffice"]);
+        var entity = await PartnerRepository.GetByIdAsync(id);
         if (entity == null)
         {
             return false;
         }
+
+        // Load organization unit relationships for single partner
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
 
         await PartnerRepository.Delete(entity);
         return true;
@@ -956,9 +1115,12 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var partnerTreesByGroupWithChildrenCodes = GetAllDescendantPartnerTrees(partnerTreesByGroupCodes).Select(pt => pt.Code).ToList();
         
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupWithChildrenCodes.Contains(x.PartnerGroupCode))
             .AsQueryable();
+        
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
 
         var partners = query.Paginate(
             x => {
@@ -972,7 +1134,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         foreach (var partner in partners.Records)
         {
             /*partner.Permissions = await GetEntityPermissionsAsync(
-                await PartnerRepository.GetByIdAsync(partner.Id, ["PartnerOffice"]), 
+                await PartnerRepository.GetByIdAsync(partner.Id, ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"]), 
                 user
             );
             */
@@ -1006,13 +1168,16 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var partnerTreesByGroupInCategoryCode = GetAllDescendantPartnerTrees(partnerTreesByCategoryCodes).Select(pt => pt.Code).ToList();
         
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["PartnerGroup"])
             .Where(x => !x.IsDeleted && partnerTreesByGroupInCategoryCode.Contains(x.PartnerGroupCode))
             .AsQueryable();
 
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
+
         // Apply access control filters (row and column filtering)
         var filteredData = await ApplyAccessControlFilters(query, user, "read");
-        
+
         // If filteredData is a list, we need to handle pagination manually
         if (filteredData is IEnumerable<UNOPSPartner> partnerList)
         {
@@ -1059,7 +1224,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
+        string[] includes = ["Documents", "PartnerGroup", "Contacts"];
 
         var item = await PartnerRepository.GetByIdAsync(id, includes);
 
@@ -1068,15 +1233,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return default;
         }
 
-        // Load partner office if needed
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository.GetByIdAsync(item.PartnerOfficeId.Value);
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
-        }
+        // Load organization unit relationships
+        await item.LoadOrganizationUnitRelationshipsAsync(_context);
 
         return await MapEntityToModelAsync(item, _mapper, null);
     }
@@ -1090,6 +1248,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             throw new BusinessException($"Partner {model.Id} does not exist.");
         }
 
+        // Handle organization unit relationship updates using differential approach
+        if (model.OrganizationUnitRelationships != null)
+        {
+            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationUnitRelationships);
+        }
+
+        // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
 
         await PartnerRepository.UpdateAsync(entity);
@@ -1116,11 +1281,14 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
     {
         var partners = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["PartnerGroup"])
             .AsQueryable()
             .Where(p => input.partnerIds.Contains(p.Id))
             .Cast<UNOPSPartner>()
             .ToList();
+
+        // Load organization unit relationships manually
+        await partners.LoadOrganizationUnitRelationshipsAsync(_context);
 
         // Get all partner IDs to load interactions and contacts
         var allPartnerIds = partners.Select(p => p.Id).ToList();
@@ -1253,9 +1421,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         _logger?.LogInformation("UNOPSPartnerManager.GetByIdsAsync called with IDs: [{Ids}]", string.Join(", ", ids));
 
         var partners = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup"])
+            .GetAll(["PartnerGroup"])
             .Where(p => ids.Contains(p.Id))
             .ToList();
+
+        await partners.LoadOrganizationUnitRelationshipsAsync(_context);
 
         _logger?.LogInformation("Found {Count} partners from database before RBAC filtering", partners.Count);
 
@@ -1290,4 +1460,76 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         
         return results.Cast<object>().ToList();
     }
+    
+    /// <summary>
+    /// Applies org unit filtering if the specification supports it using manual joins
+    /// </summary>
+    private IQueryable<UNOPSPartner> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSPartner> query, ISpecification<Partner> specification)
+    {
+        // Check if this is a PartnerSpecificationAdapter and get the original specification
+        if (specification is PartnerSpecificationAdapter adapter)
+        {
+            var originalSpec = adapter.GetOriginalSpecification();
+            return ApplyUNOPSPartnerOrgUnitFilterIfSupported(query, originalSpec);
+        }
+        
+        // Check if specification has ApplyOrgUnitFilter method and call it
+        var specType = specification.GetType();
+        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Partner>), typeof(DbContext) });
+        
+        if (filterMethod != null)
+        {
+            try
+            {
+                // Cast to base type for Partner specifications
+                var baseQuery = query.Cast<Partner>();
+                var result = filterMethod.Invoke(specification, new object[] { baseQuery, _context });
+                if (result is IQueryable<Partner> filteredBaseQuery)
+                {
+                    return filteredBaseQuery.OfType<UNOPSPartner>();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue without org unit filtering
+                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
+            }
+        }
+        
+        // If no ApplyOrgUnitFilter method found, return original query
+        return query;
+    }
+    
+    /// <summary>
+    /// Applies org unit filtering for UNOPS-specific specifications
+    /// </summary>
+    private IQueryable<UNOPSPartner> ApplyUNOPSPartnerOrgUnitFilterIfSupported(IQueryable<UNOPSPartner> query, ISpecification<UNOPSPartner> specification)
+    {
+        // Check if specification has ApplyOrgUnitFilter method and call it
+        var specType = specification.GetType();
+        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<UNOPSPartner>), typeof(DbContext) });
+        
+        if (filterMethod != null)
+        {
+            try
+            {
+                // Direct call for UNOPSPartner specifications
+                var result = filterMethod.Invoke(specification, new object[] { query, _context });
+                if (result is IQueryable<UNOPSPartner> filteredQuery)
+                {
+                    return filteredQuery;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue without org unit filtering
+                Console.WriteLine($"Error applying UNOPS partner org unit filter: {ex.Message}");
+            }
+        }
+        
+        // If no ApplyOrgUnitFilter method found, return original query
+        return query;
+    }
+
+
 }

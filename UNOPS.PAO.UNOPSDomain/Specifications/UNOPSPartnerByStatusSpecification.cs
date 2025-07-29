@@ -16,6 +16,5 @@ public class UNOPSPartnerByStatusSpecification : BaseSpecification<UNOPSPartner>
         : base(string.IsNullOrEmpty(status) ? p => true : p => p.Status == status)
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
     }
 }

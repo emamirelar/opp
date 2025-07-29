@@ -372,14 +372,18 @@ export class PartnerComponent implements OnDestroy, OnInit {
         type: 'text'
       },
       { 
-        field: 'partnerOfficeName',
-        label: 'label.partner.partnerOffice',
+        field: 'organizationUnitName',
+        label: 'label.partner.organizationUnit',
         sortable: false,
         width: '20%',
         type: 'template',
         ellipsis: true,
         templateFn: (partner: any) => {
-          return partner.partnerOffice?.name || '';
+          const primaryOrgUnit = partner.getPrimaryOrganizationUnit?.() || 
+                                (partner.organizationUnitRelationships && partner.organizationUnitRelationships.length > 0 
+                                 ? partner.organizationUnitRelationships[0].organizationHierarchy 
+                                 : null);
+          return primaryOrgUnit?.name || '';
         }
       },
       {

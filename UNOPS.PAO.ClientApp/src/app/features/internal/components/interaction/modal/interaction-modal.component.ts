@@ -111,7 +111,7 @@ export class InteractionModalComponent {
   allContacts = this.cachedDataService.allContacts;
   allPartners = this.cachedDataService.allPartners;
   allUsers = this.cachedDataService.allUsers;
-  allOrgUnits = this.cachedDataService.allPartnerOffices;
+  allOrgUnits = this.cachedDataService.allOrganizationUnits;
   currentUser = this.cachedDataService.currentUser;
 
   // Check if this is an import edit

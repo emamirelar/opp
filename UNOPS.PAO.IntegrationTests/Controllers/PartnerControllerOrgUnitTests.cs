@@ -30,9 +30,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
         {
         }
 
-        private static UNOPSPartner CreateTestPartner(string name, string status, int partnerOfficeId, int createdBy = 1)
+        private static UNOPSPartner CreateTestPartner(string name, string status, int organizationHierarchyId, int createdBy = 1)
         {
-            return new UNOPSPartner
+            var partner = new UNOPSPartner
             {
                 Name = name,
                 ShortName = name.Length > 10 ? name.Substring(0, 10) : name,
@@ -42,10 +42,22 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
                 DDRequired = "No",
                 DDEACDone = "No",
                 LevyPotentiallyApplies = "No",
-                PartnerOfficeId = partnerOfficeId,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow
             };
+
+            // Add organization unit relationship
+            partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = organizationHierarchyId,
+                    EntityId = partner.Id,
+                    EntityType = nameof(UNOPSPartner)
+                }
+            };
+
+            return partner;
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -101,76 +113,11 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             // Create partners in different org units
             var partners = new List<UNOPSPartner>
             {
-                new UNOPSPartner 
-                { 
-                    Name = "Partner in Root", 
-                    ShortName = "PIR",
-                    Status = "Active",
-                    NewEngagement = "No",
-                    PooledFund = "No",
-                    DDRequired = "No",
-                    DDEACDone = "No",
-                    LevyPotentiallyApplies = "No",
-                    PartnerOfficeId = 100,
-                    CreatedBy = 1,
-                    CreatedDate = DateTime.UtcNow
-                },
-                new UNOPSPartner 
-                { 
-                    Name = "Partner in Child 1", 
-                    ShortName = "PIC1",
-                    Status = "Active",
-                    NewEngagement = "No",
-                    PooledFund = "No",
-                    DDRequired = "No",
-                    DDEACDone = "No",
-                    LevyPotentiallyApplies = "No",
-                    PartnerOfficeId = 101,
-                    CreatedBy = 1,
-                    CreatedDate = DateTime.UtcNow
-                },
-                new UNOPSPartner 
-                { 
-                    Name = "Partner in Child 2", 
-                    ShortName = "PIC2",
-                    Status = "Active",
-                    NewEngagement = "No",
-                    PooledFund = "No",
-                    DDRequired = "No",
-                    DDEACDone = "No",
-                    LevyPotentiallyApplies = "No",
-                    PartnerOfficeId = 102,
-                    CreatedBy = 1,
-                    CreatedDate = DateTime.UtcNow
-                },
-                new UNOPSPartner 
-                { 
-                    Name = "Partner in Grandchild", 
-                    ShortName = "PIG",
-                    Status = "Active",
-                    NewEngagement = "No",
-                    PooledFund = "No",
-                    DDRequired = "No",
-                    DDEACDone = "No",
-                    LevyPotentiallyApplies = "No",
-                    PartnerOfficeId = 103,
-                    CreatedBy = 1,
-                    CreatedDate = DateTime.UtcNow
-                },
-                new UNOPSPartner 
-                { 
-                    Name = "Partner in Different Org", 
-                    ShortName = "PIDO",
-                    Status = "Active",
-                    NewEngagement = "No",
-                    PooledFund = "No",
-                    DDRequired = "No",
-                    DDEACDone = "No",
-                    LevyPotentiallyApplies = "No",
-                    PartnerOfficeId = 200, // Different org unit not in hierarchy
-                    CreatedBy = 1,
-                    CreatedDate = DateTime.UtcNow
-                }
+                CreateTestPartner("Partner in Root", "Active", 100),
+                CreateTestPartner("Partner in Child 1", "Active", 101),
+                CreateTestPartner("Partner in Child 2", "Active", 102),
+                CreateTestPartner("Partner in Grandchild", "Active", 103),
+                CreateTestPartner("Partner in Different Org", "Active", 200) // Different org unit not in hierarchy
             };
 
             await dbContext.Partners.AddRangeAsync(partners);

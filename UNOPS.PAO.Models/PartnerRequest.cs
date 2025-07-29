@@ -35,6 +35,17 @@ public class PartnerRequest : ExtensibleModel
     public string? ReasonForLevyNotApplying { get; set; }
     public string? LevyTreatment { get; set; }
     //public List<int>? ContactIds { get; set; }
-    public int? PartnerOfficeId { get; set; }
+    
+    // Replace OrganizationHierarchyId with OrganizationUnitRelationships
+    public List<OrganizationUnitRelationshipRequest>? OrganizationUnitRelationships { get; set; }
     public string? PartnerGroupCode { get; set; }
+}
+
+/// <summary>
+/// Request model for organization unit relationships
+/// </summary>
+public class OrganizationUnitRelationshipRequest
+{
+    public int OrganizationHierarchyId { get; set; }
+    public string EntityType { get; set; } = "Partner";
 }

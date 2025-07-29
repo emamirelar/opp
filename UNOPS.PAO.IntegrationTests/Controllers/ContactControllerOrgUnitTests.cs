@@ -25,9 +25,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
         {
         }
 
-        private static UNOPSPartner CreateTestPartner(string name, int partnerOfficeId, int createdBy = 1)
+        private static UNOPSPartner CreateTestPartner(string name, int organizationHierarchyId, int createdBy = 1)
         {
-            return new UNOPSPartner
+            var partner = new UNOPSPartner
             {
                 Name = name,
                 ShortName = name.Length > 10 ? name.Substring(0, 10) : name,
@@ -37,10 +37,22 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
                 DDRequired = "No",
                 DDEACDone = "No",
                 LevyPotentiallyApplies = "No",
-                PartnerOfficeId = partnerOfficeId,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow
             };
+
+            // Add organization unit relationship
+            partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = organizationHierarchyId,
+                    EntityId = partner.Id,
+                    EntityType = nameof(UNOPSPartner)
+                }
+            };
+
+            return partner;
         }
 
         private static UNOPSContact CreateTestContact(string firstName, string lastName, int partnerId, int createdBy = 1)

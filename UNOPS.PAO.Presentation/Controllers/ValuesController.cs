@@ -81,8 +81,7 @@ public class ValuesController : BaseController
             return allPartners.Select(p => new PartnerValueModel
             {
                 Id = p.Id,
-                Name = p.Name,
-                PartnerOfficeId = p.PartnerOfficeId
+                Name = p.Name
             }).ToList();
         });
     }

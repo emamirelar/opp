@@ -346,7 +346,11 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // Apply the specification to the query
         var query = interactionRepository.GetAll().AsQueryable()
             .Where(x => !x.IsDeleted);
-        var filteredQuery = query.ApplySpecification(specification);
+        
+        // Cast to base type to apply specification, then cast back to derived type
+        var baseQuery = query.Cast<Interaction>();
+        var filteredBaseQuery = baseQuery.ApplySpecification(specification);
+        var filteredQuery = filteredBaseQuery.OfType<UNOPSInteraction>();
         
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, GetCurrentUserOrSystemContext(), "read");
@@ -411,7 +415,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     {
         // RBAC interceptor handles security enforcement
         var query = interactionRepository
-            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"])
+            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"])
             .AsQueryable();
 
         var interactions = query.Paginate(
@@ -422,7 +426,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // Add permissions for frontend UI
         foreach (var interaction in interactions.Records)
         {
-            var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
+            var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"]);
             if (entity != null)
             {
                 //interaction.Permissions = await GetEntityPermissionsAsync(entity, user);
@@ -438,7 +442,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var item = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
+        var item = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"]);
         if (item == null) return null;
 
         return await MapEntityToModelAsync(item, mapper, user);
@@ -450,7 +454,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await interactionRepository.GetByIdAsync(model.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
+        var entity = await interactionRepository.GetByIdAsync(model.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"]);
         if (entity == null)
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");
@@ -476,7 +480,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"]);
+        var entity = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"]);
         if (entity == null) return;
 
         await interactionRepository.Delete(entity);
@@ -497,7 +501,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 "InteractionUsers",
                 "InteractionContacts.Contact",
                 "InteractionContacts.Contact.Partner",
-                "InteractionContacts.Contact.Partner.PartnerOffice",
+                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships",
+                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
                 "Documents"
@@ -540,7 +545,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 "InteractionUsers",
                 "InteractionContacts.Contact",
                 "InteractionContacts.Contact.Partner",
-                "InteractionContacts.Contact.Partner.PartnerOffice",
+                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships",
+                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
                 "Documents"
@@ -647,7 +653,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 "InteractionUsers",
                 "InteractionContacts.Contact",
                 "InteractionContacts.Contact.Partner",
-                "InteractionContacts.Contact.Partner.PartnerOffice",
+                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships",
+                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
                 "Documents"

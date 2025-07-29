@@ -172,7 +172,8 @@
         "partner": {
             "partner": "Parceiro",
             "selectPartner": "Selecionar Parceiro",
-            "selectPartnerOffice": "Selecionar Escritório do Parceiro",
+            "organizationUnit": "Unidade de Organização",
+            "selectOrganizationUnit": "Selecionar Unidade de Organização",
             "selectPartnerGroup": "Selecionar Grupo de Parceiros"
         }
     },
@@ -346,7 +347,7 @@
     "aria": {
         "selectPartner": "Selecionar Parceiro",
         "selectNewEngagement": "Selecionar Novo Engajamento",
-        "selectPartnerOffice": "Selecionar Escritório do Parceiro",
+        "selectOrganizationUnits": "Selecionar Unidades de Organização",
         "selectPartnerGroup": "Selecionar Grupo de Parceiros",
         "selectPooledFund": "Selecionar Fundo Comum",
         "selectDDRequired": "Selecionar DD Obrigatório",

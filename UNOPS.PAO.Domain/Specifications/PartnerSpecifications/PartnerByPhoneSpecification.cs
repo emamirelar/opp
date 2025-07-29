@@ -15,6 +15,5 @@ public class PartnerByPhoneSpecification : BaseSpecification<Partner>
         : base(p => p.Phone != null && p.Phone.Contains(phone))
     {
         // Include related entities
-        AddInclude(p => p.PartnerOffice);
     }
 } 

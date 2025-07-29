@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using UNOPS.PAO.UNOPSBusiness.Specifications;
+using UNOPS.PAO.UNOPSBusiness.Extensions;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -47,6 +48,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private CommonEntityRepository commonRepository;
     private readonly ILogger<UNOPSContactManager>? _logger;
     private readonly DataRepository<AiPrompt> promptRepository;
+    private readonly UNOPSAppDbContext _context;
 
     private async Task<ContactModel> MapEntityToModel(UNOPSContact entity, IMapper mapper, ClaimsPrincipal user)
     {
@@ -136,6 +138,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         : base(mapper, context, configuration, null, "Contact", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
+        _context = context; 
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
         userInfoRepository = new BaseRepository<UserInfo>(context, configuration, serviceProvider);
@@ -158,7 +161,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     public PaginationResponse<ContactModel> GetContacts(int userId, PaginationRequest request)
     {
         var query = contactRepository
-            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
+            .GetAll(["Partner", "Partner.PartnerGroup"])
             .AsQueryable();
 
         // Custom pagination with efficient user lookup
@@ -170,6 +173,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .Skip(excludedRows)
             .Take(request.PageSize)
             .ToList();
+
+        // Load OrganizationUnitRelationships manually for all items
+        /*foreach (var item in items.Where(i => i.Partner != null))
+        {
+            item.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        }*/
 
         // Get all unique user IDs from the contacts
         var userIds = items.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
@@ -207,8 +216,14 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     public async Task<PaginationResponse<ContactModel>> GetContactsAsync(ClaimsPrincipal user, PaginationRequest request)
     {
         var query = contactRepository
-            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
+            .GetAll(["Partner", "Partner.PartnerGroup"])
             .AsQueryable();
+
+        // Load OrganizationUnitRelationships manually for all items
+        /*foreach (var qItem in query.Where(i => i.Partner != null))
+        {
+            await qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
 
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(query, user, "read");
@@ -225,6 +240,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 .Skip(excludedRows)
                 .Take(request.PageSize)
                 .ToArray();
+
+            // Load OrganizationUnitRelationships manually for all items
+            /*foreach (var item in pagedItems.Where(i => i.Partner != null))
+            {
+                await item.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+            }*/
 
             // Get all unique user IDs from the contacts for user info lookup
             var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
@@ -271,15 +292,27 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public async Task<ContactModel?> GetContactAsync(ClaimsPrincipal user, int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]);
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup"]);
         if (entity == null) return null;
+
+        // Load OrganizationUnitRelationships manually
+        /*if (entity.Partner != null)
+        {
+            await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
 
         // Check if user has permission to access this specific entity
         // Create a single-item query and apply access control filters
         var query = contactRepository
-            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
+            .GetAll(["Partner", "Partner.PartnerGroup"])
             .Where(x => x.Id == id)
             .AsQueryable();
+
+        // Load OrganizationUnitRelationships manually for all items
+        /*foreach (var qItem in query.Where(i => i.Partner != null))
+        {
+            await qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
 
         // Apply access control filters (row and column filtering)
         var filteredData = await ApplyAccessControlFilters(query, user, "read");
@@ -290,6 +323,11 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             var accessibleContact = contactList.FirstOrDefault();
             if (accessibleContact != null)
             {
+                // Load OrganizationUnitRelationships manually
+                /*if (accessibleContact.Partner != null)
+                {
+                    await accessibleContact.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+                }*/
                 return await MapEntityToModel(accessibleContact, mapper, user);
             }
         }
@@ -311,7 +349,14 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         await contactRepository.UpdateAsync(entity);
         
         // Return updated entity with includes
-        var updatedEntity = await contactRepository.GetByIdAsync(entity.Id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]);
+        var updatedEntity = await contactRepository.GetByIdAsync(entity.Id, ["Partner", "Partner.PartnerGroup"]);
+        
+        // Load OrganizationUnitRelationships manually
+        /*if (updatedEntity?.Partner != null)
+        {
+            await updatedEntity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
+        
         return await MapEntityToModel(updatedEntity, mapper, user);
     }
 
@@ -327,7 +372,20 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     {
         // Apply the specification to the query
         var query = contactRepository.GetAll(["Partner"]).AsQueryable();
-        var filteredQuery = query.ApplySpecification(specification);
+
+        // Load OrganizationUnitRelationships manually for all items
+        /*foreach (var qItem in query.Where(i => i.Partner != null))
+        {
+            qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        }*/
+
+        // Cast to base type to apply specification, then cast back to derived type
+        var baseQuery = query.Cast<Contact>();
+        var filteredBaseQuery = baseQuery.ApplySpecification(specification);
+        var filteredQuery = filteredBaseQuery.OfType<UNOPSContact>();
+        
+        // Apply org unit filtering if the specification supports it
+        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
 
         // Custom pagination with efficient user lookup
         var totalCount = filteredQuery.Count();
@@ -373,8 +431,14 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public async Task<ContactModel?> GetContact(int userId, int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]);
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup"]);
         if (entity == null) return null;
+
+        // Load OrganizationUnitRelationships manually
+        /*if (entity.Partner != null)
+        {
+            await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
 
         return await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
     }
@@ -399,7 +463,14 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public IEnumerable<ContactModel> GetPartnerContacts(int partnerId)
     {
-        var contacts = contactRepository.GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]).Where(c => c.PartnerId == partnerId);
+        var contacts = contactRepository.GetAll(["Partner", "Partner.PartnerGroup"]).Where(c => c.PartnerId == partnerId).ToList();
+        
+        // Load OrganizationUnitRelationships manually for all contacts
+        /*foreach (var contact in contacts.Where(c => c.Partner != null))
+        {
+            contact.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        }*/
+        
         var results = new List<ContactModel>();
         foreach (var contact in contacts)
         {
@@ -415,10 +486,19 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     {
         // Apply the specification directly to the UNOPSContact query
         var query = contactRepository
-            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
+            .GetAll(["Partner", "Partner.PartnerGroup"])
             .AsQueryable();
-        
+
+        // Load OrganizationUnitRelationships manually for all items
+        /*foreach (var qItem in query.Where(i => i.Partner != null))
+        {
+            await qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
+
         var filteredQuery = query.ApplySpecification(specification);
+        
+        // Apply org unit filtering if the specification supports it
+        filteredQuery = ApplyUNOPSContactOrgUnitFilterIfSupported(filteredQuery, specification);
 
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
@@ -435,6 +515,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 .Skip(excludedRows)
                 .Take(pagination.PageSize)
                 .ToArray();
+
+            // Load OrganizationUnitRelationships manually for all items
+            /*foreach (var item in pagedItems.Where(i => i.Partner != null))
+            {
+                await item.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+            }*/
 
             // Get all unique user IDs from the contacts for user info lookup
             var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
@@ -502,16 +588,28 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public async Task<ContactModel?> GetContactAsync(int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"]);
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup"]);
         if (entity == null) return null;
+
+        // Load OrganizationUnitRelationships manually
+        /*if (entity.Partner != null)
+        {
+            await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
 
         return await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
     }
 
     public async Task<ContactModel?> GetContactWithInteractionsAsync(int id)
     {
-        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup", "Interactions"]);
+        var entity = await contactRepository.GetByIdAsync(id, ["Partner", "Partner.PartnerGroup", "Interactions"]);
         if (entity == null) return null;
+
+        // Load OrganizationUnitRelationships manually
+        /*if (entity.Partner != null)
+        {
+            await entity.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
 
         var result = await MapEntityToModel(entity, mapper, GetCurrentUserOrSystemContext());
         
@@ -543,10 +641,22 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         
         // Apply the specification to the query
         var query = contactRepository
-            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
+            .GetAll(["Partner", "Partner.PartnerGroup"])
             .AsQueryable();
+
+        // Load OrganizationUnitRelationships manually for all items
+        /*foreach (var qItem in query.Where(i => i.Partner != null))
+        {
+            await qItem.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
+
+        // Cast to base type to apply specification, then cast back to derived type
+        var baseQuery = query.Cast<Contact>();
+        var filteredBaseQuery = baseQuery.ApplySpecification(specification);
+        var filteredQuery = filteredBaseQuery.OfType<UNOPSContact>();
         
-        var filteredQuery = query.ApplySpecification(specification);
+        // Apply org unit filtering if the specification supports it
+        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
 
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, user, "read");
@@ -563,6 +673,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                 .Skip(excludedRows)
                 .Take(pagination.PageSize)
                 .ToArray();
+
+            // Load OrganizationUnitRelationships manually for all items
+            /*foreach (var item in pagedItems.Where(i => i.Partner != null))
+            {
+                await item.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+            }*/
 
             // Get all unique user IDs from the contacts for user info lookup
             var userIds = pagedItems.Where(c => c.CreatedBy > 0).Select(c => c.CreatedBy).Distinct().ToList();
@@ -660,6 +776,12 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
                         .Where(c => (c.Email != null && input.EmailAddresses.Contains(c.Email)))
                         .Cast<UNOPSContact>()
                         .ToList();
+
+        // Load OrganizationUnitRelationships manually for all contacts
+        /*foreach (var contact in contacts.Where(c => c.Partner != null))
+        {
+            await contact.Partner.LoadOrganizationUnitRelationshipsAsync(_context);
+        }*/
 
         // Get all contact IDs to load interactions
         var allContactIds = contacts.Select(c => c.Id).ToList();
@@ -919,9 +1041,15 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             return new List<object>();
 
         var contacts = contactRepository
-            .GetAll(["Partner", "Partner.PartnerOffice", "Partner.PartnerGroup"])
+            .GetAll(["Partner", "Partner.PartnerGroup"])
             .Where(c => ids.Contains(c.Id))
             .ToList();
+
+        // Load OrganizationUnitRelationships manually for all contacts
+        /*foreach (var contact in contacts.Where(c => c.Partner != null))
+        {
+            contact.Partner.LoadOrganizationUnitRelationshipsAsync(_context).Wait();
+        }*/
 
         // Apply access control if user context is provided
         if (user != null)
@@ -953,5 +1081,71 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
             .ToDictionary(o => o.Code);
 
         return contacts.Select(contact => (object)MapEntityToModelWithUserInfo(contact, mapper, userInfoLookup, orgHierarchyLookup)).ToList();
+    }
+    
+    /// <summary>
+    /// Applies org unit filtering if the specification supports it using manual joins for Contact specifications
+    /// </summary>
+    private IQueryable<UNOPSContact> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSContact> query, ISpecification<Contact> specification)
+    {
+        // Check if specification has ApplyOrgUnitFilter method and call it
+        var specType = specification.GetType();
+        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Contact>), typeof(DbContext) });
+        
+        if (filterMethod != null)
+        {
+            try
+            {
+                // Cast to base type for the ApplyOrgUnitFilter method
+                var baseQuery = query.Cast<Contact>();
+                var result = filterMethod.Invoke(specification, new object[] { baseQuery, _context });
+                if (result is IQueryable<Contact> filteredBaseQuery)
+                {
+                    // Cast back to UNOPSContact using OfType for safety
+                    return filteredBaseQuery.OfType<UNOPSContact>();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue without org unit filtering
+                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
+            }
+        }
+        
+        // If no ApplyOrgUnitFilter method found, return original query
+        // This is normal for composite specifications that handle filtering internally
+        return query;
+    }
+    
+    /// <summary>
+    /// Applies org unit filtering if the specification supports it using manual joins for UNOPSContact specifications
+    /// </summary>
+    private IQueryable<UNOPSContact> ApplyUNOPSContactOrgUnitFilterIfSupported(IQueryable<UNOPSContact> query, ISpecification<UNOPSContact> specification)
+    {
+        // Check if specification has ApplyOrgUnitFilter method and call it
+        var specType = specification.GetType();
+        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<UNOPSContact>), typeof(DbContext) });
+        
+        if (filterMethod != null)
+        {
+            try
+            {
+                // Direct call for UNOPSContact specifications
+                var result = filterMethod.Invoke(specification, new object[] { query, _context });
+                if (result is IQueryable<UNOPSContact> filteredQuery)
+                {
+                    return filteredQuery;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue without org unit filtering
+                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
+            }
+        }
+        
+        // If no ApplyOrgUnitFilter method found, return original query
+        // This is normal for specifications that don't support org unit filtering
+        return query;
     }
 }

@@ -59,15 +59,14 @@ public class PartnerControllerTests : IntegrationTestBase
         await dbContext.SaveChangesAsync();
     }
 
-    private UNOPSPartner CreateTestPartner(int id, string name, string status, string shortName, int partnerOfficeId)
+    private UNOPSPartner CreateTestPartner(int id, string name, string status, string shortName, int organizationHierarchyId)
     {
-        return new UNOPSPartner
+        var partner = new UNOPSPartner
         {
             Id = id,
             Name = name,
             Status = status,
             ShortName = shortName,
-            PartnerOfficeId = partnerOfficeId,
             NewEngagement = "true",
             PooledFund = "false",
             DDRequired = "false",
@@ -78,6 +77,21 @@ public class PartnerControllerTests : IntegrationTestBase
             CreatedDate = DateTime.UtcNow.AddDays(-id),
             LastModifiedDate = DateTime.UtcNow
         };
+
+        // Add organization unit relationship
+        partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+        {
+            new OrganizationUnitRelationship
+            {
+                OrganizationHierarchyId = organizationHierarchyId,
+                EntityId = partner.Id,
+                EntityType = nameof(UNOPSPartner),
+                Name = $"Partner-{partner.Id}-TestOrgUnit",
+                Status = EntityStatus.Active
+            }
+        };
+
+        return partner;
     }
 
     #region Basic Filtering Tests

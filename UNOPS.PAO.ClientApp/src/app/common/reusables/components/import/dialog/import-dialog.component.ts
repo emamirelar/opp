@@ -504,7 +504,13 @@ export class ImportDialogComponent implements OnInit {
       // Special handling for each entity type to ensure form is populated correctly
       if (entityType === 'partner') {
         // For partner, explicitly set certain fields that the form expects
-        dialogRecord.partnerOfficeId = dialogRecord.partnerOfficeId || null;
+        // Handle organization unit relationships
+        if (dialogRecord.organizationHierarchyIds && Array.isArray(dialogRecord.organizationHierarchyIds)) {
+          dialogRecord.organizationUnitRelationships = dialogRecord.organizationHierarchyIds.map((id: number) => ({
+            organizationHierarchyId: id,
+            entityType: 'Partner'
+          }));
+        }
         dialogRecord.partnerCategoryId = dialogRecord.partnerCategoryId || null;
         dialogRecord.website = dialogRecord.website || '';
         dialogRecord.eacReference = dialogRecord.eacReference || '';

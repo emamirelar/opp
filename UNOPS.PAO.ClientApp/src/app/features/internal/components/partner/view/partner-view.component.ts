@@ -32,18 +32,18 @@ import { DialogModule } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CardModule } from 'primeng/card';
-import { Partner } from '../../../models/partner.model';
 import { PartnerService } from '../../../services/partner.service';
 import { PartnerContactsComponent } from '../contacts/partner-contacts.component';
 import { LinkListComponent } from '../../../../../common/reusables/components/link/list/link-list.component';
 import { EntityType } from '../../../../../common/models/link.model';
 import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
+import { Partner, getPrimaryOrganizationUnit } from '../../../models/partner.model';
+import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { GeminiService } from '../../../services/gemini.service';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
-import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 
@@ -162,6 +162,9 @@ export class PartnerViewComponent implements OnInit {
   shouldShowSeeLessButton = computed(() => {
     return this.showAdditionalInfo() && this.showFullContent();
   });
+
+  // Helper method to get primary organization unit
+  getPrimaryOrganizationUnit = getPrimaryOrganizationUnit;
 
   ngOnDestroy(): void {
     this.langChangeSubscription?.unsubscribe();

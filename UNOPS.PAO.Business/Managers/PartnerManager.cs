@@ -3,6 +3,7 @@ namespace UNOPS.PAO.Business.Managers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -20,10 +21,13 @@ using UNOPS.PAO.DataAccess.Services;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.Domain.Specifications;
 using System.Security.Claims;
+using UNOPS.PAO.Business.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 public class PartnerManager : IPartnerManager
 {
     private IMapper mapper;
+    private AppDbContext _context;
 
     private DataRepository<Partner> PartnerRepository;
     private DataRepository<PartnerTree> PartnerTreeRepository;
@@ -32,26 +36,107 @@ public class PartnerManager : IPartnerManager
     public PartnerManager(IMapper mapper, AppDbContext context)
     {
         this.mapper = mapper;
+        this._context = context;
         this.PartnerRepository = new DataRepository<Partner>(context);
         this.PartnerTreeRepository = new DataRepository<PartnerTree>(context);
         this.OrganizationHierarchyRepository = new DataRepository<OrganizationHierarchy>(context);
+    }
+
+    /// <summary>
+    /// Efficiently updates organization unit relationships by only adding/removing what's changed
+    /// </summary>
+    private async Task UpdateOrganizationUnitRelationshipsDifferentialAsync(int partnerId, IEnumerable<OrganizationUnitRelationshipRequest> newRelationships)
+    {
+        // Get current relationships from database
+        var currentRelationships = await _context.OrganizationUnitRelationships
+            .Where(r => r.EntityId == partnerId && r.EntityType == "Partner")
+            .ToListAsync();
+
+        var newOrgUnitIds = new HashSet<int>(newRelationships?.Select(r => r.OrganizationHierarchyId) ?? Enumerable.Empty<int>());
+        var currentOrgUnitIds = new HashSet<int>(currentRelationships.Select(r => r.OrganizationHierarchyId));
+
+        // Find relationships to remove (exist in current but not in new)
+        var idsToRemove = currentOrgUnitIds.Except(newOrgUnitIds).ToList();
+        
+        // Find relationships to add (exist in new but not in current)
+        var idsToAdd = newOrgUnitIds.Except(currentOrgUnitIds).ToList();
+
+        // Remove relationships that are no longer needed
+        if (idsToRemove.Any())
+        {
+            await _context.OrganizationUnitRelationships
+                .Where(r => r.EntityId == partnerId && r.EntityType == "Partner" && idsToRemove.Contains(r.OrganizationHierarchyId))
+                .ExecuteDeleteAsync();
+        }
+
+        // Add new relationships
+        if (idsToAdd.Any())
+        {
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            
+            foreach (var orgUnitId in idsToAdd)
+            {
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(orgUnitId);
+                if (orgUnit != null && orgUnit.Type == OrganizationUnitType.OrgUnit)
+                {
+                    var newRelationship = new OrganizationUnitRelationship
+                    {
+                        OrganizationHierarchyId = orgUnit.Id,
+                        EntityId = partnerId,
+                        EntityType = "Partner",
+                        Name = $"Partner-{partnerId}-{orgUnit.Code}",
+                        Status = EntityStatus.Active
+                    };
+                    relationshipsToAdd.Add(newRelationship);
+                }
+            }
+            
+            if (relationshipsToAdd.Any())
+            {
+                await _context.OrganizationUnitRelationships.AddRangeAsync(relationshipsToAdd);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
     {
         var entity = mapper.Map<Partner>(model);
 
-        // Verify that the selected PartnerOffice is of type OrgUnit
-        if (entity.PartnerOfficeId.HasValue)
+        // Save the partner first to get its ID
+        await PartnerRepository.AddAsync(entity);
+
+        // Handle organization unit relationships if specified - AFTER saving the partner
+        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
         {
-            var office = await OrganizationHierarchyRepository.GetByIdAsync(entity.PartnerOfficeId.Value);
-            if (office == null || office.Type != OrganizationUnitType.OrgUnit)
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            
+            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
             {
-                throw new BusinessException("Partner Office must be of type OrgUnit");
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                if (orgUnit == null || orgUnit.Type != OrganizationUnitType.OrgUnit)
+                {
+                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                }
+                
+                // Create the organization unit relationship with the actual partner ID
+                var newRelationship = new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = orgUnit.Id,
+                    EntityId = entity.Id, // Now entity.Id has the actual saved ID
+                    EntityType = nameof(Partner),
+                    Name = $"Partner-{entity.Id}-{orgUnit.Code}",
+                    Status = EntityStatus.Active
+                };
+                relationshipsToAdd.Add(newRelationship);
+            }
+            
+            if (relationshipsToAdd.Any())
+            {
+                await _context.OrganizationUnitRelationships.AddRangeAsync(relationshipsToAdd);
+                await _context.SaveChangesAsync();
             }
         }
-
-        await PartnerRepository.AddAsync(entity);
 
         return mapper.Map<PartnerModel>(entity);
     }
@@ -59,12 +144,20 @@ public class PartnerManager : IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartners(int userId, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice", "PartnerGroup", "Contacts"])
-            .Where(x => !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
+            .GetAll(["PartnerGroup", "Contacts"])
+            .Where(x => !x.IsDeleted)
             .AsQueryable();
 
-        // Get total count
-        var totalCount = await query.CountAsync();
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        // Filter partners that have org unit relationships of type OrgUnit (after loading)
+        var filteredEntities = query.Where(x => 
+            !x.OrganizationUnitRelationships.Any() || 
+            x.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchy.Type == OrganizationUnitType.OrgUnit)).ToList();
+
+        // Get total count after filtering
+        var totalCount = filteredEntities.Count;
         
         // Apply pagination
         var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
@@ -72,17 +165,17 @@ public class PartnerManager : IPartnerManager
         
         if (request.OrderBy != null)
         {
-            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+            filteredEntities = filteredEntities.AsQueryable().OrderByColumnName(request.OrderBy, request.Ascending ?? true).ToList();
         }
         
         // Get the entities for this page
-        var entities = await query
+        var pagedEntities = filteredEntities
             .Skip(excludedRows)
             .Take(request.PageSize)
-            .ToListAsync();
+            .ToList();
         
         // Map entities
-        var mappedEntities = entities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
+        var mappedEntities = pagedEntities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
 
         return new PaginationResponse<PartnerModel>
         {
@@ -95,11 +188,22 @@ public class PartnerManager : IPartnerManager
     {
         // Apply the specification to the query
         var query = PartnerRepository.GetAll().AsQueryable();
-        var filteredQuery = query.ApplySpecification(specification)
-            .Where(x => x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit);
+
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        var filteredQuery = query.ApplySpecification(specification);
         
-        // Get total count
-        var totalCount = await filteredQuery.CountAsync();
+        // Apply org unit filtering if the specification supports it
+        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
+        
+        // Filter by org unit type after loading relationships
+        var filteredEntities = filteredQuery.Where(x => 
+            !x.OrganizationUnitRelationships.Any() || 
+            x.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchy.Type == OrganizationUnitType.OrgUnit)).ToList();
+        
+        // Get total count after filtering
+        var totalCount = filteredEntities.Count;
         
         // Apply pagination
         var pageIndex = pagination.PageIndex < 1 ? 1 : pagination.PageIndex;
@@ -107,17 +211,17 @@ public class PartnerManager : IPartnerManager
         
         if (pagination.OrderBy != null)
         {
-            filteredQuery = filteredQuery.OrderByColumnName(pagination.OrderBy, pagination.Ascending ?? true);
+            filteredEntities = filteredEntities.AsQueryable().OrderByColumnName(pagination.OrderBy, pagination.Ascending ?? true).ToList();
         }
         
         // Get the entities for this page
-        var entities = await filteredQuery
+        var pagedEntities = filteredEntities
             .Skip(excludedRows)
             .Take(pagination.PageSize)
-            .ToListAsync();
+            .ToList();
         
         // Map entities
-        var mappedEntities = entities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
+        var mappedEntities = pagedEntities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
 
         return new PaginationResponse<PartnerModel>
         {
@@ -141,24 +245,18 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> GetPartner(int userId, int id)
     {
-        var item = await PartnerRepository.GetByIdAsync(id);
+        var item = await PartnerRepository
+            .GetAll()
+            .Where(x => x.Id == id)
+            .FirstOrDefaultAsync();
 
         if (item == null)
         {
             return default;
         }
 
-        if (item.PartnerOfficeId.HasValue)
-        {
-            var partnerOffice = await OrganizationHierarchyRepository
-                .GetAll()
-                .Where(x => x.Id == item.PartnerOfficeId.Value && x.Type == OrganizationUnitType.OrgUnit)
-                .FirstOrDefaultAsync();
-            if (partnerOffice != null)
-            {
-                item.PartnerOffice = partnerOffice;
-            }
-        }
+        // Load organization unit relationships manually
+        await item.LoadOrganizationUnitRelationshipsAsync(_context);
 
         return mapper.Map<PartnerModel>(item);
     }
@@ -184,24 +282,20 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> UpdatePartnerAsync(int userId, UpdatePartnerRequest model)
     {
-        var entity = await PartnerRepository.GetByIdAsync(model.Id);
+        var entity = await PartnerRepository
+            .GetAll()
+            .Where(x => x.Id == model.Id)
+            .FirstOrDefaultAsync();
 
         if (entity == null)
         {
             return default;
         }
 
-        // Verify that the selected PartnerOffice is of type OrgUnit
-        if (model.PartnerOfficeId.HasValue)
+        // Handle organization unit relationship updates using differential approach
+        if (model.OrganizationUnitRelationships != null)
         {
-            var office = await OrganizationHierarchyRepository
-                .GetAll()
-                .Where(x => x.Id == model.PartnerOfficeId.Value && x.Type == OrganizationUnitType.OrgUnit)
-                .FirstOrDefaultAsync();
-            if (office == null)
-            {
-                throw new BusinessException("Partner Office must be of type OrgUnit");
-            }
+            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationUnitRelationships);
         }
 
         mapper.Map<UpdatePartnerRequest, Partner>(model, entity);
@@ -242,16 +336,26 @@ public class PartnerManager : IPartnerManager
 
     public async Task<PartnerModel?> GetPartnerAsync(int id)
     {
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts"];
+        string[] includes = ["Documents", "PartnerGroup", "Contacts"];
 
         var item = await PartnerRepository
             .GetAll(includes)
-            .Where(x => x.Id == id && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
+            .Where(x => x.Id == id)
             .FirstOrDefaultAsync();
 
         if (item == null)
         {
             return default;
+        }
+
+        // Load organization unit relationships manually
+        await item.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        // Filter check after loading relationships
+        if (item.OrganizationUnitRelationships.Any() && 
+            !item.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchy?.Type == OrganizationUnitType.OrgUnit))
+        {
+            return default; // Don't return if no valid org unit relationships
         }
 
         return mapper.Map<PartnerModel>(item);
@@ -263,16 +367,26 @@ public class PartnerManager : IPartnerManager
     public async Task<PartnerModel?> GetPartnerWithContactsAndInteractionsAsync(int id)
     {
         // Include contacts and their interactions using standard Entity Framework includes
-        string[] includes = ["Documents", "PartnerOffice", "PartnerGroup", "Contacts", "Contacts.Interactions"];
+        string[] includes = ["Documents", "PartnerGroup", "Contacts", "Contacts.Interactions"];
 
         var partner = await PartnerRepository
             .GetAll(includes)
-            .Where(x => x.Id == id && !x.IsDeleted && (x.PartnerOffice == null || x.PartnerOffice.Type == OrganizationUnitType.OrgUnit))
+            .Where(x => x.Id == id && !x.IsDeleted)
             .FirstOrDefaultAsync();
 
         if (partner == null)
         {
             return default;
+        }
+
+        // Load organization unit relationships manually
+        await partner.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        // Filter check after loading relationships
+        if (partner.OrganizationUnitRelationships.Any() && 
+            !partner.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchy?.Type == OrganizationUnitType.OrgUnit))
+        {
+            return default; // Don't return if no valid org unit relationships
         }
 
         // Now you can use the Partner entity's methods to get interaction data
@@ -290,12 +404,18 @@ public class PartnerManager : IPartnerManager
         var partnerTreeCode = partnerTreeId;
         
         var query = PartnerRepository
-            .GetAll(["PartnerOffice"])
+            .GetAll()
             .Where(x => !x.IsDeleted && x.PartnerGroupCode == partnerTreeCode)
             .AsQueryable();
 
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        // Get entities and load relationships
+        var entities = await query.ToListAsync();
+
         // Get total count
-        var totalCount = await query.CountAsync();
+        var totalCount = entities.Count;
         
         // Apply pagination
         var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
@@ -303,17 +423,17 @@ public class PartnerManager : IPartnerManager
         
         if (request.OrderBy != null)
         {
-            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+            entities = entities.AsQueryable().OrderByColumnName(request.OrderBy, request.Ascending ?? true).ToList();
         }
         
         // Get the entities for this page
-        var entities = await query
+        var pagedEntities = entities
             .Skip(excludedRows)
             .Take(request.PageSize)
-            .ToListAsync();
+            .ToList();
         
         // Map entities
-        var mappedEntities = entities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
+        var mappedEntities = pagedEntities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
 
         return new PaginationResponse<PartnerModel>
         {
@@ -325,12 +445,18 @@ public class PartnerManager : IPartnerManager
     public async Task<PaginationResponse<PartnerModel>> GetPartnersByPartnerCategory(int userId, string partnerCategoryCode, PaginationRequest request)
     {
         var query = PartnerRepository
-            .GetAll(["PartnerOffice"])
+            .GetAll()
             .Where(x => !x.IsDeleted && x.PartnerGroup != null && x.PartnerGroup.PartnerCategoryCode == partnerCategoryCode)
             .AsQueryable();
 
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(_context);
+
+        // Get entities and load relationships
+        var entities = await query.ToListAsync();
+
         // Get total count
-        var totalCount = await query.CountAsync();
+        var totalCount = entities.Count;
         
         // Apply pagination
         var pageIndex = request.PageIndex < 1 ? 1 : request.PageIndex;
@@ -338,17 +464,17 @@ public class PartnerManager : IPartnerManager
         
         if (request.OrderBy != null)
         {
-            query = query.OrderByColumnName(request.OrderBy, request.Ascending ?? true);
+            entities = entities.AsQueryable().OrderByColumnName(request.OrderBy, request.Ascending ?? true).ToList();
         }
         
         // Get the entities for this page
-        var entities = await query
+        var pagedEntities = entities
             .Skip(excludedRows)
             .Take(request.PageSize)
-            .ToListAsync();
+            .ToList();
         
         // Map entities
-        var mappedEntities = entities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
+        var mappedEntities = pagedEntities.Select(x => mapper.Map<PartnerModel>(x)).ToList();
 
         return new PaginationResponse<PartnerModel>
         {
@@ -594,4 +720,34 @@ public class PartnerManager : IPartnerManager
     }
 
     #endregion
+    
+    /// <summary>
+    /// Applies org unit filtering if the specification supports it using manual joins
+    /// </summary>
+    private IQueryable<Partner> ApplyOrgUnitFilterIfSupported(IQueryable<Partner> query, ISpecification<Partner> specification)
+    {
+        // Check if specification has ApplyOrgUnitFilter method and call it
+        var specType = specification.GetType();
+        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter");
+        
+        if (filterMethod != null)
+        {
+            try
+            {
+                // Call the ApplyOrgUnitFilter method if it exists
+                var result = filterMethod.Invoke(specification, new object[] { query, _context });
+                if (result is IQueryable<Partner> filteredQuery)
+                {
+                    return filteredQuery;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue without org unit filtering
+                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
+            }
+        }
+        
+        return query;
+    }
 }

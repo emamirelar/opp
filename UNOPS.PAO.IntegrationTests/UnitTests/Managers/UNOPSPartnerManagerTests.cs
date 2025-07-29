@@ -112,7 +112,6 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                     Id = source.Id,
                     Name = source.Name,
                     Status = source.Status,
-                    PartnerOfficeId = source.PartnerOfficeId,
                     PartnerGroupCode = source.PartnerGroupCode
                 });
 
@@ -142,11 +141,11 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             // Seed test data
             var partners = new List<UNOPSPartner>
             {
-                new UNOPSPartner { Id = 1, Name = "Partner 1", PartnerOfficeId = 10, Status = "Active", ShortName = "P1", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 2, Name = "Partner 2", PartnerOfficeId = 11, Status = "Active", ShortName = "P2", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 3, Name = "Partner 3", PartnerOfficeId = 12, Status = "Active", ShortName = "P3", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 4, Name = "Partner 4", PartnerOfficeId = 20, Status = "Active", ShortName = "P4", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false }, // Different org unit
-                new UNOPSPartner { Id = 5, Name = "Partner 5", PartnerOfficeId = null, Status = "Active", ShortName = "P5", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false } // No org unit
+                CreatePartnerWithOrgUnit(1, "Partner 1", 10),
+                CreatePartnerWithOrgUnit(2, "Partner 2", 11),
+                CreatePartnerWithOrgUnit(3, "Partner 3", 12),
+                CreatePartnerWithOrgUnit(4, "Partner 4", 20), // Different org unit
+                CreatePartnerWithoutOrgUnit(5, "Partner 5") // No org unit
             };
             
             // Add contacts and interactions to create indirect relations
@@ -213,7 +212,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var response = result as PaginationResponse<PartnerModel>;
             response!.Should().NotBeNull();
             
-            // The new org unit filter includes both direct (PartnerOfficeId) and indirect (via contacts) relations
+            // The new org unit filter includes both direct (OrganizationUnitRelationships) and indirect (via contacts) relations
             // Partners 1, 2, 3 (direct) + 4, 5 (indirect via interactions) = 5 total
             response!.TotalCount.Should().Be(5);
             response!.Records.Should().HaveCount(5);
@@ -229,9 +228,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             // Arrange
             var partners = new List<UNOPSPartner>
             {
-                new UNOPSPartner { Id = 1, Name = "Partner 1", Status = "Active", ShortName = "P1", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 2, Name = "Partner 2", Status = "Active", ShortName = "P2", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 3, Name = "Partner 3", Status = "Active", ShortName = "P3", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false }
+                CreatePartnerWithoutOrgUnit(1, "Partner 1"),
+                CreatePartnerWithoutOrgUnit(2, "Partner 2"),
+                CreatePartnerWithoutOrgUnit(3, "Partner 3")
             };
             await _dbContext.Partners.AddRangeAsync(partners);
             await _dbContext.SaveChangesAsync();
@@ -273,10 +272,10 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             
             var partners = new List<UNOPSPartner>
             {
-                new UNOPSPartner { Id = 1, Name = "Active Partner 1", PartnerOfficeId = 10, Status = "Active", ShortName = "AP1", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 2, Name = "Inactive Partner", PartnerOfficeId = 10, Status = "Inactive", ShortName = "IP", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 3, Name = "Active Partner 2", PartnerOfficeId = 11, Status = "Active", ShortName = "AP2", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 4, Name = "Active Partner 3", PartnerOfficeId = 20, Status = "Active", ShortName = "AP3", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false }
+                CreatePartnerWithoutOrgUnit(1, "Active Partner 1"),
+                CreatePartnerWithoutOrgUnit(2, "Inactive Partner"),
+                CreatePartnerWithoutOrgUnit(3, "Active Partner 2"),
+                CreatePartnerWithoutOrgUnit(4, "Active Partner 3")
             };
             
             // Add a contact to partner 4 to simulate indirect relation
@@ -333,8 +332,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             
             var partners = new List<UNOPSPartner>
             {
-                new UNOPSPartner { Id = 1, Name = "Partner 1", PartnerOfficeId = 10, Status = "Active", ShortName = "P1", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 2, Name = "Partner 2", PartnerOfficeId = 11, Status = "Active", ShortName = "P2", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false }
+                CreatePartnerWithoutOrgUnit(1, "Partner 1"),
+                CreatePartnerWithoutOrgUnit(2, "Partner 2")
             };
             
             // Add a contact to partner 2 to simulate potential indirect relation
@@ -385,7 +384,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var partners = new List<UNOPSPartner>();
             for (int i = 1; i <= 15; i++)
             {
-                partners.Add(new UNOPSPartner { Id = i, Name = $"Partner {i}", Status = "Active", ShortName = $"P{i}", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false });
+                partners.Add(CreatePartnerWithoutOrgUnit(i, $"Partner {i}"));
             }
             await _dbContext.Partners.AddRangeAsync(partners);
             await _dbContext.SaveChangesAsync();
@@ -423,8 +422,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             // Arrange
             var partners = new List<UNOPSPartner>
             {
-                new UNOPSPartner { Id = 1, Name = "Partner 1", PartnerOfficeId = 10, Status = "Active", ShortName = "P1", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 2, Name = "Partner 2", PartnerOfficeId = 20, Status = "Active", ShortName = "P2", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false }
+                CreatePartnerWithoutOrgUnit(1, "Partner 1"),
+                CreatePartnerWithoutOrgUnit(2, "Partner 2")
             };
             await _dbContext.Partners.AddRangeAsync(partners);
             await _dbContext.SaveChangesAsync();
@@ -455,7 +454,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             // Arrange
             var partners = new List<UNOPSPartner>
             {
-                new UNOPSPartner { Id = 201, Name = "Simple Test Partner", Status = "Active", ShortName = "STP", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false }
+                CreatePartnerWithoutOrgUnit(201, "Simple Test Partner")
             };
             
             await _dbContext.Partners.AddRangeAsync(partners);
@@ -503,8 +502,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             // Arrange
             var partners = new List<UNOPSPartner>
             {
-                new UNOPSPartner { Id = 101, Name = "Test Partner 1", Status = "Active", ShortName = "TP1", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false },
-                new UNOPSPartner { Id = 102, Name = "Test Partner 2", Status = "Active", ShortName = "TP2", DDEACDone = "false", DDRequired = "false", LevyPotentiallyApplies = "false", NewEngagement = "true", PooledFund = "false", IsDeleted = false }
+                CreatePartnerWithoutOrgUnit(101, "Test Partner 1"),
+                CreatePartnerWithoutOrgUnit(102, "Test Partner 2")
             };
             
             // Act - Save data
@@ -534,6 +533,53 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
         {
             _dbContext?.Dispose();
             _serviceProvider?.Dispose();
+        }
+
+        private UNOPSPartner CreatePartnerWithOrgUnit(int id, string name, int organizationHierarchyId)
+        {
+            var partner = new UNOPSPartner 
+            { 
+                Id = id, 
+                Name = name, 
+                Status = "Active", 
+                ShortName = $"P{id}", 
+                DDEACDone = "false", 
+                DDRequired = "false", 
+                LevyPotentiallyApplies = "false", 
+                NewEngagement = "true", 
+                PooledFund = "false", 
+                IsDeleted = false 
+            };
+
+            // Add organization unit relationship
+            partner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
+            {
+                new OrganizationUnitRelationship
+                {
+                    OrganizationHierarchyId = organizationHierarchyId,
+                    EntityId = partner.Id,
+                    EntityType = nameof(UNOPSPartner)
+                }
+            };
+
+            return partner;
+        }
+
+        private UNOPSPartner CreatePartnerWithoutOrgUnit(int id, string name)
+        {
+            return new UNOPSPartner 
+            { 
+                Id = id, 
+                Name = name, 
+                Status = "Active", 
+                ShortName = $"P{id}", 
+                DDEACDone = "false", 
+                DDRequired = "false", 
+                LevyPotentiallyApplies = "false", 
+                NewEngagement = "true", 
+                PooledFund = "false", 
+                IsDeleted = false 
+            };
         }
     }
 }

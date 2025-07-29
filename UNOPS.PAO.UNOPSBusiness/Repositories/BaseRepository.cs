@@ -175,21 +175,45 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
             
             if (entityType == typeof(Partner))
             {
+                // Pre-materialize the partner IDs that match the org unit criteria to avoid nested query issues
+                var validPartnerIds = await _dataDbContext.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Partner" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToListAsync();
+                
                 var partnerQuery = queryable as IQueryable<Partner>;
-                queryable = partnerQuery.Where(p => p.PartnerOfficeId.HasValue && orgUnitIds.Contains(p.PartnerOfficeId.Value)) as IQueryable<TEntity>;
+                queryable = partnerQuery.Where(p => validPartnerIds.Contains(p.Id)) as IQueryable<TEntity>;
             }
             else if (entityType == typeof(Contact))
             {
+                // Pre-materialize the partner IDs that match the org unit criteria
+                var validPartnerIds = await _dataDbContext.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Partner" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToListAsync();
+                
                 var contactQuery = queryable as IQueryable<Contact>;
-                queryable = contactQuery.Where(c => c.Partner != null && c.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(c.Partner.PartnerOfficeId.Value)) as IQueryable<TEntity>;
+                queryable = contactQuery.Where(c => c.Partner != null && validPartnerIds.Contains(c.Partner.Id)) as IQueryable<TEntity>;
             }
             else if (entityType == typeof(Interaction))
             {
+                // Pre-materialize the partner IDs that match the org unit criteria
+                var validPartnerIds = await _dataDbContext.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Partner" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToListAsync();
+                
                 var interactionQuery = queryable as IQueryable<Interaction>;
                 queryable = interactionQuery.Where(i => 
                     (i.OrgUnitId.HasValue && orgUnitIds.Contains(i.OrgUnitId.Value)) ||
-                    (i.InteractionContacts != null && i.InteractionContacts.Any(ic => ic.Contact != null && ic.Contact.Partner != null && ic.Contact.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(ic.Contact.Partner.PartnerOfficeId.Value))) ||
-                    (i.InteractionPartners != null && i.InteractionPartners.Any(ip => ip.Partner != null && ip.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(ip.Partner.PartnerOfficeId.Value)))
+                    (i.InteractionContacts != null && i.InteractionContacts.Any(ic => ic.Contact != null && ic.Contact.Partner != null && validPartnerIds.Contains(ic.Contact.Partner.Id))) ||
+                    (i.InteractionPartners != null && i.InteractionPartners.Any(ip => ip.Partner != null && validPartnerIds.Contains(ip.Partner.Id)))
                 ) as IQueryable<TEntity>;
             }
             else
@@ -447,21 +471,45 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
             
             if (entityType == typeof(Partner))
             {
+                // Pre-materialize the partner IDs that match the org unit criteria to avoid nested query issues
+                var validPartnerIds = _dataDbContext.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Partner" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToList();
+                
                 var partnerQuery = queryable as IQueryable<Partner>;
-                queryable = partnerQuery.Where(p => p.PartnerOfficeId.HasValue && orgUnitIds.Contains(p.PartnerOfficeId.Value)) as IQueryable<TEntity>;
+                queryable = partnerQuery.Where(p => validPartnerIds.Contains(p.Id)) as IQueryable<TEntity>;
             }
             else if (entityType == typeof(Contact))
             {
+                // Pre-materialize the partner IDs that match the org unit criteria
+                var validPartnerIds = _dataDbContext.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Partner" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToList();
+                
                 var contactQuery = queryable as IQueryable<Contact>;
-                queryable = contactQuery.Where(c => c.Partner != null && c.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(c.Partner.PartnerOfficeId.Value)) as IQueryable<TEntity>;
+                queryable = contactQuery.Where(c => c.Partner != null && validPartnerIds.Contains(c.Partner.Id)) as IQueryable<TEntity>;
             }
             else if (entityType == typeof(Interaction))
             {
+                // Pre-materialize the partner IDs that match the org unit criteria
+                var validPartnerIds = _dataDbContext.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Partner" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToList();
+                
                 var interactionQuery = queryable as IQueryable<Interaction>;
                 queryable = interactionQuery.Where(i => 
                     (i.OrgUnitId.HasValue && orgUnitIds.Contains(i.OrgUnitId.Value)) ||
-                    (i.InteractionContacts != null && i.InteractionContacts.Any(ic => ic.Contact != null && ic.Contact.Partner != null && ic.Contact.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(ic.Contact.Partner.PartnerOfficeId.Value))) ||
-                    (i.InteractionPartners != null && i.InteractionPartners.Any(ip => ip.Partner != null && ip.Partner.PartnerOfficeId.HasValue && orgUnitIds.Contains(ip.Partner.PartnerOfficeId.Value)))
+                    (i.InteractionContacts != null && i.InteractionContacts.Any(ic => ic.Contact != null && ic.Contact.Partner != null && validPartnerIds.Contains(ic.Contact.Partner.Id))) ||
+                    (i.InteractionPartners != null && i.InteractionPartners.Any(ip => ip.Partner != null && validPartnerIds.Contains(ip.Partner.Id)))
                 ) as IQueryable<TEntity>;
             }
             else

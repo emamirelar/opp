@@ -17,6 +17,5 @@ public class UNOPSContactByTitleSpecification : BaseSpecification<UNOPSContact>
     {
         // Include related entities
         AddInclude(c => c.Partner);
-        AddInclude("Partner.PartnerOffice");
     }
 }
