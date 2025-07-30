@@ -227,7 +227,6 @@ export class ListviewExportService {
         ContactName: interaction.contactName || '',
         Status: interaction.status || '',
         Location: interaction.location || '',
-        OrgUnitId: interaction.orgUnitId || '',
         CreatedBy: interaction.createdBy || ''
       };
     });

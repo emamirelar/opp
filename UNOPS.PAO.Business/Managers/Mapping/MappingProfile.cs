@@ -13,7 +13,8 @@ public class MappingProfile : Profile
         CreateMap<EligibleEntity, EligibleEntityModel>();
         CreateMap<Country, CountryModel>();
         CreateMap<Interaction, InteractionModel>();
-        CreateMap<InteractionRequest, Interaction>();
+        CreateMap<InteractionRequest, Interaction>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<PartnerRequest, Partner>()
             .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<UpdatePartnerRequest, Partner>()

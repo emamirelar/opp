@@ -155,14 +155,14 @@ export class PartnerEditDialogComponent implements OnInit {
   // Custom counter for selected organization units 
   getSelectedActiveOrgUnitsLabel = computed(() => {
     const selectedIds = this.selectedOrgUnitsSignal();
-    if (!selectedIds.length) return 'Select organization units';
+    if (!selectedIds.length) return this.translateService.instant('label.partner.selectOrganizationUnits');
     
     // The backend already filters for active records, so we just count selected items
     const count = selectedIds.length;
     
     return count === 1 
-      ? '1 organization unit selected' 
-      : `${count} organization units selected`;
+      ? this.translateService.instant('label.partner.oneOrganizationUnitSelected')
+      : this.translateService.instant('label.partner.organizationUnitsSelected', { count });
   });
   allPartnerCategoriesData = this.cachedDataService.partnerCategoryGroups;
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
@@ -360,13 +360,8 @@ export class PartnerEditDialogComponent implements OnInit {
 
         switch (key) {
           case 'organizationHierarchyIds':
-            // Convert FormArray values to organizationUnitRelationships
-            if (indexValue && Array.isArray(indexValue)) {
-              requestJsonObj['organizationUnitRelationships'] = indexValue.map((id: number) => ({
-                organizationHierarchyId: id,
-                entityType: 'Partner'
-              }));
-            }
+            // Pass organizationHierarchyIds directly to backend
+            requestJsonObj['organizationHierarchyIds'] = indexValue;
             break;
 
           default:

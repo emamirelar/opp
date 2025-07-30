@@ -42,10 +42,10 @@ namespace UNOPS.PAO.Domain.Entities
 
         public string Subject { get; set; }
 
-        [JsonIgnore]  // Prevents circular reference in serialization
-        public virtual OrganizationHierarchy? OrgUnit { get; set; }
-
-        public int? OrgUnitId { get; set; }
+        // Many-to-many relationship with OrganizationHierarchy through OrganizationUnitRelationships
+        // This replaces the direct OrgUnitId/OrgUnit relationship to support multiple org unit associations
+        [JsonIgnore]
+        public virtual ICollection<OrganizationUnitRelationship> OrganizationUnitRelationships { get; set; } = new HashSet<OrganizationUnitRelationship>();
 
         public List<Document>? Documents { get; set; }
         public string? GmailThreadId { get; set; }

@@ -145,6 +145,8 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasMany(i => i.InteractionPartners)
                 .WithOne(ip => ip.Interaction)
                 .HasForeignKey(ip => ip.InteractionId);
+
+            entity.Ignore(x => x.OrganizationUnitRelationships);
         });
 
         modelBuilder

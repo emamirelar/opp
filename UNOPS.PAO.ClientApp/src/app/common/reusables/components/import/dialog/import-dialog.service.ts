@@ -412,10 +412,10 @@ export class ImportDialogService {
       contactIds: [],
       partnerIds: [],
       userIds: [],
+      organizationHierarchyIds: [],
       emailAddresses: [],
       phoneNumbers: [],
-      location: '',
-      orgUnitId: null
+      location: ''
     };
   }
 
