@@ -173,17 +173,17 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
 
-        // Handle organization unit relationships if specified - AFTER saving the partner
-        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
+        // Handle organization unit hierarchy IDs if specified - AFTER saving the partner
+        if (model.OrganizationHierarchyIds != null && model.OrganizationHierarchyIds.Any())
         {
             var relationshipsToAdd = new List<OrganizationUnitRelationship>();
             
-            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
+            foreach (var orgUnitId in model.OrganizationHierarchyIds)
             {
-                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(orgUnitId);
                 if (orgUnit == null || orgUnit.Type != OrganizationUnitType.OrgUnit)
                 {
-                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                    throw new BusinessException($"Organization unit with ID {orgUnitId} must be of type OrgUnit");
                 }
                 
                 // Create the organization unit relationship with the actual partner ID
@@ -925,17 +925,17 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
 
-        // Handle organization unit relationships if specified - AFTER saving the partner
-        if (model.OrganizationUnitRelationships != null && model.OrganizationUnitRelationships.Any())
+        // Handle organization unit hierarchy IDs if specified - AFTER saving the partner
+        if (model.OrganizationHierarchyIds != null && model.OrganizationHierarchyIds.Any())
         {
             var relationshipsToAdd = new List<OrganizationUnitRelationship>();
             
-            foreach (var relationshipRequest in model.OrganizationUnitRelationships)
+            foreach (var orgUnitId in model.OrganizationHierarchyIds)
             {
-                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(relationshipRequest.OrganizationHierarchyId);
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(orgUnitId);
                 if (orgUnit == null || orgUnit.Type != OrganizationUnitType.OrgUnit)
                 {
-                    throw new BusinessException($"Organization unit with ID {relationshipRequest.OrganizationHierarchyId} must be of type OrgUnit");
+                    throw new BusinessException($"Organization unit with ID {orgUnitId} must be of type OrgUnit");
                 }
                 
                 // Create the organization unit relationship with the actual partner ID
@@ -971,21 +971,21 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Efficiently updates organization unit relationships by only adding/removing what's changed
     /// </summary>
-    private async Task UpdateOrganizationUnitRelationshipsDifferentialAsync(int partnerId, IEnumerable<OrganizationUnitRelationshipRequest> newRelationships)
+    private async Task UpdateOrganizationUnitRelationshipsDifferentialAsync(int partnerId, IEnumerable<int> newOrgUnitIds)
     {
         // Get current relationships from database
         var currentRelationships = await _context.OrganizationUnitRelationships
             .Where(r => r.EntityId == partnerId && r.EntityType == "Partner")
             .ToListAsync();
 
-        var newOrgUnitIds = new HashSet<int>(newRelationships?.Select(r => r.OrganizationHierarchyId) ?? Enumerable.Empty<int>());
+        var newOrgUnitIdsSet = new HashSet<int>(newOrgUnitIds ?? Enumerable.Empty<int>());
         var currentOrgUnitIds = new HashSet<int>(currentRelationships.Select(r => r.OrganizationHierarchyId));
 
         // Find relationships to remove (exist in current but not in new)
-        var idsToRemove = currentOrgUnitIds.Except(newOrgUnitIds).ToList();
+        var idsToRemove = currentOrgUnitIds.Except(newOrgUnitIdsSet).ToList();
         
         // Find relationships to add (exist in new but not in current)
-        var idsToAdd = newOrgUnitIds.Except(currentOrgUnitIds).ToList();
+        var idsToAdd = newOrgUnitIdsSet.Except(currentOrgUnitIds).ToList();
 
         // Remove relationships that are no longer needed
         if (idsToRemove.Any())
@@ -1012,7 +1012,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
                     {
                         OrganizationHierarchyId = orgUnit.Id,
                         EntityId = partnerId,
-                        EntityType = "Partner",
+                        EntityType = nameof(Partner),
                         Name = $"Partner-{partnerId}-{orgUnit.Code}",
                         Status = EntityStatus.Active
                     };
@@ -1053,10 +1053,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             return null;
         }
 
-        // Handle organization unit relationship updates using differential approach
-        if (model.OrganizationUnitRelationships != null)
+        // Handle organization unit hierarchy ID updates using differential approach
+        if (model.OrganizationHierarchyIds != null)
         {
-            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationUnitRelationships);
+            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationHierarchyIds);
         }
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
@@ -1134,7 +1134,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         foreach (var partner in partners.Records)
         {
             /*partner.Permissions = await GetEntityPermissionsAsync(
-                await PartnerRepository.GetByIdAsync(partner.Id, ["OrganizationUnitRelationships", "OrganizationUnitRelationships.OrganizationHierarchy"]), 
+                await PartnerRepository.GetByIdAsync(partner.Id), 
                 user
             );
             */
@@ -1248,10 +1248,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             throw new BusinessException($"Partner {model.Id} does not exist.");
         }
 
-        // Handle organization unit relationship updates using differential approach
-        if (model.OrganizationUnitRelationships != null)
+        // Handle organization unit hierarchy ID updates using differential approach
+        if (model.OrganizationHierarchyIds != null)
         {
-            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationUnitRelationships);
+            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationHierarchyIds);
         }
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships

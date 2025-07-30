@@ -133,7 +133,6 @@ export const EXAMPLE_INTERACTIONS: Interaction[] = [
       emailAddresses: ['john.doe@example.com'],
       phoneNumbers: ['+1234567890'],
       location: 'Virtual Meeting',
-      orgUnitId: 1,
       createdBy: 1
     },
     {
@@ -151,7 +150,6 @@ export const EXAMPLE_INTERACTIONS: Interaction[] = [
       emailAddresses: ['jane.smith@example.com'],
       phoneNumbers: ['+1987654321'],
       location: 'Conference Room A',
-      orgUnitId: 1,
       createdBy: 1
     },
     {
@@ -169,7 +167,6 @@ export const EXAMPLE_INTERACTIONS: Interaction[] = [
       emailAddresses: ['ahmed.hassan@example.com'],
       phoneNumbers: ['+4412345678'],
       location: 'Phone Call',
-      orgUnitId: 1,
       createdBy: 1
     }
   ];

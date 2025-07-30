@@ -22,7 +22,8 @@ public class MappingProfile : Profile
                 src.Interactions != null ? src.Interactions.Cast<UNOPSInteraction>().Select(interaction => context.Mapper.Map<UNOPSInteraction, InteractionModel>(interaction)).ToList() : null));
         CreateMap<ContactModel, UNOPSContact>()
             .ForMember(dest => dest.Partner, opt => opt.Ignore());
-        CreateMap<InteractionRequest, UNOPSInteraction>();
+        CreateMap<InteractionRequest, UNOPSInteraction>()
+            .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<UNOPSInteraction, InteractionModel>()
             .ForMember(dest => dest.ContactId, opt => opt.MapFrom(src => 
                 src.InteractionContacts != null && src.InteractionContacts.Any() 

@@ -153,7 +153,7 @@ export class ImportDialogComponent implements OnInit {
     { field: 'userIds', header: 'User IDs', required: false, label: 'User IDs', type: 'text', sortable: false },
     { field: 'emailAddresses', header: 'Email Addresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
     { field: 'phoneNumbers', header: 'Phone Numbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
-    { field: 'orgUnitId', header: 'Org Unit ID', required: false, label: 'Org Unit ID', type: 'text', sortable: false }
+    { field: 'organizationHierarchyIds', header: 'Organization Unit IDs', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
   ];
 
   // Create data effect in the constructor to ensure injection context
@@ -504,13 +504,7 @@ export class ImportDialogComponent implements OnInit {
       // Special handling for each entity type to ensure form is populated correctly
       if (entityType === 'partner') {
         // For partner, explicitly set certain fields that the form expects
-        // Handle organization unit relationships
-        if (dialogRecord.organizationHierarchyIds && Array.isArray(dialogRecord.organizationHierarchyIds)) {
-          dialogRecord.organizationUnitRelationships = dialogRecord.organizationHierarchyIds.map((id: number) => ({
-            organizationHierarchyId: id,
-            entityType: 'Partner'
-          }));
-        }
+        // organizationHierarchyIds is used directly, no conversion needed
         dialogRecord.partnerCategoryId = dialogRecord.partnerCategoryId || null;
         dialogRecord.website = dialogRecord.website || '';
         dialogRecord.eacReference = dialogRecord.eacReference || '';

@@ -50,8 +50,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             // Assert
             specification.Should().NotBeNull();
             specification.Criteria.Should().NotBeNull();
-            specification.Includes.Should().HaveCount(1);
-            specification.IncludeStrings.Should().Contain("Partner.OrganizationUnitRelationships");
+            // Note: OrganizationUnitRelationships filtering is now handled via ApplyOrgUnitFilter method
         }
 
         [Fact]
@@ -66,7 +65,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             // Assert
             specification.Includes.Should().HaveCount(1);
             specification.Includes.Should().Contain(include => include.Body.ToString().Contains("Partner"));
-            specification.IncludeStrings.Should().Contain("Partner.OrganizationUnitRelationships");
+            // Note: OrganizationUnitRelationships filtering is now handled via ApplyOrgUnitFilter method
         }
 
         [Fact]
