@@ -64,14 +64,67 @@
 
 .sidebar-content {
   flex: 1;
-  padding: 0.5rem 1rem 1rem 1rem;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent the whole container from scrolling */
   margin-top: -1px; /* Move up to eliminate double border */
 }
 
 .sidebar-content-collapsed {
   display: block !important;
   padding: 0;
+}
+
+/* Fixed header section (New Chat + Search) */
+.sidebar-fixed-header {
+  flex-shrink: 0; /* Don't shrink this section */
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--surface-border);
+  .chat-button {
+    margin: 6em 1em 1em 1em;
+  }
+}
+
+/* Scrollable content section (Chat list) */
+.sidebar-scrollable-content {
+  flex: 1; /* Take remaining space */
+  overflow-y: auto; /* Only this section scrolls */
+  padding: 0.5rem 1rem 1rem 1rem;
+}
+
+/* Ensure chat list fills the scrollable area */
+.sidebar-scrollable-content .sidebar-section {
+  height: 100%;
+}
+
+/* Custom scrollbar for the chat list only */
+.sidebar-scrollable-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scrollable-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scrollable-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.sidebar-scrollable-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Disabled state for New Chat button */
+.new-chat-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background: var(--surface-300) !important;
+}
+
+.new-chat-button:disabled i,
+.new-chat-button:disabled span {
+  color: var(--text-color-secondary) !important;
 }
 
 .sidebar-section {
@@ -761,7 +814,7 @@
   .right-panel-content {
     padding: 1rem;
   }
-}
+
 
   /* Global mobile adjustments */
   .layout-wrapper {

@@ -538,3 +538,15 @@
 .source-item:hover .external-link-icon {
   transform: translateX(2px);
 }
+
+/* Chat history dropdown menu height constraint */
+:host ::ng-deep .p-menu.p-menu-overlay {
+  min-height: 100px !important;
+  max-height: 400px !important;
+  overflow-y: auto !important;
+}
+
+:host ::ng-deep .p-menu .p-menu-list {
+  max-height: 360px !important;
+  overflow-y: auto !important;
+}

@@ -507,7 +507,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   }
 
   // Follow-up suggestion handling
-  selectFollowUp(followUpText: string): void {
+  selectUserResponse(followUpText: string): void {
     this.message.set(followUpText);
     // Focus the textarea for user convenience
     setTimeout(() => {
@@ -518,16 +518,16 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  // Get follow-ups from the most recent message
-  getLatestFollowUps(): string[] {
+  // Get suggested user responses from the most recent message
+  getLatestSuggestedUserResponses(): string[] {
     const chatHistory = this.aiAssistantData.chatHistory();
     if (chatHistory.length === 0) return [];
     
     // Get the most recent AI message (not user message)
     for (let i = chatHistory.length - 1; i >= 0; i--) {
       const message = chatHistory[i];
-      if (!message.isUser && message.followUps && message.followUps.length > 0) {
-        return message.followUps;
+      if (!message.isUser && message.suggestedUserResponses && message.suggestedUserResponses.length > 0) {
+        return message.suggestedUserResponses;
       }
     }
     
@@ -910,5 +910,232 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         const routeSegment = entityType.toLowerCase().replace(/\s+/g, '-');
         return `/${routeSegment}s/${entityId}`;
     }
+  }
+
+  // Helper methods for inline data handling
+  getFileTypeCategory(mimeType: string): string {
+    if (!mimeType) return 'unknown';
+    
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('audio/')) return 'audio';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType === 'application/pdf') return 'pdf';
+    if (mimeType.startsWith('text/')) return 'text';
+    if (mimeType.includes('document') || 
+        mimeType.includes('word') || 
+        mimeType.includes('excel') || 
+        mimeType.includes('powerpoint') ||
+        mimeType.includes('presentation') ||
+        mimeType.includes('sheet')) return 'document';
+    
+    return 'unknown';
+  }
+
+  downloadInlineFile(inline: any, defaultFileName: string): void {
+    try {
+      const byteCharacters = atob(inline.data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: inline.mimeType });
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = defaultFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  }
+
+  decodeBase64Text(data: string): string {
+    try {
+      return atob(data);
+    } catch (error) {
+      return 'Unable to decode text content';
+    }
+  }
+
+  getFileIcon(mimeType: string): string {
+    if (!mimeType) return 'pi pi-file text-gray-400';
+    
+    if (mimeType.includes('word')) return 'pi pi-file-word text-blue-600';
+    if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'pi pi-file-excel text-green-600';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'pi pi-file text-orange-600';
+    if (mimeType.includes('zip') || mimeType.includes('archive')) return 'pi pi-file-archive text-purple-600';
+    
+    return 'pi pi-file text-gray-400';
+  }
+
+  getFileTypeName(mimeType: string): string {
+    if (!mimeType) return 'File';
+    
+    if (mimeType.includes('word')) return 'Word Document';
+    if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'Excel Spreadsheet';
+    if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'PowerPoint Presentation';
+    if (mimeType.includes('zip')) return 'Archive';
+    if (mimeType.includes('json')) return 'JSON File';
+    if (mimeType.includes('xml')) return 'XML File';
+    
+    return mimeType.split('/')[1]?.toUpperCase() || 'File';
+  }
+
+  getFileName(mimeType: string): string {
+    if (!mimeType) return 'file';
+    
+    const extensions: { [key: string]: string } = {
+      'application/pdf': 'document.pdf',
+      'application/msword': 'document.doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'document.docx',
+      'application/vnd.ms-excel': 'spreadsheet.xls',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'spreadsheet.xlsx',
+      'application/vnd.ms-powerpoint': 'presentation.ppt',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'presentation.pptx',
+      'application/zip': 'archive.zip',
+      'application/json': 'data.json',
+      'application/xml': 'data.xml',
+      'text/plain': 'text.txt',
+      'text/csv': 'data.csv'
+    };
+    
+    return extensions[mimeType] || `file.${mimeType.split('/')[1] || 'bin'}`;
+  }
+
+  isValidBase64(str: string): boolean {
+    if (!str) return false;
+    try {
+      // Check if it's valid base64
+      const decoded = atob(str);
+      const reencoded = btoa(decoded);
+      return reencoded === str;
+    } catch (err) {
+      console.error('Base64 decode error:', err);
+      return false;
+    }
+  }
+
+  analyzeBase64Data(data: string): any {
+    if (!data) return { error: 'No data' };
+    
+    const invalidChars = data.match(/[^A-Za-z0-9+/=]/g);
+    const uniqueInvalidChars = [...new Set(invalidChars || [])];
+    
+    const analysis = {
+      length: data.length,
+      hasInvalidChars: !/^[A-Za-z0-9+/]*={0,2}$/.test(data),
+      invalidCharsCount: invalidChars?.length || 0,
+      uniqueInvalidChars: uniqueInvalidChars,
+      uniqueInvalidCharCodes: uniqueInvalidChars.map(c => `'${c}' (${c.charCodeAt(0)})`),
+      properPadding: data.endsWith('=') || data.endsWith('==') || !data.includes('='),
+      firstChars: data.substring(0, 100),
+      lastChars: data.substring(data.length - 100),
+      sampleInvalidPositions: this.findInvalidCharPositions(data, 10)
+    };
+    
+    console.log('Base64 Analysis:', analysis);
+    
+    // Try to clean and test the data
+    const cleaned = this.cleanBase64Data(data);
+    console.log('Cleaned data valid:', this.isValidBase64(cleaned));
+    console.log('Original length:', data.length, 'Cleaned length:', cleaned.length);
+    
+    return analysis;
+  }
+
+  findInvalidCharPositions(data: string, maxSamples: number): any[] {
+    const samples = [];
+    for (let i = 0; i < data.length && samples.length < maxSamples; i++) {
+      const char = data[i];
+      if (!/[A-Za-z0-9+/=]/.test(char)) {
+        samples.push({
+          position: i,
+          char: char,
+          charCode: char.charCodeAt(0),
+          context: data.substring(Math.max(0, i-10), i+10)
+        });
+      }
+    }
+    return samples;
+  }
+
+  cleanBase64Data(data: string): string {
+    if (!data) return data;
+    
+    // Remove any whitespace, newlines, or invalid characters
+    let cleaned = data.replace(/[^A-Za-z0-9+/=]/g, '');
+    
+    // Fix padding if needed
+    const remainder = cleaned.length % 4;
+    if (remainder > 0) {
+      cleaned += '='.repeat(4 - remainder);
+    }
+    
+    return cleaned;
+  }
+
+  testCleanedImage(inline: any): void {
+    const cleaned = this.cleanBase64Data(inline.data);
+    const dataUrl = `data:${inline.mimeType};base64,${cleaned}`;
+    
+    console.log('Testing cleaned image:', {
+      originalLength: inline.data.length,
+      cleanedLength: cleaned.length,
+      validAfterCleaning: this.isValidBase64(cleaned)
+    });
+    
+    // Create a test image to see if it loads
+    const img = new Image();
+    img.onload = () => {
+      console.log('✅ Cleaned image loads successfully!');
+      console.log('Image dimensions:', img.width, 'x', img.height);
+    };
+    img.onerror = () => console.error('❌ Cleaned image still fails to load');
+    img.src = dataUrl;
+  }
+
+  onImageError(event: any, inline: any): void {
+    const dataUrl = `data:${inline.mimeType};base64,${inline.data}`;
+    console.error('Image failed to load:', {
+      mimeType: inline.mimeType,
+      dataLength: inline.data?.length,
+      dataPrefix: inline.data?.substring(0, 50),
+      constructedUrl: dataUrl.substring(0, 100),
+      isValidBase64: this.isValidBase64(inline.data),
+      event: event
+    });
+    
+    // Test if data URL is valid
+    const testImg = new Image();
+    testImg.onload = () => console.log('✅ Data URL is valid, image can load');
+    testImg.onerror = () => console.error('❌ Data URL is invalid');
+    testImg.src = dataUrl;
+  }
+
+  openImageModal(inline: any): void {
+    // Create a modal overlay for viewing large images
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 cursor-pointer';
+    modal.onclick = () => document.body.removeChild(modal);
+
+    const img = document.createElement('img');
+    img.src = `data:${inline.mimeType};base64,${inline.data}`;
+    img.className = 'max-w-[95vw] max-h-[95vh] object-contain rounded-lg';
+    img.onclick = (e) => e.stopPropagation();
+
+    // Add close button
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '×';
+    closeBtn.className = 'absolute top-4 right-4 text-white text-3xl font-bold bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75 transition-colors';
+    closeBtn.onclick = () => document.body.removeChild(modal);
+
+    modal.appendChild(img);
+    modal.appendChild(closeBtn);
+    document.body.appendChild(modal);
   }
 } 

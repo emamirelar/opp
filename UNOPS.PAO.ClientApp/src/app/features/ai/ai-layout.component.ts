@@ -108,6 +108,9 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     );
   });
 
+  // New Chat button should be disabled when already in new chat state
+  isNewChatDisabled = computed(() => !this.aiAssistantData.currentSessionId());
+
   selectedChatId = signal<string | null>(null);
 
   // Remove the static chatMenuItems array
@@ -327,29 +330,7 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     return result;
   }
 
-  formatDate(dateString: string): string {
-    if (!dateString) return 'Unknown';
-    if (dateString === 'Invalid Date') return 'Unknown';
-    let date: Date;
-    try {
-      date = new Date(dateString);
-      if (isNaN(date.getTime())) return 'Unknown';
-    } catch {
-      return 'Unknown';
-    }
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays === 1) {
-      return 'Today';
-    } else if (diffDays === 2) {
-      return 'Yesterday';
-    } else if (diffDays <= 7) {
-      return `${diffDays - 1} days ago`;
-    } else {
-      return date.toLocaleDateString();
-    }
-  }
+
 
   onSearchInput(event: any): void {
     const query = event.target.value;
@@ -358,6 +339,11 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
 
   clearSearch(): void {
     this.searchQuery.set('');
+  }
+
+  // TrackBy function for chat sessions to improve performance
+  trackByChatId(index: number, chat: any): string {
+    return chat.id || index;
   }
 
   performSearch(): void {
@@ -374,10 +360,13 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     
     console.log('Opening chat menu for:', chat.title, 'at index:', index);
     
+    // Set menu items for the current chat before showing menu
+    this.currentChatMenuItems = this.createChatMenuItems(chat);
+    
     const menu = this.chatMenus?.toArray()[index];
     if (menu && menu.toggle) {
       try {
-      menu.toggle(event);
+        menu.toggle(event);
         console.log('Menu toggled successfully');
       } catch (error) {
         console.error('Error toggling menu:', error);
@@ -387,7 +376,10 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  getChatMenuItems(chat: any) {
+  // Store current menu items to avoid infinite re-rendering
+  currentChatMenuItems: any[] = [];
+
+  private createChatMenuItems(chat: any): any[] {
     console.log('Creating menu items for chat:', chat.title, 'starred:', chat.starred, 'archived:', chat.archived);
     return [
       { 
