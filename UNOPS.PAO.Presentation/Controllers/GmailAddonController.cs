@@ -22,9 +22,8 @@ using UNOPS.PAO.Domain.Entities;
 namespace UNOPS.PAO.Presentation.Controllers
 {
     [Route("/")]
-    [ApiController]
-    [Authorize(AuthenticationSchemes = "Bearer")]
-    public class GmailAddonController : GmailAddonBaseController
+    [Authorize(AuthenticationSchemes = "IAP")]
+    public class GmailAddonController : BaseController
     {
         private readonly IInteractionManager _interactionManager;
         private readonly IContactManager _contactManager;
