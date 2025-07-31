@@ -26,6 +26,11 @@ public class EndpointAnalyzer
             ExtractedAt = DateTime.UtcNow
         };
 
+        // Extract search metadata FIRST
+        Console.WriteLine("[INFO] Extracting search metadata...");
+        var searchExtractor = new SearchMetadataExtractor();
+        endpointData.SearchMetadata = searchExtractor.ExtractSearchMetadata(assembly);
+
         // Find all controller types
         var controllerTypes = FindControllerTypes(assembly);
         Console.WriteLine($"[FOUND] {controllerTypes.Count} controller types");
@@ -33,6 +38,10 @@ public class EndpointAnalyzer
         foreach (var controllerType in controllerTypes)
         {
             var controllerInfo = AnalyzeController(controllerType, xmlParser);
+            
+            // Attach search metadata to relevant controllers
+            AttachSearchMetadataToController(controllerInfo, endpointData.SearchMetadata);
+            
             if (controllerInfo.Methods.Any())
             {
                 endpointData.Controllers.Add(controllerInfo);
@@ -44,6 +53,7 @@ public class EndpointAnalyzer
         var json = JsonConvert.SerializeObject(endpointData, Formatting.Indented);
         var totalEndpoints = endpointData.Controllers.Sum(c => c.Methods.Count);
         Console.WriteLine($"[SUCCESS] Extracted {totalEndpoints} endpoints from {endpointData.Controllers.Count} controllers");
+        Console.WriteLine($"[SUCCESS] Extracted search metadata for {endpointData.SearchMetadata.Count} entities");
         
         return json;
     }
@@ -79,7 +89,26 @@ public class EndpointAnalyzer
             .Where(type => type.Name.EndsWith("Controller") || 
                           type.IsSubclassOf(typeof(ControllerBase)) ||
                           type.GetCustomAttribute<ApiControllerAttribute>() != null)
+            .Where(type => !IsExternalController(type)) // Exclude external controllers
             .ToList();
+    }
+
+    private bool IsExternalController(Type controllerType)
+    {
+        // Exclude controllers from External namespaces or with External in the name
+        var fullName = controllerType.FullName ?? controllerType.Name;
+        var namespaceName = controllerType.Namespace ?? "";
+        
+        bool isExternal = fullName.Contains(".External.") || 
+                         namespaceName.Contains(".External") ||
+                         controllerType.Name.Contains("External");
+        
+        if (isExternal)
+        {
+            Console.WriteLine($"[EXCLUDED] External controller: {fullName}");
+        }
+        
+        return isExternal;
     }
 
     private ControllerInfo AnalyzeController(Type controllerType, XmlDocumentationParser xmlParser)
@@ -291,6 +320,22 @@ public class EndpointAnalyzer
     private List<string> GetAttributeStrings(IEnumerable<Attribute> attributes)
     {
         return attributes.Select(attr => attr.GetType().Name).ToList();
+    }
+
+    private void AttachSearchMetadataToController(ControllerInfo controllerInfo, List<EntitySearchMetadata> searchMetadata)
+    {
+        // Map controller names to entity names
+        var entityMapping = new Dictionary<string, string>
+        {
+            { "InteractionController", "Interaction" },
+            { "PartnerController", "Partner" },
+            { "ContactController", "Contact" }
+        };
+        
+        if (entityMapping.TryGetValue(controllerInfo.Name, out var entityName))
+        {
+            controllerInfo.SearchMetadata = searchMetadata.FirstOrDefault(sm => sm.Entity == entityName);
+        }
     }
 }
 

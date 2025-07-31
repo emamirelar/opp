@@ -157,11 +157,65 @@ class ToolsJsonGenerator:
     def create_generation_prompt(self, metadata: Dict[str, Any]) -> str:
         """Create the prompt for Gemini to generate entity-specific tools JSON"""
         
+        # Check if we have search metadata
+        search_metadata_section = ""
+        if 'SearchMetadata' in metadata and metadata['SearchMetadata']:
+            search_metadata_json = json.dumps(metadata['SearchMetadata'], indent=2)
+            search_metadata_section = f"""
+
+## SEARCH METADATA AVAILABLE
+The following search metadata has been extracted from AdvancedSearchHelper:
+```json
+{search_metadata_json}
+```
+
+**CRITICAL: Include searchMetadata in Entity Configuration**
+When generating the entity JSON, you MUST include a "searchMetadata" section for each entity that has search capabilities.
+
+Use this format within each entity:
+```json
+{{
+  "entity": "EntityName",
+  "description": "...",
+  "synonyms": [...],
+  "mandatoryFields": [...],
+  "searchMetadata": {{
+    "directFields": ["field1", "field2", "field3"],
+    "nestedFields": {{
+      "relatedEntity1": ["field1", "field2"],
+      "relatedEntity2": ["field1", "field2"]
+    }},
+    "operators": ["like", "is", "not", "contains", "startsWith", "between"],
+    "dateFields": ["createdDate", "modifiedDate", "date"],
+    "exampleCriteria": [
+      {{
+        "field": "partner.name",
+        "operator": "like", 
+        "value": "UNICEF",
+        "description": "Find entities related to UNICEF partners"
+      }}
+    ]
+  }},
+  "endpoints": [...]
+}}
+```
+
+**Advanced Search Guidance Requirements:**
+1. **For GetAll/Search endpoints**: Add detailed advanced_search_guidance in the description
+2. **Include searchCriteria format**: Show the operator-based JSON array format
+3. **Provide field examples**: Use actual field names from searchMetadata
+4. **Operator examples**: Show how to use different operators with real examples
+
+**Example Advanced Search Guidance:**
+"For advanced search, use advancedSearch=true with searchCriteria as JSON array of objects. Each object should have 'field', 'operator', 'value', and optional 'logicalOperator'. Available fields include direct fields like 'name', 'status' and nested fields like 'partner.name', 'contact.firstName'. Example: [{{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}}]"
+"""
+        
         prompt = f"""
 You are an expert at converting .NET Web API controller metadata into structured entity configuration for AI agents.
 
 ## TASK
 Transform the provided controller metadata into an entity-specific JSON configuration following the EXACT format specified.
+{search_metadata_section}
 
 ## OUTPUT FORMAT
 Generate a valid JSON object with this EXACT structure:
@@ -171,6 +225,22 @@ Generate a valid JSON object with this EXACT structure:
   "description": "<Description of what this entity manages>",
   "synonyms": ["<synonym1>", "<synonym2>", "<synonym3>", "<synonym4>", "<synonym5>"],
   "mandatoryFields": ["<field1>", "<field2>", "<field3>"],
+  "searchMetadata": {{
+    "directFields": ["<direct_field1>", "<direct_field2>"],
+    "nestedFields": {{
+      "<related_entity>": ["<nested_field1>", "<nested_field2>"]
+    }},
+    "operators": ["like", "is", "not", "contains", "startsWith", "between"],
+    "dateFields": ["<date_field1>", "<date_field2>"],
+    "exampleCriteria": [
+      {{
+        "field": "<field_name>",
+        "operator": "<operator>",
+        "value": "<example_value>",
+        "description": "<usage_description>"
+      }}
+    ]
+  }},
   "endpoints": [
     {{
       "name": "<MethodName>",
@@ -193,28 +263,40 @@ Generate a valid JSON object with this EXACT structure:
 
 ## CRITICAL REQUIREMENTS
 
-### 1. ENTITY NAME
+### 1. SEARCH METADATA INTEGRATION
+- **MANDATORY**: Include searchMetadata section for entities that have search capabilities
+- **Use provided data**: Extract directFields, nestedFields, operators from the SearchMetadata section above
+- **Match entity names**: Link search metadata to the correct entity (Interaction, Partner, Contact)
+
+### 2. ADVANCED SEARCH GUIDANCE
+- **For GetAll/Search endpoints**: Include detailed guidance on using advancedSearch parameter
+- **Specify searchCriteria format**: Mention the JSON array format with field/operator/value structure
+- **Field examples**: Use actual field names from the searchMetadata section
+- **Operator guidance**: Explain available operators and their usage
+
+### 3. ENTITY NAME
 - Extract from controller name by removing "Controller" suffix
 - Examples: "PartnerController" → "Partner", "ContactController" → "Contact"
 
-### 2. DESCRIPTION  
+### 4. DESCRIPTION  
 - Describe what the entity represents and its business purpose
 - Keep it concise but informative
 
-### 3. SYNONYMS
+### 5. SYNONYMS
 - Generate 3-5 alternative terms users might use for this entity
 - Consider common business terms, abbreviations, related concepts
+- For Entity Name "Partner", include "Partner Group" and "Partner Category" in the synonyms list.
 
-### 4. MANDATORY FIELDS
+### 6. MANDATORY FIELDS
 - Identify required/mandatory fields from POST/PUT endpoint parameters
 - Look for parameters marked as required in the metadata
 - Focus on business-critical fields
 
-### 5. ENDPOINTS
+### 7. ENDPOINTS
 - **name**: Use the exact method name from metadata
 - **url**: Combine BaseRoute + Method Route (replace {{id}} with {{id}})
 - **method**: HTTP method (GET, POST, PUT, DELETE)
-- **description**: Detailed business description of what the endpoint does
+- **description**: Detailed business description + advanced search guidance for search endpoints
 - **parameters**: Flat object with each parameter as a property
 - **example_uses**: 3+ natural language examples of when to use this endpoint
 - **when_to_use**: Clear guidance on the use case for this endpoint
@@ -326,10 +408,14 @@ Generate the entity configuration JSON now (JSON only, no explanations):
         print(f"   [TIME] Extracted at: {metadata.get('ExtractedAt', 'Unknown')}")
         print()
         
-        # Create tools subdirectory 
+        # Create tools/endpoints subdirectory for backend API tools
         output_dir = os.path.dirname(output_path)
-        tools_dir = os.path.join(output_dir, "tools")
+        tools_dir = os.path.join(output_dir, "tools", "endpoints")
         os.makedirs(tools_dir, exist_ok=True)
+        
+        # Also create main tools.json in the tools directory for config_manager fallback
+        main_tools_dir = os.path.join(output_dir, "tools")
+        os.makedirs(main_tools_dir, exist_ok=True)
         
         # Process each controller separately
         individual_tool_files = []
@@ -380,11 +466,37 @@ Generate the entity configuration JSON now (JSON only, no explanations):
             
             print()
         
+        # Create a combined tools.json file as fallback for config_manager
+        if individual_tool_files:
+            print(f"[COMBINE] Creating combined tools.json fallback...")
+            combined_tools = {
+                "generated_at": datetime.now().isoformat(),
+                "version": "1.0",
+                "total_entities": processed_count,
+                "total_endpoints": total_endpoints,
+                "entities": []
+            }
+            
+            # Load and combine all individual tool files
+            for tool_file in individual_tool_files:
+                try:
+                    with open(tool_file, 'r', encoding='utf-8') as f:
+                        entity_tools = json.loads(f.read())
+                        combined_tools["entities"].append(entity_tools)
+                except Exception as e:
+                    print(f"   [WARNING] Failed to load {tool_file} for combining: {e}")
+            
+            # Save combined tools.json in main tools directory
+            combined_tools_file = os.path.join(main_tools_dir, "tools.json")
+            self.save_tools_json(json.dumps(combined_tools, indent=2), combined_tools_file)
+            print(f"   [OK] Combined tools.json saved -> tools/tools.json")
+        
         # Show results summary
         print("=" * 80)
-        print("[SUCCESS] Individual controller tools.json files generated!")
+        print("[SUCCESS] Backend API endpoint tools.json files generated!")
         print("=" * 80)
         print(f"   Output Directory: {tools_dir}")
+        print(f"   Combined File: {os.path.join(main_tools_dir, 'tools.json')}")
         print(f"   Controllers Processed: {processed_count}/{len(controllers)}")
         if failed_count > 0:
             print(f"   Failed: {failed_count}")
@@ -402,7 +514,9 @@ Generate the entity configuration JSON now (JSON only, no explanations):
             print(f"\n[WARNING] {failed_count} controllers failed to process. Check logs above for details.")
         
         print()
-        print("[SUCCESS] Individual tool files ready for easier management and debugging!")
+        print("[SUCCESS] Backend API endpoint tool files ready!")
+        print("   📁 Individual entities: tools/endpoints/")
+        print("   📄 Combined fallback: tools/tools.json")
         print("=" * 80)
 
 def main():
