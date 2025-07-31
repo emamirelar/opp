@@ -1,0 +1,54 @@
+{
+  "entity": "EntityManager",
+  "description": "Advanced administrative interface for configuring entity field visibility, ordering, and permissions. Allows customization of how data is displayed in lists and forms across different entities (Partners, Contacts, Interactions).",
+  "synonyms": [
+    "field_configuration",
+    "column_management",
+    "entity_settings",
+    "display_configuration",
+    "field_admin"
+  ],
+  "mandatoryFields": [
+    "entity_selection"
+  ],
+  "pages": [
+    {
+      "route": "/admin/entity-manager",
+      "name": "EntityManagerComponent",
+      "description": "This administrative page provides a powerful interface to customize how data fields are presented and managed across various entities within the system, such as Partners, Contacts, and Interactions. Users can control field visibility, reorder columns, and set permissions, ensuring data is displayed optimally for different user roles and workflows.",
+      "capabilities": [
+        "configure_entity_fields",
+        "reorder_columns",
+        "toggle_field_visibility",
+        "manage_field_permissions",
+        "customize_display_settings",
+        "drag_drop_reordering"
+      ],
+      "buttons": [],
+      "forms": [],
+      "tabs": [],
+      "search": {
+        "placeholder": "",
+        "description": "This page does not currently support direct search functionality for fields or settings.",
+        "help_text": "To find specific settings, you may need to manually browse through the available options after selecting an entity."
+      },
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're unsure how to proceed, first ensure you have selected an entity from the dropdown menu. Once an entity is selected, use the available tabs (e.g., Field Configuration, Field Ordering, Permissions) to manage its fields. Remember that changes are typically saved automatically as you make them, so you can test your configurations immediately by navigating to the relevant entity list or form.",
+        "common_tasks": [
+          "Configuring field visibility: Select the desired entity from the dropdown, navigate to the 'Field Configuration' tab, and then use the checkboxes to show or hide specific fields.",
+          "Reordering columns: After selecting an entity, go to the 'Field Ordering' tab. You can then drag and drop fields to arrange them in your preferred display order.",
+          "Managing field permissions: Select an entity, then access the 'Permissions' tab to define which user roles or groups can view or edit specific fields.",
+          "Customizing display settings: Use the 'Display Settings' tab (if available) to configure labels, icons, or other visual aspects of the fields.",
+          "Testing your changes: After making adjustments, navigate to the actual entity list or detail view (e.g., Partners list, Contact detail) to see how your configurations have been applied in the live system."
+        ],
+        "troubleshooting": [
+          "Problem: Changes are not appearing on the entity list → Solution: Ensure you have selected the correct entity and that the changes have been saved (most changes auto-save). Clear your browser cache if necessary, or try navigating away and back to the entity list.",
+          "Problem: A field is missing from the configuration options → Solution: Verify that the field is a standard or custom field associated with the selected entity. If it's a new custom field, it might need to be created or enabled elsewhere before appearing here."
+        ],
+        "getting_started": "To begin, select an entity (e.g., 'Partners', 'Contacts') from the dropdown menu at the top of the page. This will load the configuration options specific to that entity. You can then use the tabs provided to manage field visibility, order, and permissions. Start by exploring the 'Field Configuration' tab to understand which fields are currently visible.",
+        "keyboard_shortcuts": []
+      }
+    }
+  ]
+}

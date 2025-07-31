@@ -25,6 +25,23 @@ import { SearchField } from '../../../../../common/services/search-parser.servic
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 
+/**
+ * @uiEntity Contact
+ * @route /partnerships/contacts
+ * @description Browse and manage contact persons within partner organizations. Central hub for managing individual contacts, their roles, and communication details.
+ * @capabilities search_contacts, filter_contacts, create_contact, edit_contact, delete_contact, export_contacts, import_contacts, bulk_operations, view_partner_contacts
+ * @synonyms person, individual, contact_person, team_member, staff, representative
+ * @mandatoryFields firstName, lastName, email, title, partnerId
+ * @help_when_stuck Use the search bar to find contacts by name, email, or organization. Click + to add new contacts if you have permissions. Use filters to narrow results by partner, department, or role.
+ * @common_tasks
+ *   - Finding a contact: Search by name, email, or partner organization
+ *   - Creating a contact: Click 'Create Contact' button (requires CONTACT_CREATE permission)
+ *   - Editing a contact: Click on any contact row to open details, then click Edit
+ *   - Filtering by partner: Use the partner filter to see contacts from specific organizations
+ *   - Exporting contacts: Use Export button to download contact lists with details
+ *   - Importing contacts: Use Import button to bulk upload contact data
+ * @tabs Details:/partnerships/contacts/:id, Interactions:/partnerships/contacts/:id/interactions
+ */
 @Component({
   selector: 'app-contact-list',
   templateUrl: './contact-list.component.html',
@@ -326,6 +343,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * @uiButton create_contact,edit_contact
+   * @description Opens the contact creation or editing dialog with form fields for managing contact information
+   * @label New Contact | Edit Contact
+   * @icon pi pi-plus | pi pi-pencil
+   * @when_to_use When creating a new contact person or editing existing contact details, especially when adding contacts to partner organizations
+   * @permissions CONTACT_CREATE, CONTACT_UPDATE
+   */
   openContactEditDialog(contactData: Contact = {}) {
     // Check if user has appropriate permission
     if (contactData.id && !this.permissionUtilityService.canUpdate(this.entityPermissions())) {
@@ -365,6 +390,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
     this.handleOnOpenRecordDetails(contact);
   }
 
+  /**
+   * @uiButton scan_business_card
+   * @description Opens the business card scanner interface to capture and extract contact information from business cards using AI
+   * @label Scan Business Card
+   * @icon pi pi-camera
+   * @when_to_use When you need to quickly create a contact from a physical business card, saving time on manual data entry
+   * @permissions CONTACT_CREATE
+   */
   openBusinessCardScanner() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
@@ -389,6 +422,14 @@ export class ContactListComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * @uiButton import_contacts
+   * @description Opens the import dialog to bulk import contacts from Google Sheets or CSV files
+   * @label Import Contacts
+   * @icon pi pi-file-import
+   * @when_to_use When you need to add multiple contacts at once from external sources, ideal for bulk data migration
+   * @permissions CONTACT_CREATE
+   */
   openImportDialog() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {

@@ -1,0 +1,48 @@
+{
+  "entity": "AiAssistant",
+  "description": "Full-featured AI Assistant interface with chat sessions management, smart sidebars, and context-aware assistance. Provides comprehensive AI support for navigating and using the application effectively.",
+  "synonyms": [
+    "ai_chat",
+    "virtual_assistant",
+    "smart_help",
+    "ai_support",
+    "intelligent_assistant"
+  ],
+  "mandatoryFields": [
+    "None"
+  ],
+  "pages": [
+    {
+      "route": "/ai",
+      "name": "AiLayoutComponent",
+      "description": "This page provides a comprehensive AI Assistant interface designed to help you navigate the application, understand features, find data, and perform tasks efficiently. It includes chat session management, a smart sidebar for context, and the ability to view chat history.",
+      "capabilities": [
+        "ai_chat",
+        "session_management",
+        "context_awareness",
+        "entity_preview",
+        "smart_assistance",
+        "chat_history",
+        "fullscreen_mode"
+      ],
+      "buttons": [],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're unsure how to proceed, simply type your question or command into the chat input field. The AI is designed to understand natural language and provide relevant assistance. Remember to utilize the sidebar to manage your chat sessions, search through past conversations, or access contextual entity previews. For a more focused experience, click the fullscreen icon to expand the chat area.",
+        "common_tasks": [
+          "Getting help: Type questions about how to use features or find information within the application.",
+          "Managing sessions: Create new chat sessions, rename existing ones for better organization, or search through your chat history to revisit past conversations.",
+          "Entity assistance: Ask the AI about specific partners, contacts, or interactions to receive contextual help and insights related to those entities.",
+          "Navigation help: Request guidance on where to find specific features, reports, or data within the application.",
+          "Task automation: Inquire about how the AI can assist with complex workflows or data entry tasks to streamline your work."
+        ],
+        "troubleshooting": [],
+        "getting_started": "To begin using the AI Assistant, locate the chat input field at the bottom of the screen. Type your question or command, such as 'How do I create a new contact?' or 'Show me my recent sales data.' The AI will process your request and provide an answer or suggest an action. You can start a new conversation at any time, and your chat history will be saved for future reference. Explore the sidebar to see how the AI can provide context-aware help based on the data you are currently viewing.",
+        "keyboard_shortcuts": []
+      }
+    }
+  ]
+}

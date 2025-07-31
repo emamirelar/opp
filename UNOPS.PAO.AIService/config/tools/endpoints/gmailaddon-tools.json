@@ -1,0 +1,109 @@
+{
+  "entity": "Interaction",
+  "description": "Manages records of interactions, particularly those originating from or related to Gmail communications. This entity helps in logging and tracking communications with various stakeholders.",
+  "synonyms": [
+    "communication",
+    "activity",
+    "engagement",
+    "email record",
+    "correspondence"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "CreateInteraction",
+      "url": "api/gmail-addon/interactions",
+      "method": "POST",
+      "description": "Creates a new interaction record, typically initiated from a Gmail context. This allows logging communications or activities directly from email.",
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": false,
+          "description": "The interaction data to be created."
+        }
+      },
+      "example_uses": [
+        "Create a new interaction from an email.",
+        "Log a new communication with a client.",
+        "Record a new activity related to a Gmail conversation."
+      ],
+      "when_to_use": "When you need to create a new interaction record, typically initiated from a Gmail context, to log a communication or activity."
+    },
+    {
+      "name": "UpdateInteraction",
+      "url": "api/gmail-addon/interactions",
+      "method": "PUT",
+      "description": "Updates an existing interaction record. This allows modifying details of previously logged communications or activities.",
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": false,
+          "description": "The updated interaction data."
+        }
+      },
+      "example_uses": [
+        "Update the details of an existing interaction.",
+        "Modify an interaction record to add more information.",
+        "Change the status of a logged email interaction."
+      ],
+      "when_to_use": "When you need to modify the details of an already existing interaction record, such as updating its status or adding more notes."
+    },
+    {
+      "name": "FindGmailInteraction",
+      "url": "api/gmail-addon/interactions/find",
+      "method": "POST",
+      "description": "Finds specific Gmail interactions based on provided criteria. This endpoint allows searching for interactions using various parameters within the request body.",
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": false,
+          "description": "The criteria to search for Gmail interactions."
+        }
+      },
+      "example_uses": [
+        "Find all interactions related to a specific email thread.",
+        "Search for Gmail interactions by sender or recipient.",
+        "Locate interactions that occurred within a certain date range."
+      ],
+      "when_to_use": "When you need to search for and retrieve specific interaction records, especially those originating from Gmail, using various search criteria provided in the request body."
+    },
+    {
+      "name": "FindRelatedRecords",
+      "url": "api/gmail-addon/interactions/find-related-records",
+      "method": "POST",
+      "description": "Finds records related to a given Gmail context, such as contacts, partners, or other entities linked to an email. This helps in identifying existing relationships based on email content.",
+      "parameters": {
+        "input": {
+          "type": "object",
+          "required": false,
+          "description": "The input data to find related records."
+        }
+      },
+      "example_uses": [
+        "Find contacts related to the current email.",
+        "Discover partners associated with this email conversation.",
+        "Identify any existing records linked to the email content."
+      ],
+      "when_to_use": "When you need to identify and retrieve records (e.g., contacts, partners, projects) that are related to the context of a specific Gmail email or conversation."
+    },
+    {
+      "name": "CreateRecordsFromEmails",
+      "url": "api/gmail-addon/create-records",
+      "method": "POST",
+      "description": "Creates new records (e.g., interactions, contacts, partners) based on information extracted from one or more emails. This automates the process of logging information from emails into the system.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "The request containing email data to create records from."
+        }
+      },
+      "example_uses": [
+        "Generate new interaction records from a selection of emails.",
+        "Create new contact entries directly from email addresses.",
+        "Automate the creation of business records from email content."
+      ],
+      "when_to_use": "When you need to automatically create various types of records (like interactions, contacts, or partners) by processing information extracted from one or more emails."
+    }
+  ]
+}

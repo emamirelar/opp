@@ -1,0 +1,65 @@
+{
+  "tourId": "partnertreeview-overview",
+  "title": "PartnerTreeView Overview Tour",
+  "description": "Partner tree node detail navigation interface with tabs for managing specific organizational hierarchy nodes. Provides organized access to partner tree details and analytics data.",
+  "entity": "PartnerTreeView",
+  "route": "/admin/partner-tree/:recordId",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to PartnerTreeViewComponent",
+        "description": "This page serves as the central hub for viewing and managing the details of a specific organizational node within the partner hierarchy. It provides a comprehensive overview, allowing users to navigate through different aspects of the node, such as its core details, relationships, and associated analytics.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"Edit\"]",
+      "popover": {
+        "title": "Edit",
+        "description": "Opens a dialog to modify the details of the current organizational node, including its name, properties, and hierarchical position within the partner tree.<br><br><strong>When to use:</strong> When you need to modify organizational node details, relationships, or hierarchical positioning",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Edit\"]",
+          "p-button .p-button-label:contains(\"Edit\")",
+          "button:contains(\"Edit\")",
+          "[aria-label=\"Edit\"]",
+          "[title=\"Edit\"]",
+          "p-button[icon=\"pi pi-pencil\"]",
+          ".pi.pi-pencil",
+          "i.pi.pi-pencil",
+          "button .pi.pi-pencil",
+          "#edit-partner-tree-node-btn",
+          "#edit-partner-tree-node-btn-btn",
+          "[data-test-id=\"edit-partner-tree-node-btn\"]",
+          ".edit-partner-tree-node-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of PartnerTreeView. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-31T14:05:06.620950",
+  "version": "1.0"
+}

@@ -96,9 +96,10 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Build session menu items whenever sessions change
+    // Build session menu items whenever sessions or current session change
     effect(() => {
       const sessions = this.aiAssistantData.userSessions();
+      const currentSessionId = this.aiAssistantData.currentSessionId();
       this.buildSessionMenuItems();
     });
 
@@ -244,6 +245,27 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     this.processFiles([file]);
   }
 
+  // Extract current route from hash-based or path-based routing
+  private extractCurrentRoute(): string {
+    try {
+      const hash = window.location.hash;
+      const pathname = window.location.pathname;
+      const search = window.location.search;
+      
+      // Check if using hash-based routing
+      if (hash && hash.startsWith('#/')) {
+        // Extract route from hash (remove the # and keep the /)
+        return hash.substring(1) + search;
+      }
+      
+      // Fallback to path-based routing
+      return pathname + search;
+    } catch (error) {
+      console.error('Error extracting current route:', error);
+      return '/';
+    }
+  }
+
   // Message handling
   sendMessage(): void {
     const currentMessage = this.message();
@@ -261,15 +283,12 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
         content: ''
       }));
 
-      // Build state object with all context information
+      // Build enhanced state object with screen context parameters for the enhanced screen context agent
       const state = {
-        screen_url: this.extractUrlStructure(),
-        user_email: localStorage.getItem('user_email'),
-        orgUnitId: this.globalFilterService.getSelectedOrgUnitId(),
-        user_viewing_panel: this.rightPanelEntityType && this.rightPanelEntityId ? {
-          entity_id: this.rightPanelEntityId,
-          entity: this.rightPanelEntityType
-        } : null
+        screen_url: this.extractCurrentRoute(),
+        user_focus_context: this.rightPanelEntityType && this.rightPanelEntityId ? 
+          `/${this.rightPanelEntityType.toLowerCase()}s/${this.rightPanelEntityId}` : '',
+        user_email: localStorage.getItem('user_email')
       };
 
       this.aiAssistantData.sendMessage(currentMessage, chatFiles, state).subscribe({
@@ -652,7 +671,13 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   openFullscreen(): void {
     // For hash-based routing, we need to construct the URL properly
     const baseUrl = window.location.origin + window.location.pathname;
-    const hashUrl = `${baseUrl}#/ai`;
+    const currentSessionId = this.aiAssistantData.currentSessionId();
+    
+    // Include sessionId in URL if available
+    const hashUrl = currentSessionId 
+      ? `${baseUrl}#/ai/${currentSessionId}`
+      : `${baseUrl}#/ai`;
+    
     window.open(hashUrl, '_blank');
   }
 

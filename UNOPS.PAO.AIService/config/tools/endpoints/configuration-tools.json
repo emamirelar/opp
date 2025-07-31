@@ -1,0 +1,27 @@
+{
+  "entity": "Configuration",
+  "description": "Manages global application and system configuration settings.",
+  "synonyms": [
+    "settings",
+    "parameters",
+    "app config",
+    "system config",
+    "preferences"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "Get",
+      "url": "api/configuration",
+      "method": "GET",
+      "description": "Retrieves the current global application and system configuration settings.",
+      "parameters": {},
+      "example_uses": [
+        "Retrieve the current application settings.",
+        "Get all system configurations.",
+        "Show me the configuration details."
+      ],
+      "when_to_use": "When you need to fetch the global application or system configuration settings."
+    }
+  ]
+}

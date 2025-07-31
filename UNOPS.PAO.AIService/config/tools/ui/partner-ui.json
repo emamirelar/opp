@@ -1,0 +1,168 @@
+{
+  "entity": "Partner",
+  "description": "Browse and manage partner organizations with comprehensive search, filtering, and CRUD operations. Central hub for all partner-related activities.",
+  "synonyms": [
+    "organization",
+    "collaborator",
+    "entity",
+    "associate",
+    "vendor",
+    "supplier",
+    "contractor"
+  ],
+  "mandatoryFields": [
+    "name",
+    "partnerType",
+    "status",
+    "partnerOfficeId"
+  ],
+  "pages": [
+    {
+      "route": "/partnerships/partners",
+      "name": "PartnerComponent",
+      "description": "This page allows users to browse, search, filter, and manage partner organizations. It serves as the central hub for all partner-related activities, providing an overview of existing partners and options to create new ones or import data.",
+      "capabilities": [
+        "search_partners",
+        "filter_partners",
+        "create_partner",
+        "edit_partner",
+        "delete_partner",
+        "export_partners",
+        "import_partners",
+        "bulk_operations"
+      ],
+      "buttons": [
+        {
+          "id": "create_partner-btn",
+          "label": "New Partner | Edit Partner",
+          "icon": "pi pi-plus | pi pi-pencil",
+          "action": "create_partner",
+          "description": "This button opens a dialog for creating a new partner or editing an existing one. It provides comprehensive form fields to manage all organizational information, contacts, and business relationships.",
+          "when_to_use": [
+            "When you need to add a brand new partner organization to the system.",
+            "When you need to update details for an existing partner, such as their name, type, or contact information."
+          ]
+        },
+        {
+          "id": "import_partners-btn",
+          "label": "Import Partners",
+          "icon": "pi pi-file-import",
+          "action": "import_partners",
+          "description": "This button opens a dialog that allows you to bulk import multiple partner organizations from external sources like Google Sheets or CSV files.",
+          "when_to_use": [
+            "When you have a large list of partners to add and want to avoid manual entry.",
+            "During initial system setup or data migration from another system."
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [
+        {
+          "name": "Details",
+          "route": "/partnerships/partners/:id",
+          "label": "title.details",
+          "description": "Displays the primary details and overview of the partner, including general information and key attributes."
+        },
+        {
+          "name": "Contacts",
+          "route": "/partnerships/partners/:id/contacts",
+          "label": "title.contacts",
+          "description": "Lists all associated contact persons for the partner, allowing you to manage individual contacts."
+        },
+        {
+          "name": "Interactions",
+          "route": "/partnerships/partners/:id/interactions",
+          "label": "title.interactions",
+          "description": "Shows a history of all interactions and communications with the partner, providing a chronological record of engagement."
+        },
+        {
+          "name": "Data",
+          "route": "/partnerships/partners/:id/data",
+          "label": "title.data",
+          "description": "Contains additional data, documents, and attachments related to the partner, such as contracts or supporting files."
+        }
+      ],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're having trouble finding a partner, use the search bar at the top to search by name, type, or location. To add a new partner, click the 'New Partner' button. You can also use the filters on the left side to narrow down the list by partner type, status, or organizational unit.",
+        "common_tasks": [
+          "Finding a partner: Use the global search bar or entity-specific filters.",
+          "Creating a partner: Click the 'New Partner' button.",
+          "Editing a partner: Click on any partner row in the list to open its details, then click the 'Edit' button on the detail page.",
+          "Filtering partners: Use the advanced search and filter options available in the left panel.",
+          "Exporting data: Use the 'Export' button to download the current list of partners in Excel format.",
+          "Importing partners: Use the 'Import Partners' button to bulk upload partner data from a file."
+        ]
+      }
+    },
+    {
+      "route": "/partnerships/partners/:id",
+      "name": "PartnerViewComponent",
+      "description": "This page provides a detailed view of a specific partner organization. Users can view and edit comprehensive information including contact details, address, organizational data, and associated documents. It serves as the central place for managing all aspects of a single partner.",
+      "capabilities": [
+        "view_partner_details",
+        "edit_partner_info",
+        "upload_logo",
+        "manage_documents",
+        "view_contacts",
+        "create_interactions",
+        "edit_address",
+        "update_status"
+      ],
+      "buttons": [
+        {
+          "id": "edit_partner-btn",
+          "label": "Edit Partner",
+          "icon": "pi pi-pencil",
+          "action": "edit_partner",
+          "description": "This button opens the partner editing dialog, allowing you to modify all the detailed information about the partner organization.",
+          "when_to_use": [
+            "When any information about the partner needs to be updated or corrected.",
+            "When adding new organizational details that were previously missing."
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [
+        {
+          "name": "Details",
+          "route": "/partnerships/partners/:id",
+          "label": "title.details",
+          "description": "Displays the primary details and overview of the partner, including general information and key attributes."
+        },
+        {
+          "name": "Contacts",
+          "route": "/partnerships/partners/:id/contacts",
+          "label": "title.contacts",
+          "description": "Lists all associated contact persons for the partner, allowing you to manage individual contacts."
+        },
+        {
+          "name": "Interactions",
+          "route": "/partnerships/partners/:id/interactions",
+          "label": "title.interactions",
+          "description": "Shows a history of all interactions and communications with the partner, providing a chronological record of engagement."
+        },
+        {
+          "name": "Data",
+          "route": "/partnerships/partners/:id/data",
+          "label": "title.data",
+          "description": "Contains additional data, documents, and attachments related to the partner, such as contracts or supporting files."
+        }
+      ],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "This page provides a complete overview of the partner. To modify any details, click the 'Edit Partner' button. Use the tabs at the top to navigate between different sections like Contacts, Interactions, and Data. You can also click on the partner's logo area to upload a new logo. All fields are organized into logical categories for easy access.",
+        "common_tasks": [
+          "Editing partner info: Click the 'Edit Partner' button and modify the relevant fields in the form that appears.",
+          "Uploading logo: Click on the current logo or image area to upload a new partner logo.",
+          "Viewing contacts: Go to the 'Contacts' tab to see all individuals associated with this partner.",
+          "Adding interactions: Navigate to the 'Interactions' tab and click 'Add Interaction' to log a new communication.",
+          "Managing documents: Scroll down to the 'Documents' section to upload new files or view existing ones.",
+          "Updating address: Edit the address fields directly within the 'Contact Information' section on the 'Details' tab."
+        ]
+      }
+    }
+  ]
+}

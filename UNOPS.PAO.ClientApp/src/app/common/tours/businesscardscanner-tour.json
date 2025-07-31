@@ -1,0 +1,185 @@
+{
+  "tourId": "businesscardscanner-overview",
+  "title": "BusinessCardScanner Overview Tour",
+  "description": "An AI-powered business card scanner that captures images and automatically extracts contact information using Google's Gemini AI. This tool streamlines the process of digitizing physical business cards into usable contact data.",
+  "entity": "BusinessCardScanner",
+  "route": "Modal dialog (opened from contact list)",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to BusinessCardScannerComponent",
+        "description": "This modal component provides the interface for scanning business cards. Users can either use their device's camera to capture a new image of a business card or upload an existing image from their device. Once an image is provided, the system uses AI to process it and extract relevant contact details, which can then be used to create or update contact records.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"Toggle Camera\"]",
+      "popover": {
+        "title": "Toggle Camera",
+        "description": "Switches between the front and back cameras on mobile devices. This allows users to select the best camera for capturing a clear image of the business card, especially when dealing with different lighting conditions or card placements.<br><br><strong>When to use:</strong> When the current camera view is not optimal for capturing the business card clearly., To switch to a different camera (e.g., from front to rear) for better image quality or positioning.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Toggle Camera\"]",
+          "p-button .p-button-label:contains(\"Toggle Camera\")",
+          "button:contains(\"Toggle Camera\")",
+          "[aria-label=\"Toggle Camera\"]",
+          "[title=\"Toggle Camera\"]",
+          "p-button[icon=\"pi pi-sort-alt\"]",
+          ".pi.pi-sort-alt",
+          "i.pi.pi-sort-alt",
+          "button .pi.pi-sort-alt",
+          "#toggle-camera-btn",
+          "#toggle-camera-btn-btn",
+          "[data-test-id=\"toggle-camera-btn\"]",
+          ".toggle-camera-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "element": "p-button[label=\"Capture\"]",
+      "popover": {
+        "title": "Capture",
+        "description": "Takes a photo of the business card currently displayed in the camera's view. This action captures the image that will then be sent for AI processing to extract contact information.<br><br><strong>When to use:</strong> When you have positioned the business card clearly within the on-screen frame and are ready to take the photo for scanning.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Capture\"]",
+          "p-button .p-button-label:contains(\"Capture\")",
+          "button:contains(\"Capture\")",
+          "[aria-label=\"Capture\"]",
+          "[title=\"Capture\"]",
+          "p-button[icon=\"pi pi-camera\"]",
+          ".pi.pi-camera",
+          "i.pi.pi-camera",
+          "button .pi.pi-camera",
+          "#capture-image-btn",
+          "#capture-image-btn-btn",
+          "[data-test-id=\"capture-image-btn\"]",
+          ".capture-image-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 2
+      }
+    },
+    {
+      "element": "p-button[label=\"Scan\"]",
+      "popover": {
+        "title": "Scan",
+        "description": "Initiates the AI processing of the captured or uploaded business card image. The system will analyze the image to automatically identify and extract contact details such as name, company, phone number, and email address.<br><br><strong>When to use:</strong> After successfully capturing a new business card image using the camera., After uploading an existing business card image from your device.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Scan\"]",
+          "p-button .p-button-label:contains(\"Scan\")",
+          "button:contains(\"Scan\")",
+          "[aria-label=\"Scan\"]",
+          "[title=\"Scan\"]",
+          "p-button[icon=\"pi pi-search\"]",
+          ".pi.pi-search",
+          "i.pi.pi-search",
+          "button .pi.pi-search",
+          "#scan-business-card-btn",
+          "#scan-business-card-btn-btn",
+          "[data-test-id=\"scan-business-card-btn\"]",
+          ".scan-business-card-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 3
+      }
+    },
+    {
+      "element": "p-button[label=\"Retake\"]",
+      "popover": {
+        "title": "Retake",
+        "description": "Discards the currently captured image and reactivates the camera, allowing you to take a new photo of the business card. This is essential if the previous capture was blurry, poorly framed, or had insufficient lighting.<br><br><strong>When to use:</strong> When the previously captured image is of poor quality (e.g., blurry, too dark, card not fully visible)., If the business card was not positioned correctly in the frame during the last capture, leading to incomplete data.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Retake\"]",
+          "p-button .p-button-label:contains(\"Retake\")",
+          "button:contains(\"Retake\")",
+          "[aria-label=\"Retake\"]",
+          "[title=\"Retake\"]",
+          "p-button[icon=\"pi pi-refresh\"]",
+          ".pi.pi-refresh",
+          "i.pi.pi-refresh",
+          "button .pi.pi-refresh",
+          "#retake-photo-btn",
+          "#retake-photo-btn-btn",
+          "[data-test-id=\"retake-photo-btn\"]",
+          ".retake-photo-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 4
+      }
+    },
+    {
+      "element": "p-button[label=\"Upload Image\"]",
+      "popover": {
+        "title": "Upload Image",
+        "description": "Allows you to select and upload an existing image of a business card from your device's local storage. This provides an alternative to using the live camera capture feature, useful if you already have photos of cards.<br><br><strong>When to use:</strong> When you already have a photo of a business card saved on your device and want to scan it., If you prefer not to use the live camera capture feature or are experiencing camera issues.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Upload Image\"]",
+          "p-button .p-button-label:contains(\"Upload Image\")",
+          "button:contains(\"Upload Image\")",
+          "[aria-label=\"Upload Image\"]",
+          "[title=\"Upload Image\"]",
+          "p-button[icon=\"pi pi-upload\"]",
+          ".pi.pi-upload",
+          "i.pi.pi-upload",
+          "button .pi.pi-upload",
+          "#upload-business-card-image-btn",
+          "#upload-business-card-image-btn-btn",
+          "[data-test-id=\"upload-business-card-image-btn\"]",
+          ".upload-business-card-image-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 5
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of BusinessCardScanner. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-31T14:05:06.395290",
+  "version": "1.0"
+}

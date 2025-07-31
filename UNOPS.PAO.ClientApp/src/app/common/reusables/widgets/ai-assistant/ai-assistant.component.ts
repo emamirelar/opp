@@ -13,6 +13,8 @@ import { signal } from '@angular/core';
 import { LayoutService } from '../../../layouts/services/layout.service';
 import { AiAssistantScanComponent } from './scan/ai-assistant-scan.component';
 import { SafeUrlPipe } from './safe-url.pipe';
+import { FileUploadComponent } from '../../../components/file-upload/file-upload.component';
+import { AiAssistantService } from '../../../../features/internal/services/ai-assistant.service';
 
 @Component({
   selector: 'app-ai-assistant',
@@ -30,28 +32,33 @@ import { SafeUrlPipe } from './safe-url.pipe';
     TooltipModule,
     TranslatePipe,
     AiAssistantScanComponent,
-    SafeUrlPipe
+    SafeUrlPipe,
+    FileUploadComponent
   ]
 })
 export class AiAssistantComponent implements OnInit {
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
   @ViewChild('scanComponent') private scanComponent!: AiAssistantScanComponent;
+  @ViewChild('fileUploadComponent') private fileUploadComponent!: FileUploadComponent;
   @Input() viewContainerRef!: ViewContainerRef;  // Accept ViewContainerRef
 
   firstScroll = signal(true);
   message = signal('');
   selectedFiles = signal<{ file: File, name: string, content: string }[]>([]);
-  isProcessingFile = signal(false);
   isDragging = signal(false);
   loading = signal(false);
   isFullscreen = signal(false);
   layoutService = inject(LayoutService);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
+  private aiAssistantService = inject(AiAssistantService);
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   isRecording = signal(false);
   audioBlob = signal<Blob | null>(null);
+  
+  // File validation errors
+  fileValidationErrors = signal<string[]>([]);
   
   // Example prompts for welcome message
   examplePrompts = [
@@ -135,46 +142,98 @@ export class AiAssistantComponent implements OnInit {
     });
   }
 
-  onFileSelect(event: any): void {
-    this.isProcessingFile.set(true);
-    const files = event.files || event.target?.files || (event.dataTransfer?.files);
+  // File upload methods
+  onFilesSelected(files: File[]): void {
+    console.log('🔍 Files selected:', files.map(f => f.name));
+    
+    // Filter out duplicate files (by name and size)
+    const currentFiles = this.selectedFiles();
+    const newFiles = files.filter(newFile => {
+      return !currentFiles.some(existing => 
+        existing.file.name === newFile.name && 
+        existing.file.size === newFile.size
+      );
+    });
 
-    if (!files?.length) {
-      this.isProcessingFile.set(false);
+    if (newFiles.length === 0) {
+      console.log('⚠️ All files already selected, skipping duplicates');
       return;
     }
 
-    this.processFiles([files[0]]);
+    // Convert new files to our format
+    const newFileData = newFiles.map(file => ({
+      file,
+      name: file.name,
+      content: ''
+    }));
 
-    if (event.target?.value) {
-      event.target.value = '';
-    }
+    this.ngZone.run(() => {
+      // APPEND to existing files instead of replacing
+      const updatedFiles = [...currentFiles, ...newFileData];
+      
+      this.selectedFiles.set(updatedFiles);
+      this.fileValidationErrors.set([]);
+      console.log('✅ selectedFiles updated:', this.selectedFiles().map(f => f.name));
+      this.cdr.detectChanges();
+    });
   }
 
-  private async processFiles(files: File[]): Promise<void> {
-    try {
-      const contents = await Promise.all(files.map(file => this.readFileAsBase64(file)));
-
-      // Replace any existing files with the new one
-      this.selectedFiles.set([{ file: files[0], name: files[0].name, content: '' }]);
-    } catch (error) {
-      console.error('Error processing files:', error);
-    } finally {
-      this.isProcessingFile.set(false);
-    }
-  }
-
-  private readFileAsBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-      reader.readAsDataURL(file);
+  onFileValidationErrors(errors: string[]): void {
+    console.log('⚠️ File validation errors:', errors);
+    this.ngZone.run(() => {
+      this.fileValidationErrors.set(errors);
+      this.cdr.detectChanges();
     });
   }
 
   removeFile(index: number): void {
+    this.ngZone.run(() => {
     this.selectedFiles.update(files => files.filter((_, i) => i !== index));
+      
+      // Also update the FileUploadComponent to stay in sync
+      if (this.fileUploadComponent) {
+        const remainingFiles = this.selectedFiles().map(f => f.file);
+        // Update the internal state of the component without triggering events
+        this.fileUploadComponent.selectedFiles = remainingFiles.map(file => ({
+          file,
+          id: this.generateId(),
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          status: 'pending' as const
+        }));
+      }
+      
+      this.cdr.detectChanges();
+    });
+  }
+
+  clearAllFiles(): void {
+    this.ngZone.run(() => {
+      this.selectedFiles.set([]);
+      this.fileValidationErrors.set([]);
+      if (this.fileUploadComponent) {
+        this.fileUploadComponent.clearAllFiles();
+      }
+      this.cdr.detectChanges();
+    });
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  hasValidFiles(): boolean {
+    return this.selectedFiles().length > 0 && this.fileValidationErrors().length === 0;
+  }
+
+  getFileUploadStatus(): string {
+    const files = this.selectedFiles();
+    const errors = this.fileValidationErrors();
+    
+    if (files.length === 0) return '';
+    if (errors.length > 0) return `⚠️ ${errors.length} file validation error(s)`;
+    return `📎 ${files.length} file(s) ready`;
   }
 
   // Drag and drop handlers
@@ -197,7 +256,7 @@ export class AiAssistantComponent implements OnInit {
 
     const files = event.dataTransfer?.files;
     if (files) {
-      this.onFileSelect({ target: { files } });
+      this.onFilesSelected(Array.from(files));
     }
   }
 
@@ -207,7 +266,7 @@ export class AiAssistantComponent implements OnInit {
   }
 
   onImageCaptured(file: File): void {
-    this.processFiles([file]);
+    this.onFilesSelected([file]);
   }
 
   // Message handling
@@ -216,7 +275,7 @@ export class AiAssistantComponent implements OnInit {
     const currentFiles = this.selectedFiles();
 
     if (currentMessage.trim() || currentFiles.length > 0) {
-      // Clear message before the operation
+      // Clear message and files before the operation
       this.ngZone.run(() => {
         this.message.set('');
         this.loading.set(true);
@@ -234,7 +293,14 @@ export class AiAssistantComponent implements OnInit {
         next: () => {
           this.ngZone.run(() => {
             this.selectedFiles.set([]);
+            this.fileValidationErrors.set([]);
             this.loading.set(false);
+            
+            // Clear the enhanced file upload component
+            if (this.fileUploadComponent) {
+              this.fileUploadComponent.clearAllFiles();
+            }
+            
             this.cdr.detectChanges();
           });
         },
@@ -313,28 +379,11 @@ export class AiAssistantComponent implements OnInit {
 
   private async processAudioMessage(audioBlob: Blob): Promise<void> {
     try {
-      // Convert audio blob to base64
-      const base64Audio = await this.blobToBase64(audioBlob);
-
-      // Replace any existing files with the audio file
-      this.selectedFiles.set([{ file: new File([audioBlob], 'audio-message.mp3', { type: 'audio/mpeg' }), name: 'audio-message.mp3', content: '' }]);
+      // Convert audio blob to a File and add it to selected files
+      const audioFile = new File([audioBlob], 'audio-message.mp3', { type: 'audio/mpeg' });
+      this.onFilesSelected([audioFile]);
     } catch (error) {
       console.error('Error processing audio message:', error);
     }
-  }
-
-  private blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          resolve(reader.result);
-        } else {
-          reject(new Error('Failed to convert blob to base64'));
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
   }
 }

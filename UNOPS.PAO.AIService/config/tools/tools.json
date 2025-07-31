@@ -1,0 +1,2679 @@
+{
+  "generated_at": "2025-07-31T16:00:49.009294",
+  "version": "1.0",
+  "total_entities": 19,
+  "total_endpoints": 151,
+  "entities": [
+    {
+      "entity": "Configuration",
+      "description": "Manages global application and system configuration settings.",
+      "synonyms": [
+        "settings",
+        "parameters",
+        "app config",
+        "system config",
+        "preferences"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "Get",
+          "url": "api/configuration",
+          "method": "GET",
+          "description": "Retrieves the current global application and system configuration settings.",
+          "parameters": {},
+          "example_uses": [
+            "Retrieve the current application settings.",
+            "Get all system configurations.",
+            "Show me the configuration details."
+          ],
+          "when_to_use": "When you need to fetch the global application or system configuration settings."
+        }
+      ]
+    },
+    {
+      "entity": "Contact",
+      "description": "Manages information about individuals or points of contact, including their personal, professional, and communication details, often associated with partner organizations or interactions.",
+      "synonyms": [
+        "person",
+        "individual",
+        "associate",
+        "point of contact",
+        "POC"
+      ],
+      "mandatoryFields": [
+        "firstName",
+        "lastName",
+        "email"
+      ],
+      "searchMetadata": {
+        "directFields": [
+          "id",
+          "salutation",
+          "firstName",
+          "middleName",
+          "lastName",
+          "suffix",
+          "title",
+          "department",
+          "description",
+          "email",
+          "phone",
+          "mobile",
+          "assistant",
+          "assistantPhone",
+          "assistantEmail",
+          "status",
+          "mailingStreet",
+          "mailingStreet2",
+          "mailingCity",
+          "mailingStateProvince",
+          "mailingPostalCode",
+          "mailingCountry",
+          "profilePictureUrl",
+          "partnerId",
+          "partnerName",
+          "partnerStatus",
+          "partnerShortName"
+        ],
+        "nestedFields": {
+          "partner": [
+            "name",
+            "status",
+            "shortName",
+            "phone",
+            "website",
+            "address1City",
+            "address1Country"
+          ]
+        },
+        "operators": [
+          "like",
+          "is",
+          "not",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "between",
+          "greaterThan",
+          "lessThan",
+          "greaterThanOrEqual",
+          "lessThanOrEqual",
+          "on",
+          "not on",
+          "this week",
+          "this month",
+          "this year"
+        ],
+        "dateFields": [
+          "createdDate",
+          "modifiedDate"
+        ],
+        "exampleCriteria": [
+          {
+            "field": "firstName",
+            "operator": "like",
+            "value": "Maria",
+            "description": "Find contacts named Maria"
+          },
+          {
+            "field": "partner.name",
+            "operator": "like",
+            "value": "UNICEF",
+            "description": "Find contacts from UNICEF partners"
+          },
+          {
+            "field": "email",
+            "operator": "contains",
+            "value": "@unops.org",
+            "description": "Find UNOPS email contacts"
+          },
+          {
+            "field": "department",
+            "operator": "is",
+            "value": "Finance",
+            "description": "Find contacts in Finance department"
+          }
+        ]
+      },
+      "endpoints": [
+        {
+          "name": "Create",
+          "url": "/api/contact",
+          "method": "POST",
+          "description": "Creates a new contact with comprehensive personal and professional details.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": false,
+              "description": "Contact creation request with required fields"
+            }
+          },
+          "example_uses": [
+            "Create a contact named John Doe with email john@unicef.org",
+            "Add a new program manager contact for partner 123",
+            "Register Dr. Jane Smith as the technical lead",
+            "Create contact with full address information",
+            "Add executive contact to organization"
+          ],
+          "when_to_use": "Use this when the user asks to add, create, register, or set up a new contact."
+        },
+        {
+          "name": "ListAllContacts",
+          "url": "/api/contact",
+          "method": "GET",
+          "description": "Retrieves all contacts with basic pagination and ordering (no search criteria).",
+          "parameters": {
+            "pageIndex": {
+              "type": "integer",
+              "required": false,
+              "description": "Page number (1-based, default: 1)"
+            },
+            "pageSize": {
+              "type": "integer",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            "orderBy": {
+              "type": "string",
+              "required": false,
+              "description": "Field to order results by (optional)"
+            },
+            "ascending": {
+              "type": "boolean",
+              "required": false,
+              "description": "Sort direction - true for ascending, false for descending (default: true)"
+            }
+          },
+          "example_uses": [
+            "Show me all contacts",
+            "List all contacts in the system",
+            "Display the contact directory",
+            "Get all contact records",
+            "Browse contacts"
+          ],
+          "when_to_use": "Use this when the user wants to see ALL contacts without any search criteria or when asking for a general contact list."
+        },
+        {
+          "name": "SearchContacts",
+          "url": "/api/contact/search",
+          "method": "GET",
+          "description": "Performs simple text search across multiple contact fields (name, email, title, etc.). Use the 'searchText' parameter for a general keyword search. For more specific or complex searches, use the 'AdvancedSearchContacts' endpoint.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Pagination request containing only pagination and sorting parameters"
+            },
+            "searchText": {
+              "type": "string",
+              "required": false,
+              "description": "Text to search across contact name, email, title, and other basic fields"
+            }
+          },
+          "example_uses": [
+            "Search for contacts named John",
+            "Find contacts with @unicef.org email",
+            "Search for contacts containing 'Smith'",
+            "Find contact with phone number 555-1234",
+            "Look for contacts with title 'Manager'"
+          ],
+          "when_to_use": "Use this for simple name, email, title, or basic field searches. NOT for partner relationship searches."
+        },
+        {
+          "name": "AdvancedSearchContacts",
+          "url": "/api/contact/advanced-search",
+          "method": "GET",
+          "description": "Performs advanced search with structured criteria including relationships with partners, departments, and complex filters. Use the 'searchCriteria' parameter, which expects a JSON array of objects. Each object should have 'field', 'operator', and 'value'. Available fields include direct fields like 'firstName', 'email', 'department', and nested fields like 'partner.name', 'partner.status'. Available operators are 'like', 'is', 'not', 'contains', 'startsWith', 'endsWith', 'between', 'greaterThan', 'lessThan', 'greaterThanOrEqual', 'lessThanOrEqual', 'on', 'not on', 'this week', 'this month', 'this year'. For example, to find contacts from UNICEF partners, use: `[{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}]`.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Pagination request containing only pagination and sorting parameters"
+            },
+            "searchCriteria": {
+              "type": "string",
+              "required": false,
+              "description": "JSON array of search criteria objects with field, operator, value, and logicalOperator"
+            },
+            "searchText": {
+              "type": "string",
+              "required": false,
+              "description": "Optional additional text search to combine with criteria"
+            }
+          },
+          "example_uses": [
+            "Find contacts from UNICEF partner organization",
+            "Show contacts in Finance department created this month",
+            "Get contacts working at Asian Infrastructure partners",
+            "Find contacts where partner status is Active",
+            "List contacts from climate-related interactions",
+            "Search for contacts by department and creation date"
+          ],
+          "when_to_use": "Use this for searches involving partner relationships, departments, dates, status, or any complex multi-field criteria."
+        },
+        {
+          "name": "Get",
+          "url": "/api/contact/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific contact by ID with complete details including partner information and all contact methods.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Contact ID"
+            }
+          },
+          "example_uses": [
+            "Show me details for contact ID 123",
+            "Get full information about contact 456",
+            "Display contact record 789",
+            "Get complete contact profile",
+            "Show contact with partner information"
+          ],
+          "when_to_use": "Use this when the user asks for specific contact details by ID or when you need complete contact information."
+        },
+        {
+          "name": "Update",
+          "url": "/api/contact",
+          "method": "PUT",
+          "description": "Updates an existing contact's information including personal details, contact methods, and professional information.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": false,
+              "description": "Contact update request containing modified fields"
+            }
+          },
+          "example_uses": [
+            "Update contact 123's email to newemail@unicef.org",
+            "Change contact 456's title to Senior Manager",
+            "Update phone number for contact 789",
+            "Modify contact's department information",
+            "Change contact status to Inactive"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or change contact information."
+        },
+        {
+          "name": "Delete",
+          "url": "/api/contact/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes a contact from the system (marks as deleted rather than permanent removal).",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Contact ID to delete"
+            }
+          },
+          "example_uses": [
+            "Delete contact ID 123",
+            "Remove contact 456 from the system",
+            "Deactivate contact record",
+            "Soft delete contact John Doe"
+          ],
+          "when_to_use": "Use this when the user asks to delete, remove, or eliminate a contact."
+        },
+        {
+          "name": "PartnerContacts",
+          "url": "/api/partner/{partnerId}/contacts",
+          "method": "GET",
+          "description": "Retrieves all contacts associated with a specific partner organization with access control.",
+          "parameters": {
+            "partnerId": {
+              "type": "integer",
+              "required": true,
+              "description": "Partner organization ID to get contacts for"
+            }
+          },
+          "example_uses": [
+            "Show all contacts for partner organization 123",
+            "Get contact list for UNICEF partner",
+            "Find all people working at partner ID 456",
+            "List contacts belonging to a specific organization",
+            "Get partner's contact directory"
+          ],
+          "when_to_use": "Use this when the user asks to see contacts for a specific partner, organization, or wants to view who works at a particular partner."
+        },
+        {
+          "name": "PermissionsGet",
+          "url": "/api/contact/{id}/permissions",
+          "method": "GET",
+          "description": "Retrieves the current user's permissions for a specific contact (read, update, delete).",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Contact ID to check permissions for"
+            }
+          },
+          "example_uses": [
+            "Check my permissions for contact 123",
+            "What can I do with contact 456?",
+            "Get access rights for this contact",
+            "Verify contact permissions before editing",
+            "Can I update this contact's information?"
+          ],
+          "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for contact management."
+        },
+        {
+          "name": "UploadProfilePicture",
+          "url": "/api/contact/{id}/profile-picture",
+          "method": "POST",
+          "description": "Uploads and associates a profile picture with a contact (max 1MB, JPEG/PNG/WEBP only).",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Contact ID to upload profile picture for"
+            },
+            "file": {
+              "type": "object",
+              "required": false,
+              "description": "Image file (max 1MB, JPEG/PNG/WEBP formats only)"
+            }
+          },
+          "example_uses": [
+            "Upload a profile picture for contact 123",
+            "Add photo to contact John Doe",
+            "Set contact profile image",
+            "Update contact's profile picture",
+            "Add headshot to contact record"
+          ],
+          "when_to_use": "Use this when the user wants to add or update a contact's profile picture or photo."
+        },
+        {
+          "name": "ScanContactData",
+          "url": "/api/contact/scan-data",
+          "method": "POST",
+          "description": "Scans and processes uploaded files for contact data extraction using AI-powered analysis.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": false,
+              "description": "File scan request containing the file to be processed"
+            }
+          },
+          "example_uses": [
+            "Scan business cards for contact information",
+            "Upload contact forms for processing",
+            "Analyze contact documents with AI",
+            "Extract data from contact lists",
+            "Process contact information from uploaded files"
+          ],
+          "when_to_use": "Use this when the user wants to upload and scan documents for contact data extraction using AI."
+        },
+        {
+          "name": "AnalyseContactData",
+          "url": "/api/contact/analyse-file",
+          "method": "POST",
+          "description": "Analyzes uploaded files and extracts structured contact data using AI-powered data analysis.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Analysis request containing file and analysis parameters"
+            }
+          },
+          "example_uses": [
+            "Analyze contact directories for structured data extraction",
+            "Extract contact information from uploaded forms",
+            "Process contact documents with AI",
+            "Convert contact files into structured database entries",
+            "Analyze business card data for key information"
+          ],
+          "when_to_use": "Use this when the user wants to analyze files and extract structured contact data for database import."
+        },
+        {
+          "name": "BulkUploadContacts",
+          "url": "/api/contact/bulk-upload",
+          "method": "POST",
+          "description": "Bulk uploads multiple contact records using AI-assisted data processing and validation.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": false,
+              "description": "Bulk upload request containing contact data"
+            }
+          },
+          "example_uses": [
+            "Bulk upload 500 contacts from Excel",
+            "Import multiple contacts from CSV file",
+            "Mass upload contact data with AI validation",
+            "Bulk import contact records with duplicate detection",
+            "Upload large contact dataset with automated processing"
+          ],
+          "when_to_use": "Use this when the user wants to upload multiple contact records at once with AI-assisted processing."
+        }
+      ]
+    },
+    {
+      "entity": "Document",
+      "description": "Manages files, attachments, and associated metadata linked to various entities such as Partners, Contacts, and Interactions. It allows for retrieval, viewing, and updating of document details.",
+      "synonyms": [
+        "file",
+        "attachment",
+        "record",
+        "upload",
+        "artifact",
+        "document record"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetAll",
+          "url": "/api/document/{entityName}/{entityId}",
+          "method": "GET",
+          "description": "Retrieves all documents associated with a specific entity (partner, contact, or interaction) with access control.",
+          "parameters": {
+            "entityName": {
+              "type": "string",
+              "required": false,
+              "description": "Entity type name (e.g., 'Partner', 'Contact', 'Interaction')"
+            },
+            "entityId": {
+              "type": "integer",
+              "required": true,
+              "description": "Entity ID to get documents for"
+            }
+          },
+          "example_uses": [
+            "Show all documents for partner 123",
+            "Get documents attached to contact 456",
+            "List files for interaction 789",
+            "Find all documents for this partner",
+            "Show uploaded files for contact",
+            "Get document attachments for entity"
+          ],
+          "when_to_use": "Use this when the user asks to see documents, files, or attachments for a specific partner, contact, or interaction.",
+          "advanced_search_guidance": "This endpoint does not support advanced search criteria via a 'searchCriteria' parameter. It filters documents based on 'entityName' and 'entityId' provided in the URL path."
+        },
+        {
+          "name": "Get",
+          "url": "/api/document/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific document by ID with complete details including file information, metadata, and download access.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Document ID"
+            }
+          },
+          "example_uses": [
+            "Show me details for document ID 123",
+            "Get document 456 information",
+            "Display document record 789",
+            "Get complete document metadata",
+            "Show document with download link",
+            "Access document file details"
+          ],
+          "when_to_use": "Use this when the user asks for specific document details by ID or when you need complete document information for viewing or downloading."
+        },
+        {
+          "name": "Update",
+          "url": "/api/document",
+          "method": "PUT",
+          "description": "Updates an existing document's metadata, description, and properties with permission validation.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": false,
+              "description": "Document update request containing modified fields"
+            }
+          },
+          "example_uses": [
+            "Update document 123's title to \"New Contract\"",
+            "Change document 456's description",
+            "Modify document type to \"Legal Agreement\"",
+            "Update document tags and visibility",
+            "Change document metadata and properties"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or change document information or metadata."
+        }
+      ]
+    },
+    {
+      "entity": "DocumentType",
+      "description": "Manages the various types of documents associated with different entities within the system, such as partners, projects, or interactions.",
+      "synonyms": [
+        "document category",
+        "file type",
+        "record type",
+        "doc type",
+        "document classification"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetAll",
+          "url": "api/document-type/{entityName}",
+          "method": "GET",
+          "description": "Retrieves a list of document types, optionally filtered by an associated entity name. Supports pagination and ordering of results.",
+          "parameters": {
+            "entityName": {
+              "type": "string",
+              "required": false,
+              "description": "The name of the entity to filter document types by (e.g., 'Partner', 'Project', 'Interaction'). If not provided, all document types are returned."
+            },
+            "pageIndex": {
+              "type": "integer",
+              "required": false,
+              "description": "The 0-based index of the page to retrieve. Defaults to 0 if not specified."
+            },
+            "pageSize": {
+              "type": "integer",
+              "required": false,
+              "description": "The number of items per page. Defaults to 10 if not specified."
+            },
+            "orderBy": {
+              "type": "string",
+              "required": false,
+              "description": "The field name to order the results by (e.g., 'Name', 'Id')."
+            },
+            "ascending": {
+              "type": "boolean",
+              "required": false,
+              "description": "Specifies whether to sort in ascending (true) or descending (false) order. Defaults to true."
+            }
+          },
+          "example_uses": [
+            "Get all available document types.",
+            "List document types specifically for 'Partner' entities.",
+            "Retrieve the second page of document types, with 20 items per page, ordered by name.",
+            "Find all document types associated with 'Project' entities, sorted in descending order by their creation date."
+          ],
+          "when_to_use": "Use this endpoint when you need to fetch a list of predefined document types, either globally or specific to a particular entity, for display or selection purposes in a user interface or automated process."
+        }
+      ]
+    },
+    {
+      "entity": "EntityConfiguration",
+      "description": "Manages the dynamic configuration and schema definition of entities and their fields within the system. This includes creating, updating, and retrieving entity structures and their associated field properties.",
+      "synonyms": [
+        "Entity Config",
+        "Data Model",
+        "Schema Definition",
+        "Field Configuration",
+        "Entity Management"
+      ],
+      "mandatoryFields": [
+        "id",
+        "entityManagerId"
+      ],
+      "endpoints": [
+        {
+          "name": "GetEntities",
+          "url": "/api/entities",
+          "method": "GET",
+          "description": "Get all available entities for dropdown selection.",
+          "parameters": {},
+          "example_uses": [
+            "How can I get a list of all configurable entities?",
+            "Show me the entities that can be selected in a dropdown.",
+            "I need a list of all system entities for a UI component."
+          ],
+          "when_to_use": "Use this endpoint to retrieve a simple list of all entities configured in the system, typically for populating dropdowns or selection lists in a user interface."
+        },
+        {
+          "name": "GetEntityConfiguration",
+          "url": "/api/entity-configuration/{entityName}",
+          "method": "GET",
+          "description": "Get entity configuration details by entity name for the frontend screen.",
+          "parameters": {
+            "entityName": {
+              "type": "string",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Retrieve the configuration details for the 'Partner' entity.",
+            "I need to see how the 'Project' entity is configured, including its fields.",
+            "Show me the schema definition for the 'Contact' entity."
+          ],
+          "when_to_use": "Use this endpoint to fetch the detailed configuration, including field definitions, for a specific entity by its name. This is typically used to dynamically render forms or display entity structures on a frontend."
+        },
+        {
+          "name": "SaveEntityConfiguration",
+          "url": "/api/entity-configuration/{entityName}/save",
+          "method": "POST",
+          "description": "Save entity configuration (entity description and field configurations).",
+          "parameters": {
+            "entityName": {
+              "type": "string",
+              "required": false,
+              "description": ""
+            },
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Save the updated configuration for the 'Vendor' entity.",
+            "I want to persist changes to the 'Asset' entity's description and field settings.",
+            "Update the configuration of the 'User' entity with new field definitions."
+          ],
+          "when_to_use": "Use this endpoint to update or save the entire configuration of an existing entity, including its general description and the definitions of its fields. This is a comprehensive save operation."
+        },
+        {
+          "name": "GetAllEntityConfigurations",
+          "url": "/api/entity-configuration",
+          "method": "GET",
+          "description": "Get all entity configurations (for admin purposes).",
+          "parameters": {},
+          "example_uses": [
+            "List all configured entities and their full configurations.",
+            "As an administrator, I need to see all entity schemas.",
+            "Retrieve a complete overview of all entity configurations in the system."
+          ],
+          "when_to_use": "Use this endpoint to retrieve a comprehensive list of all entity configurations, including their detailed field definitions. This is typically used for administrative overview or system-wide configuration management."
+        },
+        {
+          "name": "CreateEntityConfiguration",
+          "url": "/api/entity-configuration/create",
+          "method": "POST",
+          "description": "Create a new entity configuration.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Create a new entity configuration for 'Project Task'.",
+            "Define a new data model for 'Support Ticket'.",
+            "I need to add a new configurable entity to the system."
+          ],
+          "when_to_use": "Use this endpoint to define and create a brand new entity configuration within the system. This allows for the introduction of new data models."
+        },
+        {
+          "name": "UpdateEntityConfiguration",
+          "url": "/api/entity-configuration/{id}",
+          "method": "PUT",
+          "description": "Update an entity configuration.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": ""
+            },
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Update the entity configuration with ID 123.",
+            "Modify the details of an existing entity configuration.",
+            "I want to change the properties of the entity configuration identified by its ID."
+          ],
+          "when_to_use": "Use this endpoint to modify an existing entity configuration identified by its unique ID. This is for targeted updates to a specific entity's definition."
+        },
+        {
+          "name": "DeleteEntityConfiguration",
+          "url": "/api/entity-configuration/{id}",
+          "method": "DELETE",
+          "description": "Delete an entity configuration.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Delete the entity configuration with ID 456.",
+            "Remove the 'Old Feature' entity configuration from the system.",
+            "I need to permanently delete an entity definition."
+          ],
+          "when_to_use": "Use this endpoint to permanently remove an entity configuration from the system, identified by its unique ID. Exercise caution as this action is irreversible."
+        },
+        {
+          "name": "GetEntityFields",
+          "url": "/api/entity-configuration/{entityManagerId}/fields",
+          "method": "GET",
+          "description": "Get fields for a specific entity configuration.",
+          "parameters": {
+            "entityManagerId": {
+              "type": "integer",
+              "required": true,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Retrieve all fields associated with the entity configuration ID 789.",
+            "Show me the field definitions for the 'Product' entity configuration.",
+            "I need a list of fields for a specific entity configuration."
+          ],
+          "when_to_use": "Use this endpoint to retrieve only the field definitions for a specific entity configuration, identified by its manager ID. This is useful when you only need the schema of fields, not the full entity configuration."
+        },
+        {
+          "name": "CreateEntityField",
+          "url": "/api/entity-field/create",
+          "method": "POST",
+          "description": "Create a new entity field.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Add a new 'Status' field to the 'Order' entity.",
+            "Define a new custom field for an existing entity.",
+            "I want to create a new field within an entity's configuration."
+          ],
+          "when_to_use": "Use this endpoint to add a new field definition to an existing entity configuration. This allows for extending the data model of an entity."
+        },
+        {
+          "name": "UpdateEntityField",
+          "url": "/api/entity-field/{id}",
+          "method": "PUT",
+          "description": "Update an entity field.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": ""
+            },
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Update the entity field with ID 101.",
+            "Modify the properties of an existing field, like its data type or label.",
+            "I need to change the definition of a specific entity field."
+          ],
+          "when_to_use": "Use this endpoint to modify the properties of an existing entity field, identified by its unique ID. This is for targeted updates to a specific field's definition."
+        },
+        {
+          "name": "DeleteEntityField",
+          "url": "/api/entity-field/{id}",
+          "method": "DELETE",
+          "description": "Delete an entity field.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Delete the entity field with ID 202.",
+            "Remove the 'Temporary Notes' field from the 'Task' entity.",
+            "I need to permanently delete a specific field from an entity's configuration."
+          ],
+          "when_to_use": "Use this endpoint to permanently remove an entity field from its configuration, identified by its unique ID. Exercise caution as this action is irreversible."
+        },
+        {
+          "name": "GetRelatedEntityFields",
+          "url": "/api/entity-configuration/related-fields/{entityType}",
+          "method": "GET",
+          "description": "Get available fields for a related entity type (for relationship field configuration).",
+          "parameters": {
+            "entityType": {
+              "type": "string",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Show me the fields available for linking to the 'User' entity type.",
+            "What fields can I use to establish a relationship with the 'Department' entity?",
+            "Retrieve fields from a related entity for configuring a relationship field."
+          ],
+          "when_to_use": "Use this endpoint to discover available fields from a specified related entity type. This is crucial when configuring relationship fields, allowing you to select which fields from the related entity can be referenced."
+        },
+        {
+          "name": "GetFieldOptionsForDataType",
+          "url": "/api/entity-configuration/field-options/{dataType}/{contextEntityName}",
+          "method": "GET",
+          "description": "Get field options for a specific data type in the context of an entity.",
+          "parameters": {
+            "dataType": {
+              "type": "string",
+              "required": false,
+              "description": ""
+            },
+            "contextEntityName": {
+              "type": "string",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "What are the available options for a 'string' data type field in the context of the 'Product' entity?",
+            "Show me the field options for a 'boolean' type within the 'Settings' entity.",
+            "Retrieve configuration options for a field based on its data type and the entity it belongs to."
+          ],
+          "when_to_use": "Use this endpoint to retrieve specific configuration options or constraints applicable to a field based on its data type (e.g., 'string', 'integer', 'boolean') and the entity it's being configured for. This helps in dynamic form generation or validation."
+        },
+        {
+          "name": "GetEntityListViewConfiguration",
+          "url": "/api/entity-configuration/{entityName}/list-view",
+          "method": "GET",
+          "description": "Get list view configuration for an entity (for dynamic column generation).",
+          "parameters": {
+            "entityName": {
+              "type": "string",
+              "required": false,
+              "description": ""
+            }
+          },
+          "example_uses": [
+            "Retrieve the list view settings for the 'Order' entity.",
+            "What columns should be displayed in the list view for 'Customers'?",
+            "Show me the configuration for generating the table view of the 'Invoice' entity."
+          ],
+          "when_to_use": "Use this endpoint to fetch the specific configuration that dictates how an entity's data should be displayed in a list or table view, including which columns to show and their order. This is essential for dynamic UI rendering of data grids."
+        }
+      ]
+    },
+    {
+      "entity": "Global",
+      "description": "Manages user-specific global settings, preferences, and provides a system-wide intelligent search functionality across all entities.",
+      "synonyms": [
+        "global settings",
+        "user preferences",
+        "system settings",
+        "user configuration",
+        "application settings"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetUserPreferences",
+          "url": "api/global/user-preferences",
+          "method": "GET",
+          "description": "Retrieves user-specific preferences and settings for interface customization and default behaviors.",
+          "parameters": {
+            "id": {
+              "type": "string",
+              "required": false,
+              "description": "User ID to get preferences for"
+            }
+          },
+          "example_uses": [
+            "Get my user preferences and settings",
+            "Show user interface customizations",
+            "Get default language and timezone settings"
+          ],
+          "when_to_use": "Use this when the user asks for their preferences, settings, customizations, or when loading user interface defaults."
+        },
+        {
+          "name": "UpdateUserPreferences",
+          "url": "api/global/user-preferences",
+          "method": "PUT",
+          "description": "Updates user-specific preferences and settings for interface customization and default behaviors.",
+          "parameters": {
+            "id": {
+              "type": "string",
+              "required": false,
+              "description": "User ID to update preferences for"
+            },
+            "userPreferences": {
+              "type": "object",
+              "required": false,
+              "description": "Updated user preference object containing new settings"
+            }
+          },
+          "example_uses": [
+            "Update my language preference to French",
+            "Change my timezone to EST",
+            "Set theme to dark mode"
+          ],
+          "when_to_use": "Use this when the user wants to update their preferences, settings, or interface customizations."
+        },
+        {
+          "name": "GetGlobalFilters",
+          "url": "api/global/filters",
+          "method": "GET",
+          "description": "Retrieves user's global filter settings and preferences for consistent filtering across all views.",
+          "parameters": {
+            "id": {
+              "type": "string",
+              "required": false,
+              "description": "User ID to get global filters for"
+            }
+          },
+          "example_uses": [
+            "Get my global filter settings",
+            "Show saved filter preferences",
+            "Retrieve default filters for all pages"
+          ],
+          "when_to_use": "Use this when loading user's saved filter settings or when applying consistent filters across multiple views."
+        },
+        {
+          "name": "UpdateGlobalFilters",
+          "url": "api/global/filters",
+          "method": "PUT",
+          "description": "Updates user's global filter settings and preferences for consistent filtering across all views.",
+          "parameters": {
+            "id": {
+              "type": "string",
+              "required": false,
+              "description": "User ID to update global filters for"
+            },
+            "globalFilters": {
+              "type": "object",
+              "required": false,
+              "description": "Updated global filter configuration"
+            }
+          },
+          "example_uses": [
+            "Save my default organizational unit filter",
+            "Update global date range preferences",
+            "Set default status filters for all views"
+          ],
+          "when_to_use": "Use this when the user wants to save filter preferences that apply across all views and pages."
+        },
+        {
+          "name": "ResetGlobalFilters",
+          "url": "api/global/filters/reset",
+          "method": "POST",
+          "description": "Resets user's global filter settings to system defaults, clearing all custom filter preferences.",
+          "parameters": {
+            "id": {
+              "type": "string",
+              "required": false,
+              "description": "User ID to reset global filters for"
+            }
+          },
+          "example_uses": [
+            "Reset my filter settings to defaults",
+            "Clear all saved filter preferences",
+            "Restore default filtering behavior"
+          ],
+          "when_to_use": "Use this when the user wants to clear their saved filter preferences and return to system defaults."
+        },
+        {
+          "name": "GetPreferredLanguage",
+          "url": "api/global/preferred-language",
+          "method": "GET",
+          "description": "Retrieves the current user's preferred language setting for interface localization.",
+          "parameters": {},
+          "example_uses": [
+            "Get my preferred language setting",
+            "Show current language preference",
+            "What language is my interface set to?"
+          ],
+          "when_to_use": "Use this when loading interface language settings or when determining localization preferences."
+        },
+        {
+          "name": "UpdatePreferredLanguage",
+          "url": "api/global/preferred-language",
+          "method": "PUT",
+          "description": "Updates the current user's preferred language setting for interface localization.",
+          "parameters": {
+            "language": {
+              "type": "string",
+              "required": false,
+              "description": "Language code to set as preferred (e.g., 'en', 'fr', 'es')"
+            }
+          },
+          "example_uses": [
+            "Change my language to French",
+            "Set interface language to Spanish",
+            "Update my language preference to English"
+          ],
+          "when_to_use": "Use this when the user wants to change their interface language or localization preferences."
+        },
+        {
+          "name": "IntelligentGlobalSearch",
+          "url": "api/global/search",
+          "method": "GET",
+          "description": "Performs intelligent global search across all entities using hybrid text and semantic search capabilities. Automatically determines optimal search strategy based on query characteristics and complexity.",
+          "parameters": {
+            "q": {
+              "type": "string",
+              "required": false,
+              "description": "Search query text"
+            },
+            "debug": {
+              "type": "boolean",
+              "required": false,
+              "description": "Enable debug mode to show search strategy and scoring details (default: false)"
+            },
+            "fullResults": {
+              "type": "boolean",
+              "required": false,
+              "description": "Return full detailed results instead of summary (default: false)"
+            }
+          },
+          "example_uses": [
+            "Search for \"UNICEF project manager\"",
+            "Find \"meetings about climate change\"",
+            "Look for \"john.doe@example.com\""
+          ],
+          "when_to_use": "Use this when the user performs any search operation across the system - it automatically chooses between text search for exact matches and semantic search for conceptual queries."
+        }
+      ]
+    },
+    {
+      "entity": "Interaction",
+      "description": "Manages records of interactions, particularly those originating from or related to Gmail communications. This entity helps in logging and tracking communications with various stakeholders.",
+      "synonyms": [
+        "communication",
+        "activity",
+        "engagement",
+        "email record",
+        "correspondence"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "CreateInteraction",
+          "url": "api/gmail-addon/interactions",
+          "method": "POST",
+          "description": "Creates a new interaction record, typically initiated from a Gmail context. This allows logging communications or activities directly from email.",
+          "parameters": {
+            "model": {
+              "type": "object",
+              "required": false,
+              "description": "The interaction data to be created."
+            }
+          },
+          "example_uses": [
+            "Create a new interaction from an email.",
+            "Log a new communication with a client.",
+            "Record a new activity related to a Gmail conversation."
+          ],
+          "when_to_use": "When you need to create a new interaction record, typically initiated from a Gmail context, to log a communication or activity."
+        },
+        {
+          "name": "UpdateInteraction",
+          "url": "api/gmail-addon/interactions",
+          "method": "PUT",
+          "description": "Updates an existing interaction record. This allows modifying details of previously logged communications or activities.",
+          "parameters": {
+            "model": {
+              "type": "object",
+              "required": false,
+              "description": "The updated interaction data."
+            }
+          },
+          "example_uses": [
+            "Update the details of an existing interaction.",
+            "Modify an interaction record to add more information.",
+            "Change the status of a logged email interaction."
+          ],
+          "when_to_use": "When you need to modify the details of an already existing interaction record, such as updating its status or adding more notes."
+        },
+        {
+          "name": "FindGmailInteraction",
+          "url": "api/gmail-addon/interactions/find",
+          "method": "POST",
+          "description": "Finds specific Gmail interactions based on provided criteria. This endpoint allows searching for interactions using various parameters within the request body.",
+          "parameters": {
+            "model": {
+              "type": "object",
+              "required": false,
+              "description": "The criteria to search for Gmail interactions."
+            }
+          },
+          "example_uses": [
+            "Find all interactions related to a specific email thread.",
+            "Search for Gmail interactions by sender or recipient.",
+            "Locate interactions that occurred within a certain date range."
+          ],
+          "when_to_use": "When you need to search for and retrieve specific interaction records, especially those originating from Gmail, using various search criteria provided in the request body."
+        },
+        {
+          "name": "FindRelatedRecords",
+          "url": "api/gmail-addon/interactions/find-related-records",
+          "method": "POST",
+          "description": "Finds records related to a given Gmail context, such as contacts, partners, or other entities linked to an email. This helps in identifying existing relationships based on email content.",
+          "parameters": {
+            "input": {
+              "type": "object",
+              "required": false,
+              "description": "The input data to find related records."
+            }
+          },
+          "example_uses": [
+            "Find contacts related to the current email.",
+            "Discover partners associated with this email conversation.",
+            "Identify any existing records linked to the email content."
+          ],
+          "when_to_use": "When you need to identify and retrieve records (e.g., contacts, partners, projects) that are related to the context of a specific Gmail email or conversation."
+        },
+        {
+          "name": "CreateRecordsFromEmails",
+          "url": "api/gmail-addon/create-records",
+          "method": "POST",
+          "description": "Creates new records (e.g., interactions, contacts, partners) based on information extracted from one or more emails. This automates the process of logging information from emails into the system.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "The request containing email data to create records from."
+            }
+          },
+          "example_uses": [
+            "Generate new interaction records from a selection of emails.",
+            "Create new contact entries directly from email addresses.",
+            "Automate the creation of business records from email content."
+          ],
+          "when_to_use": "When you need to automatically create various types of records (like interactions, contacts, or partners) by processing information extracted from one or more emails."
+        }
+      ]
+    },
+    {
+      "entity": "Interaction",
+      "description": "Manages records of communications, meetings, and engagements with partners and contacts. This includes creating, retrieving, updating, and deleting interaction entries, as well as advanced search capabilities and AI-assisted data processing for interactions.",
+      "synonyms": [
+        "communication",
+        "meeting",
+        "engagement",
+        "call",
+        "log",
+        "record"
+      ],
+      "mandatoryFields": [
+        "type",
+        "date",
+        "subject"
+      ],
+      "searchMetadata": {
+        "directFields": [
+          "id",
+          "contactId",
+          "type",
+          "date",
+          "fromDate",
+          "toDate",
+          "description",
+          "subject",
+          "contactName",
+          "contactFirstName",
+          "contactLastName",
+          "contactEmail",
+          "partnerName",
+          "partnerStatus"
+        ],
+        "nestedFields": {
+          "contact": [
+            "firstName",
+            "lastName",
+            "email",
+            "title",
+            "department",
+            "phone",
+            "mobile"
+          ],
+          "partner": [
+            "name",
+            "status",
+            "shortName"
+          ]
+        },
+        "operators": [
+          "like",
+          "is",
+          "not",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "between",
+          "greaterThan",
+          "lessThan",
+          "greaterThanOrEqual",
+          "lessThanOrEqual",
+          "on",
+          "not on",
+          "this week",
+          "this month",
+          "this year"
+        ],
+        "dateFields": [
+          "date",
+          "fromDate",
+          "toDate",
+          "createdDate",
+          "modifiedDate"
+        ],
+        "exampleCriteria": [
+          {
+            "field": "partner.name",
+            "operator": "like",
+            "value": "UNICEF",
+            "description": "Find interactions with UNICEF partners"
+          },
+          {
+            "field": "contact.firstName",
+            "operator": "like",
+            "value": "John",
+            "description": "Find interactions with contacts named John"
+          },
+          {
+            "field": "type",
+            "operator": "is",
+            "value": "Meeting",
+            "description": "Find only meeting interactions"
+          },
+          {
+            "field": "date",
+            "operator": "between",
+            "value": "2024-01-01,2024-12-31",
+            "description": "Find interactions in 2024"
+          }
+        ]
+      },
+      "endpoints": [
+        {
+          "name": "Create",
+          "url": "/api/interactions",
+          "method": "POST",
+          "description": "Creates a new interaction record with complete details including participants, type, and associated entities.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": true,
+              "description": "Interaction creation request with all required details"
+            }
+          },
+          "example_uses": [
+            "Create a new meeting with UNICEF on project planning",
+            "Record email interaction with partner contacts",
+            "Add conference call with multiple stakeholders"
+          ],
+          "when_to_use": "Use this when the user asks to create, add, record, or log a new interaction, meeting, call, or communication."
+        },
+        {
+          "name": "ListAllInteractions",
+          "url": "/api/interactions",
+          "method": "GET",
+          "description": "Retrieves all interactions with basic pagination and ordering (no search criteria).",
+          "parameters": {
+            "pageIndex": {
+              "type": "integer",
+              "required": false,
+              "description": "Page number (1-based, default: 1)"
+            },
+            "pageSize": {
+              "type": "integer",
+              "required": false,
+              "description": "Number of items per page (default: 20)"
+            },
+            "orderBy": {
+              "type": "string",
+              "required": false,
+              "description": "Field to order results by (optional)"
+            },
+            "ascending": {
+              "type": "boolean",
+              "required": false,
+              "description": "Sort direction - true for ascending, false for descending (default: true)"
+            }
+          },
+          "example_uses": [
+            "Show me all interactions",
+            "List all interactions in the system",
+            "Display the interaction history"
+          ],
+          "when_to_use": "Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list."
+        },
+        {
+          "name": "SearchInteractions",
+          "url": "/api/interactions/search",
+          "method": "GET",
+          "description": "Performs simple text search across multiple interaction fields (subject, description, etc.). Use the `searchText` parameter for keyword-based searches. For more structured or relational searches, use the `AdvancedSearchInteractions` endpoint.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Pagination request containing only pagination and sorting parameters"
+            },
+            "searchText": {
+              "type": "string",
+              "required": false,
+              "description": "Text to search across interaction subject, description, and other basic fields"
+            }
+          },
+          "example_uses": [
+            "Search for interactions about project",
+            "Find interactions containing 'meeting notes'",
+            "Search for interactions with 'UNICEF' mentioned"
+          ],
+          "when_to_use": "Use this for simple keyword searches across interaction content. NOT for relationship-based searches."
+        },
+        {
+          "name": "AdvancedSearchInteractions",
+          "url": "/api/interactions/advanced-search",
+          "method": "GET",
+          "description": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters. Use the `searchCriteria` parameter, which expects a JSON array of objects. Each object should have `field`, `operator`, and `value` properties. For example: `[{\"field\": \"type\", \"operator\": \"is\", \"value\": \"Meeting\"}, {\"field\": \"date\", \"operator\": \"between\", \"value\": \"2024-01-01,2024-12-31\"}]`. Available fields for search are: `id`, `contactId`, `type`, `date`, `fromDate`, `toDate`, `description`, `subject`, `contactName`, `contactFirstName`, `contactLastName`, `contactEmail`, `partnerName`, `partnerStatus`. Nested fields include `contact.firstName`, `contact.lastName`, `contact.email`, `contact.title`, `contact.department`, `contact.phone`, `contact.mobile`, `partner.name`, `partner.status`, `partner.shortName`. Operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are: `date`, `fromDate`, `toDate`, `createdDate`, `modifiedDate`.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Pagination request containing only pagination and sorting parameters"
+            },
+            "searchCriteria": {
+              "type": "string",
+              "required": false,
+              "description": "JSON array of search criteria objects with field, operator, value, and logicalOperator"
+            },
+            "searchText": {
+              "type": "string",
+              "required": false,
+              "description": "Optional additional text search to combine with criteria"
+            }
+          },
+          "example_uses": [
+            "Find interactions with UNICEF partners",
+            "Show meetings with John Smith contact",
+            "Get email interactions this week"
+          ],
+          "when_to_use": "Use this for searches involving partner relationships, contact details, dates, interaction types, or multiple field combinations."
+        },
+        {
+          "name": "Get",
+          "url": "/api/interactions/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific interaction by ID with complete details including participants, documents, and permissions.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Interaction ID"
+            }
+          },
+          "example_uses": [
+            "Show me details for interaction ID 123",
+            "Get full information about meeting 456",
+            "Display interaction record 789"
+          ],
+          "when_to_use": "Use this when the user asks for specific interaction details by ID or when you need complete interaction information."
+        },
+        {
+          "name": "Update",
+          "url": "/api/interactions",
+          "method": "PUT",
+          "description": "Updates an existing interaction's information including details, participants, scheduling, and metadata.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": true,
+              "description": "Interaction update request containing modified fields"
+            }
+          },
+          "example_uses": [
+            "Update meeting 123's time to 2 PM",
+            "Change interaction 456's location to virtual",
+            "Modify meeting description and agenda"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or change interaction information."
+        },
+        {
+          "name": "Delete",
+          "url": "/api/interactions/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes an interaction from the system (marks as deleted rather than permanent removal).",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Interaction ID to delete"
+            }
+          },
+          "example_uses": [
+            "Delete interaction ID 123",
+            "Remove meeting 456 from the system",
+            "Cancel and delete upcoming meeting"
+          ],
+          "when_to_use": "Use this when the user asks to delete, remove, cancel, or eliminate an interaction."
+        },
+        {
+          "name": "PermissionsGet",
+          "url": "/api/interactions/{id}/permissions",
+          "method": "GET",
+          "description": "Retrieves the current user's permissions for a specific interaction (read, update, delete).",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Interaction ID to check permissions for"
+            }
+          },
+          "example_uses": [
+            "Check my permissions for interaction 123",
+            "What can I do with meeting 456?",
+            "Get access rights for this interaction"
+          ],
+          "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for interaction management."
+        },
+        {
+          "name": "ScanInteractionData",
+          "url": "/api/interactions/scan-data",
+          "method": "POST",
+          "description": "Scans and processes uploaded files for interaction data extraction using AI-powered analysis.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": true,
+              "description": "File scan request containing the file to be processed"
+            }
+          },
+          "example_uses": [
+            "Scan meeting notes for interaction details",
+            "Upload email threads for processing",
+            "Analyze call transcripts with AI"
+          ],
+          "when_to_use": "Use this when the user wants to upload and scan documents for interaction data extraction using AI."
+        },
+        {
+          "name": "AnalyseInteractionData",
+          "url": "/api/interactions/analyse-file",
+          "method": "POST",
+          "description": "Analyzes uploaded files and extracts structured interaction data using AI-powered data analysis.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": true,
+              "description": "Analysis request containing file and analysis parameters"
+            }
+          },
+          "example_uses": [
+            "Analyze meeting transcripts for structured data extraction",
+            "Extract interaction information from uploaded logs",
+            "Process communication documents with AI"
+          ],
+          "when_to_use": "Use this when the user wants to analyze files and extract structured interaction data for database import."
+        },
+        {
+          "name": "BulkUploadInteractions",
+          "url": "/api/interactions/bulk-upload",
+          "method": "POST",
+          "description": "Bulk uploads multiple interaction records using AI-assisted data processing and validation.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": true,
+              "description": "Bulk upload request containing interaction data"
+            }
+          },
+          "example_uses": [
+            "Bulk upload 200 interactions from Excel",
+            "Import multiple interactions from CSV file",
+            "Mass upload interaction data with AI validation"
+          ],
+          "when_to_use": "Use this when the user wants to upload multiple interaction records at once with AI-assisted processing."
+        }
+      ]
+    },
+    {
+      "entity": "Link",
+      "description": "A Link represents a connection or reference to an external resource (like a URL) or another internal entity within the system. It allows associating related information or documents with primary entities such as Partners, Projects, or Contacts.",
+      "synonyms": [
+        "reference",
+        "attachment",
+        "resource",
+        "connection",
+        "URL"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetLinks",
+          "url": "/api/links",
+          "method": "GET",
+          "description": "Retrieves a list of links associated with a specific entity and its unique identifier. This endpoint supports pagination to manage large result sets.",
+          "parameters": {
+            "entity": {
+              "type": "string",
+              "required": true,
+              "description": "The type of entity the links are associated with (e.g., 'Partner', 'Project', 'Contact')."
+            },
+            "entityId": {
+              "type": "integer",
+              "required": true,
+              "description": "The unique identifier of the entity for which to retrieve links."
+            },
+            "parameters": {
+              "type": "object",
+              "required": false,
+              "description": "Pagination parameters such as page number, page size, and sorting options."
+            }
+          },
+          "example_uses": [
+            "Get all links associated with Partner ID 123.",
+            "List the first 10 links for Project 456.",
+            "Find all external resources linked to Contact 789."
+          ],
+          "when_to_use": "When you need to retrieve a list of links that are related to a specific business entity (e.g., Partner, Project, Contact) and its unique ID, optionally with pagination."
+        },
+        {
+          "name": "Create",
+          "url": "/api/links",
+          "method": "POST",
+          "description": "Creates a new link record in the system. This allows associating a new external resource or internal reference with an existing entity.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": false,
+              "description": "The request body containing the details for the new link, such as its URL, description, and the entity it's associated with."
+            }
+          },
+          "example_uses": [
+            "Create a new link for a partner's website.",
+            "Add a document link to a project's resources.",
+            "Register a new external reference for a contact."
+          ],
+          "when_to_use": "When you need to establish a new connection or reference, such as a URL or document, and associate it with a specific entity in the system."
+        },
+        {
+          "name": "Update",
+          "url": "/api/links",
+          "method": "PUT",
+          "description": "Updates an existing link record. This allows modifying the details of a previously created link.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": false,
+              "description": "The request body containing the updated details for the link, including its ID and any fields to be modified."
+            }
+          },
+          "example_uses": [
+            "Update the URL of an existing link.",
+            "Modify the description of a link.",
+            "Change the entity an existing link is associated with."
+          ],
+          "when_to_use": "When you need to modify the properties or details of an already existing link record."
+        },
+        {
+          "name": "Delete",
+          "url": "/api/links",
+          "method": "DELETE",
+          "description": "Deletes a link record from the system using its unique identifier.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "The unique identifier of the link to be deleted."
+            }
+          },
+          "example_uses": [
+            "Delete the link with ID 123.",
+            "Remove a specific link from the system.",
+            "Can you delete the link that was created yesterday?"
+          ],
+          "when_to_use": "When you need to permanently remove a specific link record from the system using its unique identifier."
+        }
+      ]
+    },
+    {
+      "entity": "Notification",
+      "description": "Manages user notifications, alerts, and system messages, allowing retrieval, marking as read, and administrative updates.",
+      "synonyms": [
+        "alert",
+        "message",
+        "system message",
+        "user alert",
+        "inbox item"
+      ],
+      "mandatoryFields": [
+        "notificationId"
+      ],
+      "endpoints": [
+        {
+          "name": "GetNotifications",
+          "url": "api/notifications",
+          "method": "GET",
+          "description": "Retrieves a list of notifications for the current user, with an option to filter for unread notifications only.",
+          "parameters": {
+            "unreadOnly": {
+              "type": "boolean",
+              "required": false,
+              "description": "If true, only unread notifications will be returned."
+            }
+          },
+          "example_uses": [
+            "Get all my notifications.",
+            "Show me only my unread messages.",
+            "List all system alerts."
+          ],
+          "when_to_use": "Use this to fetch a user's notifications, either all of them or just the unread ones."
+        },
+        {
+          "name": "MarkAsRead",
+          "url": "api/notifications/{notificationId}/read",
+          "method": "PUT",
+          "description": "Marks a specific notification as read for the current user to update notification status.",
+          "parameters": {
+            "notificationId": {
+              "type": "integer",
+              "required": true,
+              "description": "Notification ID to mark as read"
+            }
+          },
+          "example_uses": [
+            "Mark notification 123 as read",
+            "Read notification about system update",
+            "Clear unread status for alert 456"
+          ],
+          "when_to_use": "Use this when the user opens, reads, or acknowledges a notification to update its status."
+        },
+        {
+          "name": "UpdateNotification",
+          "url": "api/notifications/{notificationId}/update",
+          "method": "PUT",
+          "description": "Updates a notification's content and status for administrative or system management purposes.",
+          "parameters": {
+            "notificationId": {
+              "type": "integer",
+              "required": true,
+              "description": "Notification ID to update"
+            },
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Update request containing new message and status"
+            }
+          },
+          "example_uses": [
+            "Update notification 123's message content",
+            "Change notification status to resolved",
+            "Modify system alert text"
+          ],
+          "when_to_use": "Use this when administrators need to update notification content or status for system management."
+        }
+      ]
+    },
+    {
+      "entity": "OrganizationHierarchy",
+      "description": "Manages the structure and details of an organization's hierarchical units, such as departments, divisions, or teams.",
+      "synonyms": [
+        "Organizational Unit",
+        "Org Unit",
+        "Department",
+        "Division",
+        "Team",
+        "Hierarchy Node"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetOrganizationHierarchy",
+          "url": "/api/organization-hierarchy",
+          "method": "GET",
+          "description": "Retrieves the complete organizational hierarchy structure.",
+          "parameters": {},
+          "example_uses": [
+            "Show me the entire organizational structure.",
+            "Get all organizational units.",
+            "Display the company hierarchy."
+          ],
+          "when_to_use": "Use this when you need to view the full organizational structure without specific filters."
+        },
+        {
+          "name": "GetOrganizationHierarchyLegacy",
+          "url": "/api/organization-hierarchy/legacy",
+          "method": "GET",
+          "description": "Retrieves the legacy complete organizational hierarchy structure. This endpoint might be deprecated or for specific historical data access.",
+          "parameters": {},
+          "example_uses": [
+            "Show me the old organizational structure.",
+            "Get the legacy org chart.",
+            "Display historical organizational units."
+          ],
+          "when_to_use": "Use this when specifically requesting the legacy version of the organizational hierarchy, potentially for compatibility or historical analysis."
+        },
+        {
+          "name": "GetOrganizationHierarchyById",
+          "url": "/api/organization-hierarchy/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific organizational unit by ID with complete details including hierarchy information.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Organizational unit ID"
+            }
+          },
+          "example_uses": [
+            "Show me details for org unit ID 138",
+            "Get information about organizational unit 123",
+            "What is org unit 456?",
+            "Display org unit details for ID 789",
+            "Get description of organizational unit 321"
+          ],
+          "when_to_use": "Use this when the user asks for specific organizational unit details by ID."
+        }
+      ]
+    },
+    {
+      "entity": "PartnerTree",
+      "description": "Manages the hierarchical structure of partners, including categories and groups, for organizational and classification purposes.",
+      "synonyms": [
+        "partner hierarchy",
+        "partner classification",
+        "partner structure",
+        "partner categories",
+        "partner groups",
+        "partner taxonomy"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "Create",
+          "url": "/api/partner-tree",
+          "method": "POST",
+          "description": "Creates a new partner tree node for organizing partner hierarchies and classifications.",
+          "parameters": {
+            "req": {
+              "type": "object",
+              "required": false,
+              "description": "Partner tree data model with hierarchy information"
+            }
+          },
+          "example_uses": [
+            "Create a new partner category for Government",
+            "Add a partner group under UN Agencies",
+            "Create NGO subcategory classification"
+          ],
+          "when_to_use": "Use this when the user asks to create, add, or set up new partner categories, groups, or hierarchy structures."
+        },
+        {
+          "name": "GetAll",
+          "url": "/api/partner-tree",
+          "method": "GET",
+          "description": "Retrieves all partner tree nodes (categories and groups) with sorting and access control.",
+          "parameters": {
+            "sortBy": {
+              "type": "string",
+              "required": false,
+              "description": "Field to sort by (default: \"Name\")"
+            },
+            "ascending": {
+              "type": "boolean",
+              "required": false,
+              "description": "Sort direction (default: true for ascending)"
+            }
+          },
+          "example_uses": [
+            "Show all partner categories and groups",
+            "List partner hierarchy structure",
+            "Get partner classification tree"
+          ],
+          "when_to_use": "Use this when the user asks to see partner categories, groups, hierarchy, or classification structure."
+        },
+        {
+          "name": "Get",
+          "url": "/api/partner-tree/{id}",
+          "method": "GET",
+          "description": "Retrieves a specific partner tree node by ID with complete hierarchy details and permissions.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Partner tree node ID"
+            }
+          },
+          "example_uses": [
+            "Show me details for partner category ID 123",
+            "Get information about partner group 456",
+            "Display hierarchy node 789"
+          ],
+          "when_to_use": "Use this when the user asks for specific partner tree node details by ID or when you need complete hierarchy information."
+        },
+        {
+          "name": "Update",
+          "url": "/api/partner-tree",
+          "method": "PUT",
+          "description": "Updates multiple partner tree nodes (categories and groups) with new hierarchy information and properties.",
+          "parameters": {
+            "req": {
+              "type": "array",
+              "required": false,
+              "description": "Array of partner tree data models to update"
+            }
+          },
+          "example_uses": [
+            "Update partner category names and descriptions",
+            "Reorganize partner tree hierarchy",
+            "Modify partner group classifications"
+          ],
+          "when_to_use": "Use this when the user asks to update, modify, edit, or reorganize partner tree structure or classifications."
+        },
+        {
+          "name": "Delete",
+          "url": "/api/partner-tree/{id}",
+          "method": "DELETE",
+          "description": "Soft deletes a partner tree node from the hierarchy (marks as deleted rather than permanent removal).",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Partner tree node ID to delete"
+            }
+          },
+          "example_uses": [
+            "Delete partner category ID 123",
+            "Remove partner group 456 from hierarchy",
+            "Delete obsolete partner classification"
+          ],
+          "when_to_use": "Use this when the user asks to delete, remove, or eliminate a partner category, group, or tree node."
+        },
+        {
+          "name": "PermissionsGet",
+          "url": "/api/partner-tree/{id}/permissions",
+          "method": "GET",
+          "description": "Retrieves the current user's permissions for a specific partner tree node (read, update, delete).",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "Partner tree node ID to check permissions for"
+            }
+          },
+          "example_uses": [
+            "Check my permissions for partner category 123",
+            "What can I do with partner group 456?",
+            "Get access rights for this tree node"
+          ],
+          "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for partner tree management."
+        },
+        {
+          "name": "GetCategoryAndGroupStructure",
+          "url": "/api/partner-tree-structure",
+          "method": "GET",
+          "description": "Retrieves the complete partner category and group structure as a hierarchical tree for organizational navigation.",
+          "parameters": {},
+          "example_uses": [
+            "Show partner hierarchy structure",
+            "Get complete partner taxonomy tree",
+            "Display partner organization chart"
+          ],
+          "when_to_use": "Use this when the user needs to see the complete partner organizational structure, hierarchy, or when building navigation trees."
+        },
+        {
+          "name": "GetPartnersByPartnerGroup",
+          "url": "/api/partner-tree/by-partner-group-code/{code}",
+          "method": "GET",
+          "description": "Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting.",
+          "parameters": {
+            "code": {
+              "type": "string",
+              "required": false,
+              "description": "Partner group code to filter by (e.g., 'GOV', 'NGO', 'UNAGENCY')"
+            },
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Pagination request containing page size and index"
+            }
+          },
+          "example_uses": [
+            "Show all government partners (GOV group)",
+            "List all NGO partners with pagination",
+            "Get UN agency partners sorted by name"
+          ],
+          "when_to_use": "Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification."
+        },
+        {
+          "name": "GetPartnersByPartnerCategory",
+          "url": "/api/partner-tree/by-partner-category-code/{code}",
+          "method": "GET",
+          "description": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting.",
+          "parameters": {
+            "code": {
+              "type": "string",
+              "required": false,
+              "description": "Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')"
+            },
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Pagination request containing page size and index"
+            }
+          },
+          "example_uses": [
+            "Show all national partners in this category",
+            "List international partners with pagination",
+            "Get bilateral partners sorted by name"
+          ],
+          "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification."
+        },
+        {
+          "name": "GetAllPartnerCategories",
+          "url": "/api/partner-tree/categories-summary",
+          "method": "GET",
+          "description": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.",
+          "parameters": {},
+          "example_uses": [
+            "Get all partner categories with counts",
+            "Show partner distribution by category",
+            "Generate partner category statistics"
+          ],
+          "when_to_use": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization."
+        },
+        {
+          "name": "GetAllPartnerGroups",
+          "url": "/api/partner-tree/groups-summary",
+          "method": "GET",
+          "description": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation.",
+          "parameters": {},
+          "example_uses": [
+            "Get all partner groups with counts",
+            "Show partner distribution by group",
+            "Generate partner group statistics"
+          ],
+          "when_to_use": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping."
+        },
+        {
+          "name": "GetPartnerCategorizationOverview",
+          "url": "/api/partner-tree/categorization-overview",
+          "method": "GET",
+          "description": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation.",
+          "parameters": {},
+          "example_uses": [
+            "Get complete partner categorization overview",
+            "Show partner distribution across categories and groups",
+            "Generate comprehensive partner statistics"
+          ],
+          "when_to_use": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups."
+        }
+      ]
+    },
+    {
+      "entity": "Permission",
+      "description": "Manages system-wide access control, user roles, and entity-specific permissions within the application. It defines what actions users can perform and what data they can access.",
+      "synonyms": [
+        "access control",
+        "authorization",
+        "roles",
+        "rights",
+        "privileges"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetSystemPermissionConfiguration",
+          "url": "api/Permission",
+          "method": "GET",
+          "description": "Get the entire system permission configuration including all roles and their capabilities. This provides a comprehensive overview of the application's security model.",
+          "parameters": {},
+          "example_uses": [
+            "How do I get the full system permission setup?",
+            "Show me all roles and their capabilities.",
+            "I need the complete permission configuration for frontend initialization."
+          ],
+          "when_to_use": "Use this endpoint to retrieve the comprehensive, system-wide permission configuration, typically for initializing frontend applications or understanding the overall permission structure."
+        },
+        {
+          "name": "CheckUserRoutePermission",
+          "url": "api/Permission/check/{route}",
+          "method": "GET",
+          "description": "Check if the current user has permission to access a specific route or page. This is useful for dynamic UI rendering based on user access.",
+          "parameters": {
+            "route": {
+              "type": "string",
+              "required": false,
+              "description": "The route/URL path to check permissions for (e.g., '/partnerships/contacts/123')"
+            }
+          },
+          "example_uses": [
+            "Can the current user access the '/admin/users' page?",
+            "Check if I have permission for '/reports/financials'.",
+            "Verify user access to a specific application route."
+          ],
+          "when_to_use": "Use this endpoint to dynamically check if the currently authenticated user has the necessary permissions to access a given application route or URL path."
+        },
+        {
+          "name": "GetEntityPermissionDetails",
+          "url": "api/Permission/entity-permissions/{entityName}",
+          "method": "GET",
+          "description": "Get complete permission details for a specific entity, including all possible operations and role requirements. This helps in understanding granular access for data entities.",
+          "parameters": {
+            "entityName": {
+              "type": "string",
+              "required": false,
+              "description": "Name of the entity (e.g., 'Contact', 'Partner', 'Interaction')"
+            }
+          },
+          "example_uses": [
+            "What permissions are needed for the 'Contact' entity?",
+            "Show me all operations and role requirements for 'Partner' permissions.",
+            "Retrieve the detailed permission configuration for a specific data entity."
+          ],
+          "when_to_use": "Use this endpoint to retrieve detailed permission information for a specific business entity (e.g., 'Contact', 'Partner'), including what operations are allowed and which roles are required for those operations."
+        },
+        {
+          "name": "GetCurrentUserRoles",
+          "url": "api/Permission/user-roles",
+          "method": "GET",
+          "description": "Get the current authenticated user's roles and permissions. This provides immediate insight into the logged-in user's capabilities.",
+          "parameters": {},
+          "example_uses": [
+            "What roles does the current user have?",
+            "Show me my current permissions.",
+            "Retrieve the roles assigned to the logged-in user."
+          ],
+          "when_to_use": "Use this endpoint to quickly retrieve the roles and basic permission information for the currently authenticated user."
+        },
+        {
+          "name": "GetUserRolesByUserId",
+          "url": "api/Permission/user/{userId}",
+          "method": "GET",
+          "description": "Get roles and basic information for a specific user by ID (admin access required). This is for administrative purposes to manage user roles.",
+          "parameters": {
+            "userId": {
+              "type": "string",
+              "required": false,
+              "description": "The ID of the user to retrieve role information for"
+            }
+          },
+          "example_uses": [
+            "What roles does user 'abc-123' have?",
+            "Retrieve the permissions for a specific user ID.",
+            "Show me the roles assigned to user 'john.doe@example.com'."
+          ],
+          "when_to_use": "Use this endpoint (requires administrative access) to retrieve the roles and basic information for a specific user, identified by their user ID."
+        },
+        {
+          "name": "GetAvailableSystemRoles",
+          "url": "api/Permission/available-roles",
+          "method": "GET",
+          "description": "Get all available system roles and their descriptions. This provides a list of all predefined roles that can be assigned to users.",
+          "parameters": {},
+          "example_uses": [
+            "List all roles available in the system.",
+            "Show me the descriptions of all system roles.",
+            "What are the predefined roles I can assign?"
+          ],
+          "when_to_use": "Use this endpoint to retrieve a comprehensive list of all predefined system roles and their associated descriptions, useful for administrative interfaces or role management."
+        }
+      ]
+    },
+    {
+      "entity": "SavedFilter",
+      "description": "A Saved Filter allows users to store and reuse complex search criteria for various entities within the system, enabling quick access to frequently used queries.",
+      "synonyms": [
+        "filter preset",
+        "search template",
+        "custom search",
+        "stored filter",
+        "query template"
+      ],
+      "mandatoryFields": [
+        "name",
+        "entityType",
+        "filterCriteria"
+      ],
+      "endpoints": [
+        {
+          "name": "CreateSavedFilter",
+          "url": "api/SavedFilter",
+          "method": "POST",
+          "description": "Creates a new saved filter with specified criteria and a unique name for the current user.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "The request body containing the details for the new saved filter, including its name, entity type, and filter criteria."
+            }
+          },
+          "example_uses": [
+            "How do I save a new filter for partners that are active?",
+            "Can you create a filter named 'High Priority Projects' for me?",
+            "I want to store a search query for future use, how do I do that?"
+          ],
+          "when_to_use": "Use this endpoint when you want to persist a specific set of search criteria for later reuse, allowing users to quickly apply complex filters without re-entering them."
+        },
+        {
+          "name": "UpdateSavedFilter",
+          "url": "api/SavedFilter",
+          "method": "PUT",
+          "description": "Updates an existing saved filter's name or criteria based on the provided request.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "The request body containing the updated details for the saved filter, identified by its ID, including new name or filter criteria."
+            }
+          },
+          "example_uses": [
+            "I need to modify the 'My Active Projects' filter to include a new status.",
+            "Update the criteria for the 'High Priority Tasks' filter to only show tasks assigned to me.",
+            "Can I change the name of my saved filter from 'Old Leads' to 'Archived Leads'?"
+          ],
+          "when_to_use": "Use this endpoint when you need to change the details (name, description, criteria) of an already existing saved filter."
+        },
+        {
+          "name": "DeleteSavedFilter",
+          "url": "api/SavedFilter/{id}",
+          "method": "DELETE",
+          "description": "Deletes a specific saved filter by its unique identifier.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "The unique ID of the filter to delete."
+            }
+          },
+          "example_uses": [
+            "Delete the saved filter with ID 123.",
+            "Remove the 'Old Projects' filter from my saved list.",
+            "I no longer need this saved search, please delete it."
+          ],
+          "when_to_use": "Use this endpoint when you want to permanently remove a saved filter that is no longer needed."
+        },
+        {
+          "name": "GetSavedFilter",
+          "url": "api/SavedFilter/{id}",
+          "method": "GET",
+          "description": "Retrieves the detailed information of a single saved filter by its unique ID.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "The unique ID of the filter to retrieve."
+            }
+          },
+          "example_uses": [
+            "Get the details of saved filter 456.",
+            "Show me the criteria for the 'My Team's Tasks' filter.",
+            "What is the configuration of saved filter ID 789?"
+          ],
+          "when_to_use": "Use this endpoint when you need to view the specific configuration or details of a single saved filter."
+        },
+        {
+          "name": "GetSavedFilters",
+          "url": "api/SavedFilter",
+          "method": "GET",
+          "description": "Retrieves a paginated list of saved filters for the current user. This endpoint supports advanced filtering and pagination via the 'request' query parameter. The 'request' object can include 'searchCriteria' (an array of objects, each with 'field', 'operator', and 'value' properties) to filter results, along with 'pageIndex' and 'pageSize' for pagination.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Search and pagination parameters for retrieving saved filters. Can include 'searchCriteria' for filtering by fields like 'name' or 'entityType', and 'pageIndex'/'pageSize' for pagination."
+            }
+          },
+          "example_uses": [
+            "List all my saved filters.",
+            "Show me saved filters that apply to 'Projects'.",
+            "Get the second page of my saved filters, with 20 items per page."
+          ],
+          "when_to_use": "Use this endpoint when you need to retrieve a list of saved filters, optionally applying search criteria or pagination to narrow down the results."
+        },
+        {
+          "name": "ApplySavedFilter",
+          "url": "api/SavedFilter/{id}/apply",
+          "method": "GET",
+          "description": "Applies a saved filter by its ID and returns the corresponding filter request object, which can then be used to query the actual data. This endpoint also supports pagination parameters.",
+          "parameters": {
+            "id": {
+              "type": "integer",
+              "required": true,
+              "description": "The unique ID of the filter to apply."
+            },
+            "pageIndex": {
+              "type": "integer",
+              "required": false,
+              "description": "Optional page index for pagination (default: 1)."
+            },
+            "pageSize": {
+              "type": "integer",
+              "required": false,
+              "description": "Optional page size for pagination (default: 10)."
+            }
+          },
+          "example_uses": [
+            "Apply saved filter 123 and get the search query it represents.",
+            "I want to use the 'Active Partners' filter to get the search parameters for a query.",
+            "Generate the search request for filter ID 789, for page 1 with 50 results."
+          ],
+          "when_to_use": "Use this endpoint when you want to retrieve the actual search criteria (as a request object) defined within a saved filter, typically to then execute that search against another entity's data."
+        },
+        {
+          "name": "GetFilterStatistics",
+          "url": "api/SavedFilter/statistics",
+          "method": "GET",
+          "description": "Retrieves usage statistics related to saved filters, optionally filtered by entity type.",
+          "parameters": {
+            "entityType": {
+              "type": "string",
+              "required": false,
+              "description": "Optional parameter to filter statistics by a specific entity type (e.g., 'Partner', 'Project')."
+            }
+          },
+          "example_uses": [
+            "What are the statistics for saved filters?",
+            "Show me the usage statistics for saved filters related to 'Projects'.",
+            "How many times have filters been applied for 'Partners'?"
+          ],
+          "when_to_use": "Use this endpoint when you need to gather analytical data or insights into how saved filters are being used within the system."
+        }
+      ]
+    },
+    {
+      "entity": "SystemAdmin",
+      "description": "Manages system-level administrative tasks, primarily focusing on database migrations and other core system maintenance operations.",
+      "synonyms": [
+        "System Administrator",
+        "Admin",
+        "System Ops",
+        "Maintenance",
+        "System Management"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "RunMigrations",
+          "url": "api/system-admin/migrations/run",
+          "method": "GET",
+          "description": "Initiates the execution of pending database migrations to update the system's database schema. This operation ensures the database is up-to-date with the latest application version.",
+          "parameters": {},
+          "example_uses": [
+            "Run the latest database migrations.",
+            "Execute all pending system database updates.",
+            "Can you trigger the database migration process?"
+          ],
+          "when_to_use": "Use this endpoint when the system's database schema needs to be updated to reflect changes in the application code, typically after a new deployment or version upgrade. This ensures data consistency and compatibility."
+        }
+      ]
+    },
+    {
+      "entity": "UserManagement",
+      "description": "Manages user accounts, roles, and organizational unit settings within the system. This includes retrieving user details, updating roles, and configuring self-management options for organizational units.",
+      "synonyms": [
+        "users",
+        "accounts",
+        "user administration",
+        "user settings",
+        "user roles"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetUsers",
+          "url": "/api/user-management/users",
+          "method": "POST",
+          "description": "Get a paginated list of users with filtering and search capabilities. This endpoint supports advanced search criteria through the `request` body's `advancedSearch` array. Each item in `advancedSearch` should be a JSON object with `field`, `operator`, and `value`. For example, to search for users by name, you might use `{\"field\": \"username\", \"operator\": \"like\", \"value\": \"John%\"}`. Common fields include 'username', 'email', 'status', 'orgUnitCode'. Available operators are 'like', 'is', 'not', 'contains', 'startsWith', 'between'.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "User management request with pagination, filters, and advanced search criteria."
+            }
+          },
+          "example_uses": [
+            "How can I get a list of all active users?",
+            "Find users whose email contains 'example.com' and are in the 'HR' organizational unit.",
+            "Show me users created after January 1, 2023, sorted by username, with a page size of 20."
+          ],
+          "when_to_use": "To retrieve a list of users, applying filters, pagination, and advanced search criteria based on various user attributes."
+        },
+        {
+          "name": "GetUser",
+          "url": "/api/user-management/users/{userId}",
+          "method": "GET",
+          "description": "Get details for a specific user by their unique ID.",
+          "parameters": {
+            "userId": {
+              "type": "string",
+              "required": false,
+              "description": "The unique identifier of the user."
+            }
+          },
+          "example_uses": [
+            "Retrieve the profile information for user 'john.doe'.",
+            "What are the details for user ID 'abc-123'?",
+            "Can I see the full record for a specific user?"
+          ],
+          "when_to_use": "To fetch the complete profile and details of a single user when their ID is known."
+        },
+        {
+          "name": "UpdateUserRoles",
+          "url": "/api/user-management/users/{userId}/roles",
+          "method": "PUT",
+          "description": "Update the roles assigned to a specific user.",
+          "parameters": {
+            "userId": {
+              "type": "string",
+              "required": false,
+              "description": "The unique identifier of the user whose roles are to be updated."
+            },
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "The request body containing the new roles to assign to the user."
+            }
+          },
+          "example_uses": [
+            "Change the roles for user 'jane.smith' to 'Admin' and 'Editor'.",
+            "Assign the 'Viewer' role to user 'user123'.",
+            "Update the permissions for a specific user account."
+          ],
+          "when_to_use": "To modify the security roles or permissions associated with an existing user account."
+        },
+        {
+          "name": "GetAvailableRoles",
+          "url": "/api/user-management/roles",
+          "method": "GET",
+          "description": "Retrieve a list of all roles that the current authenticated user is permitted to assign to other users.",
+          "parameters": {},
+          "example_uses": [
+            "What roles can I assign to new users?",
+            "List all available user roles.",
+            "Show me the roles I have permission to manage."
+          ],
+          "when_to_use": "To discover the set of roles that can be used when creating or updating user accounts, based on the current user's permissions."
+        },
+        {
+          "name": "GetCurrentUserOrgUnit",
+          "url": "/api/user-management/current-user-org-unit",
+          "method": "GET",
+          "description": "Get the organizational unit associated with the currently authenticated user. This information can be used for filtering data relevant to the user's organizational context.",
+          "parameters": {},
+          "example_uses": [
+            "What is my current organizational unit?",
+            "Retrieve the organizational unit for the logged-in user.",
+            "Find out which department I belong to."
+          ],
+          "when_to_use": "To determine the organizational context of the current user, often used for data filtering or access control."
+        },
+        {
+          "name": "GetOrgUnitSelfManagement",
+          "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
+          "method": "GET",
+          "description": "Retrieve the self-management setting for a specific organizational unit. This setting determines if users within that unit can manage certain aspects of their own accounts or unit settings.",
+          "parameters": {
+            "orgUnitCode": {
+              "type": "string",
+              "required": false,
+              "description": "The unique code of the organizational unit."
+            }
+          },
+          "example_uses": [
+            "Check if self-management is enabled for the 'HR' organizational unit.",
+            "What is the self-management status for org unit 'FINANCE'?",
+            "Get the self-management configuration for a specific department."
+          ],
+          "when_to_use": "To query whether self-management features are active for a given organizational unit."
+        },
+        {
+          "name": "UpdateOrgUnitSelfManagement",
+          "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
+          "method": "PUT",
+          "description": "Update the self-management setting for a specific organizational unit. This allows administrators to enable or disable self-service capabilities for users within that unit.",
+          "parameters": {
+            "orgUnitCode": {
+              "type": "string",
+              "required": false,
+              "description": "The unique code of the organizational unit."
+            },
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "The request body containing the new self-management setting."
+            }
+          },
+          "example_uses": [
+            "Enable self-management for the 'IT' organizational unit.",
+            "Disable self-management for org unit 'SALES'.",
+            "Change the self-service setting for a department."
+          ],
+          "when_to_use": "To modify whether users within a specific organizational unit are allowed to manage certain aspects of their own accounts or unit settings."
+        }
+      ]
+    },
+    {
+      "entity": "UserPreference",
+      "description": "Manages user-specific settings and preferences, primarily focusing on the default organizational unit for filtering and access control.",
+      "synonyms": [
+        "user settings",
+        "user configuration",
+        "personal preferences",
+        "account settings",
+        "user profile"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetDefaultOrgUnit",
+          "url": "api/user-preferences/default-org-unit",
+          "method": "GET",
+          "description": "Retrieves the current user's default organizational unit preference for filtering and access control. This preference determines the user's default context for operations and data visibility.",
+          "parameters": {},
+          "example_uses": [
+            "Get my default organizational unit setting",
+            "What's my default org unit preference?",
+            "Show my default office assignment"
+          ],
+          "when_to_use": "Use this when loading user's default organizational unit for filtering or when determining the user's default office context."
+        },
+        {
+          "name": "SetDefaultOrgUnit",
+          "url": "api/user-preferences/default-org-unit",
+          "method": "PUT",
+          "description": "Updates the current user's default organizational unit preference for filtering and access control. This allows users to change their primary working context.",
+          "parameters": {
+            "request": {
+              "type": "object",
+              "required": false,
+              "description": "Default org unit request containing the new setting"
+            }
+          },
+          "example_uses": [
+            "Set my default org unit to Headquarters",
+            "Change my default office to Field Office 123",
+            "Update my organizational unit preference"
+          ],
+          "when_to_use": "Use this when the user wants to change their default organizational unit for filtering and access control purposes."
+        }
+      ]
+    },
+    {
+      "entity": "UserProfile",
+      "description": "Manages user profile information, including personal details, contact information, roles, permissions, and preferences within the system.",
+      "synonyms": [
+        "User Profile",
+        "My Profile",
+        "Account Settings",
+        "User Info",
+        "Personal Details"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "UpdateProfile",
+          "url": "/api/profile",
+          "method": "POST",
+          "description": "Updates the current user's profile information, such as name, contact details, and other personal attributes. This operation allows users to modify their own profile data.",
+          "parameters": {
+            "profile": {
+              "type": "object",
+              "required": false,
+              "description": "Updated profile model containing new information"
+            }
+          },
+          "example_uses": [
+            "How do I change my profile details?",
+            "I need to update my contact information.",
+            "Can you help me modify my user profile?"
+          ],
+          "when_to_use": "Use this endpoint when the authenticated user needs to update their personal profile information, such as name, address, phone number, or other details stored in their profile."
+        },
+        {
+          "name": "UpdateUserInfo",
+          "url": "/api/user-info/update",
+          "method": "PUT",
+          "description": "Updates the current user's information and profile settings. This includes general user data and potentially broader settings beyond just personal profile details.",
+          "parameters": {
+            "userInfo": {
+              "type": "object",
+              "required": false,
+              "description": "Updated user information object containing profile changes"
+            }
+          },
+          "example_uses": [
+            "I want to change my user settings.",
+            "How can I update my general user information?",
+            "Modify my user account details."
+          ],
+          "when_to_use": "Use this endpoint when the authenticated user needs to update their general user information or settings that might encompass more than just basic profile details, such as preferences or other user-specific configurations."
+        },
+        {
+          "name": "GetUserProfileDetails",
+          "url": "/api/user-info/current",
+          "method": "GET",
+          "description": "Retrieves comprehensive current user information including profile, roles, permissions, organizational settings, and user preferences. This endpoint can also be used by administrators to fetch details for a specific user by providing their email.",
+          "parameters": {
+            "email": {
+              "type": "string",
+              "required": false,
+              "description": "Optional specific email to get user info for (if not provided, uses current authenticated user)"
+            }
+          },
+          "example_uses": [
+            "Show me my current profile details.",
+            "What are my roles and permissions?",
+            "Can I see the profile for user@example.com?"
+          ],
+          "when_to_use": "Use this endpoint to retrieve all available information about the current authenticated user, including their profile, assigned roles, permissions, and organizational context. It can also be used by authorized personnel to look up another user's details by providing their email address."
+        }
+      ]
+    },
+    {
+      "entity": "Value",
+      "description": "Manages various lookup and reference data points used across the system, providing lists of predefined options for different categories like currencies, countries, and application types.",
+      "synonyms": [
+        "Reference Data",
+        "Lookup Data",
+        "System Values",
+        "Configurations",
+        "Static Data"
+      ],
+      "mandatoryFields": [],
+      "endpoints": [
+        {
+          "name": "GetCurrencies",
+          "url": "/api/values/currency",
+          "method": "GET",
+          "description": "Retrieves a comprehensive list of all available currencies supported by the system, including their codes and names.",
+          "parameters": {},
+          "example_uses": [
+            "How can I get a list of all supported currencies?",
+            "Show me the currency codes and names.",
+            "I need to see all currency options for a dropdown."
+          ],
+          "when_to_use": "Use this endpoint when you need to populate a dropdown, validate currency inputs, or display a list of valid currency options within the application."
+        },
+        {
+          "name": "GetEligibleEntities",
+          "url": "/api/values/eligible-entity",
+          "method": "GET",
+          "description": "Retrieves a list of entities that are deemed eligible for specific operations, classifications, or partnerships within the system.",
+          "parameters": {},
+          "example_uses": [
+            "What are the eligible entities in the system?",
+            "List all entities that qualify for this program.",
+            "I need to see the list of eligible organizations."
+          ],
+          "when_to_use": "Use this endpoint to retrieve a list of entities that meet specific eligibility criteria, typically for selection or filtering purposes in business processes."
+        },
+        {
+          "name": "GetCountries",
+          "url": "/api/values/country",
+          "method": "GET",
+          "description": "Retrieves a list of all recognized countries, often including their ISO codes and full names.",
+          "parameters": {},
+          "example_uses": [
+            "Can you give me a list of all countries?",
+            "Show me the country codes and names.",
+            "I need to select a country from a list for an address."
+          ],
+          "when_to_use": "Use this endpoint when you need to populate a dropdown or display a list of valid country options, typically for address, location, or demographic selection."
+        },
+        {
+          "name": "GetApplicationTypes",
+          "url": "/api/values/application-type",
+          "method": "GET",
+          "description": "Retrieves a list of all defined application types used within the system, categorizing different forms or processes.",
+          "parameters": {},
+          "example_uses": [
+            "What are the different application types available?",
+            "List all available application categories.",
+            "I need to know the types of applications supported by the system."
+          ],
+          "when_to_use": "Use this endpoint to retrieve a list of predefined application types for classification, filtering, or guiding users through different application processes."
+        },
+        {
+          "name": "GetPartners",
+          "url": "/api/values/partners",
+          "method": "GET",
+          "description": "Retrieves a basic list of all registered partners. This endpoint is for lookup purposes (e.g., partner names and IDs) and does not provide detailed partner management capabilities.",
+          "parameters": {},
+          "example_uses": [
+            "List all partners.",
+            "Show me the names of all partners.",
+            "I need a simple list of partners for a report."
+          ],
+          "when_to_use": "Use this endpoint to get a simple list of partners, typically for selection in other forms or reports, not for detailed partner information or comprehensive management."
+        },
+        {
+          "name": "GetOrganizationUnits",
+          "url": "/api/values/organization-units",
+          "method": "GET",
+          "description": "Retrieves a list of all organizational units or departments within the system's structure.",
+          "parameters": {},
+          "example_uses": [
+            "What are the organizational units?",
+            "List all departments in the company.",
+            "I need to see the structure of the organization."
+          ],
+          "when_to_use": "Use this endpoint to retrieve a list of organizational units, typically for assigning responsibilities, filtering data by department/unit, or understanding the organizational hierarchy."
+        },
+        {
+          "name": "GetContacts",
+          "url": "/api/values/contacts",
+          "method": "GET",
+          "description": "Retrieves a basic list of all registered contacts. This endpoint is for lookup purposes (e.g., contact names and IDs) and does not provide detailed contact management capabilities.",
+          "parameters": {},
+          "example_uses": [
+            "List all contacts.",
+            "Show me the names of all contacts.",
+            "I need a simple list of contacts for a communication."
+          ],
+          "when_to_use": "Use this endpoint to get a simple list of contacts, typically for selection in other forms or reports, not for detailed contact information or comprehensive management."
+        },
+        {
+          "name": "GetUsers",
+          "url": "/api/values/users",
+          "method": "GET",
+          "description": "Retrieves a basic list of all registered users in the system. This endpoint is for lookup purposes (e.g., user names and IDs) and does not provide detailed user management capabilities.",
+          "parameters": {},
+          "example_uses": [
+            "List all users.",
+            "Show me the names of all system users.",
+            "I need a simple list of users for access control."
+          ],
+          "when_to_use": "Use this endpoint to get a simple list of users, typically for selection in other forms or reports, not for detailed user information or comprehensive management."
+        },
+        {
+          "name": "GetGeminiModels",
+          "url": "/api/values/gemini-models",
+          "method": "GET",
+          "description": "Retrieves a list of available Gemini AI models that can be integrated or utilized by the system.",
+          "parameters": {},
+          "example_uses": [
+            "What Gemini models are available?",
+            "List all AI models I can use.",
+            "I need to know which Gemini models are supported."
+          ],
+          "when_to_use": "Use this endpoint to retrieve a list of available Gemini AI models for integration, configuration, or selection purposes within AI-driven features."
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, computed, ViewContainerRef, effect, ViewChildren, QueryList, Type, Injector, ChangeDetectorRef, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { LayoutService } from '../../common/layouts/services/layout.service';
 import { TopbarComponent } from '../../common/layouts/components/topbar/topbar.component';
@@ -21,6 +21,22 @@ import { InteractionModalComponent } from '../../features/internal/components/in
 
 import { GlobalFilterService } from '../../services/global-filter.service';
 import { TranslateModule } from '@ngx-translate/core';
+
+/**
+ * @uiEntity AiAssistant
+ * @route /ai
+ * @description Full-featured AI Assistant interface with chat sessions management, smart sidebars, and context-aware assistance. Provides comprehensive AI support for navigating and using the application effectively.
+ * @capabilities ai_chat, session_management, context_awareness, entity_preview, smart_assistance, chat_history, fullscreen_mode
+ * @synonyms ai_chat, virtual_assistant, smart_help, ai_support, intelligent_assistant
+ * @mandatoryFields None
+ * @help_when_stuck Start by typing your question in the chat input. The AI can help you navigate the app, understand features, find data, or perform tasks. Use the sidebar to manage chat sessions, search previous conversations, or access entity previews. Click the fullscreen icon for an expanded view.
+ * @common_tasks
+ *   - Getting help: Type questions about how to use features or find information
+ *   - Managing sessions: Create new chats, rename sessions, or search chat history
+ *   - Entity assistance: Ask about partners, contacts, or interactions for contextual help
+ *   - Navigation help: Get guidance on where to find specific features or data
+ *   - Task automation: Request help with complex workflows or data entry
+ */
 
 interface ChatSession {
   id: string;
@@ -58,6 +74,7 @@ interface ChatSession {
 export class AiLayoutComponent implements OnInit, OnDestroy {
   layoutService = inject(LayoutService);
   router = inject(Router);
+  route = inject(ActivatedRoute);
   http = inject(HttpClient);
   viewContainerRef = inject(ViewContainerRef);
   aiAssistantData = inject(AiAssistantData);
@@ -133,9 +150,58 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     // Set the ViewContainerRef for the AI assistant data service
     this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
     
+    // Handle sessionId from route parameter
+    this.route.params.subscribe(params => {
+      const sessionId = params['sessionId'];
+      if (sessionId) {
+        // Set selected chat ID immediately for highlighting
+        this.selectedChatId.set(sessionId);
+        
+        // Load the specific session
+        this.aiAssistantData.switchToSession(sessionId).subscribe({
+          next: () => {
+            // Ensure we reload sessions to have the latest list for highlighting
+            this.loadUserSessions();
+          },
+          error: (error) => {
+            console.error('Failed to load session from URL:', error);
+            // Reset selected chat ID on error
+            this.selectedChatId.set(null);
+            // Optionally redirect to /ai without sessionId if session doesn't exist
+            this.router.navigate(['/ai'], { replaceUrl: true });
+          }
+        });
+      } else {
+        // No session ID in URL, clear selection
+        this.selectedChatId.set(null);
+      }
+    });
+    
     // Listen for current session changes to update selected chat
     effect(() => {
-      this.selectedChatId.set(this.aiAssistantData.currentSessionId());
+      const currentSessionId = this.aiAssistantData.currentSessionId();
+      this.selectedChatId.set(currentSessionId);
+    });
+    
+    // Listen for current session changes to update URL
+    effect(() => {
+      const currentSessionId = this.aiAssistantData.currentSessionId();
+      const currentRoute = this.router.url;
+      
+      // Only update URL if we're on an AI route
+      if (currentRoute.startsWith('/ai')) {
+        if (currentSessionId) {
+          // Navigate to session-specific URL
+          if (currentRoute !== `/ai/${currentSessionId}`) {
+            this.router.navigate(['/ai', currentSessionId], { replaceUrl: true });
+          }
+        } else {
+          // Navigate to general AI URL when no session
+          if (currentRoute !== '/ai') {
+            this.router.navigate(['/ai'], { replaceUrl: true });
+          }
+        }
+      }
     });
     // Listen for the first model message in a new session to refresh recent chats
     effect(() => {
@@ -198,9 +264,14 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
   }
 
   startNewChat() {
-    console.log('Starting new chat...');
     this.aiAssistantData.clearConversation();
     this.selectedChatId.set(null);
+    
+    // Update URL to /ai when starting a new chat
+    const currentRoute = this.router.url;
+    if (currentRoute.startsWith('/ai') && currentRoute !== '/ai') {
+      this.router.navigate(['/ai'], { replaceUrl: true });
+    }
     
     // Close sidebar on mobile after starting new chat
     if (this.isMobile()) {
@@ -218,8 +289,14 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
   }
 
   openChat(chat: ChatSession) {
-    console.log('Opening chat:', chat);
     this.selectedChatId.set(chat.id);
+    
+    // Update URL immediately when opening a chat
+    const currentRoute = this.router.url;
+    if (currentRoute.startsWith('/ai') && currentRoute !== `/ai/${chat.id}`) {
+      this.router.navigate(['/ai', chat.id], { replaceUrl: true });
+    }
+    
     this.aiAssistantData.switchToSession(chat.id).subscribe({
       error: (error) => console.error('Failed to switch session:', error)
     });
@@ -228,6 +305,26 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     if (this.isMobile()) {
       this.closeMobileSidebar();
     }
+  }
+
+  // Helper method to check if a chat is selected (handles type mismatches)
+  isSelectedChat(chat: ChatSession): boolean {
+    const selected = this.selectedChatId();
+    if (!selected || !chat.id) {
+      return false;
+    }
+    
+    // Direct comparison first
+    if (selected === chat.id) {
+      return true;
+    }
+    
+    // String comparison as fallback for type mismatches
+    const result = String(selected) === String(chat.id);
+    if (result) {
+      console.log('🔍 [AI Layout] Chat matched via string conversion:', selected, '===', chat.id);
+    }
+    return result;
   }
 
   formatDate(dateString: string): string {

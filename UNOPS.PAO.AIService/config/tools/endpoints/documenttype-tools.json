@@ -1,0 +1,54 @@
+{
+  "entity": "DocumentType",
+  "description": "Manages the various types of documents associated with different entities within the system, such as partners, projects, or interactions.",
+  "synonyms": [
+    "document category",
+    "file type",
+    "record type",
+    "doc type",
+    "document classification"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetAll",
+      "url": "api/document-type/{entityName}",
+      "method": "GET",
+      "description": "Retrieves a list of document types, optionally filtered by an associated entity name. Supports pagination and ordering of results.",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": "The name of the entity to filter document types by (e.g., 'Partner', 'Project', 'Interaction'). If not provided, all document types are returned."
+        },
+        "pageIndex": {
+          "type": "integer",
+          "required": false,
+          "description": "The 0-based index of the page to retrieve. Defaults to 0 if not specified."
+        },
+        "pageSize": {
+          "type": "integer",
+          "required": false,
+          "description": "The number of items per page. Defaults to 10 if not specified."
+        },
+        "orderBy": {
+          "type": "string",
+          "required": false,
+          "description": "The field name to order the results by (e.g., 'Name', 'Id')."
+        },
+        "ascending": {
+          "type": "boolean",
+          "required": false,
+          "description": "Specifies whether to sort in ascending (true) or descending (false) order. Defaults to true."
+        }
+      },
+      "example_uses": [
+        "Get all available document types.",
+        "List document types specifically for 'Partner' entities.",
+        "Retrieve the second page of document types, with 20 items per page, ordered by name.",
+        "Find all document types associated with 'Project' entities, sorted in descending order by their creation date."
+      ],
+      "when_to_use": "Use this endpoint when you need to fetch a list of predefined document types, either globally or specific to a particular entity, for display or selection purposes in a user interface or automated process."
+    }
+  ]
+}

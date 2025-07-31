@@ -1,0 +1,107 @@
+{
+  "entity": "InteractionList",
+  "description": "Browse and manage all interaction records across the organization. Central hub for viewing meetings, calls, emails, and other communications with comprehensive search and filtering capabilities.",
+  "synonyms": [
+    "communications",
+    "meetings",
+    "activities",
+    "engagements",
+    "touchpoints",
+    "correspondence"
+  ],
+  "mandatoryFields": [
+    "type",
+    "date",
+    "subject",
+    "contactId"
+  ],
+  "pages": [
+    {
+      "route": "/partnerships/interactions",
+      "name": "InteractionListComponent",
+      "description": "This page serves as the central hub for managing all interaction records within the organization. It provides a comprehensive view of meetings, calls, emails, and other communications with partners and contacts. Users can efficiently search, filter, create, edit, and delete interaction entries, ensuring a complete history of engagements.",
+      "capabilities": [
+        "search_interactions",
+        "filter_interactions",
+        "create_interaction",
+        "edit_interaction",
+        "delete_interaction",
+        "export_interactions",
+        "import_interactions",
+        "view_timeline"
+      ],
+      "buttons": [
+        {
+          "id": "create_interaction-btn",
+          "label": "New Interaction",
+          "icon": "pi pi-plus",
+          "action": "create_interaction",
+          "description": "Opens a modal window to create and record a new interaction, such as a meeting, call, email, or general note, with a partner or contact.",
+          "when_to_use": [
+            "When you have completed a new communication (e.g., a phone call, email exchange) and need to log it.",
+            "When you are scheduling or have just finished a meeting and want to record its details.",
+            "When you need to add a historical interaction that occurred outside the system."
+          ]
+        },
+        {
+          "id": "import_interactions-btn",
+          "label": "Import Interactions",
+          "icon": "pi pi-file-import",
+          "action": "import_interactions",
+          "description": "Initiates the process to bulk import multiple interaction records from an external file, typically a Google Sheet or CSV.",
+          "when_to_use": [
+            "When you need to migrate a large volume of historical interaction data from another system.",
+            "When you receive interaction data from a third party in a structured file format.",
+            "When you want to quickly add many interactions that were tracked offline."
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [],
+      "search": {
+        "placeholder": "Search by type, date, subject, or participant",
+        "description": "Allows users to quickly find specific interaction records by searching across various fields such as interaction type, date, subject, or associated contacts/partners.",
+        "help_text": "Enter keywords related to the interaction's type (e.g., 'Call', 'Meeting'), a specific date (e.g., '2023-10-26'), part of the subject line, or the names of involved contacts/partners. The search is case-insensitive and will display matching results as you type."
+      },
+      "filters": [
+        {
+          "name": "interaction_type",
+          "label": "Interaction Type",
+          "description": "Filter interactions by their communication type, such as 'Call', 'Meeting', 'Email', or 'Note', to view only specific categories of engagements."
+        },
+        {
+          "name": "date_range",
+          "label": "Date Range",
+          "description": "Filter interactions to display only those that occurred within a specified period, allowing you to focus on recent or historical activities."
+        },
+        {
+          "name": "participants",
+          "label": "Participants",
+          "description": "Filter interactions by the contacts or partners who were involved, enabling you to see all communications related to specific individuals or organizations."
+        }
+      ],
+      "help_guidance": {
+        "when_stuck": "If you're having trouble finding an interaction, try using the search bar with different keywords (type, date, subject, participant). If you need to add a new interaction, click the 'New Interaction' button. To narrow down the list, apply filters for interaction type, date range, or participants. If a button is disabled, you might lack the necessary permissions.",
+        "common_tasks": [
+          "Finding interactions: Use the search bar at the top of the list and enter keywords such as the date, participant name, subject, or interaction type (e.g., 'Call', 'Meeting').",
+          "Creating interactions: Click the 'New Interaction' button (plus icon) located at the top right of the list. Fill in the required details in the modal and save. Note: You need 'INTERACTION_CREATE' permission.",
+          "Editing interactions: Click on any interaction row in the list to open its details. Make your changes and click 'Save' to update the record.",
+          "Filtering by type: Locate the 'Interaction Type' filter above the list. Select one or more types (e.g., 'Meeting', 'Email') to display only those interactions.",
+          "Exporting data: Look for an 'Export' button (often a download icon) near the top of the list. Click it to download the current filtered list of interactions as a CSV or Excel file for reporting.",
+          "Importing interactions: Click the 'Import Interactions' button (file import icon) at the top right. Follow the prompts to upload your interaction data from a CSV or Google Sheet."
+        ],
+        "troubleshooting": [
+          "Problem: Cannot find a specific interaction → Solution: Double-check your search terms and applied filters. Ensure the interaction exists and you have access to view it. Try broadening your search or clearing all filters.",
+          "Problem: 'New Interaction' button is disabled → Solution: This usually means your user role does not have the 'INTERACTION_CREATE' permission. Contact your system administrator to request access.",
+          "Problem: Interaction import fails or data is incorrect → Solution: Verify that your import file (CSV/Google Sheet) adheres to the required format and includes all mandatory fields. Check for data type mismatches (e.g., text in a date field). Refer to the import template for guidance.",
+          "Problem: List is empty or not showing expected interactions → Solution: Ensure no filters are inadvertently applied that are hiding your data. Clear all filters and try searching again. If the issue persists, contact support."
+        ],
+        "getting_started": "Welcome to the Interaction List! This page is your central hub for managing all communications and engagements with your partners and contacts. To begin, you can: 1. Use the search bar to explore existing interactions by typing keywords. 2. Click the 'New Interaction' button to record your first communication. 3. Apply filters (e.g., 'Interaction Type', 'Date Range') to narrow down the list and focus on specific activities. This list provides a comprehensive overview of all your team's touchpoints.",
+        "keyboard_shortcuts": [
+          "Ctrl + F (or Cmd + F on Mac): Focus on the search bar to quickly start typing your query.",
+          "N: (When list is focused) Open the 'New Interaction' modal (if the button is visible and enabled)."
+        ]
+      }
+    }
+  ]
+}

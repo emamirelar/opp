@@ -55,6 +55,20 @@ import { MarkdownService } from 'ngx-markdown';
       border-radius: 3px;
       font-size: 0.9em;
     }
+    
+    .typewriter-content .mermaid-diagram {
+      margin: 1rem 0;
+      text-align: center;
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .typewriter-content .mermaid-diagram svg {
+      max-width: 100%;
+      height: auto;
+    }
   `],
   encapsulation: ViewEncapsulation.None
 })
@@ -90,10 +104,63 @@ export class TypewriterMarkdownComponent implements OnInit, OnDestroy {
     this.stopTypewriting();
   }
 
+  private async processMermaidDiagrams(content: string): Promise<string> {
+    if (!this.isBrowser) {
+      return content;
+    }
+
+    // Find mermaid code blocks
+    const mermaidRegex = /```mermaid\n([\s\S]*?)```/g;
+    let processedContent = content;
+    let match;
+    let diagramId = 0;
+
+    try {
+      // Dynamically import mermaid
+      const mermaid = await import('mermaid');
+      mermaid.default.initialize({ 
+        startOnLoad: false, 
+        theme: 'default',
+        securityLevel: 'loose'
+      });
+
+      while ((match = mermaidRegex.exec(content)) !== null) {
+        const diagramCode = match[1].trim();
+        const uniqueId = `mermaid-diagram-${Date.now()}-${diagramId++}`;
+        
+        try {
+          // Generate SVG from mermaid code
+          const { svg } = await mermaid.default.render(uniqueId, diagramCode);
+          
+          // Replace the mermaid code block with the rendered SVG
+          processedContent = processedContent.replace(
+            match[0], 
+            `<div class="mermaid-diagram">${svg}</div>`
+          );
+        } catch (mermaidError) {
+          console.warn('Failed to render mermaid diagram:', mermaidError);
+          // Keep the original code block if rendering fails
+          processedContent = processedContent.replace(
+            match[0], 
+            `<pre><code class="language-mermaid">${diagramCode}</code></pre>`
+          );
+        }
+      }
+      
+      return processedContent;
+    } catch (importError) {
+      console.warn('Failed to import mermaid:', importError);
+      return content;
+    }
+  }
+
   private async convertMarkdownAndStartTyping() {
     try {
+      // Process mermaid diagrams before markdown conversion
+      let processedContent = await this.processMermaidDiagrams(this.content);
+      
       // Convert markdown to HTML
-      this.htmlContent = await this.markdownService.parse(this.content) || this.content;
+      this.htmlContent = await this.markdownService.parse(processedContent) || processedContent;
       
       // If typewriter is disabled, show content immediately
       if (!this.enableTypewriter) {

@@ -1,0 +1,95 @@
+{
+  "tourId": "interactionlist-overview",
+  "title": "InteractionList Overview Tour",
+  "description": "Browse and manage all interaction records across the organization. Central hub for viewing meetings, calls, emails, and other communications with comprehensive search and filtering capabilities.",
+  "entity": "InteractionList",
+  "route": "/partnerships/interactions",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to InteractionListComponent",
+        "description": "This page serves as the central hub for managing all interaction records within the organization. It provides a comprehensive view of meetings, calls, emails, and other communications with partners and contacts. Users can efficiently search, filter, create, edit, and delete interaction entries, ensuring a complete history of engagements.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"New Interaction\"]",
+      "popover": {
+        "title": "New Interaction",
+        "description": "Opens a modal window to create and record a new interaction, such as a meeting, call, email, or general note, with a partner or contact.<br><br><strong>When to use:</strong> When you have completed a new communication (e.g., a phone call, email exchange) and need to log it., When you are scheduling or have just finished a meeting and want to record its details.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"New Interaction\"]",
+          "p-button .p-button-label:contains(\"New Interaction\")",
+          "button:contains(\"New Interaction\")",
+          "[aria-label=\"New Interaction\"]",
+          "[title=\"New Interaction\"]",
+          "p-button[icon=\"pi pi-plus\"]",
+          ".pi.pi-plus",
+          "i.pi.pi-plus",
+          "button .pi.pi-plus",
+          "#create-interaction-btn",
+          "#create-interaction-btn-btn",
+          "[data-test-id=\"create-interaction-btn\"]",
+          ".create-interaction-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "element": "p-button[label=\"Import Interactions\"]",
+      "popover": {
+        "title": "Import Interactions",
+        "description": "Initiates the process to bulk import multiple interaction records from an external file, typically a Google Sheet or CSV.<br><br><strong>When to use:</strong> When you need to migrate a large volume of historical interaction data from another system., When you receive interaction data from a third party in a structured file format.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Import Interactions\"]",
+          "p-button .p-button-label:contains(\"Import Interactions\")",
+          "button:contains(\"Import Interactions\")",
+          "[aria-label=\"Import Interactions\"]",
+          "[title=\"Import Interactions\"]",
+          "p-button[icon=\"pi pi-file-import\"]",
+          ".pi.pi-file-import",
+          "i.pi.pi-file-import",
+          "button .pi.pi-file-import",
+          "#import-interactions-btn",
+          "#import-interactions-btn-btn",
+          "[data-test-id=\"import-interactions-btn\"]",
+          ".import-interactions-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 2
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of InteractionList. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-31T14:05:06.501197",
+  "version": "1.0"
+}

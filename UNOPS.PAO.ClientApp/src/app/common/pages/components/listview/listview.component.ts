@@ -265,7 +265,7 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     this.setupLoadDataStream();
     this.loadGlobalFilterInfo();
 
-    // Subscribe to global filter changes
+    // Subscribe to global filter changes for UI display only (not API params)
     this.globalFilterService.activeOrgUnitId$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((activeOrgUnitId) => {
@@ -277,24 +277,19 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         }
         this.updateActiveFilterLabels();
         
-        if (this._dataUrl) {
-          this.state.update(s => ({ ...s, pageIndex: 1, data: [], hasMoreData: true }));
-          this.loadData();
-        }
+        // Note: We don't reload data here since orgUnitId is not sent to API
+        // The filter is for UI display only
       });
 
     // Subscribe to global filter changes (when filters are saved)
     this.globalFilterService.filtersChanged$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        // Reload global filter information
+        // Reload global filter information for UI display
         this.loadGlobalFilterInfo();
         
-        // Refresh data if we have a data URL
-        if (this._dataUrl) {
-          this.state.update(s => ({ ...s, pageIndex: 1, data: [], hasMoreData: true }));
-          this.loadData();
-        }
+        // Note: We don't reload data here since orgUnitId is not sent to API
+        // The filter is for UI display only
       });
 
     // Cleanup resize observer on destroy
@@ -375,7 +370,8 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         this.state.update(s => ({ ...s, error: false }));
 
         const params = this.buildHttpParams();
-        return this.http.get<any>(this._dataUrl, { params }).pipe(
+        const endpoint = this.getApiEndpoint();
+        return this.http.get<any>(endpoint, { params }).pipe(
           tap(response => {
             this.handleDataResponse(response);
             if (isInitialLoad) {
@@ -785,19 +781,38 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     }
 
     if (isAdvancedSearchMode && searchCriteria.length > 0) {
-      params = params
-        .set('advancedSearch', 'true')
-        .set('searchCriteria', JSON.stringify(searchCriteria));
+      // For advanced search, only add searchCriteria (no advancedSearch flag)
+      params = params.set('searchCriteria', JSON.stringify(searchCriteria));
     } else if (searchText?.trim()) {
+      // For simple search, only add searchText
       params = params.set('searchText', searchText.trim());
     }
 
-    const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
-    if (activeOrgUnitId) {
-      params = params.set('orgUnitId', activeOrgUnitId.toString());
-    }
+    // Removed automatic orgUnitId parameter addition
+    // const activeOrgUnitId = this.globalFilterService.getActiveOrgUnitId();
+    // if (activeOrgUnitId) {
+    //   params = params.set('orgUnitId', activeOrgUnitId.toString());
+    // }
 
     return params;
+  }
+
+  /**
+   * Determines the correct API endpoint based on search type
+   */
+  private getApiEndpoint(): string {
+    const { isAdvancedSearchMode, searchCriteria, searchText } = this.state();
+    
+    if (isAdvancedSearchMode && searchCriteria.length > 0) {
+      // Advanced search with criteria
+      return `${this._dataUrl}/advanced-search`;
+    } else if (searchText?.trim()) {
+      // Simple text search
+      return `${this._dataUrl}/search`;
+    } else {
+      // List all (no search)
+      return this._dataUrl;
+    }
   }
 
   private handleDataResponse(data: any): void {

@@ -52,16 +52,40 @@ export class InteractionModalFooterComponent {
     return record?.isImportEdit || record?.skipServerSave || false;
   }
 
+  /**
+   * @uiButton cancel_interaction_dialog
+   * @description Closes the interaction dialog without saving any changes
+   * @label Cancel
+   * @icon pi pi-times
+   * @when_to_use When you want to discard changes and close the interaction dialog
+   * @permissions None required
+   */
   onCancel(): void {
     this.dialogRef.close();
   }
 
+  /**
+   * @uiButton save_interaction_footer
+   * @description Triggers the save action for the interaction form from the footer
+   * @label Save
+   * @icon pi pi-check
+   * @when_to_use When all interaction details are filled and you want to save the record
+   * @permissions INTERACTION_CREATE, INTERACTION_UPDATE
+   */
   onSave(): void {
     if (this.config.data?.handleSave) {
       this.config.data.handleSave();
     }
   }
   
+  /**
+   * @uiButton delete_interaction_footer
+   * @description Triggers the delete action for the interaction from the footer
+   * @label Delete
+   * @icon pi pi-trash
+   * @when_to_use When you want to permanently remove an existing interaction record
+   * @permissions INTERACTION_DELETE
+   */
   onDelete(): void {
     if (this.config.data?.handleDelete) {
       this.config.data.handleDelete();

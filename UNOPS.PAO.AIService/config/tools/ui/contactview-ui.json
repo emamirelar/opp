@@ -1,0 +1,53 @@
+{
+  "entity": "ContactView",
+  "description": "View and edit detailed contact information including personal details, professional information, communication preferences, and associated documents. This is the central place for managing all aspects of an individual contact person.",
+  "synonyms": [
+    "contact_details",
+    "person_profile",
+    "individual_view",
+    "contact_information"
+  ],
+  "mandatoryFields": [
+    "firstName",
+    "lastName",
+    "email",
+    "title",
+    "partnerId"
+  ],
+  "pages": [
+    {
+      "route": "/partnerships/contacts/:recordId/details",
+      "name": "ContactViewComponent",
+      "description": "This page provides a comprehensive view of a specific contact's information. You can review and update personal details, professional affiliations, communication preferences, and manage associated documents. It serves as the primary hub for all information related to an individual contact.",
+      "capabilities": [
+        "view_contact_details",
+        "edit_contact_info",
+        "upload_photo",
+        "manage_documents",
+        "view_links",
+        "update_preferences",
+        "edit_address",
+        "update_status"
+      ],
+      "buttons": [],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "This page displays all the information for a specific contact. If you need to make changes, look for an 'Edit' button or icon to activate the editing mode. To update the contact's profile picture, click on the existing photo or avatar area. Documents and related links are typically found by scrolling down the page. All contact fields are logically grouped to help you find specific information quickly.",
+        "common_tasks": [
+          "Editing contact info: Locate and click the 'Edit' button, then modify the desired fields in the form that appears. Remember to save your changes.",
+          "Uploading photo: Click on the current profile photo or the designated photo upload area. You will then be prompted to select a new image file from your device.",
+          "Viewing interactions: Navigate to the 'Interactions' tab (if available) to review the history of communications and activities with this contact.",
+          "Managing documents: Scroll to the 'Documents' section on the page. Here you can upload new files related to the contact or view/download existing ones.",
+          "Updating contact details: To change personal, professional, or address information, enter the editing mode and update the relevant text fields or selections.",
+          "Managing links: Find the 'Links' section to add new external references or modify existing ones associated with the contact."
+        ],
+        "troubleshooting": [],
+        "getting_started": "To begin, simply navigate to a contact's detail page. You will see their primary information displayed at the top. Explore the different sections by scrolling down to understand the full scope of information available. To make your first edit, look for an 'Edit' button, typically near the contact's name or at the top of the page.",
+        "keyboard_shortcuts": []
+      }
+    }
+  ]
+}

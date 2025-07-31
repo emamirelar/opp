@@ -31,7 +31,8 @@ export class GeminiService {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);
-    return this.http.post(`${this.apiUrl}/scan-data`, formData)
+    let entity = type.split('_')[0];
+    return this.http.post(`${this.apiUrl}/${entity}/scan-data`, formData)
       .pipe(map(this.parseGeminiResponseToJson));
   }
 

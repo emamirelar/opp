@@ -1,0 +1,27 @@
+{
+  "entity": "SystemAdmin",
+  "description": "Manages system-level administrative tasks, primarily focusing on database migrations and other core system maintenance operations.",
+  "synonyms": [
+    "System Administrator",
+    "Admin",
+    "System Ops",
+    "Maintenance",
+    "System Management"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "RunMigrations",
+      "url": "api/system-admin/migrations/run",
+      "method": "GET",
+      "description": "Initiates the execution of pending database migrations to update the system's database schema. This operation ensures the database is up-to-date with the latest application version.",
+      "parameters": {},
+      "example_uses": [
+        "Run the latest database migrations.",
+        "Execute all pending system database updates.",
+        "Can you trigger the database migration process?"
+      ],
+      "when_to_use": "Use this endpoint when the system's database schema needs to be updated to reflect changes in the application code, typically after a new deployment or version upgrade. This ensures data consistency and compatibility."
+    }
+  ]
+}

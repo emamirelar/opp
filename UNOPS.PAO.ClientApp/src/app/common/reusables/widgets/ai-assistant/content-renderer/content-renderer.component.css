@@ -1,5 +1,79 @@
 .content-item {
   margin: 0.5rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.content-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0.5rem;
+}
+
+.content-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
+  opacity: 0.6;
+}
+
+.content-item:last-child::after {
+  display: none;
+}
+
+/* Content Type Headers */
+.content-type-header {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.content-type-label {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.content-type-label::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.content-type-label:hover::before {
+  left: 100%;
+}
+
+/* Content Type Specific Colors */
+.mermaid-container .content-type-label {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.code-container .content-type-label {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.fade-in-content:has(app-entity-grid) .content-type-label {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
 .fade-in-content {
@@ -20,6 +94,24 @@
 .mermaid-container {
   margin: 1rem 0;
   text-align: center;
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.mermaid-container .mermaid {
+  background: transparent;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 .code-container {

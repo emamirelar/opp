@@ -61,6 +61,22 @@ interface PaginationResponse<T> {
   totalPages: number;
 }
 
+/**
+ * @uiEntity UserManagement
+ * @route /admin/user-management
+ * @description Administrative interface for managing user permissions, roles, and organizational access. Allows viewing, editing, and managing user role assignments across the organization.
+ * @capabilities view_users, edit_user_roles, assign_permissions, filter_by_org_unit, manage_access_levels, bulk_operations
+ * @synonyms user_administration, permission_management, role_assignment, access_control
+ * @mandatoryFields user_selection, role_assignment
+ * @help_when_stuck Use filters to find specific users (search by name/email, filter by role or org unit). Click "Edit" on any user to modify their role assignments. Use "My Org Unit Only" toggle to focus on your organizational unit. Different roles provide different levels of access to system features.
+ * @common_tasks
+ *   - Finding a user: Use the search box or role/org unit filters
+ *   - Changing user roles: Click "Edit" button, modify role checkboxes, and save
+ *   - Filtering by organization: Toggle "My Org Unit Only" or use org unit dropdown
+ *   - Managing access levels: Assign Admin, Standard User, or custom roles as appropriate
+ *   - Bulk management: Use table filters and pagination for efficient user management
+ */
+
 @Component({
   selector: 'app-user-management',
   standalone: true,

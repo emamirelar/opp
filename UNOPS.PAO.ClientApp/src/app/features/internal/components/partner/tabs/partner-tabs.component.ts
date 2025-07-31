@@ -7,6 +7,23 @@ import { PictureComponent } from '@common/reusables/components/picture/picture.c
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
 import { ResponsiveTabsComponent, ResponsiveTabItem } from '../../../../../common/reusables/components/responsive-tabs';
 
+/**
+ * @uiEntity PartnerTabs
+ * @route /partnerships/partners/:recordId
+ * @description Partner detail navigation interface with tabs for different aspects of partner information. Provides organized access to partner details, contacts, interactions, funding agreements, and analytics data.
+ * @capabilities navigate_partner_sections, view_partner_details, manage_partner_contacts, view_partner_interactions, access_partner_data, upload_logo
+ * @synonyms partner_navigation, partner_details, partner_tabs, partner_sections, organization_tabs
+ * @mandatoryFields recordId
+ * @help_when_stuck Use the tabs to navigate between different sections of partner information. The partner logo and basic info are always visible at the top. Each tab shows different aspects like organizational details, contacts, interactions, or analytics.
+ * @common_tasks
+ *   - Viewing partner details: Click on the main Details tab
+ *   - Managing contacts: Switch to Contacts tab to see people associated with this partner
+ *   - Checking interactions: Switch to Interactions tab to see communication history
+ *   - Viewing funding: Go to Funding & Agreements tab for financial information
+ *   - Accessing analytics: Use Dashboard tab for partner performance data
+ *   - Uploading logo: Click on the logo area to upload a new partner logo
+ */
+
 @Component({
   selector: 'app-partner-tabs',
   standalone: true,

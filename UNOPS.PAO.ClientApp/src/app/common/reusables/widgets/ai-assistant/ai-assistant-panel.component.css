@@ -396,7 +396,7 @@
 
 /* Enhanced welcome state for better space utilization */
 .ai-chat-container:has(.flex.flex-col.items-center.justify-center.h-full) {
-  min-height: calc(100vh - 310px);
+  min-height: calc(100vh - 375px);
 }
 
 /* Enhanced grid layout for example prompts */

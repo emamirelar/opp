@@ -86,7 +86,10 @@ export class AiAssistantData {
 
     // Allow empty sessionId for new conversations - backend will create one
     const sessionId = this.currentSessionId() || '';
-    return this.sendMessageToServer(sessionId, message, files[0]?.file, state);
+    
+    // Enhanced: Support multiple files instead of just the first one
+    const fileObjects = files.map(chatFile => chatFile.file).filter(file => file != null);
+    return this.sendMessageToServer(sessionId, message, fileObjects, state);
   }
 
   public clearConversation(): void {
@@ -440,20 +443,16 @@ export class AiAssistantData {
   private sendMessageToServer(
     sessionId: string, 
     message: string, 
-    file?: File, 
+    files?: File[], 
     state?: any
   ): Observable<void> {
-    const formData = new FormData();
-    formData.append("sessionId", sessionId);
-    formData.append("message", message);
-    if (file) {
-        formData.append("file", file);
-    }
-    if (state) {
-        formData.append("state", JSON.stringify(state));
-    }
-    // TODO: Add the file to the formData
-    return this.aiAssistantService.chat(formData).pipe(
+    // Use our enhanced chat method that supports multiple files
+    return this.aiAssistantService.chatWithFilesSimple(
+      message,
+      sessionId,
+      files,
+      state
+    ).pipe(
       tap(response => {
         this.isLoading.set(false);
         const serverResponse: any = response.body;

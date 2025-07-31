@@ -1,0 +1,65 @@
+{
+  "tourId": "partnertree-overview",
+  "title": "PartnerTree Overview Tour",
+  "description": "Administrative interface for managing organizational hierarchy and partner tree structure. Allows viewing, editing, and organizing partner categories and groups in a hierarchical tree format.",
+  "entity": "PartnerTree",
+  "route": "/admin/partner-tree",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to PartnerTreeComponent",
+        "description": "This page provides the administrative interface for managing your organization's hierarchy and partner tree structure. You can view, edit, and organize partner categories and groups in a hierarchical tree format, allowing for clear visualization and management of your business relationships.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"New Partner Level\"]",
+      "popover": {
+        "title": "New Partner Level",
+        "description": "This button opens a dialog to create a new organizational node, such as a category or group, within the partner hierarchy tree. Use this to expand your organizational structure.<br><br><strong>When to use:</strong> When you need to add a new category or group to your partner hierarchy., When you are setting up a new division or segment within your organization's structure.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"New Partner Level\"]",
+          "p-button .p-button-label:contains(\"New Partner Level\")",
+          "button:contains(\"New Partner Level\")",
+          "[aria-label=\"New Partner Level\"]",
+          "[title=\"New Partner Level\"]",
+          "p-button[icon=\"pi pi-plus\"]",
+          ".pi.pi-plus",
+          "i.pi.pi-plus",
+          "button .pi.pi-plus",
+          "#create-partner-level-btn",
+          "#create-partner-level-btn-btn",
+          "[data-test-id=\"create-partner-level-btn\"]",
+          ".create-partner-level-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of PartnerTree. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-31T14:05:06.586485",
+  "version": "1.0"
+}

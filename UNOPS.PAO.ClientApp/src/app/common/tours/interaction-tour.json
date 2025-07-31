@@ -1,0 +1,125 @@
+{
+  "tourId": "interaction-overview",
+  "title": "Interaction Overview Tour",
+  "description": "Create and edit interaction records including meetings, calls, emails, and other communications with partners and contacts. Supports AI transcription and file attachments.",
+  "entity": "Interaction",
+  "route": "Modal dialog (no direct route)",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to InteractionModalComponent",
+        "description": "This modal allows users to create new interaction records or edit existing ones. It supports various types of communications like meetings, calls, and emails. Key features include adding participants, uploading relevant documents, and leveraging AI for transcribing and extracting details from audio or image files.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"Delete\"]",
+      "popover": {
+        "title": "Delete",
+        "description": "Permanently deletes an interaction record after a confirmation dialog. Use this with caution as deleted interactions cannot be recovered.<br><br><strong>When to use:</strong> When an interaction was recorded incorrectly or is no longer relevant (use with caution).",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Delete\"]",
+          "p-button .p-button-label:contains(\"Delete\")",
+          "button:contains(\"Delete\")",
+          "[aria-label=\"Delete\"]",
+          "[title=\"Delete\"]",
+          "p-button[icon=\"pi pi-trash\"]",
+          ".pi.pi-trash",
+          "i.pi.pi-trash",
+          "button .pi.pi-trash",
+          "#delete-interaction-btn",
+          "#delete-interaction-btn-btn",
+          "[data-test-id=\"delete-interaction-btn\"]",
+          ".delete-interaction-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "element": "p-button[label=\"Save | Create Interaction\"]",
+      "popover": {
+        "title": "Save | Create Interaction",
+        "description": "Saves or creates an interaction record with all form data, including participants, documents, and interaction details. This action finalizes the interaction entry.<br><br><strong>When to use:</strong> When all required fields are filled and you want to save the interaction to the system.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Save | Create Interaction\"]",
+          "p-button .p-button-label:contains(\"Save | Create Interaction\")",
+          "button:contains(\"Save | Create Interaction\")",
+          "[aria-label=\"Save | Create Interaction\"]",
+          "[title=\"Save | Create Interaction\"]",
+          "p-button[icon=\"pi pi-check\"]",
+          ".pi.pi-check",
+          "i.pi.pi-check",
+          "button .pi.pi-check",
+          "#save-interaction-btn",
+          "#save-interaction-btn-btn",
+          "[data-test-id=\"save-interaction-btn\"]",
+          ".save-interaction-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 2
+      }
+    },
+    {
+      "element": "p-button[label=\"Process Transcription\"]",
+      "popover": {
+        "title": "Process Transcription",
+        "description": "Processes AI transcription results from uploaded audio, image, or text files and automatically fills relevant form fields with extracted interaction data, such as subject, participants, or notes.<br><br><strong>When to use:</strong> After uploading audio, image",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Process Transcription\"]",
+          "p-button .p-button-label:contains(\"Process Transcription\")",
+          "button:contains(\"Process Transcription\")",
+          "[aria-label=\"Process Transcription\"]",
+          "[title=\"Process Transcription\"]",
+          "p-button[icon=\"pi pi-microphone\"]",
+          ".pi.pi-microphone",
+          "i.pi.pi-microphone",
+          "button .pi.pi-microphone",
+          "#process-transcription-btn",
+          "#process-transcription-btn-btn",
+          "[data-test-id=\"process-transcription-btn\"]",
+          ".process-transcription-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 3
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of Interaction. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-31T14:05:06.485439",
+  "version": "1.0"
+}

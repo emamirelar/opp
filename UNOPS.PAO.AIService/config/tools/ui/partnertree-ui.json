@@ -1,0 +1,60 @@
+{
+  "entity": "PartnerTree",
+  "description": "Administrative interface for managing organizational hierarchy and partner tree structure. Allows viewing, editing, and organizing partner categories and groups in a hierarchical tree format.",
+  "synonyms": [
+    "organizational_hierarchy",
+    "partner_categories",
+    "partner_structure",
+    "administrative_tree",
+    "hierarchy_management"
+  ],
+  "mandatoryFields": [
+    "name",
+    "type",
+    "status"
+  ],
+  "pages": [
+    {
+      "route": "/admin/partner-tree",
+      "name": "PartnerTreeComponent",
+      "description": "This page provides the administrative interface for managing your organization's hierarchy and partner tree structure. You can view, edit, and organize partner categories and groups in a hierarchical tree format, allowing for clear visualization and management of your business relationships.",
+      "capabilities": [
+        "view_partner_tree",
+        "create_partner_level",
+        "edit_partner_level",
+        "delete_partner_level",
+        "manage_hierarchy",
+        "drag_drop_reorder",
+        "expand_collapse_nodes"
+      ],
+      "buttons": [
+        {
+          "id": "create_partner_level-btn",
+          "label": "New Partner Level",
+          "icon": "pi pi-plus",
+          "action": "create_partner_level",
+          "description": "This button opens a dialog to create a new organizational node, such as a category or group, within the partner hierarchy tree. Use this to expand your organizational structure.",
+          "when_to_use": [
+            "When you need to add a new category or group to your partner hierarchy.",
+            "When you are setting up a new division or segment within your organization's structure.",
+            "When you want to define a new level for partner classification."
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're unsure how to proceed, remember that the main area displays your organizational structure as a tree. To add a new level, click the 'New Partner Level' button. To explore different parts of the hierarchy, use the expand/collapse arrows next to each node. To modify an existing partner level, simply click on its row in the tree.",
+        "common_tasks": [
+          "Creating partner levels: Click the 'New Partner Level' button located at the top of the page to open the creation dialog and define a new organizational node.",
+          "Editing partner structure: Click on any existing node (row) within the tree view to open its details for modification. Make your changes and save.",
+          "Managing hierarchy: Utilize the drag-and-drop functionality (if enabled) to reorder or nest partner levels, or use the edit function to assign parent/child relationships.",
+          "Viewing organizational structure: Click the expand (arrow pointing right) or collapse (arrow pointing down) icons next to each node to reveal or hide its sub-levels.",
+          "Administrative management: Use this page to configure and maintain the relationships and reporting structures between different partner categories and groups."
+        ]
+      }
+    }
+  ]
+}

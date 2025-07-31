@@ -1,0 +1,100 @@
+{
+  "entity": "Link",
+  "description": "A Link represents a connection or reference to an external resource (like a URL) or another internal entity within the system. It allows associating related information or documents with primary entities such as Partners, Projects, or Contacts.",
+  "synonyms": [
+    "reference",
+    "attachment",
+    "resource",
+    "connection",
+    "URL"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetLinks",
+      "url": "/api/links",
+      "method": "GET",
+      "description": "Retrieves a list of links associated with a specific entity and its unique identifier. This endpoint supports pagination to manage large result sets.",
+      "parameters": {
+        "entity": {
+          "type": "string",
+          "required": true,
+          "description": "The type of entity the links are associated with (e.g., 'Partner', 'Project', 'Contact')."
+        },
+        "entityId": {
+          "type": "integer",
+          "required": true,
+          "description": "The unique identifier of the entity for which to retrieve links."
+        },
+        "parameters": {
+          "type": "object",
+          "required": false,
+          "description": "Pagination parameters such as page number, page size, and sorting options."
+        }
+      },
+      "example_uses": [
+        "Get all links associated with Partner ID 123.",
+        "List the first 10 links for Project 456.",
+        "Find all external resources linked to Contact 789."
+      ],
+      "when_to_use": "When you need to retrieve a list of links that are related to a specific business entity (e.g., Partner, Project, Contact) and its unique ID, optionally with pagination."
+    },
+    {
+      "name": "Create",
+      "url": "/api/links",
+      "method": "POST",
+      "description": "Creates a new link record in the system. This allows associating a new external resource or internal reference with an existing entity.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing the details for the new link, such as its URL, description, and the entity it's associated with."
+        }
+      },
+      "example_uses": [
+        "Create a new link for a partner's website.",
+        "Add a document link to a project's resources.",
+        "Register a new external reference for a contact."
+      ],
+      "when_to_use": "When you need to establish a new connection or reference, such as a URL or document, and associate it with a specific entity in the system."
+    },
+    {
+      "name": "Update",
+      "url": "/api/links",
+      "method": "PUT",
+      "description": "Updates an existing link record. This allows modifying the details of a previously created link.",
+      "parameters": {
+        "req": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing the updated details for the link, including its ID and any fields to be modified."
+        }
+      },
+      "example_uses": [
+        "Update the URL of an existing link.",
+        "Modify the description of a link.",
+        "Change the entity an existing link is associated with."
+      ],
+      "when_to_use": "When you need to modify the properties or details of an already existing link record."
+    },
+    {
+      "name": "Delete",
+      "url": "/api/links",
+      "method": "DELETE",
+      "description": "Deletes a link record from the system using its unique identifier.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": "The unique identifier of the link to be deleted."
+        }
+      },
+      "example_uses": [
+        "Delete the link with ID 123.",
+        "Remove a specific link from the system.",
+        "Can you delete the link that was created yesterday?"
+      ],
+      "when_to_use": "When you need to permanently remove a specific link record from the system using its unique identifier."
+    }
+  ]
+}

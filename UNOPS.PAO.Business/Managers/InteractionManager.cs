@@ -126,7 +126,7 @@ public class InteractionManager : IInteractionManager
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }
 
-    public async Task<PaginationResponse<InteractionModel>> GetInteractionsWithSpecification(int userId, ISpecification<Interaction> specification, PaginationRequest pagination)
+    public async Task<PaginationResponse<InteractionModel>> GetInteractionsWithSpecification(int userId, ISpecification<Domain.Entities.Interaction> specification, PaginationRequest pagination)
     {
         throw new NotImplementedException("Use UNOPSInteractionManager for UNOPS-specific implementation");
     }

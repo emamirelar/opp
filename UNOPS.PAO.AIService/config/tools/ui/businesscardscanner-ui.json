@@ -1,0 +1,114 @@
+{
+  "entity": "BusinessCardScanner",
+  "description": "An AI-powered business card scanner that captures images and automatically extracts contact information using Google's Gemini AI. This tool streamlines the process of digitizing physical business cards into usable contact data.",
+  "synonyms": [
+    "card_scanner",
+    "contact_scanner",
+    "ai_scanner",
+    "business_card_reader",
+    "card_digitizer"
+  ],
+  "mandatoryFields": [
+    "image_capture"
+  ],
+  "pages": [
+    {
+      "route": "Modal dialog (opened from contact list)",
+      "name": "BusinessCardScannerComponent",
+      "description": "This modal component provides the interface for scanning business cards. Users can either use their device's camera to capture a new image of a business card or upload an existing image from their device. Once an image is provided, the system uses AI to process it and extract relevant contact details, which can then be used to create or update contact records.",
+      "capabilities": [
+        "capture_image",
+        "upload_image",
+        "scan_text",
+        "extract_contact_data",
+        "toggle_camera",
+        "retake_photo"
+      ],
+      "buttons": [
+        {
+          "id": "toggle_camera-btn",
+          "label": "Toggle Camera",
+          "icon": "pi pi-sort-alt",
+          "action": "toggle_camera",
+          "description": "Switches between the front and back cameras on mobile devices. This allows users to select the best camera for capturing a clear image of the business card, especially when dealing with different lighting conditions or card placements.",
+          "when_to_use": [
+            "When the current camera view is not optimal for capturing the business card clearly.",
+            "To switch to a different camera (e.g., from front to rear) for better image quality or positioning."
+          ]
+        },
+        {
+          "id": "capture_image-btn",
+          "label": "Capture",
+          "icon": "pi pi-camera",
+          "action": "capture_image",
+          "description": "Takes a photo of the business card currently displayed in the camera's view. This action captures the image that will then be sent for AI processing to extract contact information.",
+          "when_to_use": [
+            "When you have positioned the business card clearly within the on-screen frame and are ready to take the photo for scanning."
+          ]
+        },
+        {
+          "id": "scan_business_card-btn",
+          "label": "Scan",
+          "icon": "pi pi-search",
+          "action": "scan_business_card",
+          "description": "Initiates the AI processing of the captured or uploaded business card image. The system will analyze the image to automatically identify and extract contact details such as name, company, phone number, and email address.",
+          "when_to_use": [
+            "After successfully capturing a new business card image using the camera.",
+            "After uploading an existing business card image from your device.",
+            "To automatically extract contact details from the image using AI."
+          ]
+        },
+        {
+          "id": "retake_photo-btn",
+          "label": "Retake",
+          "icon": "pi pi-refresh",
+          "action": "retake_photo",
+          "description": "Discards the currently captured image and reactivates the camera, allowing you to take a new photo of the business card. This is essential if the previous capture was blurry, poorly framed, or had insufficient lighting.",
+          "when_to_use": [
+            "When the previously captured image is of poor quality (e.g., blurry, too dark, card not fully visible).",
+            "If the business card was not positioned correctly in the frame during the last capture, leading to incomplete data."
+          ]
+        },
+        {
+          "id": "upload_business_card_image-btn",
+          "label": "Upload Image",
+          "icon": "pi pi-upload",
+          "action": "upload_business_card_image",
+          "description": "Allows you to select and upload an existing image of a business card from your device's local storage. This provides an alternative to using the live camera capture feature, useful if you already have photos of cards.",
+          "when_to_use": [
+            "When you already have a photo of a business card saved on your device and want to scan it.",
+            "If you prefer not to use the live camera capture feature or are experiencing camera issues."
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [],
+      "search": {
+        "placeholder": "",
+        "description": "",
+        "help_text": ""
+      },
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "To successfully scan a business card, ensure it is placed on a flat, well-lit surface. Position the card within the on-screen overlay frame. You can either capture a new photo using the 'Capture' button or upload an existing image via 'Upload Image'. Once an image is available, click 'Scan' to let the AI extract the contact details automatically. If the image is unclear, use 'Retake' to try again.",
+        "common_tasks": [
+          "Scanning a new business card: Place the card in the camera's view, ensure it fits the frame, click 'Capture', then click 'Scan'.",
+          "Using an existing business card image: Click 'Upload Image', select the photo from your device, then click 'Scan'.",
+          "Improving scan quality: If the scan results are poor, click 'Retake' to capture a clearer photo. Ensure the card is well-lit, flat, and free of glare before capturing.",
+          "Switching camera views (mobile): Tap the 'Toggle Camera' button to switch between front and rear cameras for optimal capture.",
+          "Extracting data after capture/upload: Always click the 'Scan' button after an image is ready to initiate AI processing and retrieve contact details."
+        ],
+        "troubleshooting": [
+          "Problem: Scan results are inaccurate or incomplete → Solution: Ensure the business card is flat, well-lit, and clearly visible within the frame. Retake the photo if it's blurry, has glare, or is partially obscured. Try scanning again with better conditions.",
+          "Problem: Camera not working or showing a black screen → Solution: Check your device's privacy settings to ensure camera access is granted for this application. Restart the application if necessary. Ensure no other app is currently using the camera.",
+          "Problem: 'Scan' button is disabled → Solution: The 'Scan' button becomes active only after an image has been successfully captured or uploaded. First, capture a new photo or upload an existing one."
+        ],
+        "getting_started": "To begin using the Business Card Scanner, have a physical business card ready. If you plan to use your device's camera, position the card within the on-screen guide for optimal capture. Click 'Capture' to take a photo. Alternatively, if you already have a digital image of a business card, click 'Upload Image' and select the file from your device. Once an image is loaded, click 'Scan' to automatically extract the contact information. The extracted data will then be presented for your review and further action.",
+        "keyboard_shortcuts": [
+          "Enter (after image is ready): Initiates the 'Scan' action",
+          "Escape: Closes the business card scanner modal (if applicable)"
+        ]
+      }
+    }
+  ]
+}

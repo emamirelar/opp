@@ -36,12 +36,6 @@ export class ContentRendererComponent implements OnInit, AfterViewInit {
     console.log('🎨 ContentRenderer - Message length:', Array.isArray(this.item.message) ? this.item.message.length : 'N/A');
     console.log('🎨 ContentRenderer - Is new message:', this.isNewMessage);
     
-    if (this.item.type === 'mermaid' && this.isBrowser) {
-      // Dynamically import mermaid only in browser
-      const mermaid = await import('mermaid');
-      mermaid.default.initialize({ startOnLoad: true });
-    }
-    
     // For non-text content types, signal completion after a brief delay for animation
     if (this.isNonTextContent() && this.shouldShow) {
       setTimeout(() => {
@@ -51,10 +45,48 @@ export class ContentRendererComponent implements OnInit, AfterViewInit {
   }
 
   async ngAfterViewInit() {
-    if (this.item.type === 'mermaid' && this.isBrowser && this.mermaidElement) {
-      const mermaid = await import('mermaid');
-      // Render the diagram in the element
-      mermaid.default.init(undefined, this.mermaidElement.nativeElement);
+    if (this.item.type === 'mermaid' && this.isBrowser) {
+      // Small delay to ensure element is ready
+      setTimeout(async () => {
+        if (!this.mermaidElement) {
+          console.warn('🎨 Mermaid element not ready');
+          return;
+        }
+
+        try {
+          const mermaid = await import('mermaid');
+          
+          // Configure mermaid
+          mermaid.default.initialize({ 
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: 'arial'
+          });
+
+          // Generate unique ID for this diagram
+          const diagramId = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Render the diagram
+          const diagramCode = this.getStringMessage();
+          console.log('🎨 Rendering mermaid diagram:', diagramCode);
+          
+          const { svg } = await mermaid.default.render(diagramId, diagramCode);
+          
+          // Insert the rendered SVG
+          if (this.mermaidElement) {
+            this.mermaidElement.nativeElement.innerHTML = svg;
+          }
+          
+          console.log('🎨 Mermaid diagram rendered successfully');
+        } catch (error) {
+          console.error('🎨 Failed to render mermaid diagram:', error);
+          // Fallback: show the raw mermaid code
+          if (this.mermaidElement) {
+            this.mermaidElement.nativeElement.innerHTML = `<pre><code>${this.getStringMessage()}</code></pre>`;
+          }
+        }
+      }, 100);
     }
   }
 
@@ -64,6 +96,21 @@ export class ContentRendererComponent implements OnInit, AfterViewInit {
     }
     // Fallback for array or other types
     return JSON.stringify(this.item.message);
+  }
+
+  getContentTypeLabel(): string {
+    switch (this.item.type) {
+      case 'mermaid':
+        return 'Mermaid Diagram';
+      case 'code':
+        return this.item.language ? this.item.language.toUpperCase() : 'Code';
+      case 'grid':
+        return this.item.entity ? `${this.item.entity} Table` : 'Data Table';
+      case 'card':
+        return this.item.entity ? `${this.item.entity} Cards` : 'Data Cards';
+      default:
+        return this.item.type?.charAt(0).toUpperCase() + this.item.type?.slice(1) || 'Content';
+    }
   }
 
   getArrayMessage(): any[] {

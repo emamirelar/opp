@@ -36,42 +36,6 @@ WITH entity_messages AS (
         ) as message
     FROM public."Interactions"
     WHERE "Id" IS NOT NULL
-    
-    UNION ALL
-    
-    -- Projects
-    SELECT 
-        json_build_object(
-            'EntityName', 'Projects',
-            'EntityId', "Id",
-            'MessageType', 'EntityProcessing'
-        ) as message
-    FROM public."Projects"
-    WHERE "Id" IS NOT NULL
-    
-    UNION ALL
-    
-    -- WorkPackages
-    SELECT 
-        json_build_object(
-            'EntityName', 'WorkPackages',
-            'EntityId', "Id",
-            'MessageType', 'EntityProcessing'
-        ) as message
-    FROM public."WorkPackages"
-    WHERE "Id" IS NOT NULL
-    
-    UNION ALL
-    
-    -- Documents
-    SELECT 
-        json_build_object(
-            'EntityName', 'Documents',
-            'EntityId', "Id",
-            'MessageType', 'EntityProcessing'
-        ) as message
-    FROM public."Documents"
-    WHERE "Id" IS NOT NULL
 )
 
 -- Aggregate all messages into a single JSON array and cast to text to avoid escaping

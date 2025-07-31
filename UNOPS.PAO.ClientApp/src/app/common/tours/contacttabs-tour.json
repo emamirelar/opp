@@ -1,0 +1,65 @@
+{
+  "tourId": "contacttabs-overview",
+  "title": "ContactTabs Overview Tour",
+  "description": "This entity represents the comprehensive view of a single contact, organized into distinct sections accessible via tabs. It allows users to efficiently navigate through various types of information related to a contact, such as personal details, communication history, associated records, and internal notes. The primary goal is to provide a holistic and easily digestible overview of a contact's profile and activities.",
+  "entity": "ContactTabs",
+  "route": "/partnerships/contacts/:recordId",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to ContactTabsComponent",
+        "description": "This page serves as the central hub for managing and viewing all information pertaining to a specific contact. It presents a structured layout using tabs, allowing users to quickly switch between different categories of contact data without leaving the contact's profile. From here, users can review personal details, track communication history, see linked entities, and add notes, providing a complete 360-degree view of the contact.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"Back to Contacts\"]",
+      "popover": {
+        "title": "Back to Contacts",
+        "description": "Returns to the list of all contacts, allowing you to select a different contact or view the full contact directory.<br><br><strong>When to use:</strong> When you are finished reviewing this contact's details and want to browse other contacts., If you accidentally navigated to the wrong contact's page.<br><small><em>Requires: VIEW_CONTACTS_LIST</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Back to Contacts\"]",
+          "p-button .p-button-label:contains(\"Back to Contacts\")",
+          "button:contains(\"Back to Contacts\")",
+          "[aria-label=\"Back to Contacts\"]",
+          "[title=\"Back to Contacts\"]",
+          "p-button[icon=\"arrow_back\"]",
+          ".arrow_back",
+          "i.arrow_back",
+          "button .arrow_back",
+          "#back-to-contacts",
+          "#back-to-contacts-btn",
+          "[data-test-id=\"back-to-contacts\"]",
+          ".back-to-contacts-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of ContactTabs. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-24T10:20:44.539924",
+  "version": "1.0"
+}

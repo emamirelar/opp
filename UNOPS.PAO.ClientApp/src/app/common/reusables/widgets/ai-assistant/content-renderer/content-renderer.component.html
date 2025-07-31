@@ -10,6 +10,9 @@
   
   <!-- Grid/Table content -->
   <div *ngSwitchCase="'grid'" class="fade-in-content">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
     <app-entity-grid 
       [entityType]="item.entity || 'Item'"
       [gridData]="getArrayMessage()"
@@ -19,6 +22,9 @@
   
   <!-- Card content (using same grid component) -->
   <div *ngSwitchCase="'card'" class="fade-in-content">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
     <app-entity-grid 
       [entityType]="item.entity || 'Item'"
       [gridData]="getArrayMessage()"
@@ -28,11 +34,17 @@
   
   <!-- Mermaid diagram -->
   <div *ngSwitchCase="'mermaid'" class="mermaid-container fade-in-content">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
     <div #mermaidElement class="mermaid">{{ getStringMessage() }}</div>
   </div>
   
   <!-- Code block -->
   <div *ngSwitchCase="'code'" class="code-container fade-in-content">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
     <pre><code [class]="'language-' + (item.language || 'javascript')">{{ getStringMessage() }}</code></pre>
   </div>
   

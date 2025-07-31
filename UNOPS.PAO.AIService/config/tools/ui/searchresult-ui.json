@@ -1,0 +1,58 @@
+{
+  "entity": "SearchResult",
+  "description": "Unified search results page displaying all matching records across multiple entity types (Partners, Contacts, Interactions). Supports tabbed view by entity type with filtering and global filters.",
+  "synonyms": [
+    "find",
+    "lookup",
+    "global_search",
+    "unified_search",
+    "cross_entity_search"
+  ],
+  "mandatoryFields": [
+    "search_query"
+  ],
+  "pages": [
+    {
+      "route": "/search",
+      "name": "SearchResultComponent",
+      "description": "This page provides a unified view of search results, consolidating matching records from various entity types such as Partners, Contacts, and Interactions. Users can efficiently find information across the entire system, with results organized into distinct tabs for easy navigation and further refinement using global filters.",
+      "capabilities": [
+        "search_all_entities",
+        "filter_by_entity_type",
+        "global_filters",
+        "view_search_snippets",
+        "navigate_to_records"
+      ],
+      "buttons": [],
+      "forms": [],
+      "tabs": [],
+      "search": {
+        "placeholder": "Search for partners, contacts, or interactions...",
+        "description": "The main search bar allows you to perform a comprehensive search across all available entity types. Enter keywords, names, or any relevant terms to find records.",
+        "help_text": "Type your search query into the search box, typically located in the application header. Results will appear dynamically on this page as you type. For best results, use specific keywords related to the record you are looking for."
+      },
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're having trouble finding what you need, remember that the search box in the header is your primary tool. Results are automatically categorized by entity type (Partners, Contacts, Interactions) and displayed in separate tabs. Click on these tabs to view results specific to that entity. If you want to narrow down results to your organization or specific criteria, look for the global filter options, often a toggle or dropdown.",
+        "common_tasks": [
+          "Searching across all entities: Use the main search box in the application header. Simply type your query, and results will populate automatically on this page.",
+          "Viewing specific entity results: Once search results appear, click on the 'Partners', 'Contacts', or 'Interactions' tabs to see only the results for that specific entity type.",
+          "Applying global filters: Look for a 'Global Filter' switch or option, usually near the search results. Toggle it on to restrict results to your organization or other predefined criteria.",
+          "Opening a record from search: Click on any individual search result card or link to navigate directly to the detailed view of that record.",
+          "Refining an existing search: To change your search, simply modify your query in the header search box. The results on this page will update accordingly."
+        ],
+        "troubleshooting": [
+          "Problem: No results found → Solution: Check your spelling. Try broader keywords or fewer terms. Ensure global filters are not overly restrictive if applied.",
+          "Problem: Too many irrelevant results → Solution: Try adding more specific keywords to your search query. Use quotation marks for exact phrases (e.g., \"John Doe\") to narrow down results.",
+          "Problem: Results not updating → Solution: Ensure you've pressed Enter or clicked the search icon after typing your query. If issues persist, try refreshing the page."
+        ],
+        "getting_started": "To begin, locate the search bar at the top of the application. Type in what you're looking for, such as a partner's name, a contact's email, or an interaction ID. The search results page will then display all matching records, categorized by type. Explore the tabs to see results for Partners, Contacts, or Interactions, and click on any result to view its details.",
+        "keyboard_shortcuts": [
+          "Ctrl + F (or Cmd + F on Mac): Quickly find text within the current search results page.",
+          "Esc: Clear the search input if it's active.",
+          "Tab: Navigate between search results and interactive elements on the page."
+        ]
+      }
+    }
+  ]
+}

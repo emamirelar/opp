@@ -1,0 +1,215 @@
+{
+  "tourId": "contactview-overview",
+  "title": "ContactView Overview Tour",
+  "description": "This interface provides a comprehensive view and management capabilities for individual contact records. Users can access, update, and organize all relevant information, including personal details, professional affiliations, communication preferences, and associated documents or external links. It serves as the central hub for maintaining accurate and complete contact profiles.",
+  "entity": "ContactView",
+  "route": "/partnerships/contacts/:recordId/details",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to ContactViewComponent",
+        "description": "This page serves as the central hub for managing all information related to a specific contact. Users can view, update, and organize personal, professional, and communication details, as well as associated documents and links. It provides a comprehensive overview of an individual, enabling efficient contact management and relationship building, ensuring all relevant data is easily accessible and up-to-date.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"Add Document\"]",
+      "popover": {
+        "title": "Add Document",
+        "description": "Allows users to upload relevant files or documents associated with this contact, such as contracts, resumes, or meeting notes. This button is typically found within the 'Documents' tab.<br><br><strong>When to use:</strong> To attach a new file related to the contact., To store important documents directly on the contact's record.<br><small><em>Requires: CONTACT_MANAGE_DOCUMENTS</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Add Document\"]",
+          "p-button .p-button-label:contains(\"Add Document\")",
+          "button:contains(\"Add Document\")",
+          "[aria-label=\"Add Document\"]",
+          "[title=\"Add Document\"]",
+          "p-button[icon=\"attach_file\"]",
+          ".attach_file",
+          "i.attach_file",
+          "button .attach_file",
+          "#addDocumentButton",
+          "#addDocumentButton-btn",
+          "[data-test-id=\"addDocumentButton\"]",
+          ".addDocumentButton-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "element": "p-button[label=\"Add Link\"]",
+      "popover": {
+        "title": "Add Link",
+        "description": "Enables adding external web links or references pertinent to the contact, such as social media profiles, company websites, or relevant articles. This button is typically found within the 'Links' tab.<br><br><strong>When to use:</strong> To add a new external link for the contact., To provide quick access to online resources related to the contact.<br><small><em>Requires: CONTACT_MANAGE_LINKS</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Add Link\"]",
+          "p-button .p-button-label:contains(\"Add Link\")",
+          "button:contains(\"Add Link\")",
+          "[aria-label=\"Add Link\"]",
+          "[title=\"Add Link\"]",
+          "p-button[icon=\"link\"]",
+          ".link",
+          "i.link",
+          "button .link",
+          "#addLinkButton",
+          "#addLinkButton-btn",
+          "[data-test-id=\"addLinkButton\"]",
+          ".addLinkButton-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 2
+      }
+    },
+    {
+      "element": "p-button[label=\"Edit\"]",
+      "popover": {
+        "title": "Edit",
+        "description": "Enables editing of all contact details displayed on the page, including personal information, professional details, addresses, and communication preferences. Clicking this button will put the page into an editable state.<br><br><strong>When to use:</strong> When you need to update any information for this contact., To correct errors in contact details.<br><small><em>Requires: CONTACT_EDIT</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Edit\"]",
+          "p-button .p-button-label:contains(\"Edit\")",
+          "button:contains(\"Edit\")",
+          "[aria-label=\"Edit\"]",
+          "[title=\"Edit\"]",
+          "p-button[icon=\"edit\"]",
+          ".edit",
+          "i.edit",
+          "button .edit",
+          "#editContactButton",
+          "#editContactButton-btn",
+          "[data-test-id=\"editContactButton\"]",
+          ".editContactButton-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 3
+      }
+    },
+    {
+      "element": "p-button[label=\"Cancel\"]",
+      "popover": {
+        "title": "Cancel",
+        "description": "Discards all unsaved changes made during the editing session and reverts the contact details to their last saved state. This will exit edit mode without applying any modifications.<br><br><strong>When to use:</strong> If you decide not to save the changes you've made., To exit edit mode without updating the contact record.<br><small><em>Requires: CONTACT_EDIT</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Cancel\"]",
+          "p-button .p-button-label:contains(\"Cancel\")",
+          "button:contains(\"Cancel\")",
+          "[aria-label=\"Cancel\"]",
+          "[title=\"Cancel\"]",
+          "p-button[icon=\"cancel\"]",
+          ".cancel",
+          "i.cancel",
+          "button .cancel",
+          "#cancelEditButton",
+          "#cancelEditButton-btn",
+          "[data-test-id=\"cancelEditButton\"]",
+          ".cancelEditButton-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 4
+      }
+    },
+    {
+      "element": "p-button[label=\"Delete Contact\"]",
+      "popover": {
+        "title": "Delete Contact",
+        "description": "Permanently removes the contact and all associated data from the system. This action cannot be undone and requires confirmation through a pop-up dialog.<br><br><strong>When to use:</strong> When a contact is no longer relevant or was created in error., To remove duplicate contact entries.<br><small><em>Requires: CONTACT_DELETE</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Delete Contact\"]",
+          "p-button .p-button-label:contains(\"Delete Contact\")",
+          "button:contains(\"Delete Contact\")",
+          "[aria-label=\"Delete Contact\"]",
+          "[title=\"Delete Contact\"]",
+          "p-button[icon=\"delete\"]",
+          ".delete",
+          "i.delete",
+          "button .delete",
+          "#deleteContactButton",
+          "#deleteContactButton-btn",
+          "[data-test-id=\"deleteContactButton\"]",
+          ".deleteContactButton-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 5
+      }
+    },
+    {
+      "element": "p-button[label=\"Save\"]",
+      "popover": {
+        "title": "Save",
+        "description": "Saves all changes made to the contact's information. This button becomes active only after modifications have been made in edit mode and all required fields are valid.<br><br><strong>When to use:</strong> After making any changes to the contact's details., To confirm and apply updates to the contact record.<br><small><em>Requires: CONTACT_EDIT</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Save\"]",
+          "p-button .p-button-label:contains(\"Save\")",
+          "button:contains(\"Save\")",
+          "[aria-label=\"Save\"]",
+          "[title=\"Save\"]",
+          "p-button[icon=\"save\"]",
+          ".save",
+          "i.save",
+          "button .save",
+          "#saveContactButton",
+          "#saveContactButton-btn",
+          "[data-test-id=\"saveContactButton\"]",
+          ".saveContactButton-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 6
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of ContactView. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-24T10:20:44.559973",
+  "version": "1.0"
+}

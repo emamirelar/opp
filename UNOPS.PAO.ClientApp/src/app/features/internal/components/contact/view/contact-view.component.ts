@@ -46,6 +46,23 @@ import { Contact } from '../../../models/contact.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
 
+/**
+ * @uiEntity ContactView
+ * @route /partnerships/contacts/:recordId/details
+ * @description View and edit detailed contact information including personal details, professional information, communication preferences, and associated documents. Central place for managing all aspects of an individual contact person.
+ * @capabilities view_contact_details, edit_contact_info, upload_photo, manage_documents, view_links, update_preferences, edit_address, update_status
+ * @synonyms contact_details, person_profile, individual_view, contact_information
+ * @mandatoryFields firstName, lastName, email, title, partnerId
+ * @help_when_stuck This page shows complete contact information. Click Edit to modify details, use the photo area to upload a new contact photo, or scroll down to see documents and links. All contact fields are organized by category for easy access.
+ * @common_tasks
+ *   - Editing contact info: Click the Edit button and modify the form fields
+ *   - Uploading photo: Click on the photo/avatar area to upload a new contact image
+ *   - Viewing interactions: Go to the Interactions tab to see communication history
+ *   - Managing documents: Scroll down to the Documents section to upload or view files
+ *   - Updating contact details: Edit personal, professional, or address information
+ *   - Managing links: Add or edit related links and references
+ */
+
 @Component({
   selector: 'app-contact-view',
   imports: [

@@ -1,0 +1,83 @@
+{
+  "entity": "Interaction",
+  "description": "Create and edit interaction records including meetings, calls, emails, and other communications with partners and contacts. Supports AI transcription and file attachments.",
+  "synonyms": [
+    "meeting",
+    "communication",
+    "event",
+    "activity",
+    "engagement",
+    "touchpoint"
+  ],
+  "mandatoryFields": [
+    "type",
+    "date",
+    "subject",
+    "contactId"
+  ],
+  "pages": [
+    {
+      "route": "Modal dialog (no direct route)",
+      "name": "InteractionModalComponent",
+      "description": "This modal allows users to create new interaction records or edit existing ones. It supports various types of communications like meetings, calls, and emails. Key features include adding participants, uploading relevant documents, and leveraging AI for transcribing and extracting details from audio or image files.",
+      "capabilities": [
+        "create_interaction",
+        "edit_interaction",
+        "add_participants",
+        "upload_documents",
+        "ai_transcription",
+        "schedule_followup",
+        "set_interaction_type"
+      ],
+      "buttons": [
+        {
+          "id": "save_interaction-btn",
+          "label": "Save | Create Interaction",
+          "icon": "pi pi-check",
+          "action": "save_interaction",
+          "description": "Saves or creates an interaction record with all form data, including participants, documents, and interaction details. This action finalizes the interaction entry.",
+          "when_to_use": [
+            "When all required fields are filled and you want to save the interaction to the system."
+          ]
+        },
+        {
+          "id": "delete_interaction-btn",
+          "label": "Delete",
+          "icon": "pi pi-trash",
+          "action": "delete_interaction",
+          "description": "Permanently deletes an interaction record after a confirmation dialog. Use this with caution as deleted interactions cannot be recovered.",
+          "when_to_use": [
+            "When an interaction was recorded incorrectly or is no longer relevant (use with caution)."
+          ]
+        },
+        {
+          "id": "process_transcription-btn",
+          "label": "Process Transcription",
+          "icon": "pi pi-microphone",
+          "action": "process_transcription",
+          "description": "Processes AI transcription results from uploaded audio, image, or text files and automatically fills relevant form fields with extracted interaction data, such as subject, participants, or notes.",
+          "when_to_use": [
+            "After uploading audio",
+            "image",
+            "or text to extract interaction details automatically using AI."
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're unsure how to proceed, ensure you have filled in the mandatory fields: interaction type (e.g., Meeting, Call), date, and subject. You can add participants by typing their email addresses or selecting them from your contact list. For quick data entry, consider using the AI transcription feature to automatically populate details from audio or image files.",
+        "common_tasks": [
+          "Recording a meeting: Select 'Meeting' as the type, specify the date and time, add all participants, and include detailed notes in the description field.",
+          "Logging a phone call: Choose 'Phone Call' as the type, select the contact you spoke with, and provide a summary of the conversation.",
+          "Adding participants: You can add participants by typing their email addresses into the participant field or by selecting existing contacts from the dropdown list.",
+          "Using AI transcription: After uploading an audio file, image, or text, click the 'Process Transcription' button to analyze the content and automatically fill in interaction details.",
+          "Attaching documents: Use the document section to upload any relevant files, such as meeting agendas, notes, or related documents.",
+          "Setting follow-up: If available, use the follow-up options to schedule future interaction reminders or define next steps related to this interaction."
+        ]
+      }
+    }
+  ]
+}

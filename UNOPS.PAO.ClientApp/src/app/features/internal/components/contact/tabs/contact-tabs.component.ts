@@ -12,6 +12,21 @@ import { PictureComponent } from '@common/reusables/components/picture/picture.c
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
 import { ContactService } from '../../../services/contact.service';
 
+/**
+ * @uiEntity ContactTabs
+ * @route /partnerships/contacts/:recordId
+ * @description Contact detail navigation interface with tabs for different aspects of contact information. Provides organized access to contact details, interactions, and related information.
+ * @capabilities navigate_contact_sections, view_contact_details, manage_contact_interactions, access_contact_data
+ * @synonyms contact_navigation, contact_details, contact_tabs, contact_sections
+ * @mandatoryFields recordId
+ * @help_when_stuck Use the tabs to navigate between different sections of contact information. The contact photo and basic info are always visible at the top. Each tab shows different aspects like personal details, interactions, or related data.
+ * @common_tasks
+ *   - Viewing contact details: Click on the main Details tab
+ *   - Checking interactions: Switch to Interactions tab to see communication history
+ *   - Navigating between sections: Click on tab headers to switch views
+ *   - Going back: Use the back button to return to the contact list
+ */
+
 interface TabItem {
   label: string;
   route: string;

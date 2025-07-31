@@ -1,0 +1,291 @@
+{
+  "entity": "EntityConfiguration",
+  "description": "Manages the dynamic configuration and schema definition of entities and their fields within the system. This includes creating, updating, and retrieving entity structures and their associated field properties.",
+  "synonyms": [
+    "Entity Config",
+    "Data Model",
+    "Schema Definition",
+    "Field Configuration",
+    "Entity Management"
+  ],
+  "mandatoryFields": [
+    "id",
+    "entityManagerId"
+  ],
+  "endpoints": [
+    {
+      "name": "GetEntities",
+      "url": "/api/entities",
+      "method": "GET",
+      "description": "Get all available entities for dropdown selection.",
+      "parameters": {},
+      "example_uses": [
+        "How can I get a list of all configurable entities?",
+        "Show me the entities that can be selected in a dropdown.",
+        "I need a list of all system entities for a UI component."
+      ],
+      "when_to_use": "Use this endpoint to retrieve a simple list of all entities configured in the system, typically for populating dropdowns or selection lists in a user interface."
+    },
+    {
+      "name": "GetEntityConfiguration",
+      "url": "/api/entity-configuration/{entityName}",
+      "method": "GET",
+      "description": "Get entity configuration details by entity name for the frontend screen.",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Retrieve the configuration details for the 'Partner' entity.",
+        "I need to see how the 'Project' entity is configured, including its fields.",
+        "Show me the schema definition for the 'Contact' entity."
+      ],
+      "when_to_use": "Use this endpoint to fetch the detailed configuration, including field definitions, for a specific entity by its name. This is typically used to dynamically render forms or display entity structures on a frontend."
+    },
+    {
+      "name": "SaveEntityConfiguration",
+      "url": "/api/entity-configuration/{entityName}/save",
+      "method": "POST",
+      "description": "Save entity configuration (entity description and field configurations).",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Save the updated configuration for the 'Vendor' entity.",
+        "I want to persist changes to the 'Asset' entity's description and field settings.",
+        "Update the configuration of the 'User' entity with new field definitions."
+      ],
+      "when_to_use": "Use this endpoint to update or save the entire configuration of an existing entity, including its general description and the definitions of its fields. This is a comprehensive save operation."
+    },
+    {
+      "name": "GetAllEntityConfigurations",
+      "url": "/api/entity-configuration",
+      "method": "GET",
+      "description": "Get all entity configurations (for admin purposes).",
+      "parameters": {},
+      "example_uses": [
+        "List all configured entities and their full configurations.",
+        "As an administrator, I need to see all entity schemas.",
+        "Retrieve a complete overview of all entity configurations in the system."
+      ],
+      "when_to_use": "Use this endpoint to retrieve a comprehensive list of all entity configurations, including their detailed field definitions. This is typically used for administrative overview or system-wide configuration management."
+    },
+    {
+      "name": "CreateEntityConfiguration",
+      "url": "/api/entity-configuration/create",
+      "method": "POST",
+      "description": "Create a new entity configuration.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Create a new entity configuration for 'Project Task'.",
+        "Define a new data model for 'Support Ticket'.",
+        "I need to add a new configurable entity to the system."
+      ],
+      "when_to_use": "Use this endpoint to define and create a brand new entity configuration within the system. This allows for the introduction of new data models."
+    },
+    {
+      "name": "UpdateEntityConfiguration",
+      "url": "/api/entity-configuration/{id}",
+      "method": "PUT",
+      "description": "Update an entity configuration.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Update the entity configuration with ID 123.",
+        "Modify the details of an existing entity configuration.",
+        "I want to change the properties of the entity configuration identified by its ID."
+      ],
+      "when_to_use": "Use this endpoint to modify an existing entity configuration identified by its unique ID. This is for targeted updates to a specific entity's definition."
+    },
+    {
+      "name": "DeleteEntityConfiguration",
+      "url": "/api/entity-configuration/{id}",
+      "method": "DELETE",
+      "description": "Delete an entity configuration.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Delete the entity configuration with ID 456.",
+        "Remove the 'Old Feature' entity configuration from the system.",
+        "I need to permanently delete an entity definition."
+      ],
+      "when_to_use": "Use this endpoint to permanently remove an entity configuration from the system, identified by its unique ID. Exercise caution as this action is irreversible."
+    },
+    {
+      "name": "GetEntityFields",
+      "url": "/api/entity-configuration/{entityManagerId}/fields",
+      "method": "GET",
+      "description": "Get fields for a specific entity configuration.",
+      "parameters": {
+        "entityManagerId": {
+          "type": "integer",
+          "required": true,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Retrieve all fields associated with the entity configuration ID 789.",
+        "Show me the field definitions for the 'Product' entity configuration.",
+        "I need a list of fields for a specific entity configuration."
+      ],
+      "when_to_use": "Use this endpoint to retrieve only the field definitions for a specific entity configuration, identified by its manager ID. This is useful when you only need the schema of fields, not the full entity configuration."
+    },
+    {
+      "name": "CreateEntityField",
+      "url": "/api/entity-field/create",
+      "method": "POST",
+      "description": "Create a new entity field.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Add a new 'Status' field to the 'Order' entity.",
+        "Define a new custom field for an existing entity.",
+        "I want to create a new field within an entity's configuration."
+      ],
+      "when_to_use": "Use this endpoint to add a new field definition to an existing entity configuration. This allows for extending the data model of an entity."
+    },
+    {
+      "name": "UpdateEntityField",
+      "url": "/api/entity-field/{id}",
+      "method": "PUT",
+      "description": "Update an entity field.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": ""
+        },
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Update the entity field with ID 101.",
+        "Modify the properties of an existing field, like its data type or label.",
+        "I need to change the definition of a specific entity field."
+      ],
+      "when_to_use": "Use this endpoint to modify the properties of an existing entity field, identified by its unique ID. This is for targeted updates to a specific field's definition."
+    },
+    {
+      "name": "DeleteEntityField",
+      "url": "/api/entity-field/{id}",
+      "method": "DELETE",
+      "description": "Delete an entity field.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Delete the entity field with ID 202.",
+        "Remove the 'Temporary Notes' field from the 'Task' entity.",
+        "I need to permanently delete a specific field from an entity's configuration."
+      ],
+      "when_to_use": "Use this endpoint to permanently remove an entity field from its configuration, identified by its unique ID. Exercise caution as this action is irreversible."
+    },
+    {
+      "name": "GetRelatedEntityFields",
+      "url": "/api/entity-configuration/related-fields/{entityType}",
+      "method": "GET",
+      "description": "Get available fields for a related entity type (for relationship field configuration).",
+      "parameters": {
+        "entityType": {
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Show me the fields available for linking to the 'User' entity type.",
+        "What fields can I use to establish a relationship with the 'Department' entity?",
+        "Retrieve fields from a related entity for configuring a relationship field."
+      ],
+      "when_to_use": "Use this endpoint to discover available fields from a specified related entity type. This is crucial when configuring relationship fields, allowing you to select which fields from the related entity can be referenced."
+    },
+    {
+      "name": "GetFieldOptionsForDataType",
+      "url": "/api/entity-configuration/field-options/{dataType}/{contextEntityName}",
+      "method": "GET",
+      "description": "Get field options for a specific data type in the context of an entity.",
+      "parameters": {
+        "dataType": {
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        "contextEntityName": {
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "What are the available options for a 'string' data type field in the context of the 'Product' entity?",
+        "Show me the field options for a 'boolean' type within the 'Settings' entity.",
+        "Retrieve configuration options for a field based on its data type and the entity it belongs to."
+      ],
+      "when_to_use": "Use this endpoint to retrieve specific configuration options or constraints applicable to a field based on its data type (e.g., 'string', 'integer', 'boolean') and the entity it's being configured for. This helps in dynamic form generation or validation."
+    },
+    {
+      "name": "GetEntityListViewConfiguration",
+      "url": "/api/entity-configuration/{entityName}/list-view",
+      "method": "GET",
+      "description": "Get list view configuration for an entity (for dynamic column generation).",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      },
+      "example_uses": [
+        "Retrieve the list view settings for the 'Order' entity.",
+        "What columns should be displayed in the list view for 'Customers'?",
+        "Show me the configuration for generating the table view of the 'Invoice' entity."
+      ],
+      "when_to_use": "Use this endpoint to fetch the specific configuration that dictates how an entity's data should be displayed in a list or table view, including which columns to show and their order. This is essential for dynamic UI rendering of data grids."
+    }
+  ]
+}

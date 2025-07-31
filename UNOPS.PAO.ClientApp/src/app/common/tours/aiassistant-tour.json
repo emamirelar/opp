@@ -1,0 +1,215 @@
+{
+  "tourId": "aiassistant-overview",
+  "title": "AiAssistant Overview Tour",
+  "description": "The AI Assistant provides an intelligent, conversational interface to help you navigate the application, understand features, find information, and streamline your workflows. It offers real-time support, manages chat sessions, and leverages context-aware insights to provide relevant assistance.",
+  "entity": "AiAssistant",
+  "route": "/ai",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to AiLayoutComponent",
+        "description": "This page is your central hub for interacting with the AI Assistant. It features a main chat area for conversations, a sidebar for managing chat sessions and accessing contextual information, and options to expand the view for focused work. Use it to get instant help, explore data, or automate tasks within the application.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"New Chat\"]",
+      "popover": {
+        "title": "New Chat",
+        "description": "Initiates a brand new conversation with the AI Assistant, clearing the current chat history and context. This is useful when you want to start a fresh topic or if your current conversation has become too long or irrelevant.<br><br><strong>When to use:</strong> When you want to start a completely new topic with the AI., If the current chat session is no longer relevant to your task.<br><small><em>Requires: ASSISTANT_ACCESS</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"New Chat\"]",
+          "p-button .p-button-label:contains(\"New Chat\")",
+          "button:contains(\"New Chat\")",
+          "[aria-label=\"New Chat\"]",
+          "[title=\"New Chat\"]",
+          "p-button[icon=\"add\"]",
+          ".add",
+          "i.add",
+          "button .add",
+          "#new-chat-session",
+          "#new-chat-session-btn",
+          "[data-test-id=\"new-chat-session\"]",
+          ".new-chat-session-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "element": "p-button[label=\"Send\"]",
+      "popover": {
+        "title": "Send",
+        "description": "Sends your typed message to the AI Assistant for processing. The AI will then generate a response based on your query and the current conversation context.<br><br><strong>When to use:</strong> After typing your question or command in the input field., To submit a follow-up question or clarification.<br><small><em>Requires: ASSISTANT_ACCESS</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Send\"]",
+          "p-button .p-button-label:contains(\"Send\")",
+          "button:contains(\"Send\")",
+          "[aria-label=\"Send\"]",
+          "[title=\"Send\"]",
+          "p-button[icon=\"send\"]",
+          ".send",
+          "i.send",
+          "button .send",
+          "#send-message",
+          "#send-message-btn",
+          "[data-test-id=\"send-message\"]",
+          ".send-message-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 2
+      }
+    },
+    {
+      "element": "p-button[label=\"Clear Chat\"]",
+      "popover": {
+        "title": "Clear Chat",
+        "description": "Deletes all messages from the current chat session, effectively resetting the conversation without starting a new session. This can be helpful if you want to remove sensitive information or simply clean up the display.<br><br><strong>When to use:</strong> To remove all messages from the current chat session., If you want to reset the conversation context without creating a new session.<br><small><em>Requires: ASSISTANT_ACCESS</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Clear Chat\"]",
+          "p-button .p-button-label:contains(\"Clear Chat\")",
+          "button:contains(\"Clear Chat\")",
+          "[aria-label=\"Clear Chat\"]",
+          "[title=\"Clear Chat\"]",
+          "p-button[icon=\"delete_sweep\"]",
+          ".delete_sweep",
+          "i.delete_sweep",
+          "button .delete_sweep",
+          "#clear-current-chat",
+          "#clear-current-chat-btn",
+          "[data-test-id=\"clear-current-chat\"]",
+          ".clear-current-chat-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 3
+      }
+    },
+    {
+      "element": "p-button[label=\"Fullscreen\"]",
+      "popover": {
+        "title": "Fullscreen",
+        "description": "Expands the AI Assistant interface to occupy the entire screen, providing a more immersive and focused chat experience. This is ideal for long conversations or when you need to concentrate solely on the AI interaction.<br><br><strong>When to use:</strong> When you need more screen space for the chat interface., To focus solely on your conversation with the AI.<br><small><em>Requires: ASSISTANT_ACCESS</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Fullscreen\"]",
+          "p-button .p-button-label:contains(\"Fullscreen\")",
+          "button:contains(\"Fullscreen\")",
+          "[aria-label=\"Fullscreen\"]",
+          "[title=\"Fullscreen\"]",
+          "p-button[icon=\"fullscreen\"]",
+          ".fullscreen",
+          "i.fullscreen",
+          "button .fullscreen",
+          "#toggle-fullscreen",
+          "#toggle-fullscreen-btn",
+          "[data-test-id=\"toggle-fullscreen\"]",
+          ".toggle-fullscreen-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 4
+      }
+    },
+    {
+      "element": "p-button[label=\"Copy\"]",
+      "popover": {
+        "title": "Copy",
+        "description": "Copies the AI's last response to your clipboard, allowing you to easily paste it into other applications, documents, or messages.<br><br><strong>When to use:</strong> When you want to save or share a specific answer from the AI., To quickly transfer information provided by the AI to another field or document.<br><small><em>Requires: ASSISTANT_ACCESS</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Copy\"]",
+          "p-button .p-button-label:contains(\"Copy\")",
+          "button:contains(\"Copy\")",
+          "[aria-label=\"Copy\"]",
+          "[title=\"Copy\"]",
+          "p-button[icon=\"content_copy\"]",
+          ".content_copy",
+          "i.content_copy",
+          "button .content_copy",
+          "#copy-ai-response",
+          "#copy-ai-response-btn",
+          "[data-test-id=\"copy-ai-response\"]",
+          ".copy-ai-response-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 5
+      }
+    },
+    {
+      "element": "p-button[label=\"Rename\"]",
+      "popover": {
+        "title": "Rename",
+        "description": "Allows you to change the name of the current chat session. This helps in organizing your chat history and quickly identifying past conversations.<br><br><strong>When to use:</strong> After a conversation has developed a clear topic., To make it easier to find specific past chats in your history.<br><small><em>Requires: ASSISTANT_ACCESS</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Rename\"]",
+          "p-button .p-button-label:contains(\"Rename\")",
+          "button:contains(\"Rename\")",
+          "[aria-label=\"Rename\"]",
+          "[title=\"Rename\"]",
+          "p-button[icon=\"edit\"]",
+          ".edit",
+          "i.edit",
+          "button .edit",
+          "#rename-session",
+          "#rename-session-btn",
+          "[data-test-id=\"rename-session\"]",
+          ".rename-session-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 6
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of AiAssistant. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-24T10:20:44.527981",
+  "version": "1.0"
+}
