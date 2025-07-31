@@ -132,7 +132,7 @@ public class PartnerController : BaseController
     /// <summary>
     /// Performs simple text search across multiple partner fields (name, description, etc.).
     /// </summary>
-    /// <param name="request">Partner filter request containing pagination parameters</param>
+    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
     /// <param name="searchText">Text to search across partner name, description, and other basic fields</param>
     /// <example_uses>
     /// Search for partners named UNICEF
@@ -146,7 +146,7 @@ public class PartnerController : BaseController
     [HttpGet(APIDictionary.Partner + "/search")]
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> SearchPartners(
-        [FromQuery] PartnerFilterRequest request,
+        [FromQuery] PaginationRequest request,
         [FromQuery] string searchText)
     {
         // Validate pagination parameters
@@ -160,9 +160,19 @@ public class PartnerController : BaseController
 
         return await HandleSearchOperationAsync(async () =>
         {
+            // Create a PartnerFilterRequest with pagination/sorting info and search text
+            var partnerFilterRequest = new PartnerFilterRequest
+            {
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize,
+                OrderBy = request.OrderBy,
+                Ascending = request.Ascending,
+                SearchText = searchText
+            };
+
             return await SearchControllerHelper.ProcessSimpleTextSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
                 searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
-                request,
+                partnerFilterRequest,
                 "Partner",
                 filterRequest => new PartnerCompositeSpecification(filterRequest),
                 async (userId, spec, pagination) => {
@@ -182,7 +192,7 @@ public class PartnerController : BaseController
     /// <summary>
     /// Performs advanced search with structured criteria including status, dates, relationships, and complex filters.
     /// </summary>
-    /// <param name="request">Partner filter request containing pagination parameters</param>
+    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
     /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
     /// <param name="searchText">Optional additional text search to combine with criteria</param>
     /// <example_uses>
@@ -204,7 +214,7 @@ public class PartnerController : BaseController
     [HttpGet(APIDictionary.Partner + "/advanced-search")]
     [AccessControlled(EntityTypes.Partner, "read")]
     public async Task<ActionResult<PaginationResponse<PartnerModel>>> AdvancedSearchPartners(
-        [FromQuery] PartnerFilterRequest request,
+        [FromQuery] PaginationRequest request,
         [FromQuery] string searchCriteria,
         [FromQuery] string? searchText = null)
     {
@@ -219,9 +229,21 @@ public class PartnerController : BaseController
 
         return await HandleSearchOperationAsync(async () =>
         {
+            // Create a PartnerFilterRequest with pagination/sorting info and search criteria
+            var partnerFilterRequest = new PartnerFilterRequest
+            {
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize,
+                OrderBy = request.OrderBy,
+                Ascending = request.Ascending,
+                SearchCriteria = searchCriteria,
+                SearchText = searchText,
+                AdvancedSearch = true // Set this internally since we know this is an advanced search
+            };
+
             return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
                 searchCriteria, searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
-                request,
+                partnerFilterRequest,
                 "Partner",
                 filterRequest => new PartnerCompositeSpecification(filterRequest),
                 async (userId, spec, pagination) => {

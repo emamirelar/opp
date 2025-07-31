@@ -930,26 +930,6 @@ public class UNOPSGeminiManager : IGeminiManager
         return responseContent;
     }
 
-    private static bool IsRestrictedHeader(string headerName)
-    {
-        // List of headers that should not be forwarded or are set automatically by HttpClient
-        var restrictedHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "Content-Length",
-            "Content-Type",
-            "Host",
-            "Connection",
-            "Transfer-Encoding",
-            "Expect",
-            "If-Modified-Since",
-            "Range",
-            "Referer",
-            "User-Agent"
-        };
-        
-        return restrictedHeaders.Contains(headerName);
-    }
-
     public async Task<string> GenerateTitle(string sessionId, int userId)
     {
         // If sessionId is null or empty, throw

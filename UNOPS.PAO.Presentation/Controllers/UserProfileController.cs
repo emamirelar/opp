@@ -77,7 +77,7 @@ public class UserProfileController : BaseController
     /// <remarks>
     /// Use this when the user asks for their profile information or when displaying profile details in the UI.
     /// </remarks>
-    [HttpGet(APIDictionary.Profile)]
+    /*[HttpGet(APIDictionary.Profile)]
     public async Task<ActionResult> Get()
     {
         return await HandleOperationAsync(async () =>
@@ -99,7 +99,7 @@ public class UserProfileController : BaseController
             
             return profile;
         });
-    }
+    }*/
 
     /// <summary>
     /// Updates the current user's profile information.
@@ -123,77 +123,6 @@ public class UserProfileController : BaseController
         {
             await _profileManager.Update(profile);
         });
-    }
-
-    #endregion
-
-    #region UserDataController Endpoints
-
-    /// <summary>
-    /// Retrieves comprehensive current user data and context information.
-    /// </summary>
-    /// <returns>Complete user data including organizational context</returns>
-    /// <example>
-    /// Example uses:
-    /// - "Get my user data"
-    /// - "Show current user information"
-    /// - "Display my account data"
-    /// - "What's my user context?"
-    /// </example>
-    /// <remarks>
-    /// Use this when the system needs complete user context data or when displaying comprehensive user information.
-    /// </remarks>
-    [HttpGet(APIDictionary.CurrentUserData)]
-    public async Task<ActionResult> GetCurrentUserData()
-    {
-        return await HandleOperationAsync(async () =>
-        {
-            var userData = await _userDataManager.GetCurrentUserAsync();
-            if (userData == null)
-            {
-                throw new BusinessException("User data not found");
-            }
-            return userData;
-        });
-    }
-    
-    /// <summary>
-    /// Retrieves user information by email address with fallback to current user.
-    /// </summary>
-    /// <param name="email">Email address to lookup (optional, defaults to current user)</param>
-    /// <returns>User information for the specified or current user</returns>
-    /// <example>
-    /// Example uses:
-    /// - "Get user info for john.doe@unops.org"
-    /// - "Find user by email address"
-    /// - "Lookup user information"
-    /// - "Get my user info"
-    /// </example>
-    /// <remarks>
-    /// Use this when looking up user information by email or when needing user details for administrative purposes.
-    /// </remarks>
-    [HttpGet(APIDictionary.UserInfo)]
-    public async Task<IActionResult> GetUserByEmail([FromQuery] string email)
-    {
-        if (string.IsNullOrEmpty(email))
-        {
-            // If no email is provided, try to get the current user's email from claims
-            var userEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                return BadRequest("Email is required");
-            }
-            email = userEmail;
-        }
-        
-        var userData = await _userDataManager.GetUserByEmailAsync(email);
-        if (userData == null)
-        {
-            // User not found in database
-            return NotFound();
-        }
-        
-        return Ok(userData);
     }
 
     #endregion
@@ -244,7 +173,7 @@ public class UserProfileController : BaseController
     /// Use this when the user asks for their profile information, account details, roles, permissions, organizational context, or when the system needs to load user-specific settings and preferences.
     /// </remarks>
     [HttpGet(APIDictionary.CurrentUserInfo)]
-    public async Task<ActionResult<UserInfo>> GetCurrentUserInfo([FromQuery] string? email = null)
+    public async Task<ActionResult<UserInfo>> GetUserProfileDetails([FromQuery] string? email = null)
     {
         string currentEmail;
         

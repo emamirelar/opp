@@ -32,6 +32,7 @@ public class ContactController : BaseController
 {
     private readonly IContactManager _manager;
     private readonly IOrgUnitFilterService _orgUnitFilterService;
+    private readonly IGeminiManager _geminiManager;
 
     public ContactController(
         IManagerWrapper manager, 
@@ -43,6 +44,7 @@ public class ContactController : BaseController
     {
         _manager = manager.ContactManager;
         _orgUnitFilterService = orgUnitFilterService;
+        _geminiManager = manager.GeminiManager;
     }
 
     /// <summary>
@@ -86,128 +88,182 @@ public class ContactController : BaseController
     }
 
     /// <summary>
-    /// Retrieves a list of contacts with advanced filtering, pagination, search capabilities, and access control.
+    /// Retrieves all contacts with basic pagination and ordering (no search criteria).
     /// </summary>
-    /// <param name="request">Contact filter request containing search and pagination parameters</param>
-    /// <param name="request.pageIndex">Page number (1-based)</param>
-    /// <param name="request.pageSize">Number of items per page</param>
-    /// <param name="request.searchText">Text to search across contact fields</param>
-    /// <param name="request.orderBy">Field to order results by</param>
-    /// <param name="request.ascending">Sort direction (true for ascending)</param>
-    /// <param name="request.orgUnitId">Filter by organizational unit ID for access control</param>
-    /// <param name="advancedSearch">Enable advanced search mode for complex entity relationship searches</param>
-    /// <param name="searchCriteria">JSON string containing advanced search filters with nested entity criteria. Required when advancedSearch=true</param>
-    /// <param name="searchText">Text to search across contact fields (override for request.searchText)</param>
+    /// <param name="pageIndex">Page number (1-based, default: 1)</param>
+    /// <param name="pageSize">Number of items per page (default: 20)</param>
+    /// <param name="orderBy">Field to order results by (optional)</param>
+    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
     /// <example_uses>
     /// Show me all contacts
-    /// List contacts with email domain @unicef.org
-    /// Find contacts working at government partners (use advancedSearch=true, searchCriteria with partner.name)
-    /// Search for contacts named John
-    /// Show contacts from my office only
-    /// Get contacts sorted by last name
-    /// Find technical experts in partner organizations (use advancedSearch=true)
-    /// Find contacts from specific interactions (use advancedSearch=true, searchCriteria with interaction.subject)
-    /// Get contacts from UNICEF partner organization (advancedSearch=true)
+    /// List all contacts in the system
+    /// Display the contact directory
+    /// Get all contact records
+    /// Browse contacts
     /// </example_uses>
-    /// <when_to_use>Use this when the user asks to search, list, filter, or browse contacts. Use advancedSearch=true for relationship-based searches involving partners or interactions.</when_to_use>
-    /// <advanced_search_guidance>
-    /// **CRITICAL: When to use advancedSearch=true:**
-    /// - User searches for contacts BY PARTNER: "contacts from UNICEF", "contacts working at partner X"
-    /// - User searches for contacts BY ORGANIZATION: "contacts from organization Y"
-    /// - User searches for contacts BY INTERACTION: "contacts from meeting Z", "contacts involved in interaction"
-    /// - Any search involving related entities (partners, interactions, organizations)
-    /// 
-            /// **searchCriteria JSON format with operators (CRITICAL - Must use this exact format):**
-        /// searchCriteria must be a JSON array of SearchCriteria objects with field, operator, value, and logicalOperator
-        /// 
-        /// **Available Operators:**
-        /// - "is" (exact match), "is not" (not equal), "like" (contains), "not like" (does not contain)
-        /// - ">", "<", ">=", "<=" (comparisons), "after", "before", "between" (dates)
-        /// 
-        /// **Logical Operators:** "AND", "OR"
-        /// 
-        /// **Examples:**
-        /// - Find contacts from partner "Asian Infrastructure": 
-        ///   searchCriteria=[{"field": "partner.name", "operator": "like", "value": "Asian Infrastructure"}]
-        /// - Find contacts from UNICEF organization: 
-        ///   searchCriteria=[{"field": "partner.name", "operator": "like", "value": "UNICEF"}]
-        /// - Find contacts involved in climate meetings: 
-        ///   searchCriteria=[{"field": "interaction.subject", "operator": "like", "value": "climate", "logicalOperator": "AND"}, {"field": "interaction.type", "operator": "is", "value": "Meeting"}]
-        /// - Find contacts named John from WHO: 
-        ///   searchCriteria=[{"field": "firstName", "operator": "like", "value": "John", "logicalOperator": "AND"}, {"field": "partner.name", "operator": "like", "value": "WHO"}]
-    /// 
-    /// **Simple search (advancedSearch=false) for:**
-    /// - Name/email text search: "contacts named Smith"
-    /// - Basic filtering: "contacts with gmail", "active contacts"
-    /// - Role/title searches: "technical contacts"
-    /// </advanced_search_guidance>
-    /// <returns>Paginated list of contacts with metadata</returns>
+    /// <when_to_use>Use this when the user wants to see ALL contacts without any search criteria or when asking for a general contact list.</when_to_use>
+    /// <returns>Paginated list of all contacts</returns>
     [HttpGet(APIDictionary.Contact)]
     [AccessControlled(EntityTypes.Contact, "read")]
-    public async Task<ActionResult> Get(
-        [FromQuery] ContactFilterRequest request,
-        [FromQuery] bool advancedSearch = false, 
-        [FromQuery] string? searchCriteria = null, 
-        [FromQuery] string? searchText = null)
+    public async Task<ActionResult> ListAllContacts(
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] bool ascending = true)
     {
-        
         // Validate pagination parameters
-        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
         if (validationResult != null) return validationResult;
         
-        // Handle different search scenarios using the new helper methods
         return await HandleSearchOperationAsync(async () =>
         {
-            if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
+            // Create a basic ContactFilterRequest with just pagination and ordering
+            var request = new ContactFilterRequest
             {
-                // For advanced search, we need to parse the search criteria and combine with org unit filter
-                return await SearchControllerHelper.ProcessAdvancedSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
-                    searchCriteria, searchText ?? request.SearchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
-                    request,
-                    "Contact",
-                    filterRequest => new ContactCompositeSpecification(filterRequest),
-                    async (userId, spec, pagination) => {
-                        // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
-                        if (pagination is ContactFilterRequest contactPagination && contactPagination.OrgUnitId.HasValue)
-                        {
-                            var orgUnitSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(contactPagination, User);
-                            var adaptedSpec = new ContactSpecificationAdapter(orgUnitSpec);
-                            return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, adaptedSpec, contactPagination);
-                        }
-                        return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
-                    },
-                    CurrentUserId, _logger);
-            }
-
-            // Handle simple text search
-            if (!string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(request.SearchText))
-            {
-                var textToSearch = searchText ?? request.SearchText;
-                return await SearchControllerHelper.ProcessSimpleTextSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
-                    textToSearch!, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
-                    request,
-                    "Contact",
-                    filterRequest => new ContactCompositeSpecification(filterRequest),
-                    async (userId, spec, pagination) => {
-                        // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
-                        if (pagination is ContactFilterRequest contactPagination && contactPagination.OrgUnitId.HasValue)
-                        {
-                            var orgUnitSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(contactPagination, User);
-                            var adaptedSpec = new ContactSpecificationAdapter(orgUnitSpec);
-                            return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, adaptedSpec, contactPagination);
-                        }
-                        return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
-                    },
-                    CurrentUserId, _logger);
-            }
-
-            // Use OrgUnitFilterService to create the appropriate specification
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                OrderBy = orderBy,
+                Ascending = ascending
+            };
+            
+            // Use OrgUnitFilterService to create the appropriate specification for listing all
             var unosContactSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(request, User);
             var specification = new ContactSpecificationAdapter(unosContactSpec);
             
             var result = await _manager.GetContactsWithSpecificationAsync(User, specification, request);
             return (PaginationResponse<ContactModel>)result;
-        }, "contact search");
+        }, "contact list all");
+    }
+
+    /// <summary>
+    /// Performs simple text search across multiple contact fields (name, email, title, etc.).
+    /// </summary>
+    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
+    /// <param name="searchText">Text to search across contact name, email, title, and other basic fields</param>
+    /// <example_uses>
+    /// Search for contacts named John
+    /// Find contacts with @unicef.org email
+    /// Search for contacts containing 'Smith'
+    /// Find contact with phone number 555-1234
+    /// Look for contacts with title 'Manager'
+    /// </example_uses>
+    /// <when_to_use>Use this for simple name, email, title, or basic field searches. NOT for partner relationship searches.</when_to_use>
+    /// <returns>Paginated list of contacts matching the search text</returns>
+    [HttpGet(APIDictionary.Contact + "/search")]
+    [AccessControlled(EntityTypes.Contact, "read")]
+    public async Task<ActionResult> SearchContacts(
+        [FromQuery] PaginationRequest request,
+        [FromQuery] string searchText)
+    {
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        if (validationResult != null) return validationResult;
+        
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            throw new BusinessException("Search text is required for contact search");
+        }
+
+        return await HandleSearchOperationAsync(async () =>
+        {
+            // Create a ContactFilterRequest with pagination/sorting info and search text
+            var contactFilterRequest = new ContactFilterRequest
+            {
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize,
+                OrderBy = request.OrderBy,
+                Ascending = request.Ascending,
+                SearchText = searchText
+            };
+
+            return await SearchControllerHelper.ProcessSimpleTextSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
+                searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                contactFilterRequest,
+                "Contact",
+                filterRequest => new ContactCompositeSpecification(filterRequest),
+                async (userId, spec, pagination) => {
+                    // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
+                    if (pagination is ContactFilterRequest contactPagination && contactPagination.OrgUnitId.HasValue)
+                    {
+                        var orgUnitSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(contactPagination, User);
+                        var adaptedSpec = new ContactSpecificationAdapter(orgUnitSpec);
+                        return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, adaptedSpec, contactPagination);
+                    }
+                    return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
+                },
+                CurrentUserId, _logger);
+        }, "contact simple search");
+    }
+
+    /// <summary>
+    /// Performs advanced search with structured criteria including relationships with partners, departments, and complex filters.
+    /// </summary>
+    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
+    /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
+    /// <param name="searchText">Optional additional text search to combine with criteria</param>
+    /// <example_uses>
+    /// Find contacts from UNICEF partner organization
+    /// Show contacts in Finance department created this month
+    /// Get contacts working at Asian Infrastructure partners
+    /// Find contacts where partner status is Active
+    /// List contacts from climate-related interactions
+    /// Search for contacts by department and creation date
+    /// </example_uses>
+    /// <when_to_use>Use this for searches involving partner relationships, departments, dates, status, or any complex multi-field criteria.</when_to_use>
+    /// <searchCriteria_format>
+    /// JSON array format: [{"field": "partner.name", "operator": "like", "value": "UNICEF", "logicalOperator": "AND"}]
+    /// Available operators: is, is not, like, not like, greater than, less than, greater than or equal, less than or equal, this week, this month, this year
+    /// Available fields: firstName, lastName, email, title, department, partner.name, partner.status, createdDate, modifiedDate
+    /// Logical operators: AND, OR
+    /// </searchCriteria_format>
+    /// <returns>Paginated list of contacts matching the advanced search criteria</returns>
+    [HttpGet(APIDictionary.Contact + "/advanced-search")]
+    [AccessControlled(EntityTypes.Contact, "read")]
+    public async Task<ActionResult> AdvancedSearchContacts(
+        [FromQuery] PaginationRequest request,
+        [FromQuery] string searchCriteria,
+        [FromQuery] string? searchText = null)
+    {
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        if (validationResult != null) return validationResult;
+        
+        if (string.IsNullOrWhiteSpace(searchCriteria))
+        {
+            throw new BusinessException("Search criteria is required for advanced contact search");
+        }
+
+        return await HandleSearchOperationAsync(async () =>
+        {
+            // Create a ContactFilterRequest with pagination/sorting info and search criteria
+            var contactFilterRequest = new ContactFilterRequest
+            {
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize,
+                OrderBy = request.OrderBy,
+                Ascending = request.Ascending,
+                SearchCriteria = searchCriteria,
+                SearchText = searchText,
+                AdvancedSearch = true // Set this internally since we know this is an advanced search
+            };
+
+            return await SearchControllerHelper.ProcessAdvancedSearch<ContactFilterRequest, ContactCompositeSpecification, PaginationResponse<ContactModel>>(
+                searchCriteria, searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
+                contactFilterRequest,
+                "Contact",
+                filterRequest => new ContactCompositeSpecification(filterRequest),
+                async (userId, spec, pagination) => {
+                    // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
+                    if (pagination is ContactFilterRequest contactPagination && contactPagination.OrgUnitId.HasValue)
+                    {
+                        var orgUnitSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(contactPagination, User);
+                        var adaptedSpec = new ContactSpecificationAdapter(orgUnitSpec);
+                        return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, adaptedSpec, contactPagination);
+                    }
+                    return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
+                },
+                CurrentUserId, _logger);
+        }, "contact advanced search");
     }
 
     /// <summary>
@@ -377,4 +433,119 @@ public class ContactController : BaseController
         var result = await _manager.UpdateContactProfilePictureAsync(id, file);
         return Ok(new { imageUrl = result });
     }
+
+    #region AI-Powered Contact Data Processing
+
+    /// <summary>
+    /// Scans and processes uploaded files for contact data extraction using AI-powered analysis.
+    /// </summary>
+    /// <param name="req">File scan request containing the file to be processed</param>
+    /// <param name="req.File">File to scan for contact data (required)</param>
+    /// <example_uses>
+    /// Scan business cards for contact information
+    /// Upload contact forms for processing
+    /// Analyze contact documents with AI
+    /// Extract data from contact lists
+    /// Process contact information from uploaded files
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to upload and scan documents for contact data extraction using AI.</when_to_use>
+    /// <returns>Extracted contact data from the scanned file</returns>
+    [HttpPost(APIDictionary.Contact + "/scan-data")]
+    [AccessControlled(EntityTypes.Contact, "create")]
+    public async Task<ActionResult> ScanContactData([FromForm] GeminiFileRequest req) 
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            if (req?.File == null || req?.File.Length == 0)
+            {
+                throw new BusinessException("No valid file detected.");
+            }
+
+            string fileType = _geminiManager.FindFileType(req.File);
+
+            if (string.IsNullOrEmpty(fileType)) 
+            {
+                throw new BusinessException("File type not compatible");
+            }
+
+            string response = await _geminiManager.ScanFileForGeminiProcessing(req);
+
+            if (string.IsNullOrEmpty(response))
+            {
+                throw new BusinessException("Prompt configuration for contact data scanning is not found.");
+            }
+
+            return response.Trim();
+        });
+    }
+
+    /// <summary>
+    /// Analyzes uploaded files and extracts structured contact data using AI-powered data analysis.
+    /// </summary>
+    /// <param name="request">Analysis request containing file and analysis parameters</param>
+    /// <param name="request.entityType">Should be set to 'Contact' for contact data analysis</param>
+    /// <param name="request.analysisType">Type of analysis to perform on contact data</param>
+    /// <example_uses>
+    /// Analyze contact directories for structured data extraction
+    /// Extract contact information from uploaded forms
+    /// Process contact documents with AI
+    /// Convert contact files into structured database entries
+    /// Analyze business card data for key information
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to analyze files and extract structured contact data for database import.</when_to_use>
+    /// <returns>Structured contact data extracted from the analyzed file</returns>
+    [HttpPost(APIDictionary.Contact + "/analyse-file")]
+    [AccessControlled(EntityTypes.Contact, "create")]
+    public async Task<ActionResult> AnalyseContactData([FromBody] AnalyseFileRequest request)
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            if (request == null)
+            {
+                throw new BusinessException("Invalid request.");
+            }
+
+            return await _geminiManager.ExtractDataAfterAnalysis(request, CurrentUserId);
+        });
+    }
+
+    /// <summary>
+    /// Bulk uploads multiple contact records using AI-assisted data processing and validation.
+    /// </summary>
+    /// <param name="req">Bulk upload request containing contact data</param>
+    /// <param name="req.Type">Should be set to 'Contact' for contact bulk upload</param>
+    /// <param name="req.Data">Array of contact data objects to upload</param>
+    /// <param name="req.Options">Upload options and validation settings</param>
+    /// <example_uses>
+    /// Bulk upload 500 contacts from Excel
+    /// Import multiple contacts from CSV file
+    /// Mass upload contact data with AI validation
+    /// Bulk import contact records with duplicate detection
+    /// Upload large contact dataset with automated processing
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to upload multiple contact records at once with AI-assisted processing.</when_to_use>
+    /// <returns>Bulk upload results with success/failure status for each contact</returns>
+    [HttpPost(APIDictionary.Contact + "/bulk-upload")]
+    [AccessControlled(EntityTypes.Contact, "create")]
+    public async Task<ActionResult> BulkUploadContacts([FromBody] BulkUploadRequest req) 
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            if (req == null || string.IsNullOrEmpty(req.Type))
+            {
+                throw new BusinessException("Invalid request.");
+            }
+
+            // Ensure the request is for contact entities
+            if (!req.Type.Equals("Contact", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BusinessException("This endpoint only supports Contact bulk uploads.");
+            }
+
+            string response = await _geminiManager.BulkInsertRecordsAsync(req);
+            return new { message = response };
+        });
+    }
+
+    #endregion
 }
