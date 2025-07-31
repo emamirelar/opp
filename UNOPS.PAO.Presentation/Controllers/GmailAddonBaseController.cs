@@ -18,7 +18,11 @@ using UNOPS.PAO.UNOPSBusiness.Interfaces;
 namespace UNOPS.PAO.Presentation.Controllers
 {
     [ApiController]
-    [Authorize(AuthenticationSchemes = "Bearer")]
+    [Authorize(AuthenticationSchemes = "IAP")]
+    /***********************************************************************************************************************************
+     * Base controller for Gmail Addon API
+     * This controller might not be needed after switching to IAP authentication. Will cleanup later after end to end testing.
+     ***********************************************************************************************************************************/
     public abstract class GmailAddonBaseController : ControllerBase
     {
         protected readonly ILogger _logger;
