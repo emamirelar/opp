@@ -30,13 +30,13 @@ public class InteractionModel
     public virtual ICollection<InteractionUserModel>? InteractionUsers { get; set; }
     public string? Location { get; set; }
     public string Subject { get; set; }
-    [JsonIgnore]
-    public virtual OrganizationHierarchyModel? OrgUnit { get; set; }
-    public int? OrgUnitId { get; set; }
+    
+    public virtual ICollection<OrganizationUnitRelationshipModel>? OrganizationUnitRelationships { get; set; }
+    
     public List<DocumentModel>? Documents { get; set; }
 
     /// <summary>
-    /// Permissions for this specific partner
+    /// Permissions for this specific interaction
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }
     public string? GmailThreadId { get; set; }

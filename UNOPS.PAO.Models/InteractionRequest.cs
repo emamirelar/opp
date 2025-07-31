@@ -19,6 +19,11 @@ public class InteractionRequest : ExtensibleModel
     public List<int>? UserIds { get; set; } = new List<int>();
     public string? Location { get; set; }
     public string Subject { get; set; }
-    public int? OrgUnitId { get; set; }
+    
+    /// <summary>
+    /// Organization unit hierarchy IDs - managed automatically by the interaction manager
+    /// </summary>
+    public List<int>? OrganizationHierarchyIds { get; set; }
+    
     public string? GmailThreadId { get; set; }
 } 

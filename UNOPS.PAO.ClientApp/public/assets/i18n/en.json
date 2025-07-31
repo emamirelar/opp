@@ -216,6 +216,8 @@
       "organizationUnits": "Organization Units",
       "organizationUnit": "Organization Unit",
       "selectOrganizationUnits": "Select Organization Units",
+      "oneOrganizationUnitSelected": "1 Organization Unit Selected",
+      "organizationUnitsSelected": "{{count}} Organization Units Selected",
       "partnerCategory": "Partner Category",
       "partnerTeam": "Partner Team"
     },
@@ -303,6 +305,10 @@
       "description": "Description",
       "orgUnit": "Organization Unit",
       "selectOrgUnit": "Select Organization Unit",
+      "organizationUnits": "Organization Units",
+      "selectOrganizationUnits": "Select Organization Units",
+      "oneOrganizationUnitSelected": "1 Organization Unit Selected",
+      "organizationUnitsSelected": "{{count}} Organization Units Selected",
       "createdBy": "Created By",
       "selectCreatedBy": "Select Created By"
     },

@@ -209,9 +209,17 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
                     .Select(orgRel => orgRel.EntityId)
                     .ToListAsync();
                 
+                // Pre-materialize the interaction IDs that match the org unit criteria
+                var validInteractionIds = await _dataDbContext.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Interaction" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToListAsync();
+                
                 var interactionQuery = queryable as IQueryable<Interaction>;
                 queryable = interactionQuery.Where(i => 
-                    (i.OrgUnitId.HasValue && orgUnitIds.Contains(i.OrgUnitId.Value)) ||
+                    validInteractionIds.Contains(i.Id) ||
                     (i.InteractionContacts != null && i.InteractionContacts.Any(ic => ic.Contact != null && ic.Contact.Partner != null && validPartnerIds.Contains(ic.Contact.Partner.Id))) ||
                     (i.InteractionPartners != null && i.InteractionPartners.Any(ip => ip.Partner != null && validPartnerIds.Contains(ip.Partner.Id)))
                 ) as IQueryable<TEntity>;
@@ -505,9 +513,17 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
                     .Select(orgRel => orgRel.EntityId)
                     .ToList();
                 
+                // Pre-materialize the interaction IDs that match the org unit criteria
+                var validInteractionIds = _dataDbContext.Set<OrganizationUnitRelationship>()
+                    .Where(orgRel => 
+                        orgRel.EntityType == "Interaction" && 
+                        orgUnitIds.Contains(orgRel.OrganizationHierarchyId))
+                    .Select(orgRel => orgRel.EntityId)
+                    .ToList();
+                
                 var interactionQuery = queryable as IQueryable<Interaction>;
                 queryable = interactionQuery.Where(i => 
-                    (i.OrgUnitId.HasValue && orgUnitIds.Contains(i.OrgUnitId.Value)) ||
+                    validInteractionIds.Contains(i.Id) ||
                     (i.InteractionContacts != null && i.InteractionContacts.Any(ic => ic.Contact != null && ic.Contact.Partner != null && validPartnerIds.Contains(ic.Contact.Partner.Id))) ||
                     (i.InteractionPartners != null && i.InteractionPartners.Any(ip => ip.Partner != null && validPartnerIds.Contains(ip.Partner.Id)))
                 ) as IQueryable<TEntity>;

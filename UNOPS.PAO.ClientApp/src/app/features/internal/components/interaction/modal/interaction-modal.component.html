@@ -179,20 +179,22 @@
   </div>
 
   <div class="flex flex-col gap-2">
-    <label for="orgUnit">{{ 'label.interaction.orgUnit' | translate }}</label>
-    <p-select id="orgUnit"
-              formControlName="orgUnitId"
-              [options]="allOrgUnits()"
-              [disabled]="!recordPermissions()?.permissions?.canUpdate"
-              optionLabel="name"
-              optionValue="id"
-              [filter]="true"
-              filterBy="name"
-              [appendTo]="'body'"
-              [showClear]="true"
-              placeholder="{{ 'label.interaction.selectOrgUnit' | translate }}"
-              class="w-full">
-    </p-select>
+    <label for="organizationUnits">{{ 'label.interaction.organizationUnits' | translate }}</label>
+    <p-multiselect id="organizationUnits"
+                   formControlName="organizationHierarchyIds"
+                   [options]="allOrgUnits()"
+                   [disabled]="!recordPermissions()?.permissions?.canUpdate"
+                   optionLabel="name"
+                   optionValue="id"
+                   [filter]="true"
+                   filterBy="name"
+                   [appendTo]="'body'"
+                   [showClear]="true"
+                   display="chip"
+                   placeholder="{{ 'label.interaction.selectOrganizationUnits' | translate }}"
+                   class="w-full"
+                   [selectedItemsLabel]="getSelectedActiveOrgUnitsLabel()">
+    </p-multiselect>
   </div>
 
   @if( recordId && !isImportEdit ) {

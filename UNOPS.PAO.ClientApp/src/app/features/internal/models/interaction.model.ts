@@ -1,5 +1,6 @@
 import { InteractionType } from './interaction-type.enum';
 import { EntityPermissionSet } from './shared-types';
+import { OrganizationUnitRelationshipModel } from './organization-unit-relationship.model';
 
 export interface Interaction {
   id: number;
@@ -16,7 +17,8 @@ export interface Interaction {
   phoneNumbers: string[];
   location: string;
   subject: string;
-  orgUnitId: number;
+  // Organization Unit Relationships
+  organizationUnitRelationships?: OrganizationUnitRelationshipModel[] | null;
   createdBy: number;
   permissions?: EntityPermissionSet;
   

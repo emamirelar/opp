@@ -17,6 +17,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using System.Security.Claims;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Extensions;
 using Microsoft.AspNetCore.Http;
 
 public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
@@ -24,6 +25,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private readonly IMapper mapper;
     private readonly BaseRepository<UNOPSInteraction> interactionRepository;
     private readonly BaseRepository<UNOPSContact> contactRepository;
+    private readonly BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
     private readonly UNOPSAppDbContext context;
 
     private static InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
@@ -61,6 +63,67 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         return entity;
     }
 
+    private async Task UpdateOrganizationUnitRelationshipsDifferentialAsync(int interactionId, IEnumerable<int>? newOrgUnitIds)
+    {
+        if (newOrgUnitIds == null) return;
+
+        // Get current relationships
+        var currentRelationships = await context.OrganizationUnitRelationships
+            .Where(r => r.EntityId == interactionId && r.EntityType == "Interaction")
+            .ToListAsync();
+
+        var currentOrgUnitIds = currentRelationships.Select(r => r.OrganizationHierarchyId).ToHashSet();
+        var newOrgUnitIdsSet = newOrgUnitIds.ToHashSet();
+
+        // Find relationships to remove (in current but not in new)
+        var relationshipsToRemove = currentRelationships
+            .Where(r => !newOrgUnitIdsSet.Contains(r.OrganizationHierarchyId))
+            .ToList();
+
+        // Find relationships to add (in new but not in current)
+        var orgUnitIdsToAdd = newOrgUnitIdsSet
+            .Where(id => !currentOrgUnitIds.Contains(id))
+            .ToList();
+
+        // Remove old relationships
+        if (relationshipsToRemove.Any())
+        {
+            await context.OrganizationUnitRelationships
+                .Where(r => r.EntityId == interactionId && r.EntityType == "Interaction" && 
+                           relationshipsToRemove.Select(rel => rel.OrganizationHierarchyId).Contains(r.OrganizationHierarchyId))
+                .ExecuteDeleteAsync();
+        }
+
+        // Add new relationships
+        if (orgUnitIdsToAdd.Any())
+        {
+            var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+            foreach (var orgUnitId in orgUnitIdsToAdd)
+            {
+                var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(orgUnitId);
+                if (orgUnit != null && orgUnit.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+                {
+                    var newRelationship = new OrganizationUnitRelationship
+                    {
+                        OrganizationHierarchyId = orgUnitId,
+                        EntityId = interactionId,
+                        EntityType = nameof(Interaction),
+                        Name = $"Interaction-{interactionId}-{orgUnit.Code}",
+                        Status = EntityStatus.Active
+                    };
+                    relationshipsToAdd.Add(newRelationship);
+                }
+            }
+
+            foreach (var relationship in relationshipsToAdd)
+            {
+                context.OrganizationUnitRelationships.Add(relationship);
+            }
+        }
+
+        await context.SaveChangesAsync();
+    }
+
     public UNOPSInteractionManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, IPermissionService permissionService = null, IHttpContextAccessor httpContextAccessor = null, IServiceProvider serviceProvider = null)
         : base(mapper, context, configuration, null, "Interaction", permissionService, httpContextAccessor)
     {
@@ -68,6 +131,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         this.context = context;
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration, serviceProvider);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
+        OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
     }
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
@@ -83,6 +147,37 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
             await interactionRepository.AddAsync(entity);
             await context.SaveChangesAsync();
+
+            // Handle OrganizationHierarchyIds
+            if (model.OrganizationHierarchyIds != null && model.OrganizationHierarchyIds.Any())
+            {
+                var relationshipsToAdd = new List<OrganizationUnitRelationship>();
+                foreach (var orgUnitId in model.OrganizationHierarchyIds)
+                {
+                    var orgUnit = await OrganizationHierarchyRepository.GetByIdAsync(orgUnitId);
+                    if (orgUnit == null || orgUnit.Type != Domain.Enums.OrganizationUnitType.OrgUnit)
+                    {
+                        throw new BusinessException($"Organization unit with ID {orgUnitId} must be of type OrgUnit");
+                    }
+                    
+                    var newRelationship = new OrganizationUnitRelationship
+                    {
+                        OrganizationHierarchyId = orgUnitId,
+                        EntityId = entity.Id,
+                        EntityType = nameof(Interaction),
+                        Name = $"Interaction-{entity.Id}-{orgUnit.Code}",
+                        Status = EntityStatus.Active
+                    };
+                    relationshipsToAdd.Add(newRelationship);
+                }
+
+                foreach (var relationship in relationshipsToAdd)
+                {
+                    context.OrganizationUnitRelationships.Add(relationship);
+                }
+                await context.SaveChangesAsync();
+            }
+
             await transaction.CommitAsync();
         }
         catch
@@ -182,7 +277,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var query = interactionRepository
             .GetAll()
             .AsQueryable()
-            .Include(i => i.OrgUnit)
             .Include(i => i.InteractionContacts).ThenInclude(ic => ic.Contact)
             .Include(i => i.InteractionPartners).ThenInclude(ip => ip.Partner)
             .Include(i => i.InteractionUsers).ThenInclude(iu => iu.User)
@@ -234,7 +328,6 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var item = await interactionRepository.GetByIdAsync(id,
             includes: new[]
             {
-                nameof(Interaction.OrgUnit),
                 nameof(Interaction.InteractionContacts),
                 nameof(Interaction.InteractionPartners),
                 nameof(Interaction.InteractionUsers),
@@ -247,6 +340,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         {
             return default;
         }
+
+        // Load organization unit relationships for single interaction
+        await item.LoadOrganizationUnitRelationshipsAsync(context);
 
         InteractionModel retVal = MapEntityToModel(item, mapper);
 
@@ -286,6 +382,12 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
         entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
 
+        // Handle OrganizationHierarchyIds if provided
+        if (model.OrganizationHierarchyIds != null)
+        {
+            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationHierarchyIds);
+        }
+
         // Update junction tables
         await ProcessJunctionTables(entity, model);
 
@@ -310,6 +412,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             .GetAll(["InteractionContacts"])
             .Where(x => x.InteractionContacts.Any(ic => ic.ContactId == contactId) && !x.IsDeleted)
             .AsQueryable();
+
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(context);
 
         // Apply access control filters
         var filteredData = await ApplyAccessControlFilters(query, GetCurrentUserOrSystemContext(), "read");
@@ -346,11 +451,17 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // Apply the specification to the query
         var query = interactionRepository.GetAll().AsQueryable()
             .Where(x => !x.IsDeleted);
+
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(context);
         
         // Cast to base type to apply specification, then cast back to derived type
         var baseQuery = query.Cast<Interaction>();
         var filteredBaseQuery = baseQuery.ApplySpecification(specification);
         var filteredQuery = filteredBaseQuery.OfType<UNOPSInteraction>();
+
+        // Apply org unit filtering if the specification supports it
+        filteredQuery = ApplyOrgUnitFilterIfSupported(filteredQuery, specification);
         
         // Apply access control filters (row and column filtering) BEFORE pagination
         var filteredData = await ApplyAccessControlFilters(filteredQuery, GetCurrentUserOrSystemContext(), "read");
@@ -415,8 +526,11 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     {
         // RBAC interceptor handles security enforcement
         var query = interactionRepository
-            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"])
+            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"])
             .AsQueryable();
+
+        // Load organization unit relationships
+        await query.LoadOrganizationUnitRelationshipsAsync(context);
 
         var interactions = query.Paginate(
             x => MapEntityToModel(x, mapper),
@@ -426,7 +540,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // Add permissions for frontend UI
         foreach (var interaction in interactions.Records)
         {
-            var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"]);
+            var entity = await interactionRepository.GetByIdAsync(interaction.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"]);
             if (entity != null)
             {
                 //interaction.Permissions = await GetEntityPermissionsAsync(entity, user);
@@ -442,8 +556,11 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var item = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"]);
+        var item = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"]);
         if (item == null) return null;
+
+        // Load organization unit relationships for single interaction
+        await item.LoadOrganizationUnitRelationshipsAsync(context);
 
         return await MapEntityToModelAsync(item, mapper, user);
     }
@@ -454,17 +571,26 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task<InteractionModel?> UpdateInteractionAsync(ClaimsPrincipal user, UpdateInteractionRequest model)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await interactionRepository.GetByIdAsync(model.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"]);
+        var entity = await interactionRepository.GetByIdAsync(model.Id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"]);
         if (entity == null)
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");
         }
+
+        // Load organization unit relationships for single interaction
+        await entity.LoadOrganizationUnitRelationshipsAsync(context);
 
         PatchNonNullProperties(model, entity);
 
         // Update emails/phones
         entity.EmailAddresses = model.EmailAddresses?.ToList() ?? new List<string>();
         entity.PhoneNumbers = model.PhoneNumbers?.ToList() ?? new List<string>();
+
+        // Handle OrganizationHierarchyIds if provided
+        if (model.OrganizationHierarchyIds != null)
+        {
+            await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationHierarchyIds);
+        }
 
         // Update junction tables
         await ProcessJunctionTables(entity, model);
@@ -480,8 +606,11 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task DeleteInteractionAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var entity = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships", "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy"]);
+        var entity = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"]);
         if (entity == null) return;
+
+        // Load organization unit relationships for single interaction
+        await entity.LoadOrganizationUnitRelationshipsAsync(context);
 
         await interactionRepository.Delete(entity);
     }
@@ -495,20 +624,20 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var item = await interactionRepository.GetByIdAsync(id,
             includes: new[]
             {
-                "OrgUnit",
                 "InteractionContacts",
                 "InteractionPartners", 
                 "InteractionUsers",
                 "InteractionContacts.Contact",
                 "InteractionContacts.Contact.Partner",
-                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships",
-                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
                 "Documents"
             });
 
         if (item == null) return null;
+
+        // Load organization unit relationships for single interaction
+        await item.LoadOrganizationUnitRelationshipsAsync(context);
 
         var result = await MapEntityToModelAsync(item, mapper, user);
         
@@ -539,14 +668,11 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         var item = await interactionRepository.GetByIdAsync(id,
             includes: new[]
             {
-                "OrgUnit",
                 "InteractionContacts",
                 "InteractionPartners",
                 "InteractionUsers",
                 "InteractionContacts.Contact",
                 "InteractionContacts.Contact.Partner",
-                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships",
-                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
                 "Documents"
@@ -556,6 +682,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         {
             return null;
         }
+
+        // Load organization unit relationships for single interaction
+        await item.LoadOrganizationUnitRelationshipsAsync(context);
 
         var result = await MapEntityToModelAsync(item, mapper, null);
         
@@ -647,14 +776,11 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     {
         var entity = await interactionRepository.GetByIdAsync(model.Id, includes: new[]
             {
-                "OrgUnit",
                 "InteractionContacts",
                 "InteractionPartners",
                 "InteractionUsers",
                 "InteractionContacts.Contact",
                 "InteractionContacts.Contact.Partner",
-                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships",
-                "InteractionContacts.Contact.Partner.OrganizationUnitRelationships.OrganizationHierarchy",
                 "InteractionPartners.Partner",
                 "InteractionUsers.User",
                 "Documents"
@@ -663,6 +789,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");
         }
+
+        // Load organization unit relationships for single interaction
+        await entity.LoadOrganizationUnitRelationshipsAsync(context);
 
         if (model.EmailAddresses != null && model.EmailAddresses.Count > 0)
         {
@@ -761,9 +890,12 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
             return new List<object>();
 
         var interactions = interactionRepository
-            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner", "InteractionContacts.Contact.Partner.PartnerOffice"])
+            .GetAll(["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"])
             .Where(i => ids.Contains(i.Id))
             .ToList();
+
+        // Load organization unit relationships
+        await interactions.LoadOrganizationUnitRelationshipsAsync(context);
 
         // Apply access control if user context is provided
         if (user != null)
@@ -784,5 +916,38 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
         
         return results.Cast<object>().ToList();
+    }
+
+    /// <summary>
+    /// Applies org unit filtering if the specification supports it using manual joins
+    /// </summary>
+    private IQueryable<UNOPSInteraction> ApplyOrgUnitFilterIfSupported(IQueryable<UNOPSInteraction> query, ISpecification<Interaction> specification)
+    {
+        // Check if specification has ApplyOrgUnitFilter method and call it
+        var specType = specification.GetType();
+        var filterMethod = specType.GetMethod("ApplyOrgUnitFilter", new[] { typeof(IQueryable<Interaction>), typeof(DbContext) });
+        
+        if (filterMethod != null)
+        {
+            try
+            {
+                // Cast to base type for the ApplyOrgUnitFilter method
+                var baseQuery = query.Cast<Interaction>();
+                var result = filterMethod.Invoke(specification, new object[] { baseQuery, context });
+                if (result is IQueryable<Interaction> filteredBaseQuery)
+                {
+                    // Cast back to UNOPSInteraction using OfType for safety
+                    return filteredBaseQuery.OfType<UNOPSInteraction>();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue without org unit filtering
+                Console.WriteLine($"Error applying org unit filter: {ex.Message}");
+            }
+        }
+        
+        // If no ApplyOrgUnitFilter method found, return original query
+        return query;
     }
 }

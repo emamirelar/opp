@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, signal, SimpleChanges, inject, effect, computed } from '@angular/core';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Interaction } from '../../../models/interaction.model';
@@ -111,8 +111,25 @@ export class InteractionModalComponent {
   allContacts = this.cachedDataService.allContacts;
   allPartners = this.cachedDataService.allPartners;
   allUsers = this.cachedDataService.allUsers;
+  // Backend already filters for active organization units
   allOrgUnits = this.cachedDataService.allOrganizationUnits;
   currentUser = this.cachedDataService.currentUser;
+
+  // Signal to track form control changes
+  private selectedOrgUnitsSignal = signal<number[]>([]);
+
+  // Custom counter for selected organization units 
+  getSelectedActiveOrgUnitsLabel = computed(() => {
+    const selectedIds = this.selectedOrgUnitsSignal();
+    if (!selectedIds.length) return this.translateService.instant('label.interaction.selectOrganizationUnits');
+    
+    // The backend already filters for active records, so we just count selected items
+    const count = selectedIds.length;
+    
+    return count === 1 
+      ? this.translateService.instant('label.interaction.oneOrganizationUnitSelected')
+      : this.translateService.instant('label.interaction.organizationUnitsSelected', { count });
+  });
 
   // Check if this is an import edit
   get isImportEdit(): boolean {
@@ -149,11 +166,12 @@ export class InteractionModalComponent {
       location: [''],
       subject: ['', Validators.required],
       createdBy: [null],
-      orgUnitId: [null],
+      
       previousContactIds: [[]],
       previousEmails: [[]],
       previousPhones: [[]],
-      previousUserIds: [[]]
+      previousUserIds: [[]],
+      organizationHierarchyIds: [[]]
     });
 
     this.setupContactIdsChangeListener();
@@ -178,6 +196,15 @@ export class InteractionModalComponent {
     // Initialize permission management
     this.permissionUtils = this.permissionUtilityService.createInstancePermissions('Interaction');
     this.recordPermissions = this.permissionUtils.recordPermissions;
+  }
+
+  // Helper methods for organization hierarchy FormControl
+  setOrganizationHierarchyIds(ids: number[]): void {
+    this.formGroup.get('organizationHierarchyIds')?.setValue(ids || []);
+  }
+
+  getSelectedOrganizationHierarchyIds(): number[] {
+    return this.formGroup.get('organizationHierarchyIds')?.value || [];
   }
 
   ngOnInit() {
@@ -255,6 +282,15 @@ export class InteractionModalComponent {
       this.dialogConfig.data.isSaving = this.isSaving;
       this.dialogConfig.data.recordPermissions = this.recordPermissions;
     }
+    
+    // Track form control changes for organization units counter
+    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
+      this.selectedOrgUnitsSignal.set(value || []);
+    });
+    
+    // Initialize the signal with current form value
+    const currentValue = this.formGroup.get('organizationHierarchyIds')?.value || [];
+    this.selectedOrgUnitsSignal.set(currentValue);
   }
 
   private loadInteractionById(id: number) {
@@ -276,6 +312,12 @@ export class InteractionModalComponent {
   }
 
   private populateForm(record: Interaction) {
+    // Handle organization unit relationships - convert to organizationHierarchyIds for form
+    let organizationHierarchyIds: number[] = [];
+    if (record.organizationUnitRelationships) {
+      organizationHierarchyIds = record.organizationUnitRelationships.map(rel => rel.organizationHierarchyId);
+    }
+
     this.formGroup.patchValue({
       id: record.id,
       type: record.type,
@@ -290,12 +332,14 @@ export class InteractionModalComponent {
       location: record.location,
       subject: record.subject,
       createdBy: record.createdBy,
-      orgUnitId: record.orgUnitId,
       previousContactIds: record.contactIds || [],
       previousEmails: record.emailAddresses || [],
       previousPhones: record.phoneNumbers || [],
       previousUserIds: record.userIds || []
     });
+
+    // Set organization hierarchy IDs using helper method
+    this.setOrganizationHierarchyIds(organizationHierarchyIds);
 
     // Extract permissions from the interaction response if they exist
     if (record.permissions) {
@@ -337,8 +381,20 @@ export class InteractionModalComponent {
    * @permissions INTERACTION_CREATE, INTERACTION_UPDATE
    */
   onSubmit(): void {
+    const formValue = this.formGroup.value;
+    
+    // Set contactId to first contact from contactIds for backward compatibility
+    if (formValue.contactIds && formValue.contactIds.length > 0) {
+      formValue.contactId = formValue.contactIds[0];
+      this.formGroup.patchValue({ contactId: formValue.contactId });
+    }
+    
+    // Keep organizationHierarchyIds as is - no conversion needed
+    // The backend now expects organizationHierarchyIds directly
+    
     if (this.formGroup.valid) {
-      const formValue = this.formGroup.value;
+      // Clear validation error if form is now valid
+      this.showValidationFailedError.set(false);
       
       // Check if this is an import edit (we're only updating local data, not saving to server)
       const isImportEdit = this.dialogConfig.data?.isImportEdit || 
@@ -719,6 +775,11 @@ export class InteractionModalComponent {
         description: data.description || this.formGroup.get('description')?.value,
         contactId: data.contactId || this.formGroup.get('contactId')?.value
       });
+
+      // Handle organization hierarchy IDs from AI transcription
+      if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds)) {
+        this.setOrganizationHierarchyIds(data.organizationHierarchyIds);
+      }
     }
   }
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250729222758_OrgUnitManyToManyRemoveInteractionOrgUnitId")]
+    partial class OrgUnitManyToManyRemoveInteractionOrgUnitId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -900,29 +903,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.ToTable("OrganizationHierarchies", "public");
                 });
 
-            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PAOUser", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsInternal")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AspNetUsers", "public", t =>
-                        {
-                            t.ExcludeFromMigrations();
-                        });
-                });
-
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.OrganizationUnitRelationship", b =>
                 {
                     b.Property<int>("Id")
@@ -980,6 +960,29 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .IsUnique();
 
                     b.ToTable("OrganizationUnitRelationships", "public");
+                });
+
+            modelBuilder.Entity("UNOPS.PAO.Domain.Entities.PAOUser", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AspNetUsers", "public", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.Partner", b =>
@@ -2071,12 +2074,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.HasOne("UNOPS.PAO.Domain.Entities.Contact", null)
                         .WithMany("Interactions")
                         .HasForeignKey("ContactId");
-
-                    b.HasOne("UNOPS.PAO.Domain.Entities.OrganizationHierarchy", "OrgUnit")
-                        .WithMany()
-                        .HasForeignKey("OrgUnitId");
-
-                    b.Navigation("OrgUnit");
                 });
 
             modelBuilder.Entity("UNOPS.PAO.Domain.Entities.InteractionContact", b =>
