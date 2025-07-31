@@ -1,13 +1,13 @@
 {
   "entity": "Interaction",
-  "description": "Manages records of communications, meetings, and engagements with partners and contacts. This includes creating, retrieving, updating, and deleting interaction entries, as well as advanced search capabilities and AI-assisted data processing for interactions.",
+  "description": "Manages communication records, meetings, calls, and other forms of engagement with partners and contacts. It allows for creation, retrieval, update, deletion, and advanced searching of interaction data.",
   "synonyms": [
-    "communication",
     "meeting",
-    "engagement",
     "call",
-    "log",
-    "record"
+    "communication",
+    "engagement",
+    "record",
+    "log"
   ],
   "mandatoryFields": [
     "type",
@@ -108,8 +108,8 @@
       "parameters": {
         "req": {
           "type": "object",
-          "required": true,
-          "description": "Interaction creation request with all required details"
+          "required": false,
+          "description": "Interaction creation request with all required details (e.g., type, date, subject, description, participants)."
         }
       },
       "example_uses": [
@@ -123,7 +123,7 @@
       "name": "ListAllInteractions",
       "url": "/api/interactions",
       "method": "GET",
-      "description": "Retrieves all interactions with basic pagination and ordering (no search criteria).",
+      "description": "Retrieves all interactions with basic pagination and ordering (no search criteria). This endpoint is for general listing and does not support advanced filtering. For specific searches, use the 'SearchInteractions' or 'AdvancedSearchInteractions' endpoints.",
       "parameters": {
         "pageIndex": {
           "type": "integer",
@@ -157,7 +157,7 @@
       "name": "SearchInteractions",
       "url": "/api/interactions/search",
       "method": "GET",
-      "description": "Performs simple text search across multiple interaction fields (subject, description, etc.). Use the `searchText` parameter for keyword-based searches. For more structured or relational searches, use the `AdvancedSearchInteractions` endpoint.",
+      "description": "Performs simple text search across multiple interaction fields (subject, description, etc.). This endpoint is suitable for keyword-based searches. For structured and relationship-based searches, use 'AdvancedSearchInteractions'.",
       "parameters": {
         "request": {
           "type": "object",
@@ -181,7 +181,7 @@
       "name": "AdvancedSearchInteractions",
       "url": "/api/interactions/advanced-search",
       "method": "GET",
-      "description": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters. Use the `searchCriteria` parameter, which expects a JSON array of objects. Each object should have `field`, `operator`, and `value` properties. For example: `[{\"field\": \"type\", \"operator\": \"is\", \"value\": \"Meeting\"}, {\"field\": \"date\", \"operator\": \"between\", \"value\": \"2024-01-01,2024-12-31\"}]`. Available fields for search are: `id`, `contactId`, `type`, `date`, `fromDate`, `toDate`, `description`, `subject`, `contactName`, `contactFirstName`, `contactLastName`, `contactEmail`, `partnerName`, `partnerStatus`. Nested fields include `contact.firstName`, `contact.lastName`, `contact.email`, `contact.title`, `contact.department`, `contact.phone`, `contact.mobile`, `partner.name`, `partner.status`, `partner.shortName`. Operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are: `date`, `fromDate`, `toDate`, `createdDate`, `modifiedDate`.",
+      "description": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters. The 'searchCriteria' parameter expects a JSON array of objects, where each object defines a filter condition. Each condition must have a 'field', 'operator', and 'value'. An optional 'logicalOperator' (AND/OR) can be used to combine conditions. Available fields for searching include direct fields like 'type', 'date', 'subject', and nested fields like 'partner.name' or 'contact.email'. Refer to the 'searchMetadata' section for a full list of searchable fields and supported operators (e.g., 'like', 'is', 'between', 'greaterThan').",
       "parameters": {
         "request": {
           "type": "object",
@@ -191,7 +191,7 @@
         "searchCriteria": {
           "type": "string",
           "required": false,
-          "description": "JSON array of search criteria objects with field, operator, value, and logicalOperator"
+          "description": "JSON array of search criteria objects with field, operator, value, and optional logicalOperator. Example: [{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}, {\"field\": \"date\", \"operator\": \"between\", \"value\": \"2024-01-01,2024-12-31\", \"logicalOperator\": \"AND\"}]"
         },
         "searchText": {
           "type": "string",
@@ -202,7 +202,9 @@
       "example_uses": [
         "Find interactions with UNICEF partners",
         "Show meetings with John Smith contact",
-        "Get email interactions this week"
+        "Get email interactions this week",
+        "Find conference calls from Finance department contacts",
+        "List interactions by type and date range"
       ],
       "when_to_use": "Use this for searches involving partner relationships, contact details, dates, interaction types, or multiple field combinations."
     },
@@ -233,8 +235,8 @@
       "parameters": {
         "req": {
           "type": "object",
-          "required": true,
-          "description": "Interaction update request containing modified fields"
+          "required": false,
+          "description": "Interaction update request containing modified fields (e.g., interaction ID, new time, new location, updated participants)."
         }
       },
       "example_uses": [
@@ -290,7 +292,7 @@
       "parameters": {
         "req": {
           "type": "object",
-          "required": true,
+          "required": false,
           "description": "File scan request containing the file to be processed"
         }
       },
@@ -309,7 +311,7 @@
       "parameters": {
         "request": {
           "type": "object",
-          "required": true,
+          "required": false,
           "description": "Analysis request containing file and analysis parameters"
         }
       },
@@ -328,7 +330,7 @@
       "parameters": {
         "req": {
           "type": "object",
-          "required": true,
+          "required": false,
           "description": "Bulk upload request containing interaction data"
         }
       },

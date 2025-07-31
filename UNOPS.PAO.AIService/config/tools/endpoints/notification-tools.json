@@ -1,12 +1,12 @@
 {
   "entity": "Notification",
-  "description": "Manages user notifications, alerts, and system messages, allowing retrieval, marking as read, and administrative updates.",
+  "description": "Manages user notifications, including fetching, marking as read, and administrative updates.",
   "synonyms": [
     "alert",
     "message",
-    "system message",
-    "user alert",
-    "inbox item"
+    "inbox item",
+    "system notification",
+    "announcement"
   ],
   "mandatoryFields": [
     "notificationId"
@@ -16,20 +16,20 @@
       "name": "GetNotifications",
       "url": "api/notifications",
       "method": "GET",
-      "description": "Retrieves a list of notifications for the current user, with an option to filter for unread notifications only.",
+      "description": "Retrieves a list of notifications for the current user. Can filter to show only unread notifications.",
       "parameters": {
         "unreadOnly": {
           "type": "boolean",
           "required": false,
-          "description": "If true, only unread notifications will be returned."
+          "description": "If true, only unread notifications are returned."
         }
       },
       "example_uses": [
         "Get all my notifications.",
-        "Show me only my unread messages.",
-        "List all system alerts."
+        "Show me only my unread notifications.",
+        "List all notifications I have received."
       ],
-      "when_to_use": "Use this to fetch a user's notifications, either all of them or just the unread ones."
+      "when_to_use": "Use this to display a user's notification feed or to check for new, unread alerts."
     },
     {
       "name": "MarkAsRead",
@@ -46,7 +46,9 @@
       "example_uses": [
         "Mark notification 123 as read",
         "Read notification about system update",
-        "Clear unread status for alert 456"
+        "Clear unread status for alert 456",
+        "Mark message as seen",
+        "Update notification read status"
       ],
       "when_to_use": "Use this when the user opens, reads, or acknowledges a notification to update its status."
     },
@@ -70,7 +72,9 @@
       "example_uses": [
         "Update notification 123's message content",
         "Change notification status to resolved",
-        "Modify system alert text"
+        "Modify system alert text",
+        "Update notification priority level",
+        "Change notification message and status"
       ],
       "when_to_use": "Use this when administrators need to update notification content or status for system management."
     }

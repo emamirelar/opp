@@ -1,17 +1,16 @@
 {
   "entity": "Contact",
-  "description": "Manages information about individuals or points of contact, including their personal, professional, and communication details, often associated with partner organizations or interactions.",
+  "description": "A contact represents an individual associated with an organization or interaction, storing personal and professional details such as name, email, phone, title, and departmental information.",
   "synonyms": [
     "person",
     "individual",
-    "associate",
-    "point of contact",
-    "POC"
+    "staff",
+    "employee",
+    "associate"
   ],
   "mandatoryFields": [
     "firstName",
-    "lastName",
-    "email"
+    "lastName"
   ],
   "searchMetadata": {
     "directFields": [
@@ -165,7 +164,7 @@
       "name": "SearchContacts",
       "url": "/api/contact/search",
       "method": "GET",
-      "description": "Performs simple text search across multiple contact fields (name, email, title, etc.). Use the 'searchText' parameter for a general keyword search. For more specific or complex searches, use the 'AdvancedSearchContacts' endpoint.",
+      "description": "Performs simple text search across multiple contact fields (name, email, title, etc.). This endpoint supports simple text search via the 'searchText' parameter. For more complex, structured searches, use the 'AdvancedSearchContacts' endpoint.",
       "parameters": {
         "request": {
           "type": "object",
@@ -191,7 +190,7 @@
       "name": "AdvancedSearchContacts",
       "url": "/api/contact/advanced-search",
       "method": "GET",
-      "description": "Performs advanced search with structured criteria including relationships with partners, departments, and complex filters. Use the 'searchCriteria' parameter, which expects a JSON array of objects. Each object should have 'field', 'operator', and 'value'. Available fields include direct fields like 'firstName', 'email', 'department', and nested fields like 'partner.name', 'partner.status'. Available operators are 'like', 'is', 'not', 'contains', 'startsWith', 'endsWith', 'between', 'greaterThan', 'lessThan', 'greaterThanOrEqual', 'lessThanOrEqual', 'on', 'not on', 'this week', 'this month', 'this year'. For example, to find contacts from UNICEF partners, use: `[{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}]`.",
+      "description": "Performs advanced search with structured criteria including relationships with partners, departments, and complex filters. This endpoint supports complex, structured searches using the 'searchCriteria' parameter. The 'searchCriteria' should be a JSON array of objects, where each object has 'field', 'operator', and 'value' properties. Fields can be direct (e.g., 'firstName', 'email') or nested (e.g., 'partner.name', 'partner.status'). Available operators include 'like', 'is', 'not', 'contains', 'startsWith', 'endsWith', 'between', 'greaterThan', 'lessThan', 'greaterThanOrEqual', 'lessThanOrEqual', 'on', 'not on', 'this week', 'this month', 'this year'. For date fields like 'createdDate' or 'modifiedDate', use date-specific operators. Example: `[{\"field\": \"firstName\", \"operator\": \"like\", \"value\": \"John\"}, {\"field\": \"partner.name\", \"operator\": \"is\", \"value\": \"UNICEF\"}]`",
       "parameters": {
         "request": {
           "type": "object",

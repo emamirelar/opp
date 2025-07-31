@@ -1,6 +1,6 @@
 {
   "entity": "Contact",
-  "description": "Browse and manage contact persons within partner organizations. Central hub for managing individual contacts, their roles, and communication details.",
+  "description": "Browse and manage contact persons within partner organizations. This is the central hub for managing individual contacts, their roles, and communication details.",
   "synonyms": [
     "person",
     "individual",
@@ -20,7 +20,7 @@
     {
       "route": "/partnerships/contacts",
       "name": "ContactListComponent",
-      "description": "This page serves as the central hub for viewing, searching, and managing all contact persons associated with partner organizations. Users can quickly find specific contacts, add new ones, or initiate bulk import operations.",
+      "description": "This page allows you to view, search, filter, and manage all contact persons associated with your partner organizations. It serves as the primary interface for overseeing individual contacts, their specific roles, and all relevant communication details.",
       "capabilities": [
         "search_contacts",
         "filter_contacts",
@@ -38,10 +38,11 @@
           "label": "New Contact",
           "icon": "pi pi-plus",
           "action": "create_contact",
-          "description": "Opens a dialog to create a new contact person or to edit an existing contact's details. This is the primary way to manage individual contact information.",
+          "description": "This button opens a dialog to create a new contact person or edit an existing contact's details. It provides form fields for entering and updating all relevant contact information, including their association with a partner organization.",
           "when_to_use": [
-            "When you need to add a new contact person to a partner organization.",
-            "When you need to update the details (e.g., name, email, title) of an existing contact."
+            "When you need to add a brand new contact person to the system.",
+            "When you need to modify the details of an existing contact, such as their name, email, or role.",
+            "When associating a contact with a specific partner organization."
           ]
         },
         {
@@ -49,10 +50,10 @@
           "label": "Scan Business Card",
           "icon": "pi pi-camera",
           "action": "scan_business_card",
-          "description": "Launches an interface that uses AI to scan and extract contact information directly from a physical business card, automating data entry.",
+          "description": "This button activates the business card scanner interface, which uses AI to capture and extract contact information directly from a physical business card. This automates data entry for new contacts.",
           "when_to_use": [
-            "When you have a physical business card and want to quickly add the contact without manual typing.",
-            "To efficiently digitize contact information from networking events or meetings."
+            "When you have a physical business card and want to quickly add the contact's information without manual typing.",
+            "To save time on data entry after networking events or meetings."
           ]
         },
         {
@@ -60,10 +61,11 @@
           "label": "Import Contacts",
           "icon": "pi pi-file-import",
           "action": "import_contacts",
-          "description": "Opens a wizard to bulk import multiple contacts from external files, such as Google Sheets or CSV documents.",
+          "description": "This button opens a dialog that allows you to bulk import multiple contacts from external sources, such as Google Sheets or CSV files. It's designed for adding a large number of contacts efficiently.",
           "when_to_use": [
-            "When you need to add a large number of contacts simultaneously from a spreadsheet.",
-            "For migrating contact data from another system or a list provided by a partner."
+            "When you need to add many contacts at once from a spreadsheet or another system.",
+            "For migrating existing contact data into the platform.",
+            "When receiving a list of contacts from a partner or event."
           ]
         }
       ],
@@ -72,33 +74,34 @@
         {
           "name": "Details",
           "route": "/partnerships/contacts/:id",
-          "label": "Details",
-          "description": "Displays comprehensive information about the selected contact, including personal details, contact information, and associated partner."
+          "label": "title.details",
+          "description": "This tab displays the comprehensive profile and core information for the selected contact, including their personal details, contact information, and associated partner organization."
         },
         {
           "name": "Interactions",
           "route": "/partnerships/contacts/:id/interactions",
-          "label": "Interactions",
-          "description": "Shows a history of all recorded interactions and communications with this contact."
+          "label": "title.interactions",
+          "description": "This tab shows a chronological log of all communications, activities, and interactions related to the selected contact, providing a complete history of engagement."
         }
       ],
       "search": {
         "placeholder": "Search contacts by name, email, or organization...",
-        "description": "Enables users to quickly locate specific contacts within the list by searching across various fields.",
-        "help_text": "Type a contact's first name, last name, email address, or the name of their associated partner organization into the search bar. The list will dynamically update as you type."
+        "description": "The search bar allows you to quickly find contacts by typing in their name, email address, or the name of their associated partner organization. The system will filter the list in real-time as you type.",
+        "help_text": "To find a specific contact, enter their first name, last name, email, or the name of the partner company they belong to. The search is not case-sensitive."
       },
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're having trouble finding a contact, use the search bar at the top of the list to search by name, email, or organization. To add a new contact, click the 'New Contact' button. If you need to narrow down the list, look for available filters to sort by partner, department, or role.",
+        "when_stuck": "If you're having trouble finding a contact, use the search bar at the top of the list to search by name, email, or organization. To add a new contact, click the 'New Contact' button. If you need to narrow down the list, use the available filters (e.g., by partner, department, or role) once they are implemented.",
         "common_tasks": [
-          "Finding a contact: Use the search bar at the top of the list and type in the contact's name, email, or the partner organization's name.",
-          "Creating a contact: Click the 'New Contact' button. Fill in the required fields in the dialog that appears and save.",
-          "Editing a contact: Click the 'New Contact' button (which also functions as 'Edit Contact' for existing records) to open the contact form. Make your changes and save.",
-          "Filtering by partner: Use the partner filter (if available) to narrow down the list and see contacts from specific organizations.",
-          "Importing contacts: Click the 'Import Contacts' button to upload multiple contacts from a Google Sheet or CSV file."
+          "Finding a contact: Use the search bar and type the contact's name, email, or partner organization. The list will update automatically.",
+          "Creating a contact: Click the 'New Contact' button. Fill in the required fields in the dialog and save. You can also use 'Scan Business Card' for quick entry.",
+          "Editing a contact: Click on any contact row in the list to open their details. Then, look for an 'Edit' button within the details view to make changes.",
+          "Filtering by partner: (Feature to be implemented) Use the partner filter dropdown to display contacts only from specific organizations.",
+          "Exporting contacts: (Feature to be implemented) Click the 'Export' button to download the current list of contacts, including all their details, into a file format like CSV or Excel.",
+          "Importing contacts: Click the 'Import Contacts' button to upload a spreadsheet (CSV or Google Sheet) containing multiple contact records for bulk creation."
         ],
         "troubleshooting": [],
-        "getting_started": "",
+        "getting_started": "Welcome to the Contacts page! To begin, you can either search for existing contacts using the search bar, or add a new contact by clicking the 'New Contact' button. If you have a physical business card, try the 'Scan Business Card' feature for quick data entry. For bulk additions, use 'Import Contacts'.",
         "keyboard_shortcuts": []
       }
     }

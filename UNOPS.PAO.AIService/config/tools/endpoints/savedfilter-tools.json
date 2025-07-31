@@ -1,16 +1,16 @@
 {
   "entity": "SavedFilter",
-  "description": "A Saved Filter allows users to store and reuse complex search criteria for various entities within the system, enabling quick access to frequently used queries.",
+  "description": "Manages user-defined saved filters, allowing users to store and reuse complex search criteria or data configurations across different parts of the application.",
   "synonyms": [
-    "filter preset",
-    "search template",
-    "custom search",
-    "stored filter",
-    "query template"
+    "filter",
+    "saved search",
+    "criteria set",
+    "user filter",
+    "custom filter"
   ],
   "mandatoryFields": [
+    "id",
     "name",
-    "entityType",
     "filterCriteria"
   ],
   "endpoints": [
@@ -18,39 +18,39 @@
       "name": "CreateSavedFilter",
       "url": "api/SavedFilter",
       "method": "POST",
-      "description": "Creates a new saved filter with specified criteria and a unique name for the current user.",
+      "description": "Creates a new saved filter for the current user. The request body should contain the details of the filter to be saved, including its name and the filter criteria.",
       "parameters": {
         "request": {
           "type": "object",
           "required": false,
-          "description": "The request body containing the details for the new saved filter, including its name, entity type, and filter criteria."
+          "description": "Filter creation request containing the name and criteria for the new saved filter."
         }
       },
       "example_uses": [
-        "How do I save a new filter for partners that are active?",
-        "Can you create a filter named 'High Priority Projects' for me?",
-        "I want to store a search query for future use, how do I do that?"
+        "Create a new saved filter named 'My Active Projects' with specific project status criteria.",
+        "Save a complex search query for partners in a particular region as a new filter.",
+        "Can you help me create a saved filter for all interactions from the last quarter?"
       ],
-      "when_to_use": "Use this endpoint when you want to persist a specific set of search criteria for later reuse, allowing users to quickly apply complex filters without re-entering them."
+      "when_to_use": "When you want to save a specific set of search criteria or filter configurations for later reuse."
     },
     {
       "name": "UpdateSavedFilter",
       "url": "api/SavedFilter",
       "method": "PUT",
-      "description": "Updates an existing saved filter's name or criteria based on the provided request.",
+      "description": "Updates an existing saved filter. The request body must include the ID of the filter to be updated, along with the new details or modified criteria.",
       "parameters": {
         "request": {
           "type": "object",
           "required": false,
-          "description": "The request body containing the updated details for the saved filter, identified by its ID, including new name or filter criteria."
+          "description": "Filter update request containing the ID of the filter to update and its new details."
         }
       },
       "example_uses": [
-        "I need to modify the 'My Active Projects' filter to include a new status.",
-        "Update the criteria for the 'High Priority Tasks' filter to only show tasks assigned to me.",
-        "Can I change the name of my saved filter from 'Old Leads' to 'Archived Leads'?"
+        "Update the 'My Active Projects' filter to include a new project type.",
+        "Modify the criteria of an existing saved filter to refine its search results.",
+        "I need to change the name of my 'Old Interactions' filter to 'Archived Interactions'."
       ],
-      "when_to_use": "Use this endpoint when you need to change the details (name, description, criteria) of an already existing saved filter."
+      "when_to_use": "When you need to modify the details or criteria of an already saved filter."
     },
     {
       "name": "DeleteSavedFilter",
@@ -61,82 +61,82 @@
         "id": {
           "type": "integer",
           "required": true,
-          "description": "The unique ID of the filter to delete."
+          "description": "The unique ID of the saved filter to delete."
         }
       },
       "example_uses": [
         "Delete the saved filter with ID 123.",
-        "Remove the 'Old Projects' filter from my saved list.",
-        "I no longer need this saved search, please delete it."
+        "Remove the 'Temporary Search' filter.",
+        "Can you delete the filter I created yesterday?"
       ],
-      "when_to_use": "Use this endpoint when you want to permanently remove a saved filter that is no longer needed."
+      "when_to_use": "When you no longer need a previously saved filter and wish to remove it."
     },
     {
       "name": "GetSavedFilter",
       "url": "api/SavedFilter/{id}",
       "method": "GET",
-      "description": "Retrieves the detailed information of a single saved filter by its unique ID.",
+      "description": "Retrieves the details of a single saved filter by its unique ID.",
       "parameters": {
         "id": {
           "type": "integer",
           "required": true,
-          "description": "The unique ID of the filter to retrieve."
+          "description": "The unique ID of the saved filter to retrieve."
         }
       },
       "example_uses": [
-        "Get the details of saved filter 456.",
-        "Show me the criteria for the 'My Team's Tasks' filter.",
-        "What is the configuration of saved filter ID 789?"
+        "Get the details of saved filter ID 456.",
+        "Show me the configuration for the 'High Priority Tasks' filter.",
+        "What are the criteria defined in filter number 789?"
       ],
-      "when_to_use": "Use this endpoint when you need to view the specific configuration or details of a single saved filter."
+      "when_to_use": "When you need to view the specific configuration or details of a particular saved filter."
     },
     {
       "name": "GetSavedFilters",
       "url": "api/SavedFilter",
       "method": "GET",
-      "description": "Retrieves a paginated list of saved filters for the current user. This endpoint supports advanced filtering and pagination via the 'request' query parameter. The 'request' object can include 'searchCriteria' (an array of objects, each with 'field', 'operator', and 'value' properties) to filter results, along with 'pageIndex' and 'pageSize' for pagination.",
+      "description": "Retrieves a paginated list of all saved filters for the current user, with optional search and pagination capabilities. The `request` parameter allows for advanced filtering using a JSON array of `searchCriteria` objects. Each `searchCriteria` object should have `field`, `operator`, and `value` properties. Supported operators include 'like', 'is', 'not', 'contains', 'startsWith', 'between'. Example `searchCriteria`: `[{\"field\": \"name\", \"operator\": \"contains\", \"value\": \"project\"}]`.",
       "parameters": {
         "request": {
           "type": "object",
           "required": false,
-          "description": "Search and pagination parameters for retrieving saved filters. Can include 'searchCriteria' for filtering by fields like 'name' or 'entityType', and 'pageIndex'/'pageSize' for pagination."
+          "description": "Search and pagination parameters for filtering the list of saved filters. This can include `pageIndex`, `pageSize`, and `searchCriteria`."
         }
       },
       "example_uses": [
-        "List all my saved filters.",
-        "Show me saved filters that apply to 'Projects'.",
-        "Get the second page of my saved filters, with 20 items per page."
+        "List all saved filters.",
+        "Show me saved filters that contain 'report' in their name, on page 2 with 10 items per page.",
+        "Can you find all saved filters related to 'partners'?"
       ],
-      "when_to_use": "Use this endpoint when you need to retrieve a list of saved filters, optionally applying search criteria or pagination to narrow down the results."
+      "when_to_use": "When you want to list or search through the saved filters available to the current user."
     },
     {
       "name": "ApplySavedFilter",
       "url": "api/SavedFilter/{id}/apply",
       "method": "GET",
-      "description": "Applies a saved filter by its ID and returns the corresponding filter request object, which can then be used to query the actual data. This endpoint also supports pagination parameters.",
+      "description": "Applies a saved filter by its ID and returns the corresponding filter request object, which can then be used to query data based on the saved criteria. Supports optional pagination parameters.",
       "parameters": {
         "id": {
           "type": "integer",
           "required": true,
-          "description": "The unique ID of the filter to apply."
+          "description": "The unique ID of the saved filter to apply."
         },
         "pageIndex": {
           "type": "integer",
           "required": false,
-          "description": "Optional page index for pagination (default: 1)."
+          "description": "Page index for pagination (default: 1)."
         },
         "pageSize": {
           "type": "integer",
           "required": false,
-          "description": "Optional page size for pagination (default: 10)."
+          "description": "Page size for pagination (default: 10)."
         }
       },
       "example_uses": [
-        "Apply saved filter 123 and get the search query it represents.",
-        "I want to use the 'Active Partners' filter to get the search parameters for a query.",
-        "Generate the search request for filter ID 789, for page 1 with 50 results."
+        "Apply the saved filter with ID 123 and get its criteria.",
+        "Retrieve the filter configuration for 'My Sales Leads' filter.",
+        "Can you give me the filter request object for filter 456, setting page size to 20?"
       ],
-      "when_to_use": "Use this endpoint when you want to retrieve the actual search criteria (as a request object) defined within a saved filter, typically to then execute that search against another entity's data."
+      "when_to_use": "When you want to retrieve the filter criteria defined in a saved filter to apply it to another data query or view."
     },
     {
       "name": "GetFilterStatistics",
@@ -147,15 +147,15 @@
         "entityType": {
           "type": "string",
           "required": false,
-          "description": "Optional parameter to filter statistics by a specific entity type (e.g., 'Partner', 'Project')."
+          "description": "Optional filter to get statistics for a specific entity type (e.g., 'Project', 'Partner')."
         }
       },
       "example_uses": [
-        "What are the statistics for saved filters?",
-        "Show me the usage statistics for saved filters related to 'Projects'.",
-        "How many times have filters been applied for 'Partners'?"
+        "Get overall usage statistics for all saved filters.",
+        "Show me the statistics for saved filters related to 'Project' entities.",
+        "How many times have users applied filters for 'Contact' entities?"
       ],
-      "when_to_use": "Use this endpoint when you need to gather analytical data or insights into how saved filters are being used within the system."
+      "when_to_use": "When you need to analyze the usage patterns or popularity of saved filters."
     }
   ]
 }

@@ -16,7 +16,7 @@
     {
       "popover": {
         "title": "Welcome to PartnerComponent",
-        "description": "This page allows users to browse, search, filter, and manage partner organizations. It serves as the central hub for all partner-related activities, providing an overview of existing partners and options to create new ones or import data.",
+        "description": "This page serves as the central hub for managing all partner organizations. Users can browse, search, filter, create, edit, and delete partner records. It provides an overview of all partners in the system and allows for bulk operations like import and export.",
         "side": "over",
         "align": "center"
       }
@@ -25,7 +25,7 @@
       "element": "p-button[label=\"New Partner | Edit Partner\"]",
       "popover": {
         "title": "New Partner | Edit Partner",
-        "description": "This button opens a dialog for creating a new partner or editing an existing one. It provides comprehensive form fields to manage all organizational information, contacts, and business relationships.<br><br><strong>When to use:</strong> When you need to add a brand new partner organization to the system., When you need to update details for an existing partner, such as their name, type, or contact information.",
+        "description": "Opens a dialog to create a new partner organization or modify an existing one. This includes comprehensive form fields for managing all aspects of partner information.<br><br><strong>When to use:</strong> When you need to add a brand new partner organization to the system., When you need to update the core details of an existing partner, such as their name, type, or primary contact information.",
         "side": "bottom",
         "align": "start"
       },
@@ -55,7 +55,7 @@
       "element": "p-button[label=\"Import Partners\"]",
       "popover": {
         "title": "Import Partners",
-        "description": "This button opens a dialog that allows you to bulk import multiple partner organizations from external sources like Google Sheets or CSV files.<br><br><strong>When to use:</strong> When you have a large list of partners to add and want to avoid manual entry., During initial system setup or data migration from another system.",
+        "description": "Initiates the process to bulk import partner organizations from external data sources like Google Sheets or CSV files.<br><br><strong>When to use:</strong> When you have a large list of partners to add to the system simultaneously., During initial system setup or data migration from another system.",
         "side": "bottom",
         "align": "start"
       },
@@ -90,6 +90,6 @@
       }
     }
   ],
-  "generatedAt": "2025-07-31T14:05:06.536855",
+  "generatedAt": "2025-07-31T18:59:03.665466",
   "version": "1.0"
 }

@@ -1,6 +1,6 @@
 {
   "entity": "UserProfile",
-  "description": "Manages user profile information, including personal details, contact information, roles, permissions, and preferences within the system.",
+  "description": "Manages the profile and personal information for users within the system, including their contact details, settings, roles, and permissions.",
   "synonyms": [
     "User Profile",
     "My Profile",
@@ -14,7 +14,7 @@
       "name": "UpdateProfile",
       "url": "/api/profile",
       "method": "POST",
-      "description": "Updates the current user's profile information, such as name, contact details, and other personal attributes. This operation allows users to modify their own profile data.",
+      "description": "Updates the current user's profile information.",
       "parameters": {
         "profile": {
           "type": "object",
@@ -23,17 +23,17 @@
         }
       },
       "example_uses": [
-        "How do I change my profile details?",
-        "I need to update my contact information.",
-        "Can you help me modify my user profile?"
+        "Update my profile with my new contact details.",
+        "I need to change my address in my user profile.",
+        "Can you help me update my personal information?"
       ],
-      "when_to_use": "Use this endpoint when the authenticated user needs to update their personal profile information, such as name, address, phone number, or other details stored in their profile."
+      "when_to_use": "Use this endpoint when an authenticated user wants to modify their own profile details such as name, contact information, or other personal attributes."
     },
     {
       "name": "UpdateUserInfo",
       "url": "/api/user-info/update",
       "method": "PUT",
-      "description": "Updates the current user's information and profile settings. This includes general user data and potentially broader settings beyond just personal profile details.",
+      "description": "Updates current user's information and profile settings.",
       "parameters": {
         "userInfo": {
           "type": "object",
@@ -42,17 +42,17 @@
         }
       },
       "example_uses": [
-        "I want to change my user settings.",
-        "How can I update my general user information?",
-        "Modify my user account details."
+        "I want to update my user settings.",
+        "Modify my account information.",
+        "Can I change my user preferences?"
       ],
-      "when_to_use": "Use this endpoint when the authenticated user needs to update their general user information or settings that might encompass more than just basic profile details, such as preferences or other user-specific configurations."
+      "when_to_use": "Use this endpoint to update a broader set of user information and settings, potentially including profile details, preferences, or other user-specific configurations."
     },
     {
       "name": "GetUserProfileDetails",
       "url": "/api/user-info/current",
       "method": "GET",
-      "description": "Retrieves comprehensive current user information including profile, roles, permissions, organizational settings, and user preferences. This endpoint can also be used by administrators to fetch details for a specific user by providing their email.",
+      "description": "Retrieves comprehensive current user information including profile, roles, permissions, organizational settings, and user preferences. Supports both authenticated user lookup and explicit email parameter for administrative purposes.",
       "parameters": {
         "email": {
           "type": "string",
@@ -61,11 +61,11 @@
         }
       },
       "example_uses": [
-        "Show me my current profile details.",
-        "What are my roles and permissions?",
-        "Can I see the profile for user@example.com?"
+        "Get my current user profile details.",
+        "Show me all the information associated with my account.",
+        "Retrieve the profile details for 'john.doe@example.com'."
       ],
-      "when_to_use": "Use this endpoint to retrieve all available information about the current authenticated user, including their profile, assigned roles, permissions, and organizational context. It can also be used by authorized personnel to look up another user's details by providing their email address."
+      "when_to_use": "Use this endpoint to fetch all available information about the current authenticated user, or to retrieve details for a specific user by providing their email address (requires appropriate administrative permissions)."
     }
   ]
 }

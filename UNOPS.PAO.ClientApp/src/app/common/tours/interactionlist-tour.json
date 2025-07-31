@@ -16,7 +16,7 @@
     {
       "popover": {
         "title": "Welcome to InteractionListComponent",
-        "description": "This page serves as the central hub for managing all interaction records within the organization. It provides a comprehensive view of meetings, calls, emails, and other communications with partners and contacts. Users can efficiently search, filter, create, edit, and delete interaction entries, ensuring a complete history of engagements.",
+        "description": "This page serves as the central hub for viewing, searching, and managing all interaction records within the organization. Users can browse a comprehensive list of meetings, calls, emails, and other communications, with robust tools for finding specific records and initiating new interactions.",
         "side": "over",
         "align": "center"
       }
@@ -25,7 +25,7 @@
       "element": "p-button[label=\"New Interaction\"]",
       "popover": {
         "title": "New Interaction",
-        "description": "Opens a modal window to create and record a new interaction, such as a meeting, call, email, or general note, with a partner or contact.<br><br><strong>When to use:</strong> When you have completed a new communication (e.g., a phone call, email exchange) and need to log it., When you are scheduling or have just finished a meeting and want to record its details.",
+        "description": "Opens a modal window to create and record a new interaction, such as a meeting, call, or email. This allows users to log new communications with partners or contacts.<br><br><strong>When to use:</strong> When you need to record a new communication, meeting, or activity with partners or contacts., After completing a call or meeting and you want to log the details.",
         "side": "bottom",
         "align": "start"
       },
@@ -55,7 +55,7 @@
       "element": "p-button[label=\"Import Interactions\"]",
       "popover": {
         "title": "Import Interactions",
-        "description": "Initiates the process to bulk import multiple interaction records from an external file, typically a Google Sheet or CSV.<br><br><strong>When to use:</strong> When you need to migrate a large volume of historical interaction data from another system., When you receive interaction data from a third party in a structured file format.",
+        "description": "Opens a dialog to bulk import interaction records from external sources, typically Google Sheets or CSV files. This is useful for migrating data or adding many records at once.<br><br><strong>When to use:</strong> When you need to add multiple interaction records at once from external sources or during a data migration., If you have a spreadsheet of past interactions that need to be added to the system.",
         "side": "bottom",
         "align": "start"
       },
@@ -90,6 +90,6 @@
       }
     }
   ],
-  "generatedAt": "2025-07-31T14:05:06.501197",
+  "generatedAt": "2025-07-31T18:59:03.663446",
   "version": "1.0"
 }

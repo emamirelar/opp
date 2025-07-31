@@ -1,6 +1,6 @@
 {
   "entity": "PartnerTabs",
-  "description": "The Partner Tabs interface provides a comprehensive view of a specific partner, organizing all relevant information into distinct, easily navigable sections. Users can access details such as organizational information, contact persons, interaction history, funding agreements, and performance analytics, all from a single, centralized location. This interface is crucial for managing partner relationships and accessing critical data efficiently.",
+  "description": "The PartnerTabs interface provides a comprehensive view of a specific partner, organizing all relevant information into distinct, easy-to-navigate tabs. Users can access details such as organizational information, contact persons, historical interactions, funding agreements, and performance analytics, ensuring a holistic understanding of each partner relationship.",
   "synonyms": [
     "partner_navigation",
     "partner_details",
@@ -15,7 +15,7 @@
     {
       "route": "/partnerships/partners/:recordId",
       "name": "PartnerTabsComponent",
-      "description": "This page serves as the central hub for viewing and managing all aspects of a specific partner. It uses a tabbed navigation system to segment information, allowing users to quickly switch between different categories of data without leaving the partner's profile. The top section always displays the partner's logo and basic identifying information, ensuring context is maintained across all tabs.",
+      "description": "This page serves as the central hub for managing and viewing all information related to a specific partner. It uses a tabbed interface to categorize data, allowing users to quickly switch between different aspects like general details, contacts, interactions, funding, and analytics dashboards. The partner's logo and basic identifying information are persistently displayed at the top for quick reference.",
       "capabilities": [
         "navigate_partner_sections",
         "view_partner_details",
@@ -27,24 +27,20 @@
       "buttons": [],
       "forms": [],
       "tabs": [],
-      "search": {
-        "placeholder": "",
-        "description": "",
-        "help_text": ""
-      },
+      "search": {},
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're looking for specific information about a partner, use the tabs at the top of the page to navigate between different sections. The partner's logo and essential details are always visible at the top for quick reference. Each tab is designed to display a distinct set of information, such as organizational details, contact persons, interaction history, or financial agreements. If you need to update the partner's logo, click on the existing logo area.",
+        "when_stuck": "If you're looking for specific information about a partner, use the tabs at the top of the page to navigate between different sections. For example, 'Details' for general info, 'Contacts' for people, 'Interactions' for communication history, 'Funding & Agreements' for financial data, and 'Dashboard' for analytics. The partner's logo and name are always visible at the top.",
         "common_tasks": [
-          "Viewing partner details: Click on the 'Details' tab to see the main organizational information.",
+          "Viewing partner details: Click on the 'Details' tab to see the partner's core organizational information, address, and general settings.",
           "Managing contacts: Switch to the 'Contacts' tab to view, add, or edit individuals associated with this partner.",
-          "Checking interactions: Navigate to the 'Interactions' tab to review communication history and past engagements.",
-          "Viewing funding: Go to the 'Funding & Agreements' tab for financial information and contractual details.",
-          "Accessing analytics: Use the 'Dashboard' tab to view performance metrics and analytical data related to the partner.",
-          "Uploading logo: Click on the partner's logo displayed at the top of the page to upload a new image."
+          "Checking interactions: Navigate to the 'Interactions' tab to review all past communications, meetings, and activities related to this partner.",
+          "Viewing funding: Go to the 'Funding & Agreements' tab to access financial agreements, grants, and payment schedules with the partner.",
+          "Accessing analytics: Use the 'Dashboard' tab to view performance metrics, key indicators, and analytical reports for the partner.",
+          "Uploading logo: Click on the existing partner logo (or the placeholder if none exists) at the top of the page to upload a new logo image for the partner."
         ],
         "troubleshooting": [],
-        "getting_started": "To begin, select a partner from the main partners list. This will open their dedicated profile page, which is organized into several tabs. Start by exploring the 'Details' tab for an overview, then proceed to other tabs like 'Contacts' or 'Interactions' based on the information you need. The interface is designed for intuitive navigation between these sections.",
+        "getting_started": "To get started, select a partner from the main partners list. This will bring you to the PartnerTabs page. By default, you'll land on the 'Details' tab, showing an overview of the partner. Explore the other tabs like 'Contacts', 'Interactions', 'Funding & Agreements', and 'Dashboard' to see the full spectrum of information available for this partner.",
         "keyboard_shortcuts": []
       }
     }

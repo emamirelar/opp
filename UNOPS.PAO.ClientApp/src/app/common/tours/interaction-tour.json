@@ -16,7 +16,7 @@
     {
       "popover": {
         "title": "Welcome to InteractionModalComponent",
-        "description": "This modal allows users to create new interaction records or edit existing ones. It supports various types of communications like meetings, calls, and emails. Key features include adding participants, uploading relevant documents, and leveraging AI for transcribing and extracting details from audio or image files.",
+        "description": "This modal allows users to create new interaction records or edit existing ones. It supports various communication types like meetings, calls, and emails, and includes features for adding participants, uploading documents, and leveraging AI for transcription to automatically populate details.",
         "side": "over",
         "align": "center"
       }
@@ -25,7 +25,7 @@
       "element": "p-button[label=\"Delete\"]",
       "popover": {
         "title": "Delete",
-        "description": "Permanently deletes an interaction record after a confirmation dialog. Use this with caution as deleted interactions cannot be recovered.<br><br><strong>When to use:</strong> When an interaction was recorded incorrectly or is no longer relevant (use with caution).",
+        "description": "Permanently deletes an interaction record after a confirmation dialog. Use with caution as this action cannot be undone.<br><br><strong>When to use:</strong> When an interaction was recorded incorrectly or is no longer relevant and needs to be removed from the system.",
         "side": "bottom",
         "align": "start"
       },
@@ -55,7 +55,7 @@
       "element": "p-button[label=\"Save | Create Interaction\"]",
       "popover": {
         "title": "Save | Create Interaction",
-        "description": "Saves or creates an interaction record with all form data, including participants, documents, and interaction details. This action finalizes the interaction entry.<br><br><strong>When to use:</strong> When all required fields are filled and you want to save the interaction to the system.",
+        "description": "Saves or creates an interaction record with all form data, including participants, documents, and interaction details.<br><br><strong>When to use:</strong> When all required fields are filled and you want to save the interaction to the system.",
         "side": "bottom",
         "align": "start"
       },
@@ -85,7 +85,7 @@
       "element": "p-button[label=\"Process Transcription\"]",
       "popover": {
         "title": "Process Transcription",
-        "description": "Processes AI transcription results from uploaded audio, image, or text files and automatically fills relevant form fields with extracted interaction data, such as subject, participants, or notes.<br><br><strong>When to use:</strong> After uploading audio, image",
+        "description": "Processes AI transcription results from uploaded audio, image, or text files and automatically fills relevant form fields with extracted interaction data.<br><br><strong>When to use:</strong> After uploading an audio recording, image, or text file from an interaction to automatically extract and populate details using AI.",
         "side": "bottom",
         "align": "start"
       },
@@ -120,6 +120,6 @@
       }
     }
   ],
-  "generatedAt": "2025-07-31T14:05:06.485439",
+  "generatedAt": "2025-07-31T18:59:03.661529",
   "version": "1.0"
 }

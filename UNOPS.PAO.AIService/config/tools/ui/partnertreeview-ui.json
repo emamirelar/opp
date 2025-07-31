@@ -14,7 +14,7 @@
     {
       "route": "/admin/partner-tree/:recordId",
       "name": "PartnerTreeViewComponent",
-      "description": "This page serves as the central hub for viewing and managing the details of a specific organizational node within the partner hierarchy. It provides a comprehensive overview, allowing users to navigate through different aspects of the node, such as its core details, relationships, and associated analytics.",
+      "description": "Partner tree node detail navigation interface with tabs for managing specific organizational hierarchy nodes. Provides organized access to partner tree details and analytics data.",
       "capabilities": [
         "navigate_tree_sections",
         "view_tree_details",
@@ -28,9 +28,11 @@
           "label": "Edit",
           "icon": "pi pi-pencil",
           "action": "edit_partner_tree_node",
-          "description": "Opens a dialog to modify the details of the current organizational node, including its name, properties, and hierarchical position within the partner tree.",
+          "description": "Opens the partner tree node editing dialog to modify organizational hierarchy structure and details",
           "when_to_use": [
-            "When you need to modify organizational node details, relationships, or hierarchical positioning"
+            "When you need to modify organizational node details",
+            "relationships",
+            "or hierarchical positioning"
           ]
         }
       ],
@@ -43,16 +45,16 @@
       },
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're unsure where to find specific information, use the tabs (if available) to navigate between different aspects of this organizational node. The 'Edit' button allows you to modify the tree structure. For general organizational information, look for a 'Details' tab, and for performance metrics, check for a 'Dashboard' or 'Analytics' tab.",
+        "when_stuck": "Use the tabs to navigate between different aspects of this organizational node. The Edit button allows you to modify the tree structure. Use the Details tab for organizational information and Dashboard tab for analytics.",
         "common_tasks": [
-          "Viewing tree node details: Click on the 'Details' tab (if available) to see organizational information.",
-          "Editing tree structure: Click the 'Edit' button to modify organizational hierarchy.",
-          "Accessing analytics: Switch to the 'Dashboard' tab (if available) to view performance and data metrics.",
-          "Managing relationships: Use the details view to understand parent-child relationships.",
-          "Navigating hierarchy: Use the navigation breadcrumb (if present) to move between different levels of the partner tree."
+          "Viewing tree node details: Click on the Details tab to see organizational information",
+          "Editing tree structure: Click the Edit button to modify organizational hierarchy",
+          "Accessing analytics: Switch to Dashboard tab to view performance and data metrics",
+          "Managing relationships: Use the details view to understand parent-child relationships",
+          "Navigating hierarchy: Use the navigation breadcrumb to move between tree levels"
         ],
         "troubleshooting": [],
-        "getting_started": "To get started, select a partner tree node from the main tree view. This page will then display its specific details. Begin by reviewing the 'Details' tab for core information, and use the 'Edit' button if you need to make any changes to the node's properties or its place in the hierarchy.",
+        "getting_started": "",
         "keyboard_shortcuts": []
       }
     }

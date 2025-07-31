@@ -17,7 +17,7 @@
     {
       "route": "/admin/partner-tree",
       "name": "PartnerTreeComponent",
-      "description": "This page provides the administrative interface for managing your organization's hierarchy and partner tree structure. You can view, edit, and organize partner categories and groups in a hierarchical tree format, allowing for clear visualization and management of your business relationships.",
+      "description": "This page provides the administrative interface for managing your organization's hierarchical structure. You can view, edit, and organize partner categories and groups in a tree-like format, allowing for clear visualization and management of your business relationships and internal structures.",
       "capabilities": [
         "view_partner_tree",
         "create_partner_level",
@@ -33,11 +33,11 @@
           "label": "New Partner Level",
           "icon": "pi pi-plus",
           "action": "create_partner_level",
-          "description": "This button opens a dialog to create a new organizational node, such as a category or group, within the partner hierarchy tree. Use this to expand your organizational structure.",
+          "description": "Opens a dialog to create a new organizational node, such as a category, group, or level, within the partner hierarchy tree.",
           "when_to_use": [
-            "When you need to add a new category or group to your partner hierarchy.",
-            "When you are setting up a new division or segment within your organization's structure.",
-            "When you want to define a new level for partner classification."
+            "When you need to add a new organizational category to the partner tree structure.",
+            "When you need to add a new group to the partner tree structure.",
+            "When you need to add a new level to the partner hierarchy."
           ]
         }
       ],
@@ -46,14 +46,17 @@
       "search": {},
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're unsure how to proceed, remember that the main area displays your organizational structure as a tree. To add a new level, click the 'New Partner Level' button. To explore different parts of the hierarchy, use the expand/collapse arrows next to each node. To modify an existing partner level, simply click on its row in the tree.",
+        "when_stuck": "If you're unsure how to proceed, use the tree view to navigate the organizational structure. Click the '+' button to create new partner levels. Use the expand/collapse controls (arrows next to nodes) to view different levels of the hierarchy. To edit details of an existing partner level, simply click on its row in the tree.",
         "common_tasks": [
-          "Creating partner levels: Click the 'New Partner Level' button located at the top of the page to open the creation dialog and define a new organizational node.",
-          "Editing partner structure: Click on any existing node (row) within the tree view to open its details for modification. Make your changes and save.",
-          "Managing hierarchy: Utilize the drag-and-drop functionality (if enabled) to reorder or nest partner levels, or use the edit function to assign parent/child relationships.",
-          "Viewing organizational structure: Click the expand (arrow pointing right) or collapse (arrow pointing down) icons next to each node to reveal or hide its sub-levels.",
-          "Administrative management: Use this page to configure and maintain the relationships and reporting structures between different partner categories and groups."
-        ]
+          "Creating partner levels: Click the 'New Partner Level' button to add new organizational nodes to your hierarchy.",
+          "Editing partner structure: Click on any existing tree node (partner level) to open its details for modification.",
+          "Managing hierarchy: Utilize the tree structure to organize and reorder partner categories and groups as needed.",
+          "Viewing organizational structure: Expand and collapse nodes within the tree to explore different levels of your hierarchy.",
+          "Administrative management: Configure and maintain organizational relationships and reporting structures within the tree."
+        ],
+        "troubleshooting": [],
+        "getting_started": "",
+        "keyboard_shortcuts": []
       }
     }
   ]

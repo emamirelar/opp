@@ -1,13 +1,13 @@
 {
   "entity": "PartnerTree",
-  "description": "Manages the hierarchical structure of partners, including categories and groups, for organizational and classification purposes.",
+  "description": "Manages the hierarchical classification and organization of partners, including categories, groups, and their relationships. It allows for structuring partners into a logical taxonomy.",
   "synonyms": [
     "partner hierarchy",
     "partner classification",
-    "partner structure",
-    "partner categories",
-    "partner groups",
-    "partner taxonomy"
+    "partner category",
+    "partner group",
+    "partner taxonomy",
+    "partner structure"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -26,7 +26,9 @@
       "example_uses": [
         "Create a new partner category for Government",
         "Add a partner group under UN Agencies",
-        "Create NGO subcategory classification"
+        "Create NGO subcategory classification",
+        "Add new partner hierarchy node",
+        "Set up partner organization structure"
       ],
       "when_to_use": "Use this when the user asks to create, add, or set up new partner categories, groups, or hierarchy structures."
     },
@@ -50,7 +52,9 @@
       "example_uses": [
         "Show all partner categories and groups",
         "List partner hierarchy structure",
-        "Get partner classification tree"
+        "Get partner classification tree",
+        "Show partner organization taxonomy",
+        "List all partner categories sorted by name"
       ],
       "when_to_use": "Use this when the user asks to see partner categories, groups, hierarchy, or classification structure."
     },
@@ -69,7 +73,9 @@
       "example_uses": [
         "Show me details for partner category ID 123",
         "Get information about partner group 456",
-        "Display hierarchy node 789"
+        "Display hierarchy node 789",
+        "Show complete partner tree node details",
+        "Get partner classification details"
       ],
       "when_to_use": "Use this when the user asks for specific partner tree node details by ID or when you need complete hierarchy information."
     },
@@ -88,7 +94,9 @@
       "example_uses": [
         "Update partner category names and descriptions",
         "Reorganize partner tree hierarchy",
-        "Modify partner group classifications"
+        "Modify partner group classifications",
+        "Update multiple tree nodes at once",
+        "Restructure partner organization taxonomy"
       ],
       "when_to_use": "Use this when the user asks to update, modify, edit, or reorganize partner tree structure or classifications."
     },
@@ -107,7 +115,9 @@
       "example_uses": [
         "Delete partner category ID 123",
         "Remove partner group 456 from hierarchy",
-        "Delete obsolete partner classification"
+        "Delete obsolete partner classification",
+        "Remove unused tree node",
+        "Clean up partner taxonomy structure"
       ],
       "when_to_use": "Use this when the user asks to delete, remove, or eliminate a partner category, group, or tree node."
     },
@@ -126,7 +136,9 @@
       "example_uses": [
         "Check my permissions for partner category 123",
         "What can I do with partner group 456?",
-        "Get access rights for this tree node"
+        "Get access rights for this tree node",
+        "Verify tree permissions before editing",
+        "Can I modify this partner classification?"
       ],
       "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for partner tree management."
     },
@@ -139,7 +151,10 @@
       "example_uses": [
         "Show partner hierarchy structure",
         "Get complete partner taxonomy tree",
-        "Display partner organization chart"
+        "Display partner organization chart",
+        "Show category and group relationships",
+        "Get partner classification structure",
+        "Load partner tree for navigation"
       ],
       "when_to_use": "Use this when the user needs to see the complete partner organizational structure, hierarchy, or when building navigation trees."
     },
@@ -163,7 +178,9 @@
       "example_uses": [
         "Show all government partners (GOV group)",
         "List all NGO partners with pagination",
-        "Get UN agency partners sorted by name"
+        "Get UN agency partners sorted by name",
+        "Find partners in a specific partner group classification",
+        "Show commercial partners (COMM group) with 20 per page"
       ],
       "when_to_use": "Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification."
     },
@@ -187,7 +204,10 @@
       "example_uses": [
         "Show all national partners in this category",
         "List international partners with pagination",
-        "Get bilateral partners sorted by name"
+        "Get bilateral partners sorted by name",
+        "Find partners in a specific operational category",
+        "Show multilateral partners with 15 per page",
+        "Filter partners by geographic or operational scope"
       ],
       "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification."
     },
@@ -200,7 +220,10 @@
       "example_uses": [
         "Get all partner categories with counts",
         "Show partner distribution by category",
-        "Generate partner category statistics"
+        "Generate partner category statistics",
+        "Create partner category breakdown chart",
+        "Display partner classification overview",
+        "Draw diagram of partner categories with counts"
       ],
       "when_to_use": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization."
     },
@@ -213,7 +236,10 @@
       "example_uses": [
         "Get all partner groups with counts",
         "Show partner distribution by group",
-        "Generate partner group statistics"
+        "Generate partner group statistics",
+        "Create partner group breakdown chart",
+        "Display partner group overview",
+        "Draw diagram of partner groups with counts"
       ],
       "when_to_use": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping."
     },
@@ -226,7 +252,10 @@
       "example_uses": [
         "Get complete partner categorization overview",
         "Show partner distribution across categories and groups",
-        "Generate comprehensive partner statistics"
+        "Generate comprehensive partner statistics",
+        "Create partner organization chart",
+        "Display complete partner taxonomy with counts",
+        "Draw diagram showing partner categories and groups with distribution"
       ],
       "when_to_use": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups."
     }

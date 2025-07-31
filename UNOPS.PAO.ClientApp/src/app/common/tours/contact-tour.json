@@ -1,7 +1,7 @@
 {
   "tourId": "contact-overview",
   "title": "Contact Overview Tour",
-  "description": "Browse and manage contact persons within partner organizations. Central hub for managing individual contacts, their roles, and communication details.",
+  "description": "Browse and manage contact persons within partner organizations. This is the central hub for managing individual contacts, their roles, and communication details.",
   "entity": "Contact",
   "route": "/partnerships/contacts",
   "showButtons": [
@@ -16,7 +16,7 @@
     {
       "popover": {
         "title": "Welcome to ContactListComponent",
-        "description": "This page serves as the central hub for viewing, searching, and managing all contact persons associated with partner organizations. Users can quickly find specific contacts, add new ones, or initiate bulk import operations.",
+        "description": "This page allows you to view, search, filter, and manage all contact persons associated with your partner organizations. It serves as the primary interface for overseeing individual contacts, their specific roles, and all relevant communication details.",
         "side": "over",
         "align": "center"
       }
@@ -25,7 +25,7 @@
       "element": "p-button[label=\"New Contact\"]",
       "popover": {
         "title": "New Contact",
-        "description": "Opens a dialog to create a new contact person or to edit an existing contact's details. This is the primary way to manage individual contact information.<br><br><strong>When to use:</strong> When you need to add a new contact person to a partner organization., When you need to update the details (e.g., name, email, title) of an existing contact.",
+        "description": "This button opens a dialog to create a new contact person or edit an existing contact's details. It provides form fields for entering and updating all relevant contact information, including their association with a partner organization.<br><br><strong>When to use:</strong> When you need to add a brand new contact person to the system., When you need to modify the details of an existing contact, such as their name, email, or role.",
         "side": "bottom",
         "align": "start"
       },
@@ -55,7 +55,7 @@
       "element": "p-button[label=\"Import Contacts\"]",
       "popover": {
         "title": "Import Contacts",
-        "description": "Opens a wizard to bulk import multiple contacts from external files, such as Google Sheets or CSV documents.<br><br><strong>When to use:</strong> When you need to add a large number of contacts simultaneously from a spreadsheet., For migrating contact data from another system or a list provided by a partner.",
+        "description": "This button opens a dialog that allows you to bulk import multiple contacts from external sources, such as Google Sheets or CSV files. It's designed for adding a large number of contacts efficiently.<br><br><strong>When to use:</strong> When you need to add many contacts at once from a spreadsheet or another system., For migrating existing contact data into the platform.",
         "side": "bottom",
         "align": "start"
       },
@@ -85,7 +85,7 @@
       "element": "p-button[label=\"Scan Business Card\"]",
       "popover": {
         "title": "Scan Business Card",
-        "description": "Launches an interface that uses AI to scan and extract contact information directly from a physical business card, automating data entry.<br><br><strong>When to use:</strong> When you have a physical business card and want to quickly add the contact without manual typing., To efficiently digitize contact information from networking events or meetings.",
+        "description": "This button activates the business card scanner interface, which uses AI to capture and extract contact information directly from a physical business card. This automates data entry for new contacts.<br><br><strong>When to use:</strong> When you have a physical business card and want to quickly add the contact's information without manual typing., To save time on data entry after networking events or meetings.",
         "side": "bottom",
         "align": "start"
       },
@@ -120,6 +120,6 @@
       }
     }
   ],
-  "generatedAt": "2025-07-31T14:05:06.413584",
+  "generatedAt": "2025-07-31T18:59:03.655870",
   "version": "1.0"
 }

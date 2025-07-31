@@ -1,12 +1,12 @@
 {
   "entity": "UserManagement",
-  "description": "Manages user accounts, roles, and organizational unit settings within the system. This includes retrieving user details, updating roles, and configuring self-management options for organizational units.",
+  "description": "Manages user accounts, roles, and organizational unit settings within the system. This entity allows for retrieving user lists, updating user roles, and configuring self-management options for organizational units.",
   "synonyms": [
-    "users",
-    "accounts",
-    "user administration",
-    "user settings",
-    "user roles"
+    "User Admin",
+    "Account Management",
+    "User Configuration",
+    "User Settings",
+    "User Access"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -14,26 +14,26 @@
       "name": "GetUsers",
       "url": "/api/user-management/users",
       "method": "POST",
-      "description": "Get a paginated list of users with filtering and search capabilities. This endpoint supports advanced search criteria through the `request` body's `advancedSearch` array. Each item in `advancedSearch` should be a JSON object with `field`, `operator`, and `value`. For example, to search for users by name, you might use `{\"field\": \"username\", \"operator\": \"like\", \"value\": \"John%\"}`. Common fields include 'username', 'email', 'status', 'orgUnitCode'. Available operators are 'like', 'is', 'not', 'contains', 'startsWith', 'between'.",
+      "description": "Get a paginated list of users. This endpoint supports advanced filtering and search capabilities by providing a 'request' body. The 'request' object can include parameters for pagination (e.g., pageNumber, pageSize), sorting (e.g., sortBy, sortOrder), and a 'searchCriteria' array for complex queries. Each item in 'searchCriteria' should be a JSON object with 'field', 'operator', and 'value' properties. Supported operators include 'like', 'is', 'not', 'contains', 'startsWith', 'between'. Specific field names for search criteria are defined by the 'UserManagementRequest' schema, which is not detailed in this metadata.",
       "parameters": {
         "request": {
           "type": "object",
           "required": false,
-          "description": "User management request with pagination, filters, and advanced search criteria."
+          "description": "User management request with pagination and filters. This object defines the criteria for searching, filtering, and paginating the user list."
         }
       },
       "example_uses": [
-        "How can I get a list of all active users?",
-        "Find users whose email contains 'example.com' and are in the 'HR' organizational unit.",
-        "Show me users created after January 1, 2023, sorted by username, with a page size of 20."
+        "Find all active users in the system.",
+        "List users created in the last month, sorted by name.",
+        "Search for users whose email address contains 'example.com' and are in 'Admin' role."
       ],
-      "when_to_use": "To retrieve a list of users, applying filters, pagination, and advanced search criteria based on various user attributes."
+      "when_to_use": "When you need to retrieve a list of users, applying filters, sorting, or pagination based on various criteria."
     },
     {
       "name": "GetUser",
       "url": "/api/user-management/users/{userId}",
       "method": "GET",
-      "description": "Get details for a specific user by their unique ID.",
+      "description": "Get user details by ID.",
       "parameters": {
         "userId": {
           "type": "string",
@@ -42,17 +42,17 @@
         }
       },
       "example_uses": [
-        "Retrieve the profile information for user 'john.doe'.",
-        "What are the details for user ID 'abc-123'?",
-        "Can I see the full record for a specific user?"
+        "Get details for user 'john.doe@example.com'.",
+        "Retrieve the profile of user ID '12345'.",
+        "Show me the information for a specific user."
       ],
-      "when_to_use": "To fetch the complete profile and details of a single user when their ID is known."
+      "when_to_use": "When you need to retrieve detailed information for a single user by their unique identifier."
     },
     {
       "name": "UpdateUserRoles",
       "url": "/api/user-management/users/{userId}/roles",
       "method": "PUT",
-      "description": "Update the roles assigned to a specific user.",
+      "description": "Update user roles.",
       "parameters": {
         "userId": {
           "type": "string",
@@ -62,71 +62,71 @@
         "request": {
           "type": "object",
           "required": false,
-          "description": "The request body containing the new roles to assign to the user."
+          "description": "The request body containing the new roles to be assigned to the user."
         }
       },
       "example_uses": [
-        "Change the roles for user 'jane.smith' to 'Admin' and 'Editor'.",
-        "Assign the 'Viewer' role to user 'user123'.",
-        "Update the permissions for a specific user account."
+        "Change the roles for user 'jane.doe' to 'Editor' and 'Viewer'.",
+        "Assign 'Admin' role to user 'user123'.",
+        "Remove 'Viewer' role from user 'user456'."
       ],
-      "when_to_use": "To modify the security roles or permissions associated with an existing user account."
+      "when_to_use": "When you need to modify the assigned roles for a specific user."
     },
     {
       "name": "GetAvailableRoles",
       "url": "/api/user-management/roles",
       "method": "GET",
-      "description": "Retrieve a list of all roles that the current authenticated user is permitted to assign to other users.",
+      "description": "Get available roles that the current user can assign.",
       "parameters": {},
       "example_uses": [
-        "What roles can I assign to new users?",
-        "List all available user roles.",
-        "Show me the roles I have permission to manage."
+        "List all roles I can assign to users.",
+        "What are the available user roles in the system?",
+        "Show me the roles that can be granted to users."
       ],
-      "when_to_use": "To discover the set of roles that can be used when creating or updating user accounts, based on the current user's permissions."
+      "when_to_use": "When you need to retrieve a list of all roles that the current authenticated user has permission to assign to other users."
     },
     {
       "name": "GetCurrentUserOrgUnit",
       "url": "/api/user-management/current-user-org-unit",
       "method": "GET",
-      "description": "Get the organizational unit associated with the currently authenticated user. This information can be used for filtering data relevant to the user's organizational context.",
+      "description": "Get current user's organization unit for filtering.",
       "parameters": {},
       "example_uses": [
-        "What is my current organizational unit?",
-        "Retrieve the organizational unit for the logged-in user.",
-        "Find out which department I belong to."
+        "What is my current organization unit?",
+        "Retrieve the organization unit associated with my account.",
+        "Show me my default organizational filter."
       ],
-      "when_to_use": "To determine the organizational context of the current user, often used for data filtering or access control."
+      "when_to_use": "When you need to determine the organization unit associated with the currently authenticated user, often used for filtering data or setting context."
     },
     {
       "name": "GetOrgUnitSelfManagement",
       "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
       "method": "GET",
-      "description": "Retrieve the self-management setting for a specific organizational unit. This setting determines if users within that unit can manage certain aspects of their own accounts or unit settings.",
+      "description": "Get organization unit self-management setting.",
       "parameters": {
         "orgUnitCode": {
           "type": "string",
           "required": false,
-          "description": "The unique code of the organizational unit."
+          "description": "The code of the organization unit."
         }
       },
       "example_uses": [
-        "Check if self-management is enabled for the 'HR' organizational unit.",
-        "What is the self-management status for org unit 'FINANCE'?",
-        "Get the self-management configuration for a specific department."
+        "Check self-management status for org unit 'HQ'.",
+        "Is self-management enabled for 'Region A'?",
+        "Retrieve the self-management setting for a specific organizational unit."
       ],
-      "when_to_use": "To query whether self-management features are active for a given organizational unit."
+      "when_to_use": "When you need to check if self-management is enabled for a particular organization unit."
     },
     {
       "name": "UpdateOrgUnitSelfManagement",
       "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
       "method": "PUT",
-      "description": "Update the self-management setting for a specific organizational unit. This allows administrators to enable or disable self-service capabilities for users within that unit.",
+      "description": "Update organization unit self-management setting.",
       "parameters": {
         "orgUnitCode": {
           "type": "string",
           "required": false,
-          "description": "The unique code of the organizational unit."
+          "description": "The code of the organization unit to update."
         },
         "request": {
           "type": "object",
@@ -135,11 +135,11 @@
         }
       },
       "example_uses": [
-        "Enable self-management for the 'IT' organizational unit.",
-        "Disable self-management for org unit 'SALES'.",
-        "Change the self-service setting for a department."
+        "Enable self-management for org unit 'HQ'.",
+        "Disable self-management for 'Region B'.",
+        "Change the self-management setting for an organizational unit."
       ],
-      "when_to_use": "To modify whether users within a specific organizational unit are allowed to manage certain aspects of their own accounts or unit settings."
+      "when_to_use": "When you need to modify the self-management setting for a specific organization unit."
     }
   ]
 }

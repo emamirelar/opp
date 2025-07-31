@@ -1,19 +1,21 @@
 {
   "entity": "Document",
-  "description": "Manages files, attachments, and associated metadata linked to various entities such as Partners, Contacts, and Interactions. It allows for retrieval, viewing, and updating of document details.",
+  "description": "Manages documents and files associated with various entities like partners, contacts, and interactions, including retrieval, viewing, and metadata updates.",
   "synonyms": [
     "file",
     "attachment",
     "record",
-    "upload",
-    "artifact",
-    "document record"
+    "document record",
+    "uploaded file"
   ],
-  "mandatoryFields": [],
+  "mandatoryFields": [
+    "id",
+    "entityId"
+  ],
   "endpoints": [
     {
       "name": "GetAll",
-      "url": "/api/document/{entityName}/{entityId}",
+      "url": "api/document/{entityName}/{entityId}",
       "method": "GET",
       "description": "Retrieves all documents associated with a specific entity (partner, contact, or interaction) with access control.",
       "parameters": {
@@ -37,11 +39,11 @@
         "Get document attachments for entity"
       ],
       "when_to_use": "Use this when the user asks to see documents, files, or attachments for a specific partner, contact, or interaction.",
-      "advanced_search_guidance": "This endpoint does not support advanced search criteria via a 'searchCriteria' parameter. It filters documents based on 'entityName' and 'entityId' provided in the URL path."
+      "advanced_search_guidance": null
     },
     {
       "name": "Get",
-      "url": "/api/document/{id}",
+      "url": "api/document/{id}",
       "method": "GET",
       "description": "Retrieves a specific document by ID with complete details including file information, metadata, and download access.",
       "parameters": {
@@ -59,11 +61,12 @@
         "Show document with download link",
         "Access document file details"
       ],
-      "when_to_use": "Use this when the user asks for specific document details by ID or when you need complete document information for viewing or downloading."
+      "when_to_use": "Use this when the user asks for specific document details by ID or when you need complete document information for viewing or downloading.",
+      "advanced_search_guidance": null
     },
     {
       "name": "Update",
-      "url": "/api/document",
+      "url": "api/document",
       "method": "PUT",
       "description": "Updates an existing document's metadata, description, and properties with permission validation.",
       "parameters": {
@@ -80,7 +83,8 @@
         "Update document tags and visibility",
         "Change document metadata and properties"
       ],
-      "when_to_use": "Use this when the user asks to update, modify, edit, or change document information or metadata."
+      "when_to_use": "Use this when the user asks to update, modify, edit, or change document information or metadata.",
+      "advanced_search_guidance": null
     }
   ]
 }

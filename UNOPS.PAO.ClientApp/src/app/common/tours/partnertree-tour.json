@@ -16,7 +16,7 @@
     {
       "popover": {
         "title": "Welcome to PartnerTreeComponent",
-        "description": "This page provides the administrative interface for managing your organization's hierarchy and partner tree structure. You can view, edit, and organize partner categories and groups in a hierarchical tree format, allowing for clear visualization and management of your business relationships.",
+        "description": "This page provides the administrative interface for managing your organization's hierarchical structure. You can view, edit, and organize partner categories and groups in a tree-like format, allowing for clear visualization and management of your business relationships and internal structures.",
         "side": "over",
         "align": "center"
       }
@@ -25,7 +25,7 @@
       "element": "p-button[label=\"New Partner Level\"]",
       "popover": {
         "title": "New Partner Level",
-        "description": "This button opens a dialog to create a new organizational node, such as a category or group, within the partner hierarchy tree. Use this to expand your organizational structure.<br><br><strong>When to use:</strong> When you need to add a new category or group to your partner hierarchy., When you are setting up a new division or segment within your organization's structure.",
+        "description": "Opens a dialog to create a new organizational node, such as a category, group, or level, within the partner hierarchy tree.<br><br><strong>When to use:</strong> When you need to add a new organizational category to the partner tree structure., When you need to add a new group to the partner tree structure.",
         "side": "bottom",
         "align": "start"
       },
@@ -60,6 +60,6 @@
       }
     }
   ],
-  "generatedAt": "2025-07-31T14:05:06.586485",
+  "generatedAt": "2025-07-31T18:59:03.668452",
   "version": "1.0"
 }
