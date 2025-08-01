@@ -26,8 +26,9 @@ function getBaseUrl() {
   if (isDebugMode()) {
       return 'https://swift-legible-raven.ngrok-free.app'; //temp url
   } else {
-      const baseUrl = propertiesService.getProperty('OPPORTUNITY_PLUS_BASEURL');
-      return baseUrl;
+    const propertiesService = PropertiesService.getScriptProperties()
+    const baseUrl = propertiesService.getProperty('OPPORTUNITY_PLUS_BASEURL');
+    return baseUrl;
   }
 }
 
