@@ -1,9 +1,18 @@
 namespace UNOPS.PAO.Domain.Specifications.Interfaces;
 
 /// <summary>
+/// Interface for pagination and ordering functionality
+/// </summary>
+public interface IPaginationFilter
+{
+    string? OrderBy { get; set; }
+    bool? Ascending { get; set; }
+}
+
+/// <summary>
 /// Interface for basic search functionality
 /// </summary>
-public interface ISearchFilter
+public interface ISearchFilter : IPaginationFilter
 {
     string? SearchText { get; set; }
 }
