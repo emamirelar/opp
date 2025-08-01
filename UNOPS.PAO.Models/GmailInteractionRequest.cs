@@ -7,4 +7,5 @@ namespace UNOPS.PAO.Models;
 public class GmailInteractionRequest
 {
     public string GmailThreadId { get; set; }
+    public string GmailMessageId { get; set; }
 }

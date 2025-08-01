@@ -49,5 +49,7 @@ namespace UNOPS.PAO.Domain.Entities
 
         public List<Document>? Documents { get; set; }
         public string? GmailThreadId { get; set; }
+        [MaxLength(80)]
+        public string? GmailMessageId { get; set; }
     }
-} 
+}

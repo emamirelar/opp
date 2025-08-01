@@ -19,15 +19,24 @@ function isDebugMode() {
 }
 
 /**
+ * Returns the base URL based on the current deployment environment.
+ * @returns {string} The base URL.
+ */
+function getBaseUrl() {
+  if (isDebugMode()) {
+      return 'https://swift-legible-raven.ngrok-free.app'; //temp url
+  } else {
+      const baseUrl = propertiesService.getProperty('OPPORTUNITY_PLUS_BASEURL');
+      return baseUrl;
+  }
+}
+
+/**
  * Returns the base API URL based on the current deployment environment.
  * @returns {string} The base API URL.
  */
 function getApiBaseUrl() {
-  if (isDebugMode()) {
-      return 'https://swift-legible-raven.ngrok-free.app/api'; //temp url
-  } else {
-      return 'https://test-opportunityplus.unops.org/api';
-  }
+  return getBaseUrl() + '/api';
 }
 
 const API_BASE_URL = getApiBaseUrl();
@@ -40,6 +49,7 @@ const OPPORTUNITY_PLUS_ENDPOINT = `https://localhost:44426/#`;
 const ICON_URL = 'https://storage.googleapis.com/opportunity_plus_logo/Opportunity%20Logo%20Graphic1000px.png';
 const CONTACT_READ_ERROR_MSG = 'Insufficient permission to view';
 const PARTNER_READ_ERROR_MSG = 'Insufficient permission to view';
+const USER_READ_ERROR_MSG = 'Insufficient permission to view';
 const RELATED_RECORDS_ERROR_MSG = 'There was an error retrieving the data';
 const EMPTY_MSG = '';
   

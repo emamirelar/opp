@@ -5,15 +5,14 @@ using UNOPS.PAO.Identity.Services;
 
 namespace UNOPS.PAO.Identity.Controllers;
 /*************************************************************************************************************************************
- * This controller is already authorized by IAP as public URLs seem to be protected by GCP / Cloudflare for the test server. 
- * Will look into optimizing the overall authentication and session flow if this approach works on the test server.
+ * This controller NOT USED currently, will clean up after end to end testing.
  * ***********************************************************************************************************************************/
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]  
 [ApiController]
 public class GmailAddonAuthController : ControllerBase
 {
-    private readonly IGmailAddonAuthService _authService;
+    /*private readonly IGmailAddonAuthService _authService;
 
     public GmailAddonAuthController(IGmailAddonAuthService authService)
     {
@@ -60,7 +59,7 @@ public class GmailAddonAuthController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-    }
+    }*/
 }
 
 public class RefreshTokenRequest

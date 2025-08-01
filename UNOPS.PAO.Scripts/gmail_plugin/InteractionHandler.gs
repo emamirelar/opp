@@ -35,11 +35,12 @@ function extractEmailAddresses(emailString) {
   return emails.map(email => extractEmailAddress(email)).filter(email => email);
 }
 
-function getMappedInteractionData(messageData) {
+function getMappedInteractionData(messageData, relatedRecords = null) {
   // Log the incoming data for debugging
     
     Logger.log('Message Data Get Mapped Interaction Data: ' + JSON.stringify(messageData));
     const threadId = messageData.threadId;
+    const messageId = messageData.messageId;
 
     // Extract all email addresses
     const allEmails = [
@@ -53,16 +54,29 @@ function getMappedInteractionData(messageData) {
 
     Logger.log('All extracted emails: ' + JSON.stringify(uniqueEmails));
 
+    // Extract IDs from related records if available
+    const contactIds = relatedRecords?.contacts?.map(contact => contact.id) || [];
+    const partnerIds = relatedRecords?.partners?.map(partner => partner.id) || [];
+    const userIds = relatedRecords?.users?.map(user => user.id) || [];
+
+    Logger.log('Extracted Contact IDs: ' + JSON.stringify(contactIds));
+    Logger.log('Extracted Partner IDs: ' + JSON.stringify(partnerIds));
+    Logger.log('Extracted User IDs: ' + JSON.stringify(userIds));
+
     // Extract email data
     const interactionData = {
       Type: 'Email',
       Date: new Date(messageData.date).toISOString(), // Convert to ISO format
       Subject: messageData.subject,
-      Description: messageData.body,
+      Description: messageData.currentMessageBody,
       EmailAddresses: uniqueEmails,
-      ContactId: 0,
+      ContactId: contactIds.length > 0 ? contactIds[0] : 0, // Use first contact as primary contact
+      ContactIds: contactIds,
+      PartnerIds: partnerIds,
+      UserIds: userIds,
       Location: 'Email',
-      GmailThreadId: threadId
+      GmailThreadId: threadId,
+      GmailMessageId: messageId
     };
     Logger.log('Final interaction data: ' + JSON.stringify(interactionData));
     return interactionData;
@@ -70,7 +84,7 @@ function getMappedInteractionData(messageData) {
 
 /**
  * Creates or updates an Interaction based on email data
- * @param {Object} messageData - The email message data
+ * @param {Object} e - The event object containing parameters
  * @returns {Object} The created/updated Interaction
  */
 function createOrUpdateInteraction(e) {
@@ -78,7 +92,12 @@ function createOrUpdateInteraction(e) {
     // Check if interaction already exists
     //const existingInteraction = findExistingInteraction(threadId);
     const messageData = JSON.parse(e.parameters.messageData);
-    const interactionData = getMappedInteractionData(messageData);
+    const relatedRecords = JSON.parse(e.parameters.relatedRecords);
+    
+    Logger.log('Using passed related records: ' + JSON.stringify(relatedRecords));
+    
+    // Create the interaction data with the IDs from passed related records
+    const interactionData = getMappedInteractionData(messageData, relatedRecords);
 
     if (messageData.existingInteraction) {
       // Update existing interaction
@@ -91,10 +110,19 @@ function createOrUpdateInteraction(e) {
     } else {
       // Create new interaction
       const createdInteraction = createInteraction(interactionData);
+      
+      // Update messageData with the newly created interaction to prevent duplicates
+      messageData.existingInteraction = createdInteraction;
+      
+      Logger.log('Created interaction: ' + JSON.stringify(createdInteraction));
+      
+      // Rebuild the card with updated messageData
+      const updatedCard = buildOpportunityPlusCard(relatedRecords, messageData);
 
       return CardService.newActionResponseBuilder()
         .setNotification(CardService.newNotification()
         .setText('Interaction created successfully!'))
+        .setNavigation(CardService.newNavigation().updateCard(updatedCard))
         .build();
     }
     
@@ -107,13 +135,15 @@ function createOrUpdateInteraction(e) {
 /**
  * Finds an existing interaction by source ID
  * @param {string} threadId - The email thread ID
+ * @param {string} messageId - The email message ID
  * @returns {Object|null} The existing interaction or null
  */
-function findExistingInteraction(threadId) {
+function findExistingInteraction(threadId, messageId) {
   try {
 
     const findRequestData = {
-      GmailThreadId: threadId
+      GmailThreadId: threadId,
+      GmailMessageId: messageId
     };
 
     const response = UrlFetchApp.fetch(`${INTERACTION_API_ENDPOINT}/find`, {

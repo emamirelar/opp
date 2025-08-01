@@ -1,12 +1,14 @@
 using UNOPS.PAO.Identity.Models;
 
 namespace UNOPS.PAO.Identity.Services;
-
+/***********************************************************************************************************************************
+* This class might not be needed after switching to IAP authentication. Will cleanup later after end to end testing.
+***********************************************************************************************************************************/
 public interface IGmailAddonAuthService
 {
-    Task<GmailAddonAuthResponse> AuthenticateForGmailAddonAsync(GmailAddonSignInRequest request);
+    /*Task<GmailAddonAuthResponse> AuthenticateForGmailAddonAsync(GmailAddonSignInRequest request);
     Task<GmailAddonAuthResponse> RefreshTokenAsync(string refreshToken);
-    Task RevokeTokenAsync(string refreshToken);
+    Task RevokeTokenAsync(string refreshToken);*/
 }
 
 public class GmailAddonAuthResponse

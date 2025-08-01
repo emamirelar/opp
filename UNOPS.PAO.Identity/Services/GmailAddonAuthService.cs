@@ -8,12 +8,13 @@ using UNOPS.PAO.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 using Google.Cloud.SecretManager.V1;
-using UNOPS.PAO.Identity.Helpers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Http;
 
 namespace UNOPS.PAO.Identity.Services;
-
+/***********************************************************************************************************************************
+* This class might not be needed after switching to IAP authentication. Will cleanup later after end to end testing.
+***********************************************************************************************************************************/
 public class GmailAddonAuthService : IGmailAddonAuthService
 {
     private readonly IConfiguration _configuration;
@@ -32,7 +33,7 @@ public class GmailAddonAuthService : IGmailAddonAuthService
         RoleManager<PAOIdentityRole> roleManager,
         IHttpContextAccessor httpContextAccessor)
     {
-        _configuration = configuration;
+        /*_configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
         _googleClientId = _configuration["GmailAddonAuthSettings:clientId"];
         _jwtIssuer = _configuration["JWTSettings:validIssuer"];
@@ -45,10 +46,10 @@ public class GmailAddonAuthService : IGmailAddonAuthService
         var projectId = _configuration["AppConfig:ProjectId"];
         var secretName = $"projects/{projectId}/secrets/QA_Gmail_Plugin_Secret/versions/latest";
         var secret = _secretManager.AccessSecretVersion(secretName);
-        _jwtSecret = secret.Payload.Data.ToStringUtf8();
+        _jwtSecret = secret.Payload.Data.ToStringUtf8();*/
     }
 
-    public async Task<GmailAddonAuthResponse> AuthenticateForGmailAddonAsync(GmailAddonSignInRequest request)
+    /*public async Task<GmailAddonAuthResponse> AuthenticateForGmailAddonAsync(GmailAddonSignInRequest request)
     {
         try
         {
@@ -131,13 +132,13 @@ public class GmailAddonAuthService : IGmailAddonAuthService
         {
             throw new Exception("Invalid Google token", ex);
         }
-    }
+    }*/
 
-    public async Task<GmailAddonAuthResponse> RefreshTokenAsync(string refreshToken)
+    /*public async Task<GmailAddonAuthResponse> RefreshTokenAsync(string refreshToken)
     {
         //TO-DO: Implement refresh token logic
         // 1. Validate the refresh token
-        /*if (string.IsNullOrEmpty(refreshToken))
+        if (string.IsNullOrEmpty(refreshToken))
         {
             throw new ArgumentException("Refresh token is required.");
         }
@@ -170,11 +171,11 @@ public class GmailAddonAuthService : IGmailAddonAuthService
             Email = user.Email,
             Name = user.UserName,
             Roles = roles.ToList()
-        };*/
+        };
 
         // Implement refresh token validation and generation of new access token
         throw new NotImplementedException();
-    }
+    }*/
 
     public async Task RevokeTokenAsync(string refreshToken)
     {
@@ -201,7 +202,7 @@ public class GmailAddonAuthService : IGmailAddonAuthService
         throw new NotImplementedException();
     }
 
-    private string GenerateJwtToken(string subject, string email, string name, List<string> roles = null)
+    /*private string GenerateJwtToken(string subject, string email, string name, List<string> roles = null)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_jwtSecret);
@@ -236,7 +237,7 @@ public class GmailAddonAuthService : IGmailAddonAuthService
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
-    }
+    }*/
 
     private string GenerateRefreshToken()
     {

@@ -15,7 +15,7 @@ function onGmailMessageOpen(e) {
 
   const messageData = getMessageData(e);
   
-  const existingInteraction = findExistingInteraction(messageData.threadId);
+  const existingInteraction = findExistingInteraction(messageData.threadId, messageData.messageId);
   messageData.existingInteraction = existingInteraction;
 
   // Extract all email addresses
@@ -47,6 +47,7 @@ function getMessageData(eventObj) {
     const message = GmailApp.getMessageById(messageId);
     const thread = GmailApp.getThreadById(threadId);
     const threadMessages = thread.getMessages();
+    const currentMessageBody = cleanEmailBody(message.getPlainBody());
 
     let fullConversationContent = "";
     let attachmentNames = [];
@@ -113,7 +114,8 @@ function getMessageData(eventObj) {
       body: fullConversationContent,
       attachments: attachmentNames.length > 0 ? attachmentNames : ["None"],
       threadId: threadId,
-      messageId: messageId
+      messageId: messageId,
+      currentMessageBody: currentMessageBody
     };
 
   } catch (error) {

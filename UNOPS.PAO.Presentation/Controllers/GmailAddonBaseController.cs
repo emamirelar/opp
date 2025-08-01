@@ -25,7 +25,7 @@ namespace UNOPS.PAO.Presentation.Controllers
      ***********************************************************************************************************************************/
     public abstract class GmailAddonBaseController : ControllerBase
     {
-        protected readonly ILogger _logger;
+        /*protected readonly ILogger _logger;
         protected readonly IAuthorizationService _authorizationService;
         protected readonly UserResolverService<int> _userResolverService;
         protected readonly IPermissionService _permissionService;
@@ -541,6 +541,6 @@ namespace UNOPS.PAO.Presentation.Controllers
                 _logger.LogError(ex, "Error occurred during {SearchDescription}", searchDescription);
                 return StatusCode(500, new { error = $"An error occurred during {searchDescription}" });
             }
-        }
+        }*/
     }
 }

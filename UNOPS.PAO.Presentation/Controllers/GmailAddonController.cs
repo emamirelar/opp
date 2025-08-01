@@ -17,7 +17,7 @@ using UNOPS.PAO.UNOPSDataAccess.Migrations;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
-using UNOPS.PAO.Domain.Entities;
+using Google.Apis.Drive.v3.Data;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -28,6 +28,8 @@ namespace UNOPS.PAO.Presentation.Controllers
         private readonly IInteractionManager _interactionManager;
         private readonly IContactManager _contactManager;
         private readonly IPartnerManager _partnerManager;
+        private readonly IUserDataManager _userDataManager;
+        private readonly GmailAddonHelper _gmailHelper;
 
         protected int CurrentUserId => _userResolverService.GetCurrentUserId();
 
@@ -35,11 +37,14 @@ namespace UNOPS.PAO.Presentation.Controllers
         UserResolverService<int> userResolverService,
         ILogger<GmailAddonController> logger,
         IAuthorizationService authorizationService,
-        IPermissionService permissionService) : base(logger, authorizationService, userResolverService, permissionService)
+        IPermissionService permissionService,
+        GmailAddonHelper gmailHelper) : base(logger, authorizationService, userResolverService, permissionService)
         {
             _interactionManager = manager.InteractionManager;
             _contactManager = manager.ContactManager;
             _partnerManager = manager.PartnerManager;
+            _userDataManager = manager.UserDataManager;
+            _gmailHelper = gmailHelper;
         }
 
         [HttpPost(APIDictionary.GmailAddonInteraction)]
@@ -82,164 +87,26 @@ namespace UNOPS.PAO.Presentation.Controllers
         {
             try
             {
-                var retVal = new GmailRelatedRecordsResponse();
+                var response = new GmailRelatedRecordsResponse();
                 var unmatchedEmailStrings = new List<string>(input.EmailAddresses);
 
-                input.partnerIds = new List<int>();
+                // Initialize permissions
+                await InitializeResponsePermissionsAsync(response);
 
-                //List<int> contactPartnerIds = new List<int>();
-                List<int> softPartnerIds = new List<int>();
+                // Process contacts and get their associated partner IDs
+                var contactPartnerIds = await _gmailHelper.ProcessContactsAsync(input, response, unmatchedEmailStrings, User);
 
-                var contactCreatePermissionResult = await CheckEntityPermissionAsync("Contact", "create");
+                // Process partners using the contact partner IDs
+                input.partnerIds = contactPartnerIds;
+                await _gmailHelper.ProcessPartnersAsync(input, response, User);
 
-                if (contactCreatePermissionResult == null)
-                {
-                    retVal.CanCreateContacts = true;
-                }
+                // Process users and update unmatched emails
+                await _gmailHelper.ProcessUsersAsync(input, response, unmatchedEmailStrings);
 
-                var contacts = await _contactManager.GetContactsForGmailAddon(input, User);
-                if (contacts != null && contacts.Any())
-                {
-                    foreach (ContactModel? contact in contacts)
-                    {
-                        if (contact != null)
-                        {
-                            if (contact.Permissions.CanRead)
-                            {
-                                var gmailContact = new GmailRelatedContact
-                                {
-                                    Name = $"{contact.Salutation} {contact.FirstName} {contact.MiddleName} {contact.LastName}",
-                                    Title = contact.Title,
-                                    PartnerName = contact.Partner?.Name ?? string.Empty,
-                                    Id = contact.Id,
-                                    EmailAddress = contact.Email,
-                                    Location = !string.IsNullOrEmpty(contact.MailingCity) && !string.IsNullOrEmpty(contact.MailingCountry)
-                                                ? $"{contact.MailingCity}, {contact.MailingCountry}"
-                                                : null,
-                                    Phone = contact.Phone,
-                                    ProfilePictureUrl = contact.ProfilePictureUrl,
-                                    CanRead = true
-                                };
+                // Process unmatched emails
+                await _gmailHelper.ProcessUnmatchedEmailsAsync(unmatchedEmailStrings, response, User);
 
-                                // Add interactions if available
-                                if (contact.Interactions != null && contact.Interactions.Any())
-                                {
-                                    gmailContact.Interactions = contact.Interactions
-                                        .Where(i => i.Permissions.CanRead)
-                                        .Select(i => new GmailRelatedInteraction
-                                        {
-                                            Id = i.Id,
-                                            Type = i.Type.ToString(),
-                                            Description = i.Description,
-                                            Date = i.Date,
-                                            CanRead = i.Permissions.CanRead
-                                        }).ToList();
-                                }
-
-                                retVal.Contacts.Add(gmailContact);
-                            }
-                            else
-                            {
-                                retVal.Contacts.Add(new GmailRelatedContact
-                                {
-                                    EmailAddress = contact.Email,
-                                    CanRead = false
-                                });
-                            }
-                            
-                            if (contact.Partner != null && !input.partnerIds.Contains(contact.Partner.Id))
-                            {
-                                input.partnerIds.Add(contact.Partner.Id);
-                            }
-
-                            unmatchedEmailStrings.Remove(contact.Email);
-                        }
-                    }
-                }
-
-                var partners = await _partnerManager.GetPartnersForGmailAddon(input, User);
-                if (partners != null && partners.Any())
-                {
-                    foreach (PartnerModel? partner in partners)
-                    {
-                        if (partner != null)
-                        {
-                            if(partner.Permissions.CanRead)
-                            {
-                                GmailRelatedPartner currentPartner = new GmailRelatedPartner {
-                                    Id = partner.Id,
-                                    Name = partner.Name,
-                                    PartnerCode = partner.PartnerCode,
-                                    Phone = partner.Phone,
-                                    LogoUrl = partner.LogoUrl,
-                                    Location = !String.IsNullOrEmpty(partner.Address1City) && !String.IsNullOrEmpty(partner.Address1Country)
-                                                    ? $"{partner.Address1City}, {partner.Address1Country}"
-                                                    : null,
-                                    CanRead = true,
-                                    Contacts = new List<GmailRelatedContact>()
-                                };
-
-                                // Add partner interactions if available
-                                if (partner.Interactions != null && partner.Interactions.Any())
-                                {
-                                    currentPartner.Interactions = partner.Interactions
-                                        .Where(i => i.Permissions.CanRead)
-                                        .Select(i => new GmailRelatedInteraction
-                                        {
-                                            Id = i.Id,
-                                            Type = i.Type.ToString(),
-                                            Description = i.Description,
-                                            Date = i.Date,
-                                            CanRead = i.Permissions.CanRead
-                                        }).ToList();
-                                }
-
-                                if (partner.Contacts != null && partner.Contacts.Count() > 0)
-                                {
-                                    foreach (ContactModel? contact in partner.Contacts)
-                                    {
-                                        if (contact != null)
-                                        {
-                                            if (contact.Permissions.CanRead)
-                                            {
-                                                currentPartner.Contacts.Add(new GmailRelatedContact
-                                                {
-                                                    Name = $"{contact.Salutation} {contact.FirstName} {contact.MiddleName} {contact.LastName}",
-                                                    Title = contact.Title,
-                                                    Id = contact.Id,
-                                                    EmailAddress = contact.Email,
-                                                    CanRead = true
-                                                });
-                                            }
-                                            else
-                                            {
-                                                currentPartner.Contacts.Add(new GmailRelatedContact
-                                                {
-                                                    EmailAddress = contact.Email,
-                                                    CanRead = false
-                                                });
-                                            }
-                                        }
-                                    }
-                                }
-                                retVal.Partners.Add(currentPartner);
-                            }
-                            else
-                            {
-                                retVal.Partners.Add(new GmailRelatedPartner
-                                {
-                                    Name = partner.Name,
-                                    CanRead = false
-                                });
-                            }
-                        }
-                    }
-                }
-
-                // Process unmatched emails with partner suggestions
-                retVal.UnmatchedEmails = await _contactManager.GetUnmatchedEmailsWithPartnerSuggestionsAsync(unmatchedEmailStrings, User);
-
-                return Ok(retVal);
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -354,7 +221,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                         var namePart = emailParts[0];
 
                         // Try to extract first and last name from email
-                        var nameComponents = ExtractNameFromEmail(namePart);
+                        var nameComponents = _gmailHelper.ExtractNameFromEmail(namePart);
 
                         var contactRequest = new ContactRequest
                         {
@@ -402,27 +269,11 @@ namespace UNOPS.PAO.Presentation.Controllers
             }
         }
 
-        private (string FirstName, string LastName) ExtractNameFromEmail(string emailPrefix)
+        private async Task<bool> InitializeResponsePermissionsAsync(GmailRelatedRecordsResponse response)
         {
-            // Simple name extraction logic - can be enhanced
-            var parts = emailPrefix.Split(new char[] { '.', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (parts.Length >= 2)
-            {
-                return (
-                    FirstName: char.ToUpper(parts[0][0]) + parts[0].Substring(1).ToLower(),
-                    LastName: char.ToUpper(parts[1][0]) + parts[1].Substring(1).ToLower()
-                );
-            }
-            else if (parts.Length == 1)
-            {
-                return (
-                    FirstName: char.ToUpper(parts[0][0]) + parts[0].Substring(1).ToLower(),
-                    LastName: ""
-                );
-            }
-
-            return (FirstName: emailPrefix, LastName: "");
+            var contactCreatePermissionResult = await CheckEntityPermissionAsync("Contact", "create");
+            response.CanCreateContacts = contactCreatePermissionResult == null;
+            return true;
         }
     }
 }
