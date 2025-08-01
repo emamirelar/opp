@@ -738,7 +738,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public virtual async Task<InteractionModel> FindGmailInteractionAsync(GmailInteractionRequest model)
     {
         var entity = await interactionRepository.GetAll().AsQueryable()
-            .FirstOrDefaultAsync(x => x.GmailThreadId == model.GmailThreadId && !x.IsDeleted);
+            .FirstOrDefaultAsync(x => x.GmailThreadId == model.GmailThreadId && x.GmailMessageId == model.GmailMessageId && !x.IsDeleted);
 
         return mapper.Map<InteractionModel>(entity);
     }
@@ -756,10 +756,17 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         try
         {
-            entity.Name = model.ContactId + " - " + model.Date;
+            // Use the ContactId from the model if provided, otherwise use the first ContactId from the list, or default to 0
+            var primaryContactId = model.ContactId > 0 ? model.ContactId : 
+                                  (model.ContactIds?.FirstOrDefault() ?? 0);
+            
+            entity.Name = primaryContactId + " - " + model.Date;
 
             await interactionRepository.AddAsync(entity);
             await context.SaveChangesAsync();
+
+
+
             await transaction.CommitAsync();
         }
         catch
@@ -817,24 +824,50 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         await using var jtTransaction = await context.Database.BeginTransactionAsync();
         try
         {
-            // Process email-based Contact lookups
-            if (model.EmailAddresses?.Any() == true)
+            // Get existing relationships in parallel for better performance
+            var existingContacts = await context.InteractionContacts
+                .Where(ic => ic.InteractionId == interaction.Id)
+                .Select(ic => ic.ContactId)
+                .ToListAsync();
+
+            var existingUsers = await context.InteractionUsers
+                .Where(iu => iu.InteractionId == interaction.Id)
+                .Select(iu => iu.UserId)
+                .ToListAsync();
+
+            var existingPartners = await context.InteractionPartners
+                .Where(ip => ip.InteractionId == interaction.Id)
+                .Select(ip => ip.PartnerId)
+                .ToListAsync();
+
+            var existingOrgUnitRelationships = await context.OrganizationUnitRelationships
+                .Where(r => r.EntityId == interaction.Id && r.EntityType == "Interaction")
+                .Select(r => r.OrganizationHierarchyId)
+                .ToListAsync();
+
+            var existingContactIds = existingContacts.ToHashSet();
+            var existingUserIds = existingUsers.ToHashSet();
+            var existingPartnerIds = existingPartners.ToHashSet();
+            var existingOrgUnitIds = existingOrgUnitRelationships.ToHashSet();
+
+            // Prepare bulk insert lists
+            var contactsToAdd = new List<InteractionContact>();
+            var partnersToAdd = new List<InteractionPartner>();
+            var usersToAdd = new List<InteractionUser>();
+            var orgUnitRelationshipsToAdd = new List<OrganizationUnitRelationship>();
+
+            // Process ContactIds - bulk prepare
+            if (model.ContactIds?.Any() == true)
             {
-                var matchingContacts = await context.Contacts
-                    .Where(c => model.EmailAddresses.Contains(c.Email))
-                    .ToListAsync();
-
-                var existingEmailContacts = await context.InteractionContacts
-                    .Where(ic => ic.InteractionId == interaction.Id)
-                    .Include(ic => ic.Contact)
-                    .ToListAsync();
-
-                // Add new contacts found by email
-                foreach (var contact in matchingContacts)
+                var newContactIds = model.ContactIds.Where(id => !existingContactIds.Contains(id)).ToList();
+                if (newContactIds.Any())
                 {
-                    if (!existingEmailContacts.Any(ec => ec.ContactId == contact.Id))
+                    // Load contacts into context to ensure EF can track them
+                    var contacts = await context.Contacts.Where(c => newContactIds.Contains(c.Id)).ToListAsync();
+                    
+                    foreach (var contact in contacts)
                     {
-                        await context.InteractionContacts.AddAsync(new InteractionContact
+                        contactsToAdd.Add(new InteractionContact
                         {
                             InteractionId = interaction.Id,
                             ContactId = contact.Id,
@@ -844,24 +877,39 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                 }
             }
 
-            // Process email-based User lookups
-            if (model.EmailAddresses?.Any() == true)
+            // Process PartnerIds - bulk prepare
+            if (model.PartnerIds?.Any() == true)
             {
-                var matchingUsers = await context.PAOUsers
-                    .Where(u => model.EmailAddresses.Contains(u.Email))
-                    .ToListAsync();
-
-                var existingEmailUsers = await context.InteractionUsers
-                    .Where(iu => iu.InteractionId == interaction.Id)
-                    .Include(iu => iu.User)
-                    .ToListAsync();
-
-                // Add new users found by email
-                foreach (var user in matchingUsers)
+                var newPartnerIds = model.PartnerIds.Where(id => !existingPartnerIds.Contains(id)).ToList();
+                if (newPartnerIds.Any())
                 {
-                    if (!existingEmailUsers.Any(eu => eu.UserId == user.Id))
+                    // Load partners into context to ensure EF can track them
+                    var partners = await context.Partners.Where(p => newPartnerIds.Contains(p.Id)).ToListAsync();
+                    
+                    foreach (var partner in partners)
                     {
-                        await context.InteractionUsers.AddAsync(new InteractionUser
+                        partnersToAdd.Add(new InteractionPartner
+                        {
+                            InteractionId = interaction.Id,
+                            PartnerId = partner.Id,
+                            Partner = partner
+                        });
+                    }
+                }
+            }
+
+            // Process UserIds - bulk prepare
+            if (model.UserIds?.Any() == true)
+            {
+                var newUserIds = model.UserIds.Where(id => !existingUserIds.Contains(id)).ToList();
+                if (newUserIds.Any())
+                {
+                    // Load users into context to ensure EF can track them
+                    var users = await context.PAOUsers.Where(u => newUserIds.Contains(u.Id)).ToListAsync();
+                    
+                    foreach (var user in users)
+                    {
+                        usersToAdd.Add(new InteractionUser
                         {
                             InteractionId = interaction.Id,
                             UserId = user.Id,
@@ -869,6 +917,65 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
                         });
                     }
                 }
+            }
+
+            // Process OrganizationUnitRelationships from related partners - bulk prepare
+            if (model.PartnerIds?.Any() == true)
+            {
+                // Get organization unit relationships for all related partners
+                var partnerOrgUnitRelationships = await context.OrganizationUnitRelationships
+                    .Where(r => model.PartnerIds.Contains(r.EntityId) && r.EntityType == "Partner")
+                    .ToListAsync();
+
+                if (partnerOrgUnitRelationships.Any())
+                {
+                    var uniqueOrgUnitIds = partnerOrgUnitRelationships
+                        .Select(r => r.OrganizationHierarchyId)
+                        .Distinct()
+                        .Where(id => !existingOrgUnitIds.Contains(id))
+                        .ToList();
+
+                    if (uniqueOrgUnitIds.Any())
+                    {
+                        // Load organization units into context to ensure EF can track them
+                        var orgUnits = await context.OrganizationHierarchies
+                            .Where(ou => uniqueOrgUnitIds.Contains(ou.Id) && ou.Type == Domain.Enums.OrganizationUnitType.OrgUnit)
+                            .ToListAsync();
+
+                        foreach (var orgUnit in orgUnits)
+                        {
+                            orgUnitRelationshipsToAdd.Add(new OrganizationUnitRelationship
+                            {
+                                OrganizationHierarchyId = orgUnit.Id,
+                                EntityId = interaction.Id,
+                                EntityType = nameof(Interaction),
+                                Name = $"Interaction-{interaction.Id}-{orgUnit.Code}",
+                                Status = EntityStatus.Active
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Bulk insert all relationships
+            if (contactsToAdd.Any())
+            {
+                await context.InteractionContacts.AddRangeAsync(contactsToAdd);
+            }
+
+            if (partnersToAdd.Any())
+            {
+                await context.InteractionPartners.AddRangeAsync(partnersToAdd);
+            }
+
+            if (usersToAdd.Any())
+            {
+                await context.InteractionUsers.AddRangeAsync(usersToAdd);
+            }
+
+            if (orgUnitRelationshipsToAdd.Any())
+            {
+                await context.OrganizationUnitRelationships.AddRangeAsync(orgUnitRelationshipsToAdd);
             }
 
             await context.SaveChangesAsync();

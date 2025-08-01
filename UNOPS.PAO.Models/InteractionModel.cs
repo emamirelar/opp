@@ -40,6 +40,7 @@ public class InteractionModel
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }
     public string? GmailThreadId { get; set; }
+    public string? GmailMessageId { get; set; }
 }
 
 public class InteractionContactModel

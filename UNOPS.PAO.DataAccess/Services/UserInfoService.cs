@@ -113,4 +113,17 @@ public class UserInfoService : IUserInfoService
             }
         }
     }
+
+    public async Task<List<UserInfo>> GetUserInfosByEmailsAsync(IEnumerable<string> emails)
+    {
+        if (emails == null || !emails.Any())
+        {
+            return new List<UserInfo>();
+        }
+
+        var emailList = emails.Select(e => e.ToLower()).ToList();
+        return await _context.UserInfos
+            .Where(u => emailList.Contains(u.UserEmail.ToLower()))
+            .ToListAsync();
+    }
 } 

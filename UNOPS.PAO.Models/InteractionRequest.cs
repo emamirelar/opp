@@ -26,4 +26,5 @@ public class InteractionRequest : ExtensibleModel
     public List<int>? OrganizationHierarchyIds { get; set; }
     
     public string? GmailThreadId { get; set; }
-} 
+    public string? GmailMessageId { get; set; }
+}
