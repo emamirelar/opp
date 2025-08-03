@@ -64,4 +64,20 @@ public class UserDataManager : IUserDataManager
         
         return GetUserByIdAsync(userIdInt);
     }
+
+    public Task<List<PAOUserModel>> GetUsersByEmailsAsync(IEnumerable<string> emails)
+    {
+        if (emails == null || !emails.Any())
+        {
+            return Task.FromResult(new List<PAOUserModel>());
+        }
+
+        var emailList = emails.Select(e => e.ToLower()).ToList();
+        var users = context.PAOUsers
+            .Where(u => emailList.Contains(u.Email.ToLower()))
+            .ToList();
+
+        var mappedUsers = users.Select(u => mapper.Map<PAOUserModel>(u)).ToList();
+        return Task.FromResult(mappedUsers);
+    }
 }

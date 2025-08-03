@@ -214,9 +214,6 @@ public class Startup
         // Register authorization handlers
         ConfigureAuthorization(services);
 
-        // Register IAuthService
-        services.AddScoped<UNOPS.PAO.Identity.Services.IGmailAddonAuthService, UNOPS.PAO.Identity.Services.GmailAddonAuthService>();
-
         // Get JWT secret from Secret Manager
         var projectId = Configuration["AppConfig:ProjectId"];
         var secretManager = SecretManagerServiceClient.Create();
@@ -397,6 +394,9 @@ public class Startup
 
         // Register HttpContextAccessor for accessing request context in managers
         services.AddHttpContextAccessor();
+        
+        // Register GmailAddonHelper for Gmail addon functionality
+        services.AddScoped<UNOPS.PAO.Presentation.Helpers.GmailAddonHelper>();
         
         //services.AddScoped<IManagerWrapper, ManagerWrapper>();
         services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();

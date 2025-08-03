@@ -8,6 +8,10 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
   const personIconImage = CardService.newIconImage().setMaterialIcon(
     CardService.newMaterialIcon().setName('person'),
   );
+
+  const userIconImage = CardService.newIconImage().setMaterialIcon(
+    CardService.newMaterialIcon().setName('account_circle'),
+  );
   
   // Create a new card builder
   var card = CardService.newCardBuilder();
@@ -23,6 +27,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
   if(relatedRecords) {
     var contactData = relatedRecords.contacts;
     var partnerData = relatedRecords.partners;
+    var userData = relatedRecords.users || [];
     var unmatchedEmailsData = relatedRecords.unmatchedEmails;
 
     Logger.log('relatedRecords: ' + JSON.stringify(relatedRecords));
@@ -160,7 +165,7 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
         CardService.newTextButton()
           .setMaterialIcon(CardService.newMaterialIcon().setName('keyboard_arrow_down'))
           .setTextButtonStyle(CardService.TextButtonStyle.BORDERLESS)
-          .setText('Show All ' + `(${contactData.length + partnerData.length})`);
+          .setText('Show All ' + `(${contactData.length + partnerData.length + userData.length})`);
 
     const weKnowSection =
         CardService.newCardSection()
@@ -216,8 +221,29 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
       });
     }
 
+    if(userData.length > 0) {
+      userData.forEach(function(user) {
+        if(user.canRead) {
+          weKnowSection.addWidget(
+            CardService.newDecoratedText()
+              .setStartIcon(userIconImage)
+              .setTopLabel('Opportunity+ User')
+              .setText(user.name)
+          );
+        }
+        else {
+          weKnowSection.addWidget(
+            CardService.newDecoratedText()
+              .setStartIcon(userIconImage)
+              .setTopLabel('Opportunity+ User')
+              .setText(`${USER_READ_ERROR_MSG}`)
+          );
+        }
+      });
+    }
+
     //The screen does not load if a section does not have atleast one widget
-    if(partnerData.length == 0 && contactData.length == 0) {
+    if(partnerData.length == 0 && contactData.length == 0 && userData.length == 0) {
       weKnowSection.addWidget(CardService.newTextParagraph()
             .setText("<font color=\"#555555\">" + `${EMPTY_MSG}` + "</font>")
           );
@@ -272,6 +298,29 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
       });
     }
 
+    if(userData.length > 0) {
+      userData.forEach(function(user) {
+        if(user.canRead) {
+          const currentChip = CardService.newChip()
+                                          .setLabel(user.name)
+                                          .setIcon(userIconImage)
+                                          .setOnClickAction(
+                                                CardService.newAction()
+                                                    .setFunctionName('onUserChipSelected')
+                                                    .setParameters({ user: JSON.stringify(user) }) // Pass the object JSON as a parameter
+                                          );
+          chipList.addChip(currentChip);
+        }
+        else {
+          const currentChip = CardService.newChip()
+                                          .setLabel(user.name || 'Opportunity+ User')
+                                          .setIcon(userIconImage)
+                                          .setDisabled(true);
+          chipList.addChip(currentChip);
+        }
+      });
+    }
+
     weKnowSection.addWidget(chipList);
 
     card.addSection(weKnowSection);
@@ -286,7 +335,10 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
             .setOnClickAction(
               CardService.newAction()
                 .setFunctionName('createOrUpdateInteraction')
-                .setParameters({ messageData: JSON.stringify(messageData) })
+                .setParameters({ 
+                  messageData: JSON.stringify(messageData),
+                  relatedRecords: JSON.stringify(relatedRecords)
+                })
             )
         )
     );

@@ -770,10 +770,13 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public async Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
     {
+        // Convert input email addresses to lowercase for case-insensitive comparison
+        var lowercaseEmailAddresses = input.EmailAddresses.Select(e => e.ToLower()).ToList();
+        
         var contacts = contactRepository
                         .GetAll(["Partner"])
                         .AsQueryable()
-                        .Where(c => (c.Email != null && input.EmailAddresses.Contains(c.Email)))
+                        .Where(c => (c.Email != null && lowercaseEmailAddresses.Contains(c.Email.ToLower())))
                         .Cast<UNOPSContact>()
                         .ToList();
 
