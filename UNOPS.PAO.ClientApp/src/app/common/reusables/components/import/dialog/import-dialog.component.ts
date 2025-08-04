@@ -12,7 +12,7 @@ import { MessageModule } from 'primeng/message';
 import { BlockUIModule } from 'primeng/blockui';
 import { StepperModule } from 'primeng/stepper';
 import { FeedbackDialogService } from '../../../../pages/services/feedback-dialog.service';
-import { NgForOf, NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
+import { NgClass, JsonPipe, TitleCasePipe } from '@angular/common';
 import { ImportDialogService } from './import-dialog.service';
 import { PaginatorModule } from 'primeng/paginator';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -45,7 +45,6 @@ interface ImportColumn extends ListViewColumn {
     MessageModule,
     BlockUIModule,
     StepperModule,
-    NgForOf,
     NgClass,
     PaginatorModule,
     ProgressSpinnerModule,

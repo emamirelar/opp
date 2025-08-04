@@ -1,12 +1,10 @@
 import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, Renderer2, ViewChild, effect, signal, TemplateRef, AfterViewInit, HostListener } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterModule } from '@angular/router';
-import { FooterComponent } from '../footer/footer.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
 import { Subscription, filter } from 'rxjs';
 import { LayoutService } from '../../services/layout.service';
-import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 import { LanguageService } from '../../../services/language.service';
 import { SplitterComponent, SplitterPanel, SplitterResizeEvent } from '../../../reusables/components/splitter/splitter.component';
 import { AiAssistantPanelComponent } from '../../../reusables/widgets/ai-assistant/ai-assistant-panel.component';
@@ -19,8 +17,6 @@ import { EntityDetailsPanelComponent } from '../../../components/entity-details-
     TopbarComponent, 
     SidebarComponent, 
     RouterModule, 
-    FooterComponent, 
-    BreadcrumbComponent, 
     SplitterComponent,
     AiAssistantPanelComponent,
     NgClass,

@@ -32,7 +32,7 @@ import { ResponsiveTabsComponent, ResponsiveTabItem } from '../../../../../commo
           />
           <div class="flex flex-col">
             <div class="text-2xl md:text-4xl font-bold">
-              {{ recordData?.name }}
+              {{ recordData.name }}
             </div>
           </div>
         </div>

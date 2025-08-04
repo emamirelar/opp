@@ -14,7 +14,7 @@ import { ParentEntityType } from '../../../overrides/interfaces/types';
 import { DocumentLinkModel } from '../../../overrides/interfaces/types';
 import { DocumentComponent } from '../../../../../common/reusables/components/document/document.component';
 import { GDriveDocumentComponent } from '../../../overrides/reusables/components/document/gdrive/document-gdrive.component';
-import { PictureComponent } from "../../../../../common/reusables/components/picture/picture.component";
+
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -41,11 +41,10 @@ import { EntityType } from '../../../../../common/models/link.model';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { DialogService } from 'primeng/dynamicdialog';
-import { PartnerViewContactsComponent } from './contacts/partner-view-contacts.component';
 import { Partner, getPrimaryOrganizationUnit } from '../../../models/partner.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { AiPanelComponent } from '../../../../../common/reusables/components/ai-panel/ai-panel.component';
-import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
+
 
 @Component({
   selector: 'app-partner-view',
@@ -71,12 +70,9 @@ import { GoBackComponent } from '../../../../../common/reusables/components/go-b
     FormsModule,
     PartnerContactsComponent,
     LinkListComponent,
-    PictureComponent,
-    PartnerViewContactsComponent,
     TooltipModule,
     AiPanelComponent,
     RouterModule,
-    GoBackComponent,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
@@ -114,10 +110,10 @@ export class PartnerViewComponent implements OnInit {
 
   // Input property for recordId when used in AI layout
   @Input() recordId: string = '';
-  
+
   // Input property to control AI panel visibility
   private _showAiPanel: boolean = true;
-  @Input() 
+  @Input()
   get showAiPanel(): boolean {
     return this._showAiPanel;
   }
@@ -155,7 +151,7 @@ export class PartnerViewComponent implements OnInit {
 
   ngOnInit() {
     console.log('PartnerView ngOnInit - showAiPanel value:', this.showAiPanel);
-    
+
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
       console.log('Using input recordId:', this.recordId);

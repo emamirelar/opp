@@ -8,7 +8,7 @@ import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule } from 'primeng/checkbox';
-import { DatePipe } from '@angular/common';
+
 
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { DocumentService } from '../../../services/document.service';
@@ -44,7 +44,7 @@ import { ContactEditDialogComponent } from '../edit-dialog/contact-edit-dialog.c
 import { DialogService } from 'primeng/dynamicdialog';
 import { Contact } from '../../../models/contact.model';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
-import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
+
 
 @Component({
   selector: 'app-contact-view',
@@ -58,11 +58,9 @@ import { GoBackComponent } from '../../../../../common/reusables/components/go-b
     DividerModule,
     MessageModule,
     LinkListComponent,
-    DatePipe,
     CheckboxModule,
     AiPanelComponent,
-    RouterModule,
-    GoBackComponent
+    RouterModule
   ],
   templateUrl: './contact-view.component.html',
   standalone: true,
