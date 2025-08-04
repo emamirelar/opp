@@ -1,6 +1,6 @@
 <div class="entity-grid-container">
   <div class="entity-grid-header" *ngIf="entityType">
-    <h4>{{ entityType }}s ({{ gridData?.length || 0 }})</h4>
+    <h4>{{ entityType }}s ({{ gridData.length || 0 }})</h4>
   </div>
   
   <div class="entity-grid-loading" *ngIf="isLoading()">
@@ -29,6 +29,6 @@
   </div>
   
   <div class="entity-grid-empty" *ngIf="!isLoading() && (!gridData || gridData.length === 0)">
-    <p>No {{ entityType?.toLowerCase() }} data available</p>
+    <p>No {{ entityType.toLowerCase() }} data available</p>
   </div>
 </div> 

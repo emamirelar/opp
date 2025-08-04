@@ -12,7 +12,7 @@ import { PartnerTreeItemComponent } from '../item/partner-tree-item.component';
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { CachedDataService } from '../../../../../common/services/cached-data.service';
-import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
+
 
 interface TabItem {
   label: string;
@@ -30,7 +30,7 @@ interface TabItem {
     Tab,
     TooltipModule,
     PartnerTreeViewNavigationComponent,
-    GoBackComponent
+
   ],
   providers: [DialogService],
   template: `
@@ -44,16 +44,16 @@ interface TabItem {
       <div class="flex items-center justify-between w-full">
         <div class="flex flex-col">
           <div class="text-lg font-medium text-gray-600">
-            @if (recordData?.partnerGroupCode) {
+            @if (recordData.partnerGroupCode) {
               {{ 'label.partnerTree.partnerGroup' | translate }}
-            } @else if (recordData?.partnerCategoryCode) {
+            } @else if (recordData.partnerCategoryCode) {
               {{ 'label.partnerTree.partnerCategory' | translate }}
             } @else {
               {{ 'title.partnerTree' | translate }}
             }
           </div>
           <div class="text-3xl font-bold">
-            {{ recordData?.name }}
+            {{ recordData.name }}
           </div>
         </div>
 

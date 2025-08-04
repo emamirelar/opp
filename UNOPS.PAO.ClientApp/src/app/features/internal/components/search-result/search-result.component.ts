@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Tab, TabList, TabPanel, TabPanels, Tabs } from 'primeng/tabs';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
 import { CardModule } from 'primeng/card';
@@ -56,11 +56,7 @@ interface EntityTab {
   imports: [
     CommonModule,
     TranslateModule,
-    Tabs,
-    TabList,
-    Tab,
-    TabPanels,
-    TabPanel,
+
     DialogModule,
     CardModule,
     ButtonModule,
