@@ -20,7 +20,7 @@ import { AuthService } from '../../../../essentials/services/auth.service';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ImportDialogService } from '../../../reusables/components/import/dialog/import-dialog.service';
 import { ImportService } from '../../../reusables/components/import/import.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MenuModule } from 'primeng/menu';
 import { RippleModule } from 'primeng/ripple';
@@ -51,8 +51,8 @@ interface UserInfo {
   imports: [
     CommonModule,
     HttpClientModule,
+    RouterModule,
     LanguageSelectorComponent,
-
     ProfileMenubarComponent,
     StyleClassModule,
     ButtonModule,

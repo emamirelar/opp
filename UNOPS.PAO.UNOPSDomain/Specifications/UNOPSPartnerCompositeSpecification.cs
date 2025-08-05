@@ -32,27 +32,9 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
     /// <param name="filter">The filter containing ordering information</param>
     private void ApplyDynamicOrdering(IPartnerSearchFilter filter)
     {
-        // Get the OrderBy and Ascending values from the filter
-        string? orderByField = null;
-        bool ascending = true;
-        
-        // Check if the filter has OrderBy and Ascending properties (from PaginationRequest)
-        var orderByProperty = filter.GetType().GetProperty("OrderBy");
-        var ascendingProperty = filter.GetType().GetProperty("Ascending");
-        
-        if (orderByProperty != null)
-        {
-            orderByField = orderByProperty.GetValue(filter) as string;
-        }
-        
-        if (ascendingProperty != null)
-        {
-            var ascendingValue = ascendingProperty.GetValue(filter) ?? true;
-            if (ascendingValue is bool boolValue)
-            {
-                ascending = boolValue;
-            }
-        }
+        // Get the OrderBy and Ascending values directly from the interface (type-safe)
+        string? orderByField = filter.OrderBy;
+        bool ascending = filter.Ascending ?? true;
         
         // Determine the ordering expression based on the field name
         Expression<Func<UNOPSPartner, object>> orderExpression = GetOrderByExpression(orderByField);

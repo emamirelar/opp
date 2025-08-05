@@ -7,13 +7,14 @@ import { LanguageService } from '../../../services/language.service';
 import { Subscription } from 'rxjs/internal/Subscription';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { RouterModule, Router } from '@angular/router';
 
 import { ButtonModule } from 'primeng/button';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [MenuComponent, CommonModule, HttpClientModule, ButtonModule, TranslateModule],
+  imports: [MenuComponent, CommonModule, HttpClientModule, RouterModule, ButtonModule, TranslateModule],
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
   standalone: true,
@@ -22,6 +23,7 @@ import { GlobalFilterService } from '../../../../services/global-filter.service'
 export class SidebarComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private globalFilterService = inject(GlobalFilterService);
+  private router = inject(Router);
 
   constructor(
     public el: ElementRef,
