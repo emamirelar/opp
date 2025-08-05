@@ -235,7 +235,11 @@
         "thinking": "Pensando...",
         "chatHistory": "Histórico de conversas",
         "noOldChats": "Nenhuma conversa antiga",
-        "disclaimer": "O Assistente de IA pode cometer erros. Sempre verifique duas vezes."
+        "disclaimer": "O Assistente de IA pode cometer erros. Sempre verifique duas vezes.",
+        "hello": "Olá",
+        "user": "Usuário",
+        "welcomeDescription": "Bem-vindo ao Assistente de IA do Opportunity+, seu companheiro inteligente para tudo relacionado ao UNOPS. Fui projetado para ajudá-lo a navegar por parcerias, oportunidades e insights organizacionais com facilidade. Esteja você procurando informações sobre parceiros, analisando interações ou explorando novas oportunidades, estou aqui para fornecer assistência rápida e precisa.",
+        "quickActionDescription": "Comece instantaneamente com essas tarefas comuns:"
     },
     "common": {
         "cancel": "Cancelar",
