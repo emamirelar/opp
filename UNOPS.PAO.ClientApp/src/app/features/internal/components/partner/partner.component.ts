@@ -19,6 +19,23 @@ import { PermissionUtilityService } from '../../../../essentials/services/permis
 import { EntityPermissions } from '../../../../essentials/services/permission.service';
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
 
+/**
+ * @uiEntity Partner
+ * @route /partnerships/partners
+ * @description Browse and manage partner organizations with comprehensive search, filtering, and CRUD operations. Central hub for all partner-related activities.
+ * @capabilities search_partners, filter_partners, create_partner, edit_partner, delete_partner, export_partners, import_partners, bulk_operations
+ * @synonyms organization, collaborator, entity, associate, vendor, supplier, contractor
+ * @mandatoryFields name, partnerType, status, partnerOfficeId
+ * @help_when_stuck Use the search bar to find specific partners by name, type, or location. Click the + button to create new partners if you have permissions. Use filters to narrow down results by partner type, status, or organizational unit.
+ * @common_tasks
+ *   - Finding a partner: Use the global search bar or entity-specific filters
+ *   - Creating a partner: Click 'Create Partner' button (requires PARTNER_CREATE permission)
+ *   - Editing a partner: Click on any partner row to open details, then click Edit
+ *   - Filtering partners: Use the advanced search and filter options in the left panel
+ *   - Exporting data: Use the Export button to download partner lists in Excel format
+ *   - Importing partners: Use the Import button to bulk upload partner data
+ * @tabs Details:/partnerships/partners/:id, Contacts:/partnerships/partners/:id/contacts, Interactions:/partnerships/partners/:id/interactions, Data:/partnerships/partners/:id/data
+ */
 @Component({
   selector: 'app-partner',
   templateUrl: './partner.component.html',
@@ -195,6 +212,14 @@ export class PartnerComponent implements OnDestroy, OnInit {
     }
   }
 
+  /**
+   * @uiButton create_partner,edit_partner
+   * @description Opens the partner creation or editing dialog with comprehensive form fields for managing partner organization information
+   * @label New Partner | Edit Partner
+   * @icon pi pi-plus | pi pi-pencil
+   * @when_to_use When creating a new partner organization or editing existing partner details, including organizational information, contacts, and business relationships
+   * @permissions PARTNER_CREATE, PARTNER_UPDATE
+   */
   openPartnerEditDialog(partnerData: Partner = {}) {
     const ref = this.dialogService.open(PartnerEditDialogComponent, {
       header: partnerData.id ? 'Edit Partner' : 'New Partner',
@@ -219,6 +244,14 @@ export class PartnerComponent implements OnDestroy, OnInit {
     });
   }
 
+  /**
+   * @uiButton import_partners
+   * @description Opens the import dialog to bulk import partner organizations from Google Sheets or CSV files
+   * @label Import Partners
+   * @icon pi pi-file-import
+   * @when_to_use When you need to add multiple partner organizations at once from external sources, ideal for bulk data migration or initial system setup
+   * @permissions PARTNER_CREATE
+   */
   openImportDialog() {
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('partner');

@@ -561,7 +561,9 @@ export class CachedDataService {
       //this.currentUserData.set([]);
 
       this.isLoading.set(true);
-      this.http.get('/api/current-user-data').subscribe({
+      this.currentUserData.set({});
+      this.isLoading.set(false);
+      /*this.http.get('/api/current-user-data').subscribe({
         next: (data: any) => {
           this.currentUserData.set(data);
           this.isLoading.set(false);
@@ -571,7 +573,7 @@ export class CachedDataService {
           //this.allUsersData.set(new Object);
           this.isLoading.set(false);
         }
-      });
+      });*/
     }
   }
 

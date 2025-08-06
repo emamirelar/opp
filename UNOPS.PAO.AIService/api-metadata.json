@@ -1,383 +1,6 @@
 {
   "Controllers": [
     {
-      "Name": "AiPromptController",
-      "FullName": "UNOPS.PAO.Presentation.Controllers.AiPromptController",
-      "BaseRoute": "/",
-      "Methods": [
-        {
-          "Name": "GetPromptsAsync",
-          "HttpMethod": "POST",
-          "Route": "/api/ai-prompt-management/list",
-          "FullRoute": "api/ai-prompt-management/list",
-          "Summary": "Retrieves all AI prompts with advanced filtering, pagination, search capabilities, and access control for prompt management.",
-          "Returns": "Paginated list of AI prompts with metadata",
-          "ExampleUses": [
-            "Show me all AI prompts",
-            "List prompts for GPT-4 model",
-            "Find prompts containing 'email' in the name",
-            "Get prompts for specific project",
-            "Show active prompts with pagination",
-            "Search for customer service prompts"
-          ],
-          "WhenToUse": "Use this when the user asks to search, list, filter, or browse AI prompts and prompt templates.",
-          "Parameters": [
-            {
-              "Name": "request",
-              "Type": "AiPromptFilterRequest",
-              "Description": "AI prompt filter request containing search and pagination parameters",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetPromptByIdAsync",
-          "HttpMethod": "GET",
-          "Route": "/api/ai-prompt-management/{id}",
-          "FullRoute": "api/ai-prompt-management/{id}",
-          "Summary": "Retrieves a specific AI prompt by ID with complete details including prompt content, parameters, and configuration.",
-          "Returns": "Complete AI prompt details with content and configuration",
-          "ExampleUses": [
-            "Show me details for AI prompt ID 123",
-            "Get full information about prompt 456",
-            "Display prompt record 789",
-            "Get complete prompt configuration",
-            "Show prompt with all parameters and content"
-          ],
-          "WhenToUse": "Use this when the user asks for specific AI prompt details by ID or when you need complete prompt information for editing or testing.",
-          "Parameters": [
-            {
-              "Name": "id",
-              "Type": "int",
-              "Description": "AI prompt ID",
-              "IsRequired": true,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "CreatePromptAsync",
-          "HttpMethod": "POST",
-          "Route": "/api/ai-prompt-management",
-          "FullRoute": "api/ai-prompt-management",
-          "Summary": "Creates a new AI prompt with complete configuration including content, parameters, model settings, and metadata.",
-          "Returns": "Created AI prompt with ID and metadata",
-          "ExampleUses": [
-            "Create a new email generation prompt",
-            "Add a customer service response template",
-            "Set up a new data analysis prompt",
-            "Create prompt for document summarization",
-            "Add meeting notes generation template"
-          ],
-          "WhenToUse": "Use this when the user asks to create, add, or set up a new AI prompt template.",
-          "Parameters": [
-            {
-              "Name": "model",
-              "Type": "AiPromptModel",
-              "Description": "AI prompt creation request with all configuration details",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "UpdatePromptAsync",
-          "HttpMethod": "PUT",
-          "Route": "/api/ai-prompt-management/{id}",
-          "FullRoute": "api/ai-prompt-management/{id}",
-          "Summary": "Updates an existing AI prompt's configuration including content, parameters, model settings, and metadata.",
-          "Returns": "Updated AI prompt data",
-          "ExampleUses": [
-            "Update prompt 123's content with new template",
-            "Change prompt 456's model from GPT-3.5 to GPT-4",
-            "Modify prompt temperature settings",
-            "Update prompt description and metadata",
-            "Change prompt type classification"
-          ],
-          "WhenToUse": "Use this when the user asks to update, modify, edit, or change AI prompt configuration or content.",
-          "Parameters": [
-            {
-              "Name": "id",
-              "Type": "int",
-              "Description": "AI prompt ID to update (required)",
-              "IsRequired": true,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            },
-            {
-              "Name": "model",
-              "Type": "AiPromptModel",
-              "Description": "Updated AI prompt data",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPutAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "DeletePromptAsync",
-          "HttpMethod": "DELETE",
-          "Route": "/api/ai-prompt-management/{id}",
-          "FullRoute": "api/ai-prompt-management/{id}",
-          "Summary": "Soft deletes an AI prompt from the system (marks as deleted rather than permanent removal).",
-          "Returns": "No content on successful deletion",
-          "ExampleUses": [
-            "Delete AI prompt ID 123",
-            "Remove prompt 456 from the system",
-            "Deactivate email template prompt",
-            "Delete outdated prompt template",
-            "Remove unused AI prompt"
-          ],
-          "WhenToUse": "Use this when the user asks to delete, remove, or eliminate an AI prompt.",
-          "Parameters": [
-            {
-              "Name": "id",
-              "Type": "int",
-              "Description": "AI prompt ID to delete",
-              "IsRequired": true,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpDeleteAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetPromptsByTypeAsync",
-          "HttpMethod": "GET",
-          "Route": "/api/ai-prompt-management/type/{type}",
-          "FullRoute": "api/ai-prompt-management/type/{type}",
-          "Summary": "Retrieves all AI prompts filtered by specific prompt type with access control.",
-          "Returns": "List of AI prompts matching the specified type",
-          "ExampleUses": [
-            "Show all email generation prompts",
-            "List prompts for document summarization",
-            "Get data analysis prompt templates",
-            "Find translation prompts",
-            "Show customer service prompts",
-            "Get meeting notes prompts"
-          ],
-          "WhenToUse": "Use this when the user asks to filter prompts by specific type, category, or functional purpose.",
-          "Parameters": [
-            {
-              "Name": "type",
-              "Type": "string",
-              "Description": "Prompt type to filter by (e.g., 'email', 'summary', 'analysis', 'translation')",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetPromptTypesAsync",
-          "HttpMethod": "GET",
-          "Route": "/api/ai-prompt-management/types",
-          "FullRoute": "api/ai-prompt-management/types",
-          "Summary": "Retrieves all unique prompt types available in the system for dropdown menus and filtering operations.",
-          "Returns": "List of unique prompt types for filtering and selection",
-          "ExampleUses": [
-            "Get prompt types for dropdown menu",
-            "What types of prompts are available?",
-            "Show all prompt categories",
-            "Get filter options for prompt types",
-            "List available prompt classifications"
-          ],
-          "WhenToUse": "Use this when the user needs to see available prompt types for filtering or when building UI dropdown menus.",
-          "Parameters": [],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetModelsAsync",
-          "HttpMethod": "GET",
-          "Route": "/api/ai-prompt-management/models",
-          "FullRoute": "api/ai-prompt-management/models",
-          "Summary": "Retrieves all unique AI models available in the system for dropdown menus and filtering operations.",
-          "Returns": "List of unique AI models for filtering and selection",
-          "ExampleUses": [
-            "Get AI models for dropdown menu",
-            "What AI models are available?",
-            "Show all supported models",
-            "Get filter options for AI models",
-            "List GPT and other model options"
-          ],
-          "WhenToUse": "Use this when the user needs to see available AI models for filtering or when configuring prompt model settings.",
-          "Parameters": [],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetProjectsAsync",
-          "HttpMethod": "GET",
-          "Route": "/api/ai-prompt-management/projects",
-          "FullRoute": "api/ai-prompt-management/projects",
-          "Summary": "Retrieves all unique projects associated with AI prompts for dropdown menus and filtering operations.",
-          "Returns": "List of unique projects for filtering and selection",
-          "ExampleUses": [
-            "Get projects for dropdown menu",
-            "What projects have AI prompts?",
-            "Show all project assignments",
-            "Get filter options for projects",
-            "List projects using AI prompts"
-          ],
-          "WhenToUse": "Use this when the user needs to see available projects for filtering prompts or when assigning prompts to projects.",
-          "Parameters": [],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "GetLocationsAsync",
-          "HttpMethod": "GET",
-          "Route": "/api/ai-prompt-management/locations",
-          "FullRoute": "api/ai-prompt-management/locations",
-          "Summary": "Retrieves all unique locations/regions associated with AI prompts for dropdown menus and filtering operations.",
-          "Returns": "List of unique locations for filtering and selection",
-          "ExampleUses": [
-            "Get locations for dropdown menu",
-            "What locations have AI prompts?",
-            "Show all regional assignments",
-            "Get filter options for locations",
-            "List regions using AI prompts"
-          ],
-          "WhenToUse": "Use this when the user needs to see available locations for filtering prompts or when assigning prompts to regions.",
-          "Parameters": [],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        },
-        {
-          "Name": "TestPromptAsync",
-          "HttpMethod": "POST",
-          "Route": "/api/ai-prompt-management/test",
-          "FullRoute": "api/ai-prompt-management/test",
-          "Summary": "Tests an AI prompt with provided test data to validate prompt effectiveness and output quality before deployment.",
-          "Returns": "Test results including prompt output and performance metrics",
-          "ExampleUses": [
-            "Test email prompt with sample data",
-            "Validate prompt 123 with test input",
-            "Check prompt performance before deployment",
-            "Test prompt output quality",
-            "Verify prompt generates expected results"
-          ],
-          "WhenToUse": "Use this when the user wants to test, validate, or preview AI prompt output before using it in production.",
-          "Parameters": [
-            {
-              "Name": "request",
-              "Type": "TestPromptRequest",
-              "Description": "Test request containing prompt data and test parameters",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute",
-            "AccessControlledAttribute"
-          ],
-          "AccessControl": "AccessControlledAttribute"
-        }
-      ],
-      "Attributes": [
-        "NullableContextAttribute",
-        "NullableAttribute",
-        "RouteAttribute",
-        "AuthorizeAttribute",
-        "ApiControllerAttribute",
-        "AuthorizeAttribute",
-        "ControllerAttribute"
-      ]
-    },
-    {
       "Name": "ConfigurationController",
       "FullName": "UNOPS.PAO.Presentation.Controllers.ConfigurationController",
       "BaseRoute": "/",
@@ -405,7 +28,8 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "ContactController",
@@ -449,27 +73,47 @@
           "AccessControl": "AccessControlledAttribute"
         },
         {
-          "Name": "Get",
+          "Name": "ListAllContacts",
           "HttpMethod": "GET",
           "Route": "/api/contact",
           "FullRoute": "api/contact",
-          "Summary": "Retrieves a list of contacts with advanced filtering, pagination, search capabilities, and access control.",
-          "Returns": "Paginated list of contacts with metadata",
+          "Summary": "Retrieves all contacts with basic pagination and ordering (no search criteria).",
+          "Returns": "Paginated list of all contacts",
           "ExampleUses": [
             "Show me all contacts",
-            "List contacts with email domain @unicef.org",
-            "Find contacts working at government partners",
-            "Search for contacts named John",
-            "Show contacts from my office only",
-            "Get contacts sorted by last name",
-            "Find technical experts in partner organizations"
+            "List all contacts in the system",
+            "Display the contact directory",
+            "Get all contact records",
+            "Browse contacts"
           ],
-          "WhenToUse": "Use this when the user asks to search, list, filter, or browse contacts.",
+          "WhenToUse": "Use this when the user wants to see ALL contacts without any search criteria or when asking for a general contact list.",
           "Parameters": [
             {
-              "Name": "request",
-              "Type": "ContactFilterRequest",
-              "Description": "Contact filter request containing search and pagination parameters",
+              "Name": "pageIndex",
+              "Type": "int",
+              "Description": "Page number (1-based, default: 1)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 1,
+              "Properties": []
+            },
+            {
+              "Name": "pageSize",
+              "Type": "int",
+              "Description": "Number of items per page (default: 20)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 20,
+              "Properties": []
+            },
+            {
+              "Name": "orderBy",
+              "Type": "string",
+              "Description": "Field to order results by (optional)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -478,20 +122,45 @@
               "Properties": []
             },
             {
-              "Name": "advancedSearch",
+              "Name": "ascending",
               "Type": "bool",
-              "Description": "Enable advanced search mode",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": false,
+              "DefaultValue": true,
               "Properties": []
-            },
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "SearchContacts",
+          "HttpMethod": "GET",
+          "Route": "/api/contact/search",
+          "FullRoute": "api/contact/search",
+          "Summary": "Performs simple text search across multiple contact fields (name, email, title, etc.).",
+          "Returns": "Paginated list of contacts matching the search text",
+          "ExampleUses": [
+            "Search for contacts named John",
+            "Find contacts with @unicef.org email",
+            "Search for contacts containing 'Smith'",
+            "Find contact with phone number 555-1234",
+            "Look for contacts with title 'Manager'"
+          ],
+          "WhenToUse": "Use this for simple name, email, title, or basic field searches. NOT for partner relationship searches.",
+          "Parameters": [
             {
-              "Name": "searchCriteria",
-              "Type": "string",
-              "Description": "JSON string containing advanced search filters",
+              "Name": "request",
+              "Type": "PaginationRequest",
+              "Description": "Pagination request containing only pagination and sorting parameters",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -502,7 +171,66 @@
             {
               "Name": "searchText",
               "Type": "string",
-              "Description": "Text to search across contact fields (override for request.searchText)",
+              "Description": "Text to search across contact name, email, title, and other basic fields",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "AdvancedSearchContacts",
+          "HttpMethod": "GET",
+          "Route": "/api/contact/advanced-search",
+          "FullRoute": "api/contact/advanced-search",
+          "Summary": "Performs advanced search with structured criteria including relationships with partners, departments, and complex filters.",
+          "Returns": "Paginated list of contacts matching the advanced search criteria",
+          "ExampleUses": [
+            "Find contacts from UNICEF partner organization",
+            "Show contacts in Finance department created this month",
+            "Get contacts working at Asian Infrastructure partners",
+            "Find contacts where partner status is Active",
+            "List contacts from climate-related interactions",
+            "Search for contacts by department and creation date"
+          ],
+          "WhenToUse": "Use this for searches involving partner relationships, departments, dates, status, or any complex multi-field criteria.",
+          "Parameters": [
+            {
+              "Name": "request",
+              "Type": "PaginationRequest",
+              "Description": "Pagination request containing only pagination and sorting parameters",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "searchCriteria",
+              "Type": "string",
+              "Description": "JSON array of search criteria objects with field, operator, value, and logicalOperator",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "searchText",
+              "Type": "string",
+              "Description": "Optional additional text search to combine with criteria",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -743,6 +471,114 @@
             "AccessControlledAttribute"
           ],
           "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "ScanContactData",
+          "HttpMethod": "POST",
+          "Route": "/api/contact/scan-data",
+          "FullRoute": "api/contact/scan-data",
+          "Summary": "Scans and processes uploaded files for contact data extraction using AI-powered analysis.",
+          "Returns": "Extracted contact data from the scanned file",
+          "ExampleUses": [
+            "Scan business cards for contact information",
+            "Upload contact forms for processing",
+            "Analyze contact documents with AI",
+            "Extract data from contact lists",
+            "Process contact information from uploaded files"
+          ],
+          "WhenToUse": "Use this when the user wants to upload and scan documents for contact data extraction using AI.",
+          "Parameters": [
+            {
+              "Name": "req",
+              "Type": "GeminiFileRequest",
+              "Description": "File scan request containing the file to be processed",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "AnalyseContactData",
+          "HttpMethod": "POST",
+          "Route": "/api/contact/analyse-file",
+          "FullRoute": "api/contact/analyse-file",
+          "Summary": "Analyzes uploaded files and extracts structured contact data using AI-powered data analysis.",
+          "Returns": "Structured contact data extracted from the analyzed file",
+          "ExampleUses": [
+            "Analyze contact directories for structured data extraction",
+            "Extract contact information from uploaded forms",
+            "Process contact documents with AI",
+            "Convert contact files into structured database entries",
+            "Analyze business card data for key information"
+          ],
+          "WhenToUse": "Use this when the user wants to analyze files and extract structured contact data for database import.",
+          "Parameters": [
+            {
+              "Name": "request",
+              "Type": "AnalyseFileRequest",
+              "Description": "Analysis request containing file and analysis parameters",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "BulkUploadContacts",
+          "HttpMethod": "POST",
+          "Route": "/api/contact/bulk-upload",
+          "FullRoute": "api/contact/bulk-upload",
+          "Summary": "Bulk uploads multiple contact records using AI-assisted data processing and validation.",
+          "Returns": "Bulk upload results with success/failure status for each contact",
+          "ExampleUses": [
+            "Bulk upload 500 contacts from Excel",
+            "Import multiple contacts from CSV file",
+            "Mass upload contact data with AI validation",
+            "Bulk import contact records with duplicate detection",
+            "Upload large contact dataset with automated processing"
+          ],
+          "WhenToUse": "Use this when the user wants to upload multiple contact records at once with AI-assisted processing.",
+          "Parameters": [
+            {
+              "Name": "req",
+              "Type": "BulkUploadRequest",
+              "Description": "Bulk upload request containing contact data",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
         }
       ],
       "Attributes": [
@@ -753,7 +589,102 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": {
+        "Entity": "Contact",
+        "DirectFields": [
+          "id",
+          "salutation",
+          "firstName",
+          "middleName",
+          "lastName",
+          "suffix",
+          "title",
+          "department",
+          "description",
+          "email",
+          "phone",
+          "mobile",
+          "assistant",
+          "assistantPhone",
+          "assistantEmail",
+          "status",
+          "mailingStreet",
+          "mailingStreet2",
+          "mailingCity",
+          "mailingStateProvince",
+          "mailingPostalCode",
+          "mailingCountry",
+          "profilePictureUrl",
+          "partnerId",
+          "partnerName",
+          "partnerStatus",
+          "partnerShortName"
+        ],
+        "NestedFields": {
+          "partner": [
+            "name",
+            "status",
+            "shortName",
+            "phone",
+            "website",
+            "address1City",
+            "address1Country"
+          ]
+        },
+        "Operators": [
+          "like",
+          "is",
+          "not",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "between",
+          "greaterThan",
+          "lessThan",
+          "greaterThanOrEqual",
+          "lessThanOrEqual",
+          "on",
+          "not on",
+          "this week",
+          "this month",
+          "this year"
+        ],
+        "DateFields": [
+          "createdDate",
+          "modifiedDate"
+        ],
+        "ExampleCriteria": [
+          {
+            "Field": "firstName",
+            "Operator": "like",
+            "Value": "Maria",
+            "LogicalOperator": null,
+            "Description": "Find contacts named Maria"
+          },
+          {
+            "Field": "partner.name",
+            "Operator": "like",
+            "Value": "UNICEF",
+            "LogicalOperator": null,
+            "Description": "Find contacts from UNICEF partners"
+          },
+          {
+            "Field": "email",
+            "Operator": "contains",
+            "Value": "@unops.org",
+            "LogicalOperator": null,
+            "Description": "Find UNOPS email contacts"
+          },
+          {
+            "Field": "department",
+            "Operator": "is",
+            "Value": "Finance",
+            "LogicalOperator": null,
+            "Description": "Find contacts in Finance department"
+          }
+        ]
+      }
     },
     {
       "Name": "DocumentController",
@@ -886,7 +817,8 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "DocumentTypeController",
@@ -974,7 +906,8 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "EntityConfigurationController",
@@ -1425,13 +1358,375 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "GeminiController",
       "FullName": "UNOPS.PAO.Presentation.Controllers.GeminiController",
       "BaseRoute": "/",
       "Methods": [
+        {
+          "Name": "GetPromptsAsync",
+          "HttpMethod": "POST",
+          "Route": "/api/ai-prompt-management/list",
+          "FullRoute": "api/ai-prompt-management/list",
+          "Summary": "Retrieves all AI prompts with advanced filtering, pagination, search capabilities, and access control for prompt management.",
+          "Returns": "Paginated list of AI prompts with metadata",
+          "ExampleUses": [
+            "Show me all AI prompts",
+            "List prompts for GPT-4 model",
+            "Find prompts containing 'email' in the name",
+            "Get prompts for specific project",
+            "Show active prompts with pagination",
+            "Search for customer service prompts"
+          ],
+          "WhenToUse": "Use this when the user asks to search, list, filter, or browse AI prompts and prompt templates.",
+          "Parameters": [
+            {
+              "Name": "request",
+              "Type": "AiPromptFilterRequest",
+              "Description": "AI prompt filter request containing search and pagination parameters",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPromptByIdAsync",
+          "HttpMethod": "GET",
+          "Route": "/api/ai-prompt-management/{id}",
+          "FullRoute": "api/ai-prompt-management/{id}",
+          "Summary": "Retrieves a specific AI prompt by ID with complete details including prompt content, parameters, and configuration.",
+          "Returns": "Complete AI prompt details with content and configuration",
+          "ExampleUses": [
+            "Show me details for AI prompt ID 123",
+            "Get full information about prompt 456",
+            "Display prompt record 789",
+            "Get complete prompt configuration",
+            "Show prompt with all parameters and content"
+          ],
+          "WhenToUse": "Use this when the user asks for specific AI prompt details by ID or when you need complete prompt information for editing or testing.",
+          "Parameters": [
+            {
+              "Name": "id",
+              "Type": "int",
+              "Description": "AI prompt ID",
+              "IsRequired": true,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "CreatePromptAsync",
+          "HttpMethod": "POST",
+          "Route": "/api/ai-prompt-management",
+          "FullRoute": "api/ai-prompt-management",
+          "Summary": "Creates a new AI prompt with complete configuration including content, parameters, model settings, and metadata.",
+          "Returns": "Created AI prompt with ID and metadata",
+          "ExampleUses": [
+            "Create a new email generation prompt",
+            "Add a customer service response template",
+            "Set up a new data analysis prompt",
+            "Create prompt for document summarization",
+            "Add meeting notes generation template"
+          ],
+          "WhenToUse": "Use this when the user asks to create, add, or set up a new AI prompt template.",
+          "Parameters": [
+            {
+              "Name": "model",
+              "Type": "AiPromptModel",
+              "Description": "AI prompt creation request with all configuration details",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "UpdatePromptAsync",
+          "HttpMethod": "PUT",
+          "Route": "/api/ai-prompt-management/{id}",
+          "FullRoute": "api/ai-prompt-management/{id}",
+          "Summary": "Updates an existing AI prompt's configuration including content, parameters, model settings, and metadata.",
+          "Returns": "Updated AI prompt data",
+          "ExampleUses": [
+            "Update prompt 123's content with new template",
+            "Change prompt 456's model from GPT-3.5 to GPT-4",
+            "Modify prompt temperature settings",
+            "Update prompt description and metadata",
+            "Change prompt type classification"
+          ],
+          "WhenToUse": "Use this when the user asks to update, modify, edit, or change AI prompt configuration or content.",
+          "Parameters": [
+            {
+              "Name": "id",
+              "Type": "int",
+              "Description": "AI prompt ID to update (required)",
+              "IsRequired": true,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "model",
+              "Type": "AiPromptModel",
+              "Description": "Updated AI prompt data",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPutAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "DeletePromptAsync",
+          "HttpMethod": "DELETE",
+          "Route": "/api/ai-prompt-management/{id}",
+          "FullRoute": "api/ai-prompt-management/{id}",
+          "Summary": "Soft deletes an AI prompt from the system (marks as deleted rather than permanent removal).",
+          "Returns": "No content on successful deletion",
+          "ExampleUses": [
+            "Delete AI prompt ID 123",
+            "Remove prompt 456 from the system",
+            "Deactivate email template prompt",
+            "Delete outdated prompt template",
+            "Remove unused AI prompt"
+          ],
+          "WhenToUse": "Use this when the user asks to delete, remove, or eliminate an AI prompt.",
+          "Parameters": [
+            {
+              "Name": "id",
+              "Type": "int",
+              "Description": "AI prompt ID to delete",
+              "IsRequired": true,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpDeleteAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPromptsByTypeAsync",
+          "HttpMethod": "GET",
+          "Route": "/api/ai-prompt-management/type/{type}",
+          "FullRoute": "api/ai-prompt-management/type/{type}",
+          "Summary": "Retrieves all AI prompts filtered by specific prompt type with access control.",
+          "Returns": "List of AI prompts matching the specified type",
+          "ExampleUses": [
+            "Show all email generation prompts",
+            "List prompts for document summarization",
+            "Get data analysis prompt templates",
+            "Find translation prompts",
+            "Show customer service prompts",
+            "Get meeting notes prompts"
+          ],
+          "WhenToUse": "Use this when the user asks to filter prompts by specific type, category, or functional purpose.",
+          "Parameters": [
+            {
+              "Name": "type",
+              "Type": "string",
+              "Description": "Prompt type to filter by (e.g., 'email', 'summary', 'analysis', 'translation')",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPromptTypesAsync",
+          "HttpMethod": "GET",
+          "Route": "/api/ai-prompt-management/types",
+          "FullRoute": "api/ai-prompt-management/types",
+          "Summary": "Retrieves all unique prompt types available in the system for dropdown menus and filtering operations.",
+          "Returns": "List of unique prompt types for filtering and selection",
+          "ExampleUses": [
+            "Get prompt types for dropdown menu",
+            "What types of prompts are available?",
+            "Show all prompt categories",
+            "Get filter options for prompt types",
+            "List available prompt classifications"
+          ],
+          "WhenToUse": "Use this when the user needs to see available prompt types for filtering or when building UI dropdown menus.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetModelsAsync",
+          "HttpMethod": "GET",
+          "Route": "/api/ai-prompt-management/models",
+          "FullRoute": "api/ai-prompt-management/models",
+          "Summary": "Retrieves all unique AI models available in the system for dropdown menus and filtering operations.",
+          "Returns": "List of unique AI models for filtering and selection",
+          "ExampleUses": [
+            "Get AI models for dropdown menu",
+            "What AI models are available?",
+            "Show all supported models",
+            "Get filter options for AI models",
+            "List GPT and other model options"
+          ],
+          "WhenToUse": "Use this when the user needs to see available AI models for filtering or when configuring prompt model settings.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetProjectsAsync",
+          "HttpMethod": "GET",
+          "Route": "/api/ai-prompt-management/projects",
+          "FullRoute": "api/ai-prompt-management/projects",
+          "Summary": "Retrieves all unique projects associated with AI prompts for dropdown menus and filtering operations.",
+          "Returns": "List of unique projects for filtering and selection",
+          "ExampleUses": [
+            "Get projects for dropdown menu",
+            "What projects have AI prompts?",
+            "Show all project assignments",
+            "Get filter options for projects",
+            "List projects using AI prompts"
+          ],
+          "WhenToUse": "Use this when the user needs to see available projects for filtering prompts or when assigning prompts to projects.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetLocationsAsync",
+          "HttpMethod": "GET",
+          "Route": "/api/ai-prompt-management/locations",
+          "FullRoute": "api/ai-prompt-management/locations",
+          "Summary": "Retrieves all unique locations/regions associated with AI prompts for dropdown menus and filtering operations.",
+          "Returns": "List of unique locations for filtering and selection",
+          "ExampleUses": [
+            "Get locations for dropdown menu",
+            "What locations have AI prompts?",
+            "Show all regional assignments",
+            "Get filter options for locations",
+            "List regions using AI prompts"
+          ],
+          "WhenToUse": "Use this when the user needs to see available locations for filtering prompts or when assigning prompts to regions.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "TestPromptAsync",
+          "HttpMethod": "POST",
+          "Route": "/api/ai-prompt-management/test",
+          "FullRoute": "api/ai-prompt-management/test",
+          "Summary": "Tests an AI prompt with provided test data to validate prompt effectiveness and output quality before deployment.",
+          "Returns": "Test results including prompt output and performance metrics",
+          "ExampleUses": [
+            "Test email prompt with sample data",
+            "Validate prompt 123 with test input",
+            "Check prompt performance before deployment",
+            "Test prompt output quality",
+            "Verify prompt generates expected results"
+          ],
+          "WhenToUse": "Use this when the user wants to test, validate, or preview AI prompt output before using it in production.",
+          "Parameters": [
+            {
+              "Name": "request",
+              "Type": "TestPromptRequest",
+              "Description": "Test request containing prompt data and test parameters",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
         {
           "Name": "GetUserSessions",
           "HttpMethod": "POST",
@@ -1491,35 +1786,6 @@
             {
               "Name": "req",
               "Type": "GeminiAssistantRequest",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
-          "Name": "ScanFile",
-          "HttpMethod": "POST",
-          "Route": "/api/scan-data",
-          "FullRoute": "api/scan-data",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "req",
-              "Type": "GeminiFileRequest",
               "Description": "",
               "IsRequired": false,
               "IsFromBody": false,
@@ -1711,148 +1977,6 @@
           "AccessControl": ""
         },
         {
-          "Name": "BulkUpload",
-          "HttpMethod": "POST",
-          "Route": "/api/import/bulk-upload",
-          "FullRoute": "api/import/bulk-upload",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "req",
-              "Type": "BulkUploadRequest",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
-          "Name": "AnalyseFile",
-          "HttpMethod": "POST",
-          "Route": "/api/import/analyse-file",
-          "FullRoute": "api/import/analyse-file",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "request",
-              "Type": "AnalyseFileRequest",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
-          "Name": "GetSimilarityResultAsync",
-          "HttpMethod": "GET",
-          "Route": "get-similarity-result",
-          "FullRoute": "get-similarity-result",
-          "Summary": "Performs semantic/similarity search with RBAC filtering",
-          "Returns": "Search results filtered by RBAC permissions",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "entityName",
-              "Type": "string",
-              "Description": "Name of the entity to search (e.g., \"Partners\", \"Contacts\")",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            },
-            {
-              "Name": "searchText",
-              "Type": "string",
-              "Description": "Text to search for",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            },
-            {
-              "Name": "vectorEmbedding",
-              "Type": "string",
-              "Description": "Optional vector embedding for semantic search",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            },
-            {
-              "Name": "similarityThreshold",
-              "Type": "float",
-              "Description": "Threshold for similarity search (default: 0.3)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 0.3,
-              "Properties": []
-            },
-            {
-              "Name": "embeddingThreshold",
-              "Type": "float",
-              "Description": "Threshold for embedding search (default: 0.7)",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": 0.7,
-              "Properties": []
-            },
-            {
-              "Name": "whereCondition",
-              "Type": "string",
-              "Description": "Optional additional WHERE condition",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
           "Name": "GenerateTitle",
           "HttpMethod": "GET",
           "Route": "/api/ai-assistant/generate-title",
@@ -1890,7 +2014,8 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "GlobalController",
@@ -2221,7 +2346,8 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "GmailAddonController",
@@ -2386,7 +2512,8 @@
         "AuthorizeAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "InteractionController",
@@ -2430,27 +2557,47 @@
           "AccessControl": "AccessControlledAttribute"
         },
         {
-          "Name": "GetAll",
+          "Name": "ListAllInteractions",
           "HttpMethod": "GET",
           "Route": "/api/interactions",
           "FullRoute": "api/interactions",
-          "Summary": "Retrieves a list of interactions with advanced filtering, pagination, search capabilities, and access control.",
-          "Returns": "Paginated list of interactions with metadata",
+          "Summary": "Retrieves all interactions with basic pagination and ordering (no search criteria).",
+          "Returns": "Paginated list of all interactions",
           "ExampleUses": [
             "Show me all interactions",
-            "List meetings from last month",
-            "Find interactions with UNICEF partners",
-            "Show email interactions this week",
-            "Get interactions containing 'project' in subject",
-            "List interactions sorted by date",
-            "Find conference calls with specific contacts"
+            "List all interactions in the system",
+            "Display the interaction history",
+            "Get all interaction records",
+            "Browse interactions"
           ],
-          "WhenToUse": "Use this when the user asks to search, list, filter, or browse interactions, meetings, calls, or communications.",
+          "WhenToUse": "Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list.",
           "Parameters": [
             {
-              "Name": "request",
-              "Type": "InteractionFilterRequest",
-              "Description": "Interaction filter request containing search and pagination parameters",
+              "Name": "pageIndex",
+              "Type": "int",
+              "Description": "Page number (1-based, default: 1)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 1,
+              "Properties": []
+            },
+            {
+              "Name": "pageSize",
+              "Type": "int",
+              "Description": "Number of items per page (default: 20)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 20,
+              "Properties": []
+            },
+            {
+              "Name": "orderBy",
+              "Type": "string",
+              "Description": "Field to order results by (optional)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -2459,20 +2606,45 @@
               "Properties": []
             },
             {
-              "Name": "advancedSearch",
+              "Name": "ascending",
               "Type": "bool",
-              "Description": "Enable advanced search mode",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": false,
+              "DefaultValue": true,
               "Properties": []
-            },
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "SearchInteractions",
+          "HttpMethod": "GET",
+          "Route": "/api/interactions/search",
+          "FullRoute": "api/interactions/search",
+          "Summary": "Performs simple text search across multiple interaction fields (subject, description, etc.).",
+          "Returns": "Paginated list of interactions matching the search text",
+          "ExampleUses": [
+            "Search for interactions about project",
+            "Find interactions containing 'meeting notes'",
+            "Search for interactions with 'UNICEF' mentioned",
+            "Look for interactions about specific topics",
+            "Find interactions by keywords"
+          ],
+          "WhenToUse": "Use this for simple keyword searches across interaction content. NOT for relationship-based searches.",
+          "Parameters": [
             {
-              "Name": "searchCriteria",
-              "Type": "string",
-              "Description": "JSON string containing advanced search filters",
+              "Name": "request",
+              "Type": "PaginationRequest",
+              "Description": "Pagination request containing only pagination and sorting parameters",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -2483,7 +2655,66 @@
             {
               "Name": "searchText",
               "Type": "string",
-              "Description": "Text to search across interaction fields (override for request.searchText)",
+              "Description": "Text to search across interaction subject, description, and other basic fields",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "AdvancedSearchInteractions",
+          "HttpMethod": "GET",
+          "Route": "/api/interactions/advanced-search",
+          "FullRoute": "api/interactions/advanced-search",
+          "Summary": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters.",
+          "Returns": "Paginated list of interactions matching the advanced search criteria",
+          "ExampleUses": [
+            "Find interactions with UNICEF partners",
+            "Show meetings with John Smith contact",
+            "Get email interactions this week",
+            "Find conference calls from Finance department contacts",
+            "List interactions by type and date range",
+            "Search for interactions by complex criteria combinations"
+          ],
+          "WhenToUse": "Use this for searches involving partner relationships, contact details, dates, interaction types, or multiple field combinations.",
+          "Parameters": [
+            {
+              "Name": "request",
+              "Type": "PaginationRequest",
+              "Description": "Pagination request containing only pagination and sorting parameters",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "searchCriteria",
+              "Type": "string",
+              "Description": "JSON array of search criteria objects with field, operator, value, and logicalOperator",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "searchText",
+              "Type": "string",
+              "Description": "Optional additional text search to combine with criteria",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -2642,6 +2873,114 @@
             "HttpGetAttribute"
           ],
           "AccessControl": ""
+        },
+        {
+          "Name": "ScanInteractionData",
+          "HttpMethod": "POST",
+          "Route": "/api/interactions/scan-data",
+          "FullRoute": "api/interactions/scan-data",
+          "Summary": "Scans and processes uploaded files for interaction data extraction using AI-powered analysis.",
+          "Returns": "Extracted interaction data from the scanned file",
+          "ExampleUses": [
+            "Scan meeting notes for interaction details",
+            "Upload email threads for processing",
+            "Analyze call transcripts with AI",
+            "Extract data from communication logs",
+            "Process interaction records from uploaded files"
+          ],
+          "WhenToUse": "Use this when the user wants to upload and scan documents for interaction data extraction using AI.",
+          "Parameters": [
+            {
+              "Name": "req",
+              "Type": "GeminiFileRequest",
+              "Description": "File scan request containing the file to be processed",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "AnalyseInteractionData",
+          "HttpMethod": "POST",
+          "Route": "/api/interactions/analyse-file",
+          "FullRoute": "api/interactions/analyse-file",
+          "Summary": "Analyzes uploaded files and extracts structured interaction data using AI-powered data analysis.",
+          "Returns": "Structured interaction data extracted from the analyzed file",
+          "ExampleUses": [
+            "Analyze meeting transcripts for structured data extraction",
+            "Extract interaction information from uploaded logs",
+            "Process communication documents with AI",
+            "Convert interaction files into structured database entries",
+            "Analyze call records for key information"
+          ],
+          "WhenToUse": "Use this when the user wants to analyze files and extract structured interaction data for database import.",
+          "Parameters": [
+            {
+              "Name": "request",
+              "Type": "AnalyseFileRequest",
+              "Description": "Analysis request containing file and analysis parameters",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "BulkUploadInteractions",
+          "HttpMethod": "POST",
+          "Route": "/api/interactions/bulk-upload",
+          "FullRoute": "api/interactions/bulk-upload",
+          "Summary": "Bulk uploads multiple interaction records using AI-assisted data processing and validation.",
+          "Returns": "Bulk upload results with success/failure status for each interaction",
+          "ExampleUses": [
+            "Bulk upload 200 interactions from Excel",
+            "Import multiple interactions from CSV file",
+            "Mass upload interaction data with AI validation",
+            "Bulk import interaction records with duplicate detection",
+            "Upload large interaction dataset with automated processing"
+          ],
+          "WhenToUse": "Use this when the user wants to upload multiple interaction records at once with AI-assisted processing.",
+          "Parameters": [
+            {
+              "Name": "req",
+              "Type": "BulkUploadRequest",
+              "Description": "Bulk upload request containing interaction data",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
         }
       ],
       "Attributes": [
@@ -2652,7 +2991,97 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": {
+        "Entity": "Interaction",
+        "DirectFields": [
+          "id",
+          "contactId",
+          "type",
+          "date",
+          "fromDate",
+          "toDate",
+          "description",
+          "subject",
+          "contactName",
+          "contactFirstName",
+          "contactLastName",
+          "contactEmail",
+          "partnerName",
+          "partnerStatus"
+        ],
+        "NestedFields": {
+          "contact": [
+            "firstName",
+            "lastName",
+            "email",
+            "title",
+            "department",
+            "phone",
+            "mobile"
+          ],
+          "partner": [
+            "name",
+            "status",
+            "shortName"
+          ]
+        },
+        "Operators": [
+          "like",
+          "is",
+          "not",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "between",
+          "greaterThan",
+          "lessThan",
+          "greaterThanOrEqual",
+          "lessThanOrEqual",
+          "on",
+          "not on",
+          "this week",
+          "this month",
+          "this year"
+        ],
+        "DateFields": [
+          "date",
+          "fromDate",
+          "toDate",
+          "createdDate",
+          "modifiedDate"
+        ],
+        "ExampleCriteria": [
+          {
+            "Field": "partner.name",
+            "Operator": "like",
+            "Value": "UNICEF",
+            "LogicalOperator": null,
+            "Description": "Find interactions with UNICEF partners"
+          },
+          {
+            "Field": "contact.firstName",
+            "Operator": "like",
+            "Value": "John",
+            "LogicalOperator": "AND",
+            "Description": "Find interactions with contacts named John"
+          },
+          {
+            "Field": "type",
+            "Operator": "is",
+            "Value": "Meeting",
+            "LogicalOperator": null,
+            "Description": "Find only meeting interactions"
+          },
+          {
+            "Field": "date",
+            "Operator": "between",
+            "Value": "2024-01-01,2024-12-31",
+            "LogicalOperator": null,
+            "Description": "Find interactions in 2024"
+          }
+        ]
+      }
     },
     {
       "Name": "LinkController",
@@ -2805,7 +3234,8 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "NotificationController",
@@ -2929,7 +3359,8 @@
         "RouteAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "OrganizationHierarchyController",
@@ -2969,6 +3400,41 @@
             "HttpGetAttribute"
           ],
           "AccessControl": ""
+        },
+        {
+          "Name": "GetOrganizationHierarchyById",
+          "HttpMethod": "GET",
+          "Route": "/api/organization-hierarchy/{id}",
+          "FullRoute": "api/organization-hierarchy/{id}",
+          "Summary": "Retrieves a specific organizational unit by ID with complete details including hierarchy information.",
+          "Returns": "Complete organizational unit details",
+          "ExampleUses": [
+            "Show me details for org unit ID 138",
+            "Get information about organizational unit 123",
+            "What is org unit 456?",
+            "Display org unit details for ID 789",
+            "Get description of organizational unit 321"
+          ],
+          "WhenToUse": "Use this when the user asks for specific organizational unit details by ID.",
+          "Parameters": [
+            {
+              "Name": "id",
+              "Type": "int",
+              "Description": "Organizational unit ID",
+              "IsRequired": true,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute"
+          ],
+          "AccessControl": ""
         }
       ],
       "Attributes": [
@@ -2977,7 +3443,8 @@
         "RouteAttribute",
         "ApiControllerAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "PartnerController",
@@ -3021,27 +3488,47 @@
           "AccessControl": "AccessControlledAttribute"
         },
         {
-          "Name": "GetAll",
+          "Name": "ListAllPartners",
           "HttpMethod": "GET",
           "Route": "/api/partner",
           "FullRoute": "api/partner",
-          "Summary": "Retrieves a list of partners with advanced filtering, pagination, search capabilities, and access control.",
-          "Returns": "Paginated list of partners with metadata",
+          "Summary": "Retrieves all partners with basic pagination and ordering (no search criteria).",
+          "Returns": "Paginated list of all partners",
           "ExampleUses": [
             "Show me all partners",
-            "List partners containing 'UNICEF' in the name",
-            "Find partners with global key account status",
-            "Show active partners from my office",
-            "Search for government partners",
-            "Get partners sorted by name",
-            "Find partners in specific organizational unit"
+            "List all partners in the system",
+            "Display the partner directory",
+            "Get all partner records",
+            "Browse partners"
           ],
-          "WhenToUse": "Use this when the user asks to search, list, filter, or browse partners.",
+          "WhenToUse": "Use this when the user wants to see ALL partners without any search criteria or when asking for a general partner list.",
           "Parameters": [
             {
-              "Name": "request",
-              "Type": "PartnerFilterRequest",
-              "Description": "Partner filter request containing search and pagination parameters",
+              "Name": "pageIndex",
+              "Type": "int",
+              "Description": "Page number (1-based, default: 1)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 1,
+              "Properties": []
+            },
+            {
+              "Name": "pageSize",
+              "Type": "int",
+              "Description": "Number of items per page (default: 20)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 20,
+              "Properties": []
+            },
+            {
+              "Name": "orderBy",
+              "Type": "string",
+              "Description": "Field to order results by (optional)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -3050,20 +3537,45 @@
               "Properties": []
             },
             {
-              "Name": "advancedSearch",
+              "Name": "ascending",
               "Type": "bool",
-              "Description": "Enable advanced search mode",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
               "IsFromRoute": false,
-              "DefaultValue": false,
+              "DefaultValue": true,
               "Properties": []
-            },
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "SearchPartners",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/search",
+          "FullRoute": "api/partner/search",
+          "Summary": "Performs simple text search across multiple partner fields (name, description, etc.).",
+          "Returns": "Paginated list of partners matching the search text",
+          "ExampleUses": [
+            "Search for partners named UNICEF",
+            "Find partners containing 'Government'",
+            "Search for partners with 'Development' in description",
+            "Look for partners with specific keywords",
+            "Find partner by short name or acronym"
+          ],
+          "WhenToUse": "Use this for simple name, description, or basic field searches. NOT for complex criteria or relationship searches.",
+          "Parameters": [
             {
-              "Name": "searchCriteria",
-              "Type": "string",
-              "Description": "JSON string containing advanced search filters",
+              "Name": "request",
+              "Type": "PaginationRequest",
+              "Description": "Pagination request containing only pagination and sorting parameters",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -3074,7 +3586,66 @@
             {
               "Name": "searchText",
               "Type": "string",
-              "Description": "Text to search across partner fields (override for request.searchText)",
+              "Description": "Text to search across partner name, description, and other basic fields",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "AdvancedSearchPartners",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/advanced-search",
+          "FullRoute": "api/partner/advanced-search",
+          "Summary": "Performs advanced search with structured criteria including status, dates, relationships, and complex filters.",
+          "Returns": "Paginated list of partners matching the advanced search criteria",
+          "ExampleUses": [
+            "Find active government partners",
+            "Show partners with global key account status",
+            "Get partners created this month",
+            "Find partners by status and office location",
+            "List partners involved in climate projects",
+            "Search for partners by complex criteria combinations"
+          ],
+          "WhenToUse": "Use this for searches involving partner status, dates, types, complex criteria, or multiple field combinations.",
+          "Parameters": [
+            {
+              "Name": "request",
+              "Type": "PaginationRequest",
+              "Description": "Pagination request containing only pagination and sorting parameters",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "searchCriteria",
+              "Type": "string",
+              "Description": "JSON array of search criteria objects with field, operator, value, and logicalOperator",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "searchText",
+              "Type": "string",
+              "Description": "Optional additional text search to combine with criteria",
               "IsRequired": false,
               "IsFromBody": false,
               "IsFromQuery": true,
@@ -3371,6 +3942,189 @@
             "AccessControlledAttribute"
           ],
           "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetAllPartnerCategories",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/categories-summary",
+          "FullRoute": "api/partner/categories-summary",
+          "Summary": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.",
+          "Returns": "List of partner categories with their respective partner counts",
+          "ExampleUses": [
+            "Get all partner categories with counts",
+            "Show partner distribution by category",
+            "Generate partner category statistics",
+            "Create partner category breakdown chart",
+            "Display partner classification overview",
+            "Draw diagram of partner categories with counts"
+          ],
+          "WhenToUse": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetAllPartnerGroups",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/groups-summary",
+          "FullRoute": "api/partner/groups-summary",
+          "Summary": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation.",
+          "Returns": "List of partner groups with their respective partner counts",
+          "ExampleUses": [
+            "Get all partner groups with counts",
+            "Show partner distribution by group",
+            "Generate partner group statistics",
+            "Create partner group breakdown chart",
+            "Display partner group overview",
+            "Draw diagram of partner groups with counts"
+          ],
+          "WhenToUse": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPartnerCategorizationOverview",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/categorization-overview",
+          "FullRoute": "api/partner/categorization-overview",
+          "Summary": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation.",
+          "Returns": "Complete partner categorization data with categories, groups, and their respective partner counts",
+          "ExampleUses": [
+            "Get complete partner categorization overview",
+            "Show partner distribution across categories and groups",
+            "Generate comprehensive partner statistics",
+            "Create partner organization chart",
+            "Display complete partner taxonomy with counts",
+            "Draw diagram showing partner categories and groups with distribution"
+          ],
+          "WhenToUse": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "ScanPartnerData",
+          "HttpMethod": "POST",
+          "Route": "/api/partner/scan-data",
+          "FullRoute": "api/partner/scan-data",
+          "Summary": "Scans and processes uploaded files for partner data extraction using AI-powered analysis.",
+          "Returns": "Extracted partner data from the scanned file",
+          "ExampleUses": [
+            "Scan partner contract document for data extraction",
+            "Upload partner registration form for processing",
+            "Analyze partner profile document with AI",
+            "Extract data from partner onboarding files",
+            "Process partner information from uploaded documents"
+          ],
+          "WhenToUse": "Use this when the user wants to upload and scan documents for partner data extraction using AI.",
+          "Parameters": [
+            {
+              "Name": "req",
+              "Type": "GeminiFileRequest",
+              "Description": "File scan request containing the file to be processed",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "AnalysePartnerData",
+          "HttpMethod": "POST",
+          "Route": "/api/partner/analyse-file",
+          "FullRoute": "api/partner/analyse-file",
+          "Summary": "Analyzes uploaded files and extracts structured partner data using AI-powered data analysis.",
+          "Returns": "Structured partner data extracted from the analyzed file",
+          "ExampleUses": [
+            "Analyze partner documents for structured data extraction",
+            "Extract partner information from uploaded forms",
+            "Process partner onboarding documents with AI",
+            "Convert partner files into structured database entries",
+            "Analyze partner contract data for key information"
+          ],
+          "WhenToUse": "Use this when the user wants to analyze files and extract structured partner data for database import.",
+          "Parameters": [
+            {
+              "Name": "request",
+              "Type": "AnalyseFileRequest",
+              "Description": "Analysis request containing file and analysis parameters",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "BulkUploadPartners",
+          "HttpMethod": "POST",
+          "Route": "/api/partner/bulk-upload",
+          "FullRoute": "api/partner/bulk-upload",
+          "Summary": "Bulk uploads multiple partner records using AI-assisted data processing and validation.",
+          "Returns": "Bulk upload results with success/failure status for each partner",
+          "ExampleUses": [
+            "Bulk upload 100 partner organizations from Excel",
+            "Import multiple partners from CSV file",
+            "Mass upload partner data with AI validation",
+            "Bulk import partner records with duplicate detection",
+            "Upload large partner dataset with automated processing"
+          ],
+          "WhenToUse": "Use this when the user wants to upload multiple partner records at once with AI-assisted processing.",
+          "Parameters": [
+            {
+              "Name": "req",
+              "Type": "BulkUploadRequest",
+              "Description": "Bulk upload request containing partner data",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
         }
       ],
       "Attributes": [
@@ -3381,7 +4135,84 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": {
+        "Entity": "Partner",
+        "DirectFields": [
+          "id",
+          "name",
+          "status",
+          "newEngagement",
+          "phone",
+          "website",
+          "shortName",
+          "organizationHierarchyId",
+          "organizationHierarchyName",
+          "partnerCategoryId",
+          "partnerCategoryName",
+          "addressCity",
+          "addressStateProvince",
+          "addressPostalCode",
+          "addressCountry",
+          "description",
+          "email",
+          "createdDate",
+          "modifiedDate"
+        ],
+        "NestedFields": {},
+        "Operators": [
+          "like",
+          "is",
+          "not",
+          "contains",
+          "startsWith",
+          "endsWith",
+          "between",
+          "greaterThan",
+          "lessThan",
+          "greaterThanOrEqual",
+          "lessThanOrEqual",
+          "on",
+          "not on",
+          "this week",
+          "this month",
+          "this year"
+        ],
+        "DateFields": [
+          "createdDate",
+          "modifiedDate"
+        ],
+        "ExampleCriteria": [
+          {
+            "Field": "name",
+            "Operator": "like",
+            "Value": "Foundation",
+            "LogicalOperator": null,
+            "Description": "Find partners with 'Foundation' in name"
+          },
+          {
+            "Field": "status",
+            "Operator": "is",
+            "Value": "Active",
+            "LogicalOperator": null,
+            "Description": "Find only active partners"
+          },
+          {
+            "Field": "contact.firstName",
+            "Operator": "like",
+            "Value": "Sarah",
+            "LogicalOperator": null,
+            "Description": "Find partners with contacts named Sarah"
+          },
+          {
+            "Field": "addressCountry",
+            "Operator": "is",
+            "Value": "Bangladesh",
+            "LogicalOperator": null,
+            "Description": "Find partners in Bangladesh"
+          }
+        ]
+      }
     },
     {
       "Name": "PartnerTreeController",
@@ -3638,6 +4469,176 @@
             "AccessControlledAttribute"
           ],
           "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPartnersByPartnerGroup",
+          "HttpMethod": "GET",
+          "Route": "/api/partner-tree/by-partner-group-code/{code}",
+          "FullRoute": "api/partner-tree/by-partner-group-code/{code}",
+          "Summary": "Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting.",
+          "Returns": "Paginated list of partners belonging to the specified partner group",
+          "ExampleUses": [
+            "Show all government partners (GOV group)",
+            "List all NGO partners with pagination",
+            "Get UN agency partners sorted by name",
+            "Find partners in a specific partner group classification",
+            "Show commercial partners (COMM group) with 20 per page"
+          ],
+          "WhenToUse": "Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification.",
+          "Parameters": [
+            {
+              "Name": "code",
+              "Type": "string",
+              "Description": "Partner group code to filter by (e.g., 'GOV', 'NGO', 'UNAGENCY')",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "request",
+              "Type": "PaginationRequest",
+              "Description": "Pagination request containing page size and index",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPartnersByPartnerCategory",
+          "HttpMethod": "GET",
+          "Route": "/api/partner-tree/by-partner-category-code/{code}",
+          "FullRoute": "api/partner-tree/by-partner-category-code/{code}",
+          "Summary": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting.",
+          "Returns": "Paginated list of partners belonging to the specified partner category",
+          "ExampleUses": [
+            "Show all national partners in this category",
+            "List international partners with pagination",
+            "Get bilateral partners sorted by name",
+            "Find partners in a specific operational category",
+            "Show multilateral partners with 15 per page",
+            "Filter partners by geographic or operational scope"
+          ],
+          "WhenToUse": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification.",
+          "Parameters": [
+            {
+              "Name": "code",
+              "Type": "string",
+              "Description": "Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "request",
+              "Type": "PaginationRequest",
+              "Description": "Pagination request containing page size and index",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetAllPartnerCategories",
+          "HttpMethod": "GET",
+          "Route": "/api/partner-tree/categories-summary",
+          "FullRoute": "api/partner-tree/categories-summary",
+          "Summary": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.",
+          "Returns": "List of partner categories with their respective partner counts",
+          "ExampleUses": [
+            "Get all partner categories with counts",
+            "Show partner distribution by category",
+            "Generate partner category statistics",
+            "Create partner category breakdown chart",
+            "Display partner classification overview",
+            "Draw diagram of partner categories with counts"
+          ],
+          "WhenToUse": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetAllPartnerGroups",
+          "HttpMethod": "GET",
+          "Route": "/api/partner-tree/groups-summary",
+          "FullRoute": "api/partner-tree/groups-summary",
+          "Summary": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation.",
+          "Returns": "List of partner groups with their respective partner counts",
+          "ExampleUses": [
+            "Get all partner groups with counts",
+            "Show partner distribution by group",
+            "Generate partner group statistics",
+            "Create partner group breakdown chart",
+            "Display partner group overview",
+            "Draw diagram of partner groups with counts"
+          ],
+          "WhenToUse": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPartnerCategorizationOverview",
+          "HttpMethod": "GET",
+          "Route": "/api/partner-tree/categorization-overview",
+          "FullRoute": "api/partner-tree/categorization-overview",
+          "Summary": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation.",
+          "Returns": "Complete partner categorization data with categories, groups, and their respective partner counts",
+          "ExampleUses": [
+            "Get complete partner categorization overview",
+            "Show partner distribution across categories and groups",
+            "Generate comprehensive partner statistics",
+            "Create partner organization chart",
+            "Display complete partner taxonomy with counts",
+            "Draw diagram showing partner categories and groups with distribution"
+          ],
+          "WhenToUse": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups.",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
         }
       ],
       "Attributes": [
@@ -3648,20 +4649,21 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
-      "Name": "ProfileController",
-      "FullName": "UNOPS.PAO.Presentation.Controllers.ProfileController",
-      "BaseRoute": "/",
+      "Name": "PermissionController",
+      "FullName": "UNOPS.PAO.Presentation.Controllers.PermissionController",
+      "BaseRoute": "api/[controller]",
       "Methods": [
         {
-          "Name": "Get",
+          "Name": "GetSystemPermissionConfiguration",
           "HttpMethod": "GET",
-          "Route": "/api/profile",
-          "FullRoute": "api/profile",
-          "Summary": "",
-          "Returns": "",
+          "Route": "",
+          "FullRoute": "api/[controller]",
+          "Summary": "Get the entire system permission configuration including all roles and their capabilities",
+          "Returns": "System-wide permission configuration for frontend initialization",
           "ExampleUses": [],
           "WhenToUse": "",
           "Parameters": [],
@@ -3673,21 +4675,21 @@
           "AccessControl": ""
         },
         {
-          "Name": "UpdateProfile",
-          "HttpMethod": "POST",
-          "Route": "/api/profile",
-          "FullRoute": "api/profile",
-          "Summary": "",
-          "Returns": "",
+          "Name": "CheckUserRoutePermission",
+          "HttpMethod": "GET",
+          "Route": "check/{*route}",
+          "FullRoute": "api/[controller]/check/{*route}",
+          "Summary": "Check if the current user has permission to access a specific route or page",
+          "Returns": "Permission details including access status and specific permissions for the route",
           "ExampleUses": [],
           "WhenToUse": "",
           "Parameters": [
             {
-              "Name": "profile",
-              "Type": "ProfileModel",
-              "Description": "",
+              "Name": "route",
+              "Type": "string",
+              "Description": "The route/URL path to check permissions for (e.g., '/partnerships/contacts/123')",
               "IsRequired": false,
-              "IsFromBody": true,
+              "IsFromBody": false,
               "IsFromQuery": false,
               "IsFromRoute": false,
               "DefaultValue": null,
@@ -3697,7 +4699,99 @@
           "Attributes": [
             "AsyncStateMachineAttribute",
             "DebuggerStepThroughAttribute",
-            "HttpPostAttribute"
+            "HttpGetAttribute"
+          ],
+          "AccessControl": ""
+        },
+        {
+          "Name": "GetEntityPermissionDetails",
+          "HttpMethod": "GET",
+          "Route": "entity-permissions/{entityName}",
+          "FullRoute": "api/[controller]/entity-permissions/{entityName}",
+          "Summary": "Get complete permission details for a specific entity, including all possible operations and role requirements",
+          "Returns": "Comprehensive entity permission configuration",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "entityName",
+              "Type": "string",
+              "Description": "Name of the entity (e.g., 'Contact', 'Partner', 'Interaction')",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute"
+          ],
+          "AccessControl": ""
+        },
+        {
+          "Name": "GetCurrentUserRoles",
+          "HttpMethod": "GET",
+          "Route": "user-roles",
+          "FullRoute": "api/[controller]/user-roles",
+          "Summary": "Get the current authenticated user's roles and permissions",
+          "Returns": "Current user's role assignments and basic information",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute"
+          ],
+          "AccessControl": ""
+        },
+        {
+          "Name": "GetUserRolesByUserId",
+          "HttpMethod": "GET",
+          "Route": "user/{userId}",
+          "FullRoute": "api/[controller]/user/{userId}",
+          "Summary": "Get roles and basic information for a specific user by ID (admin access required)",
+          "Returns": "Specified user's role assignments and basic information",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "userId",
+              "Type": "string",
+              "Description": "The ID of the user to retrieve role information for",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute"
+          ],
+          "AccessControl": ""
+        },
+        {
+          "Name": "GetAvailableSystemRoles",
+          "HttpMethod": "GET",
+          "Route": "available-roles",
+          "FullRoute": "api/[controller]/available-roles",
+          "Summary": "Get all available system roles and their descriptions",
+          "Returns": "List of all system roles with metadata",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute"
           ],
           "AccessControl": ""
         }
@@ -3705,11 +4799,12 @@
       "Attributes": [
         "NullableContextAttribute",
         "NullableAttribute",
-        "RouteAttribute",
         "ApiControllerAttribute",
+        "RouteAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "SavedFilterController",
@@ -3950,7 +5045,8 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "SystemAdminController",
@@ -3982,47 +5078,31 @@
         "RouteAttribute",
         "ApiControllerAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
-      "Name": "UserDataController",
-      "FullName": "UNOPS.PAO.Presentation.Controllers.UserDataController",
+      "Name": "UserManagementController",
+      "FullName": "UNOPS.PAO.Presentation.Controllers.UserManagementController",
       "BaseRoute": "/",
       "Methods": [
         {
-          "Name": "GetCurrentUserData",
-          "HttpMethod": "GET",
-          "Route": "/api/current-user-data",
-          "FullRoute": "api/current-user-data",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
-          "Name": "GetUserByEmail",
-          "HttpMethod": "GET",
-          "Route": "/api/user-info/by-email",
-          "FullRoute": "api/user-info/by-email",
-          "Summary": "",
-          "Returns": "",
+          "Name": "GetUsers",
+          "HttpMethod": "POST",
+          "Route": "/api/user-management/users",
+          "FullRoute": "api/user-management/users",
+          "Summary": "Get paginated list of users with filtering and search capabilities",
+          "Returns": "Paginated list of users",
           "ExampleUses": [],
           "WhenToUse": "",
           "Parameters": [
             {
-              "Name": "email",
-              "Type": "string",
-              "Description": "",
+              "Name": "request",
+              "Type": "UserManagementRequest",
+              "Description": "User management request with pagination and filters",
               "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": true,
+              "IsFromBody": true,
+              "IsFromQuery": false,
               "IsFromRoute": false,
               "DefaultValue": null,
               "Properties": []
@@ -4031,9 +5111,188 @@
           "Attributes": [
             "AsyncStateMachineAttribute",
             "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
+            "HttpPostAttribute",
+            "AccessControlledAttribute"
           ],
-          "AccessControl": ""
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetUser",
+          "HttpMethod": "GET",
+          "Route": "/api/user-management/users/{userId}",
+          "FullRoute": "api/user-management/users/{userId}",
+          "Summary": "Get user details by ID",
+          "Returns": "User details",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "userId",
+              "Type": "string",
+              "Description": "User ID",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "UpdateUserRoles",
+          "HttpMethod": "PUT",
+          "Route": "/api/user-management/users/{userId}/roles",
+          "FullRoute": "api/user-management/users/{userId}/roles",
+          "Summary": "Update user roles",
+          "Returns": "Updated user details",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "userId",
+              "Type": "string",
+              "Description": "User ID",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "request",
+              "Type": "UpdateUserRolesRequest",
+              "Description": "Update roles request",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPutAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetAvailableRoles",
+          "HttpMethod": "GET",
+          "Route": "/api/user-management/roles",
+          "FullRoute": "api/user-management/roles",
+          "Summary": "Get available roles that the current user can assign",
+          "Returns": "List of available roles",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetCurrentUserOrgUnit",
+          "HttpMethod": "GET",
+          "Route": "/api/user-management/current-user-org-unit",
+          "FullRoute": "api/user-management/current-user-org-unit",
+          "Summary": "Get current user's organization unit for filtering",
+          "Returns": "Current user's org unit",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetOrgUnitSelfManagement",
+          "HttpMethod": "GET",
+          "Route": "/api/user-management/org-units/{orgUnitCode}/self-management",
+          "FullRoute": "api/user-management/org-units/{orgUnitCode}/self-management",
+          "Summary": "Get organization unit self-management setting",
+          "Returns": "Self-management setting",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "orgUnitCode",
+              "Type": "string",
+              "Description": "Organization unit code",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "UpdateOrgUnitSelfManagement",
+          "HttpMethod": "PUT",
+          "Route": "/api/user-management/org-units/{orgUnitCode}/self-management",
+          "FullRoute": "api/user-management/org-units/{orgUnitCode}/self-management",
+          "Summary": "Update organization unit self-management setting",
+          "Returns": "Success response",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "orgUnitCode",
+              "Type": "string",
+              "Description": "Organization unit code",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            },
+            {
+              "Name": "request",
+              "Type": "UpdateOrgUnitSelfManagementRequest",
+              "Description": "Self-management setting request",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPutAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
         }
       ],
       "Attributes": [
@@ -4042,8 +5301,10 @@
         "RouteAttribute",
         "ApiControllerAttribute",
         "AuthorizeAttribute",
+        "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "UserPreferenceController",
@@ -4117,7 +5378,112 @@
         "ApiControllerAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
-      ]
+      ],
+      "SearchMetadata": null
+    },
+    {
+      "Name": "UserProfileController",
+      "FullName": "UNOPS.PAO.Presentation.Controllers.UserProfileController",
+      "BaseRoute": "/",
+      "Methods": [
+        {
+          "Name": "UpdateProfile",
+          "HttpMethod": "POST",
+          "Route": "/api/profile",
+          "FullRoute": "api/profile",
+          "Summary": "Updates the current user's profile information.",
+          "Returns": "Success confirmation",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "profile",
+              "Type": "ProfileModel",
+              "Description": "Updated profile model containing new information",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPostAttribute"
+          ],
+          "AccessControl": ""
+        },
+        {
+          "Name": "UpdateUserInfo",
+          "HttpMethod": "PUT",
+          "Route": "/api/user-info/update",
+          "FullRoute": "api/user-info/update",
+          "Summary": "Updates current user's information and profile settings.",
+          "Returns": "Updated user information with confirmation",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "userInfo",
+              "Type": "UserInfo",
+              "Description": "Updated user information object containing profile changes",
+              "IsRequired": false,
+              "IsFromBody": true,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpPutAttribute"
+          ],
+          "AccessControl": ""
+        },
+        {
+          "Name": "GetUserProfileDetails",
+          "HttpMethod": "GET",
+          "Route": "/api/user-info/current",
+          "FullRoute": "api/user-info/current",
+          "Summary": "Retrieves comprehensive current user information including profile, roles, permissions, organizational settings, and user preferences.\r\n            Supports both authenticated user lookup and explicit email parameter for administrative purposes.",
+          "Returns": "Complete user information including profile, roles, organizational context, permissions, and preferences",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "email",
+              "Type": "string",
+              "Description": "Optional specific email to get user info for (if not provided, uses current authenticated user)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": []
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute"
+          ],
+          "AccessControl": ""
+        }
+      ],
+      "Attributes": [
+        "NullableContextAttribute",
+        "NullableAttribute",
+        "RouteAttribute",
+        "ApiControllerAttribute",
+        "AuthorizeAttribute",
+        "AuthorizeAttribute",
+        "ControllerAttribute"
+      ],
+      "SearchMetadata": null
     },
     {
       "Name": "ValuesController",
@@ -4286,298 +5652,275 @@
         "AuthorizeAttribute",
         "AuthorizeAttribute",
         "ControllerAttribute"
+      ],
+      "SearchMetadata": null
+    }
+  ],
+  "SearchMetadata": [
+    {
+      "Entity": "Contact",
+      "DirectFields": [
+        "id",
+        "salutation",
+        "firstName",
+        "middleName",
+        "lastName",
+        "suffix",
+        "title",
+        "department",
+        "description",
+        "email",
+        "phone",
+        "mobile",
+        "assistant",
+        "assistantPhone",
+        "assistantEmail",
+        "status",
+        "mailingStreet",
+        "mailingStreet2",
+        "mailingCity",
+        "mailingStateProvince",
+        "mailingPostalCode",
+        "mailingCountry",
+        "profilePictureUrl",
+        "partnerId",
+        "partnerName",
+        "partnerStatus",
+        "partnerShortName"
+      ],
+      "NestedFields": {
+        "partner": [
+          "name",
+          "status",
+          "shortName",
+          "phone",
+          "website",
+          "address1City",
+          "address1Country"
+        ]
+      },
+      "Operators": [
+        "like",
+        "is",
+        "not",
+        "contains",
+        "startsWith",
+        "endsWith",
+        "between",
+        "greaterThan",
+        "lessThan",
+        "greaterThanOrEqual",
+        "lessThanOrEqual",
+        "on",
+        "not on",
+        "this week",
+        "this month",
+        "this year"
+      ],
+      "DateFields": [
+        "createdDate",
+        "modifiedDate"
+      ],
+      "ExampleCriteria": [
+        {
+          "Field": "firstName",
+          "Operator": "like",
+          "Value": "Maria",
+          "LogicalOperator": null,
+          "Description": "Find contacts named Maria"
+        },
+        {
+          "Field": "partner.name",
+          "Operator": "like",
+          "Value": "UNICEF",
+          "LogicalOperator": null,
+          "Description": "Find contacts from UNICEF partners"
+        },
+        {
+          "Field": "email",
+          "Operator": "contains",
+          "Value": "@unops.org",
+          "LogicalOperator": null,
+          "Description": "Find UNOPS email contacts"
+        },
+        {
+          "Field": "department",
+          "Operator": "is",
+          "Value": "Finance",
+          "LogicalOperator": null,
+          "Description": "Find contacts in Finance department"
+        }
       ]
     },
     {
-      "Name": "WorkflowController",
-      "FullName": "UNOPS.PAO.Presentation.Controllers.WorkflowController",
-      "BaseRoute": "/",
-      "Methods": [
-        {
-          "Name": "GetWorkflowPath",
-          "HttpMethod": "GET",
-          "Route": "/api/workflow/{entityName}",
-          "FullRoute": "api/workflow/{entityName}",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "entityName",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
-          "Name": "GetStateMachine",
-          "HttpMethod": "GET",
-          "Route": "/api/workflow/{entityName}/{id}",
-          "FullRoute": "api/workflow/{entityName}/{id}",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "entityName",
-              "Type": "string",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            },
-            {
-              "Name": "id",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": true,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
-        },
-        {
-          "Name": "DoWorkflowAction",
-          "HttpMethod": "POST",
-          "Route": "/api/workflow",
-          "FullRoute": "api/workflow",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "model",
-              "Type": "WorkflowActionModel",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute"
-          ],
-          "AccessControl": ""
-        }
+      "Entity": "Partner",
+      "DirectFields": [
+        "id",
+        "name",
+        "status",
+        "newEngagement",
+        "phone",
+        "website",
+        "shortName",
+        "organizationHierarchyId",
+        "organizationHierarchyName",
+        "partnerCategoryId",
+        "partnerCategoryName",
+        "addressCity",
+        "addressStateProvince",
+        "addressPostalCode",
+        "addressCountry",
+        "description",
+        "email",
+        "createdDate",
+        "modifiedDate"
       ],
-      "Attributes": [
-        "NullableContextAttribute",
-        "NullableAttribute",
-        "RouteAttribute",
-        "ApiControllerAttribute",
-        "AuthorizeAttribute",
-        "ControllerAttribute"
+      "NestedFields": {},
+      "Operators": [
+        "like",
+        "is",
+        "not",
+        "contains",
+        "startsWith",
+        "endsWith",
+        "between",
+        "greaterThan",
+        "lessThan",
+        "greaterThanOrEqual",
+        "lessThanOrEqual",
+        "on",
+        "not on",
+        "this week",
+        "this month",
+        "this year"
+      ],
+      "DateFields": [
+        "createdDate",
+        "modifiedDate"
+      ],
+      "ExampleCriteria": [
+        {
+          "Field": "name",
+          "Operator": "like",
+          "Value": "Foundation",
+          "LogicalOperator": null,
+          "Description": "Find partners with 'Foundation' in name"
+        },
+        {
+          "Field": "status",
+          "Operator": "is",
+          "Value": "Active",
+          "LogicalOperator": null,
+          "Description": "Find only active partners"
+        },
+        {
+          "Field": "contact.firstName",
+          "Operator": "like",
+          "Value": "Sarah",
+          "LogicalOperator": null,
+          "Description": "Find partners with contacts named Sarah"
+        },
+        {
+          "Field": "addressCountry",
+          "Operator": "is",
+          "Value": "Bangladesh",
+          "LogicalOperator": null,
+          "Description": "Find partners in Bangladesh"
+        }
       ]
     },
     {
-      "Name": "ContactController",
-      "FullName": "UNOPS.PAO.Presentation.Controllers.External.ContactController",
-      "BaseRoute": "/",
-      "Methods": [
+      "Entity": "Interaction",
+      "DirectFields": [
+        "id",
+        "contactId",
+        "type",
+        "date",
+        "fromDate",
+        "toDate",
+        "description",
+        "subject",
+        "contactName",
+        "contactFirstName",
+        "contactLastName",
+        "contactEmail",
+        "partnerName",
+        "partnerStatus"
+      ],
+      "NestedFields": {
+        "contact": [
+          "firstName",
+          "lastName",
+          "email",
+          "title",
+          "department",
+          "phone",
+          "mobile"
+        ],
+        "partner": [
+          "name",
+          "status",
+          "shortName"
+        ]
+      },
+      "Operators": [
+        "like",
+        "is",
+        "not",
+        "contains",
+        "startsWith",
+        "endsWith",
+        "between",
+        "greaterThan",
+        "lessThan",
+        "greaterThanOrEqual",
+        "lessThanOrEqual",
+        "on",
+        "not on",
+        "this week",
+        "this month",
+        "this year"
+      ],
+      "DateFields": [
+        "date",
+        "fromDate",
+        "toDate",
+        "createdDate",
+        "modifiedDate"
+      ],
+      "ExampleCriteria": [
         {
-          "Name": "GetPostedContacts",
-          "HttpMethod": "GET",
-          "Route": "/api/external/contact",
-          "FullRoute": "api/external/contact",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [],
-          "Attributes": [
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
+          "Field": "partner.name",
+          "Operator": "like",
+          "Value": "UNICEF",
+          "LogicalOperator": null,
+          "Description": "Find interactions with UNICEF partners"
         },
         {
-          "Name": "GetPostedContact",
-          "HttpMethod": "GET",
-          "Route": "/api/external/contact/{id}",
-          "FullRoute": "api/external/contact/{id}",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "id",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": true,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
-        }
-      ],
-      "Attributes": [
-        "NullableContextAttribute",
-        "NullableAttribute",
-        "RouteAttribute",
-        "ApiControllerAttribute",
-        "ControllerAttribute"
-      ]
-    },
-    {
-      "Name": "PartnerTreeController",
-      "FullName": "UNOPS.PAO.Presentation.Controllers.External.PartnerTreeController",
-      "BaseRoute": "/",
-      "Methods": [
-        {
-          "Name": "GetPostedPartnerTrees",
-          "HttpMethod": "GET",
-          "Route": "/api/external/partner-tree",
-          "FullRoute": "api/external/partner-tree",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [],
-          "Attributes": [
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
+          "Field": "contact.firstName",
+          "Operator": "like",
+          "Value": "John",
+          "LogicalOperator": "AND",
+          "Description": "Find interactions with contacts named John"
         },
         {
-          "Name": "GetPostedPartnerTree",
-          "HttpMethod": "GET",
-          "Route": "/api/external/partner-tree/{id}",
-          "FullRoute": "api/external/partner-tree/{id}",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "id",
-              "Type": "int",
-              "Description": "",
-              "IsRequired": true,
-              "IsFromBody": false,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
-        }
-      ],
-      "Attributes": [
-        "NullableContextAttribute",
-        "NullableAttribute",
-        "RouteAttribute",
-        "ApiControllerAttribute",
-        "ControllerAttribute"
-      ]
-    },
-    {
-      "Name": "ProfileController",
-      "FullName": "UNOPS.PAO.Presentation.Controllers.External.ProfileController",
-      "BaseRoute": "/",
-      "Methods": [
-        {
-          "Name": "Get",
-          "HttpMethod": "GET",
-          "Route": "/api/external/profile",
-          "FullRoute": "api/external/profile",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [],
-          "Attributes": [
-            "HttpGetAttribute"
-          ],
-          "AccessControl": ""
+          "Field": "type",
+          "Operator": "is",
+          "Value": "Meeting",
+          "LogicalOperator": null,
+          "Description": "Find only meeting interactions"
         },
         {
-          "Name": "UpdateProfile",
-          "HttpMethod": "POST",
-          "Route": "/api/external/profile",
-          "FullRoute": "api/external/profile",
-          "Summary": "",
-          "Returns": "",
-          "ExampleUses": [],
-          "WhenToUse": "",
-          "Parameters": [
-            {
-              "Name": "profile",
-              "Type": "ProfileModel",
-              "Description": "",
-              "IsRequired": false,
-              "IsFromBody": true,
-              "IsFromQuery": false,
-              "IsFromRoute": false,
-              "DefaultValue": null,
-              "Properties": []
-            }
-          ],
-          "Attributes": [
-            "AsyncStateMachineAttribute",
-            "DebuggerStepThroughAttribute",
-            "HttpPostAttribute"
-          ],
-          "AccessControl": ""
+          "Field": "date",
+          "Operator": "between",
+          "Value": "2024-01-01,2024-12-31",
+          "LogicalOperator": null,
+          "Description": "Find interactions in 2024"
         }
-      ],
-      "Attributes": [
-        "NullableContextAttribute",
-        "NullableAttribute",
-        "RouteAttribute",
-        "ApiControllerAttribute",
-        "AuthorizeAttribute",
-        "ControllerAttribute"
       ]
     }
   ],
-  "ExtractedAt": "2025-07-17T09:49:23.6196563Z",
+  "ExtractedAt": "2025-07-31T18:48:16.0587828Z",
   "AssemblyName": "UNOPS.PAO.Presentation",
   "AssemblyVersion": "1.0.0.0"
 }

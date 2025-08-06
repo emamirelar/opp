@@ -43,6 +43,22 @@ import {
 } from '../../services/entity-configuration.service';
 import { InteractionIconService } from '../../../../common/services/interaction-icon.service';
 
+/**
+ * @uiEntity EntityManager
+ * @route /admin/entity-manager
+ * @description Advanced administrative interface for configuring entity field visibility, ordering, and permissions. Allows customization of how data is displayed in lists and forms across different entities (Partners, Contacts, Interactions).
+ * @capabilities configure_entity_fields, reorder_columns, toggle_field_visibility, manage_field_permissions, customize_display_settings, drag_drop_reordering
+ * @synonyms field_configuration, column_management, entity_settings, display_configuration, field_admin
+ * @mandatoryFields entity_selection
+ * @help_when_stuck Select an entity from the dropdown first, then configure fields using the tabs. Use Field Configuration to show/hide columns, Field Ordering to drag and reorder fields, and Permissions to control access. Changes auto-save as you make them.
+ * @common_tasks
+ *   - Configuring field visibility: Select entity, go to Field Configuration tab, toggle checkboxes
+ *   - Reordering columns: Use Field Ordering tab, drag fields to desired positions
+ *   - Managing permissions: Use Permissions tab to control who can see specific fields
+ *   - Customizing display: Use Display Settings to configure labels, icons, and appearance
+ *   - Testing changes: Save and navigate to the entity list to see your changes applied
+ */
+
 @Component({
   selector: 'app-entity-manager',
   standalone: true,

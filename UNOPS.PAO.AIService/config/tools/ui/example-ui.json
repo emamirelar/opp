@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "description": "UI configuration for team-specific customizations",
+  "theme": {
+    "primary_color": "#0066cc",
+    "secondary_color": "#f0f0f0",
+    "application_logo": "/assets/team-logo.png"
+  },
+  "navigation": {
+    "menu_items": [
+      {
+        "label": "Dashboard",
+        "path": "/dashboard",
+        "icon": "dashboard"
+      },
+      {
+        "label": "Your Entities",
+        "path": "/entities",
+        "icon": "list"
+      },
+      {
+        "label": "Reports",
+        "path": "/reports",
+        "icon": "analytics"
+      }
+    ]
+  },
+  "dashboard": {
+    "widgets": [
+      {
+        "type": "summary_cards",
+        "entities": [
+          "YourPrimaryEntity",
+          "YourSecondaryEntity"
+        ]
+      },
+      {
+        "type": "recent_activity",
+        "limit": 10
+      }
+    ]
+  }
+}

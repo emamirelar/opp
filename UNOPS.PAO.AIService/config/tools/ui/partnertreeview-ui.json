@@ -1,0 +1,62 @@
+{
+  "entity": "PartnerTreeView",
+  "description": "Partner tree node detail navigation interface with tabs for managing specific organizational hierarchy nodes. Provides organized access to partner tree details and analytics data.",
+  "synonyms": [
+    "partner_tree_navigation",
+    "organizational_node_details",
+    "hierarchy_node_tabs",
+    "tree_node_view"
+  ],
+  "mandatoryFields": [
+    "recordId"
+  ],
+  "pages": [
+    {
+      "route": "/admin/partner-tree/:recordId",
+      "name": "PartnerTreeViewComponent",
+      "description": "Partner tree node detail navigation interface with tabs for managing specific organizational hierarchy nodes. Provides organized access to partner tree details and analytics data.",
+      "capabilities": [
+        "navigate_tree_sections",
+        "view_tree_details",
+        "edit_tree_node",
+        "access_tree_analytics",
+        "manage_tree_relationships"
+      ],
+      "buttons": [
+        {
+          "id": "edit_partner_tree_node-btn",
+          "label": "Edit",
+          "icon": "pi pi-pencil",
+          "action": "edit_partner_tree_node",
+          "description": "Opens the partner tree node editing dialog to modify organizational hierarchy structure and details",
+          "when_to_use": [
+            "When you need to modify organizational node details",
+            "relationships",
+            "or hierarchical positioning"
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [],
+      "search": {
+        "placeholder": "",
+        "description": "",
+        "help_text": ""
+      },
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "Use the tabs to navigate between different aspects of this organizational node. The Edit button allows you to modify the tree structure. Use the Details tab for organizational information and Dashboard tab for analytics.",
+        "common_tasks": [
+          "Viewing tree node details: Click on the Details tab to see organizational information",
+          "Editing tree structure: Click the Edit button to modify organizational hierarchy",
+          "Accessing analytics: Switch to Dashboard tab to view performance and data metrics",
+          "Managing relationships: Use the details view to understand parent-child relationships",
+          "Navigating hierarchy: Use the navigation breadcrumb to move between tree levels"
+        ],
+        "troubleshooting": [],
+        "getting_started": "",
+        "keyboard_shortcuts": []
+      }
+    }
+  ]
+}

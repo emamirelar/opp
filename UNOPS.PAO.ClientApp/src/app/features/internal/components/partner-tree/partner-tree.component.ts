@@ -23,6 +23,22 @@ import { FeedbackDialogService } from '../../../../common/pages/services/feedbac
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
 import { ListViewColumn } from '../../../../common/pages/components/listview/listview.model';
 
+/**
+ * @uiEntity PartnerTree
+ * @route /admin/partner-tree
+ * @description Administrative interface for managing organizational hierarchy and partner tree structure. Allows viewing, editing, and organizing partner categories and groups in a hierarchical tree format.
+ * @capabilities view_partner_tree, create_partner_level, edit_partner_level, delete_partner_level, manage_hierarchy, drag_drop_reorder, expand_collapse_nodes
+ * @synonyms organizational_hierarchy, partner_categories, partner_structure, administrative_tree, hierarchy_management
+ * @mandatoryFields name, type, status
+ * @help_when_stuck Use the tree view to navigate organizational structure. Click the + button to create new partner levels. Use expand/collapse controls to view different levels of the hierarchy. Click on any row to edit partner level details.
+ * @common_tasks
+ *   - Creating partner levels: Click 'New Partner Level' button to add new organizational nodes
+ *   - Editing partner structure: Click on any tree node to modify organizational details
+ *   - Managing hierarchy: Use the tree structure to organize partner categories and groups
+ *   - Viewing organizational structure: Expand and collapse nodes to explore the hierarchy
+ *   - Administrative management: Configure organizational relationships and reporting structures
+ */
+
 @Component({
   selector: 'app-partner-tree',
   imports: [DialogModule, ProgressSpinnerModule, TreeTableModule, ButtonModule, CommonModule, FormsModule, TableModule, TranslateModule, ToggleSwitchModule, SelectModule, TooltipModule, RouterModule],
@@ -240,6 +256,14 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     return rowData.partnerGroupEditable === true;
   }
 
+  /**
+   * @uiButton create_partner_level
+   * @description Opens the partner level creation dialog to add new organizational nodes to the partner hierarchy tree
+   * @label New Partner Level
+   * @icon pi pi-plus
+   * @when_to_use When you need to add new organizational categories, groups, or levels to the partner tree structure
+   * @permissions PARTNER_TREE_CREATE
+   */
   onCreateNewPartnerLevel() {
     // Check permission before opening modal
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {

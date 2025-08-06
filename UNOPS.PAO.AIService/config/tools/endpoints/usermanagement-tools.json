@@ -1,0 +1,145 @@
+{
+  "entity": "UserManagement",
+  "description": "Manages user accounts, roles, and organizational unit settings within the system. This entity allows for retrieving user lists, updating user roles, and configuring self-management options for organizational units.",
+  "synonyms": [
+    "User Admin",
+    "Account Management",
+    "User Configuration",
+    "User Settings",
+    "User Access"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetUsers",
+      "url": "/api/user-management/users",
+      "method": "POST",
+      "description": "Get a paginated list of users. This endpoint supports advanced filtering and search capabilities by providing a 'request' body. The 'request' object can include parameters for pagination (e.g., pageNumber, pageSize), sorting (e.g., sortBy, sortOrder), and a 'searchCriteria' array for complex queries. Each item in 'searchCriteria' should be a JSON object with 'field', 'operator', and 'value' properties. Supported operators include 'like', 'is', 'not', 'contains', 'startsWith', 'between'. Specific field names for search criteria are defined by the 'UserManagementRequest' schema, which is not detailed in this metadata.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "User management request with pagination and filters. This object defines the criteria for searching, filtering, and paginating the user list."
+        }
+      },
+      "example_uses": [
+        "Find all active users in the system.",
+        "List users created in the last month, sorted by name.",
+        "Search for users whose email address contains 'example.com' and are in 'Admin' role."
+      ],
+      "when_to_use": "When you need to retrieve a list of users, applying filters, sorting, or pagination based on various criteria."
+    },
+    {
+      "name": "GetUser",
+      "url": "/api/user-management/users/{userId}",
+      "method": "GET",
+      "description": "Get user details by ID.",
+      "parameters": {
+        "userId": {
+          "type": "string",
+          "required": false,
+          "description": "The unique identifier of the user."
+        }
+      },
+      "example_uses": [
+        "Get details for user 'john.doe@example.com'.",
+        "Retrieve the profile of user ID '12345'.",
+        "Show me the information for a specific user."
+      ],
+      "when_to_use": "When you need to retrieve detailed information for a single user by their unique identifier."
+    },
+    {
+      "name": "UpdateUserRoles",
+      "url": "/api/user-management/users/{userId}/roles",
+      "method": "PUT",
+      "description": "Update user roles.",
+      "parameters": {
+        "userId": {
+          "type": "string",
+          "required": false,
+          "description": "The unique identifier of the user whose roles are to be updated."
+        },
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing the new roles to be assigned to the user."
+        }
+      },
+      "example_uses": [
+        "Change the roles for user 'jane.doe' to 'Editor' and 'Viewer'.",
+        "Assign 'Admin' role to user 'user123'.",
+        "Remove 'Viewer' role from user 'user456'."
+      ],
+      "when_to_use": "When you need to modify the assigned roles for a specific user."
+    },
+    {
+      "name": "GetAvailableRoles",
+      "url": "/api/user-management/roles",
+      "method": "GET",
+      "description": "Get available roles that the current user can assign.",
+      "parameters": {},
+      "example_uses": [
+        "List all roles I can assign to users.",
+        "What are the available user roles in the system?",
+        "Show me the roles that can be granted to users."
+      ],
+      "when_to_use": "When you need to retrieve a list of all roles that the current authenticated user has permission to assign to other users."
+    },
+    {
+      "name": "GetCurrentUserOrgUnit",
+      "url": "/api/user-management/current-user-org-unit",
+      "method": "GET",
+      "description": "Get current user's organization unit for filtering.",
+      "parameters": {},
+      "example_uses": [
+        "What is my current organization unit?",
+        "Retrieve the organization unit associated with my account.",
+        "Show me my default organizational filter."
+      ],
+      "when_to_use": "When you need to determine the organization unit associated with the currently authenticated user, often used for filtering data or setting context."
+    },
+    {
+      "name": "GetOrgUnitSelfManagement",
+      "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
+      "method": "GET",
+      "description": "Get organization unit self-management setting.",
+      "parameters": {
+        "orgUnitCode": {
+          "type": "string",
+          "required": false,
+          "description": "The code of the organization unit."
+        }
+      },
+      "example_uses": [
+        "Check self-management status for org unit 'HQ'.",
+        "Is self-management enabled for 'Region A'?",
+        "Retrieve the self-management setting for a specific organizational unit."
+      ],
+      "when_to_use": "When you need to check if self-management is enabled for a particular organization unit."
+    },
+    {
+      "name": "UpdateOrgUnitSelfManagement",
+      "url": "/api/user-management/org-units/{orgUnitCode}/self-management",
+      "method": "PUT",
+      "description": "Update organization unit self-management setting.",
+      "parameters": {
+        "orgUnitCode": {
+          "type": "string",
+          "required": false,
+          "description": "The code of the organization unit to update."
+        },
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing the new self-management setting."
+        }
+      },
+      "example_uses": [
+        "Enable self-management for org unit 'HQ'.",
+        "Disable self-management for 'Region B'.",
+        "Change the self-management setting for an organizational unit."
+      ],
+      "when_to_use": "When you need to modify the self-management setting for a specific organization unit."
+    }
+  ]
+}

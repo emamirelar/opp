@@ -11,18 +11,9 @@ public class APIDictionary
     public const string Document = APIPrefix + "document";
     public const string DocumentType = APIPrefix + "document-type";
 
-    // FundingOpportunity
-    public const string FundingOpportunity = APIPrefix + "funding-opportunity";
-    public const string ExternalFundingOpportunity = ExternalAPIPrefix + "funding-opportunity";
-
     // Profile
     public const string Profile = APIPrefix + "profile";
     public const string ExternalProfile = ExternalAPIPrefix + "profile";
-
-    // Proposal
-    public const string Proposal = APIPrefix + "proposal";
-    public const string FundingOpportunityProposal = FundingOpportunity + "/{opportunityId}/proposal";
-    public const string ExternalProposal = ExternalAPIPrefix + "proposal";
 
     // System Admin
     public const string SystemAdmin = APIPrefix + "system-admin";

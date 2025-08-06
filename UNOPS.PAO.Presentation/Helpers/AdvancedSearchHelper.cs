@@ -5,7 +5,15 @@ using UNOPS.PAO.Domain.Infrastructure;
 namespace UNOPS.PAO.Presentation.Helpers;
 
 /// <summary>
-/// Helper class for processing advanced search criteria
+/// Helper class for processing advanced search criteria with backward compatibility support
+/// 
+/// BACKWARD COMPATIBILITY NOTE:
+/// This helper maintains compatibility with legacy field names that may exist in:
+/// - Existing saved searches
+/// - Bookmarked URLs with search parameters
+/// - Historical filter configurations
+/// 
+/// Legacy field mappings are automatically applied during search criteria processing.
 /// </summary>
 public static class AdvancedSearchHelper
 {
@@ -29,6 +37,9 @@ public static class AdvancedSearchHelper
             {
                 throw new ArgumentException("Search criteria JSON is invalid or empty");
             }
+
+            // Apply legacy field name mapping for backward compatibility
+            searchCriteria = MapLegacyFieldNames(searchCriteria);
 
             var result = new T();
             
@@ -152,6 +163,9 @@ public static class AdvancedSearchHelper
             throw new ArgumentException("Search criteria cannot be empty");
         }
         
+        // Apply legacy field name mapping for backward compatibility
+        parsedCriteria = MapLegacyFieldNames(parsedCriteria);
+        
         ValidateSearchCriteria(parsedCriteria, allowedFields);
         return parsedCriteria;
     }
@@ -212,9 +226,13 @@ public static class AdvancedSearchHelper
             "contact.department", "contact.phone", "contact.mobile",
             "contactName", "contactFirstName", "contactLastName", "contactEmail",
             
-            // Partner related fields (through contact)
-            "contact.partner.name", "contact.partner.status", "contact.partner.shortName",
-            "partnerName", "partnerStatus"
+            // Partner related fields (NEW FORMAT)
+            "partner.name", "partner.status", "partner.shortName",
+            "partnerName", "partnerStatus",
+            
+            // Partner related fields (OLD FORMAT - BACKWARD COMPATIBILITY)
+            // These maintain compatibility with existing saved searches, filters, and bookmarks
+            "contact.partner.name", "contact.partner.status", "contact.partner.shortName"
         };
     }
 
@@ -232,5 +250,54 @@ public static class AdvancedSearchHelper
             "interaction" => GetInteractionAllowedFields(),
             _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         };
+    }
+
+    /// <summary>
+    /// Maps legacy field names to current field names for backward compatibility
+    /// </summary>
+    /// <param name="fieldName">The field name to map</param>
+    /// <returns>The current field name equivalent</returns>
+    public static string MapLegacyFieldName(string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName))
+        {
+            return fieldName;
+        }
+
+        // Handle legacy partner field mappings for interactions
+        var legacyMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "contact.partner.name", "partner.name" },
+            { "contact.partner.status", "partner.status" },
+            { "contact.partner.shortName", "partner.shortName" }
+        };
+
+        return legacyMappings.TryGetValue(fieldName, out var mappedName) ? mappedName : fieldName;
+    }
+
+    /// <summary>
+    /// Processes search criteria and maps any legacy field names to current equivalents
+    /// </summary>
+    /// <param name="criteria">The search criteria to process</param>
+    /// <returns>Search criteria with updated field names</returns>
+    public static List<SearchCriteria> MapLegacyFieldNames(List<SearchCriteria> criteria)
+    {
+        if (criteria == null || !criteria.Any())
+        {
+            return criteria;
+        }
+
+        foreach (var criterion in criteria)
+        {
+            var mappedFieldName = MapLegacyFieldName(criterion.Field);
+            if (!string.Equals(criterion.Field, mappedFieldName, StringComparison.OrdinalIgnoreCase))
+            {
+                // Log the field name mapping for debugging
+                System.Diagnostics.Debug.WriteLine($"Mapped legacy field '{criterion.Field}' to '{mappedFieldName}'");
+                criterion.Field = mappedFieldName;
+            }
+        }
+
+        return criteria;
     }
 } 

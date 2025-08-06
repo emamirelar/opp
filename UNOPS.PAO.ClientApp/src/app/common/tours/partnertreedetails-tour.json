@@ -1,0 +1,155 @@
+{
+  "tourId": "partnertreedetails-overview",
+  "title": "PartnerTreeDetails Overview Tour",
+  "description": "This UI provides a comprehensive interface for managing individual nodes within the organizational partner tree. Users can view detailed information about a specific partner, modify its attributes, define its position within the hierarchy (e.g., parent-child relationships), and update any associated organizational data. It's crucial for maintaining an accurate and up-to-date representation of the company's internal and external partner structures, ensuring correct reporting lines and data aggregation.",
+  "entity": "PartnerTreeDetails",
+  "route": "/admin/partner-tree/:recordId",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to PartnerTreeDetailsComponent",
+        "description": "This page displays the complete profile and hierarchical context of a selected partner tree node. It serves as the central hub for administrators to inspect, modify, and manage the intricate details of an organizational entity. Users can update core attributes, establish or change parent-child relationships, and ensure the partner's data aligns with the overall organizational structure. This view is critical for maintaining data integrity, enabling accurate reporting, and reflecting real-world organizational changes within the system.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"Edit\"]",
+      "popover": {
+        "title": "Edit",
+        "description": "Switches the page into editing mode, allowing modifications to the partner's details and hierarchical relationships.<br><br><strong>When to use:</strong> When you need to make changes to the partner's information., To update the partner's position in the organizational hierarchy.<br><small><em>Requires: PARTNER_TREE_EDIT</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Edit\"]",
+          "p-button .p-button-label:contains(\"Edit\")",
+          "button:contains(\"Edit\")",
+          "[aria-label=\"Edit\"]",
+          "[title=\"Edit\"]",
+          "p-button[icon=\"pi pi-pencil\"]",
+          ".pi.pi-pencil",
+          "i.pi.pi-pencil",
+          "button .pi.pi-pencil",
+          "#editPartnerTree",
+          "#editPartnerTree-btn",
+          "[data-test-id=\"editPartnerTree\"]",
+          ".editPartnerTree-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "element": "p-button[label=\"Cancel\"]",
+      "popover": {
+        "title": "Cancel",
+        "description": "Discards all unsaved changes made during the current editing session and reverts the page to its last saved state.<br><br><strong>When to use:</strong> If you decide not to save the changes you've made., To exit editing mode without applying modifications.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Cancel\"]",
+          "p-button .p-button-label:contains(\"Cancel\")",
+          "button:contains(\"Cancel\")",
+          "[aria-label=\"Cancel\"]",
+          "[title=\"Cancel\"]",
+          "p-button[icon=\"pi pi-times\"]",
+          ".pi.pi-times",
+          "i.pi.pi-times",
+          "button .pi.pi-times",
+          "#cancelEditPartnerTree",
+          "#cancelEditPartnerTree-btn",
+          "[data-test-id=\"cancelEditPartnerTree\"]",
+          ".cancelEditPartnerTree-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 2
+      }
+    },
+    {
+      "element": "p-button[label=\"Delete\"]",
+      "popover": {
+        "title": "Delete",
+        "description": "Permanently removes this partner tree node and all its associated data from the system. This action is irreversible and may affect child nodes.<br><br><strong>When to use:</strong> When a partner entity is no longer relevant or needs to be removed from the hierarchy., To clean up outdated or erroneous entries.<br><small><em>Requires: PARTNER_TREE_DELETE</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Delete\"]",
+          "p-button .p-button-label:contains(\"Delete\")",
+          "button:contains(\"Delete\")",
+          "[aria-label=\"Delete\"]",
+          "[title=\"Delete\"]",
+          "p-button[icon=\"pi pi-trash\"]",
+          ".pi.pi-trash",
+          "i.pi.pi-trash",
+          "button .pi.pi-trash",
+          "#deletePartnerTree",
+          "#deletePartnerTree-btn",
+          "[data-test-id=\"deletePartnerTree\"]",
+          ".deletePartnerTree-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 3
+      }
+    },
+    {
+      "element": "p-button[label=\"Save\"]",
+      "popover": {
+        "title": "Save",
+        "description": "Commits all changes made to the partner tree node's details and hierarchy to the system. This action is irreversible without manual correction.<br><br><strong>When to use:</strong> After making any modifications to the partner's data., To confirm changes to the partner's parent or child relationships.<br><small><em>Requires: PARTNER_TREE_EDIT</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Save\"]",
+          "p-button .p-button-label:contains(\"Save\")",
+          "button:contains(\"Save\")",
+          "[aria-label=\"Save\"]",
+          "[title=\"Save\"]",
+          "p-button[icon=\"pi pi-save\"]",
+          ".pi.pi-save",
+          "i.pi.pi-save",
+          "button .pi.pi-save",
+          "#savePartnerTree",
+          "#savePartnerTree-btn",
+          "[data-test-id=\"savePartnerTree\"]",
+          ".savePartnerTree-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 4
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of PartnerTreeDetails. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-24T10:20:44.627815",
+  "version": "1.0"
+}

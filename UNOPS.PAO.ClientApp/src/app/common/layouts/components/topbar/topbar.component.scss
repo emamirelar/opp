@@ -1,3 +1,9 @@
+/* Fix topbar height for proper AI layout positioning */
+:host {
+  height: 8vh;
+  display: block;
+}
+
 .notification-badge {
   position: absolute;
   top: -5px;
@@ -30,6 +36,24 @@
     .brand-logo {
       height: 2rem;
       width: auto;
+    }
+
+    // Ensure logo link is clickable and has proper styling
+    a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+      outline: none;
+      
+      &:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      
+      &:hover {
+        opacity: 0.8;
+      }
     }
   }
 

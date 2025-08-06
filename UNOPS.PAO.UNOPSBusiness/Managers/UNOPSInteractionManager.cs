@@ -446,7 +446,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         };
     }
 
-    public async Task<PaginationResponse<InteractionModel>> GetInteractionsWithSpecification(int userId, ISpecification<Interaction> specification, PaginationRequest pagination)
+    public async Task<PaginationResponse<InteractionModel>> GetInteractionsWithSpecification(int userId, ISpecification<Domain.Entities.Interaction> specification, PaginationRequest pagination)
     {
         // Apply the specification to the query
         var query = interactionRepository.GetAll().AsQueryable()

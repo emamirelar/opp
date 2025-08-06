@@ -129,6 +129,22 @@ This is a placeholder response while the AI service is being implemented.
   }
 }
 
+/**
+ * @uiEntity PartnerTreeDetails
+ * @route /admin/partner-tree/:recordId
+ * @description Partner tree node detail view for administrative management of organizational hierarchies. Allows viewing and editing partner tree structure, relationships, and hierarchical data.
+ * @capabilities view_partner_tree_node, edit_tree_structure, manage_hierarchies, configure_relationships, update_organizational_data
+ * @synonyms organizational_structure, partner_hierarchy, tree_management, organizational_chart, hierarchy_admin
+ * @mandatoryFields recordId
+ * @help_when_stuck This shows detailed information about a specific node in the partner organizational tree. Use the form fields to edit organizational details, relationships, and hierarchical positioning. Changes affect how the partner appears in organizational charts and hierarchical views.
+ * @common_tasks
+ *   - Viewing tree node details: Review the organizational information and relationships
+ *   - Editing organizational data: Modify fields related to hierarchy and structure
+ *   - Managing relationships: Update parent-child relationships in the organization tree
+ *   - Configuring hierarchy: Set up proper organizational positioning and reporting lines
+ *   - Updating structure: Make changes to how the organization is represented in the system
+ */
+
 @Component({
   selector: 'app-partner-tree-details',
   imports: [

@@ -1,0 +1,50 @@
+{
+  "entity": "UserPreference",
+  "description": "Manages user-specific settings and preferences, such as default organizational units, for personalized application behavior and filtering.",
+  "synonyms": [
+    "user settings",
+    "personal preferences",
+    "account settings",
+    "user configuration",
+    "profile settings"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetDefaultOrgUnit",
+      "url": "api/user-preferences/default-org-unit",
+      "method": "GET",
+      "description": "Retrieves the current user's default organizational unit preference for filtering and access control. This setting determines the primary organizational context for the user within the application.",
+      "parameters": {},
+      "example_uses": [
+        "Get my default organizational unit setting",
+        "What's my default org unit preference?",
+        "Show my default office assignment",
+        "Get current organizational unit filter",
+        "Check my default org unit setting"
+      ],
+      "when_to_use": "Use this when loading user's default organizational unit for filtering or when determining the user's default office context."
+    },
+    {
+      "name": "SetDefaultOrgUnit",
+      "url": "api/user-preferences/default-org-unit",
+      "method": "PUT",
+      "description": "Updates the current user's default organizational unit preference for filtering and access control. This allows users to change their primary organizational context within the application.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Default org unit request containing the new setting"
+        }
+      },
+      "example_uses": [
+        "Set my default org unit to Headquarters",
+        "Change my default office to Field Office 123",
+        "Update my organizational unit preference",
+        "Set default org unit filter to my office",
+        "Clear my default org unit setting"
+      ],
+      "when_to_use": "Use this when the user wants to change their default organizational unit for filtering and access control purposes."
+    }
+  ]
+}

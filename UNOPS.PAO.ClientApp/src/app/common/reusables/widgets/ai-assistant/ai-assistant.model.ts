@@ -6,9 +6,15 @@ export interface ChatMessage {
   // New properties for structured content
   result?: ResultItem[];
   entity?: string;
-  followUps?: string[];
+  suggestedUserResponses?: string[];
   sources?: Source[];
   isFromHistory?: boolean; // Flag to indicate if message is loaded from history
+  inlineData?: InlineData[]; // Support for inline data like images
+}
+
+export interface InlineData {
+  data: string; // Base64 encoded data
+  mimeType: string; // MIME type (e.g., 'image/png', 'image/jpeg')
 }
 
 export interface Source {

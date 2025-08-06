@@ -1,0 +1,46 @@
+{
+  "entity": "PartnerTreeDetails",
+  "description": "Partner tree node detail view for administrative management of organizational hierarchies. Allows viewing and editing partner tree structure, relationships, and hierarchical data.",
+  "synonyms": [
+    "organizational_structure",
+    "partner_hierarchy",
+    "tree_management",
+    "organizational_chart",
+    "hierarchy_admin"
+  ],
+  "mandatoryFields": [
+    "recordId"
+  ],
+  "pages": [
+    {
+      "route": "/admin/partner-tree/:recordId",
+      "name": "PartnerTreeDetailsComponent",
+      "description": "This page provides a detailed view of a specific node within the partner organizational tree. It is designed for administrators to manage and configure organizational hierarchies, allowing for the viewing and editing of partner tree structure, relationships, and associated hierarchical data. Users can update organizational details, define parent-child relationships, and adjust the positioning of partners within the overall organizational chart.",
+      "capabilities": [
+        "view_partner_tree_node",
+        "edit_tree_structure",
+        "manage_hierarchies",
+        "configure_relationships",
+        "update_organizational_data"
+      ],
+      "buttons": [],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "This page displays detailed information about a specific node in your partner organizational tree. If you're unsure what to do, focus on the form fields to review and edit the organizational details, relationships, and hierarchical positioning of this partner. Remember that any changes you make here will directly affect how this partner appears in organizational charts and other hierarchical views across the system. Ensure all mandatory fields are completed before saving.",
+        "common_tasks": [
+          "Viewing tree node details: Review the organizational information, attributes, and existing relationships of the selected partner node.",
+          "Editing organizational data: Modify specific fields related to the partner's hierarchy, structure, or other descriptive data.",
+          "Managing relationships: Update or define parent-child relationships to correctly position this partner within the organizational tree.",
+          "Configuring hierarchy: Adjust the organizational positioning and reporting lines to reflect the correct structure.",
+          "Updating structure: Make necessary changes to how the organization is represented in the system, ensuring accuracy and consistency."
+        ],
+        "troubleshooting": [],
+        "getting_started": "",
+        "keyboard_shortcuts": []
+      }
+    }
+  ]
+}

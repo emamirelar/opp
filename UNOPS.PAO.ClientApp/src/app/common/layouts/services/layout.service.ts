@@ -135,9 +135,9 @@ export class LayoutService {
     private getStoredAiAssistantSidebarCollapsed(): boolean {
         try {
             const stored = localStorage.getItem(this.AI_ASSISTANT_SIDEBAR_COLLAPSED_KEY);
-            return stored ? JSON.parse(stored) : false; // false par défaut
+            return stored ? JSON.parse(stored) : true; // true par défaut - collapsed for Gemini-style
         } catch {
-            return false;
+            return true;
         }
     }
 

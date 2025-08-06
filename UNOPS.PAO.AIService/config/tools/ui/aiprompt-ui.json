@@ -1,0 +1,114 @@
+{
+  "entity": "AiPrompt",
+  "description": "Administrative interface for managing AI prompts and configurations. Allows creating, editing, and testing AI prompts with Gemini models, including advanced configuration options like temperature, top-p, and model selection.",
+  "synonyms": [
+    "ai_configuration",
+    "prompt_management",
+    "gemini_settings",
+    "ai_admin",
+    "system_prompts"
+  ],
+  "mandatoryFields": [
+    "name",
+    "type",
+    "content",
+    "model"
+  ],
+  "pages": [
+    {
+      "route": "/admin/ai-prompt-management",
+      "name": "AiPromptComponent",
+      "description": "This page provides a comprehensive administrative interface for managing AI prompts. Users can create new prompts, edit existing ones, delete obsolete prompts, and thoroughly test prompt configurations with Gemini models. It includes advanced settings for fine-tuning AI behavior, such as temperature, top-p, and model selection, ensuring optimal performance and output.",
+      "capabilities": [
+        "create_prompt",
+        "edit_prompt",
+        "delete_prompt",
+        "test_prompt",
+        "configure_ai_models",
+        "manage_system_prompts",
+        "preview_output"
+      ],
+      "buttons": [
+        {
+          "id": "clear_search-btn",
+          "label": "Clear Search",
+          "icon": "pi pi-times",
+          "action": "clear_search",
+          "description": "Clears any active search text and resets the prompt list to display all available prompts.",
+          "when_to_use": [
+            "When you want to remove the current search filter and view the complete list of prompts."
+          ]
+        },
+        {
+          "id": "create_prompt-btn",
+          "label": "New Prompt | Edit Prompt",
+          "icon": "pi pi-plus | pi pi-pencil",
+          "action": "create_prompt",
+          "description": "Opens a dialog window for creating a new AI prompt or editing an existing one. This dialog contains form fields to configure various aspects of the AI prompt, including its content, model, and parameters.",
+          "when_to_use": [
+            "When you need to define a new AI prompt from scratch.",
+            "When you need to modify the settings or content of an existing AI prompt to adjust its behavior."
+          ]
+        },
+        {
+          "id": "cancel_prompt_dialog-btn",
+          "label": "Cancel",
+          "icon": "pi pi-times",
+          "action": "cancel_prompt_dialog",
+          "description": "Closes the prompt creation or editing dialog without saving any changes made. All unsaved modifications will be discarded.",
+          "when_to_use": [
+            "When you decide not to save the changes you've made in the prompt dialog.",
+            "When you want to exit the dialog without creating or updating a prompt."
+          ]
+        },
+        {
+          "id": "test_prompt-btn",
+          "label": "Test Prompt",
+          "icon": "pi pi-play",
+          "action": "test_prompt",
+          "description": "Executes a test run of the currently configured prompt. This allows you to validate the prompt's output and performance with specific inputs before saving it, ensuring it behaves as expected.",
+          "when_to_use": [
+            "When you want to verify how a prompt responds to specific input before saving it.",
+            "When you are fine-tuning a prompt and need to quickly check the results of parameter changes."
+          ]
+        },
+        {
+          "id": "delete_prompt-btn",
+          "label": "Delete",
+          "icon": "pi pi-trash",
+          "action": "delete_prompt",
+          "description": "Initiates the process to delete an AI prompt. A confirmation dialog will appear, warning about potential dependencies and impacts on features that use this prompt.",
+          "when_to_use": [
+            "When you need to permanently remove an AI prompt that is no longer needed or is incorrect.",
+            "Use with caution, as deleting a prompt can affect other parts of the system that rely on it."
+          ]
+        },
+        {
+          "id": "toggle_preview_raw-btn",
+          "label": "Preview | Raw",
+          "icon": "pi pi-eye | pi pi-code",
+          "action": "toggle_preview_raw",
+          "description": "Switches the display of test results between a user-friendly formatted preview and the raw JSON response. This allows users to inspect the output in different levels of detail.",
+          "when_to_use": [
+            "Switch to 'Preview' to see a readable, formatted version of the AI's output.",
+            "Switch to 'Raw' to view the complete technical JSON response, useful for debugging or detailed analysis."
+          ]
+        }
+      ],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're unsure how to create a prompt, start by selecting a 'Prompt Type' and then choose a 'Gemini Model'. Fill in the 'Prompt Content' with your desired instructions or text. Remember to configure advanced parameters like 'Temperature' (for creativity) and 'Top-P' (for diversity) to fine-tune the AI's response. Always use the 'Test Prompt' feature to validate your prompt's behavior before saving. The 'Preview' tab in the test results shows a user-friendly output, while the 'Raw' tab displays the underlying JSON response.",
+        "common_tasks": [
+          "Creating a new prompt: Click the 'New Prompt' button, select the prompt type and desired Gemini model, enter your prompt content, adjust parameters as needed, and then save.",
+          "Testing a prompt: Select an existing prompt from the list, click the 'Test Prompt' button, provide any necessary test input, and review the results in the output area.",
+          "Configuring model parameters: When editing or creating a prompt, adjust the 'Temperature' slider to control the AI's creativity (higher values mean more creative, lower values mean more focused). Use 'Top-P' (nucleus sampling) to control the diversity of generated text, and 'Top-K' to limit the number of tokens considered for generation.",
+          "Managing system prompts: Locate and edit prompts that are designated as 'system prompts' to control the foundational behavior and responses of the AI assistant.",
+          "Previewing output: After testing a prompt, use the 'Preview' tab to see a clean, formatted version of the AI's response, or switch to the 'Raw' tab to inspect the full JSON output for technical details."
+        ]
+      }
+    }
+  ]
+}

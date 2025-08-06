@@ -1,0 +1,48 @@
+{
+  "entity": "UserManagement",
+  "description": "Administrative interface for managing user permissions, roles, and organizational access. Allows viewing, editing, and managing user role assignments across the organization.",
+  "synonyms": [
+    "user_administration",
+    "permission_management",
+    "role_assignment",
+    "access_control",
+    "user_access"
+  ],
+  "mandatoryFields": [
+    "user_selection",
+    "role_assignment"
+  ],
+  "pages": [
+    {
+      "route": "/admin/user-management",
+      "name": "UserManagementComponent",
+      "description": "This page provides a centralized administrative interface for managing all user accounts within the system. You can view, edit, and assign roles and permissions to users, ensuring they have the appropriate access levels for their responsibilities. It's crucial for maintaining security and operational efficiency by controlling who can access what features and data.",
+      "capabilities": [
+        "view_users",
+        "edit_user_roles",
+        "assign_permissions",
+        "filter_by_org_unit",
+        "manage_access_levels",
+        "bulk_operations"
+      ],
+      "buttons": [],
+      "forms": [],
+      "tabs": [],
+      "search": {},
+      "filters": [],
+      "help_guidance": {
+        "when_stuck": "If you're having trouble finding a user or understanding their access, use the available filters to narrow down the list (e.g., search by name/email, filter by role or organizational unit). To change a user's permissions, click the 'Edit' button next to their entry, make the necessary role assignments, and then save your changes. The 'My Org Unit Only' toggle can help you focus on users within your specific department or team. Remember that different roles grant different levels of access to system features.",
+        "common_tasks": [
+          "Finding a user: Use the search box to search by name or email, or apply role/organizational unit filters.",
+          "Changing user roles: Locate the user, click the 'Edit' button, select or deselect the appropriate role checkboxes, and save your changes.",
+          "Filtering by organization: Toggle the 'My Org Unit Only' switch to see users only in your unit, or use the organizational unit dropdown for other units.",
+          "Managing access levels: Assign roles like 'Admin', 'Standard User', or custom roles based on the user's required system access.",
+          "Bulk management: Utilize the table's filtering, sorting, and pagination features to efficiently manage large numbers of users."
+        ],
+        "troubleshooting": [],
+        "getting_started": "",
+        "keyboard_shortcuts": []
+      }
+    }
+  ]
+}

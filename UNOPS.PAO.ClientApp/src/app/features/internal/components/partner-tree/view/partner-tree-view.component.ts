@@ -19,6 +19,22 @@ interface TabItem {
   route: string;
 }
 
+/**
+ * @uiEntity PartnerTreeView
+ * @route /admin/partner-tree/:recordId
+ * @description Partner tree node detail navigation interface with tabs for managing specific organizational hierarchy nodes. Provides organized access to partner tree details and analytics data.
+ * @capabilities navigate_tree_sections, view_tree_details, edit_tree_node, access_tree_analytics, manage_tree_relationships
+ * @synonyms partner_tree_navigation, organizational_node_details, hierarchy_node_tabs, tree_node_view
+ * @mandatoryFields recordId
+ * @help_when_stuck Use the tabs to navigate between different aspects of this organizational node. The Edit button allows you to modify the tree structure. Use the Details tab for organizational information and Dashboard tab for analytics.
+ * @common_tasks
+ *   - Viewing tree node details: Click on the Details tab to see organizational information
+ *   - Editing tree structure: Click the Edit button to modify organizational hierarchy
+ *   - Accessing analytics: Switch to Dashboard tab to view performance and data metrics
+ *   - Managing relationships: Use the details view to understand parent-child relationships
+ *   - Navigating hierarchy: Use the navigation breadcrumb to move between tree levels
+ */
+
 @Component({
   selector: 'app-partner-tree-view',
   imports: [
@@ -195,6 +211,14 @@ export class PartnerTreeViewComponent implements OnInit, OnDestroy {
     return this.permissionUtilityService.canUpdate(this.recordPermissions());
   }
 
+  /**
+   * @uiButton edit_partner_tree_node
+   * @description Opens the partner tree node editing dialog to modify organizational hierarchy structure and details
+   * @label Edit
+   * @icon pi pi-pencil
+   * @when_to_use When you need to modify organizational node details, relationships, or hierarchical positioning
+   * @permissions PARTNER_TREE_UPDATE
+   */
   handleEditClick(): void {
     // Check permission before opening modal
     if (!this.permissionUtilityService.canUpdate(this.recordPermissions())) {

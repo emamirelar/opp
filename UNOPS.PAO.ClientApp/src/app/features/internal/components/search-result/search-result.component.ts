@@ -21,6 +21,22 @@ import { UserPreferenceService, GlobalFilters } from '../../../../services/user-
 import { OrganizationHierarchyService } from '../../../../services/organization-hierarchy.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
 
+/**
+ * @uiEntity SearchResult
+ * @route /search
+ * @description Unified search results page displaying all matching records across multiple entity types (Partners, Contacts, Interactions). Supports tabbed view by entity type with filtering and global filters.
+ * @capabilities search_all_entities, filter_by_entity_type, global_filters, view_search_snippets, navigate_to_records
+ * @synonyms find, lookup, global_search, unified_search, cross_entity_search
+ * @mandatoryFields search_query
+ * @help_when_stuck Use the search box in the header to perform searches. Results are automatically categorized by entity type (Partners, Contacts, Interactions). Click on tabs to view specific entity types. Enable global filters if you want to restrict search to your organization or specific criteria.
+ * @common_tasks
+ *   - Searching across all entities: Use the main search box, results appear automatically
+ *   - Viewing specific entity results: Click on tabs (Partners, Contacts, Interactions)
+ *   - Applying global filters: Toggle the global filter switch to restrict to your org unit
+ *   - Opening a record: Click on any search result card to navigate to the detailed view
+ *   - Refining search: Modify your search query in the header search box
+ */
+
 interface SearchMetadata {
   matchedField?: string;
   searchType?: string;

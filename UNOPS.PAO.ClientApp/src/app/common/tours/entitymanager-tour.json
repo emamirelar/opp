@@ -1,0 +1,125 @@
+{
+  "tourId": "entitymanager-overview",
+  "title": "EntityManager Overview Tour",
+  "description": "The Entity Manager is a powerful administrative tool designed to give you granular control over how data fields are presented and accessed across various entities within the system, such as Partners, Contacts, and Interactions. You can customize which fields are visible in lists and forms, define their display order, and manage user permissions for each field, ensuring that your team sees only the most relevant information in a structured and secure manner. This module allows administrators to tailor the user interface to specific business needs without requiring developer intervention.",
+  "entity": "EntityManager",
+  "route": "/admin/entity-manager",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to EntityManagerComponent",
+        "description": "This page serves as the central hub for administrators to customize the display and access of data fields for various entities like Partners, Contacts, and Interactions. Users can control field visibility in list views and detail forms, reorder columns for optimal data presentation, manage user role permissions for individual fields, and fine-tune display settings such as labels and icons. The goal is to empower administrators to create a tailored and efficient user experience for their teams.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"Import Configuration\"]",
+      "popover": {
+        "title": "Import Configuration",
+        "description": "Uploads a previously exported JSON configuration file to apply its settings to the currently selected entity. This will overwrite the existing configuration for that entity.<br><br><strong>When to use:</strong> You want to restore a backed-up configuration for an entity., You are applying a standard configuration from another system or environment.<br><small><em>Requires: ADMIN_ENTITY_MANAGER_WRITE</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Import Configuration\"]",
+          "p-button .p-button-label:contains(\"Import Configuration\")",
+          "button:contains(\"Import Configuration\")",
+          "[aria-label=\"Import Configuration\"]",
+          "[title=\"Import Configuration\"]",
+          "p-button[icon=\"pi pi-upload\"]",
+          ".pi.pi-upload",
+          "i.pi.pi-upload",
+          "button .pi.pi-upload",
+          "#import-config-btn",
+          "#import-config-btn-btn",
+          "[data-test-id=\"import-config-btn\"]",
+          ".import-config-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "element": "p-button[label=\"Export Configuration\"]",
+      "popover": {
+        "title": "Export Configuration",
+        "description": "Downloads the current field configuration for the selected entity as a JSON file. This file can be used for backup purposes or to transfer configurations between different environments.<br><br><strong>When to use:</strong> You want to back up your custom field settings for an entity., You need to apply the same configuration to another system or environment.<br><small><em>Requires: ADMIN_ENTITY_MANAGER_READ</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Export Configuration\"]",
+          "p-button .p-button-label:contains(\"Export Configuration\")",
+          "button:contains(\"Export Configuration\")",
+          "[aria-label=\"Export Configuration\"]",
+          "[title=\"Export Configuration\"]",
+          "p-button[icon=\"pi pi-download\"]",
+          ".pi.pi-download",
+          "i.pi.pi-download",
+          "button .pi.pi-download",
+          "#export-config-btn",
+          "#export-config-btn-btn",
+          "[data-test-id=\"export-config-btn\"]",
+          ".export-config-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 2
+      }
+    },
+    {
+      "element": "p-button[label=\"Reset to Default\"]",
+      "popover": {
+        "title": "Reset to Default",
+        "description": "Reverts all field configurations (visibility, order, permissions, display settings) for the currently selected entity back to the system's original default settings. This action cannot be undone.<br><br><strong>When to use:</strong> You have made many changes and want to discard them all and start fresh., The current configuration is causing unexpected display issues and you want to revert to a known good state.<br><small><em>Requires: ADMIN_ENTITY_MANAGER_WRITE</em></small>",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Reset to Default\"]",
+          "p-button .p-button-label:contains(\"Reset to Default\")",
+          "button:contains(\"Reset to Default\")",
+          "[aria-label=\"Reset to Default\"]",
+          "[title=\"Reset to Default\"]",
+          "p-button[icon=\"pi pi-refresh\"]",
+          ".pi.pi-refresh",
+          "i.pi.pi-refresh",
+          "button .pi.pi-refresh",
+          "#reset-to-default-btn",
+          "#reset-to-default-btn-btn",
+          "[data-test-id=\"reset-to-default-btn\"]",
+          ".reset-to-default-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 3
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of EntityManager. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-24T10:20:44.563924",
+  "version": "1.0"
+}

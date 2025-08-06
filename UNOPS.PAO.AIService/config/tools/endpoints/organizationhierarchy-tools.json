@@ -1,0 +1,61 @@
+{
+  "entity": "OrganizationHierarchy",
+  "description": "Manages the organizational structure and hierarchy within the system, including departments, teams, and reporting lines.",
+  "synonyms": [
+    "Org Structure",
+    "Organizational Chart",
+    "Department Hierarchy",
+    "Reporting Lines",
+    "Org Unit"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetOrganizationHierarchy",
+      "url": "api/organization-hierarchy",
+      "method": "GET",
+      "description": "Retrieves the complete organizational hierarchy structure.",
+      "parameters": {},
+      "example_uses": [
+        "Show me the entire organizational structure.",
+        "Get the full company hierarchy.",
+        "Display all organizational units."
+      ],
+      "when_to_use": "Use this when you need to view the complete, top-level organizational structure without specific filters."
+    },
+    {
+      "name": "GetOrganizationHierarchyLegacy",
+      "url": "api/organization-hierarchy/legacy",
+      "method": "GET",
+      "description": "Retrieves the legacy version of the organizational hierarchy structure.",
+      "parameters": {},
+      "example_uses": [
+        "Show me the old organizational structure.",
+        "Get the legacy company hierarchy.",
+        "Display the previous version of organizational units."
+      ],
+      "when_to_use": "Use this when you specifically need to access the older or legacy representation of the organizational hierarchy."
+    },
+    {
+      "name": "GetOrganizationHierarchyById",
+      "url": "api/organization-hierarchy/{id}",
+      "method": "GET",
+      "description": "Retrieves a specific organizational unit by ID with complete details including hierarchy information.",
+      "parameters": {
+        "id": {
+          "type": "integer",
+          "required": true,
+          "description": "Organizational unit ID"
+        }
+      },
+      "example_uses": [
+        "Show me details for org unit ID 138",
+        "Get information about organizational unit 123",
+        "What is org unit 456?",
+        "Display org unit details for ID 789",
+        "Get description of organizational unit 321"
+      ],
+      "when_to_use": "Use this when the user asks for specific organizational unit details by ID."
+    }
+  ]
+}

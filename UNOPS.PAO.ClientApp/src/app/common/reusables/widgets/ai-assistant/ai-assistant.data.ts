@@ -86,7 +86,10 @@ export class AiAssistantData {
 
     // Allow empty sessionId for new conversations - backend will create one
     const sessionId = this.currentSessionId() || '';
-    return this.sendMessageToServer(sessionId, message, files[0]?.file, state);
+    
+    // Enhanced: Support multiple files instead of just the first one
+    const fileObjects = files.map(chatFile => chatFile.file).filter(file => file != null);
+    return this.sendMessageToServer(sessionId, message, fileObjects, state);
   }
 
   public clearConversation(): void {
@@ -95,27 +98,9 @@ export class AiAssistantData {
     this.sessionStarred.set(false);
     this.sessionArchived.set(false);
     
-    const sessionId = this.currentSessionId();
-    if (sessionId) {
-      // End current session but don't create a new one
-      this.aiAssistantService.endSession(sessionId).subscribe({
-        next: () => {
-          this.currentSessionId.set(null);
-          this.isLoading.set(false);
-          // Refresh sessions list
-          this.loadUserSessions().subscribe();
-        },
-        error: (error) => {
-          console.error('Failed to end session:', error);
-          this.currentSessionId.set(null);
-          this.isLoading.set(false);
-        }
-      });
-    } else {
-      // No active session, just reset state
-      this.currentSessionId.set(null);
-      this.isLoading.set(false);
-    }
+    // No active session, just reset state
+    this.currentSessionId.set(null);
+    this.isLoading.set(false);
   }
 
   private loadOrCreateSession(): Observable<void> {
@@ -232,7 +217,14 @@ export class AiAssistantData {
         isUser: chat.role === 'user',
         timestamp: new Date(),
         files: [],
-        isFromHistory: true // Messages from session history should not have typewriter effect
+        isFromHistory: true, // Messages from session history should not have typewriter effect
+        inlineData: (chat.inlineData || chat.InlineData) ? (chat.inlineData || chat.InlineData).map((inline: any) => {
+          console.log('Processing inline data:', inline);
+          return {
+            data: inline.data || inline.Data,
+            mimeType: inline.mimeType || inline.MimeType
+          };
+        }) : []
       };
       // For model messages, check if the text contains structured data
       if (!message.isUser && message.text) {
@@ -241,7 +233,7 @@ export class AiAssistantData {
           if (parsed.result && Array.isArray(parsed.result)) {
             message.result = parsed.result;
             message.entity = parsed.entity;
-            message.followUps = parsed.followUps || [];
+            message.suggestedUserResponses = parsed.suggestedUserResponses || [];
             message.sources = parsed.sources || []; // Extract sources from historical data
             message.text = ''; // Clear text since we have structured content
           }
@@ -256,7 +248,8 @@ export class AiAssistantData {
 
     const filtered = mapped.filter(message =>
       (message.text && message.text.trim() !== '') ||
-      (message.result && message.result.length > 0)
+      (message.result && message.result.length > 0) ||
+      (message.inlineData && message.inlineData.length > 0)
     );
 
     console.log('FILTERED messages:', filtered);
@@ -321,7 +314,7 @@ export class AiAssistantData {
   private addStructuredMessage(responseData: any): void {
     console.log('🎯 ADDING STRUCTURED MESSAGE');
     console.log('   Result items:', responseData.result?.length || 0);
-    console.log('   Follow-ups:', responseData.followUps?.length || 0);
+    console.log('   Suggested user responses:', responseData.suggestedUserResponses?.length || 0);
     console.log('   Entity:', responseData.entity);
 
     // Transform markdown result items with mermaid code blocks into separate mermaid items
@@ -373,7 +366,7 @@ export class AiAssistantData {
       files: [],
       result: newResult,
       entity: responseData.entity,
-      followUps: responseData.followUps || [],
+      suggestedUserResponses: responseData.suggestedUserResponses || [],
       sources: responseData.sources || [],
       isFromHistory: this._isLoadingPastChat // Set flag based on loading state
     };
@@ -440,20 +433,16 @@ export class AiAssistantData {
   private sendMessageToServer(
     sessionId: string, 
     message: string, 
-    file?: File, 
+    files?: File[], 
     state?: any
   ): Observable<void> {
-    const formData = new FormData();
-    formData.append("sessionId", sessionId);
-    formData.append("message", message);
-    if (file) {
-        formData.append("file", file);
-    }
-    if (state) {
-        formData.append("state", JSON.stringify(state));
-    }
-    // TODO: Add the file to the formData
-    return this.aiAssistantService.chat(formData).pipe(
+    // Use our enhanced chat method that supports multiple files
+    return this.aiAssistantService.chatWithFilesSimple(
+      message,
+      sessionId,
+      files,
+      state
+    ).pipe(
       tap(response => {
         this.isLoading.set(false);
         const serverResponse: any = response.body;
@@ -512,12 +501,14 @@ export class AiAssistantData {
             this.currentSessionId.set(parsedResponse.session_id);
             // Refresh sessions list to include the new session
             this.loadUserSessions().subscribe();
+            // Navigate to the new session URL
+            this.router.navigate(['/ai', parsedResponse.session_id], { replaceUrl: true });
           }
 
           // Process the parsed JSON response - check for new format first
           if (parsedResponse.result && Array.isArray(parsedResponse.result)) {
             console.log('✅ DIRECT JSON - Processing structured result array:', parsedResponse.result);
-            console.log('✅ DIRECT JSON - Follow-ups:', parsedResponse.followUps);
+            console.log('✅ DIRECT JSON - Suggested User Responses:', parsedResponse.suggestedUserResponses);
             console.log('✅ DIRECT JSON - Adding structured message...');
             this.addStructuredMessage(parsedResponse);
           } else if (parsedResponse.events && Array.isArray(parsedResponse.events)) {
@@ -748,7 +739,7 @@ export class AiAssistantData {
         // This handles cases where the JSON might be wrapped in extra text or not perfectly formatted
         const jsonPatterns = [
           /\{[\s\S]*"result"[\s\S]*\}/,           // Look for any JSON with "result" property
-          /\{[\s\S]*"followUps"[\s\S]*\}/,       // Look for any JSON with "followUps" property
+          /\{[\s\S]*"suggestedUserResponses"[\s\S]*\}/,       // Look for any JSON with "suggestedUserResponses" property
           /\{[\s\S]*"type"[\s\S]*"markdown"[\s\S]*\}/  // Look for markdown type responses
         ];
         

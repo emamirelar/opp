@@ -1,0 +1,95 @@
+{
+  "tourId": "partner-overview",
+  "title": "Partner Overview Tour",
+  "description": "Browse and manage partner organizations with comprehensive search, filtering, and CRUD operations. Central hub for all partner-related activities.",
+  "entity": "Partner",
+  "route": "/partnerships/partners",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "title": "Welcome to PartnerComponent",
+        "description": "This page serves as the central hub for managing all partner organizations. Users can browse, search, filter, create, edit, and delete partner records. It provides an overview of all partners in the system and allows for bulk operations like import and export.",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[label=\"New Partner | Edit Partner\"]",
+      "popover": {
+        "title": "New Partner | Edit Partner",
+        "description": "Opens a dialog to create a new partner organization or modify an existing one. This includes comprehensive form fields for managing all aspects of partner information.<br><br><strong>When to use:</strong> When you need to add a brand new partner organization to the system., When you need to update the core details of an existing partner, such as their name, type, or primary contact information.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"New Partner | Edit Partner\"]",
+          "p-button .p-button-label:contains(\"New Partner | Edit Partner\")",
+          "button:contains(\"New Partner | Edit Partner\")",
+          "[aria-label=\"New Partner | Edit Partner\"]",
+          "[title=\"New Partner | Edit Partner\"]",
+          "p-button[icon=\"pi pi-plus | pi pi-pencil\"]",
+          ".pi.pi-plus.|.pi.pi-pencil",
+          "i.pi.pi-plus.|.pi.pi-pencil",
+          "button .pi.pi-plus.|.pi.pi-pencil",
+          "#create-partner-btn",
+          "#create-partner-btn-btn",
+          "[data-test-id=\"create-partner-btn\"]",
+          ".create-partner-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 1
+      }
+    },
+    {
+      "element": "p-button[label=\"Import Partners\"]",
+      "popover": {
+        "title": "Import Partners",
+        "description": "Initiates the process to bulk import partner organizations from external data sources like Google Sheets or CSV files.<br><br><strong>When to use:</strong> When you have a large list of partners to add to the system simultaneously., During initial system setup or data migration from another system.",
+        "side": "bottom",
+        "align": "start"
+      },
+      "options": {
+        "selectors": [
+          "p-button[label=\"Import Partners\"]",
+          "p-button .p-button-label:contains(\"Import Partners\")",
+          "button:contains(\"Import Partners\")",
+          "[aria-label=\"Import Partners\"]",
+          "[title=\"Import Partners\"]",
+          "p-button[icon=\"pi pi-file-import\"]",
+          ".pi.pi-file-import",
+          "i.pi.pi-file-import",
+          "button .pi.pi-file-import",
+          "#import-partners-btn",
+          "#import-partners-btn-btn",
+          "[data-test-id=\"import-partners-btn\"]",
+          ".import-partners-btn-button",
+          "p-button",
+          "button",
+          ".p-element"
+        ],
+        "stepNumber": 2
+      }
+    },
+    {
+      "popover": {
+        "title": "Tour Complete!",
+        "description": "You've learned the key features of Partner. You can always restart this tour from the help menu.",
+        "side": "over",
+        "align": "center"
+      }
+    }
+  ],
+  "generatedAt": "2025-07-31T18:59:03.665466",
+  "version": "1.0"
+}

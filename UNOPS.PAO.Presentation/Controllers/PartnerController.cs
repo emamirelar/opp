@@ -27,6 +27,7 @@ public class PartnerController : BaseController
 {
     private readonly IPartnerManager _manager;
     private readonly IOrgUnitFilterService _orgUnitFilterService;
+    private readonly IGeminiManager _geminiManager;
 
     public PartnerController(
         IManagerWrapper manager, 
@@ -38,6 +39,7 @@ public class PartnerController : BaseController
     {
         _manager = manager.PartnerManager;
         _orgUnitFilterService = orgUnitFilterService;
+        _geminiManager = manager.GeminiManager;
     }
 
     /// <summary>
@@ -80,102 +82,182 @@ public class PartnerController : BaseController
     }
 
     /// <summary>
-    /// Retrieves a list of partners with advanced filtering, pagination, search capabilities, and access control.
+    /// Retrieves all partners with basic pagination and ordering (no search criteria).
     /// </summary>
-    /// <param name="request">Partner filter request containing search and pagination parameters</param>
-    /// <param name="request.pageIndex">Page number (1-based)</param>
-    /// <param name="request.pageSize">Number of items per page</param>
-    /// <param name="request.searchText">Text to search across partner fields</param>
-    /// <param name="request.orderBy">Field to order results by</param>
-    /// <param name="request.ascending">Sort direction (true for ascending)</param>
-    /// <param name="request.status">Filter by partner status</param>
-    /// <param name="request.name">Filter by partner name</param>
-    /// <param name="request.orgUnitId">Filter by organizational unit via OrganizationUnitRelationships for access control</param>
-    /// <param name="request.globalKeyAccount">Filter by global key account status</param>
-    /// <param name="advancedSearch">Enable advanced search mode</param>
-    /// <param name="searchCriteria">JSON string containing advanced search filters</param>
-    /// <param name="searchText">Text to search across partner fields (override for request.searchText)</param>
+    /// <param name="pageIndex">Page number (1-based, default: 1)</param>
+    /// <param name="pageSize">Number of items per page (default: 20)</param>
+    /// <param name="orderBy">Field to order results by (optional)</param>
+    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
     /// <example_uses>
     /// Show me all partners
-    /// List partners containing 'UNICEF' in the name
-    /// Find partners with global key account status
-    /// Show active partners from my office
-    /// Search for government partners
-    /// Get partners sorted by name
-    /// Find partners in specific organizational unit
+    /// List all partners in the system
+    /// Display the partner directory
+    /// Get all partner records
+    /// Browse partners
     /// </example_uses>
-    /// <when_to_use>Use this when the user asks to search, list, filter, or browse partners.</when_to_use>
-    /// <returns>Paginated list of partners with metadata</returns>
+    /// <when_to_use>Use this when the user wants to see ALL partners without any search criteria or when asking for a general partner list.</when_to_use>
+    /// <returns>Paginated list of all partners</returns>
     [HttpGet(APIDictionary.Partner)]
     [AccessControlled(EntityTypes.Partner, "read")]
-    public async Task<ActionResult<PaginationResponse<PartnerModel>>> GetAll(
-        [FromQuery] PartnerFilterRequest request, 
-        [FromQuery] bool advancedSearch = false, 
-        [FromQuery] string? searchCriteria = null,
-        [FromQuery] string? searchText = null)
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> ListAllPartners(
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] bool ascending = true)
     {
-        
         // Validate pagination parameters
-        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        var validationResult = ValidatePaginationParameters(pageIndex, pageSize);
         if (validationResult != null) return validationResult;
         
-        // Handle search using the new helper methods
         return await HandleSearchOperationAsync(async () =>
         {
-            if (advancedSearch && !string.IsNullOrEmpty(searchCriteria))
+            // Create a basic PartnerFilterRequest with just pagination and ordering
+            var request = new PartnerFilterRequest
             {
-                // For advanced search, we need to parse the search criteria and combine with org unit filter
-                // Since SearchControllerHelper expects a synchronous factory, we'll create the spec inline
-                return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
-                    searchCriteria, searchText ?? request.SearchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
-                    request, // Use request as pagination request since PartnerFilterRequest extends PaginationRequest
-                    "Partner",
-                    filterRequest => new PartnerCompositeSpecification(filterRequest),
-                    async (userId, spec, pagination) => {
-                        // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
-                        if (pagination is PartnerFilterRequest partnerPagination && partnerPagination.OrgUnitId.HasValue)
-                        {
-                            var orgUnitSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(partnerPagination, User);
-                            var adaptedSpec = new PartnerSpecificationAdapter(orgUnitSpec);
-                            return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, adaptedSpec, partnerPagination);
-                        }
-                        return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
-                    },
-                    CurrentUserId, _logger);
-            }
+                PageIndex = pageIndex,
+                PageSize = pageSize,
+                OrderBy = orderBy,
+                Ascending = ascending
+            };
             
-            // Handle simple text search
-            if (!string.IsNullOrWhiteSpace(searchText) || !string.IsNullOrWhiteSpace(request.SearchText))
-            {
-                var textToSearch = searchText ?? request.SearchText;
-                return await SearchControllerHelper.ProcessSimpleTextSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
-                    textToSearch!, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
-                    request,
-                    "Partner",
-                    filterRequest => new PartnerCompositeSpecification(filterRequest),
-                    async (userId, spec, pagination) => {
-                        // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
-                        if (pagination is PartnerFilterRequest partnerPagination && partnerPagination.OrgUnitId.HasValue)
-                        {
-                            var orgUnitSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(partnerPagination, User);
-                            var adaptedSpec = new PartnerSpecificationAdapter(orgUnitSpec);
-                            return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, adaptedSpec, partnerPagination);
-                        }
-                        return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
-                    },
-                    CurrentUserId, _logger);
-            }
-            
-            // For no search parameters, return all partners with pagination
-            _logger.LogInformation("Retrieving all partners with pagination. OrgUnitId filter: {OrgUnitId}", request.OrgUnitId);
-            
-            // Use OrgUnitFilterService to create the appropriate specification
+            // Use OrgUnitFilterService to create the appropriate specification for listing all
             var unosPartnerSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(request, User);
             var specification = new PartnerSpecificationAdapter(unosPartnerSpec);
             
             var result = await _manager.GetPartnersWithSpecificationAsync(User, specification, request);
             return (PaginationResponse<PartnerModel>)result;
-        }, "partner search");
+        }, "partner list all");
+    }
+
+    /// <summary>
+    /// Performs simple text search across multiple partner fields (name, description, etc.).
+    /// </summary>
+    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
+    /// <param name="searchText">Text to search across partner name, description, and other basic fields</param>
+    /// <example_uses>
+    /// Search for partners named UNICEF
+    /// Find partners containing 'Government'
+    /// Search for partners with 'Development' in description
+    /// Look for partners with specific keywords
+    /// Find partner by short name or acronym
+    /// </example_uses>
+    /// <when_to_use>Use this for simple name, description, or basic field searches. NOT for complex criteria or relationship searches.</when_to_use>
+    /// <returns>Paginated list of partners matching the search text</returns>
+    [HttpGet(APIDictionary.Partner + "/search")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> SearchPartners(
+        [FromQuery] PaginationRequest request,
+        [FromQuery] string searchText)
+    {
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        if (validationResult != null) return validationResult;
+        
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            throw new BusinessException("Search text is required for partner search");
+        }
+
+        return await HandleSearchOperationAsync(async () =>
+        {
+            // Create a PartnerFilterRequest with pagination/sorting info and search text
+            var partnerFilterRequest = new PartnerFilterRequest
+            {
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize,
+                OrderBy = request.OrderBy,
+                Ascending = request.Ascending,
+                SearchText = searchText
+            };
+
+            return await SearchControllerHelper.ProcessSimpleTextSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
+                searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending,
+                partnerFilterRequest,
+                "Partner",
+                filterRequest => new PartnerCompositeSpecification(filterRequest),
+                async (userId, spec, pagination) => {
+                    // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
+                    if (pagination is PartnerFilterRequest partnerPagination && partnerPagination.OrgUnitId.HasValue)
+                    {
+                        var orgUnitSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(partnerPagination, User);
+                        var adaptedSpec = new PartnerSpecificationAdapter(orgUnitSpec);
+                        return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, adaptedSpec, partnerPagination);
+                    }
+                    return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
+                },
+                CurrentUserId, _logger);
+        }, "partner simple search");
+    }
+
+    /// <summary>
+    /// Performs advanced search with structured criteria including status, dates, relationships, and complex filters.
+    /// </summary>
+    /// <param name="request">Pagination request containing only pagination and sorting parameters</param>
+    /// <param name="searchCriteria">JSON array of search criteria objects with field, operator, value, and logicalOperator</param>
+    /// <param name="searchText">Optional additional text search to combine with criteria</param>
+    /// <example_uses>
+    /// Find active government partners
+    /// Show partners with global key account status
+    /// Get partners created this month
+    /// Find partners by status and office location
+    /// List partners involved in climate projects
+    /// Search for partners by complex criteria combinations
+    /// </example_uses>
+    /// <when_to_use>Use this for searches involving partner status, dates, types, complex criteria, or multiple field combinations.</when_to_use>
+    /// <searchCriteria_format>
+    /// JSON array format: [{"field": "status", "operator": "is", "value": "Active", "logicalOperator": "AND"}]
+    /// Available operators: is, is not, like, not like, greater than, less than, greater than or equal, less than or equal, this week, this month, this year
+    /// Available fields: name, status, partnerType, globalKeyAccount, createdDate, modifiedDate, description
+    /// Logical operators: AND, OR
+    /// </searchCriteria_format>
+    /// <returns>Paginated list of partners matching the advanced search criteria</returns>
+    [HttpGet(APIDictionary.Partner + "/advanced-search")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult<PaginationResponse<PartnerModel>>> AdvancedSearchPartners(
+        [FromQuery] PaginationRequest request,
+        [FromQuery] string searchCriteria,
+        [FromQuery] string? searchText = null)
+    {
+        // Validate pagination parameters
+        var validationResult = ValidatePaginationParameters(request.PageIndex, request.PageSize);
+        if (validationResult != null) return validationResult;
+        
+        if (string.IsNullOrWhiteSpace(searchCriteria))
+        {
+            throw new BusinessException("Search criteria is required for advanced partner search");
+        }
+
+        return await HandleSearchOperationAsync(async () =>
+        {
+            // Create a PartnerFilterRequest with pagination/sorting info and search criteria
+            var partnerFilterRequest = new PartnerFilterRequest
+            {
+                PageIndex = request.PageIndex,
+                PageSize = request.PageSize,
+                OrderBy = request.OrderBy,
+                Ascending = request.Ascending,
+                SearchCriteria = searchCriteria,
+                SearchText = searchText,
+                AdvancedSearch = true // Set this internally since we know this is an advanced search
+            };
+
+            return await SearchControllerHelper.ProcessAdvancedSearch<PartnerFilterRequest, PartnerCompositeSpecification, PaginationResponse<PartnerModel>>(
+                searchCriteria, searchText, request.PageIndex, request.PageSize, request.OrderBy, request.Ascending, 
+                partnerFilterRequest,
+                "Partner",
+                filterRequest => new PartnerCompositeSpecification(filterRequest),
+                async (userId, spec, pagination) => {
+                    // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
+                    if (pagination is PartnerFilterRequest partnerPagination && partnerPagination.OrgUnitId.HasValue)
+                    {
+                        var orgUnitSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(partnerPagination, User);
+                        var adaptedSpec = new PartnerSpecificationAdapter(orgUnitSpec);
+                        return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, adaptedSpec, partnerPagination);
+                    }
+                    return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
+                },
+                CurrentUserId, _logger);
+        }, "partner advanced search");
     }
 
     /// <summary>
@@ -394,4 +476,290 @@ public class PartnerController : BaseController
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.
+    /// </summary>
+    /// <example_uses>
+    /// Get all partner categories with counts
+    /// Show partner distribution by category
+    /// Generate partner category statistics
+    /// Create partner category breakdown chart
+    /// Display partner classification overview
+    /// Draw diagram of partner categories with counts
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization.</when_to_use>
+    /// <returns>List of partner categories with their respective partner counts</returns>
+    [HttpGet(APIDictionary.Partner + "/categories-summary")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult> GetAllPartnerCategories()
+    {
+        try
+        {
+            // Get all unique partner category codes from partner trees
+            var partnerTrees = await _manager.GetPartnersAsync(User, new PaginationRequest { PageSize = int.MaxValue });
+            
+            // Group by partner category and count
+            var categoryStats = partnerTrees.Records
+                .Where(p => !string.IsNullOrEmpty(p.PartnerCategoryCode))
+                .GroupBy(p => new { p.PartnerCategoryCode, p.PartnerCategoryName })
+                .Select(g => new
+                {
+                    code = g.Key.PartnerCategoryCode,
+                    name = g.Key.PartnerCategoryName ?? g.Key.PartnerCategoryCode,
+                    partnerCount = g.Count(),
+                    description = $"{g.Key.PartnerCategoryName ?? g.Key.PartnerCategoryCode} partners"
+                })
+                .OrderBy(x => x.name)
+                .ToList();
+
+            return Ok(new
+            {
+                totalCategories = categoryStats.Count,
+                totalPartners = categoryStats.Sum(x => x.partnerCount),
+                categories = categoryStats
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Retrieves all partner groups with their partner counts for statistical analysis and diagram generation.
+    /// </summary>
+    /// <example_uses>
+    /// Get all partner groups with counts
+    /// Show partner distribution by group
+    /// Generate partner group statistics
+    /// Create partner group breakdown chart
+    /// Display partner group overview
+    /// Draw diagram of partner groups with counts
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping.</when_to_use>
+    /// <returns>List of partner groups with their respective partner counts</returns>
+    [HttpGet(APIDictionary.Partner + "/groups-summary")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult> GetAllPartnerGroups()
+    {
+        try
+        {
+            // Get all partners to analyze groups
+            var partnerTrees = await _manager.GetPartnersAsync(User, new PaginationRequest { PageSize = int.MaxValue });
+            
+            // Group by partner group and count
+            var groupStats = partnerTrees.Records
+                .Where(p => !string.IsNullOrEmpty(p.PartnerGroupCode))
+                .GroupBy(p => new { p.PartnerGroupCode, p.PartnerGroupName })
+                .Select(g => new
+                {
+                    code = g.Key.PartnerGroupCode,
+                    name = g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode,
+                    partnerCount = g.Count(),
+                    description = $"{g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode} partners"
+                })
+                .OrderBy(x => x.name)
+                .ToList();
+
+            return Ok(new
+            {
+                totalGroups = groupStats.Count,
+                totalPartners = groupStats.Sum(x => x.partnerCount),
+                groups = groupStats
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation.
+    /// </summary>
+    /// <example_uses>
+    /// Get complete partner categorization overview
+    /// Show partner distribution across categories and groups
+    /// Generate comprehensive partner statistics
+    /// Create partner organization chart
+    /// Display complete partner taxonomy with counts
+    /// Draw diagram showing partner categories and groups with distribution
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups.</when_to_use>
+    /// <returns>Complete partner categorization data with categories, groups, and their respective partner counts</returns>
+    [HttpGet(APIDictionary.Partner + "/categorization-overview")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult> GetPartnerCategorizationOverview()
+    {
+        try
+        {
+            // Get all partners for analysis
+            var partnerTrees = await _manager.GetPartnersAsync(User, new PaginationRequest { PageSize = int.MaxValue });
+            
+            // Group by categories
+            var categoryStats = partnerTrees.Records
+                .Where(p => !string.IsNullOrEmpty(p.PartnerCategoryCode))
+                .GroupBy(p => new { p.PartnerCategoryCode, p.PartnerCategoryName })
+                .Select(g => new
+                {
+                    code = g.Key.PartnerCategoryCode,
+                    name = g.Key.PartnerCategoryName ?? g.Key.PartnerCategoryCode,
+                    partnerCount = g.Count(),
+                    partners = g.Select(p => new { p.Id, p.Name }).ToList()
+                })
+                .OrderBy(x => x.name)
+                .ToList();
+
+            // Group by groups
+            var groupStats = partnerTrees.Records
+                .Where(p => !string.IsNullOrEmpty(p.PartnerGroupCode))
+                .GroupBy(p => new { p.PartnerGroupCode, p.PartnerGroupName })
+                .Select(g => new
+                {
+                    code = g.Key.PartnerGroupCode,
+                    name = g.Key.PartnerGroupName ?? g.Key.PartnerGroupCode,
+                    partnerCount = g.Count(),
+                    partners = g.Select(p => new { p.Id, p.Name }).ToList()
+                })
+                .OrderBy(x => x.name)
+                .ToList();
+
+            return Ok(new
+            {
+                summary = new
+                {
+                    totalPartners = partnerTrees.TotalCount,
+                    totalCategories = categoryStats.Count,
+                    totalGroups = groupStats.Count
+                },
+                categories = categoryStats,
+                groups = groupStats,
+                metadata = new
+                {
+                    generatedAt = DateTime.UtcNow,
+                    description = "Complete partner categorization overview with categories, groups, and partner counts"
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    #region AI-Powered Partner Data Processing
+
+    /// <summary>
+    /// Scans and processes uploaded files for partner data extraction using AI-powered analysis.
+    /// </summary>
+    /// <param name="req">File scan request containing the file to be processed</param>
+    /// <param name="req.File">File to scan for partner data (required)</param>
+    /// <example_uses>
+    /// Scan partner contract document for data extraction
+    /// Upload partner registration form for processing
+    /// Analyze partner profile document with AI
+    /// Extract data from partner onboarding files
+    /// Process partner information from uploaded documents
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to upload and scan documents for partner data extraction using AI.</when_to_use>
+    /// <returns>Extracted partner data from the scanned file</returns>
+    [HttpPost(APIDictionary.Partner + "/scan-data")]
+    [AccessControlled(EntityTypes.Partner, "create")]
+    public async Task<ActionResult> ScanPartnerData([FromForm] GeminiFileRequest req) 
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            if (req?.File == null || req?.File.Length == 0)
+            {
+                throw new BusinessException("No valid file detected.");
+            }
+
+            string fileType = _geminiManager.FindFileType(req.File);
+
+            if (string.IsNullOrEmpty(fileType)) 
+            {
+                throw new BusinessException("File type not compatible");
+            }
+
+            string response = await _geminiManager.ScanFileForGeminiProcessing(req);
+
+            if (string.IsNullOrEmpty(response))
+            {
+                throw new BusinessException("Prompt configuration for partner data scanning is not found.");
+            }
+
+            return response.Trim();
+        });
+    }
+
+    /// <summary>
+    /// Analyzes uploaded files and extracts structured partner data using AI-powered data analysis.
+    /// </summary>
+    /// <param name="request">Analysis request containing file and analysis parameters</param>
+    /// <param name="request.entityType">Should be set to 'Partner' for partner data analysis</param>
+    /// <param name="request.analysisType">Type of analysis to perform on partner data</param>
+    /// <example_uses>
+    /// Analyze partner documents for structured data extraction
+    /// Extract partner information from uploaded forms
+    /// Process partner onboarding documents with AI
+    /// Convert partner files into structured database entries
+    /// Analyze partner contract data for key information
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to analyze files and extract structured partner data for database import.</when_to_use>
+    /// <returns>Structured partner data extracted from the analyzed file</returns>
+    [HttpPost(APIDictionary.Partner + "/analyse-file")]
+    [AccessControlled(EntityTypes.Partner, "create")]
+    public async Task<ActionResult> AnalysePartnerData([FromBody] AnalyseFileRequest request)
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            if (request == null)
+            {
+                throw new BusinessException("Invalid request.");
+            }
+
+            return await _geminiManager.ExtractDataAfterAnalysis(request, CurrentUserId);
+        });
+    }
+
+    /// <summary>
+    /// Bulk uploads multiple partner records using AI-assisted data processing and validation.
+    /// </summary>
+    /// <param name="req">Bulk upload request containing partner data</param>
+    /// <param name="req.Type">Should be set to 'Partner' for partner bulk upload</param>
+    /// <param name="req.Data">Array of partner data objects to upload</param>
+    /// <param name="req.Options">Upload options and validation settings</param>
+    /// <example_uses>
+    /// Bulk upload 100 partner organizations from Excel
+    /// Import multiple partners from CSV file
+    /// Mass upload partner data with AI validation
+    /// Bulk import partner records with duplicate detection
+    /// Upload large partner dataset with automated processing
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to upload multiple partner records at once with AI-assisted processing.</when_to_use>
+    /// <returns>Bulk upload results with success/failure status for each partner</returns>
+    [HttpPost(APIDictionary.Partner + "/bulk-upload")]
+    [AccessControlled(EntityTypes.Partner, "create")]
+    public async Task<ActionResult> BulkUploadPartners([FromBody] BulkUploadRequest req) 
+    {
+        return await HandleOperationAsync(async () => 
+        {
+            if (req == null || string.IsNullOrEmpty(req.Type))
+            {
+                throw new BusinessException("Invalid request.");
+            }
+
+            // Ensure the request is for partner entities
+            if (!req.Type.Equals("Partner", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new BusinessException("This endpoint only supports Partner bulk uploads.");
+            }
+
+            string response = await _geminiManager.BulkInsertRecordsAsync(req);
+            return new { message = response };
+        });
+    }
+
+    #endregion
 }

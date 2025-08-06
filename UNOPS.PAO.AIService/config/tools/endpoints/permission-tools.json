@@ -1,0 +1,110 @@
+{
+  "entity": "Permission",
+  "description": "Manages system-wide permissions, user roles, and access control configurations within the application.",
+  "synonyms": [
+    "access",
+    "authorization",
+    "role",
+    "privilege",
+    "security"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetSystemPermissionConfiguration",
+      "url": "api/permission",
+      "method": "GET",
+      "description": "Get the entire system permission configuration including all roles and their capabilities",
+      "parameters": {},
+      "example_uses": [
+        "Retrieve the complete permission structure of the system.",
+        "Show me all roles and their associated capabilities.",
+        "Get the initial permission setup for the frontend."
+      ],
+      "when_to_use": "When you need to retrieve the full, system-wide permission configuration, typically for initializing a frontend application or for administrative overview."
+    },
+    {
+      "name": "CheckUserRoutePermission",
+      "url": "api/permission/check/{route}",
+      "method": "GET",
+      "description": "Check if the current user has permission to access a specific route or page",
+      "parameters": {
+        "route": {
+          "type": "string",
+          "required": false,
+          "description": "The route/URL path to check permissions for (e.g., '/partnerships/contacts/123')"
+        }
+      },
+      "example_uses": [
+        "Check if the current user can access the '/admin/users' page.",
+        "Verify permission for the '/partnerships/contacts/123' route.",
+        "Does the current user have access to the specified application path?"
+      ],
+      "when_to_use": "When you need to programmatically check if the currently authenticated user has access to a specific application route or URL path."
+    },
+    {
+      "name": "GetEntityPermissionDetails",
+      "url": "api/permission/entity-permissions/{entityName}",
+      "method": "GET",
+      "description": "Get complete permission details for a specific entity, including all possible operations and role requirements",
+      "parameters": {
+        "entityName": {
+          "type": "string",
+          "required": false,
+          "description": "Name of the entity (e.g., 'Contact', 'Partner', 'Interaction')"
+        }
+      },
+      "example_uses": [
+        "Retrieve all permission details for the 'Contact' entity.",
+        "Show me what operations are allowed on the 'Partner' entity and by which roles.",
+        "Get the permission configuration for the 'Interaction' entity."
+      ],
+      "when_to_use": "When you need to understand the detailed permission structure for a specific business entity, including what actions are possible and which roles are required."
+    },
+    {
+      "name": "GetCurrentUserRoles",
+      "url": "api/permission/user-roles",
+      "method": "GET",
+      "description": "Get the current authenticated user's roles and permissions",
+      "parameters": {},
+      "example_uses": [
+        "What roles does the current user have?",
+        "Retrieve the roles assigned to me.",
+        "Show me my current permissions."
+      ],
+      "when_to_use": "When you need to quickly retrieve the roles and basic permission information for the currently authenticated user."
+    },
+    {
+      "name": "GetUserRolesByUserId",
+      "url": "api/permission/user/{userId}",
+      "method": "GET",
+      "description": "Get roles and basic information for a specific user by ID (admin access required)",
+      "parameters": {
+        "userId": {
+          "type": "string",
+          "required": false,
+          "description": "The ID of the user to retrieve role information for"
+        }
+      },
+      "example_uses": [
+        "Get the roles for user with ID 'user123'.",
+        "Retrieve the permissions of user 'abc-def-ghi'.",
+        "Show me the roles assigned to a specific user."
+      ],
+      "when_to_use": "When you need to retrieve the roles and basic information for a specific user, typically requiring administrative privileges."
+    },
+    {
+      "name": "GetAvailableSystemRoles",
+      "url": "api/permission/available-roles",
+      "method": "GET",
+      "description": "Get all available system roles and their descriptions",
+      "parameters": {},
+      "example_uses": [
+        "List all roles defined in the system.",
+        "Show me the descriptions for each available system role.",
+        "What are the different types of roles I can assign?"
+      ],
+      "when_to_use": "When you need to retrieve a list of all predefined system roles and their associated descriptions, useful for role management interfaces."
+    }
+  ]
+}

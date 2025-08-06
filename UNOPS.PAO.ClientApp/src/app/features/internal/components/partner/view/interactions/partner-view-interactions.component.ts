@@ -299,6 +299,14 @@ export class PartnerViewInteractionsComponent implements OnInit {
     this.columns.set(fallbackColumns);
   }
 
+  /**
+   * @uiButton create_interaction
+   * @description Opens the interaction creation modal pre-filled with the current partner information
+   * @label New Interaction
+   * @icon pi pi-plus
+   * @when_to_use When you want to record a new meeting, call, email, or other communication with this partner
+   * @permissions INTERACTION_CREATE
+   */
   openNewInteractionModal(): void {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
@@ -349,6 +357,14 @@ export class PartnerViewInteractionsComponent implements OnInit {
     });
   }
 
+  /**
+   * @uiButton edit_interaction
+   * @description Opens the interaction editing modal with existing interaction data for modification
+   * @label Edit Interaction
+   * @icon pi pi-pencil
+   * @when_to_use When you need to update details of an existing interaction, add notes, or modify interaction information
+   * @permissions INTERACTION_UPDATE
+   */
   openEditInteractionModal(item: any): void {
     // Check if user has update permission
     if (!this.permissionUtilityService.canUpdate(this.entityPermissions())) {

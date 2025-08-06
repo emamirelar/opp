@@ -17,6 +17,23 @@ import { EntityConfigurationService } from '../../../services/entity-configurati
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 import { InteractionIconService } from '../../../../../common/services/interaction-icon.service';
 
+/**
+ * @uiEntity InteractionList
+ * @route /partnerships/interactions
+ * @description Browse and manage all interaction records across the organization. Central hub for viewing meetings, calls, emails, and other communications with comprehensive search and filtering capabilities.
+ * @capabilities search_interactions, filter_interactions, create_interaction, edit_interaction, delete_interaction, export_interactions, import_interactions, view_timeline
+ * @synonyms communications, meetings, activities, engagements, touchpoints, correspondence
+ * @mandatoryFields type, date, subject, contactId
+ * @help_when_stuck Use the search bar to find interactions by type, date, or participant. Click + to create new interactions if you have permissions. Use filters to narrow results by interaction type, date range, or participants.
+ * @common_tasks
+ *   - Finding interactions: Search by date, participant, subject, or interaction type
+ *   - Creating interactions: Click 'New Interaction' button (requires INTERACTION_CREATE permission)
+ *   - Editing interactions: Click on any interaction row to open details and modify
+ *   - Filtering by type: Use interaction type filters to see specific communication types
+ *   - Exporting data: Use Export button to download interaction lists for reporting
+ *   - Importing interactions: Use Import button to bulk upload interaction data
+ */
+
 @Component({
   selector: 'app-interaction-list',
   standalone: true,
@@ -266,6 +283,14 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * @uiButton create_interaction
+   * @description Opens the interaction creation modal to record new meetings, calls, emails, or other communications
+   * @label New Interaction
+   * @icon pi pi-plus
+   * @when_to_use When you want to record a new communication, meeting, or activity with partners or contacts
+   * @permissions INTERACTION_CREATE
+   */
   openNewInteractionModal(): void {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {
@@ -393,6 +418,14 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     this.currentSearchText = searchParams.generalSearch || '';
   }
 
+  /**
+   * @uiButton import_interactions
+   * @description Opens the import dialog to bulk import interaction records from Google Sheets or CSV files
+   * @label Import Interactions
+   * @icon pi pi-file-import
+   * @when_to_use When you need to add multiple interaction records at once from external sources or data migration
+   * @permissions INTERACTION_CREATE
+   */
   openImportDialog() {
     // Check if user has create permission
     if (!this.permissionUtilityService.canCreate(this.entityPermissions())) {

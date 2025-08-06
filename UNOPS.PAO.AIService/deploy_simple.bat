@@ -8,7 +8,7 @@ set REGION=europe-west4
 echo Deploying %SERVICE_NAME% to %PROJECT_ID% in %REGION%...
 echo This will take a few minutes...
 
-gcloud run deploy %SERVICE_NAME% --source . --region=%REGION% --platform=managed --allow-unauthenticated --port=8080 --memory=2Gi --cpu=1 --max-instances=10 --min-instances=1 --concurrency=80 --timeout=300 --set-env-vars=CURRENT_ENV=test,GOOGLE_CLOUD_PROJECT=%PROJECT_ID%,GOOGLE_CLOUD_LOCATION=%REGION%,GOOGLE_GENAI_USE_VERTEXAI=TRUE --quiet
+gcloud run deploy %SERVICE_NAME% --source . --region=%REGION% --platform=managed --port=8080 --memory=2Gi --cpu=1 --max-instances=10 --min-instances=1 --concurrency=80 --timeout=300 --set-env-vars=CURRENT_ENV=test,GOOGLE_CLOUD_PROJECT=%PROJECT_ID%,GOOGLE_CLOUD_LOCATION=%REGION%,GOOGLE_GENAI_USE_VERTEXAI=TRUE --quiet
 
 echo.
 if %ERRORLEVEL% equ 0 (

@@ -78,6 +78,22 @@ function underscoreValidator(control: AbstractControl): ValidationErrors | null 
   return null;
 }
 
+/**
+ * @uiEntity AiPrompt
+ * @route /admin/ai-prompt-management
+ * @description Administrative interface for managing AI prompts and configurations. Allows creating, editing, and testing AI prompts with Gemini models, including advanced configuration options like temperature, top-p, and model selection.
+ * @capabilities create_prompt, edit_prompt, delete_prompt, test_prompt, configure_ai_models, manage_system_prompts, preview_output
+ * @synonyms ai_configuration, prompt_management, gemini_settings, ai_admin, system_prompts
+ * @mandatoryFields name, type, content, model
+ * @help_when_stuck Select a prompt type first, then choose a Gemini model. Fill in the prompt content and configure parameters like temperature and top-p. Use the Test Prompt feature to validate your prompt before saving. The Preview tab shows formatted output while Raw tab shows actual JSON response.
+ * @common_tasks
+ *   - Creating new prompt: Click "New Prompt", select type and model, enter content and save
+ *   - Testing prompt: Select existing prompt, click "Test Prompt", enter test input and review results
+ *   - Configuring model parameters: Edit temperature (creativity), top-p (nucleus sampling), top-k (token filtering)
+ *   - Managing system prompts: Edit prompts that control AI assistant behavior and responses
+ *   - Previewing output: Use Preview/Raw tabs to see formatted vs technical output
+ */
+
 @Component({
   selector: 'app-ai-prompt',
   standalone: true,
@@ -390,6 +406,14 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     this.onLazyLoad(this.currentTableState);
   }
 
+  /**
+   * @uiButton clear_search
+   * @description Clears the search text and resets the prompt list to show all prompts
+   * @label Clear Search
+   * @icon pi pi-times
+   * @when_to_use When you want to clear the search filter and see all prompts again
+   * @permissions AI_PROMPT_READ
+   */
   clearSearch(): void {
     // Clear any pending search
     if (this.searchTimeout) {
@@ -400,6 +424,14 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     this.performSearch();
   }
 
+  /**
+   * @uiButton create_prompt,edit_prompt
+   * @description Opens the prompt creation/editing dialog with form fields for configuring AI prompts
+   * @label New Prompt | Edit Prompt
+   * @icon pi pi-plus | pi pi-pencil
+   * @when_to_use When creating a new AI prompt or editing an existing one to modify prompt behavior
+   * @permissions AI_PROMPT_CREATE, AI_PROMPT_UPDATE
+   */
   openEditDialog(prompt?: AiPrompt): void {
     // Check permissions before opening dialog
     const permissions = this.entityPermissions();
@@ -533,6 +565,14 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     return Number(value);
   }
 
+  /**
+   * @uiButton cancel_prompt_dialog
+   * @description Closes the prompt creation/editing dialog without saving changes
+   * @label Cancel
+   * @icon pi pi-times
+   * @when_to_use When you want to discard changes and close the dialog
+   * @permissions None required
+   */
   closeDialog(): void {
     this.displayDialog.set(false);
     this.currentPrompt.set(null);
@@ -663,6 +703,14 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     this.subscriptions.add(sub);
   }
 
+  /**
+   * @uiButton test_prompt
+   * @description Executes a test of the current prompt configuration to validate output and performance
+   * @label Test Prompt
+   * @icon pi pi-play
+   * @when_to_use When you want to validate a prompt before saving, or test how it responds to specific inputs
+   * @permissions AI_PROMPT_TEST
+   */
   testPrompt(): void {
     if (!this.canRunTest()) {
       this.messageService.add({
@@ -758,6 +806,14 @@ export class AiPromptComponent implements OnInit, OnDestroy {
     return false;
   }
 
+  /**
+   * @uiButton delete_prompt
+   * @description Displays a confirmation dialog before deleting an AI prompt, warning about feature dependencies
+   * @label Delete
+   * @icon pi pi-trash
+   * @when_to_use When you need to remove an obsolete or incorrect prompt (use with caution due to dependencies)
+   * @permissions AI_PROMPT_DELETE
+   */
   confirmDelete(prompt: AiPrompt): void {
     // Check delete permissions
     const permissions = this.entityPermissions();
@@ -822,7 +878,12 @@ Be extra cautious while deleting as there could be several dependencies within t
   }
 
   /**
-   * Sets the active tab for test results display
+   * @uiButton toggle_preview_raw
+   * @description Switches between formatted preview and raw JSON response in test results
+   * @label Preview | Raw
+   * @icon pi pi-eye | pi pi-code
+   * @when_to_use Switch to Preview for readable output, or Raw to see technical JSON response details
+   * @permissions None required
    */
   setActiveTab(tab: 'preview' | 'raw'): void {
     this.activeTab.set(tab);

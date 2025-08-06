@@ -5,6 +5,7 @@ using UNOPS.PAO.Models;
 using UNOPS.PAO.Business.Interfaces;
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UNOPS.PAO.Domain.Entities;
@@ -45,7 +46,7 @@ public class GeminiSessionService
     public IEnumerable<AiChatSession> GetUserSessions(int userId) {
         return (IEnumerable<AiChatSession>)_context.AiChatSession
                 .Where(x => x.UserId == userId)
-                .OrderBy(x => x.LastUpdated); // Place active sessions last
+                .OrderByDescending(x => x.LastUpdated); // Place most recent sessions first
     }
 
     // Get session data by session ID and user ID with chat messages from AI service
@@ -116,18 +117,66 @@ public class GeminiSessionService
                     var parts = content["parts"] as JArray;
                     if (parts == null) continue;
 
+                    // Collect all text and inline data for this message
+                    var messageText = new StringBuilder();
+                    var inlineDataList = new List<InlineData>();
+
                     foreach (var part in parts)
                     {
                         var text = part["text"]?.ToString();
-                        if (string.IsNullOrWhiteSpace(text)) continue;
+                        if (!string.IsNullOrWhiteSpace(text))
+                        {
+                            if (messageText.Length > 0)
+                                messageText.Append(" ");
+                            messageText.Append(text);
+                        }
 
+                        var inlineData = part["inlineData"];
+                        if (inlineData != null)
+                        {
+                            // Debug: Log the raw JSON structure
+                            Console.WriteLine($"Raw inlineData JSON: {inlineData}");
+                            
+                            var dataToken = inlineData["data"];
+                            var mimeType = inlineData["mimeType"]?.ToString();
+                            
+                            if (dataToken != null && !string.IsNullOrEmpty(mimeType))
+                            {
+                                // Get the raw string value, handling potential newlines/formatting
+                                var data = dataToken.Type == Newtonsoft.Json.Linq.JTokenType.String 
+                                    ? dataToken.Value<string>() 
+                                    : dataToken.ToString();
+                                
+                                // Clean the base64 data: remove newlines, spaces, and other formatting
+                                data = System.Text.RegularExpressions.Regex.Replace(data, @"[\r\n\s]", "");
+                                
+                                Console.WriteLine($"Original data length: {dataToken.ToString().Length}");
+                                Console.WriteLine($"Cleaned data length: {data.Length}");
+                                Console.WriteLine($"First 100 chars: {data.Substring(0, Math.Min(100, data.Length))}");
+                                
+                                if (!string.IsNullOrEmpty(data))
+                                {
+                                    inlineDataList.Add(new InlineData
+                                    {
+                                        Data = data,
+                                        MimeType = mimeType
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Only create a message if we have text or inline data
+                    if (messageText.Length > 0 || inlineDataList.Any())
+                    {
                         if (role == "user")
                         {
                             userMessages.Add(new ChatMessage
                             {
                                 Role = role,
-                                Text = text,
-                                Timestamp = timestamp
+                                Text = messageText.ToString(),
+                                Timestamp = timestamp,
+                                InlineData = inlineDataList
                             });
                         }
                         else if (role == "model" && !string.IsNullOrEmpty(invocationId))
@@ -138,8 +187,9 @@ public class GeminiSessionService
                                 modelMessagesByInvocation[invocationId] = new ChatMessage
                                 {
                                     Role = role,
-                                    Text = text,
-                                    Timestamp = timestamp
+                                    Text = messageText.ToString(),
+                                    Timestamp = timestamp,
+                                    InlineData = inlineDataList
                                 };
                             }
                         }

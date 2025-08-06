@@ -1,0 +1,64 @@
+{
+  "entity": "SearchResult",
+  "description": "The Unified Search Results page provides a comprehensive view of all matching records across various entity types, including Partners, Contacts, and Interactions. It allows users to quickly find relevant information by displaying results in a tabbed format, enabling easy navigation between different entity categories. The page also supports global filtering to refine search outcomes.",
+  "synonyms": [
+    "find",
+    "lookup",
+    "global_search",
+    "unified_search",
+    "cross_entity_search"
+  ],
+  "mandatoryFields": [
+    "search_query"
+  ],
+  "pages": [
+    {
+      "route": "/search",
+      "name": "SearchResultComponent",
+      "description": "This page displays the results of a global search query, consolidating findings from Partners, Contacts, and Interactions into a single, organized view. Users can navigate through results using entity-specific tabs and apply global filters to narrow down the scope of their search, ensuring they find precisely what they need.",
+      "capabilities": [
+        "search_all_entities",
+        "filter_by_entity_type",
+        "global_filters",
+        "view_search_snippets",
+        "navigate_to_records"
+      ],
+      "buttons": [],
+      "forms": [],
+      "tabs": [],
+      "search": {
+        "placeholder": "Search across all entities (Partners, Contacts, Interactions)...",
+        "description": "The primary search bar allows users to enter keywords, names, or IDs to find records across all integrated entity types. Results are dynamically updated and categorized.",
+        "help_text": "Enter your search query in the header search box. Results will automatically appear below, categorized by entity type. You can refine your search by adding more specific terms."
+      },
+      "filters": [
+        {
+          "name": "global_filters",
+          "label": "Global Filters",
+          "description": "This filter allows users to restrict search results based on predefined criteria, such as limiting results to records within 'My Organization's Unit' or other specific organizational boundaries. Toggling this switch applies or removes the global filter."
+        }
+      ],
+      "help_guidance": {
+        "when_stuck": "If you're having trouble finding what you need, remember to use the main search box located in the application header. Your search results will automatically be organized by entity type (Partners, Contacts, Interactions) on this page. Click on the respective tabs to view results for a specific entity. If you want to narrow down results to your organization or specific criteria, ensure the global filter switch is enabled.",
+        "common_tasks": [
+          "Searching across all entities: Simply type your query into the main search box in the header. Results will populate automatically on this page.",
+          "Viewing specific entity results: Once results appear, click on the 'Partners', 'Contacts', or 'Interactions' tabs to see only those specific records.",
+          "Applying global filters: Locate the 'Global Filters' option and toggle it on to restrict results, for example, to records within your organizational unit.",
+          "Opening a record: Click on any search result card or link to navigate directly to the detailed view of that Partner, Contact, or Interaction.",
+          "Refining search: To get more precise results, modify your original search query in the header search box and press Enter again."
+        ],
+        "troubleshooting": [
+          "Problem: No results found for my query → Solution: Double-check your spelling. Try using broader keywords or fewer terms. Ensure no restrictive global filters are active.",
+          "Problem: Too many irrelevant results → Solution: Add more specific keywords to your search query. Consider enabling global filters if available to narrow down the scope.",
+          "Problem: Results are not categorized correctly → Solution: The system automatically categorizes results. If you believe a record is miscategorized, verify the record's data in its detailed view."
+        ],
+        "getting_started": "To begin using the search functionality, locate the search bar, typically found at the top of the application interface. Enter your desired search term (e.g., a company name, a person's name, or an interaction ID) and press Enter. The Search Results page will then display all matching records, organized into distinct tabs for Partners, Contacts, and Interactions. You can click on any tab to focus on a specific type of record, and click on individual results to view their full details.",
+        "keyboard_shortcuts": [
+          "Enter: Execute search query from the search bar.",
+          "Tab: Navigate between search results or interactive elements on the page.",
+          "Esc: Clear the current search input in the search bar (if focused)."
+        ]
+      }
+    }
+  ]
+}

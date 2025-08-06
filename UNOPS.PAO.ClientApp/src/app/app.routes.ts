@@ -14,6 +14,10 @@ export const routes: Routes = [
     path: 'ai', 
     loadComponent: () => import('./features/ai/ai-layout.component').then(m => m.AiLayoutComponent)
   },
+  { 
+    path: 'ai/:sessionId', 
+    loadComponent: () => import('./features/ai/ai-layout.component').then(m => m.AiLayoutComponent)
+  },
   { path: 'login', component: LoginComponent },
   { path: 'not-found', component: NotFoundComponent },
   { path: 'access-denied', component: AccessDeniedComponent },

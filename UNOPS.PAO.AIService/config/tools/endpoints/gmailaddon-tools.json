@@ -1,0 +1,110 @@
+{
+  "entity": "GmailAddon",
+  "description": "Manages data and operations specific to the Gmail Addon, including creating and updating interactions, finding related records, and creating records from email content. This entity facilitates the integration of email activities with business processes.",
+  "synonyms": [
+    "Gmail plugin",
+    "Email integration",
+    "Addon data",
+    "Gmail extension",
+    "Email addon"
+  ],
+  "mandatoryFields": [],
+  "searchMetadata": null,
+  "endpoints": [
+    {
+      "name": "CreateInteraction",
+      "url": "api/gmail-addon/interactions",
+      "method": "POST",
+      "description": "Creates a new interaction record within the Gmail Addon context. This typically represents a communication or activity (e.g., email, meeting, call) related to an email or a business process.",
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing details for the new interaction, such as subject, participants, and related entities. The specific fields required will depend on the InteractionRequest schema."
+        }
+      },
+      "example_uses": [
+        "Create a new interaction to log an email conversation with a client.",
+        "Log a meeting interaction that was scheduled via Gmail.",
+        "Record a phone call interaction linked to an email thread for a specific project."
+      ],
+      "when_to_use": "Use this endpoint when you need to log a new communication or activity (an 'interaction') that originates from or is related to an email within the Gmail Addon, to track engagement or progress."
+    },
+    {
+      "name": "UpdateInteraction",
+      "url": "api/gmail-addon/interactions",
+      "method": "PUT",
+      "description": "Updates an existing interaction record within the Gmail Addon context. This allows modification of previously logged communications or activities, such as changing status or adding notes.",
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing the updated details for the interaction. An identifier for the interaction (e.g., InteractionId) is typically included within this object to specify which interaction to update."
+        }
+      },
+      "example_uses": [
+        "Update the status of an interaction from 'pending' to 'completed'.",
+        "Modify the description or add new notes to a logged email interaction.",
+        "Add new participants or change the date of an existing meeting interaction."
+      ],
+      "when_to_use": "Use this endpoint when you need to modify the details of an interaction that has already been created and logged via the Gmail Addon, for example, to reflect changes in status or add more information."
+    },
+    {
+      "name": "FindGmailInteraction",
+      "url": "api/gmail-addon/interactions/find",
+      "method": "POST",
+      "description": "Finds a specific Gmail interaction based on provided criteria. This is useful for retrieving details of an interaction using specific identifiers or attributes, such as an email ID or a unique interaction key.",
+      "parameters": {
+        "model": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing the criteria to find a Gmail interaction, such as an interaction ID, email ID, or other unique identifiers. The specific fields will depend on the GmailInteractionRequest schema."
+        }
+      },
+      "example_uses": [
+        "Find an interaction associated with a specific Gmail message ID.",
+        "Retrieve an interaction using its unique system identifier.",
+        "Locate an interaction based on a combination of email subject and sender to check if it already exists."
+      ],
+      "when_to_use": "Use this endpoint when you need to retrieve a specific interaction record by providing precise search criteria, typically to check for duplicates or to access existing interaction details from within the Gmail Addon."
+    },
+    {
+      "name": "FindRelatedRecords",
+      "url": "api/gmail-addon/interactions/find-related-records",
+      "method": "POST",
+      "description": "Finds records (e.g., contacts, partners, projects) that are related to a specific Gmail interaction or email. This helps in linking emails to existing entities in the system.",
+      "parameters": {
+        "input": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing information (e.g., email content, sender, recipients, subject) to identify and find related records. The specific fields will depend on the GmailRelatedRecordsRequest schema."
+        }
+      },
+      "example_uses": [
+        "Find contacts and organizations related to the sender and recipients of an email.",
+        "Identify projects or cases that might be mentioned or implied in an email body.",
+        "Discover existing records that an email might be associated with, to avoid creating duplicates."
+      ],
+      "when_to_use": "Use this endpoint when you want to discover existing records (e.g., contacts, partners, projects) that are contextually related to an email or an interaction within the Gmail Addon, to provide context or link new data."
+    },
+    {
+      "name": "CreateRecordsFromEmails",
+      "url": "api/gmail-addon/create-records",
+      "method": "POST",
+      "description": "Creates new records (e.g., contacts, leads, tasks) directly from the content of one or more emails. This streamlines data entry and automates the creation of structured data from email communications.",
+      "parameters": {
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "The request body containing the email content and any specific instructions or mappings for creating new records. The specific fields will depend on the GmailCreateRecordsRequest schema."
+        }
+      },
+      "example_uses": [
+        "Generate a new contact record by extracting information from an email signature.",
+        "Create a new task or follow-up item based on an action request in an email.",
+        "Log a new lead or opportunity from an incoming inquiry email."
+      ],
+      "when_to_use": "Use this endpoint when you need to automatically generate new structured records (like contacts, tasks, or leads) by extracting information directly from email content within the Gmail Addon, to save manual data entry time."
+    }
+  ]
+}
