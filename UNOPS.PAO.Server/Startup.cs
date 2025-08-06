@@ -56,7 +56,7 @@ public class Startup
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
     {
-        var myAllowSpecificOrigins = "AllowOrigin";
+        var myAllowSpecificOrigins = "AllowAll";
 
         // Configure the HTTP request pipeline.
         if (!env.IsDevelopment())

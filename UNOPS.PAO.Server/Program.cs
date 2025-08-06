@@ -54,24 +54,13 @@ public class Program
                         });
                     services.AddCors(options =>
                     {
-                        if (environment is null or "Development")
+                        options.AddPolicy("AllowAll", builder =>
                         {
-                            options.AddPolicy("AllowOrigin", options => options
-                                .WithOrigins("https://localhost:44326", "https://localhost:44426")
+                            builder
+                                .AllowAnyOrigin()
                                 .AllowAnyHeader()
-                                .AllowAnyMethod()
-                            );
-                        }
-                        else
-                        {
-                            options.AddPolicy("AllowAll", builder =>
-                            {
-                                builder
-                                    .AllowAnyOrigin()
-                                    .AllowAnyHeader()
-                                    .AllowAnyMethod();
-                            });
-                        }
+                                .AllowAnyMethod();
+                        });
                     });
                     if (environment is null or "Development")
                     {
