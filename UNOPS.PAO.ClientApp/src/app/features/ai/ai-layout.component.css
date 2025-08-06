@@ -8,23 +8,30 @@
 .ai-layout-container {
   flex: 1;
   display: flex;
-  height: calc(100vh - 105px);
+  height: calc(100vh - 8vh);
   overflow: hidden;
+  min-height: 0;
 }
 
-/* Sidebar styles */
+/* Sidebar styles - Gemini-inspired */
 .ai-sidebar {
   width: 320px;
   background: var(--surface-card);
   border-right: 1px solid var(--surface-border);
   display: flex;
   flex-direction: column;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s, box-shadow 0.5s;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s, box-shadow 0.3s;
   z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .ai-sidebar.sidebar-collapsed {
-  width: 60px;
+  width: 72px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ai-sidebar:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-header {
@@ -81,7 +88,7 @@
   background: var(--surface-card);
   border-bottom: 1px solid var(--surface-border);
   .chat-button {
-    margin: 6em 1em 1em 1em;
+    margin: 1em;
   }
 }
 
@@ -187,11 +194,20 @@
 }
 
 .new-chat-collapsed {
-  width: 44px;
-  height: 44px;
-  font-size: 1.7rem;
+  width: 48px;
+  height: 48px;
+  font-size: 1.5rem;
   align-items: center;
   justify-content: center;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0 !important;
+  transition: all 0.2s ease;
+}
+
+.new-chat-collapsed:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
 }
 
 .new-chat-button span {
@@ -199,9 +215,7 @@
   font-size: 1.15rem;
 }
 
-.sidebar-search-container {
-  /* No additional margin since section handles it */
-}
+/* Sidebar search container - no additional margin since section handles it */
 
 .chat-list {
   display: flex;
@@ -338,13 +352,26 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  justify-content: stretch;
   background: var(--surface-ground);
-  padding: 0;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
+  position: relative;
+  padding: 0;
+  margin: 0;
 }
+
+/* Ensure AI assistant panel takes full space with proper positioning */
+.ai-content-area app-ai-assistant-panel {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+
 
 .blank-content {
   text-align: center;
@@ -462,9 +489,7 @@
   z-index: 1;
 }
 
-.ai-right-panel.panel-visible {
-  /* Panel is visible - flex properties are set via style bindings */
-}
+/* Panel visible - flex properties are set via style bindings */
 
 .ai-right-panel.resizing {
   user-select: none;
@@ -478,7 +503,7 @@
 }
 
 .right-panel-header { 
-  padding: 1rem 1.5rem; 
+  padding-left: 1rem;
   border-bottom: 1px solid #e5e7eb; 
   display: flex; 
   justify-content: space-between; 
@@ -641,6 +666,14 @@
     background: rgba(0, 0, 0, 0.5);
     z-index: 999;
     backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .mobile-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .ai-sidebar {
@@ -651,10 +684,11 @@
     width: 100vw;
     z-index: 1000;
     transform: translateX(-100%);
-    transition: transform 0.3s ease;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
     background: var(--surface-card);
     border-right: none;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    will-change: transform;
   }
 
   .ai-sidebar.mobile-sidebar-open {
@@ -668,12 +702,13 @@
   .ai-content-area {
     width: 100%;
     padding: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .ai-content-area.mobile-content-hidden {
     opacity: 0.3;
     pointer-events: none;
+    transform: scale(0.98);
   }
 
   .ai-right-panel {
@@ -689,6 +724,14 @@
     padding: 1rem;
     height: calc(100vh - 120px);
     overflow-y: auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s;
+  }
+
+  .ai-sidebar.mobile-sidebar-open .sidebar-content {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .sidebar-content-collapsed {
@@ -834,4 +877,104 @@
   .mobile-backdrop {
     display: none;
   }
+}
+
+/* Collapsed sidebar icons */
+.collapsed-icons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.collapsed-icon-item {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: var(--text-color-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.collapsed-icon-item:hover {
+  background: var(--surface-hover);
+  color: var(--primary-color);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.collapsed-icon-item i {
+  font-size: 1.25rem;
+}
+
+/* Gemini-style sidebar improvements */
+.sidebar-content-collapsed {
+  padding-top: 0.5rem;
+}
+
+/* Enhanced chat item styling for more Gemini-like appearance */
+.chat-item {
+  border-radius: 12px;
+  margin-bottom: 0.25rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chat-item.active {
+  background: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 12px rgba(var(--primary-color-rgb, 0, 123, 255), 0.3);
+}
+
+/* Classy minimal new chat icon button - left aligned */
+.new-chat-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color-secondary);
+  width: 40px;
+  height: 40px;
+}
+
+.new-chat-icon-button:hover {
+  background: var(--surface-100);
+  color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.new-chat-icon-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.new-chat-icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.new-chat-icon-button:disabled:hover {
+  background: none;
+  color: var(--text-color-secondary);
+  transform: none;
+  box-shadow: none;
+}
+
+.new-chat-icon-button i {
+  font-size: 1.1rem;
+  font-weight: 500;
 } 

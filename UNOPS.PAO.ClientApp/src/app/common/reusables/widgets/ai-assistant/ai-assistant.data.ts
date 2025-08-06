@@ -98,27 +98,9 @@ export class AiAssistantData {
     this.sessionStarred.set(false);
     this.sessionArchived.set(false);
     
-    const sessionId = this.currentSessionId();
-    if (sessionId) {
-      // End current session but don't create a new one
-      this.aiAssistantService.endSession(sessionId).subscribe({
-        next: () => {
-          this.currentSessionId.set(null);
-          this.isLoading.set(false);
-          // Refresh sessions list
-          this.loadUserSessions().subscribe();
-        },
-        error: (error) => {
-          console.error('Failed to end session:', error);
-          this.currentSessionId.set(null);
-          this.isLoading.set(false);
-        }
-      });
-    } else {
-      // No active session, just reset state
-      this.currentSessionId.set(null);
-      this.isLoading.set(false);
-    }
+    // No active session, just reset state
+    this.currentSessionId.set(null);
+    this.isLoading.set(false);
   }
 
   private loadOrCreateSession(): Observable<void> {

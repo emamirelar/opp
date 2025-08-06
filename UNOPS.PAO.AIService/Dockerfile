@@ -15,14 +15,15 @@ RUN apt-get update && apt-get install -y \
     g++ \
     libpq-dev \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Requirements first to leverage Docker layer caching
-COPY Requirements.txt .
+# Copy requirements first to leverage Docker layer caching
+COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r Requirements.txt
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .

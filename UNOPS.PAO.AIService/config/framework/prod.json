@@ -94,6 +94,13 @@
     "enable_search_agent": true,
     "enable_contextual_agent": true
   },
+  "action_logging": {
+      "enabled": true,
+      "auto_log_actions": true,
+      "log_followup_suggestions": true,
+      "retention_days": 90,
+      "enable_analytics": true
+  },
   "support": {
     "email": "your-support@unops.org",
     "response_template": "For technical support with {application_name}, please send an email to {support_email}.",

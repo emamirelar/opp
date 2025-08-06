@@ -127,6 +127,13 @@
     "enable_search_agent": true,
     "enable_contextual_agent": true
   },
+  "action_logging": {
+      "enabled": true,
+      "auto_log_actions": true,
+      "log_followup_suggestions": true,
+      "retention_days": 90,
+      "enable_analytics": true
+  },
   "support": {
     "email": "larsj@unops.org",
     "response_template": "For technical support with {application_name}, please send an email to {support_email}. Include details about your issue, steps to reproduce the problem, your username, organizational unit, and any error messages. Support tickets are typically responded to within 24-48 hours during business hours.",

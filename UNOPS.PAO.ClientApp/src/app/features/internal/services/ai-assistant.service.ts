@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, map, throwError, timer } from 'rxjs';
-import { catchError, mergeMap, retry, retryWhen } from 'rxjs/operators';
+import { catchError, mergeMap, retry, retryWhen, tap } from 'rxjs/operators';
 import {
   AiAssistantRequest,
   AiAssistantSessionRequest,

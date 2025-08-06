@@ -46,7 +46,7 @@ public class GeminiSessionService
     public IEnumerable<AiChatSession> GetUserSessions(int userId) {
         return (IEnumerable<AiChatSession>)_context.AiChatSession
                 .Where(x => x.UserId == userId)
-                .OrderBy(x => x.LastUpdated); // Place active sessions last
+                .OrderByDescending(x => x.LastUpdated); // Place most recent sessions first
     }
 
     // Get session data by session ID and user ID with chat messages from AI service

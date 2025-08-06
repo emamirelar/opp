@@ -446,11 +446,61 @@ export class TopbarComponent implements OnInit, OnDestroy {
           // Error processing notification data
         }
       } else {
-        this.componentResolverService.loadComponent(notification.category, null, notification.records);
+        // Handle data_modification notifications with entity routing
+        if (notification.responseType === 'data_modification' || notification.responseType === 'data_creation' || notification.responseType === 'data_updation') {
+          this.handleDataModificationNotification(notification);
+        } else {
+          this.componentResolverService.loadComponent(notification.category, null, notification.records);
+        }
         
         this.markNotificationAsRead(notification.id);
       }
     }
+  }
+
+  handleDataModificationNotification(notification: Notification): void {
+    if (!notification.records || notification.records.length === 0) {
+      return;
+    }
+
+    const record = notification.records[0] as any;
+    const entityType = record.entity_type || notification.category;
+    const entityId = record.entity_id;
+
+    if (!entityType || !entityId) {
+      console.warn('Missing entity_type or entity_id in notification record:', record);
+      return;
+    }
+
+    // Route to the appropriate entity page based on entity type
+    let route: string;
+    switch (entityType.toLowerCase()) {
+      case 'partner':
+        route = `/partner/view/${entityId}`;
+        break;
+      case 'contact':
+        route = `/contact/view/${entityId}`;
+        break;
+      case 'interaction':
+        route = `/interaction/view/${entityId}`;
+        break;
+      case 'project':
+        route = `/project/view/${entityId}`;
+        break;
+      case 'opportunity':
+        route = `/opportunity/view/${entityId}`;
+        break;
+      case 'user_preference':
+        route = `/profile`;
+        break;
+      default:
+        // Try to use the category as a direct route
+        route = `/${entityType}/view/${entityId}`;
+        break;
+    }
+
+    console.log(`Navigating to entity: ${entityType} with ID: ${entityId} -> ${route}`);
+    this.router.navigate([route]);
   }
   
   markNotificationAsRead(notificationId: number): void {
