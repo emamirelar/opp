@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
-import { NgIf, AsyncPipe } from '@angular/common';
+import { NgIf } from '@angular/common';
 
 import { PanelModule } from 'primeng/panel';
 import { TableModule } from 'primeng/table';
@@ -57,8 +57,7 @@ import { EntityConfigurationService } from '../../../services/entity-configurati
     TranslateModule,
     ListviewComponent,
     ConfirmDialog,
-    NgIf,
-    AsyncPipe
+    NgIf
   ],
   providers: [DialogService, ConfirmationService]
 })

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter, Subject, takeUntil } from 'rxjs';
 import { TranslateService, TranslateModule } from '@ngx-translate/core';
-import { ListviewCardComponent } from '../../../../pages/components/listview/card/listview-card.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { EntityConfigurationService } from '../../../../../features/internal/services/entity-configuration.service';
@@ -40,7 +39,7 @@ interface EntityTab {
 
 @Component({
   selector: 'app-global-search-bar',
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule, ListviewCardComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule],
   templateUrl: './global-search-bar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,

@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, OnInit, OnDestroy, ChangeDetectorRe
 import { MenuItem } from 'primeng/api';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageSelectorComponent } from './language-selector/language-selector.component';
-import { ProfileMenubarComponent } from './profile-menubar/profile-menubar.component';
 import { StyleClassModule } from 'primeng/styleclass';
 import { PrimeIcons } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -53,7 +52,7 @@ interface UserInfo {
     HttpClientModule,
     RouterModule,
     LanguageSelectorComponent,
-    ProfileMenubarComponent,
+
     StyleClassModule,
     ButtonModule,
     OverlayPanelModule,

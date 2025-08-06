@@ -13,7 +13,7 @@ import { SelectModule } from 'primeng/select';
 import { DialogModule } from 'primeng/dialog';
 import { PartnerTree } from '../../../models/partner-tree.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { PartnerTreeItemFooterComponent } from './partner-tree-item-footer.component';
+
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 
 interface PartnerTreeFormControls {
@@ -40,7 +40,7 @@ interface PartnerTreeFormControls {
     CommonModule,
     TextareaModule,
     DialogModule,
-    PartnerTreeItemFooterComponent
+
   ],
   templateUrl: './partner-tree-item.component.html',
   standalone: true,
@@ -94,9 +94,7 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
     this.parentOptions = this.partnerTreeService.parentOptions;
 
     // Setup footer template and bind actions
-    this.dialogConfig.templates = {
-      footer: PartnerTreeItemFooterComponent
-    };
+    // Note: Footer component removed as it was not used in template
     this.dialogConfig.data = {
       ...this.dialogConfig.data,
       handleDelete: () => this.handleDelete(),

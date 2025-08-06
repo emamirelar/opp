@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, inject, signal, ViewChild, WritableSignal, ChangeDetectorRef, OnInit, OnDestroy, computed} from '@angular/core';
 import { Interaction } from '../../../models/interaction.model';
 import { InteractionService } from '../../../services/interaction.service';
-import { NgIf} from '@angular/common';
+
 import {Button, ButtonDirective} from 'primeng/button';
 import { Router, ActivatedRoute} from '@angular/router';
 import { InteractionModalComponent } from '../modal/interaction-modal.component';
@@ -39,7 +39,6 @@ import { InteractionIconService } from '../../../../../common/services/interacti
   standalone: true,
   imports: [
     Button,
-    NgIf,
     TranslateModule,
     ListviewComponent,
   ],

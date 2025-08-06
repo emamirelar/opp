@@ -1,9 +1,10 @@
-import { Component, ViewChild, ViewContainerRef, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ViewContainerRef, AfterViewInit, inject } from '@angular/core';
 import { RouterModule, RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './essentials/services/auth.service';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FeedbackDialogComponent } from './common/reusables/widgets/feedback-dialog/feedback-dialog.component';
+import { TranslationCheckerService } from './services/translation-checker.service';
 
 @Component({
   selector: 'app-root',
@@ -27,13 +28,30 @@ export class AppComponent implements AfterViewInit {
   @ViewChild('dynamicComponent', { read: ViewContainerRef, static: false }) dynamicComponent!: ViewContainerRef;
   viewContainerRef!: ViewContainerRef;
   
+  private translationChecker = inject(TranslationCheckerService);
+  
   constructor(
     private authService: AuthService,
     private router: Router
   ) { }
   
   ngOnInit() {
-    
+    // Add translation monitoring for development
+    if (this.isProduction() === false) {
+      // Clear any previously cached false positives
+      this.translationChecker.clearMissingTranslations();
+      
+      // Perform fresh comprehensive check
+      this.translationChecker.performComprehensiveCheck().subscribe(results => {
+        const missing = results.reduce((sum, stat) => sum + stat.missingKeys, 0);
+        if (missing > 0) {
+          console.warn(`🚨 ${missing} missing translations detected`);
+          console.log('Translation check results:', results);
+        } else {
+          console.log('✅ All translations are complete!');
+        }
+      });
+    }
     
     const cookies = document.cookie.split(';').map(c => c.trim());
     const devCookie = cookies.find(c => c.startsWith('dev-user-email='));
@@ -65,6 +83,14 @@ export class AppComponent implements AfterViewInit {
       this.isLoggedIn = res;
       
     });
+  }
+
+  private isProduction(): boolean {
+    const hostname = window.location.hostname;
+    return hostname !== 'localhost' && 
+           hostname !== '127.0.0.1' &&
+           !hostname.includes('dev') &&
+           !hostname.includes('staging');
   }
   
   ngAfterViewInit() {
