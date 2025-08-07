@@ -1,28 +1,28 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace UNOPS.PAO.Models
 {
     public class ChatMessage
     {
-        [JsonPropertyName("role")]
+        [JsonProperty("role")]
         public string Role { get; set; }
         
-        [JsonPropertyName("text")]
+        [JsonProperty("text")]
         public string Text { get; set; }
         
-        [JsonPropertyName("timestamp")]
+        [JsonProperty("timestamp")]
         public DateTime? Timestamp { get; set; }
         
-        [JsonPropertyName("inlineData")]
+        [JsonProperty("inlineData")]
         public List<InlineData> InlineData { get; set; } = new List<InlineData>();
     }
 
     public class InlineData
     {
-        [JsonPropertyName("data")]
+        [JsonProperty("data")]
         public string Data { get; set; }
         
-        [JsonPropertyName("mimeType")]
+        [JsonProperty("mimeType")]
         public string MimeType { get; set; }
     }
 } 

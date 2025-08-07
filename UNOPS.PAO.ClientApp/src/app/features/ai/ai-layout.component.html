@@ -27,15 +27,6 @@
           </button>
         </div>
         
-        <!-- Collapsed sidebar icons -->
-        <div class="collapsed-icons p-2" *ngIf="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()">
-          <div class="collapsed-icon-item" pTooltip="Chat History" tooltipPosition="right">
-            <i class="pi pi-history"></i>
-          </div>
-          <div class="collapsed-icon-item" pTooltip="Settings" tooltipPosition="right">
-            <i class="pi pi-cog"></i>
-          </div>
-        </div>
         <!-- Full sidebar content when expanded -->
         <ng-container *ngIf="!layoutService.aiAssistantSidebarCollapsed() || sidebarHovered() || isMobile()">
           <!-- Fixed Header Section (New Chat + Search) -->

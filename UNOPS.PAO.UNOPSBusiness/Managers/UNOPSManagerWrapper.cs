@@ -53,7 +53,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         // Create a PartnerTreeService instance
         var partnerTreeRepository = new DataRepository<UNOPSPartnerTree>(opsContext);
         var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
-        
+
         systemAdminManager = new UNOPSSystemAdminManager(opsContext);
         contactManager = new UNOPSContactManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, contactManagerLogger, serviceProvider);
         interactionManager = new UNOPSInteractionManager(mapper, opsContext, configuration, permissionService, httpContextAccessor, serviceProvider);
@@ -61,8 +61,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor, serviceProvider);
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);
-        var notificationManager = new NotificationManager(opsContext, new UserResolverService<int>(httpContextAccessor));
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, httpClient, geminiManagerLogger, userManagementManager, notificationManager);
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, userManagementManager);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);
         entityConfigurationManager = new UNOPSEntityConfigurationManager(mapper, opsContext, configuration, permissionService);
     }

@@ -55,14 +55,13 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly GoogleTextToSpeechService _ttsService;
     private readonly TextExtractionService _textExtractionService;
     private readonly GoogleCloudStorageService _gcsService;
-    private readonly GeminiSessionService _sessionService;
+
     private readonly AiContextualService _aiService;
     private readonly ILogger<UNOPSGeminiManager> _logger;
     private readonly CloudRunHelper _cloudRunHelper;
     private readonly IUserManagementManager _userManagementManager;
-    private readonly NotificationManager _notificationManager;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, HttpClient httpClient, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, NotificationManager notificationManager)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager)
     {
         _mapper = mapper;
         _context = context;
@@ -70,7 +69,6 @@ public class UNOPSGeminiManager : IGeminiManager
         _configuration = configuration;
         _logger = logger;
         _userManagementManager = userManagementManager;
-        _notificationManager = notificationManager;
         
         // Initialize CloudRunHelper internally
         var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
@@ -80,7 +78,7 @@ public class UNOPSGeminiManager : IGeminiManager
                         .CreateScoped("https://www.googleapis.com/auth/spreadsheets.readonly");
         _textExtractionService = new TextExtractionService();
         _gcsService = new GoogleCloudStorageService(configuration);
-        _sessionService = new GeminiSessionService(context, httpClient, configuration);
+
         _ttsService = new GoogleTextToSpeechService();
         _aiService = new AiContextualService(configuration, _context, _credentials);
     }
@@ -266,12 +264,93 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId) 
     {
-        return await _sessionService.GetSessionDataWithChats(sessionId, userId);
+        try
+        {
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
+            
+            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+            {
+                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+            }
+            
+            var apiUrl = $"/session-with-chats?app_name={appName}&user_id={userId}&session_id={sessionId}";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var response = await httpClient.GetAsync(apiUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var sessionWithChats = JsonConvert.DeserializeObject<SessionWithChats>(jsonContent);
+                
+                if (sessionWithChats?.Session != null)
+                {
+                    // Get the actual session data from database to get real title, starred, archived status
+                    var dbSession = await _context.AiChatSession
+                        .FirstOrDefaultAsync(x => x.Id == sessionId && x.UserId == userId);
+                    
+                    if (dbSession != null)
+                    {
+                        // Update session with database values
+                        sessionWithChats.Session.Title = dbSession.Title ?? "New Chat";
+                        sessionWithChats.Session.Starred = dbSession.Starred;
+                        sessionWithChats.Session.Archived = dbSession.Archived;
+                        sessionWithChats.Session.AiGenerateTitle = dbSession.AiGenerateTitle;
+                        sessionWithChats.Session.LastUpdated = dbSession.LastUpdated;
+                    }
+                }
+                
+                return sessionWithChats ?? new SessionWithChats();
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to fetch session with chats from external API. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error calling external API for session with chats: {ex.Message}", ex);
+        }
     }
 
     public async Task<IEnumerable<AiChatSession>> GetSessionData(string sessionId, int userId) 
     {
-        return await _sessionService.GetSessionData(sessionId, userId);
+        try
+        {
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            var appName = _configuration.GetValue<string>("AgenticAi:AppName");
+            
+            if (string.IsNullOrEmpty(serviceUrl) || string.IsNullOrEmpty(appName))
+            {
+                throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
+            }
+            
+            var apiUrl = $"/session-data?app_name={appName}&user_id={userId}&session_id={sessionId}";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            var response = await httpClient.GetAsync(apiUrl);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonContent = await response.Content.ReadAsStringAsync();
+                var sessionData = JsonConvert.DeserializeObject<IEnumerable<AiChatSession>>(jsonContent);
+                
+                return sessionData ?? new List<AiChatSession>();
+            }
+            else
+            {
+                throw new HttpRequestException($"Failed to fetch session data from external API. Status: {response.StatusCode}, Reason: {response.ReasonPhrase}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error calling external API for session data: {ex.Message}", ex);
+        }
     }
 
     public async Task<IEnumerable<AiChatSession>> GetUserSessions(int userId) 
@@ -286,7 +365,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 throw new InvalidOperationException("AgenticAi configuration is missing or incomplete.");
             }
             
-            var apiUrl = $"/apps/{appName}/users/{userId}/sessions";
+            var apiUrl = $"/user-sessions?app_name={appName}&user_id={userId}";
             
             using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
             httpClient.Timeout = TimeSpan.FromSeconds(30);
@@ -324,7 +403,7 @@ public class UNOPSGeminiManager : IGeminiManager
                             Id = extSession.Id,
                             UserId = extSession.UserId,
                             Status = extSession.Status,
-                            LastUpdated = DateTime.UtcNow,
+                            LastUpdated = dbSession.LastUpdated, // Use actual database timestamp
                             Title = dbSession.Title ?? "New Chat",
                             Starred = dbSession.Starred,
                             Archived = dbSession.Archived,
@@ -339,7 +418,7 @@ public class UNOPSGeminiManager : IGeminiManager
                             Id = extSession.Id,
                             UserId = extSession.UserId,
                             Status = extSession.Status,
-                            LastUpdated = DateTime.UtcNow,
+                            LastUpdated = DateTime.UtcNow, // Use current time for new sessions
                             Title = "New Chat",
                             Starred = false,
                             Archived = false,
@@ -378,22 +457,64 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<bool> UpdateAiAssistantAccessibility(GeminiAccessibilityRequest req)
     {
-        return await _sessionService.UpdateAiAssistantAccessibility(req);
+        var session = await _context.AiChatSession
+                                .FirstOrDefaultAsync(x => x.Id == req.SessionId);
+
+        if (session != null)
+        {
+            // Note: TextToSpeech property not available in AiChatSession entity
+            // This functionality may need to be implemented separately or added to the entity
+            await _context.SaveChangesAsync();
+            return true; // Save changes to DB
+        }
+
+        return false; // No session found
     }
 
     public async Task<bool> UpdateSessionStar(string sessionId, bool starred)
     {
-        return await _sessionService.UpdateSessionStar(sessionId, starred);
+        var session = await _context.AiChatSession
+                                .FirstOrDefaultAsync(x => x.Id == sessionId);
+
+        if (session != null)
+        {
+            session.Starred = starred;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        return false;
     }
 
     public async Task<bool> UpdateSessionArchive(string sessionId, bool archived)
     {
-        return await _sessionService.UpdateSessionArchive(sessionId, archived);
+        var session = await _context.AiChatSession
+                                .FirstOrDefaultAsync(x => x.Id == sessionId);
+
+        if (session != null)
+        {
+            session.Archived = archived;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        return false;
     }
 
     public async Task<bool> UpdateSessionTitle(string sessionId, string title)
     {
-        return await _sessionService.UpdateSessionTitle(sessionId, title);
+        var session = await _context.AiChatSession
+                                .FirstOrDefaultAsync(x => x.Id == sessionId);
+
+        if (session != null)
+        {
+            session.Title = title;
+            session.AiGenerateTitle = false;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        return false;
     }
 
     public async Task UpdateSessionTitleAndFlag(string sessionId, string title)
@@ -891,9 +1012,6 @@ public class UNOPSGeminiManager : IGeminiManager
 
         var responseContent = await response.Content.ReadAsStringAsync();
 
-        // Process data_modifications for notifications
-        await ProcessDataModifications(responseContent, int.Parse(currentUserId));
-
         // Extract sessionId from req or responseContent
         string sessionId = req.sessionId;
         if (string.IsNullOrEmpty(sessionId))
@@ -963,88 +1081,5 @@ public class UNOPSGeminiManager : IGeminiManager
     {
         var session = await _context.AiChatSession.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId);
         return session != null && session.AiGenerateTitle;
-    }
-
-    /// <summary>
-    /// Process data_modifications from AI response and create notifications
-    /// </summary>
-    private async Task ProcessDataModifications(string responseContent, int userId)
-    {
-        try
-        {
-            var responseObj = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
-            var dataModifications = responseObj["data_modifications"] as Newtonsoft.Json.Linq.JArray;
-            
-            if (dataModifications == null || !dataModifications.Any())
-            {
-                return; // No data modifications to process
-            }
-
-            foreach (var modification in dataModifications)
-            {
-                var type = modification["type"]?.ToString();
-                var message = modification["message"]?.ToString();
-                var entityType = modification["entity_type"]?.ToString();
-                var entityIdRaw = modification["entity_id"]?.ToString();
-
-                if (string.IsNullOrEmpty(message) || string.IsNullOrEmpty(entityType) || string.IsNullOrEmpty(entityIdRaw))
-                {
-                    continue; // Skip invalid modifications
-                }
-
-                // Extract the actual ID from entity_id (handle both "proj_123" and "123" formats)
-                string entityId = ExtractEntityId(entityIdRaw);
-                
-                // Create notification record with entity info
-                var notificationRecord = new 
-                {
-                    entity_type = entityType,
-                    entity_id = entityId,
-                    modification_type = type,
-                    original_entity_id = entityIdRaw
-                };
-
-                // Create notification with entity type as category for routing
-                await _notificationManager.CreateNotification(
-                    userId: userId,
-                    message: message,
-                    category: entityType, // Use entity_type as category for routing (e.g., "partner", "project", etc.)
-                    responseType: type ?? "data_modification",
-                    record: notificationRecord
-                );
-
-                _logger.LogInformation($"Created notification for user {userId}: {message} (Entity: {entityType}, ID: {entityId})");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing data_modifications from AI response");
-            // Don't throw - we don't want to break the main chat flow if notification processing fails
-        }
-    }
-
-    /// <summary>
-    /// Extract entity ID from formats like "proj_123" or "partner_456" or just "123"
-    /// </summary>
-    private string ExtractEntityId(string entityIdRaw)
-    {
-        if (string.IsNullOrEmpty(entityIdRaw))
-        {
-            return string.Empty;
-        }
-
-        // Check if it contains an underscore (e.g., "proj_123")
-        if (entityIdRaw.Contains('_'))
-        {
-            var parts = entityIdRaw.Split('_');
-            if (parts.Length >= 2)
-            {
-                // Return the part after the last underscore
-                return parts.Last();
-            }
-        }
-
-        // Return as-is if no underscore (already just the ID)
-        return entityIdRaw;
     }
 }
