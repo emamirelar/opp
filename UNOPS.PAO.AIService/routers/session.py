@@ -8,6 +8,7 @@ for better organization.
 import logging
 import os
 import json
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request, Query
 from google.adk.sessions import DatabaseSessionService
 
@@ -406,7 +407,10 @@ async def get_user_sessions(
         
         # Get all sessions for the user
         logger.info(f"🔍 Retrieving sessions for app: {app_name}, user: {user_id}")
-        sessions = await session_service.list_sessions(app_name=app_name, user_id=user_id)
+        sessions_response = await session_service.list_sessions(app_name=app_name, user_id=user_id)
+        
+        # Extract sessions from the response object
+        sessions = sessions_response.sessions if hasattr(sessions_response, 'sessions') else []
         
         if not sessions:
             logger.info(f"📭 No sessions found for user {user_id} in app {app_name}")
@@ -415,17 +419,21 @@ async def get_user_sessions(
         logger.info(f"✅ Found {len(sessions)} sessions for user {user_id}")
         
         # Convert sessions to a serializable format
+        # Note: C# code will join with database to get actual LastUpdated, Title, etc.
         session_list = []
         for session in sessions:
+            # Handle different ADK Session object attributes
+            session_id = getattr(session, 'id', getattr(session, 'session_id', getattr(session, 'sessionId', None)))
+            
             session_data = {
-                "id": session.session_id,
+                "id": session_id,
                 "userId": int(user_id),
                 "status": "Active",  # Default status
-                "lastUpdated": session.updated_at.isoformat() if session.updated_at else None,
-                "title": "Chat Session",  # Default title - could be enhanced later
-                "starred": False,  # Default values
-                "archived": False,
-                "aiGenerateTitle": True
+                "lastUpdated": datetime.now(timezone.utc).isoformat(),  # Placeholder - C# will use database value
+                "title": "Chat Session",  # Placeholder - C# will use database value
+                "starred": False,  # Placeholder - C# will use database value
+                "archived": False,  # Placeholder - C# will use database value
+                "aiGenerateTitle": True  # Placeholder - C# will use database value
             }
             session_list.append(session_data)
         
@@ -436,4 +444,213 @@ async def get_user_sessions(
         logger.error(f"❌ Error retrieving user sessions: {str(e)}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve user sessions: {str(e)}")                
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve user sessions: {str(e)}")
+
+
+@router.get("/session-with-chats")
+async def get_session_with_chats(
+    app_name: str = Query(..., description="Application name"),
+    user_id: str = Query(..., description="User ID"),
+    session_id: str = Query(..., description="Session ID to retrieve chats from")
+):
+    """
+    Get a specific session with its chat history from the ADK session service
+    """
+    try:
+        logger.info("="*50)
+        logger.info(f"📋 Getting session with chats for app: {app_name}, user: {user_id}, session: {session_id}")
+        
+        # Create session service
+        db_url = config_manager.get_database_url()
+        session_service = DatabaseSessionService(db_url=db_url)
+        logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
+        
+        # Get the specific session
+        logger.info(f"🔍 Retrieving session for app: {app_name}, user: {user_id}, session: {session_id}")
+        session = await session_service.get_session(app_name=app_name, user_id=user_id, session_id=session_id)
+        
+        if not session:
+            logger.info(f"📭 Session not found: {session_id}")
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+        
+        logger.info(f"✅ Found session: {session_id}")
+        
+        # Get conversation history from session events
+        logger.info(f"💬 Retrieving conversation history for session: {session_id}")
+        conversation_history = []
+        if session and hasattr(session, 'events'):
+            conversation_history = session.events
+            logger.info(f"📝 Found {len(conversation_history)} events in session")
+        
+        logger.info(f"✅ Found {len(conversation_history) if conversation_history else 0} conversation items")
+        
+        # Handle different ADK Session object attributes
+        session_id_attr = getattr(session, 'id', getattr(session, 'session_id', getattr(session, 'sessionId', session_id)))
+        updated_at_attr = getattr(session, 'updated_at', getattr(session, 'updatedAt', getattr(session, 'last_updated', None)))
+        
+        # Provide default timestamp if none available (C# expects non-nullable DateTime)
+        default_timestamp = datetime.now(timezone.utc)
+        timestamp_iso = updated_at_attr.isoformat() if updated_at_attr else default_timestamp.isoformat()
+        
+        # Format the response to match expected C# SessionWithChats structure
+        session_with_chats = {
+            "session": {
+                "id": session_id_attr,
+                "userId": int(user_id),
+                "status": "Active",
+                "lastUpdated": timestamp_iso,
+                "title": "Chat Session",
+                "starred": False,
+                "archived": False,
+                "aiGenerateTitle": True
+            },
+            "chatMessages": []  # Changed from "chats" to match C# property name
+        }
+        
+        # Convert conversation history to chat format
+        if conversation_history:
+            chat_items = []  # Collect all chat items first for sorting
+            
+            for conv_item in conversation_history:
+                # Handle different ADK message formats
+                message_content = ""
+                role = "user"
+                timestamp = None
+                
+                if hasattr(conv_item, 'content'):
+                    # ADK Content object
+                    if hasattr(conv_item.content, 'parts') and conv_item.content.parts:
+                        # Extract text from parts
+                        text_parts = [part.text for part in conv_item.content.parts if hasattr(part, 'text') and part.text]
+                        message_content = " ".join(text_parts)
+                    role = getattr(conv_item.content, 'role', 'user')
+                elif hasattr(conv_item, 'parts'):
+                    # Direct parts access
+                    text_parts = [part.text for part in conv_item.parts if hasattr(part, 'text') and part.text]
+                    message_content = " ".join(text_parts)
+                    role = getattr(conv_item, 'role', 'user')
+                else:
+                    # Fallback to direct attributes
+                    message_content = str(getattr(conv_item, 'text', getattr(conv_item, 'message', '')))
+                    role = getattr(conv_item, 'role', 'user')
+                
+                # Get timestamp and handle different formats
+                timestamp = None
+                if hasattr(conv_item, 'timestamp'):
+                    timestamp = conv_item.timestamp
+                elif hasattr(conv_item, 'created_at'):
+                    timestamp = conv_item.created_at
+                
+                # Convert timestamp to ISO format
+                timestamp_iso = None
+                if timestamp:
+                    try:
+                        if isinstance(timestamp, (int, float)):
+                            # Unix timestamp - convert to datetime
+                            timestamp_iso = datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
+                        elif hasattr(timestamp, 'isoformat'):
+                            # Already a datetime object
+                            timestamp_iso = timestamp.isoformat()
+                        else:
+                            # Try to convert string or other format
+                            timestamp_iso = str(timestamp)
+                    except Exception as ts_error:
+                        logger.warning(f"⚠️ Failed to convert timestamp {timestamp}: {ts_error}")
+                        timestamp_iso = None
+                
+                if message_content:  # Only add non-empty messages
+                    # Convert timestamp string to datetime if needed
+                    timestamp_dt = None
+                    if timestamp_iso:
+                        try:
+                            timestamp_dt = datetime.fromisoformat(timestamp_iso.replace('Z', '+00:00'))
+                        except:
+                            timestamp_dt = None
+                    
+                    # Format to match C# ChatMessage model
+                    chat_item = {
+                        "role": role,
+                        "text": message_content,  # Changed from "message" to "text"
+                        "timestamp": timestamp_dt.isoformat() if timestamp_dt else None,
+                        "inlineData": [],  # Initialize empty inline data
+                        "_sort_timestamp": timestamp_dt if timestamp_dt else datetime.min  # For sorting
+                    }
+                    chat_items.append(chat_item)
+            
+            # Sort chat items by timestamp (oldest first for conversation flow)
+            chat_items.sort(key=lambda x: x['_sort_timestamp'])
+            
+            # Remove the temporary sort field and add to session
+            for chat_item in chat_items:
+                del chat_item['_sort_timestamp']
+                session_with_chats["chatMessages"].append(chat_item)
+        
+        logger.info(f"📋 Returning session with {len(session_with_chats['chatMessages'])} chat items")
+        return session_with_chats
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 404) as-is
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error retrieving session with chats: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve session with chats: {str(e)}")
+
+
+@router.get("/session-data")
+async def get_session_data(
+    app_name: str = Query(..., description="Application name"),
+    user_id: str = Query(..., description="User ID"),
+    session_id: str = Query(..., description="Session ID to retrieve")
+):
+    """
+    Get basic session data without chat history from the ADK session service
+    """
+    try:
+        logger.info("="*50)
+        logger.info(f"📋 Getting session data for app: {app_name}, user: {user_id}, session: {session_id}")
+        
+        # Create session service
+        db_url = config_manager.get_database_url()
+        session_service = DatabaseSessionService(db_url=db_url)
+        logger.info(f"🔧 Created session service with DB: {db_url[:50]}...")
+        
+        # Get the specific session
+        logger.info(f"🔍 Retrieving session for app: {app_name}, user: {user_id}, session: {session_id}")
+        session = await session_service.get_session(app_name=app_name, user_id=user_id, session_id=session_id)
+        
+        if not session:
+            logger.info(f"📭 Session not found: {session_id}")
+            return []
+        
+        logger.info(f"✅ Found session: {session_id}")
+        
+        # Handle different ADK Session object attributes
+        session_id_attr = getattr(session, 'id', getattr(session, 'session_id', getattr(session, 'sessionId', session_id)))
+        updated_at_attr = getattr(session, 'updated_at', getattr(session, 'updatedAt', getattr(session, 'last_updated', None)))
+        
+        # Provide default timestamp if none available (C# expects non-nullable DateTime)
+        default_timestamp = datetime.now(timezone.utc)
+        timestamp_iso = updated_at_attr.isoformat() if updated_at_attr else default_timestamp.isoformat()
+        
+        # Format the response to match expected structure (as array for compatibility)
+        session_data = [{
+            "id": session_id_attr,
+            "userId": int(user_id),
+            "status": "Active",
+            "lastUpdated": timestamp_iso,
+            "title": "Chat Session",
+            "starred": False,
+            "archived": False,
+            "aiGenerateTitle": True
+        }]
+        
+        logger.info(f"📋 Returning session data")
+        return session_data
+        
+    except Exception as e:
+        logger.error(f"❌ Error retrieving session data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve session data: {str(e)}")                
