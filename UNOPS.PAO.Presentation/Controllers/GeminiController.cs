@@ -362,6 +362,19 @@ public class GeminiController : BaseController
         return Ok(result);
     }
 
+    /// <summary>
+    /// Upgrades all AI prompts to use the latest available Gemini model
+    /// </summary>
+    /// <returns>Upgrade result with updated count and status</returns>
+    [HttpPost(APIDictionary.AiPromptsUpgradeModel)]
+    [AccessControlled(EntityTypes.AiPromptManagement, "update")]
+    public async Task<ActionResult> UpgradeGeminiModel()
+    {
+        // RBAC interceptor handles permission checking
+        var result = await _managerWrapper.AiPromptManager.UpgradeToLatestGeminiModelAsync(User);
+        return Ok(result);
+    }
+
     #endregion
 
     #region Existing Gemini Endpoints

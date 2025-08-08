@@ -617,6 +617,7 @@
     "useEntityId": "Use Entity ID",
     "useTestData": "Use Test Data",
     "preview": "Preview",
+    "rawText": "Raw Text",
     "rawResponse": "Raw Response",
     "promptFunction": "Prompt Function",
     "promptFunctionHelper": "Optional: Function name in the corresponding UNOPSManager class (e.g., GetBasicPartnerDetailsAsync). When provided, enables testing with real entity data.",
@@ -624,6 +625,55 @@
     "typeUnderscoreFormat": "Type must contain only lowercase letters, numbers, and underscores (e.g., my_prompt_type)",
     "createPromptNotice": "Important Notice",
     "createPromptDescription": "Creating a prompt from this screen has no effect on any application feature unless programmatic code is added to invoke this prompt by type. This is an administrative tool for prompt management only.",
+    "help": "Help",
+    "helpTitle": "AI Prompt Writing Guide",
+    "helpDescription": "Learn how to write effective prompts, use markdown formatting, and configure JSON responses.",
+    "quickTips": "Quick Tips",
+    "tip1": "Be specific and clear in your instructions",
+    "tip2": "Use {promptData} placeholder for dynamic content",
+    "tip3": "Test your prompts before saving",
+    "promptWritingGuide": "Prompt Writing Guide",
+    "promptGuideContent": "## How to Write Effective AI Prompts\\n\\n### 1. Be Clear and Specific\\n- Use clear, unambiguous language\\n- Specify exactly what you want the AI to do\\n- Include context and constraints\\n\\n### 2. Structure Your Prompt\\n```\\nRole: You are a helpful assistant...\\nTask: Analyze the following data...\\nFormat: Respond in JSON format...\\nConstraints: Keep responses under 500 words...\\n```\\n\\n### 3. Use the Placeholder\\n- Always include `{promptData}` where dynamic content should be inserted\\n- This will be replaced with actual data when the prompt is executed\\n\\n### 4. Provide Examples\\n- Show the AI what good output looks like\\n- Include sample inputs and expected outputs",
+    "markdownGuide": "Markdown Formatting",
+    "markdownGuideContent": "## Markdown Syntax Guide\\n\\n### Headers\\n```markdown\\n# Header 1\\n## Header 2\\n### Header 3\\n```\\n\\n### Text Formatting\\n```markdown\\n**Bold text**\\n*Italic text*\\n`Code text`\\n```\\n\\n### Lists\\n```markdown\\n- Bullet point 1\\n- Bullet point 2\\n\\n1. Numbered item 1\\n2. Numbered item 2\\n```\\n\\n### Code Blocks\\n```markdown\\n\\`\\`\\`json\\n{\\n  \\\"key\\\": \\\"value\\\"\\n}\\n\\`\\`\\`\\n```\\n\\n### Tables\\n```markdown\\n| Column 1 | Column 2 |\\n|----------|----------|\\n| Data 1   | Data 2   |\\n```",
+    "jsonResponseGuide": "JSON Response Configuration",
+    "jsonGuideContent": "## Requesting JSON Responses\\n\\n### 1. Specify JSON Format\\n```\\nRespond in valid JSON format with the following structure:\\n{\\n  \\\"summary\\\": \\\"Brief summary here\\\",\\n  \\\"details\\\": [\\\"Detail 1\\\", \\\"Detail 2\\\"],\\n  \\\"confidence\\\": 0.95\\n}\\n```\\n\\n### 2. Define Schema\\nAlways specify the exact JSON schema you want:\\n- Field names and types\\n- Required vs optional fields\\n- Value constraints\\n\\n### 3. Validation\\n```\\nEnsure the response is valid JSON that can be parsed.\\nDo not include any text outside the JSON object.\\n```\\n\\n### 4. Error Handling\\n```\\nIf you cannot provide the requested information, respond with:\\n{\\n  \\\"error\\\": \\\"Explanation of why data is unavailable\\\",\\n  \\\"partial_data\\\": {}\\n}\\n```",
+    "examples": "Example Prompts",
+    "examplesContent": "## Example Prompts\\n\\n### Contact Summary Prompt\\n```\\nAnalyze the contact information provided in {promptData} and create a comprehensive summary.\\n\\nInclude:\\n- Basic contact details\\n- Organization affiliation\\n- Recent interactions\\n- Key insights\\n\\nFormat the response in markdown with clear sections.\\n```\\n\\n### JSON Data Analysis\\n```\\nAnalyze the data in {promptData} and respond in JSON format:\\n\\n{\\n  \\\"summary\\\": \\\"Brief overview\\\",\\n  \\\"key_points\\\": [\\\"Point 1\\\", \\\"Point 2\\\"],\\n  \\\"recommendations\\\": [\\\"Action 1\\\", \\\"Action 2\\\"],\\n  \\\"confidence_score\\\": 0.0-1.0\\n}\\n\\nEnsure all responses are valid JSON.\\n```\\n\\n### Structured Report\\n```\\nGenerate a structured report for {promptData}:\\n\\n## Executive Summary\\n[Brief overview]\\n\\n## Key Findings\\n- Finding 1\\n- Finding 2\\n\\n## Recommendations\\n1. Recommendation 1\\n2. Recommendation 2\\n\\n## Next Steps\\n- [ ] Action item 1\\n- [ ] Action item 2\\n```",
+    "collapseGuide": "Collapse Guide",
+    "expandGuide": "Expand Guide",
+    "upgradeModel": "Upgrade Gemini Model",
+    "upgradeSuccess": "Successfully upgraded AI prompts to the latest Gemini model",
+    "alreadyLatest": "All AI prompts are already using the latest available model",
+    "contactSupport": "If you think there is a newer model that is not integrated with Opportunity+, please contact system support",
+    "upgradingModels": "Upgrading models...",
+    "upgradeError": "Error upgrading models",
+    "structurePrompt": "Structure Your Prompt",
+    "markdownBasics": "Markdown Basics",
+    "jsonResponse": "JSON Response",
+    "examplePrompt": "Example Prompt",
+    "addToPrompt": "Add this to your prompt:",
+    "roleInstruction": "You are a helpful assistant...",
+    "taskInstruction": "Analyze the data in {promptData}...",
+    "formatInstruction": "Respond in JSON/Markdown...",
+    "analysisExample": "Analyze the contact data in {promptData} and create a summary.",
+    "includeBasicInfo": "Include: Basic contact information",
+    "includeOrgDetails": "Organization details",
+    "includeRecentInteractions": "Recent interactions",
+    "formatMarkdownSections": "Format the response in markdown with clear sections.",
+    "promptTips": {
+      "beSpecific": "Be specific and clear in your instructions",
+      "usePlaceholder": "Use {promptData} placeholder for dynamic content", 
+      "testBefore": "Test your prompts before saving",
+      "structureWell": "Structure your prompts with clear roles and tasks",
+      "useExamples": "Provide examples of expected output format"
+    },
+    "promptStructure": {
+      "role": "Define the AI's role and expertise",
+      "task": "Clearly state what you want the AI to do",
+      "format": "Specify the desired output format",
+      "constraints": "Add any limitations or requirements"
+    },
     "descriptionPlaceholder": "Enter a brief description of what this prompt does..."
   },
   "entityManager": {
@@ -1177,6 +1227,44 @@
         "tourControl": {
           "title": "User Management Tours",
           "description": "Access specialized tours for different aspects of user administration, role management, and security configuration."
+        }
+      }
+    },
+    "aipromptDialog": {
+      "title": "AI Prompt Editor Tour",
+      "description": "Learn how to create and edit AI prompts with our comprehensive guide",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to the AI Prompt Editor",
+          "description": "This guided tour will show you how to create effective AI prompts, test them, and get help when needed."
+        },
+        "header": {
+          "title": "Dialog Header",
+          "description": "The header shows whether you're creating a new prompt or editing an existing one. Notice the help and tour buttons on the right."
+        },
+        "helpButton": {
+          "title": "AI Prompt Writing Guide",
+          "description": "The help panel is always visible on the right side, providing real-time guidance on writing effective prompts, markdown formatting, and JSON configuration."
+        },
+        "tourControl": {
+          "title": "Tour Control",
+          "description": "Use this button to restart the tour anytime or access other available tours in the system."
+        },
+        "typeField": {
+          "title": "Prompt Type",
+          "description": "Enter a unique identifier for your prompt using lowercase letters, numbers, and underscores (e.g., 'contact_summary')."
+        },
+        "promptField": {
+          "title": "Prompt Content",
+          "description": "Write your AI prompt here. Use {promptData} as a placeholder for dynamic content. Be specific and clear in your instructions. The large text area allows for detailed prompt engineering."
+        },
+        "testSection": {
+          "title": "Test Your Prompt",
+          "description": "Test your prompt before saving to ensure it works as expected. You can test with real entity data by providing an ID, or use custom test data to see how the AI responds to different inputs."
+        },
+        "helpTab": {
+          "title": "AI Writing Guide",
+          "description": "This always-visible help panel provides comprehensive guidance on writing effective prompts, using markdown formatting, and configuring JSON responses. Use it as a reference while crafting your prompts."
         }
       }
     }

@@ -62,7 +62,30 @@
         "uploadImage": "Enviar Imagem",
         "addLink": "Adicionar Link",
         "seeMore": "Ver mais",
-        "seeLess": "Ver menos"
+        "seeLess": "Ver menos",
+        "new": "Novo"
+    },
+    "aiPrompt": {
+        "preview": "Visualização",
+        "rawText": "Texto Simples",
+        "rawResponse": "Resposta Completa",
+        "help": "Ajuda",
+        "helpTitle": "Guia de Escrita de Prompts de IA",
+        "helpDescription": "Aprenda a escrever prompts eficazes, usar formatação markdown e configurar respostas JSON.",
+        "quickTips": "Dicas Rápidas",
+        "tip1": "Seja específico e claro em suas instruções",
+        "tip2": "Use o marcador {promptData} para conteúdo dinâmico",
+        "tip3": "Teste seus prompts antes de salvar",
+        "promptWritingGuide": "Guia de Escrita de Prompts",
+        "promptGuideContent": "## Como Escrever Prompts de IA Eficazes\\n\\n### 1. Seja Claro e Específico\\n- Use linguagem clara e inequívoca\\n- Especifique exatamente o que você quer que a IA faça\\n- Inclua contexto e restrições\\n\\n### 2. Estruture seu Prompt\\n```\\nPapel: Você é um assistente útil...\\nTarefa: Analise os seguintes dados...\\nFormato: Responda em formato JSON...\\n```",
+        "markdownGuide": "Formatação Markdown",
+        "markdownGuideContent": "## Guia de Sintaxe Markdown\\n\\n### Cabeçalhos\\n```markdown\\n# Cabeçalho 1\\n## Cabeçalho 2\\n### Cabeçalho 3\\n```\\n\\n### Formatação de Texto\\n```markdown\\n**Texto em negrito**\\n*Texto em itálico*\\n`Código de texto`\\n```",
+        "jsonResponseGuide": "Configuração de Resposta JSON",
+        "jsonGuideContent": "## Solicitar Respostas JSON\\n\\n### 1. Especificar Formato JSON\\n```\\nResponda em formato JSON válido com a seguinte estrutura:\\n{\\n  \\\"resumo\\\": \\\"Resumo breve aqui\\\",\\n  \\\"detalhes\\\": [\\\"Detalhe 1\\\", \\\"Detalhe 2\\\"]\\n}\\n```",
+        "examples": "Exemplos de Prompts",
+        "examplesContent": "## Exemplos de Prompts\\n\\n### Prompt de Resumo de Contato\\n```\\nAnalise as informações de contato fornecidas em {promptData} e crie um resumo abrangente.\\n\\nInclua:\\n- Detalhes básicos de contato\\n- Afiliação organizacional\\n- Interações recentes\\n```",
+        "collapseGuide": "Recolher Guia",
+        "expandGuide": "Expandir Guia"
     },
     "label": {
         "actions": "Ações",
@@ -900,6 +923,44 @@
         "tourControl": {
           "title": "Tours de Gerenciamento de Usuários",
           "description": "Acesse tours especializados para diferentes aspectos da administração de usuários, gerenciamento de funções e configuração de segurança."
+        }
+      }
+    },
+    "aipromptDialog": {
+      "title": "Tour do Editor de Prompts IA",
+      "description": "Aprenda a criar e editar prompts de IA com nosso guia abrangente",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Editor de Prompts IA",
+          "description": "Este tour guiado mostrará como criar prompts de IA eficazes, testá-los e obter ajuda quando necessário."
+        },
+        "header": {
+          "title": "Cabeçalho do Diálogo",
+          "description": "O cabeçalho mostra se você está criando um novo prompt ou editando um existente. Observe os botões de ajuda e tour à direita."
+        },
+        "helpButton": {
+          "title": "Guia de Escrita de Prompts IA",
+          "description": "O painel de ajuda está sempre visível no lado direito, fornecendo orientação em tempo real sobre como escrever prompts eficazes, formatação markdown e configuração JSON."
+        },
+        "tourControl": {
+          "title": "Controle de Tour",
+          "description": "Use este botão para reiniciar o tour a qualquer momento ou acessar outros tours disponíveis no sistema."
+        },
+        "typeField": {
+          "title": "Tipo de Prompt",
+          "description": "Digite um identificador único para seu prompt usando letras minúsculas, números e sublinhados (ex: 'resumo_contato')."
+        },
+        "promptField": {
+          "title": "Conteúdo do Prompt",
+          "description": "Escreva seu prompt de IA aqui. Use {promptData} como marcador para conteúdo dinâmico. Seja específico e claro em suas instruções."
+        },
+        "testSection": {
+          "title": "Teste seu Prompt",
+          "description": "Teste seu prompt antes de salvar para garantir que funciona conforme esperado. Você pode testar com dados de entidade reais ou usar dados de teste personalizados."
+        },
+        "helpTab": {
+          "title": "Guia de Escrita IA",
+          "description": "Este painel de ajuda sempre visível fornece orientação abrangente sobre escrever prompts eficazes, formatação markdown e configuração de respostas JSON."
         }
       }
     }

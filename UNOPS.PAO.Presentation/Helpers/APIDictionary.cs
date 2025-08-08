@@ -100,6 +100,7 @@ public class APIDictionary
     public const string AiPromptsByType = AiPrompts + "/type";
     public const string AiPromptsList = AiPrompts + "/list";
     public const string AiPromptsTest = AiPrompts + "/test";
+    public const string AiPromptsUpgradeModel = AiPrompts + "/upgrade-model";
 
     // Entity Configuration Management
     public const string EntityList = APIPrefix + "entities";

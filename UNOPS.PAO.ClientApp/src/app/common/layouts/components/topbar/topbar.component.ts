@@ -34,6 +34,7 @@ import { GlobalFiltersDialogComponent } from './global-filters-dialog/global-fil
 import { TranslateModule } from '@ngx-translate/core';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { TourControlComponent } from '../../../components/tour-control/tour-control.component';
+import { ConfigurationService } from '../../../../essentials/services/configuration.service';
 
 interface UserInfo {
   userId: number;
@@ -119,18 +120,26 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private cdr: ChangeDetectorRef,
     private router: Router,
-    private globalFilterService: GlobalFilterService
+    private globalFilterService: GlobalFilterService,
+    private configurationService: ConfigurationService
   ) {
     // Check if we're in development mode
     this.isDevelopment = this.checkIfDevelopment();
   }
 
   private checkIfDevelopment(): boolean {
-    // Method 1: Check for localhost in URL
+    // Get environment from configuration service
+    const config = this.configurationService.getConfig();
+    
+    if (config && config.environment) {
+      // Show impersonate roles button for any environment that is NOT 'Production'
+      return config.environment.toLowerCase() !== 'production';
+    }
+    
+    // Fallback to previous logic if config is not available
     const isLocalhost = window.location.hostname === 'localhost' || 
                         window.location.hostname === '127.0.0.1';
                         
-    // Method 2: Check for dev cookie
     const hasDevCookie = document.cookie.split(';')
       .some(c => c.trim().startsWith('dev-user-email='));
       
@@ -140,6 +149,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Initialize mobile detection
     this.detectMobile();
+    
+    // Re-check development mode now that component is initialized
+    // This ensures we have the latest configuration data
+    this.isDevelopment = this.checkIfDevelopment();
     
     this.authService.user().subscribe({
       next: (claims) => {
@@ -182,6 +195,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   private setupProfileMenu() {
+    // Re-check development mode to ensure current status
+    this.isDevelopment = this.checkIfDevelopment();
+    
     this.profileMenuItems = [
       {
         label: 'View Profile',
@@ -190,13 +206,17 @@ export class TopbarComponent implements OnInit, OnDestroy {
       },
       {
         separator: true
-      },
-      {
+      }
+    ];
+
+    // Only show Impersonate Roles button when NOT in Production environment
+    if (this.isDevelopment) {
+      this.profileMenuItems.push({
         label: 'Impersonate Roles',
         icon: 'pi pi-users',
         command: () => this.showRoleDialog()
-      }
-    ];
+      });
+    }
 
     // Add development-only menu items
     if (this.isDevelopment) {

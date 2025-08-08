@@ -21,6 +21,8 @@ import { InputIconModule } from 'primeng/inputicon';
 import { SliderModule } from 'primeng/slider';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { RadioButtonModule } from 'primeng/radiobutton';
+import { MarkdownModule } from 'ngx-markdown';
+import { TourControlComponent } from '../../../../common/components/tour-control/tour-control.component';
 import { MessageService } from 'primeng/api';
 import { ConfirmationService } from 'primeng/api';
 
@@ -116,7 +118,9 @@ function underscoreValidator(control: AbstractControl): ValidationErrors | null 
     InputIconModule,
     SliderModule,
     ToggleSwitchModule,
-    RadioButtonModule
+    RadioButtonModule,
+    MarkdownModule,
+    TourControlComponent
   ],
   providers: [MessageService, ConfirmationService],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -135,15 +139,17 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   loading = signal(false);
   saving = signal(false);
   testing = signal(false);
+  upgradingModel = signal(false);
   displayDialog = signal(false);
   totalRecords = signal(0);
   pageSize = signal(10);
   searchText = '';
   geminiModels = signal<GeminiModel[]>([]);
   testResults = signal<TestResult | null>(null);
-  activeTab = signal<'preview' | 'raw'>('preview');
+  activeTab = signal<'preview' | 'text' | 'raw'>('preview');
   configurationData = signal<ConfigurationData>({});
   showCreateBanner = signal(false);
+  showHelpTab = signal(true); // Default to open
   
   // Table state management for proper pagination, sorting, and search
   private currentTableState: any = {
@@ -865,6 +871,77 @@ Be extra cautious while deleting as there could be several dependencies within t
     this.subscriptions.add(sub);
   }
 
+  /**
+   * @uiButton upgrade_gemini_model
+   * @description Upgrades all AI prompts to use the latest available Gemini model
+   * @label Upgrade Gemini Model
+   * @icon pi pi-refresh
+   * @when_to_use When you want to upgrade all prompts to the newest Gemini model version
+   * @permissions AI_PROMPT_UPDATE
+   */
+  upgradeGeminiModel(): void {
+    // Check update permissions
+    const permissions = this.entityPermissions();
+    if (!permissions.permissions.canUpdate) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to upgrade AI prompts'
+      });
+      return;
+    }
+
+    this.upgradingModel.set(true);
+    
+    const sub = this.aiPromptService.upgradeGeminiModel().subscribe({
+      next: (response) => {
+        this.upgradingModel.set(false);
+        const result = response.body;
+        
+        if (result && result.success) {
+          if (result.alreadyLatest) {
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Already Up to Date',
+              detail: result.message + ' If you think there is a newer model that is not integrated with Opportunity+, please contact system support.'
+            });
+          } else {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Upgrade Complete',
+              detail: result.message
+            });
+            // Reload prompts to show updated models
+            this.loadPrompts();
+          }
+        } else if (result) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Upgrade Failed',
+            detail: result.message
+          });
+        } else {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Upgrade Failed',
+            detail: 'No response received from server'
+          });
+        }
+      },
+      error: (error) => {
+        this.upgradingModel.set(false);
+        console.error('Error upgrading Gemini models:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to upgrade Gemini models'
+        });
+      }
+    });
+
+    this.subscriptions.add(sub);
+  }
+
   private markFormGroupTouched(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
@@ -885,8 +962,20 @@ Be extra cautious while deleting as there could be several dependencies within t
    * @when_to_use Switch to Preview for readable output, or Raw to see technical JSON response details
    * @permissions None required
    */
-  setActiveTab(tab: 'preview' | 'raw'): void {
+  setActiveTab(tab: 'preview' | 'text' | 'raw'): void {
     this.activeTab.set(tab);
+  }
+
+  /**
+   * @uiButton toggle_help
+   * @description Toggles the help panel showing guidance on prompt writing, markdown, and AI configuration
+   * @label Help
+   * @icon pi pi-question-circle
+   * @when_to_use When you need guidance on writing effective prompts or understanding markdown formatting
+   * @permissions None required
+   */
+  toggleHelpTab(): void {
+    this.showHelpTab.set(!this.showHelpTab());
   }
 
   /**

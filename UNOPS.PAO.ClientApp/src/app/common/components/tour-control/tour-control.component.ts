@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -17,6 +17,9 @@ import { WelcomeTourService } from '../../services/welcome-tour.service';
   `]
 })
 export class TourControlComponent implements OnInit {
+  @Input() customTourFile?: string; // For dialog-specific tours
+  @Input() tourContext?: string; // Additional context for tour selection
+
   private router = inject(Router);
   private translateService = inject(TranslateService);
   private welcomeTourService = inject(WelcomeTourService);
@@ -47,23 +50,29 @@ export class TourControlComponent implements OnInit {
   }
 
   async detectTour() {
-    console.log('🎯 Starting tour for current page...');
+    console.log('🎯 Starting tour...');
     
     try {
       // Load tour registry
       const registry = await this.loadTourRegistry();
       
-      // Get current URL
-      const currentUrl = this.router.url;
-      console.log('📍 Current URL:', currentUrl);
-      
-      // Find matching tour from registry
       let tourFileName = null;
-      for (const route of registry.routes) {
-        if (this.matchesRoute(currentUrl, route.pattern)) {
-          tourFileName = route.tourFile;
-          console.log('🎯 Found matching route:', route.pattern, '→', tourFileName);
-          break;
+      
+      // Check for custom tour file first (for dialogs)
+      if (this.customTourFile) {
+        tourFileName = this.customTourFile;
+        console.log('🎯 Using custom tour file:', tourFileName);
+      } else {
+        // Get current URL and find matching tour from registry
+        const currentUrl = this.router.url;
+        console.log('📍 Current URL:', currentUrl);
+        
+        for (const route of registry.routes) {
+          if (this.matchesRoute(currentUrl, route.pattern)) {
+            tourFileName = route.tourFile;
+            console.log('🎯 Found matching route:', route.pattern, '→', tourFileName);
+            break;
+          }
         }
       }
       
