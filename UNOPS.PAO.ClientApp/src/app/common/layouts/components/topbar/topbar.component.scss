@@ -4,27 +4,38 @@
   display: block;
 }
 
+/* Notifications container - similar to tour control */
+.notifications-container {
+  position: relative;
+  display: inline-block;
+}
+
 .notification-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -8px;
+  right: -8px;
   background-color: var(--primary-color);
   color: white;
-  border-radius: 50%;
-  padding: 0 4px;
-  font-size: 9px;
-  min-width: 15px;
-  height: 15px;
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 10px;
+  min-width: 20px;
+  height: 20px;
   text-align: center;
-  z-index: 1;
+  z-index: 2;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  overflow: hidden;
   box-sizing: border-box;
   line-height: 1;
   font-weight: 600;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  
+  /* Auto-adjust width for larger numbers */
+  width: auto;
+  max-width: 60px;
 }
 
 .layout-topbar {
@@ -312,13 +323,15 @@
     }
     
     /* Optimize notification badge for mobile */
-    .notification-badge {
-      min-width: 12px;
-      height: 12px;
-      font-size: 8px;
-      padding: 0 2px;
-      top: -3px;
-      right: -3px;
+    .notifications-container .notification-badge {
+      min-width: 16px;
+      height: 16px;
+      font-size: 9px;
+      padding: 1px 4px;
+      top: -6px;
+      right: -6px;
+      border-radius: 10px;
+      border: 1px solid white;
     }
     
     .org-unit-filter-badge {

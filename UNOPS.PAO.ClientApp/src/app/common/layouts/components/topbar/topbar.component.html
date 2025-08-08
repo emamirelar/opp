@@ -59,19 +59,23 @@
 			</ng-template>
 		</p-button>
 		
-      <p-button
-			type="button"
-			[rounded]="true"
-			[text]="true"
-			aria-label="Notifications"
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative"
-			(onClick)="notificationPanel.toggle($event)"
-			class="notifications-button">
-			<ng-template pTemplate="content">
-				<i class="pi pi-bell text-xl"></i>
-				<span *ngIf="unreadCount > 0" class="notification-badge">{{unreadCount}}</span>
-			</ng-template>
-		</p-button>
+      <div class="relative notifications-container">
+			<p-button
+				type="button"
+				[rounded]="true"
+				[text]="true"
+				aria-label="Notifications"
+				styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
+				(onClick)="notificationPanel.toggle($event)"
+				class="notifications-button">
+				<ng-template pTemplate="content">
+					<i class="pi pi-bell text-xl"></i>
+				</ng-template>
+			</p-button>
+			
+			<!-- Notification badge positioned outside the button -->
+			<span *ngIf="unreadCount > 0" class="notification-badge" [attr.data-count]="unreadCount">{{getDisplayCount()}}</span>
+		</div>
       <p-overlayPanel #notificationPanel [style]="{width: '400px'}">
         <div class="notification-panel">
           <div class="notification-header">

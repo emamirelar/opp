@@ -605,7 +605,8 @@
           pTextarea
           [ngModel]="message()"
           (ngModelChange)="updateMessage($event)"
-          placeholder="{{ 'aiAssistant.typeMessage' | translate }}"
+          (paste)="onPaste($event)"
+          placeholder="{{ 'aiAssistant.typeMessageOrPaste' | translate }}"
           [rows]="1"
           class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent text-sm"
           (keydown.enter)="$event.preventDefault(); sendMessage()">

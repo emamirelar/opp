@@ -283,6 +283,7 @@
         "filesToSend": "Fichiers à envoyer:",
         "removeFile": "Supprimer le fichier",
         "typeMessage": "Tapez votre message...",
+        "typeMessageOrPaste": "Tapez votre message ou collez une image...",
         "takePhoto": "Prendre une photo",
         "attachFile": "Joindre un fichier",
         "recordAudio": "Enregistrer un message vocal",

@@ -389,6 +389,7 @@
     "filesToSend": "Files to send:",
     "removeFile": "Remove file",
     "typeMessage": "Type your message...",
+    "typeMessageOrPaste": "Type your message or paste an image...",
     "takePhoto": "Take a Photo",
     "attachFile": "Attach file",
     "recordAudio": "Record audio message",

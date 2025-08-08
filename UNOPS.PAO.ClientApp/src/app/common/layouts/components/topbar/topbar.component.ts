@@ -438,6 +438,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
     });
   }
 
+  getDisplayCount(): string {
+    if (this.unreadCount > 99) {
+      return '99+';
+    }
+    return this.unreadCount.toString();
+  }
+
   handleNotificationClick(notification: Notification) {
     // Handle AI data modification notifications (category format: ENTITYTYPE_ID)
     if (notification.responseType.startsWith("data_")) {
