@@ -438,4 +438,57 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
             return 1000; // Default value
         }
     }
+
+    public async Task<GeminiModelUpgradeResult> UpgradeToLatestGeminiModelAsync(ClaimsPrincipal user)
+    {
+        try
+        {
+            // Use the latest available model value - hardcoded as the newest in system
+            var latestModelValue = "gemini-2.5-flash";
+            var latestModelDisplay = "Gemini 2.5 Flash";
+
+            // Get all prompts using the repository's existing methods
+            var allPrompts = _promptRepository.GetAll().ToList();
+            var promptsToUpdate = allPrompts.Where(p => p.Model != latestModelValue).ToList();
+
+            if (!promptsToUpdate.Any())
+            {
+                return new GeminiModelUpgradeResult
+                {
+                    Success = true,
+                    UpdatedCount = 0,
+                    Message = "All AI prompts are already using the latest available model configured in the system. If you think there is a newer model available, please contact the administrator.",
+                    LatestModel = latestModelDisplay,
+                    AlreadyLatest = true
+                };
+            }
+
+            // Update all prompts to use the latest model
+            foreach (var prompt in promptsToUpdate)
+            {
+                prompt.Model = latestModelValue;
+                await _promptRepository.UpdateAsync(prompt);
+            }
+
+            return new GeminiModelUpgradeResult
+            {
+                Success = true,
+                UpdatedCount = promptsToUpdate.Count(),
+                Message = $"Successfully upgraded {promptsToUpdate.Count()} AI prompts to {latestModelDisplay}.",
+                LatestModel = latestModelDisplay,
+                AlreadyLatest = false
+            };
+        }
+        catch (Exception ex)
+        {
+            return new GeminiModelUpgradeResult
+            {
+                Success = false,
+                UpdatedCount = 0,
+                Message = $"Error upgrading models: {ex.Message}",
+                LatestModel = null,
+                AlreadyLatest = false
+            };
+        }
+    }
 } 

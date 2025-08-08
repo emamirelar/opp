@@ -29,4 +29,6 @@ public interface IAiPromptManager
     Task<IEnumerable<string>> GetProjectsAsync(ClaimsPrincipal user);
     
     Task<IEnumerable<string>> GetLocationsAsync(ClaimsPrincipal user);
+    
+    Task<GeminiModelUpgradeResult> UpgradeToLatestGeminiModelAsync(ClaimsPrincipal user);
 } 

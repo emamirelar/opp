@@ -22,3 +22,12 @@ public class AiPromptFilterRequest : PaginationRequest
 {
     public string? SearchText { get; set; }
 }
+
+public class GeminiModelUpgradeResult
+{
+    public bool Success { get; set; }
+    public int UpdatedCount { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public string? LatestModel { get; set; }
+    public bool AlreadyLatest { get; set; }
+}

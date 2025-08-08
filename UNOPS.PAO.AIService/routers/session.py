@@ -510,12 +510,17 @@ async def get_session_with_chats(
         # Convert conversation history to chat format
         if conversation_history:
             chat_items = []  # Collect all chat items first for sorting
+            response_formatter_messages = {}  # Track response_formatter_agent messages by invocation_id
             
             for conv_item in conversation_history:
                 # Handle different ADK message formats
                 message_content = ""
                 role = "user"
                 timestamp = None
+                author = getattr(conv_item, 'author', 'user')
+                invocation_id = getattr(conv_item, 'invocation_id', None)
+                
+                logger.debug(f"📝 Processing conversation item: author={author}, invocation_id={invocation_id}")
                 
                 if hasattr(conv_item, 'content'):
                     # ADK Content object
@@ -523,16 +528,16 @@ async def get_session_with_chats(
                         # Extract text from parts
                         text_parts = [part.text for part in conv_item.content.parts if hasattr(part, 'text') and part.text]
                         message_content = " ".join(text_parts)
-                    role = getattr(conv_item.content, 'role', 'user')
+                    role = getattr(conv_item.content, 'role', author)
                 elif hasattr(conv_item, 'parts'):
                     # Direct parts access
                     text_parts = [part.text for part in conv_item.parts if hasattr(part, 'text') and part.text]
                     message_content = " ".join(text_parts)
-                    role = getattr(conv_item, 'role', 'user')
+                    role = getattr(conv_item, 'role', author)
                 else:
                     # Fallback to direct attributes
                     message_content = str(getattr(conv_item, 'text', getattr(conv_item, 'message', '')))
-                    role = getattr(conv_item, 'role', 'user')
+                    role = getattr(conv_item, 'role', author)
                 
                 # Get timestamp and handle different formats
                 timestamp = None
@@ -567,15 +572,42 @@ async def get_session_with_chats(
                         except:
                             timestamp_dt = None
                     
-                    # Format to match C# ChatMessage model
-                    chat_item = {
-                        "role": role,
-                        "text": message_content,  # Changed from "message" to "text"
-                        "timestamp": timestamp_dt.isoformat() if timestamp_dt else None,
-                        "inlineData": [],  # Initialize empty inline data
-                        "_sort_timestamp": timestamp_dt if timestamp_dt else datetime.min  # For sorting
-                    }
-                    chat_items.append(chat_item)
+                    # Handle response_formatter_agent messages specially
+                    if author == "response_formatter_agent" and invocation_id:
+                        # Store only the latest response_formatter_agent message per invocation_id
+                        if invocation_id not in response_formatter_messages or (
+                            timestamp_dt and (
+                                not response_formatter_messages[invocation_id].get('_timestamp') or 
+                                timestamp_dt > response_formatter_messages[invocation_id]['_timestamp']
+                            )
+                        ):
+                            response_formatter_messages[invocation_id] = {
+                                "role": "assistant",  # Map response_formatter_agent to assistant
+                                "text": message_content,
+                                "timestamp": timestamp_dt.isoformat() if timestamp_dt else None,
+                                "inlineData": [],
+                                "_timestamp": timestamp_dt,  # Keep for comparison
+                                "_sort_timestamp": timestamp_dt if timestamp_dt else datetime.min
+                            }
+                    elif author == "user":
+                        # Always include user messages
+                        chat_item = {
+                            "role": "user",
+                            "text": message_content,
+                            "timestamp": timestamp_dt.isoformat() if timestamp_dt else None,
+                            "inlineData": [],
+                            "_sort_timestamp": timestamp_dt if timestamp_dt else datetime.min
+                        }
+                        chat_items.append(chat_item)
+                    # Skip other agent messages (entity_detection_agent, api_caller_agent, etc.)
+            
+            # Add filtered response_formatter_agent messages to chat_items
+            logger.info(f"🔍 Found {len(response_formatter_messages)} unique response_formatter_agent responses across invocations")
+            for invocation_id, response_msg in response_formatter_messages.items():
+                logger.info(f"   - Invocation {invocation_id}: {response_msg['text'][:50]}...")
+                # Remove the temporary timestamp field
+                response_msg.pop('_timestamp', None)
+                chat_items.append(response_msg)
             
             # Sort chat items by timestamp (oldest first for conversation flow)
             chat_items.sort(key=lambda x: x['_sort_timestamp'])

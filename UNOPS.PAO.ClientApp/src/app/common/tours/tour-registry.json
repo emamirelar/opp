@@ -61,6 +61,11 @@
       "description": "AI Prompts management page"
     },
     {
+      "pattern": "/admin/ai-prompt-management",
+      "tourFile": "aiprompt-dialog-tour",
+      "description": "AI Prompt editor dialog"
+    },
+    {
       "pattern": "/partnerships/contacts/:recordId/business-card-scanner",
       "tourFile": "businesscardscanner-tour",
       "description": "Business card scanner modal"

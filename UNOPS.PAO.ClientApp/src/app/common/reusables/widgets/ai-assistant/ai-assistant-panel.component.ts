@@ -222,6 +222,41 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     }
   }
 
+  onPaste(event: ClipboardEvent): void {
+    const clipboardData = event.clipboardData;
+    if (!clipboardData) return;
+
+    // Check if there are any files in the clipboard
+    const files = Array.from(clipboardData.files);
+    
+    if (files.length > 0) {
+      // Filter for image files
+      const imageFiles = files.filter(file => file.type.startsWith('image/'));
+      
+      if (imageFiles.length > 0) {
+        // Prevent default paste behavior for images
+        event.preventDefault();
+        
+        // Process the first image file
+        this.isProcessingFile.set(true);
+        this.processFiles([imageFiles[0]]);
+        
+        console.log(`📋 Pasted image: ${imageFiles[0].name || 'clipboard-image'} (${imageFiles[0].type})`);
+        
+        // Clear any existing message text since we're sending an image
+        if (this.message().trim() === '') {
+          // Optionally show a placeholder message that an image was pasted
+          // this.message.set('🖼️ Image pasted');
+        }
+      } else if (files.length > 0) {
+        // Non-image files detected
+        console.log(`📋 Non-image files detected in clipboard, skipping file processing`);
+      }
+    }
+    
+    // If no image files, let the default paste behavior handle text
+  }
+
   private async processFiles(files: File[]): Promise<void> {
     try {
       const contents = await Promise.all(files.map(file => this.readFileAsBase64(file)));

@@ -70,7 +70,49 @@
         "addLink": "Ajouter un lien",
         "seeMore": "Voir plus",
         "seeLess": "Voir moins",
-        "chooseImage": "Choisir une image"
+        "chooseImage": "Choisir une image",
+        "new": "Nouveau"
+    },
+    "aiPrompt": {
+        "preview": "Aperçu",
+        "rawText": "Texte Brut",
+        "rawResponse": "Réponse Brute",
+        "help": "Aide",
+        "helpTitle": "Guide de Rédaction de Prompts IA",
+        "helpDescription": "Apprenez à rédiger des prompts efficaces, utiliser le formatage markdown et configurer les réponses JSON.",
+        "quickTips": "Conseils Rapides",
+        "tip1": "Soyez spécifique et clair dans vos instructions",
+        "tip2": "Utilisez le placeholder {promptData} pour le contenu dynamique",
+        "tip3": "Testez vos prompts avant de sauvegarder",
+        "promptWritingGuide": "Guide de Rédaction de Prompts",
+        "promptGuideContent": "## Comment Rédiger des Prompts IA Efficaces\\n\\n### 1. Soyez Clair et Spécifique\\n- Utilisez un langage clair et sans ambiguïté\\n- Spécifiez exactement ce que vous voulez que l'IA fasse\\n- Incluez le contexte et les contraintes\\n\\n### 2. Structurez votre Prompt\\n```\\nRôle: Vous êtes un assistant utile...\\nTâche: Analysez les données suivantes...\\nFormat: Répondez en format JSON...\\nContraintes: Gardez les réponses sous 500 mots...\\n```",
+        "markdownGuide": "Formatage Markdown",
+        "markdownGuideContent": "## Guide de Syntaxe Markdown\\n\\n### En-têtes\\n```markdown\\n# En-tête 1\\n## En-tête 2\\n### En-tête 3\\n```\\n\\n### Formatage de Texte\\n```markdown\\n**Texte gras**\\n*Texte italique*\\n`Code texte`\\n```",
+        "jsonResponseGuide": "Configuration de Réponse JSON",
+        "jsonGuideContent": "## Demander des Réponses JSON\\n\\n### 1. Spécifier le Format JSON\\n```\\nRépondez en format JSON valide avec la structure suivante:\\n{\\n  \\\"résumé\\\": \\\"Résumé bref ici\\\",\\n  \\\"détails\\\": [\\\"Détail 1\\\", \\\"Détail 2\\\"]\\n}\\n```",
+        "examples": "Exemples de Prompts",
+        "examplesContent": "## Exemples de Prompts\\n\\n### Prompt de Résumé de Contact\\n```\\nAnalysez les informations de contact fournies dans {promptData} et créez un résumé complet.\\n\\nIncluez:\\n- Détails de contact de base\\n- Affiliation organisationnelle\\n- Interactions récentes\\n```",
+        "collapseGuide": "Réduire le Guide",
+        "expandGuide": "Développer le Guide",
+        "upgradeModel": "Mettre à jour le modèle Gemini",
+        "upgradeSuccess": "Prompts IA mis à jour avec succès vers le dernier modèle Gemini",
+        "alreadyLatest": "Tous les prompts IA utilisent déjà le dernier modèle disponible",
+        "contactSupport": "Si vous pensez qu'il y a un modèle plus récent qui n'est pas intégré avec Opportunity+, veuillez contacter le support système",
+        "upgradingModels": "Mise à jour des modèles...",
+        "upgradeError": "Erreur lors de la mise à jour des modèles",
+        "structurePrompt": "Structurer votre Prompt",
+        "markdownBasics": "Bases de Markdown",
+        "jsonResponse": "Réponse JSON",
+        "examplePrompt": "Exemple de Prompt",
+        "addToPrompt": "Ajoutez ceci à votre prompt:",
+        "roleInstruction": "Vous êtes un assistant utile...",
+        "taskInstruction": "Analysez les données dans {promptData}...",
+        "formatInstruction": "Répondez en format JSON/Markdown...",
+        "analysisExample": "Analysez les données de contact dans {promptData} et créez un résumé.",
+        "includeBasicInfo": "Inclure: Informations de contact de base",
+        "includeOrgDetails": "Détails de l'organisation",
+        "includeRecentInteractions": "Interactions récentes",
+        "formatMarkdownSections": "Formatez la réponse en markdown avec des sections claires."
     },
     "label": {
         "actions": "Actions",
@@ -241,6 +283,7 @@
         "filesToSend": "Fichiers à envoyer:",
         "removeFile": "Supprimer le fichier",
         "typeMessage": "Tapez votre message...",
+        "typeMessageOrPaste": "Tapez votre message ou collez une image...",
         "takePhoto": "Prendre une photo",
         "attachFile": "Joindre un fichier",
         "recordAudio": "Enregistrer un message vocal",
@@ -940,6 +983,44 @@
         "tourControl": {
           "title": "Tours de Gestion des Utilisateurs",
           "description": "Accédez aux tours spécialisés pour différents aspects de l'administration des utilisateurs, gestion des rôles et configuration de sécurité."
+        }
+      }
+    },
+    "aipromptDialog": {
+      "title": "Tour de l'Éditeur de Prompts IA",
+      "description": "Apprenez à créer et éditer des prompts IA avec notre guide complet",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenue dans l'Éditeur de Prompts IA",
+          "description": "Cette visite guidée vous montrera comment créer des prompts IA efficaces, les tester et obtenir de l'aide quand nécessaire."
+        },
+        "header": {
+          "title": "En-tête du Dialogue",
+          "description": "L'en-tête indique si vous créez un nouveau prompt ou modifiez un existant. Remarquez les boutons d'aide et de visite à droite."
+        },
+        "helpButton": {
+          "title": "Guide de Rédaction de Prompts IA",
+          "description": "Le panneau d'aide est toujours visible à droite, fournissant des conseils en temps réel sur la rédaction de prompts efficaces, le formatage markdown et la configuration JSON."
+        },
+        "tourControl": {
+          "title": "Contrôle de Visite",
+          "description": "Utilisez ce bouton pour redémarrer la visite à tout moment ou accéder à d'autres visites disponibles dans le système."
+        },
+        "typeField": {
+          "title": "Type de Prompt",
+          "description": "Entrez un identifiant unique pour votre prompt en utilisant des lettres minuscules, des chiffres et des underscores (ex: 'resume_contact')."
+        },
+        "promptField": {
+          "title": "Contenu du Prompt",
+          "description": "Rédigez votre prompt IA ici. Utilisez {promptData} comme placeholder pour le contenu dynamique. Soyez spécifique et clair dans vos instructions."
+        },
+        "testSection": {
+          "title": "Testez Votre Prompt",
+          "description": "Testez votre prompt avant de sauvegarder pour vous assurer qu'il fonctionne comme attendu. Vous pouvez tester avec des données d'entité réelles ou des données de test personnalisées."
+        },
+        "helpTab": {
+          "title": "Guide de Rédaction IA",
+          "description": "Ce panneau d'aide toujours visible fournit des conseils complets sur la rédaction de prompts efficaces, le formatage markdown et la configuration des réponses JSON."
         }
       }
     }

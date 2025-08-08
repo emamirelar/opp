@@ -2,14 +2,26 @@
   <!-- Header -->
   <div class="flex justify-between items-center mb-6 ai-prompt-header">
     <h1 class="text-3xl font-bold">{{ 'aiPrompt.title' | translate }}</h1>
-    @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
-      <p-button
-        [label]="'aiPrompt.createNew' | translate"
-        icon="pi pi-plus"
-        (onClick)="openEditDialog()"
-        class="px-4 py-2 create-prompt-button">
-      </p-button>
-    }
+    <div class="flex gap-3">
+      @if (!permissionsLoading() && entityPermissions().permissions.canUpdate) {
+        <p-button
+          [label]="'aiPrompt.upgradeModel' | translate"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [loading]="upgradingModel()"
+          (onClick)="upgradeGeminiModel()"
+          class="px-4 py-2">
+        </p-button>
+      }
+      @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
+        <p-button
+          [label]="'aiPrompt.createNew' | translate"
+          icon="pi pi-plus"
+          (onClick)="openEditDialog()"
+          class="px-4 py-2 create-prompt-button">
+        </p-button>
+      }
+    </div>
   </div>
 
   <!-- Search Section -->
@@ -140,13 +152,26 @@
   <p-dialog
     [(visible)]="displayDialog"
     [modal]="true"
-    [header]="dialogTitle()"
     class="ai-prompt-dialog"
     [style]="{ 'min-width': '95vw', 'max-width': '1600px', 'height': '90vh' }"
     [closable]="true"
     [draggable]="false"
     [resizable]="false"
     styleClass="overflow-hidden">
+    
+    <ng-template pTemplate="header">
+      <div class="flex justify-between items-center w-full ai-prompt-dialog-header">
+        <h3 class="text-lg font-semibold text-gray-900">{{ dialogTitle() }}</h3>
+        <div class="flex items-center gap-2">
+          <!-- Tour Button -->
+          <app-tour-control 
+            class="ai-prompt-tour-control"
+            customTourFile="aiprompt-dialog-tour"
+            tourContext="dialog">
+          </app-tour-control>
+        </div>
+      </div>
+    </ng-template>
 
     <div class="h-full flex flex-col">
       <!-- Create Prompt Banner -->
@@ -182,9 +207,9 @@
       <div class="flex-1 overflow-hidden">
         <form [formGroup]="promptForm" class="h-full">
           <!-- Grid Container for Split Layout -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-            <!-- Left Side - Main Form (2/3 width) -->
-            <div class="lg:col-span-2 flex flex-col overflow-y-auto space-y-6 pr-6">
+          <div class="grid gap-6 h-full grid-cols-1" [class.xl:grid-cols-4]="showHelpTab()" [class.xl:grid-cols-3]="!showHelpTab()">
+            <!-- Left Side - Main Form -->
+            <div class="flex flex-col overflow-y-auto space-y-6 pr-6 xl:col-span-2">
               <!-- Basic Information -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-shrink-0">
                 <div class="space-y-2">
@@ -444,11 +469,11 @@
               </div>
             </div>
 
-            <!-- Right Side - Test Section Only (1/3 width) -->
-            <div class="lg:col-span-1 border-l border-gray-200 pl-6 flex flex-col overflow-hidden">
+            <!-- Test Section -->
+            <div class="border-l border-gray-200 pl-6 flex flex-col overflow-hidden xl:col-span-1">
               <div class="space-y-6 h-full flex flex-col overflow-y-auto">
                 <!-- Test Section -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-shrink-0">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-shrink-0 test-prompt-section">
                   <div class="space-y-4">
                     <div>
                       <h4 class="text-md font-semibold text-blue-800">{{ 'aiPrompt.testPrompt' | translate }}</h4>
@@ -565,6 +590,20 @@
                                   <button
                                     type="button"
                                     class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
+                                    [class.border-blue-500]="activeTab() === 'text'"
+                                    [class.bg-white]="activeTab() === 'text'"
+                                    [class.text-blue-700]="activeTab() === 'text'"
+                                    [class.shadow-sm]="activeTab() === 'text'"
+                                    [class.border-transparent]="activeTab() !== 'text'"
+                                    [class.text-gray-600]="activeTab() !== 'text'"
+                                    [class.hover:text-gray-800]="activeTab() !== 'text'"
+                                    (click)="setActiveTab('text')">
+                                    <i class="pi pi-file-text mr-2"></i>
+                                    {{ 'aiPrompt.rawText' | translate }}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    class="flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 transition-all duration-200 hover:bg-gray-100"
                                     [class.border-blue-500]="activeTab() === 'raw'"
                                     [class.bg-white]="activeTab() === 'raw'"
                                     [class.text-blue-700]="activeTab() === 'raw'"
@@ -582,8 +621,13 @@
                               <!-- Tab Content -->
                               <div class="p-3 min-h-[150px] max-h-[300px] overflow-y-auto">
                                 @if (activeTab() === 'preview') {
-                                  <!-- Preview Tab - Clean AI Response -->
-                                  <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ getAiResponseText(testResults()?.response) }}</div>
+                                  <!-- Preview Tab - Markdown Rendered AI Response -->
+                                  <div class="text-sm text-gray-700 prose prose-sm max-w-none">
+                                    <markdown [data]="getAiResponseText(testResults()?.response)"></markdown>
+                                  </div>
+                                } @else if (activeTab() === 'text') {
+                                  <!-- Raw Text Tab - Plain AI Response without JSON structure -->
+                                  <div class="text-sm text-gray-700 whitespace-pre-wrap font-mono">{{ getAiResponseText(testResults()?.response) }}</div>
                                 } @else {
                                   <!-- Raw Response Tab - Full JSON -->
                                   <pre class="text-xs text-gray-600 whitespace-pre-wrap font-mono">{{ testResults()?.response }}</pre>
@@ -604,6 +648,105 @@
                             {{ 'aiPrompt.testResultsPlaceholder' | translate }}
                           </div>
                         }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- AI Prompt Writing Guide - Always Available -->
+            <div class="relative border-l border-gray-200 flex flex-col overflow-hidden help-tab-section transition-all duration-300 xl:col-span-1 pl-6">
+              <div *ngIf="showHelpTab()" class="h-full flex flex-col overflow-y-auto">
+                  <!-- Header -->
+                  <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 flex-shrink-0 mb-6">
+                    <div class="flex items-center mb-3">
+                      <i class="pi pi-lightbulb text-2xl text-green-600 mr-3"></i>
+                      <h4 class="text-xl font-bold text-green-800">
+                        {{ 'aiPrompt.helpTitle' | translate }}
+                      </h4>
+                    </div>
+                    <p class="text-base text-green-700 leading-relaxed">{{ 'aiPrompt.helpDescription' | translate }}</p>
+                  </div>
+                  
+                <div class="space-y-4 flex-1 overflow-y-auto">
+                  <!-- Quick Tips -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.quickTips' | translate }}</h5>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                      <li class="flex items-start">
+                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-xs"></i>
+                        <span>{{ 'aiPrompt.tip1' | translate }}</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-xs"></i>
+                        <span>{{ 'aiPrompt.tip2' | translate }}</span>
+                      </li>
+                      <li class="flex items-start">
+                        <i class="pi pi-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0 text-xs"></i>
+                        <span>{{ 'aiPrompt.tip3' | translate }}</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <!-- Writing Structure -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.structurePrompt' | translate }}</h5>
+                    <div class="text-sm text-gray-700 space-y-3">
+                      <div class="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
+                        <strong class="text-blue-800">{{ 'aiPrompt.promptStructure.role' | translate }}:</strong>
+                        <span class="text-blue-700 ml-2">{{ 'aiPrompt.roleInstruction' | translate }}</span>
+                      </div>
+                      <div class="bg-green-50 p-3 rounded-lg border-l-4 border-green-500">
+                        <strong class="text-green-800">{{ 'aiPrompt.promptStructure.task' | translate }}:</strong>
+                        <span class="text-green-700 ml-2">{{ 'aiPrompt.taskInstruction' | translate }}</span>
+                      </div>
+                      <div class="bg-purple-50 p-3 rounded-lg border-l-4 border-purple-500">
+                        <strong class="text-purple-800">{{ 'aiPrompt.promptStructure.format' | translate }}:</strong>
+                        <span class="text-purple-700 ml-2">{{ 'aiPrompt.formatInstruction' | translate }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Markdown Basics -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.markdownBasics' | translate }}</h5>
+                    <div class="text-sm text-gray-700 space-y-2">
+                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-xs mr-3"># Header</code> → <strong>Header</strong></div>
+                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-xs mr-3">**bold**</code> → <strong>bold</strong></div>
+                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-xs mr-3">*italic*</code> → <em>italic</em></div>
+                      <div class="flex items-center"><code class="bg-gray-100 px-2 py-1 rounded text-xs mr-3">`code`</code> → <code>code</code></div>
+                    </div>
+                  </div>
+
+                  <!-- JSON Response -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.jsonResponse' | translate }}</h5>
+                    <div class="text-sm text-gray-700">
+                      <p class="mb-3 font-medium">{{ 'aiPrompt.addToPrompt' | translate }}</p>
+                      <div class="bg-gray-50 p-3 rounded-lg font-mono text-sm border">
+                        <div class="text-green-600 font-semibold mb-2">Respond in valid JSON format:</div>
+                        <div class="text-gray-800">&#123;</div>
+                        <div class="text-gray-800 ml-4">"summary": "Brief overview",</div>
+                        <div class="text-gray-800 ml-4">"details": ["item1", "item2"],</div>
+                        <div class="text-gray-800 ml-4">"confidence": 0.95</div>
+                        <div class="text-gray-800">&#125;</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Example -->
+                  <div class="bg-white border border-gray-200 rounded-lg p-4">
+                    <h5 class="font-semibold text-gray-800 mb-3 text-base">{{ 'aiPrompt.examplePrompt' | translate }}</h5>
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg text-sm text-gray-800 border border-blue-200">
+                      <div class="font-semibold text-blue-800 mb-3">{{ 'aiPrompt.analysisExample' | translate }}</div>
+                      <div class="space-y-2">
+                        <div class="text-blue-700">{{ 'aiPrompt.includeBasicInfo' | translate }}</div>
+                        <div class="text-blue-700">• {{ 'aiPrompt.includeOrgDetails' | translate }}</div>
+                        <div class="text-blue-700">• {{ 'aiPrompt.includeRecentInteractions' | translate }}</div>
+                      </div>
+                      <div class="mt-3 pt-3 border-t border-blue-200 text-blue-800 font-medium">
+                        {{ 'aiPrompt.formatMarkdownSections' | translate }}
                       </div>
                     </div>
                   </div>

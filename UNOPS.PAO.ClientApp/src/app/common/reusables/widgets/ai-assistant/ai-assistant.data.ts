@@ -171,6 +171,15 @@ export class AiAssistantData {
           this.sessionStarred.set(sessionData.session.starred);
           this.sessionArchived.set(sessionData.session.archived);
           
+          // Also update the session in the list to keep it in sync
+          this.userSessions.update(sessions =>
+            sessions.map(session =>
+              session.id === sessionId
+                ? { ...session, title: sessionData.session.title, starred: sessionData.session.starred, archived: sessionData.session.archived }
+                : session
+            )
+          );
+          
           // Update chat history
           if (sessionData.chatMessages) {
             const history = this.processNewChatHistory(sessionData.chatMessages);

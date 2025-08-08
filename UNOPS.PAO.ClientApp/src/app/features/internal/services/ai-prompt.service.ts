@@ -63,6 +63,14 @@ export interface TestPromptResponse {
   error?: string;
 }
 
+export interface GeminiModelUpgradeResult {
+  success: boolean;
+  updatedCount: number;
+  message: string;
+  latestModel?: string;
+  alreadyLatest: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -175,6 +183,15 @@ export class AiPromptService {
    */
   testPrompt(request: TestPromptRequest): Observable<HttpResponse<TestPromptResponse>> {
     return this.http.post<TestPromptResponse>(`${this.baseUrl}/test`, request, {
+      observe: 'response'
+    });
+  }
+
+  /**
+   * Upgrades all AI prompts to the latest available Gemini model
+   */
+  upgradeGeminiModel(): Observable<HttpResponse<GeminiModelUpgradeResult>> {
+    return this.http.post<GeminiModelUpgradeResult>(`${this.baseUrl}/upgrade-model`, {}, {
       observe: 'response'
     });
   }

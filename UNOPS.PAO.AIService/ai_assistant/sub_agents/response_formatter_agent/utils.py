@@ -315,8 +315,8 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
 		{
 			"type": "card",
 			"message": [
-				{"Contact ID": "123", "Name": "John Smith", "Title": "Manager", "Email": "john@example.com"},
-				{"Contact ID": "124", "Name": "Jane Doe", "Title": "Director", "Email": "jane@example.com"}
+				{"id": 123, "name": "John Smith", "title": "Manager", "email": "john@example.com"},
+				{"id": 124, "name": "Jane Doe", "title": "Director", "email": "jane@example.com"}
 			],
 			"entity": "Contact"
 		}
@@ -430,6 +430,8 @@ Your available types are: markdown, card, grid, json, mermaid.
 
 **🔍 CRITICAL: COMPLETE ENTITY DATA FOR CARDS:**
 - **ALWAYS include ALL available entity fields** when using card format - never send partial data
+- **USE ORIGINAL API PROPERTY NAMES** - Do NOT rename properties to display-friendly names
+- **PRESERVE EXACT FIELD NAMES** from API responses (e.g., "id", "name", "partnerType", "organizationName")
 - **Include essential display fields**: Name, ID, Logo/Avatar, Category, Status, Contact info, Address, etc.
 - **For Contacts**: Include name, title, email, phone, department, partner association, profile picture/avatar
 - **For Partners**: Include name, logo, category, group, short name, address, contact details, status
@@ -448,34 +450,35 @@ Your available types are: markdown, card, grid, json, mermaid.
 **🚨 CRITICAL: MULTIPLE ENTITIES OF SAME TYPE GROUPING:**
 - **When displaying multiple entities of the same type** (e.g., multiple partners, contacts, interactions), ALWAYS group them into ONE card object with an array in the message field
 - **NEVER create separate card objects for each entity** - this is inefficient and semantically incorrect
+- **🔑 CRITICAL: USE EXACT API PROPERTY NAMES** - Never rename or transform field names (e.g., use "id" not "Partner ID", "name" not "Name", "email" not "Contact Email")
 - **CORRECT FORMAT for multiple entities with COMPLETE data:**
   ```json
   {
     "type": "card",
     "message": [
       {
-        "Partner ID": "23", 
-        "Name": "ABC Corp", 
-        "Logo": "https://example.com/logo.png",
-        "Status": "Active", 
-        "Partner Category": "OECD/DAC Government",
-        "Partner Group": "Multilateral",
-        "Short Name": "ABC",
-        "Address": "123 Main St, City, Country",
-        "Contact Email": "contact@abc.com",
-        "Phone": "+1-555-0123"
+        "id": 23, 
+        "name": "ABC Corp", 
+        "logoUrl": "https://example.com/logo.png",
+        "status": "Active", 
+        "partnerCategory": "OECD/DAC Government",
+        "partnerGroup": "Multilateral",
+        "shortName": "ABC",
+        "address": "123 Main St, City, Country",
+        "email": "contact@abc.com",
+        "phone": "+1-555-0123"
       },
       {
-        "Partner ID": "24", 
-        "Name": "African Development Bank", 
-        "Logo": "https://example.com/adb-logo.png",
-        "Status": "Active", 
-        "Partner Category": "Non-OECD/DAC Government",
-        "Partner Group": "Regional Bank",
-        "Short Name": "AfDB",
-        "Address": "Abidjan, Côte d'Ivoire",
-        "Contact Email": "info@afdb.org",
-        "Phone": "+225-20-26-39-00"
+        "id": 24, 
+        "name": "African Development Bank", 
+        "logoUrl": "https://example.com/adb-logo.png",
+        "status": "Active", 
+        "partnerCategory": "Non-OECD/DAC Government",
+        "partnerGroup": "Regional Bank",
+        "shortName": "AfDB",
+        "address": "Abidjan, Côte d'Ivoire",
+        "email": "info@afdb.org",
+        "phone": "+225-20-26-39-00"
       }
     ],
     "entity": "Partner"
@@ -484,9 +487,9 @@ Your available types are: markdown, card, grid, json, mermaid.
 - **WRONG FORMAT (DO NOT DO THIS):**
   ```json
   [
-    {"type": "card", "message": {"Partner ID": "23", ...}, "entity": "Partner"},
-    {"type": "card", "message": {"Partner ID": "24", ...}, "entity": "Partner"},
-    {"type": "card", "message": {"Partner ID": "26", ...}, "entity": "Partner"}
+    {"type": "card", "message": {"id": 23, ...}, "entity": "Partner"},
+    {"type": "card", "message": {"id": 24, ...}, "entity": "Partner"},
+    {"type": "card", "message": {"id": 26, ...}, "entity": "Partner"}
   ]
   ```
 
@@ -570,83 +573,4 @@ def extract_key_data(api_result: Dict[str, Any]) -> Dict[str, Any]:
     return extracted
 
 
-def format_contact_data(contact: Dict[str, Any]) -> str:
-    """
-    Format a single contact into a user-friendly string.
-    
-    Args:
-        contact: Contact data dictionary
-        
-    Returns:
-        str: Formatted contact information
-    """
-    if not contact:
-        return ""
-    
-    name_parts = []
-    if contact.get("firstName"):
-        name_parts.append(contact["firstName"])
-    if contact.get("lastName"):
-        name_parts.append(contact["lastName"])
-    
-    name = " ".join(name_parts) if name_parts else contact.get("name", "Unknown")
-    title = contact.get("title", "")
-    organization = contact.get("organizationName", "")
-    email = contact.get("email", "")
-    phone = contact.get("phone", "")
-    
-    # Build formatted string
-    result = f"**{name}**"
-    
-    if title and organization:
-        result += f" - {title} at {organization}"
-    elif title:
-        result += f" - {title}"
-    elif organization:
-        result += f" - {organization}"
-    
-    details = []
-    if email:
-        details.append(f"📧 {email}")
-    if phone:
-        details.append(f"📱 {phone}")
-    
-    if details:
-        result += f"\n  {' | '.join(details)}"
-    
-    return result
 
-
-def format_partner_data(partner: Dict[str, Any]) -> str:
-    """
-    Format a single partner into a user-friendly string.
-    
-    Args:
-        partner: Partner data dictionary
-        
-    Returns:
-        str: Formatted partner information
-    """
-    if not partner:
-        return ""
-    
-    name = partner.get("name", partner.get("organizationName", "Unknown"))
-    partner_type = partner.get("partnerType", "")
-    website = partner.get("website", "")
-    description = partner.get("description", "")
-    
-    result = f"**{name}**"
-    
-    if partner_type:
-        result += f" ({partner_type})"
-    
-    details = []
-    if website:
-        details.append(f"🌐 {website}")
-    if description:
-        details.append(f"📝 {description}")
-    
-    if details:
-        result += f"\n  {' | '.join(details)}"
-    
-    return result

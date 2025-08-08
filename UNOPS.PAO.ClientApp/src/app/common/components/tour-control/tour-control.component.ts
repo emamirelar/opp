@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -13,10 +13,50 @@ import { WelcomeTourService } from '../../services/welcome-tour.service';
   imports: [CommonModule, ButtonModule, TooltipModule, TranslateModule],
   templateUrl: './tour-control.component.html',
   styles: [`
-    /* No special styling needed - button is now inline in the header */
+    :host ::ng-deep .tour-button {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    :host ::ng-deep .tour-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.6s;
+    }
+    
+    :host ::ng-deep .tour-button:hover::before {
+      left: 100%;
+    }
+    
+    :host ::ng-deep .tour-button .p-button-label {
+      color: white !important;
+    }
+    
+    :host ::ng-deep .tour-button:focus {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+    }
+    
+    /* Special styling for AI prompt dialog context */
+    :host.ai-prompt-tour-control ::ng-deep .tour-button {
+      background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%) !important;
+    }
+    
+    :host.ai-prompt-tour-control ::ng-deep .tour-button:hover {
+      background: linear-gradient(135deg, #059669 0%, #2563eb 100%) !important;
+      transform: scale(1.05);
+    }
   `]
 })
 export class TourControlComponent implements OnInit {
+  @Input() customTourFile?: string; // For dialog-specific tours
+  @Input() tourContext?: string; // Additional context for tour selection
+  @Input() hideNotificationDot: boolean = false; // Allow hiding the notification dot
+
   private router = inject(Router);
   private translateService = inject(TranslateService);
   private welcomeTourService = inject(WelcomeTourService);
@@ -40,6 +80,17 @@ export class TourControlComponent implements OnInit {
     console.log('🎯 TourControlComponent initialized');
   }
 
+  showNotificationDot(): boolean {
+    // Don't show if explicitly hidden
+    if (this.hideNotificationDot) {
+      return false;
+    }
+    
+    // Show notification dot to encourage tour usage
+    // Could be enhanced to check if user has taken tours recently
+    return true;
+  }
+
   // Development helper method - can be called from browser console
   public resetWelcomeTour(): void {
     this.welcomeTourService.resetWelcomeTourState();
@@ -47,23 +98,29 @@ export class TourControlComponent implements OnInit {
   }
 
   async detectTour() {
-    console.log('🎯 Starting tour for current page...');
+    console.log('🎯 Starting tour...');
     
     try {
       // Load tour registry
       const registry = await this.loadTourRegistry();
       
-      // Get current URL
-      const currentUrl = this.router.url;
-      console.log('📍 Current URL:', currentUrl);
-      
-      // Find matching tour from registry
       let tourFileName = null;
-      for (const route of registry.routes) {
-        if (this.matchesRoute(currentUrl, route.pattern)) {
-          tourFileName = route.tourFile;
-          console.log('🎯 Found matching route:', route.pattern, '→', tourFileName);
-          break;
+      
+      // Check for custom tour file first (for dialogs)
+      if (this.customTourFile) {
+        tourFileName = this.customTourFile;
+        console.log('🎯 Using custom tour file:', tourFileName);
+      } else {
+        // Get current URL and find matching tour from registry
+        const currentUrl = this.router.url;
+        console.log('📍 Current URL:', currentUrl);
+        
+        for (const route of registry.routes) {
+          if (this.matchesRoute(currentUrl, route.pattern)) {
+            tourFileName = route.tourFile;
+            console.log('🎯 Found matching route:', route.pattern, '→', tourFileName);
+            break;
+          }
         }
       }
       

@@ -1,0 +1,95 @@
+{
+  "tourId": "aiprompt-dialog-tour",
+  "titleKey": "tour.aipromptDialog.title",
+  "descriptionKey": "tour.aipromptDialog.description",
+  "entity": "AiPromptDialog",
+  "route": "/admin/ai-prompt-management",
+  "showButtons": [
+    "next",
+    "previous",
+    "close"
+  ],
+  "allowClose": true,
+  "overlayClickNext": false,
+  "popoverOffset": 10,
+  "steps": [
+    {
+      "popover": {
+        "titleKey": "tour.aipromptDialog.steps.welcome.title",
+        "descriptionKey": "tour.aipromptDialog.steps.welcome.description",
+        "side": "over",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".ai-prompt-dialog-header",
+      "fallbackType": "dialog-header",
+      "popover": {
+        "titleKey": "tour.aipromptDialog.steps.header.title",
+        "descriptionKey": "tour.aipromptDialog.steps.header.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".help-button",
+      "fallbackType": "help-button",
+      "popover": {
+        "titleKey": "tour.aipromptDialog.steps.helpButton.title",
+        "descriptionKey": "tour.aipromptDialog.steps.helpButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".ai-prompt-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.aipromptDialog.steps.tourControl.title",
+        "descriptionKey": "tour.aipromptDialog.steps.tourControl.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "input[formControlName='type']",
+      "fallbackType": "type-input",
+      "popover": {
+        "titleKey": "tour.aipromptDialog.steps.typeField.title",
+        "descriptionKey": "tour.aipromptDialog.steps.typeField.description",
+        "side": "right",
+        "align": "start"
+      }
+    },
+    {
+      "element": "textarea[formControlName='prompt']",
+      "fallbackType": "prompt-textarea",
+      "popover": {
+        "titleKey": "tour.aipromptDialog.steps.promptField.title",
+        "descriptionKey": "tour.aipromptDialog.steps.promptField.description",
+        "side": "right",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".test-prompt-section",
+      "fallbackType": "test-section",
+      "popover": {
+        "titleKey": "tour.aipromptDialog.steps.testSection.title",
+        "descriptionKey": "tour.aipromptDialog.steps.testSection.description",
+        "side": "left",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".help-tab-section",
+      "fallbackType": "help-tab",
+      "popover": {
+        "titleKey": "tour.aipromptDialog.steps.helpTab.title",
+        "descriptionKey": "tour.aipromptDialog.steps.helpTab.description",
+        "side": "left",
+        "align": "start"
+      }
+    }
+  ]
+}
