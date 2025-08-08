@@ -1012,6 +1012,9 @@ public class UNOPSGeminiManager : IGeminiManager
 
         var responseContent = await response.Content.ReadAsStringAsync();
 
+        // Check for data_modifications in the response and create notifications
+        await ProcessDataModificationsForNotifications(responseContent, int.Parse(currentUserId));
+
         // Extract sessionId from req or responseContent
         string sessionId = req.sessionId;
         if (string.IsNullOrEmpty(sessionId))
@@ -1081,5 +1084,196 @@ public class UNOPSGeminiManager : IGeminiManager
     {
         var session = await _context.AiChatSession.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId);
         return session != null && session.AiGenerateTitle;
+    }
+
+    /// <summary>
+    /// Process AI response for data_modifications and create notifications
+    /// </summary>
+    /// <param name="responseContent">The AI response content</param>
+    /// <param name="userId">The user ID who triggered the AI action</param>
+    private async Task ProcessDataModificationsForNotifications(string responseContent, int userId)
+    {
+        try
+        {
+            // Parse the response content to look for data_modifications
+            var responseObj = JObject.Parse(responseContent);
+            
+            // Look for data_modifications in events
+            var events = responseObj["events"] as JArray;
+            if (events != null)
+            {
+                foreach (var eventObj in events)
+                {
+                    await ProcessEventForDataModifications(eventObj, userId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Error processing data modifications for notifications: {ex.Message}");
+            // Don't rethrow - notification failures shouldn't break the chat response
+        }
+    }
+
+    /// <summary>
+    /// Process a single event for data_modifications
+    /// </summary>
+    /// <param name="eventObj">The event object to process</param>
+    /// <param name="userId">The user ID</param>
+    private async Task ProcessEventForDataModifications(JToken eventObj, int userId)
+    {
+        try
+        {
+            // Check if event has content
+            var content = eventObj["content"];
+            if (content != null)
+            {
+                // Look for data_modifications in the content
+                await ExtractAndCreateNotifications(content, userId);
+                
+                // Also check content parts if they exist
+                var parts = content["parts"] as JArray;
+                if (parts != null)
+                {
+                    foreach (var part in parts)
+                    {
+                        var text = part["text"]?.ToString();
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            await ExtractAndCreateNotificationsFromText(text, userId);
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Error processing event for data modifications: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Extract data_modifications from content and create notifications
+    /// </summary>
+    /// <param name="content">The content to process</param>
+    /// <param name="userId">The user ID</param>
+    private async Task ExtractAndCreateNotifications(JToken content, int userId)
+    {
+        try
+        {
+            // Convert content to string and try to parse as JSON
+            var contentStr = content.ToString();
+            
+            // Try to parse the content as JSON to find data_modifications
+            if (contentStr.Trim().StartsWith("{") || contentStr.Trim().StartsWith("["))
+            {
+                var contentData = JObject.Parse(contentStr);
+                var dataModifications = contentData["data_modifications"] as JArray;
+                
+                if (dataModifications != null && dataModifications.Count > 0)
+                {
+                    await CreateNotificationsFromModifications(dataModifications, userId);
+                }
+            }
+        }
+        catch (JsonReaderException)
+        {
+            // Content is not valid JSON, skip
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Error extracting notifications from content: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Extract data_modifications from text content and create notifications
+    /// </summary>
+    /// <param name="text">The text to process</param>
+    /// <param name="userId">The user ID</param>
+    private async Task ExtractAndCreateNotificationsFromText(string text, int userId)
+    {
+        try
+        {
+            // Try to parse the text as JSON to find data_modifications
+            if (text.Trim().StartsWith("{") || text.Trim().StartsWith("["))
+            {
+                var textData = JObject.Parse(text);
+                var dataModifications = textData["data_modifications"] as JArray;
+                
+                if (dataModifications != null && dataModifications.Count > 0)
+                {
+                    await CreateNotificationsFromModifications(dataModifications, userId);
+                }
+            }
+        }
+        catch (JsonReaderException)
+        {
+            // Text is not valid JSON, skip
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Error extracting notifications from text: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Create notification records from data_modifications array
+    /// </summary>
+    /// <param name="dataModifications">Array of data modification objects</param>
+    /// <param name="userId">The user ID</param>
+    private async Task CreateNotificationsFromModifications(JArray dataModifications, int userId)
+    {
+        try
+        {
+            foreach (var modification in dataModifications)
+            {
+                var modificationType = modification["type"]?.ToString() ?? "unknown";
+                var message = modification["message"]?.ToString() ?? "Data modification performed";
+                var entityType = modification["entity_type"]?.ToString() ?? "unknown";
+                var entityIdRaw = modification["entity_id"]?.ToString();
+
+                // Process entityId - handle cases where it might be "entity_<id>" format
+                string cleanEntityId = entityIdRaw;
+                if (!string.IsNullOrEmpty(entityIdRaw) && entityIdRaw.Contains('_'))
+                {
+                    var parts = entityIdRaw.Split('_');
+                    if (parts.Length > 1)
+                    {
+                        cleanEntityId = parts[1]; // Take the ID part after the underscore
+                    }
+                }
+
+                // Create category in format "ENTITYTYPE_ID"
+                var category = $"{entityType?.ToLower() ?? "UNKNOWN"}_{cleanEntityId ?? "0"}";
+
+                // Create notification record
+                var notification = new UNOPS.PAO.Domain.Entities.Notification
+                {
+                    UserId = userId,
+                    Message = message,
+                    Category = category,
+                    ResponseType = modificationType,
+                    RecordData = "[]",
+                    IsRead = false,
+                    Status = UNOPS.PAO.Domain.Enums.NotificationStatus.Done,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Notifications.Add(notification);
+                
+                _logger.LogInformation($"Created notification for user {userId}: {modificationType} on {entityType} {cleanEntityId}");
+            }
+
+            // Save all notifications to database
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation($"Successfully saved {dataModifications.Count} notifications for user {userId}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error creating notifications from modifications: {ex.Message}");
+            throw;
+        }
     }
 }

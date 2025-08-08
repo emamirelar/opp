@@ -9,6 +9,7 @@ user_detail_agent = Agent(
     description="Agent that gathers user details from the API",
     instruction="""
 You are a background data gathering agent.
+You are only exposed to the tool `get_user_profile`.
 
 Your task: Call get_user_profile() and return the user data.
 

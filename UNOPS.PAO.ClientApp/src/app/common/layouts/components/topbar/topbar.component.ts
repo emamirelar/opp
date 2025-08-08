@@ -417,6 +417,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   handleNotificationClick(notification: Notification) {
+    // Handle AI data modification notifications (category format: ENTITYTYPE_ID)
+    if (notification.responseType.startsWith("data_")) {
+      this.handleDataModificationNotification(notification);
+      return;
+    }
+
+    // Handle other notification types that require records
     if (notification.category && notification.records && notification.records.length > 0) {
       if (notification.category.startsWith('bulk_') && notification.responseType !== 'Error') {
         try {
@@ -445,43 +452,47 @@ export class TopbarComponent implements OnInit, OnDestroy {
           // Error processing notification data
         }
       } else {
-        // Handle data_modification notifications with entity routing
-        if (notification.responseType === 'data_modification' || notification.responseType === 'data_creation' || notification.responseType === 'data_updation') {
-          this.handleDataModificationNotification(notification);
-        } else {
-          this.componentResolverService.loadComponent(notification.category, null, notification.records);
-        }
-        
+        this.componentResolverService.loadComponent(notification.category, null, notification.records);
         this.markNotificationAsRead(notification.id);
       }
+    } else {
+      // For notifications without records, just mark as read
+      this.markNotificationAsRead(notification.id);
     }
   }
 
   handleDataModificationNotification(notification: Notification): void {
-    if (!notification.records || notification.records.length === 0) {
+    // Parse category in format "ENTITYTYPE_ID"
+    if (!notification.category || !notification.category.includes('_')) {
+      console.warn('Invalid category format. Expected "ENTITYTYPE_ID", got:', notification.category);
       return;
     }
 
-    const record = notification.records[0] as any;
-    const entityType = record.entity_type || notification.category;
-    const entityId = record.entity_id;
+    const categoryParts = notification.category.split('_');
+    if (categoryParts.length < 2) {
+      console.warn('Invalid category format. Expected "ENTITYTYPE_ID", got:', notification.category);
+      return;
+    }
 
-    if (!entityType || !entityId) {
-      console.warn('Missing entity_type or entity_id in notification record:', record);
+    const entityType = categoryParts[0].toLowerCase();
+    const entityId = categoryParts[1];
+
+    if (!entityType || !entityId || entityId === '0') {
+      console.warn('Missing or invalid entity type or ID in category:', notification.category);
       return;
     }
 
     // Route to the appropriate entity page based on entity type
     let route: string;
-    switch (entityType.toLowerCase()) {
+    switch (entityType) {
       case 'partner':
-        route = `/partner/view/${entityId}`;
+        route = `/partnerships/partner/${entityId}`;
         break;
       case 'contact':
-        route = `/contact/view/${entityId}`;
+        route = `/partnerships/contacts/${entityId}`;
         break;
       case 'interaction':
-        route = `/interaction/view/${entityId}`;
+        route = `/partnerships/interactions/${entityId}`;
         break;
       case 'project':
         route = `/project/view/${entityId}`;
@@ -493,13 +504,14 @@ export class TopbarComponent implements OnInit, OnDestroy {
         route = `/profile`;
         break;
       default:
-        // Try to use the category as a direct route
+        // Try to use the entity type as a direct route
         route = `/${entityType}/view/${entityId}`;
         break;
     }
 
     console.log(`Navigating to entity: ${entityType} with ID: ${entityId} -> ${route}`);
     this.router.navigate([route]);
+    this.markNotificationAsRead(notification.id);
   }
   
   markNotificationAsRead(notificationId: number): void {
@@ -622,7 +634,14 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
 
   onAIAssistantToggle() {
-    this.layoutService.onAIAssistantToggle();
+    // Check if user is on mobile
+    if (this.isMobile) {
+      // On mobile, navigate to /ai instead of opening overlay
+      this.router.navigate(['/ai']);
+    } else {
+      // On desktop, use the current overlay behavior
+      this.layoutService.onAIAssistantToggle();
+    }
   }
 
   onMenuButtonClick() {

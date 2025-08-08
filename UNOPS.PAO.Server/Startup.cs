@@ -130,6 +130,11 @@ public class Startup
             });
         }
         
+        if (!env.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
+        
         app.UseCors(myAllowSpecificOrigins);
         
         // Standard authentication processing
@@ -137,7 +142,6 @@ public class Startup
         
         app.UseAuthorization();
         
-        app.UseHttpsRedirection();
         app.UseExceptionHandler();
 
         // Configure Strict-Transport-Security header

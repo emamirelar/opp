@@ -68,9 +68,10 @@ geo_time_agent = LlmAgent(
     model=config_manager.get_gemini_model(),
     instruction="""
 You are a background data gathering agent.
+You are only exposed to the tool `geo_time_tool`.
 
 Your ONLY task is to provide the current geo-time information.
-To do this, you MUST use the `get_current_geo_time_tool`.
+To do this, you MUST use the `geo_time_tool` tool.
 
 It is not your task to worry about the user's request or message. They could be asking for any information / data operations which is independent of your task.
 You are the first agent to be called and hence the geo-time information is ALWAYS necessary to do any such above operations. No exceptions.

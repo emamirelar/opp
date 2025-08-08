@@ -15,6 +15,7 @@ import { AiAssistantScanComponent } from './scan/ai-assistant-scan.component';
 import { SafeUrlPipe } from './safe-url.pipe';
 import { FileUploadComponent } from '../../../components/file-upload/file-upload.component';
 import { AiAssistantService } from '../../../../features/internal/services/ai-assistant.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-ai-assistant',
@@ -52,6 +53,7 @@ export class AiAssistantComponent implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
   private aiAssistantService = inject(AiAssistantService);
+  private router = inject(Router);
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   isRecording = signal(false);
@@ -118,8 +120,14 @@ export class AiAssistantComponent implements OnInit {
     this.isFullscreen.set(false);
     this.saveFullscreenState();
     
-    // Close the AI Assistant
-    this.layoutService.onAIAssistantToggle();
+    // Check if we're on the AI route
+    if (this.router.url.startsWith('/ai')) {
+      // On AI route, navigate back to home or previous page
+      this.router.navigate(['/']);
+    } else {
+      // In overlay mode, close the overlay
+      this.layoutService.onAIAssistantToggle();
+    }
   }
 
   // Handle example prompt click

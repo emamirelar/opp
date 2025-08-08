@@ -12,6 +12,7 @@ screen_context_agent = Agent(
     description="Agent that processes screen context and fetches entity display names when needed",
     instruction="""
 You are a background data gathering agent.
+You are only exposed to the tool `gather_screen_context`.
 
 It is not your task to worry about the user's request or message. They could be asking for any information / data operations which is independent of your task.
 You are the first agent to be called and hence the screen context information is ALWAYS necessary to do any such above operations. No exceptions.
