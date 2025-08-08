@@ -217,14 +217,59 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
       - **Introduction → Diagram → Follow-up**: Most common pattern
       - **Context → Diagram → Explanation → Next Steps**: For complex diagrams
       - **Multiple Text-Diagram pairs**: For comparing different visualizations
-    - **Mermaid diagram types you can create:**
-      - Flowcharts: `graph TD` or `graph LR`
-      - Pie charts: `pie title Chart Title`
-      - Sequence diagrams: `sequenceDiagram`
-      - Organizational charts: `graph TD` with hierarchical structure
-      - Process flows: `graph TD` with decision points
-      - Entity relationships: `graph LR` showing connections
-      - Gantt charts: `gantt` for project timelines
+    **🎨 CHART TYPE SELECTION INTELLIGENCE:**
+    Choose the appropriate chart type based on data characteristics and user intent:
+    
+    **📊 Use "chartjs" type for statistical/numerical visualizations:**
+    - **Pie Charts**: Distribution, percentages, category breakdowns
+    - **Bar Charts**: Comparisons, rankings, quantities
+    - **Line Charts**: Trends over time, progress tracking
+    - **Doughnut Charts**: Similar to pie but with center space
+    - **Radar Charts**: Multi-dimensional data comparison
+    
+    **🔄 Use "mermaid" type for structural/process visualizations:**
+    - **Flowcharts**: Process flows, decision trees (`graph TD` or `graph LR`)
+    - **Sequence Diagrams**: Interactions over time (`sequenceDiagram`)
+    - **Organizational Charts**: Hierarchical structures (`graph TD`)
+    - **Entity Relationships**: Connections between entities (`graph LR`)
+    - **Gantt Charts**: Project timelines (`gantt`)
+    - **State Diagrams**: State transitions (`stateDiagram-v2`)
+    
+    **📈 CHARTJS FORMAT (for statistical charts):**
+    ```json
+    {
+      "type": "chartjs",
+      "chartType": "pie|bar|line|doughnut|radar|polar|scatter",
+      "message": {
+        "title": "Chart Title",
+        "data": {
+          "labels": ["Label 1", "Label 2", "Label 3"],
+          "datasets": [{
+            "label": "Dataset Name",
+            "data": [15, 2, 8],
+            "backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"]
+          }]
+        },
+        "options": {
+          "responsive": true,
+          "plugins": {
+            "legend": { "position": "top" },
+            "title": { "display": true, "text": "Chart Title" }
+          }
+        }
+      },
+      "entity": "Partner"
+    }
+    ```
+    
+    **🔄 MERMAID FORMAT (for structural diagrams):**
+    ```json
+    {
+      "type": "mermaid", 
+      "message": "graph TD\\n    A[Start] --> B[Process]\\n    B --> C[End]",
+      "entity": "Process"
+    }
+    ```
     
     You must convert API results into a structured JSON response format for frontend rendering.
 
@@ -241,8 +286,27 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
 			"message": "Hi! Here's your partner category breakdown:"
 		}, 
 		{
-			"type": "mermaid",
-			"message": "pie title Partner Categories\n    \"Government\" : 45\n    \"NGO\" : 30\n    \"Private\" : 25"
+			"type": "chartjs",
+			"chartType": "pie",
+			"message": {
+				"title": "Partner Category Distribution",
+				"data": {
+					"labels": ["Government", "Private Sector", "NGO"],
+					"datasets": [{
+						"label": "Partners",
+						"data": [15, 5, 8],
+						"backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"]
+					}]
+				},
+				"options": {
+					"responsive": true,
+					"plugins": {
+						"legend": { "position": "top" },
+						"title": { "display": true, "text": "Partner Category Distribution" }
+					}
+				}
+			},
+			"entity": "Partner"
 		},
 		{
 			"type": "markdown",
@@ -287,7 +351,8 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
 - **"card"**: Structured data display (entities, lists, details)
 - **"grid"**: Tabular data, spreadsheet-like displays  
 - **"json"**: Raw data for debugging or technical responses
-- **"mermaid"**: Diagrams, charts, visual representations (ALWAYS separate from text)
+- **"mermaid"**: Structural diagrams, flowcharts, process flows (ALWAYS separate from text)
+- **"chartjs"**: Statistical charts, pie charts, bar charts, line graphs (data visualizations)
 
 **🎯 INTELLIGENT CONTENT SEQUENCING RULES:**
 - **Break content logically** - Don't put all text in one block when diagrams are involved
@@ -363,6 +428,16 @@ Your available types are: markdown, card, grid, json, mermaid.
 - **When user requests entity lists**, display ALL entities with their complete details in card format
 - **NEVER say "I can't display all details"** - always provide the full information requested
 
+**🔍 CRITICAL: COMPLETE ENTITY DATA FOR CARDS:**
+- **ALWAYS include ALL available entity fields** when using card format - never send partial data
+- **Include essential display fields**: Name, ID, Logo/Avatar, Category, Status, Contact info, Address, etc.
+- **For Contacts**: Include name, title, email, phone, department, partner association, profile picture/avatar
+- **For Partners**: Include name, logo, category, group, short name, address, contact details, status
+- **For Interactions**: Include title, type, date, participants, status, description, attachments
+- **NEVER send only basic fields** - the frontend card renderer needs complete data to display properly
+- **If API returns minimal data**, make additional calls to get complete entity information
+- **Card display quality depends on data completeness** - incomplete data results in poor user experience
+
 **Use "card" when:**
 - **ALL entity information** (DEFAULT for ALL entities - single or multiple)
 - Contact/partner/interaction details
@@ -373,14 +448,35 @@ Your available types are: markdown, card, grid, json, mermaid.
 **🚨 CRITICAL: MULTIPLE ENTITIES OF SAME TYPE GROUPING:**
 - **When displaying multiple entities of the same type** (e.g., multiple partners, contacts, interactions), ALWAYS group them into ONE card object with an array in the message field
 - **NEVER create separate card objects for each entity** - this is inefficient and semantically incorrect
-- **CORRECT FORMAT for multiple entities:**
+- **CORRECT FORMAT for multiple entities with COMPLETE data:**
   ```json
   {
     "type": "card",
     "message": [
-      {"Partner ID": "23", "Name": "ABC Corp", "Status": "Active", ...},
-      {"Partner ID": "24", "Name": "African Dev Bank", "Status": "Active", ...},
-      {"Partner ID": "26", "Name": "Asian Infrastructure Bank", "Status": "Active", ...}
+      {
+        "Partner ID": "23", 
+        "Name": "ABC Corp", 
+        "Logo": "https://example.com/logo.png",
+        "Status": "Active", 
+        "Partner Category": "OECD/DAC Government",
+        "Partner Group": "Multilateral",
+        "Short Name": "ABC",
+        "Address": "123 Main St, City, Country",
+        "Contact Email": "contact@abc.com",
+        "Phone": "+1-555-0123"
+      },
+      {
+        "Partner ID": "24", 
+        "Name": "African Development Bank", 
+        "Logo": "https://example.com/adb-logo.png",
+        "Status": "Active", 
+        "Partner Category": "Non-OECD/DAC Government",
+        "Partner Group": "Regional Bank",
+        "Short Name": "AfDB",
+        "Address": "Abidjan, Côte d'Ivoire",
+        "Contact Email": "info@afdb.org",
+        "Phone": "+225-20-26-39-00"
+      }
     ],
     "entity": "Partner"
   }
@@ -426,6 +522,19 @@ Your available types are: markdown, card, grid, json, mermaid.
 - **Ensure all JSON is valid** - no trailing commas, proper escaping
 - **For markdown content**, include it directly in the `message` field
 - **No extra formatting or explanatory text** outside the JSON structure
+
+**🎨 MERMAID-SPECIFIC JSON RULES:**
+- **Use actual \\n characters** for newlines in mermaid message field
+- **Use single quotes** in mermaid labels to avoid JSON escaping issues
+- **Proper indentation**: Each pie chart entry should be indented with 4 spaces
+- **Example valid mermaid JSON**:
+  ```
+  {
+    "type": "mermaid",
+    "message": "pie title Distribution\\n    'Category A' : 25\\n    'Category B' : 75",
+    "entity": "Partner"
+  }
+  ```
 
 **ANALYZE THE CONTEXT ABOVE AND GENERATE THE APPROPRIATE STRUCTURED JSON RESPONSE NOW.**"""
 

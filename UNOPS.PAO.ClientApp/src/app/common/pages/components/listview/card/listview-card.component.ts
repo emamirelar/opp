@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, inject, ViewChild, AfterViewInit, OnDestroy, SimpleChanges, input, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, OnChanges, Output, TemplateRef, computed, ElementRef, inject, ViewChild, AfterViewInit, OnDestroy, SimpleChanges, input, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardModule } from 'primeng/card';
@@ -42,6 +42,17 @@ import { InteractionIconService } from '../../../../services/interaction-icon.se
     .animate-fadeIn {
       animation: fadeIn 0.3s ease-out;
     }
+    
+    .search-highlight {
+      background-color: #fef3c7;
+      background-image: linear-gradient(120deg, #fef3c7 0%, #fde047 100%);
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-weight: 600;
+      color: #854d0e;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
   `]
 })
 export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit, OnDestroy {
@@ -73,6 +84,12 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
   // Computed values
   hasActionsTemplate = computed(() => !!this.actionsTemplate);
+  
+  // Search metadata support
+  showSearchMetadata = signal<boolean>(false);
+  searchMetadataEnabled = computed(() => this.config()?.searchMetadata?.enabled || false);
+  searchMetadataDefaultVisible = computed(() => this.config()?.searchMetadata?.defaultVisible || false);
+  searchQuery = computed(() => this.config()?.searchMetadata?.searchQuery || '');
 
   // Load more skeletons count - show a few placeholder cards
   loadMoreSkeletonsCount = computed(() => {
@@ -174,6 +191,11 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     // Re-observe sentinel if columns change structure
     if (changes['columns'] && !changes['columns'].firstChange && this.hasViewInitialized) {
       this.scheduleObserveSentinel();
+    }
+    
+    // Initialize search metadata visibility
+    if (changes['config'] && this.searchMetadataEnabled()) {
+      this.showSearchMetadata.set(this.searchMetadataDefaultVisible());
     }
   }
 
@@ -639,5 +661,101 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
 
     const stringValue = value.toString().trim();
     return stringValue !== '' && stringValue !== 'null' && stringValue !== 'undefined';
+  }
+
+  // Search metadata helper methods
+  
+  /**
+   * Toggle search metadata visibility
+   */
+  toggleSearchMetadata(): void {
+    this.showSearchMetadata.set(!this.showSearchMetadata());
+  }
+
+  /**
+   * Get search metadata for an item
+   */
+  getSearchMetadata(item: any): any {
+    const extractFn = this.config()?.searchMetadata?.extractMetadata;
+    return extractFn ? extractFn(item) : item._searchMetadata;
+  }
+
+  /**
+   * Check if item has search metadata
+   */
+  hasSearchMetadata(item: any): boolean {
+    const metadata = this.getSearchMetadata(item);
+    return metadata && typeof metadata === 'object';
+  }
+
+  /**
+   * Get search type from metadata
+   */
+  getSearchType(metadata: any): string {
+    return metadata?.searchType || metadata?.type || '';
+  }
+
+  /**
+   * Get match field from metadata
+   */
+  getMatchField(metadata: any): string {
+    return metadata?.matchedField || metadata?.field || '';
+  }
+
+  /**
+   * Get search snippet from metadata
+   */
+  getSearchSnippet(metadata: any): string {
+    return metadata?.snippet || metadata?.excerpt || '';
+  }
+
+  /**
+   * Get relevance score from metadata
+   */
+  getRelevanceScore(metadata: any): number {
+    const score = metadata?.score || metadata?.relevance || 0;
+    return Math.round(score * 100);
+  }
+
+  /**
+   * Get search type badge classes
+   */
+  getSearchTypeBadgeClasses(metadata: any): string {
+    const type = this.getSearchType(metadata);
+    const baseClasses = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium';
+    
+    switch (type.toLowerCase()) {
+      case 'exact':
+        return `${baseClasses} bg-green-100 text-green-700`;
+      case 'partial':
+        return `${baseClasses} bg-blue-100 text-blue-700`;
+      case 'fuzzy':
+        return `${baseClasses} bg-yellow-100 text-yellow-700`;
+      default:
+        return `${baseClasses} bg-gray-100 text-gray-700`;
+    }
+  }
+
+  /**
+   * Get search type label
+   */
+  getSearchTypeLabel(metadata: any): string {
+    const type = this.getSearchType(metadata);
+    switch (type.toLowerCase()) {
+      case 'exact': return 'Exact Match';
+      case 'partial': return 'Partial Match';
+      case 'fuzzy': return 'Fuzzy Match';
+      default: return type || 'Match';
+    }
+  }
+
+  /**
+   * Highlight search terms in text
+   */
+  highlightSearchTerms(text: string, searchQuery: string): string {
+    if (!text || !searchQuery) return text;
+    
+    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<span class="search-highlight">$1</span>');
   }
 }

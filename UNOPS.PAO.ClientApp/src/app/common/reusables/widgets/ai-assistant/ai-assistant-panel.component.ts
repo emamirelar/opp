@@ -17,7 +17,7 @@ import { AiAssistantScanComponent } from './scan/ai-assistant-scan.component';
 import { SafeUrlPipe } from './safe-url.pipe';
 import { ContentRendererComponent } from './content-renderer/content-renderer.component';
 import { Router } from '@angular/router';
-import { EntityPanelService } from '../../../services/entity-panel.service';
+
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../essentials/services/auth.service';
@@ -117,7 +117,6 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   constructor(
     public aiAssistantData: AiAssistantData,
     private router: Router,
-    private entityPanelService: EntityPanelService,
     private globalFilterService: GlobalFilterService,
     private http: HttpClient,
     private authService: AuthService
@@ -875,8 +874,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       // In overlay mode, navigate to the entity page
       this.navigateToEntity(event.entityType, event.entityId, event.rowData);
     } else {
-      // In fullscreen mode, use the entity panel service for modal and emit for right panel
-      this.entityPanelService.openPanel(event.entityType, event.entityId, event.rowData);
+      // In fullscreen mode, emit for right panel (removed entity panel service)
       this.cardClicked.emit(event);
     }
   }

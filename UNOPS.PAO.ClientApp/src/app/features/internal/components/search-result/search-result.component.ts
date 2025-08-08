@@ -609,7 +609,13 @@ export class SearchResultComponent implements OnInit {
       defaultViewMode: 'card',
       showViewModeToggle: false,
       autoSwitchToCardView: false,
-      forceMobileMode: false
+      forceMobileMode: false,  // Allow responsive behavior like contact/partner pages
+      searchMetadata: {
+        enabled: true,
+        defaultVisible: this.showSearchMetadata(),
+        extractMetadata: (item: any) => item._searchMetadata,
+        searchQuery: this.searchQuery()
+      }
     };
   }
 

@@ -34,3 +34,22 @@
   color: var(--p-blue-900);
   font-size: 1.75rem
 }
+
+/* Pending file styles */
+:host ::ng-deep .pending-file-row {
+  background-color: rgba(59, 130, 246, 0.05);
+  border-left: 4px solid rgba(59, 130, 246, 0.5);
+}
+
+:host ::ng-deep .pending-file-row:hover {
+  background-color: rgba(59, 130, 246, 0.08);
+}
+
+/* Animate the save button */
+:host ::ng-deep .save-button {
+  transition: all 0.2s ease-in-out;
+}
+
+:host ::ng-deep .save-button:hover:not(:disabled) {
+  transform: scale(1.05);
+}

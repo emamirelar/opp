@@ -520,147 +520,35 @@ def combined_before_model_callback(callback_context, llm_request=None):
 # Task Executor-specific function definitions
 def create_google_doc_from_text_data(title: str, content: str, folder_id: str = "") -> str:
     """Create a Google Doc from text data - simplified interface for task executor"""
-    if not google_doc_wrapper:
-        logger.error("❌ Google Doc wrapper is None - initialization failed")
-        return json.dumps({"error": "Google Docs functionality not available - wrapper not initialized"})
-    
-    if not google_doc_wrapper.available:
-        logger.error("❌ Google Doc wrapper is marked as unavailable")
-        return json.dumps({"error": "Google Docs functionality not available - wrapper unavailable"})
-    
-    import time
-    import threading
-    from concurrent.futures import ThreadPoolExecutor, TimeoutError
-    
-    try:
-        logger.info(f"🔄 Creating Google Doc: {title}")
-        
-        # Create a dummy tool context with empty state
-        class DummyToolContext:
-            def __init__(self):
-                self.state = {}
-        
-        tool_context = DummyToolContext()
-        
-        def run_with_timeout():
-            """Run the Google Doc creation with proper async handling"""
-            try:
-                # Create new event loop for this thread
-                import asyncio
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                
-                try:
-                    # Set reasonable timeout for the operation
-                    result = asyncio.wait_for(
-                        google_doc_wrapper.create_document_from_text(tool_context, title, content, folder_id),
-                        timeout=30.0  # 30 second timeout
-                    )
-                    return loop.run_until_complete(result)
-                finally:
-                    # Ensure loop is properly closed
-                    try:
-                        loop.close()
-                    except Exception:
-                        pass
-                        
-            except asyncio.TimeoutError:
-                return json.dumps({"error": "Google Doc creation timed out after 30 seconds"})
-            except Exception as e:
-                return json.dumps({"error": f"Failed to create Google Doc: {str(e)}"})
-        
-        # Check if we're already in an event loop
-        try:
-            current_loop = asyncio.get_running_loop()
-            # We're in an async context, use ThreadPoolExecutor with timeout
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(run_with_timeout)
-                try:
-                    result = future.result(timeout=35.0)  # Slightly longer than internal timeout
-                    logger.info("✅ Google Doc created successfully")
-                    return result
-                except TimeoutError:
-                    logger.error("❌ Google Doc creation timed out")
-                    return json.dumps({"error": "Google Doc creation timed out"})
-                    
-        except RuntimeError:
-            # No event loop running, can run directly
-            result = run_with_timeout()
-            logger.info("✅ Google Doc created successfully") 
-            return result
-            
-    except Exception as e:
-        error_msg = f"Failed to create Google Doc: {str(e)}"
-        logger.error(f"❌ {error_msg}")
-        
-        # Check for specific socket errors and provide helpful message
-        if "WinError 10055" in str(e) or "socket" in str(e).lower():
-            error_msg = "Network connection issue: System is experiencing high network load. Please try again in a moment."
-        elif "timeout" in str(e).lower():
-            error_msg = "Google Doc creation timed out. Please try again with shorter content or check your internet connection."
-        
-        return json.dumps({"error": error_msg})
+    # Tool is currently not functional - return silent response
+    logger.info(f"ℹ️ Google Doc creation requested for '{title}' but tool is currently not functional")
+    return json.dumps({
+        "message": "Google Docs creation tool is currently not functional. The request has been acknowledged but no document was created.",
+        "title": title,
+        "status": "tool_not_functional"
+    })
 
 
 def create_google_sheet_from_list_data(title: str, data: str, folder_id: str = "") -> str:
     """Create a Google Sheet from JSON list data - simplified interface for task executor"""
-    if not google_sheet_wrapper:
-        return json.dumps({"error": "Google Sheets functionality not available"})
-    
-    try:
-        # Parse the JSON data
-        parsed_data = json.loads(data) if isinstance(data, str) else data
-        
-        # Create a dummy tool context with empty state
-        class DummyToolContext:
-            def __init__(self):
-                self.state = {}
-        
-        tool_context = DummyToolContext()
-        
-        # Use asyncio to run the async method
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, google_sheet_wrapper.create_spreadsheet_from_list(tool_context, title, parsed_data, folder_id))
-                return future.result()
-        else:
-            return asyncio.run(google_sheet_wrapper.create_spreadsheet_from_list(tool_context, title, parsed_data, folder_id))
-    except Exception as e:
-        logging.error(f"Error creating Google Sheet: {e}")
-        return json.dumps({"error": f"Failed to create Google Sheet: {str(e)}"})
+    # Tool is currently not functional - return silent response
+    logger.info(f"ℹ️ Google Sheet creation requested for '{title}' but tool is currently not functional")
+    return json.dumps({
+        "message": "Google Sheets creation tool is currently not functional. The request has been acknowledged but no spreadsheet was created.",
+        "title": title,
+        "status": "tool_not_functional"
+    })
 
 
 def create_google_sheet_with_headers_data(title: str, headers: str, data: str, folder_id: str = "") -> str:
     """Create a Google Sheet with headers and data - simplified interface for task executor"""
-    if not google_sheet_wrapper:
-        return json.dumps({"error": "Google Sheets functionality not available"})
-    
-    try:
-        # Parse the JSON data
-        parsed_headers = json.loads(headers) if isinstance(headers, str) else headers
-        parsed_data = json.loads(data) if isinstance(data, str) else data
-        
-        # Create a dummy tool context with empty state
-        class DummyToolContext:
-            def __init__(self):
-                self.state = {}
-        
-        tool_context = DummyToolContext()
-        
-        # Use asyncio to run the async method
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, google_sheet_wrapper.create_spreadsheet_with_headers(tool_context, title, parsed_headers, parsed_data, folder_id))
-                return future.result()
-        else:
-            return asyncio.run(google_sheet_wrapper.create_spreadsheet_with_headers(tool_context, title, parsed_headers, parsed_data, folder_id))
-    except Exception as e:
-        logging.error(f"Error creating Google Sheet with headers: {e}")
-        return json.dumps({"error": f"Failed to create Google Sheet: {str(e)}"})
+    # Tool is currently not functional - return silent response
+    logger.info(f"ℹ️ Google Sheet with headers creation requested for '{title}' but tool is currently not functional")
+    return json.dumps({
+        "message": "Google Sheets creation tool is currently not functional. The request has been acknowledged but no spreadsheet was created.",
+        "title": title,
+        "status": "tool_not_functional"
+    })
 
 
 def get_entity_api_tools_config(entity_name: str) -> str:

@@ -303,6 +303,61 @@
                 </div>
               }
 
+              <!-- Search Metadata Section -->
+              @if (searchMetadataEnabled() && hasSearchMetadata(item)) {
+                <div class="relative z-10 mt-4 pt-3 border-t border-gray-100">
+                  <!-- Metadata Content -->
+                  @if (showSearchMetadata()) {
+                    <span class="font-medium">Search Match Details</span>
+                    <div class="mt-3 space-y-3 text-sm animate-fadeIn">
+                      <!-- Search Type and Matched Field -->
+                      <div class="flex flex-wrap items-center gap-2">
+                        @if (getSearchType(getSearchMetadata(item))) {
+                          <span [class]="getSearchTypeBadgeClasses(getSearchMetadata(item))">
+                            <span class="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-60"></span>
+                            {{ getSearchTypeLabel(getSearchMetadata(item)) }}
+                          </span>
+                        }
+                        @if (getMatchField(getSearchMetadata(item))) {
+                          <span class="text-gray-600">
+                            <span class="font-medium">Field:</span>
+                            <span class="ml-1 text-gray-800">{{ getMatchField(getSearchMetadata(item)) }}</span>
+                          </span>
+                        }
+                      </div>
+
+                      <!-- Relevance Score -->
+                      @if (getRelevanceScore(getSearchMetadata(item)) > 0) {
+                        <div class="flex items-center space-x-2">
+                          <span class="text-gray-500">Relevance:</span>
+                          <div class="flex items-center space-x-1">
+                            <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+                                [style.width.%]="getRelevanceScore(getSearchMetadata(item))">
+                              </div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700">{{ getRelevanceScore(getSearchMetadata(item)) }}%</span>
+                          </div>
+                        </div>
+                      }
+
+                      <!-- Search Snippet -->
+                      @if (getSearchSnippet(getSearchMetadata(item))) {
+                        <div class="pt-2 border-t border-gray-100">
+                          <div class="text-gray-600">
+                            <span class="font-medium text-gray-700">Excerpt:</span>
+                            <p class="mt-1 text-gray-600 italic leading-relaxed break-words bg-gray-50 px-3 py-2 rounded border"
+                               [innerHTML]="highlightSearchTerms(getSearchSnippet(getSearchMetadata(item)), searchQuery())">
+                            </p>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
             </div>
         }
       </div>

@@ -32,6 +32,18 @@
     </app-entity-grid>
   </div>
   
+  <!-- Chart.js charts -->
+  <div *ngSwitchCase="'chartjs'" class="chartjs-container fade-in-content">
+    <div class="content-type-header">
+      <span class="content-type-label">{{ getContentTypeLabel() }}</span>
+    </div>
+    <app-chart-js 
+      [chartType]="getChartType()"
+      [chartConfig]="getChartConfig()"
+      [chartData]="getChartData()">
+    </app-chart-js>
+  </div>
+  
   <!-- Mermaid diagram -->
   <div *ngSwitchCase="'mermaid'" class="mermaid-container fade-in-content">
     <div class="content-type-header">

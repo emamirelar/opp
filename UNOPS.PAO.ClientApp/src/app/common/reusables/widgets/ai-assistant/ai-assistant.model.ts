@@ -24,10 +24,11 @@ export interface Source {
 }
 
 export interface ResultItem {
-  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card';
-  message: string | any[]; // string for text/markdown/code, array for grid/card data
+  type: 'markdown' | 'mermaid' | 'code' | 'text' | 'grid' | 'card' | 'chartjs';
+  message: string | any[] | any; // string for text/markdown/code, array for grid/card data, object for chartjs
   language?: string; // for code blocks
   entity?: string; // for grid/card data
+  chartType?: string; // for chartjs: pie, bar, line, doughnut, etc.
 }
 
 export interface ChatFile {

@@ -89,19 +89,12 @@
                      [attr.data-selected]="selectedChatId()"
                      [attr.data-chat-id]="chat.id">
                   <div class="chat-item-content" (click)="openChat(chat)">
-                    <div class="chat-title">{{ chat.title }}</div>
+                    <!-- Clickable title to open chat -->
+                    <div class="chat-title" title="Click to open chat">
+                      {{ chat.title }}
+                    </div>
                   </div>
-                  <div class="chat-status" [class.starred]="chat.starred" (click)="openChat(chat)">
-                    <svg *ngIf="chat.starred" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                  </div>
-                  <div class="chat-actions">
-                    <button class="chat-menu-btn" (click)="openChatMenu($event, chat, i)" type="button">
-                      <i class="pi pi-ellipsis-v"></i>
-                    </button>
-                    <p-menu #chatMenu [popup]="true" [model]="currentChatMenuItems"></p-menu>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -116,6 +109,53 @@
     <!-- AI Assistant Panel (Fullscreen Mode) - CLEAN REBUILD -->
     <div class="ai-content-area" 
          [class.mobile-content-hidden]="isMobile() && sidebarOpen()">
+      
+      <!-- Custom header with chat controls -->
+      <div class="ai-chat-header" *ngIf="selectedChatId()">
+        <div class="chat-header-content">
+          <div class="chat-header-title">
+            <!-- Editable title -->
+            <div class="header-chat-title" 
+                 *ngIf="!isEditingTitle(selectedChatId()!)"
+                 (click)="startEditHeaderTitle($event)"
+                 title="Click to rename chat">
+              {{ getSelectedChatTitle() }}
+            </div>
+            <!-- Title input when editing -->
+            <input *ngIf="isEditingTitle(selectedChatId()!)"
+                   class="header-chat-title-input"
+                   [(ngModel)]="editingTitleText"
+                   (keydown.enter)="saveHeaderTitle()"
+                   (keydown.escape)="cancelEditTitle()"
+                   (blur)="saveHeaderTitle()"
+                   #headerTitleInput
+                   placeholder="Enter chat title">
+          </div>
+          <div class="chat-header-actions">
+            <!-- Star button -->
+            <button class="chat-action-btn" 
+                    (click)="toggleSelectedChatStar()"
+                    [class.starred]="getSelectedChat()?.starred"
+                    title="{{getSelectedChat()?.starred ? 'Unstar' : 'Star'}} this chat">
+              <!-- Filled star when starred -->
+              <svg *ngIf="getSelectedChat()?.starred" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <!-- Outline star when not starred -->
+              <svg *ngIf="!getSelectedChat()?.starred" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </button>
+            <!-- Edit button -->
+            <button class="chat-action-btn" 
+                    (click)="startEditHeaderTitle($event)"
+                    title="Rename chat">
+              <i class="pi pi-pencil"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
       <app-ai-assistant-panel 
         [hideHeader]="true"
         [viewContainerRef]="viewContainerRef"
@@ -193,13 +233,5 @@
   </div>
   </div>
 </div>
-<p-dialog header="Rename Chat" [(visible)]="showRenameDialog" [modal]="true" [closable]="true" [style]="{width: '350px'}">
-  <div class="flex flex-col gap-4">
-    <input pInputText [(ngModel)]="renameTitle" placeholder="Enter new title" class="w-full" />
-    <div class="flex justify-end gap-2 mt-2">
-      <button pButton type="button" label="Cancel" (click)="cancelRename()"></button>
-      <button pButton type="button" label="Save" [disabled]="!renameTitle.trim()" (click)="saveRename()" class="p-button-primary"></button>
-    </div>
-  </div>
-</p-dialog>
+
 <p-confirmDialog></p-confirmDialog> 
