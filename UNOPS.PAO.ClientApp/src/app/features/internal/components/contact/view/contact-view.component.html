@@ -10,24 +10,25 @@
                         [rounded]="true"
                         [text]="true"
                         [size]="'small'"
+                        class="edit-button contact-edit-button"
                         (onClick)="handleEditClick()"></p-button>
             }
           </div>
         </ng-template>
 
-        <div class="flex flex-col gap-4 pb-2">
+        <div class="flex flex-col gap-4 pb-2 contact-info-content">
 
           <div class="flex flex-col gap-2">
             <div class="text-sm">{{ 'fieldLabels.partner' | translate }}</div>
             <a [routerLink]="['/partnerships/partners', recordData().partner?.id]"
-               class="text-primary hover:underline font-semibold">
+               class="text-primary hover:underline font-semibold contact-partner-link">
               {{recordData().partner?.name}}
             </a>
           </div>
 
           <!-- Contact Info -->
           @if(recordData().email || recordData().phone || recordData().mobile){
-            <div class="flex flex-col gap-2">
+            <div class="flex flex-col gap-2 contact-info-details">
               @if(recordData().email){
                 <div>{{recordData().email}}</div>
               }
@@ -154,7 +155,8 @@
           @if (recordData().id && +(recordData().id!) > 0) {
             <app-link-list [entityType]="entityTypeContact"
                            [entityId]="+(recordData().id!)"
-                           [disabled]="false" />
+                           [disabled]="false"
+                           class="contact-links-section" />
           }
 
           <p-divider></p-divider>
@@ -164,7 +166,8 @@
                         [entityId]="recordId"
                         [entityName]="'contact'"
                         [acceptedFormat]="'.pdf, .xls, .xlsx, .doc, .docx'"
-                        [disabled]="!recordPermissions().permissions.canUpdate">
+                        [disabled]="!recordPermissions().permissions.canUpdate"
+                        class="contact-document-section">
             <div ngProjectAs="document-toolbar">
               @if(recordPermissions().permissions.canUpdate){
                 <app-document-gdrive [entityId]="recordId"
@@ -181,7 +184,7 @@
     </div>
     <div class="md:w-1/2 flex flex-col gap-8" *ngIf="showAiPanel">
       <app-ai-panel
-        class="shadow-sm"
+        class="shadow-sm contact-ai-summary"
         [title]="'label.contact.summaryOfInteractions'"
         [entityId]="recordId"
         [promptType]="'contact_interactions_summary'"

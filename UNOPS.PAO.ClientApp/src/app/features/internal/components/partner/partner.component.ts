@@ -19,6 +19,7 @@ import { PermissionUtilityService } from '../../../../essentials/services/permis
 import { EntityPermissions } from '../../../../essentials/services/permission.service';
 import { EntityConfigurationService } from '../../services/entity-configuration.service';
 
+
 /**
  * @uiEntity Partner
  * @route /partnerships/partners

@@ -33,6 +33,7 @@ import { ProfileDialogComponent } from '../profile-dialog/profile-dialog.compone
 import { GlobalFiltersDialogComponent } from './global-filters-dialog/global-filters-dialog.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
+import { TourControlComponent } from '../../../components/tour-control/tour-control.component';
 
 interface UserInfo {
   userId: number;
@@ -68,7 +69,8 @@ interface UserInfo {
     RoleDialogComponent,
     ProfileDialogComponent,
     GlobalFiltersDialogComponent,
-    TranslateModule
+    TranslateModule,
+    TourControlComponent
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',

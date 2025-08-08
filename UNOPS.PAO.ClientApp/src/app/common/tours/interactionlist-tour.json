@@ -1,8 +1,8 @@
 {
-  "tourId": "interactionlist-overview",
-  "title": "InteractionList Overview Tour",
-  "description": "Browse and manage all interaction records across the organization. Central hub for viewing meetings, calls, emails, and other communications with comprehensive search and filtering capabilities.",
-  "entity": "InteractionList",
+  "tourId": "interactionlist-tour",
+  "titleKey": "tour.interactions.title",
+  "descriptionKey": "tour.interactions.description",
+  "entity": "Interaction",
   "route": "/partnerships/interactions",
   "showButtons": [
     "next",
@@ -15,81 +15,83 @@
   "steps": [
     {
       "popover": {
-        "title": "Welcome to InteractionListComponent",
-        "description": "This page serves as the central hub for viewing, searching, and managing all interaction records within the organization. Users can browse a comprehensive list of meetings, calls, emails, and other communications, with robust tools for finding specific records and initiating new interactions.",
+        "titleKey": "tour.interactions.steps.welcome.title",
+        "descriptionKey": "tour.interactions.steps.welcome.description",
         "side": "over",
         "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"New Interaction\"]",
+      "element": ".interaction-section-header",
+      "fallbackType": "section-header",
       "popover": {
-        "title": "New Interaction",
-        "description": "Opens a modal window to create and record a new interaction, such as a meeting, call, or email. This allows users to log new communications with partners or contacts.<br><br><strong>When to use:</strong> When you need to record a new communication, meeting, or activity with partners or contacts., After completing a call or meeting and you want to log the details.",
+        "titleKey": "tour.interactions.steps.header.title",
+        "descriptionKey": "tour.interactions.steps.header.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"New Interaction\"]",
-          "p-button .p-button-label:contains(\"New Interaction\")",
-          "button:contains(\"New Interaction\")",
-          "[aria-label=\"New Interaction\"]",
-          "[title=\"New Interaction\"]",
-          "p-button[icon=\"pi pi-plus\"]",
-          ".pi.pi-plus",
-          "i.pi.pi-plus",
-          "button .pi.pi-plus",
-          "#create-interaction-btn",
-          "#create-interaction-btn-btn",
-          "[data-test-id=\"create-interaction-btn\"]",
-          ".create-interaction-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 1
       }
     },
     {
-      "element": "p-button[label=\"Import Interactions\"]",
+      "element": ".interaction-new-button",
+      "fallbackType": "new-button",
       "popover": {
-        "title": "Import Interactions",
-        "description": "Opens a dialog to bulk import interaction records from external sources, typically Google Sheets or CSV files. This is useful for migrating data or adding many records at once.<br><br><strong>When to use:</strong> When you need to add multiple interaction records at once from external sources or during a data migration., If you have a spreadsheet of past interactions that need to be added to the system.",
+        "titleKey": "tour.interactions.steps.newButton.title",
+        "descriptionKey": "tour.interactions.steps.newButton.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Import Interactions\"]",
-          "p-button .p-button-label:contains(\"Import Interactions\")",
-          "button:contains(\"Import Interactions\")",
-          "[aria-label=\"Import Interactions\"]",
-          "[title=\"Import Interactions\"]",
-          "p-button[icon=\"pi pi-file-import\"]",
-          ".pi.pi-file-import",
-          "i.pi.pi-file-import",
-          "button .pi.pi-file-import",
-          "#import-interactions-btn",
-          "#import-interactions-btn-btn",
-          "[data-test-id=\"import-interactions-btn\"]",
-          ".import-interactions-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 2
       }
     },
     {
+      "element": ".interaction-import-button",
+      "fallbackType": "import-button",
       "popover": {
-        "title": "Tour Complete!",
-        "description": "You've learned the key features of InteractionList. You can always restart this tour from the help menu.",
-        "side": "over",
+        "titleKey": "tour.interactions.steps.importButton.title",
+        "descriptionKey": "tour.interactions.steps.importButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".quick-search",
+      "fallbackType": "search-input",
+      "popover": {
+        "titleKey": "tour.interactions.steps.searchInput.title",
+        "descriptionKey": "tour.interactions.steps.searchInput.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".interaction-listview",
+      "fallbackType": "grid-view",
+      "popover": {
+        "titleKey": "tour.interactions.steps.gridView.title",
+        "descriptionKey": "tour.interactions.steps.gridView.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".interaction-ai-transcribe",
+      "fallbackType": "ai-transcribe",
+      "popover": {
+        "titleKey": "tour.interactions.steps.aiTranscribe.title",
+        "descriptionKey": "tour.interactions.steps.aiTranscribe.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.interactions.steps.tourControl.title",
+        "descriptionKey": "tour.interactions.steps.tourControl.description",
+        "side": "bottom",
         "align": "center"
       }
     }
   ],
-  "generatedAt": "2025-07-31T18:59:03.663446",
+  "generatedAt": "2024-01-15T12:30:00Z",
   "version": "1.0"
 }

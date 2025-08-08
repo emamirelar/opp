@@ -8,7 +8,7 @@
          (click)="closeMobileSidebar()"></div>
 
     <!-- Sidebar -->
-    <div class="ai-sidebar" 
+    <div class="ai-sidebar ai-chat-sidebar" 
       [class.sidebar-collapsed]="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()"
       [class.mobile-sidebar-open]="isMobile() && sidebarOpen()"
       [class.mobile-sidebar-closed]="isMobile() && !sidebarOpen()"
@@ -20,7 +20,7 @@
         <div class="p-3 border-b border-[var(--surface-border)] flex justify-center" *ngIf="layoutService.aiAssistantSidebarCollapsed() && !sidebarHovered() && !isMobile()">
           <button 
             (click)="startNewChat()"
-            class="new-chat-button flex items-center justify-center font-bold new-chat-collapsed"
+            class="new-chat-button flex items-center justify-center font-bold new-chat-collapsed ai-new-chat-button"
             [disabled]="isNewChatDisabled()"
             [title]="isNewChatDisabled() ? 'Already in new chat' : 'Start new chat'">
             <i class="pi pi-plus text-2xl font-extrabold text-[var(--primary-color)]"></i>
@@ -43,7 +43,7 @@
             </div>
             
             <!-- Search Section -->
-            <div class="sidebar-search-container">
+            <div class="sidebar-search-container ai-search-section">
               <div class="search-input-wrapper">
                 <input 
                   type="text" 
@@ -73,7 +73,7 @@
                   ({{ filteredChatSessions().length }} of {{ chatSessions().length }})
                 </span>
               </div>
-              <div class="chat-list">
+              <div class="chat-list ai-chat-history">
                 <div *ngIf="isLoadingSessions()" class="loading-message">
                   <div class="loading-spinner"></div>
                   <span>Loading chats...</span>
@@ -107,7 +107,7 @@
     </div>
     
     <!-- AI Assistant Panel (Fullscreen Mode) - CLEAN REBUILD -->
-    <div class="ai-content-area" 
+    <div class="ai-content-area ai-main-chat-area" 
          [class.mobile-content-hidden]="isMobile() && sidebarOpen()">
       
       <!-- Custom header with chat controls -->

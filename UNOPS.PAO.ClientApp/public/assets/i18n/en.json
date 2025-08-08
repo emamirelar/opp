@@ -682,5 +682,503 @@
     "clearAll": "Clear All",
     "viewAllResults": "View All Results",
     "filteredBy": "Filtered by"
+  },
+  "tour": {
+    "control": {
+      "takeATour": "Take a Tour"
+    },
+    "welcome": {
+      "title": "🎉 Welcome to UNOPS Opportunity+!",
+      "description": "Welcome to your comprehensive partner and opportunity management platform! We're excited to help you get started. Let's take a quick tour of the main features to help you navigate and make the most of this powerful system.",
+      "startButton": "Start Tour"
+    },
+    "fallback": {
+      "title": "Welcome!",
+      "description": "We don't have a tour available for this page yet, but we're constantly adding new tours to help you navigate the application. Feel free to explore, and check back later for guided tours on this section."
+    },
+    "homepage": {
+      "title": "Homepage Navigation Tour",
+      "description": "Welcome to the UNOPS Partner and Opportunity Management System! Learn how to navigate the main interface, use the powerful search functionality, access the AI assistant, and customize your experience with global filters and language settings.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to UNOPS Partner & Opportunity Management",
+          "description": "This comprehensive platform helps you manage partnerships, track opportunities, and leverage AI-powered insights to drive better business outcomes. Let's explore the main navigation and key features to get you started effectively."
+        },
+        "menuToggle": {
+          "title": "Navigation Menu Toggle",
+          "description": "Click this hamburger menu to expand or collapse the main navigation sidebar. The sidebar contains links to all major sections: Partners, Contacts, Interactions, Reports, and Administrative tools."
+        },
+        "logo": {
+          "title": "UNOPS Opportunity+ Logo",
+          "description": "Click the logo anytime to return to the homepage. This serves as your navigation anchor point throughout the application, providing quick access back to the main dashboard."
+        },
+        "globalSearch": {
+          "title": "Global Search Bar",
+          "description": "This powerful search bar allows you to find partners, contacts, opportunities, and documents across the entire system. Use keywords, names, organization types, or even partial information to quickly locate what you need."
+        },
+        "tourControl": {
+          "title": "Interactive Tours",
+          "description": "Click this button on any page to access guided tours specific to that section. Each major area of the application has detailed tours to help you understand and master the available features."
+        },
+        "globalFilters": {
+          "title": "Global Filters",
+          "description": "Access system-wide filters to narrow down data across all modules. Set organizational unit filters, date ranges, or other criteria that will apply throughout your session, helping you focus on relevant information."
+        },
+        "languageSelector": {
+          "title": "Language Selection",
+          "description": "Switch between supported languages (English, French, Spanish, Portuguese) to use the application in your preferred language. This affects all interface text, tours, and system messages."
+        },
+        "aiAssistant": {
+          "title": "AI Assistant Access",
+          "description": "Open the intelligent AI assistant that can help analyze your data, generate insights, transcribe meetings, answer questions about partners and opportunities, and provide strategic recommendations based on your business information."
+        },
+        "notifications": {
+          "title": "Notifications Center",
+          "description": "Stay updated with system notifications, file processing status, AI analysis results, and important alerts. The notification badge shows the count of unread notifications requiring your attention."
+        },
+        "profileMenu": {
+          "title": "Profile & Settings",
+          "description": "Access your user profile, account settings, role information, and logout options. Manage your personal preferences and view your current permissions and organizational access."
+        },
+        "mainNavigation": {
+          "title": "Main Navigation Menu",
+          "description": "This sidebar contains links to all major application sections: Partner management, Contact database, Interaction tracking, AI tools, Reporting, and Administrative functions. Each section has its own specialized features and tours."
+        },
+        "welcomeDashboard": {
+          "title": "Welcome Dashboard",
+          "description": "This is your starting point in the application. From here, you can navigate to any section using the sidebar menu, search for specific information, or access the AI assistant for intelligent insights and assistance."
+        }
+      }
+    },
+    "homepage": {
+      "title": "Homepage Navigation Tour",
+      "description": "Learn how to navigate the main application interface, use the global search, access the AI assistant, and understand the core features available from the homepage.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Opportunity+",
+          "description": "This is your central dashboard for managing partnerships and opportunities. From here, you can navigate to all sections, search for information, and access powerful AI-powered tools to enhance your workflow."
+        },
+        "menuToggle": {
+          "title": "Menu Toggle",
+          "description": "Click this button to expand or collapse the main navigation sidebar. This gives you more screen space when needed while keeping navigation easily accessible."
+        },
+        "logo": {
+          "title": "Homepage Logo",
+          "description": "Click the Opportunity+ logo at any time to return to this main dashboard. This serves as your home base throughout the application."
+        },
+        "globalSearch": {
+          "title": "Global Search",
+          "description": "Use this powerful search feature to find partners, contacts, interactions, and other records across the entire system. Type keywords and get instant results from all modules."
+        },
+        "tourControl": {
+          "title": "Take a Tour",
+          "description": "Click this button on any page to start a guided tour specific to that section. Each area of the application has its own detailed tour to help you master the available features."
+        },
+        "globalFilters": {
+          "title": "Global Filters",
+          "description": "Access advanced filtering options to narrow down search results and data views. Set up saved filters for frequently used search criteria."
+        },
+        "languageSelector": {
+          "title": "Language Selector",
+          "description": "Switch between supported languages (English, French, Spanish, Portuguese). The interface will immediately adapt to your selected language preference."
+        },
+        "aiAssistant": {
+          "title": "AI Assistant Toggle",
+          "description": "Click this button to open or close the AI Assistant panel. Get intelligent help, automate tasks, and receive insights powered by advanced AI technology."
+        },
+        "notifications": {
+          "title": "Notifications",
+          "description": "View important system notifications, alerts, and updates. Stay informed about activities that require your attention or action."
+        },
+        "profileMenu": {
+          "title": "Profile Menu",
+          "description": "Access your account settings, user preferences, logout options, and other personal configuration features from this dropdown menu."
+        },
+        "mainNavigation": {
+          "title": "Main Navigation Sidebar",
+          "description": "This sidebar contains links to all major sections: Partner Management, Contact Database, Interaction Tracking, AI Tools, Reports, and Administrative functions. Each section has its own specialized features and tours."
+        },
+        "welcomeDashboard": {
+          "title": "Welcome Dashboard",
+          "description": "This is your starting point in the application. From here, you can navigate to any section using the sidebar menu, search for specific information, or access the AI assistant for intelligent insights and assistance."
+        }
+      }
+    },
+    "entitymanager": {
+      "title": "Entity Manager Overview Tour",
+      "description": "The Entity Manager is a powerful administrative tool designed to give you granular control over how data fields are presented and accessed across various entities within the system, such as Partners, Contacts, and Interactions.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Entity Manager",
+          "description": "This page serves as the central hub for administrators to customize the display and access of data fields for various entities like Partners, Contacts, and Interactions."
+        },
+        "header": {
+          "title": "Entity Manager Header",
+          "description": "The main header section shows the current module and provides navigation context. This helps you understand which administrative section you're currently working in."
+        },
+        "entityTabs": {
+          "title": "Entity Selection Tabs",
+          "description": "These tabs allow you to switch between different entity types (Partners, Contacts, Interactions, etc.). Each entity has its own field configuration that you can customize independently."
+        },
+        "settings": {
+          "title": "Entity Settings",
+          "description": "Access the main settings panel for the currently selected entity. Here you can configure display options, field permissions, and other entity-specific settings."
+        },
+        "addField": {
+          "title": "Add Field Button",
+          "description": "Click this button to add new fields to the entity configuration. You can select from available system fields or create custom field definitions."
+        },
+        "availableFields": {
+          "title": "Available Fields Pool",
+          "description": "This section shows all available fields that can be added to the entity's display configuration. Fields are organized by categories and show their data types and properties."
+        },
+        "listViewFields": {
+          "title": "List View Configuration",
+          "description": "Configure which fields appear in list views and their order. Drag and drop fields to reorder them, or use the controls to show/hide specific fields in list displays."
+        },
+        "cardPreview": {
+          "title": "Live Preview",
+          "description": "See a real-time preview of how your field configuration will look to end users. This helps you visualize the impact of your changes before saving them."
+        },
+        "tourControl": {
+          "title": "Tour Guide",
+          "description": "Access guided tours for different sections of the Entity Manager. Each area has specific tours to help you understand and master the configuration options."
+        }
+      }
+    },
+    "aiprompt": {
+      "title": "AI Prompt Management Tour",
+      "description": "Administrative interface for managing AI prompts and configurations. Create, edit, and test AI prompts with advanced model settings.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to AI Prompt Management",
+          "description": "This page provides a comprehensive interface for managing AI prompts. Create, edit, test, and configure AI prompts with advanced settings for optimal performance."
+        },
+        "header": {
+          "title": "AI Prompt Management Header",
+          "description": "The main header shows you're in the AI Prompt Management section. This administrative area is where you configure and manage all AI prompt templates."
+        },
+        "createPrompt": {
+          "title": "Create New Prompt",
+          "description": "Click this button to create a new AI prompt. You can define prompt content, select AI models, configure parameters like temperature and top-p values."
+        },
+        "searchSection": {
+          "title": "Search and Filters",
+          "description": "Use the search functionality to quickly find specific prompts. You can search by prompt name, type, model, or content to locate the prompts you need to modify."
+        },
+        "promptsTable": {
+          "title": "Prompts Management Table",
+          "description": "This table displays all your AI prompts with key information like name, type, AI model, and creation date. You can sort, filter, and manage prompts directly from this view."
+        },
+        "promptType": {
+          "title": "Prompt Type Column",
+          "description": "Shows the category or type of each prompt (e.g., Assistant, Analysis, Translation). This helps organize prompts by their intended purpose and use case."
+        },
+        "aiModel": {
+          "title": "AI Model Column",
+          "description": "Displays which AI model (Gemini Pro, Gemini Flash, etc.) is configured for each prompt. Different models have different capabilities and performance characteristics."
+        },
+        "editPrompt": {
+          "title": "Edit Prompt Actions",
+          "description": "Use these action buttons to edit, test, duplicate, or delete existing prompts. You can also view detailed prompt configurations and performance metrics."
+        },
+        "tourControl": {
+          "title": "Guided Tours",
+          "description": "Access specific tours for different aspects of AI prompt management. Learn about advanced configurations, testing strategies, and best practices."
+        }
+      }
+    },
+    "aiassistant": {
+      "title": "AI Assistant Tour",
+      "description": "The AI Assistant provides intelligent, conversational support to help you navigate the application, understand features, and streamline workflows.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to the AI Assistant",
+          "description": "This is your central hub for interacting with the AI Assistant. Get instant help, explore data, automate tasks, and receive intelligent insights within the application."
+        },
+        "chatSidebar": {
+          "title": "Chat Sidebar",
+          "description": "The sidebar provides quick access to chat management features. View recent conversations, search chat history, and manage your AI assistant sessions."
+        },
+        "newChat": {
+          "title": "Start New Chat",
+          "description": "Click this button to start a fresh conversation with the AI Assistant. This clears the current context and begins a new session for different topics or tasks."
+        },
+        "searchSection": {
+          "title": "Chat Search",
+          "description": "Search through your previous chat sessions to quickly find specific conversations, topics, or information you've discussed with the AI Assistant."
+        },
+        "chatHistory": {
+          "title": "Chat History",
+          "description": "Browse through your recent conversations with the AI Assistant. You can resume previous discussions or reference past interactions for context."
+        },
+        "mainChatArea": {
+          "title": "Main Chat Interface",
+          "description": "This is the primary conversation area where you interact with the AI Assistant. Type your questions, requests, or commands and receive intelligent responses."
+        },
+        "welcomeScreen": {
+          "title": "AI Welcome Screen",
+          "description": "When starting fresh, the AI Assistant presents a welcome screen with helpful suggestions and common use cases to get you started quickly."
+        },
+        "samplePrompts": {
+          "title": "Sample Prompts",
+          "description": "Use these example prompts to understand the AI Assistant's capabilities. They demonstrate different types of requests and help you learn effective interaction patterns."
+        },
+        "inputArea": {
+          "title": "Message Input Area",
+          "description": "Type your messages, questions, or requests here. You can also attach files, upload documents, or use voice input to communicate with the AI Assistant."
+        },
+        "sendButton": {
+          "title": "Send Message",
+          "description": "Click this button to send your message to the AI Assistant. You can also press Enter to send your message quickly while typing."
+        },
+        "tourControl": {
+          "title": "AI Assistant Tours",
+          "description": "Access specialized tours for different AI Assistant features. Learn about advanced capabilities, file handling, and optimization techniques."
+        }
+      }
+    },
+    "partners": {
+      "title": "Partner Management Tour",
+      "description": "Learn how to browse, search, and manage partner organizations in the system.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Partner Management",
+          "description": "This is the central hub for managing all partner organizations. You can browse, search, filter, create, edit, and manage partner records from this page."
+        },
+        "header": {
+          "title": "Partners Section Header",
+          "description": "This shows you're in the Partners section. The icon and title help you identify which part of the application you're currently using."
+        },
+        "newButton": {
+          "title": "Create New Partner",
+          "description": "Click this button to create a new partner organization. You'll be taken to a form where you can enter all the partner details."
+        },
+        "importButton": {
+          "title": "Import Partners",
+          "description": "Use this button to import multiple partner records from a CSV or Excel file. This is useful for bulk data entry."
+        },
+        "searchInput": {
+          "title": "Search Partners",
+          "description": "Type here to search for specific partners by name, organization type, location, or other criteria. The results will filter in real-time as you type."
+        },
+        "advancedSearch": {
+          "title": "Advanced Search",
+          "description": "Click here to access more detailed search and filtering options. You can combine multiple criteria to find exactly the partners you're looking for."
+        },
+        "gridView": {
+          "title": "Partners List",
+          "description": "This table shows all your partner organizations with key information like name, type, location, and status. You can sort, filter, and take actions on individual partners."
+        },
+        "tourControl": {
+          "title": "Partner Tours",
+          "description": "Access guided tours specific to partner management. Learn about creating partners, managing relationships, and advanced features."
+        }
+      }
+    },
+    "contacts": {
+      "title": "Contact Management Tour",
+      "description": "Learn how to browse, search, and manage contact records in the system.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Contact Management",
+          "description": "This is the central hub for managing all contact records. You can browse, search, filter, create, edit, and manage contact information from this page."
+        },
+        "header": {
+          "title": "Contacts Section Header",
+          "description": "This shows you're in the Contacts section. The icon and title help you identify which part of the application you're currently using."
+        },
+        "newButton": {
+          "title": "Create New Contact",
+          "description": "Click this button to create a new contact record. You'll be taken to a form where you can enter all the contact details."
+        },
+        "importButton": {
+          "title": "Import Contacts",
+          "description": "Use this button to import multiple contact records from a CSV or Excel file. This is useful for bulk data entry."
+        },
+        "scanButton": {
+          "title": "Scan Business Card",
+          "description": "Use this feature to scan business cards and automatically extract contact information using AI technology."
+        },
+        "searchInput": {
+          "title": "Search Contacts",
+          "description": "Type here to search for specific contacts by name, email, phone, company, or other criteria. The results will filter in real-time as you type."
+        },
+        "advancedSearch": {
+          "title": "Advanced Search",
+          "description": "Click here to access more detailed search and filtering options. You can combine multiple criteria to find exactly the contacts you're looking for."
+        },
+        "gridView": {
+          "title": "Contacts List",
+          "description": "This table shows all your contacts with key information like name, email, phone, company, and partner affiliation. You can sort, filter, and take actions on individual contacts."
+        },
+        "tourControl": {
+          "title": "Contact Tours",
+          "description": "Access guided tours specific to contact management. Learn about creating contacts, managing relationships, and advanced features."
+        }
+      }
+    },
+    "contactview": {
+      "title": "Contact Details Tour",
+      "description": "Learn how to view and manage individual contact details, information, and related records.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Contact Details",
+          "description": "This page shows comprehensive information about a specific contact. You can view, edit, and manage all aspects of the contact record from here."
+        },
+        "contactHeader": {
+          "title": "Contact Header",
+          "description": "The contact header displays the contact's name, title, and key information. This gives you a quick overview of who you're viewing."
+        },
+        "editButton": {
+          "title": "Edit Contact",
+          "description": "Click this button to edit the contact's information. You can update personal details, contact information, and other attributes."
+        },
+        "contactTabs": {
+          "title": "Contact Information Tabs",
+          "description": "These tabs organize the contact's information into different sections like personal details, addresses, interactions, and system information."
+        },
+        "tourControl": {
+          "title": "Contact Detail Tours",
+          "description": "Access specific tours for different aspects of contact management and detailed views."
+        }
+      }
+    },
+    "interactions": {
+      "title": "Interaction Management Tour",
+      "description": "Learn how to browse, search, and manage interaction records in the system.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Interaction Management",
+          "description": "This is the central hub for managing all interaction records. You can browse, search, filter, create, edit, and track interactions with contacts and partners."
+        },
+        "header": {
+          "title": "Interactions Section Header",
+          "description": "This shows you're in the Interactions section. The icon and title help you identify which part of the application you're currently using."
+        },
+        "newButton": {
+          "title": "Create New Interaction",
+          "description": "Click this button to record a new interaction. You can log meetings, calls, emails, and other communications with contacts."
+        },
+        "importButton": {
+          "title": "Import Interactions",
+          "description": "Use this button to import multiple interaction records from a CSV or Excel file. This is useful for bulk data entry."
+        },
+        "searchInput": {
+          "title": "Search Interactions",
+          "description": "Type here to search for specific interactions by contact name, interaction type, date, or other criteria. The results will filter in real-time as you type."
+        },
+        "gridView": {
+          "title": "Interactions List",
+          "description": "This table shows all your interaction records with key information like contact, type, date, and notes. You can sort, filter, and take actions on individual interactions."
+        },
+        "aiTranscribe": {
+          "title": "AI Transcription",
+          "description": "Use AI-powered transcription to automatically convert meeting recordings or notes into structured interaction records."
+        },
+        "tourControl": {
+          "title": "Interaction Tours",
+          "description": "Access guided tours specific to interaction management. Learn about logging interactions, tracking communications, and advanced features."
+        }
+      }
+    },
+    "partnerview": {
+      "title": "Partner Details Tour",
+      "description": "Learn how to view and manage individual partner details, information, and related records.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Partner Details",
+          "description": "This page shows comprehensive information about a specific partner organization. You can view, edit, and manage all aspects of the partner record from here."
+        },
+        "partnerHeader": {
+          "title": "Partner Header",
+          "description": "The partner header displays the organization's name, type, and key information. This gives you a quick overview of the partner you're viewing."
+        },
+        "editButton": {
+          "title": "Edit Partner",
+          "description": "Click this button to edit the partner's information. You can update organizational details, contact information, and other attributes."
+        },
+        "partnerInfo": {
+          "title": "Partner Information",
+          "description": "This section displays detailed information about the partner organization including contact details, addresses, and organizational data."
+        },
+        "partnerTabs": {
+          "title": "Partner Navigation Tabs",
+          "description": "These tabs organize the partner's information into different sections like details, contacts, interactions, agreements, and analytics."
+        },
+        "tourControl": {
+          "title": "Partner Detail Tours",
+          "description": "Access specific tours for different aspects of partner management and detailed views."
+        }
+      }
+    },
+    "partnertree": {
+      "title": "Partner Tree Management Tour",
+      "description": "Learn how to manage the hierarchical structure of partner organizations and categories.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Partner Tree",
+          "description": "This is the administrative interface for managing the hierarchical structure of partner organizations, categories, and groups."
+        },
+        "treeView": {
+          "title": "Partner Hierarchy Tree",
+          "description": "This tree view shows the hierarchical structure of partner categories and groups. You can expand/collapse nodes to navigate the hierarchy."
+        },
+        "addNode": {
+          "title": "Add New Node",
+          "description": "Use this button to add new categories, groups, or organizational units to the partner hierarchy."
+        },
+        "editNode": {
+          "title": "Edit Node",
+          "description": "Click this button to edit the properties of the selected node in the hierarchy, including name, description, and parent relationships."
+        },
+        "tourControl": {
+          "title": "Partner Tree Tours",
+          "description": "Access guided tours specific to partner hierarchy management and organizational structure configuration."
+        }
+      }
+    },
+    "usermanagement": {
+      "title": "User Management Tour",
+      "description": "Learn how to manage user accounts, permissions, and access control in the system.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to User Management",
+          "description": "This is the administrative interface for managing user accounts, roles, permissions, and access control across the system."
+        },
+        "header": {
+          "title": "User Management Header",
+          "description": "The main header shows you're in the User Management section. This administrative area is where you configure user access and permissions."
+        },
+        "usersList": {
+          "title": "Users List",
+          "description": "This table displays all user accounts with key information like name, email, roles, and last login. You can manage user access and permissions from this view."
+        },
+        "addUser": {
+          "title": "Add New User",
+          "description": "Click this button to create a new user account. You can set up their profile, assign roles, and configure their access permissions."
+        },
+        "editUser": {
+          "title": "Edit User",
+          "description": "Use these action buttons to edit user details, modify permissions, reset passwords, or deactivate user accounts."
+        },
+        "roleManagement": {
+          "title": "Role Management",
+          "description": "Access role-based access control settings to define user roles, permissions, and organizational unit access levels."
+        },
+        "impersonation": {
+          "title": "User Impersonation",
+          "description": "Administrative feature to impersonate other users for testing purposes or to troubleshoot user-specific issues."
+        },
+        "filterSection": {
+          "title": "User Filters",
+          "description": "Use these filters to search and narrow down the user list by name, email, role, or organization unit. You can combine multiple filters for precise results."
+        },
+        "tourControl": {
+          "title": "User Management Tours",
+          "description": "Access specialized tours for different aspects of user administration, role management, and security configuration."
+        }
+      }
+    }
   }
 }

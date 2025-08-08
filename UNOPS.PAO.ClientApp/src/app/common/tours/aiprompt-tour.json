@@ -1,7 +1,7 @@
 {
   "tourId": "aiprompt-overview",
-  "title": "AiPrompt Overview Tour",
-  "description": "Administrative interface for managing AI prompts and configurations. Allows creating, editing, and testing AI prompts with Gemini models, including advanced configuration options like temperature, top-p, and model selection.",
+  "titleKey": "tour.aiprompt.title",
+  "descriptionKey": "tour.aiprompt.description",
   "entity": "AiPrompt",
   "route": "/admin/ai-prompt-management",
   "showButtons": [
@@ -15,201 +15,93 @@
   "steps": [
     {
       "popover": {
-        "title": "Welcome to AiPromptComponent",
-        "description": "This page provides a comprehensive administrative interface for managing AI prompts. Users can create new prompts, edit existing ones, delete obsolete prompts, and thoroughly test prompt configurations with Gemini models. It includes advanced settings for fine-tuning AI behavior, such as temperature, top-p, and model selection, ensuring optimal performance and output.",
+        "titleKey": "tour.aiprompt.steps.welcome.title",
+        "descriptionKey": "tour.aiprompt.steps.welcome.description",
         "side": "over",
         "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"New Prompt | Edit Prompt\"]",
+      "element": ".ai-prompt-header",
+      "fallbackType": "section-header",
       "popover": {
-        "title": "New Prompt | Edit Prompt",
-        "description": "Opens a dialog window for creating a new AI prompt or editing an existing one. This dialog contains form fields to configure various aspects of the AI prompt, including its content, model, and parameters.<br><br><strong>When to use:</strong> When you need to define a new AI prompt from scratch., When you need to modify the settings or content of an existing AI prompt to adjust its behavior.",
+        "titleKey": "tour.aiprompt.steps.header.title",
+        "descriptionKey": "tour.aiprompt.steps.header.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"New Prompt | Edit Prompt\"]",
-          "p-button .p-button-label:contains(\"New Prompt | Edit Prompt\")",
-          "button:contains(\"New Prompt | Edit Prompt\")",
-          "[aria-label=\"New Prompt | Edit Prompt\"]",
-          "[title=\"New Prompt | Edit Prompt\"]",
-          "p-button[icon=\"pi pi-plus | pi pi-pencil\"]",
-          ".pi.pi-plus.|.pi.pi-pencil",
-          "i.pi.pi-plus.|.pi.pi-pencil",
-          "button .pi.pi-plus.|.pi.pi-pencil",
-          "#create-prompt-btn",
-          "#create-prompt-btn-btn",
-          "[data-test-id=\"create-prompt-btn\"]",
-          ".create-prompt-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 1
       }
     },
     {
-      "element": "p-button[label=\"Clear Search\"]",
+      "element": ".create-prompt-button",
+      "fallbackType": "create-prompt",
       "popover": {
-        "title": "Clear Search",
-        "description": "Clears any active search text and resets the prompt list to display all available prompts.<br><br><strong>When to use:</strong> When you want to remove the current search filter and view the complete list of prompts.",
+        "titleKey": "tour.aiprompt.steps.createPrompt.title",
+        "descriptionKey": "tour.aiprompt.steps.createPrompt.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Clear Search\"]",
-          "p-button .p-button-label:contains(\"Clear Search\")",
-          "button:contains(\"Clear Search\")",
-          "[aria-label=\"Clear Search\"]",
-          "[title=\"Clear Search\"]",
-          "p-button[icon=\"pi pi-times\"]",
-          ".pi.pi-times",
-          "i.pi.pi-times",
-          "button .pi.pi-times",
-          "#clear-search-btn",
-          "#clear-search-btn-btn",
-          "[data-test-id=\"clear-search-btn\"]",
-          ".clear-search-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 2
       }
     },
     {
-      "element": "p-button[label=\"Delete\"]",
+      "element": ".ai-prompt-search-section",
+      "fallbackType": "search-input",
       "popover": {
-        "title": "Delete",
-        "description": "Initiates the process to delete an AI prompt. A confirmation dialog will appear, warning about potential dependencies and impacts on features that use this prompt.<br><br><strong>When to use:</strong> When you need to permanently remove an AI prompt that is no longer needed or is incorrect., Use with caution, as deleting a prompt can affect other parts of the system that rely on it.",
+        "titleKey": "tour.aiprompt.steps.searchSection.title",
+        "descriptionKey": "tour.aiprompt.steps.searchSection.description",
         "side": "bottom",
-        "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Delete\"]",
-          "p-button .p-button-label:contains(\"Delete\")",
-          "button:contains(\"Delete\")",
-          "[aria-label=\"Delete\"]",
-          "[title=\"Delete\"]",
-          "p-button[icon=\"pi pi-trash\"]",
-          ".pi.pi-trash",
-          "i.pi.pi-trash",
-          "button .pi.pi-trash",
-          "#delete-prompt-btn",
-          "#delete-prompt-btn-btn",
-          "[data-test-id=\"delete-prompt-btn\"]",
-          ".delete-prompt-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 3
+        "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"Cancel\"]",
+      "element": ".ai-prompt-table-section",
+      "fallbackType": "grid-view",
       "popover": {
-        "title": "Cancel",
-        "description": "Closes the prompt creation or editing dialog without saving any changes made. All unsaved modifications will be discarded.<br><br><strong>When to use:</strong> When you decide not to save the changes you've made in the prompt dialog., When you want to exit the dialog without creating or updating a prompt.",
-        "side": "bottom",
-        "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Cancel\"]",
-          "p-button .p-button-label:contains(\"Cancel\")",
-          "button:contains(\"Cancel\")",
-          "[aria-label=\"Cancel\"]",
-          "[title=\"Cancel\"]",
-          "p-button[icon=\"pi pi-times\"]",
-          ".pi.pi-times",
-          "i.pi.pi-times",
-          "button .pi.pi-times",
-          "#cancel-prompt-dialog-btn",
-          "#cancel-prompt-dialog-btn-btn",
-          "[data-test-id=\"cancel-prompt-dialog-btn\"]",
-          ".cancel-prompt-dialog-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 4
+        "titleKey": "tour.aiprompt.steps.promptsTable.title",
+        "descriptionKey": "tour.aiprompt.steps.promptsTable.description",
+        "side": "top",
+        "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"Test Prompt\"]",
+      "element": "th[pSortableColumn='type']",
+      "fallbackType": "prompt-type",
       "popover": {
-        "title": "Test Prompt",
-        "description": "Executes a test run of the currently configured prompt. This allows you to validate the prompt's output and performance with specific inputs before saving it, ensuring it behaves as expected.<br><br><strong>When to use:</strong> When you want to verify how a prompt responds to specific input before saving it., When you are fine-tuning a prompt and need to quickly check the results of parameter changes.",
+        "titleKey": "tour.aiprompt.steps.promptType.title",
+        "descriptionKey": "tour.aiprompt.steps.promptType.description",
         "side": "bottom",
-        "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Test Prompt\"]",
-          "p-button .p-button-label:contains(\"Test Prompt\")",
-          "button:contains(\"Test Prompt\")",
-          "[aria-label=\"Test Prompt\"]",
-          "[title=\"Test Prompt\"]",
-          "p-button[icon=\"pi pi-play\"]",
-          ".pi.pi-play",
-          "i.pi.pi-play",
-          "button .pi.pi-play",
-          "#test-prompt-btn",
-          "#test-prompt-btn-btn",
-          "[data-test-id=\"test-prompt-btn\"]",
-          ".test-prompt-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 5
+        "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"Preview | Raw\"]",
+      "element": "th[pSortableColumn='model']",
+      "fallbackType": "ai-model",
       "popover": {
-        "title": "Preview | Raw",
-        "description": "Switches the display of test results between a user-friendly formatted preview and the raw JSON response. This allows users to inspect the output in different levels of detail.<br><br><strong>When to use:</strong> Switch to 'Preview' to see a readable, formatted version of the AI's output., Switch to 'Raw' to view the complete technical JSON response, useful for debugging or detailed analysis.",
+        "titleKey": "tour.aiprompt.steps.aiModel.title",
+        "descriptionKey": "tour.aiprompt.steps.aiModel.description",
         "side": "bottom",
-        "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Preview | Raw\"]",
-          "p-button .p-button-label:contains(\"Preview | Raw\")",
-          "button:contains(\"Preview | Raw\")",
-          "[aria-label=\"Preview | Raw\"]",
-          "[title=\"Preview | Raw\"]",
-          "p-button[icon=\"pi pi-eye | pi pi-code\"]",
-          ".pi.pi-eye.|.pi.pi-code",
-          "i.pi.pi-eye.|.pi.pi-code",
-          "button .pi.pi-eye.|.pi.pi-code",
-          "#toggle-preview-raw-btn",
-          "#toggle-preview-raw-btn-btn",
-          "[data-test-id=\"toggle-preview-raw-btn\"]",
-          ".toggle-preview-raw-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 6
+        "align": "center"
       }
     },
     {
+      "element": ".edit-prompt-button",
+      "fallbackType": "edit-button",
       "popover": {
-        "title": "Tour Complete!",
-        "description": "You've learned the key features of AiPrompt. You can always restart this tour from the help menu.",
-        "side": "over",
+        "titleKey": "tour.aiprompt.steps.editPrompt.title",
+        "descriptionKey": "tour.aiprompt.steps.editPrompt.description",
+        "side": "left",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.aiprompt.steps.tourControl.title",
+        "descriptionKey": "tour.aiprompt.steps.tourControl.description",
+        "side": "bottom",
         "align": "center"
       }
     }
   ],
-  "generatedAt": "2025-07-31T18:59:03.647315",
+  "generatedAt": "2024-01-15T12:00:00Z",
   "version": "1.0"
 }
