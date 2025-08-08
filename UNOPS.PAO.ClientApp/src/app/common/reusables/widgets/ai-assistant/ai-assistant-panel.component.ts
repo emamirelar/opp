@@ -187,7 +187,14 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   // Handle closing the AI Assistant
   closeAiAssistant(): void {
-    this.layoutService.onAIAssistantToggle();
+    // Check if we're on the AI route
+    if (this.router.url.startsWith('/ai')) {
+      // On AI route, navigate back to home or previous page
+      this.router.navigate(['/']);
+    } else {
+      // In overlay mode, close the overlay
+      this.layoutService.onAIAssistantToggle();
+    }
   }
 
 
