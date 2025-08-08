@@ -159,4 +159,33 @@
   border-radius: 4px;
   padding: 1rem;
   overflow-x: auto;
+}
+
+/* Chart.js container styles */
+.chartjs-container {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--surface-card);
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  overflow: hidden;
+}
+
+.chartjs-container .content-type-label {
+  background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+}
+
+/* Chart responsive behavior */
+@media (max-width: 768px) {
+  .chartjs-container {
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .chartjs-container {
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+  }
 } 

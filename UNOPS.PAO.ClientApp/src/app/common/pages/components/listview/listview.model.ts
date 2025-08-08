@@ -147,6 +147,34 @@ export interface ListViewConfig {
    */
   forceMobileMode?: boolean;
   
+  /**
+   * Search metadata configuration for displaying search result details
+   * Used in global search and other search-enabled views
+   */
+  searchMetadata?: {
+    /**
+     * Whether to show search metadata (match details, relevance score, etc.)
+     * @default false
+     */
+    enabled?: boolean;
+    
+    /**
+     * Whether metadata is visible by default or requires user toggle
+     * @default false
+     */
+    defaultVisible?: boolean;
+    
+    /**
+     * Function to extract search metadata from a data item
+     * Should return the _searchMetadata object from search results
+     */
+    extractMetadata?: (item: any) => any;
+    
+    /**
+     * Current search query for highlighting in snippets
+     */
+    searchQuery?: string;
+  };
 
   searchConfig?: {
     /**

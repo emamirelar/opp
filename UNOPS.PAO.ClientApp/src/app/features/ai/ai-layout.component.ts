@@ -7,8 +7,7 @@ import { LayoutService } from '../../common/layouts/services/layout.service';
 import { TopbarComponent } from '../../common/layouts/components/topbar/topbar.component';
 import { AiAssistantPanelComponent } from '../../common/reusables/widgets/ai-assistant/ai-assistant-panel.component';
 import { AiAssistantData } from '../../common/reusables/widgets/ai-assistant/ai-assistant.data';
-import { MenuModule } from 'primeng/menu';
-import { Menu } from 'primeng/menu';
+
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ButtonModule } from 'primeng/button';
@@ -56,7 +55,7 @@ interface ChatSession {
     HttpClientModule,
     TopbarComponent,
     AiAssistantPanelComponent,
-    MenuModule,
+
     DialogModule,
     ConfirmDialogModule,
     ButtonModule,
@@ -93,9 +92,9 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
   // Add a signal for hover state
   sidebarHovered = signal(false);
 
-  showRenameDialog = false;
-  renameTitle = '';
-  currentChatBeingRenamed: ChatSession | null = null;
+  // Inline editing state
+  editingTitleChatId = signal<string | null>(null);
+  editingTitleText = '';
   confirmAction: null | (() => void) = null;
 
   // Computed property for filtered chat sessions
@@ -116,7 +115,7 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
   // Remove the static chatMenuItems array
   // menuChat: any = null; // This line is removed as per the new_code
 
-  @ViewChildren('chatMenu') chatMenus!: QueryList<Menu>;
+
 
   rightPanelVisible = false;
   rightPanelWidth = 600;
@@ -227,6 +226,15 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     // Clean up any subscriptions if needed
+    
+    // Reset right panel state to prevent it from persisting when navigating away
+    this.rightPanelVisible = false;
+    this.rightPanelType = null;
+    this.rightPanelComponent = null;
+    this.rightPanelUrl = null;
+    this.rightPanelEntityType = null;
+    this.rightPanelEntityId = null;
+    this.rightPanelRowData = null;
   }
 
   @HostListener('window:resize', ['$event'])
@@ -354,122 +362,162 @@ export class AiLayoutComponent implements OnInit, OnDestroy {
     }
   }
 
-  openChatMenu(event: MouseEvent, chat: any, index: number) {
+  // Inline title editing methods
+  isEditingTitle(chatId: string): boolean {
+    return this.editingTitleChatId() === chatId;
+  }
+
+  startEditTitle(chat: any, event: MouseEvent) {
     event.stopPropagation();
-    event.preventDefault();
+    console.log('Starting to edit title for:', chat.title);
     
-    console.log('Opening chat menu for:', chat.title, 'at index:', index);
+    this.editingTitleChatId.set(chat.id);
+    this.editingTitleText = chat.title;
     
-    // Set menu items for the current chat before showing menu
-    this.currentChatMenuItems = this.createChatMenuItems(chat);
-    
-    const menu = this.chatMenus?.toArray()[index];
-    if (menu && menu.toggle) {
-      try {
-        menu.toggle(event);
-        console.log('Menu toggled successfully');
-      } catch (error) {
-        console.error('Error toggling menu:', error);
+    // Focus the input after Angular renders it
+    setTimeout(() => {
+      const input = document.querySelector('.chat-title-input') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        input.select();
       }
-    } else {
-      console.warn('Menu not found at index:', index, 'Available menus:', this.chatMenus?.length);
+    }, 0);
+  }
+
+  async saveTitle(chat: any) {
+    if (!this.editingTitleText.trim()) {
+      this.cancelEditTitle();
+      return;
     }
-  }
 
-  // Store current menu items to avoid infinite re-rendering
-  currentChatMenuItems: any[] = [];
+    const newTitle = this.editingTitleText.trim();
+    if (newTitle === chat.title) {
+      this.cancelEditTitle();
+      return;
+    }
 
-  private createChatMenuItems(chat: any): any[] {
-    console.log('Creating menu items for chat:', chat.title, 'starred:', chat.starred, 'archived:', chat.archived);
-    return [
-      { 
-        label: 'Rename', 
-        icon: 'pi pi-pencil', 
-        command: () => {
-          console.log('Rename menu item clicked for:', chat.title);
-          this.renameChat(chat);
-        }
-      },
-      { 
-        label: chat.starred ? 'Unstar' : 'Star', 
-        icon: chat.starred ? 'pi pi-star-fill' : 'pi pi-star', 
-        command: () => {
-          console.log('Star/Unstar menu item clicked for:', chat.title);
-          this.toggleStarChat(chat);
-        }
-      },
-      { 
-        label: chat.archived ? 'Unarchive' : 'Archive', 
-        icon: chat.archived ? 'pi pi-folder-open' : 'pi pi-archive', 
-        command: () => {
-          console.log('Archive/Unarchive menu item clicked for:', chat.title);
-          this.archiveChat(chat);
-        }
-      }
-    ];
-  }
-
-  renameChat(chat: any) {
-    console.log('renameChat called for:', chat.title);
-    this.currentChatBeingRenamed = chat;
-    this.renameTitle = chat.title;
-    this.showRenameDialog = true;
-  }
-
-  saveRename() {
-    if (this.renameTitle.trim() && this.currentChatBeingRenamed) {
-      // Update the specific chat by ID
+    try {
+      console.log('Saving title for chat:', chat.id, 'new title:', newTitle);
+      
+      // Optimistically update UI
       const updated = this.chatSessions().map(c => 
-        c.id === this.currentChatBeingRenamed!.id 
-          ? { ...c, title: this.renameTitle.trim() } 
-          : c
+        c.id === chat.id ? { ...c, title: newTitle } : c
       );
       this.chatSessions.set(updated);
-      this.showRenameDialog = false;
-      this.currentChatBeingRenamed = null;
-      this.renameTitle = '';
       
-      // TODO: Call API to save the title to the backend
-      console.log('Chat renamed to:', this.renameTitle.trim());
+      // Call backend API
+      await this.http.post('/api/ai-assistant/update-title', {
+        sessionId: chat.id,
+        title: newTitle
+      }).toPromise();
+      
+      console.log('Title updated successfully');
+      this.editingTitleChatId.set(null);
+      
+      // Reload sessions to ensure consistency
+      await this.loadUserSessions();
+      
+    } catch (error) {
+      console.error('Error updating title:', error);
+      
+      // Revert optimistic update on error
+      const reverted = this.chatSessions().map(c => 
+        c.id === chat.id ? { ...c, title: chat.title } : c
+      );
+      this.chatSessions.set(reverted);
+      this.cancelEditTitle();
     }
   }
 
-  cancelRename() {
-    this.showRenameDialog = false;
-    this.currentChatBeingRenamed = null;
-    this.renameTitle = '';
+  cancelEditTitle() {
+    this.editingTitleChatId.set(null);
+    this.editingTitleText = '';
   }
-  toggleStarChat(chat: any) {
+
+  // Header-specific methods for title editing
+  startEditHeaderTitle(event: MouseEvent) {
+    event.stopPropagation();
+    const selectedChat = this.getSelectedChat();
+    if (!selectedChat) return;
+    
+    console.log('Starting to edit header title for:', selectedChat.title);
+    
+    this.editingTitleChatId.set(selectedChat.id);
+    this.editingTitleText = selectedChat.title;
+    
+    // Focus the input after Angular renders it
+    setTimeout(() => {
+      const input = document.querySelector('.header-chat-title-input') as HTMLInputElement;
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }, 0);
+  }
+
+  async saveHeaderTitle() {
+    const selectedChat = this.getSelectedChat();
+    if (!selectedChat) {
+      this.cancelEditTitle();
+      return;
+    }
+    
+    await this.saveTitle(selectedChat);
+  }
+
+  // Methods to get selected chat info
+  getSelectedChat() {
+    const selectedId = this.selectedChatId();
+    if (!selectedId) return null;
+    
+    return this.chatSessions().find(chat => chat.id === selectedId);
+  }
+
+  getSelectedChatTitle(): string {
+    const selectedChat = this.getSelectedChat();
+    return selectedChat?.title || 'Chat';
+  }
+
+  async toggleSelectedChatStar() {
+    const selectedChat = this.getSelectedChat();
+    if (!selectedChat) return;
+    
+    await this.toggleStarChat(selectedChat);
+  }
+  async toggleStarChat(chat: any) {
     console.log('toggleStarChat called for:', chat.title, 'current starred:', chat.starred);
-    this.confirmAction = () => {
-      console.log('Executing star toggle for:', chat.title);
-      const updated = this.chatSessions().map(c => c.id === chat.id ? { ...c, starred: !c.starred } : c);
+    
+    try {
+      const newStarredState = !chat.starred;
+      
+      // Optimistically update UI first
+      const updated = this.chatSessions().map(c => 
+        c.id === chat.id ? { ...c, starred: newStarredState } : c
+      );
       this.chatSessions.set(updated);
-    };
-    this.confirmationService.confirm({
-      message: chat.starred ? 'Remove star from this chat?' : 'Star this chat?',
-      header: 'Confirm',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => { if (this.confirmAction) this.confirmAction(); },
-      reject: () => { this.confirmAction = null; }
-    });
+      
+      // Call backend API
+      const response = await this.http.post('/api/ai-assistant/update-star', {
+        sessionId: chat.id,
+        starred: newStarredState
+      }).toPromise();
+      
+      console.log('Star status updated successfully:', response);
+      
+      // Reload sessions to ensure consistency
+      await this.loadUserSessions();
+      
+    } catch (error) {
+      console.error('Error updating star status:', error);
+      
+      // Revert optimistic update on error
+      const reverted = this.chatSessions().map(c => 
+        c.id === chat.id ? { ...c, starred: chat.starred } : c
+      );
+      this.chatSessions.set(reverted);
+    }
   }
-  
-  archiveChat(chat: any) {
-    console.log('archiveChat called for:', chat.title, 'current archived:', chat.archived);
-    this.confirmAction = () => {
-      console.log('Executing archive toggle for:', chat.title);
-      const updated = this.chatSessions().map(c => c.id === chat.id ? { ...c, archived: !c.archived } : c);
-      this.chatSessions.set(updated);
-    };
-    this.confirmationService.confirm({
-      message: chat.archived ? 'Unarchive this chat?' : 'Archive this chat?',
-      header: 'Confirm',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => { if (this.confirmAction) this.confirmAction(); },
-      reject: () => { this.confirmAction = null; }
-    });
-  }
+
 
   openRightPanelWithComponent(component: Type<any>, data: any) {
     this.rightPanelType = 'component';

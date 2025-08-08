@@ -4,11 +4,12 @@ import { MarkdownModule } from 'ngx-markdown';
 import { ResultItem } from '../ai-assistant.model';
 import { EntityGridComponent } from './entity-grid/entity-grid.component';
 import { TypewriterMarkdownComponent } from './typewriter-markdown/typewriter-markdown.component';
+import { ChartJsComponent } from './chart-js/chart-js.component';
 
 @Component({
   selector: 'app-content-renderer',
   standalone: true,
-  imports: [CommonModule, MarkdownModule, EntityGridComponent, TypewriterMarkdownComponent],
+  imports: [CommonModule, MarkdownModule, EntityGridComponent, TypewriterMarkdownComponent, ChartJsComponent],
   templateUrl: './content-renderer.component.html',
   styleUrls: ['./content-renderer.component.css'],
   encapsulation: ViewEncapsulation.None
@@ -67,9 +68,15 @@ export class ContentRendererComponent implements OnInit, AfterViewInit {
           // Generate unique ID for this diagram
           const diagramId = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
           
-          // Render the diagram
-          const diagramCode = this.getStringMessage();
+          // Render the diagram with proper newline handling
+          let diagramCode = this.getStringMessage();
+          
+          // Convert escaped newlines to actual newlines for proper Mermaid parsing
+          diagramCode = diagramCode.replace(/\\n/g, '\n');
+          
           console.log('🎨 Rendering mermaid diagram:', diagramCode);
+          console.log('🎨 Diagram code length:', diagramCode.length);
+          console.log('🎨 Diagram lines:', diagramCode.split('\n').length);
           
           const { svg } = await mermaid.default.render(diagramId, diagramCode);
           
@@ -100,6 +107,8 @@ export class ContentRendererComponent implements OnInit, AfterViewInit {
 
   getContentTypeLabel(): string {
     switch (this.item.type) {
+      case 'chartjs':
+        return this.getChartTypeLabel();
       case 'mermaid':
         return 'Mermaid Diagram';
       case 'code':
@@ -140,6 +149,40 @@ export class ContentRendererComponent implements OnInit, AfterViewInit {
   }
 
   private isNonTextContent(): boolean {
-    return ['grid', 'card', 'mermaid', 'code'].includes(this.item.type);
+    return ['grid', 'card', 'mermaid', 'code', 'chartjs'].includes(this.item.type);
+  }
+
+  // Chart.js related methods
+  getChartType(): string {
+    return (this.item as any).chartType || 'pie';
+  }
+
+  getChartConfig(): any {
+    if (typeof this.item.message === 'object' && this.item.message !== null) {
+      return this.item.message;
+    }
+    return null;
+  }
+
+  getChartData(): any {
+    if (typeof this.item.message === 'object' && this.item.message !== null) {
+      return (this.item.message as any).data;
+    }
+    return null;
+  }
+
+  getChartTypeLabel(): string {
+    const chartType = this.getChartType();
+    const typeLabels: { [key: string]: string } = {
+      'pie': 'Pie Chart',
+      'doughnut': 'Doughnut Chart',
+      'bar': 'Bar Chart',
+      'line': 'Line Chart',
+      'radar': 'Radar Chart',
+      'polar': 'Polar Chart',
+      'scatter': 'Scatter Plot'
+    };
+    
+    return typeLabels[chartType] || `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`;
   }
 } 

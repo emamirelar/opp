@@ -25,10 +25,20 @@ class ResponseItem(BaseModel):
     For 'card' type with single entity:
     - message can be Dict[str, Any] (single entity object) 
     - entity should specify the entity type
+    
+    For 'chartjs' type:
+    - message should be Dict[str, Any] with Chart.js configuration
+    - chartType should specify chart type (pie, bar, line, etc.)
+    - entity should specify what the chart represents
+    
+    For 'mermaid' type:
+    - message should be str with mermaid diagram code
+    - entity should specify what the diagram represents
     """
-    type: str  # markdown | card | grid | json | mermaid
+    type: str  # markdown | card | grid | json | mermaid | chartjs
     message: Union[str, Dict[str, Any], List[Dict[str, Any]]]
     entity: Optional[str] = None
+    chartType: Optional[str] = None  # For chartjs type: pie, bar, line, doughnut, radar, etc.
 
 
 class SourceItem(BaseModel):
