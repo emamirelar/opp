@@ -89,6 +89,12 @@ public class AppDbContext : AuditableDbContext<int, int>
             .Entity<UserProfile>()
             .HasIndex(up => up.UserId)
             .IsUnique();
+            
+        // Configure UserProfile Name property to use a default value if not provided
+        modelBuilder
+            .Entity<UserProfile>()
+            .Property(up => up.Name)
+            .HasDefaultValue("Unknown User");
 
         modelBuilder
             .Entity<Partner>(p =>

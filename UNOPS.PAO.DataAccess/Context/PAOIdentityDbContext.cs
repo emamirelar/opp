@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.Domain.Enums;
+using UNOPS.PAO.Domain.Infrastructure;
 
 public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdentityRole, int>
 {
@@ -71,12 +72,12 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
             if (existingProfile == null)
             {
                 // Create UserProfile automatically with default values
+                var firstName = paoUser.Email.Split('@')[0];
                 var userProfile = new UserProfile
                 {
                     UserId = paoUser.Id,
-                    FirstName = paoUser.Email.Split('@')[0], // Extract name from email
+                    FirstName = firstName,
                     LastName = "",
-                    // Name property is computed from FirstName and LastName, no need to set it
                     Status = EntityStatus.Active,
                     CreatedBy = paoUser.Id,
                     CreatedDate = DateTime.UtcNow,
@@ -84,8 +85,14 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                     IsDeleted = false,
                     DeletedBy = 0
                 };
+                
+                // Set the inherited Name property explicitly for database storage
+                ((ModifiableDeletableEntity)userProfile).Name = string.IsNullOrEmpty(firstName) ? "Unknown User" : firstName;
 
                 appDbContext.Set<UserProfile>().Add(userProfile);
+                
+                // Save UserProfile first to ensure it exists before creating UserPreference
+                appDbContext.SaveChanges();
             }
 
             // Check if UserPreference already exists
@@ -147,12 +154,12 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
             if (existingProfile == null)
             {
                 // Create UserProfile automatically with default values
+                var firstName = paoUser.Email.Split('@')[0];
                 var userProfile = new UserProfile
                 {
                     UserId = paoUser.Id,
-                    FirstName = paoUser.Email.Split('@')[0], // Extract name from email
+                    FirstName = firstName,
                     LastName = "",
-                    // Name property is computed from FirstName and LastName, no need to set it
                     Status = EntityStatus.Active,
                     CreatedBy = paoUser.Id,
                     CreatedDate = DateTime.UtcNow,
@@ -160,8 +167,14 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                     IsDeleted = false,
                     DeletedBy = 0
                 };
+                
+                // Set the inherited Name property explicitly for database storage
+                ((ModifiableDeletableEntity)userProfile).Name = string.IsNullOrEmpty(firstName) ? "Unknown User" : firstName;
 
                 appDbContext.Set<UserProfile>().Add(userProfile);
+                
+                // Save UserProfile first to ensure it exists before creating UserPreference
+                await appDbContext.SaveChangesAsync();
             }
 
             // Check if UserPreference already exists
