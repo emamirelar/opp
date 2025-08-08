@@ -1,5 +1,6 @@
 import { Component, inject, input, OnInit, signal, effect } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 //NGPrime
 import { TableModule } from 'primeng/table';
@@ -8,12 +9,15 @@ import { PaginatorModule } from 'primeng/paginator';
 import { DialogModule } from 'primeng/dialog';
 import { Menu } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { UploadDocumentComponent } from './upload/upload-document.component';
 import { DocumentService } from './../../../services/document.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { FeedbackDialogService } from '../../services/feedback-dialog.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { DocumentLinkModel } from '../../../interfaces/document.interface';
 
 @Component({
   selector: 'app-document',
@@ -27,6 +31,9 @@ import { AuthService } from '../../../../essentials/services/auth.service';
     TranslateModule,
     Menu,
     DatePipe,
+    SelectModule,
+    FormsModule,
+    TooltipModule,
   ],
   templateUrl: './document.component.html',
   styleUrl: './document.component.scss',
@@ -49,9 +56,15 @@ export class DocumentComponent implements OnInit {
   showUploadFile: boolean = false;
   items: MenuItem[] = [];
   selectedDocument: any = null;
+  pendingFiles = signal<any[]>([]);
+  documentTypes = signal<any[]>([]);
 
   get scrollHeightValue() {
-    return this.documents().length > 0 ? 'flex' : undefined;
+    return this.documents().length > 0 || this.pendingFiles().length > 0 ? 'flex' : undefined;
+  }
+
+  get allDocuments() {
+    return [...this.documents(), ...this.pendingFiles()];
   }
 
   constructor(private authService: AuthService) {
@@ -60,7 +73,12 @@ export class DocumentComponent implements OnInit {
       const entityName = this.entityName();
       const entityId = this.entityId();
       
-      // Only load if both entityName and entityId are provided
+      // Load document types when entityName changes
+      if (entityName) {
+        this.loadDocumentTypes();
+      }
+      
+      // Only load documents if both entityName and entityId are provided
       if (entityName && entityId) {
         this.load();
       }
@@ -83,6 +101,71 @@ export class DocumentComponent implements OnInit {
       next: (data: any) => {
         this.documents.set(data);
       },
+    });
+  }
+
+  loadDocumentTypes() {
+    if (this.entityName()) {
+      this.documentService.getDocumentTypesByEntityName(this.entityName()).subscribe({
+        next: (data: any) => {
+          this.documentTypes.set(data.records || []);
+        },
+      });
+    }
+  }
+
+  addPendingFiles(files: any[]) {
+    // Add files to pending list with default properties
+    const newPendingFiles = files.map(file => ({
+      ...file,
+      isPending: true,
+      selectedDocumentType: null,
+      isSaving: false
+    }));
+    this.pendingFiles.set([...this.pendingFiles(), ...newPendingFiles]);
+  }
+
+  removePendingFile(fileToRemove: any) {
+    const updatedFiles = this.pendingFiles().filter(file => file.id !== fileToRemove.id);
+    this.pendingFiles.set(updatedFiles);
+  }
+
+  savePendingFile(file: any) {
+    if (!file.selectedDocumentType) {
+      this.feedbackService.showInfoToast({
+        detail: 'Please select a document type before saving.',
+      });
+      return;
+    }
+
+    // Set saving state
+    file.isSaving = true;
+    
+    const documentLinkModel: DocumentLinkModel = {
+      link: file.url,
+      name: file.name,
+      type: file.mimeType,
+      googleId: file.id,
+      documentTypeId: file.selectedDocumentType.id,
+      parentEntityName: this.entityName(),
+      parentEntityId: parseInt(this.entityId()),
+    };
+
+    this.documentService.linkFile(documentLinkModel).subscribe({
+      next: (response: any) => {
+        this.feedbackService.showSuccessToast({ 
+          detail: `File ${response.name} linked successfully!` 
+        });
+        
+        // Remove from pending files
+        this.removePendingFile(file);
+        
+        // Reload document list
+        this.load();
+      },
+      error: () => {
+        file.isSaving = false;
+      }
     });
   }
 
