@@ -218,8 +218,12 @@ export class TopbarComponent implements OnInit, OnDestroy {
       });
     }
 
+    var isLocalDevelopment = window.location.hostname === 'localhost' ||  window.location.hostname === '127.0.0.1';
+    
+    const hasDevCookie = document.cookie.split(';')
+    .some(c => c.trim().startsWith('dev-user-email='));
     // Add development-only menu items
-    if (this.isDevelopment) {
+    if (isLocalDevelopment || hasDevCookie) {
       this.profileMenuItems.push(
         {
           separator: true

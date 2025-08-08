@@ -68,6 +68,13 @@ public class UserPreferenceService : IUserPreferenceService
         
         if (preference == null)
         {
+            // Ensure UserProfile exists before creating UserPreference
+            var userProfile = await _context.Set<UserProfile>().FirstOrDefaultAsync(up => up.UserId == userId);
+            if (userProfile == null)
+            {
+                throw new InvalidOperationException($"UserProfile does not exist for UserId: {userId}. Cannot create UserPreference.");
+            }
+            
             var globalFilters = new GlobalFilters
             {
                 OrgUnitId = orgUnitId
@@ -125,6 +132,13 @@ public class UserPreferenceService : IUserPreferenceService
         
         if (existingPreference == null)
         {
+            // Ensure UserProfile exists before creating UserPreference
+            var userProfile = await _context.Set<UserProfile>().FirstOrDefaultAsync(up => up.UserId == userIdInt);
+            if (userProfile == null)
+            {
+                throw new InvalidOperationException($"UserProfile does not exist for UserId: {userIdInt}. Cannot create UserPreference.");
+            }
+            
             userPreferences.UserId = userIdInt;
             userPreferences.Name = $"UserPreferences_{userIdInt}";
             _context.UserPreferences.Add(userPreferences);
@@ -170,6 +184,13 @@ public class UserPreferenceService : IUserPreferenceService
         
         if (existingPreference == null)
         {
+            // Ensure UserProfile exists before creating UserPreference
+            var userProfile = await _context.Set<UserProfile>().FirstOrDefaultAsync(up => up.UserId == userIdInt);
+            if (userProfile == null)
+            {
+                throw new InvalidOperationException($"UserProfile does not exist for UserId: {userIdInt}. Cannot create UserPreference.");
+            }
+            
             var userPreference = new UserPreference
             {
                 UserId = userIdInt,
