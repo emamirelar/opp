@@ -26,7 +26,7 @@
             [(ngModel)]="searchValue"
             [placeholder]="'search.placeholder' | translate"
             (keyup.enter)="onSearch()"
-            class="w-full lg:w-64"
+            class="w-full lg:w-64 quick-search"
           />
           @if (searchValue && searchValue.length > 0) {
             <p-inputicon class="pi pi-times cursor-pointer" (click)="clearSearch()" />
@@ -50,7 +50,7 @@
             <p-button
               [label]="'search.advanced' | translate"
               icon="pi pi-filter"
-              class="hidden lg:inline-flex"
+              class="hidden lg:inline-flex advanced-search"
               text rounded
               (onClick)="switchToAdvancedSearch()"
             ></p-button>

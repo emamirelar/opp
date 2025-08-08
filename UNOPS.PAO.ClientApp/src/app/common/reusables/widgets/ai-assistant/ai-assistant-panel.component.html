@@ -170,7 +170,7 @@
     </div>
 
     <!-- Welcome state - Gemini style -->
-    <div *ngIf="aiAssistantData.chatHistory().length === 0" class="flex flex-col items-center justify-center h-full text-center px-6 py-4 max-w-4xl mx-auto">
+    <div *ngIf="aiAssistantData.chatHistory().length === 0" class="flex flex-col items-center justify-center h-full text-center px-6 py-4 max-w-4xl mx-auto ai-welcome-screen">
       <!-- Personalized Greeting -->
       <div class="mb-6">
         <h1 class="text-4xl md:text-5xl font-normal text-[var(--text-color)] mb-4">
@@ -182,7 +182,7 @@
       </div>
 
       <!-- Sample Prompts Grid -->
-      <div class="w-full max-w-5xl">
+      <div class="w-full max-w-5xl ai-sample-prompts">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <div *ngFor="let prompt of examplePrompts; let i = index" 
                class="cursor-pointer group transition-all duration-200"
@@ -599,7 +599,7 @@
     </div>
 
     <!-- Input area -->
-    <div class="p-3">
+    <div class="p-3 ai-input-area">
       <div class="bg-[var(--surface-card)] border border-[var(--surface-border)] rounded-xl p-3 focus-within:border-[var(--primary-color)] transition-colors">
         <textarea
           pTextarea
@@ -662,7 +662,8 @@
               [disabled]="!message().trim() && selectedFiles().length === 0"
               [rounded]="true"
               size="small"
-              severity="primary">
+              severity="primary"
+              class="ai-send-button">
             </p-button>
           </div>
         </div>

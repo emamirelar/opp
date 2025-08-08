@@ -36,7 +36,7 @@ import { ResponsiveTabsComponent, ResponsiveTabItem } from '../../../../../commo
           <div class="font-semibold text-gray-400">
             {{ 'title.partner' | translate }}
           </div>
-          <app-go-back></app-go-back>
+          <app-go-back class="back-button"></app-go-back>
         </div>
 
         <div class="flex gap-2 md:gap-4 w-full items-center">
@@ -58,7 +58,8 @@ import { ResponsiveTabsComponent, ResponsiveTabItem } from '../../../../../commo
       <!-- Responsive tabs -->
       <app-responsive-tabs 
         [tabs]="tabs"
-        [dropdownPlaceholder]="'Select tab'">
+        [dropdownPlaceholder]="'Select tab'"
+        class="partner-tabs-navigation">
       </app-responsive-tabs>
 
       <!-- Router outlet -->

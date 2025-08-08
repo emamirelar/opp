@@ -1,7 +1,7 @@
 {
-  "tourId": "contact-overview",
-  "title": "Contact Overview Tour",
-  "description": "Browse and manage contact persons within partner organizations. This is the central hub for managing individual contacts, their roles, and communication details.",
+  "tourId": "contact-list-tour",
+  "titleKey": "tour.contacts.title",
+  "descriptionKey": "tour.contacts.description",
   "entity": "Contact",
   "route": "/partnerships/contacts",
   "showButtons": [
@@ -15,111 +15,83 @@
   "steps": [
     {
       "popover": {
-        "title": "Welcome to ContactListComponent",
-        "description": "This page allows you to view, search, filter, and manage all contact persons associated with your partner organizations. It serves as the primary interface for overseeing individual contacts, their specific roles, and all relevant communication details.",
+        "titleKey": "tour.contacts.steps.welcome.title",
+        "descriptionKey": "tour.contacts.steps.welcome.description",
         "side": "over",
         "align": "center"
+      }
+    },
+    {
+      "element": ".quick-search",
+      "fallbackType": "search-input",
+      "popover": {
+        "titleKey": "tour.contacts.steps.searchInput.title",
+        "descriptionKey": "tour.contacts.steps.searchInput.description",
+        "side": "bottom",
+        "align": "center"
+      }
+    },
+    {
+      "element": "p-button[icon=\"pi pi-search-plus\"]",
+      "fallbackType": "advanced-search",
+      "popover": {
+        "titleKey": "tour.contacts.steps.advancedSearch.title",
+        "descriptionKey": "tour.contacts.steps.advancedSearch.description",
+        "side": "bottom",
+        "align": "end"
       }
     },
     {
       "element": "p-button[label=\"New Contact\"]",
+      "fallbackType": "new-button",
       "popover": {
-        "title": "New Contact",
-        "description": "This button opens a dialog to create a new contact person or edit an existing contact's details. It provides form fields for entering and updating all relevant contact information, including their association with a partner organization.<br><br><strong>When to use:</strong> When you need to add a brand new contact person to the system., When you need to modify the details of an existing contact, such as their name, email, or role.",
+        "titleKey": "tour.contacts.steps.newButton.title",
+        "descriptionKey": "tour.contacts.steps.newButton.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"New Contact\"]",
-          "p-button .p-button-label:contains(\"New Contact\")",
-          "button:contains(\"New Contact\")",
-          "[aria-label=\"New Contact\"]",
-          "[title=\"New Contact\"]",
-          "p-button[icon=\"pi pi-plus\"]",
-          ".pi.pi-plus",
-          "i.pi.pi-plus",
-          "button .pi.pi-plus",
-          "#create-contact-btn",
-          "#create-contact-btn-btn",
-          "[data-test-id=\"create-contact-btn\"]",
-          ".create-contact-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 1
       }
     },
     {
-      "element": "p-button[label=\"Import Contacts\"]",
+      "element": "p-button[icon=\"pi pi-upload\"]",
+      "fallbackType": "import-button",
       "popover": {
-        "title": "Import Contacts",
-        "description": "This button opens a dialog that allows you to bulk import multiple contacts from external sources, such as Google Sheets or CSV files. It's designed for adding a large number of contacts efficiently.<br><br><strong>When to use:</strong> When you need to add many contacts at once from a spreadsheet or another system., For migrating existing contact data into the platform.",
+        "titleKey": "tour.contacts.steps.importButton.title",
+        "descriptionKey": "tour.contacts.steps.importButton.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Import Contacts\"]",
-          "p-button .p-button-label:contains(\"Import Contacts\")",
-          "button:contains(\"Import Contacts\")",
-          "[aria-label=\"Import Contacts\"]",
-          "[title=\"Import Contacts\"]",
-          "p-button[icon=\"pi pi-file-import\"]",
-          ".pi.pi-file-import",
-          "i.pi.pi-file-import",
-          "button .pi.pi-file-import",
-          "#import-contacts-btn",
-          "#import-contacts-btn-btn",
-          "[data-test-id=\"import-contacts-btn\"]",
-          ".import-contacts-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 2
       }
     },
     {
-      "element": "p-button[label=\"Scan Business Card\"]",
+      "element": "p-button[icon=\"pi pi-camera\"]",
+      "fallbackType": "scanner-button",
       "popover": {
-        "title": "Scan Business Card",
-        "description": "This button activates the business card scanner interface, which uses AI to capture and extract contact information directly from a physical business card. This automates data entry for new contacts.<br><br><strong>When to use:</strong> When you have a physical business card and want to quickly add the contact's information without manual typing., To save time on data entry after networking events or meetings.",
+        "titleKey": "tour.contacts.steps.scanButton.title",
+        "descriptionKey": "tour.contacts.steps.scanButton.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Scan Business Card\"]",
-          "p-button .p-button-label:contains(\"Scan Business Card\")",
-          "button:contains(\"Scan Business Card\")",
-          "[aria-label=\"Scan Business Card\"]",
-          "[title=\"Scan Business Card\"]",
-          "p-button[icon=\"pi pi-camera\"]",
-          ".pi.pi-camera",
-          "i.pi.pi-camera",
-          "button .pi.pi-camera",
-          "#scan-business-card-btn",
-          "#scan-business-card-btn-btn",
-          "[data-test-id=\"scan-business-card-btn\"]",
-          ".scan-business-card-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 3
       }
     },
     {
+      "element": "p-table",
+      "fallbackType": "grid-view",
       "popover": {
-        "title": "Tour Complete!",
-        "description": "You've learned the key features of Contact. You can always restart this tour from the help menu.",
-        "side": "over",
+        "titleKey": "tour.contacts.steps.gridView.title",
+        "descriptionKey": "tour.contacts.steps.gridView.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.contacts.steps.tourControl.title",
+        "descriptionKey": "tour.contacts.steps.tourControl.description",
+        "side": "bottom",
         "align": "center"
       }
     }
   ],
-  "generatedAt": "2025-07-31T18:59:03.655870",
+  "generatedAt": "2024-01-15T12:30:00Z",
   "version": "1.0"
 }

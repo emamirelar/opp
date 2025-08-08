@@ -9,6 +9,7 @@ import { LanguageService } from '../../../services/language.service';
 import { SplitterComponent, SplitterPanel, SplitterResizeEvent } from '../../../reusables/components/splitter/splitter.component';
 import { AiAssistantPanelComponent } from '../../../reusables/widgets/ai-assistant/ai-assistant-panel.component';
 import { LoadingOverlayComponent, LoadingOverlayService } from '../../../reusables/components/loading-overlay/loading-overlay.component';
+import { WelcomeTourService } from '../../../services/welcome-tour.service';
 
 
 @Component({
@@ -65,7 +66,8 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
       private activatedRoute: ActivatedRoute,
       private languageService: LanguageService,
       private cdr: ChangeDetectorRef,
-      private loadingOverlayService: LoadingOverlayService
+      private loadingOverlayService: LoadingOverlayService,
+      private welcomeTourService: WelcomeTourService
   ) {
       this.overlayMenuOpenSubscription = this.layoutService.overlayOpen$.subscribe(() => {
           if (!this.menuOutsideClickListener) {

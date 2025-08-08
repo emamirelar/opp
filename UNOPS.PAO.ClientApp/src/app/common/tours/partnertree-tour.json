@@ -1,7 +1,7 @@
 {
-  "tourId": "partnertree-overview",
-  "title": "PartnerTree Overview Tour",
-  "description": "Administrative interface for managing organizational hierarchy and partner tree structure. Allows viewing, editing, and organizing partner categories and groups in a hierarchical tree format.",
+  "tourId": "partnertree-tour",
+  "titleKey": "tour.partnertree.title",
+  "descriptionKey": "tour.partnertree.description",
   "entity": "PartnerTree",
   "route": "/admin/partner-tree",
   "showButtons": [
@@ -15,51 +15,53 @@
   "steps": [
     {
       "popover": {
-        "title": "Welcome to PartnerTreeComponent",
-        "description": "This page provides the administrative interface for managing your organization's hierarchical structure. You can view, edit, and organize partner categories and groups in a tree-like format, allowing for clear visualization and management of your business relationships and internal structures.",
+        "titleKey": "tour.partnertree.steps.welcome.title",
+        "descriptionKey": "tour.partnertree.steps.welcome.description",
         "side": "over",
         "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"New Partner Level\"]",
+      "element": "p-tree",
+      "fallbackType": "tree-view",
       "popover": {
-        "title": "New Partner Level",
-        "description": "Opens a dialog to create a new organizational node, such as a category, group, or level, within the partner hierarchy tree.<br><br><strong>When to use:</strong> When you need to add a new organizational category to the partner tree structure., When you need to add a new group to the partner tree structure.",
-        "side": "bottom",
+        "titleKey": "tour.partnertree.steps.treeView.title",
+        "descriptionKey": "tour.partnertree.steps.treeView.description",
+        "side": "right",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"New Partner Level\"]",
-          "p-button .p-button-label:contains(\"New Partner Level\")",
-          "button:contains(\"New Partner Level\")",
-          "[aria-label=\"New Partner Level\"]",
-          "[title=\"New Partner Level\"]",
-          "p-button[icon=\"pi pi-plus\"]",
-          ".pi.pi-plus",
-          "i.pi.pi-plus",
-          "button .pi.pi-plus",
-          "#create-partner-level-btn",
-          "#create-partner-level-btn-btn",
-          "[data-test-id=\"create-partner-level-btn\"]",
-          ".create-partner-level-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 1
       }
     },
     {
+      "element": "p-button[icon=\"pi pi-plus\"]",
+      "fallbackType": "new-button",
       "popover": {
-        "title": "Tour Complete!",
-        "description": "You've learned the key features of PartnerTree. You can always restart this tour from the help menu.",
-        "side": "over",
+        "titleKey": "tour.partnertree.steps.addNode.title",
+        "descriptionKey": "tour.partnertree.steps.addNode.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "p-button[icon=\"pi pi-pencil\"]",
+      "fallbackType": "edit-button",
+      "popover": {
+        "titleKey": "tour.partnertree.steps.editNode.title",
+        "descriptionKey": "tour.partnertree.steps.editNode.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
+      "popover": {
+        "titleKey": "tour.partnertree.steps.tourControl.title",
+        "descriptionKey": "tour.partnertree.steps.tourControl.description",
+        "side": "bottom",
         "align": "center"
       }
     }
   ],
-  "generatedAt": "2025-07-31T18:59:03.668452",
+  "generatedAt": "2024-01-15T12:30:00Z",
   "version": "1.0"
 }

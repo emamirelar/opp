@@ -1,7 +1,7 @@
 {
-  "tourId": "usermanagement-overview",
-  "title": "UserManagement Overview Tour",
-  "description": "This administrative interface is the central hub for managing user accounts, assigning roles, and controlling access permissions across the entire organization. It provides a comprehensive overview of all users, their assigned roles, and their organizational affiliations, enabling efficient access control, compliance management, and secure system operation.",
+  "tourId": "usermanagement-tour",
+  "titleKey": "tour.usermanagement.title",
+  "descriptionKey": "tour.usermanagement.description",
   "entity": "UserManagement",
   "route": "/admin/user-management",
   "showButtons": [
@@ -15,171 +15,73 @@
   "steps": [
     {
       "popover": {
-        "title": "Welcome to UserManagementComponent",
-        "description": "This page allows administrators to view, edit, and manage user roles and organizational access. You can quickly find users, modify their permissions, and ensure they have the appropriate level of access to system features and data.",
+        "titleKey": "tour.usermanagement.steps.welcome.title",
+        "descriptionKey": "tour.usermanagement.steps.welcome.description",
         "side": "over",
         "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"Add New User\"]",
+      "element": ".user-management-header",
+      "fallbackType": "section-header",
       "popover": {
-        "title": "Add New User",
-        "description": "Initiates the process to create a new user account in the system, allowing you to define their initial details and roles.<br><br><strong>When to use:</strong> When onboarding a new employee or system user., To create an account for a new team member or contractor.<br><small><em>Requires: PERMISSION_CREATE_USER</em></small>",
+        "titleKey": "tour.usermanagement.steps.header.title",
+        "descriptionKey": "tour.usermanagement.steps.header.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Add New User\"]",
-          "p-button .p-button-label:contains(\"Add New User\")",
-          "button:contains(\"Add New User\")",
-          "[aria-label=\"Add New User\"]",
-          "[title=\"Add New User\"]",
-          "p-button[icon=\"person_add\"]",
-          ".person_add",
-          "i.person_add",
-          "button .person_add",
-          "#add-new-user-btn",
-          "#add-new-user-btn-btn",
-          "[data-test-id=\"add-new-user-btn\"]",
-          ".add-new-user-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 1
       }
     },
     {
-      "element": "p-button[label=\"Edit\"]",
+      "element": ".filter-section",
+      "fallbackType": "filter-section",
       "popover": {
-        "title": "Edit",
-        "description": "Opens a form to modify the selected user's profile details, assigned roles, and organizational unit.<br><br><strong>When to use:</strong> When you need to change a user's assigned roles or permissions., When a user's organizational unit needs to be updated.<br><small><em>Requires: PERMISSION_EDIT_USER_ROLES</em></small>",
+        "titleKey": "tour.usermanagement.steps.filterSection.title",
+        "descriptionKey": "tour.usermanagement.steps.filterSection.description",
         "side": "bottom",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Edit\"]",
-          "p-button .p-button-label:contains(\"Edit\")",
-          "button:contains(\"Edit\")",
-          "[aria-label=\"Edit\"]",
-          "[title=\"Edit\"]",
-          "p-button[icon=\"edit\"]",
-          ".edit",
-          "i.edit",
-          "button .edit",
-          "#edit-user-btn",
-          "#edit-user-btn-btn",
-          "[data-test-id=\"edit-user-btn\"]",
-          ".edit-user-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 2
       }
     },
     {
-      "element": "p-button[label=\"Cancel\"]",
+      "element": ".table-container",
+      "fallbackType": "grid-view",
       "popover": {
-        "title": "Cancel",
-        "description": "Discards any unsaved changes made in the user edit form and returns to the user list without modifying the user's profile.<br><br><strong>When to use:</strong> If you decide not to make changes after opening the edit form., To exit the edit mode without saving any modifications.",
-        "side": "bottom",
-        "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Cancel\"]",
-          "p-button .p-button-label:contains(\"Cancel\")",
-          "button:contains(\"Cancel\")",
-          "[aria-label=\"Cancel\"]",
-          "[title=\"Cancel\"]",
-          "p-button[icon=\"cancel\"]",
-          ".cancel",
-          "i.cancel",
-          "button .cancel",
-          "#cancel-edit-btn",
-          "#cancel-edit-btn-btn",
-          "[data-test-id=\"cancel-edit-btn\"]",
-          ".cancel-edit-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 3
+        "titleKey": "tour.usermanagement.steps.usersList.title",
+        "descriptionKey": "tour.usermanagement.steps.usersList.description",
+        "side": "top",
+        "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"Delete\"]",
+      "element": "p-button[icon=\"pi pi-pencil\"]",
+      "fallbackType": "edit-button",
       "popover": {
-        "title": "Delete",
-        "description": "Permanently removes the selected user account from the system. This action is irreversible and should be used with caution.<br><br><strong>When to use:</strong> When a user has left the organization and their account needs to be removed., To clean up inactive or duplicate user accounts that are no longer needed.<br><small><em>Requires: PERMISSION_DELETE_USER</em></small>",
-        "side": "bottom",
-        "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Delete\"]",
-          "p-button .p-button-label:contains(\"Delete\")",
-          "button:contains(\"Delete\")",
-          "[aria-label=\"Delete\"]",
-          "[title=\"Delete\"]",
-          "p-button[icon=\"delete\"]",
-          ".delete",
-          "i.delete",
-          "button .delete",
-          "#delete-user-btn",
-          "#delete-user-btn-btn",
-          "[data-test-id=\"delete-user-btn\"]",
-          ".delete-user-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 4
+        "titleKey": "tour.usermanagement.steps.editUser.title",
+        "descriptionKey": "tour.usermanagement.steps.editUser.description",
+        "side": "left",
+        "align": "center"
       }
     },
     {
-      "element": "p-button[label=\"Save Changes\"]",
+      "element": ".role-management-section",
+      "fallbackType": "role-management",
       "popover": {
-        "title": "Save Changes",
-        "description": "Applies all modifications made to the user's profile and role assignments, making them effective immediately.<br><br><strong>When to use:</strong> After making any changes to a user's roles or details in the edit form., To confirm and apply new access permissions for a user.<br><small><em>Requires: PERMISSION_EDIT_USER_ROLES</em></small>",
-        "side": "bottom",
+        "titleKey": "tour.usermanagement.steps.roleManagement.title",
+        "descriptionKey": "tour.usermanagement.steps.roleManagement.description",
+        "side": "right",
         "align": "start"
-      },
-      "options": {
-        "selectors": [
-          "p-button[label=\"Save Changes\"]",
-          "p-button .p-button-label:contains(\"Save Changes\")",
-          "button:contains(\"Save Changes\")",
-          "[aria-label=\"Save Changes\"]",
-          "[title=\"Save Changes\"]",
-          "p-button[icon=\"save\"]",
-          ".save",
-          "i.save",
-          "button .save",
-          "#save-changes-btn",
-          "#save-changes-btn-btn",
-          "[data-test-id=\"save-changes-btn\"]",
-          ".save-changes-btn-button",
-          "p-button",
-          "button",
-          ".p-element"
-        ],
-        "stepNumber": 5
       }
     },
     {
+      "element": "app-tour-control",
+      "fallbackType": "tour-control",
       "popover": {
-        "title": "Tour Complete!",
-        "description": "You've learned the key features of UserManagement. You can always restart this tour from the help menu.",
-        "side": "over",
+        "titleKey": "tour.usermanagement.steps.tourControl.title",
+        "descriptionKey": "tour.usermanagement.steps.tourControl.description",
+        "side": "bottom",
         "align": "center"
       }
     }
   ],
-  "generatedAt": "2025-07-24T10:20:44.651137",
+  "generatedAt": "2024-01-15T12:30:00Z",
   "version": "1.0"
 }

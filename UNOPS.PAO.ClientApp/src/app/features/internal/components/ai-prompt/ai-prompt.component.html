@@ -1,19 +1,19 @@
 <div class="flex flex-col gap-8">
   <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
+  <div class="flex justify-between items-center mb-6 ai-prompt-header">
     <h1 class="text-3xl font-bold">{{ 'aiPrompt.title' | translate }}</h1>
     @if (!permissionsLoading() && entityPermissions().permissions.canCreate) {
       <p-button
         [label]="'aiPrompt.createNew' | translate"
         icon="pi pi-plus"
         (onClick)="openEditDialog()"
-        class="px-4 py-2">
+        class="px-4 py-2 create-prompt-button">
       </p-button>
     }
   </div>
 
   <!-- Search Section -->
-  <div class="w-full">
+  <div class="w-full ai-prompt-search-section">
     <div class="flex gap-2">
       <p-iconfield iconPosition="left" class="flex-1">
         <p-inputicon class="pi pi-search" />
@@ -39,7 +39,7 @@
   </div>
 
   <!-- Data Table -->
-  <div [class.opacity-20]="loading()">
+  <div [class.opacity-20]="loading()" class="ai-prompt-table-section">
     <p-table
       [value]="prompts()"
       [loading]="loading()"
@@ -102,7 +102,8 @@
                   (onClick)="$event.stopPropagation(); openEditDialog(prompt)"
                   [pTooltip]="'common.edit' | translate"
                   severity="info"
-                  size="small">
+                  size="small"
+                  class="edit-prompt-button">
                 </p-button>
               }
               @if (!permissionsLoading() && entityPermissions().permissions.canDelete) {

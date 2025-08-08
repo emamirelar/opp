@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-8 w-full">
   <div class="flex items-center gap-4 flex-wrap">
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4 interaction-section-header">
       <span class="material-symbols-outlined text-3xl">chat</span>
       <p class="text-3xl font-bold">{{ 'title.interactions' | translate }}</p>
     </div>
@@ -11,12 +11,14 @@
           [label]="'button.import' | translate"
           (click)="openImportDialog()"
           text rounded
+          class="interaction-import-button"
         />
         <p-button
           [label]="'title.newInteraction' | translate"
           icon="pi pi-plus"
           (click)="openNewInteractionModal()"
           rounded
+          class="interaction-new-button"
         ></p-button>
       }
     </div>
@@ -30,6 +32,7 @@
     [config]="listviewConfig()"
     (rowClick)="openEditInteractionModal($event)"
     (searchChange)="onSearchChange($event)"
+    class="interaction-listview"
   >
   </app-listview>
 </div>

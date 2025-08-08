@@ -405,5 +405,503 @@
         "noResults": "Nenhum resultado encontrado",
         "viewAllResults": "Ver Todos os Resultados",
         "filteredBy": "Filtrado por"
+    },
+    "tour": {
+        "control": {
+            "takeATour": "Fazer um Tour"
+        },
+        "welcome": {
+            "title": "🎉 Bem-vindo ao UNOPS Opportunity+!",
+            "description": "Bem-vindo à sua plataforma abrangente de gestão de parceiros e oportunidades! Estamos animados para ajudá-lo a começar. Vamos fazer um tour rápido dos recursos principais para ajudá-lo a navegar e aproveitar ao máximo este sistema poderoso.",
+            "startButton": "Iniciar Tour"
+        },
+        "fallback": {
+            "title": "Bem-vindo!",
+            "description": "Ainda não temos um tour disponível para esta página, mas estamos constantemente adicionando novos tours para ajudá-lo a navegar na aplicação. Sinta-se livre para explorar, e volte mais tarde para tours guiados nesta seção."
+        },
+        "homepage": {
+            "title": "Tour de Navegação da Página Inicial",
+            "description": "Bem-vindo ao Sistema de Gestão de Parceiros e Oportunidades da UNOPS! Aprenda a navegar na interface principal, usar a funcionalidade poderosa de pesquisa, acessar o assistente de IA e personalizar sua experiência com filtros globais e configurações de idioma.",
+            "steps": {
+                "welcome": {
+                    "title": "Bem-vindo à Gestão de Parceiros e Oportunidades da UNOPS",
+                    "description": "Esta plataforma abrangente ajuda você a gerenciar parcerias, rastrear oportunidades e aproveitar insights alimentados por IA para obter melhores resultados de negócios. Vamos explorar a navegação principal e recursos-chave para começar efetivamente."
+                },
+                "menuToggle": {
+                    "title": "Alternar Menu de Navegação",
+                    "description": "Clique neste menu hamburger para expandir ou recolher a barra lateral de navegação principal. A barra lateral contém links para todas as seções principais: Parceiros, Contatos, Interações, Relatórios e ferramentas Administrativas."
+                },
+                "logo": {
+                    "title": "Logo UNOPS Opportunity+",
+                    "description": "Clique no logo a qualquer momento para retornar à página inicial. Isso serve como seu ponto de ancoragem de navegação em toda a aplicação, fornecendo acesso rápido de volta ao painel principal."
+                },
+                "globalSearch": {
+                    "title": "Barra de Pesquisa Global",
+                    "description": "Esta poderosa barra de pesquisa permite encontrar parceiros, contatos, oportunidades e documentos em todo o sistema. Use palavras-chave, nomes, tipos de organização ou mesmo informações parciais para localizar rapidamente o que você precisa."
+                },
+                "tourControl": {
+                    "title": "Tours Interativos",
+                    "description": "Clique neste botão em qualquer página para acessar tours guiados específicos para essa seção. Cada área principal da aplicação tem tours detalhados para ajudá-lo a entender e dominar os recursos disponíveis."
+                },
+                "globalFilters": {
+                    "title": "Filtros Globais",
+                    "description": "Acesse filtros de todo o sistema para refinar dados em todos os módulos. Defina filtros de unidade organizacional, intervalos de datas ou outros critérios que se aplicarão em toda a sua sessão, ajudando você a focar em informações relevantes."
+                },
+                "languageSelector": {
+                    "title": "Seleção de Idioma",
+                    "description": "Alterne entre idiomas suportados (Inglês, Francês, Espanhol, Português) para usar a aplicação em seu idioma preferido. Isso afeta todo o texto da interface, tours e mensagens do sistema."
+                },
+                "aiAssistant": {
+                    "title": "Acesso ao Assistente de IA",
+                    "description": "Abra o assistente de IA inteligente que pode ajudar a analisar seus dados, gerar insights, transcrever reuniões, responder perguntas sobre parceiros e oportunidades, e fornecer recomendações estratégicas baseadas em suas informações de negócios."
+                },
+                "notifications": {
+                    "title": "Centro de Notificações",
+                    "description": "Mantenha-se atualizado com notificações do sistema, status de processamento de arquivos, resultados de análise de IA e alertas importantes. O distintivo de notificação mostra a contagem de notificações não lidas que requerem sua atenção."
+                },
+                "profileMenu": {
+                    "title": "Perfil e Configurações",
+                    "description": "Acesse seu perfil de usuário, configurações de conta, informações de função e opções de logout. Gerencie suas preferências pessoais e veja suas permissões atuais e acesso organizacional."
+                },
+                "mainNavigation": {
+                    "title": "Menu de Navegação Principal",
+                    "description": "Esta barra lateral contém links para todas as seções principais da aplicação: Gestão de parceiros, Banco de dados de contatos, Rastreamento de interações, Ferramentas de IA, Relatórios e funções Administrativas. Cada seção tem seus próprios recursos especializados e tours."
+                },
+                "welcomeDashboard": {
+                    "title": "Painel de Boas-vindas",
+                    "description": "Este é seu ponto de partida na aplicação. Daqui, você pode navegar para qualquer seção usando o menu da barra lateral, pesquisar informações específicas ou acessar o assistente de IA para insights inteligentes e assistência."
+                        }
+      }
+    },
+    "homepage": {
+      "title": "Tour de Navegação da Página Inicial",
+      "description": "Aprenda a navegar pela interface principal da aplicação, usar a pesquisa global, acessar o assistente de IA, e entender os recursos principais disponíveis na página inicial.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Opportunity+",
+          "description": "Este é seu painel central para gerenciar parcerias e oportunidades. Daqui, você pode navegar para todas as seções, pesquisar informações, e acessar ferramentas poderosas alimentadas por IA para melhorar seu fluxo de trabalho."
+        },
+        "menuToggle": {
+          "title": "Alternar Menu",
+          "description": "Clique neste botão para expandir ou contrair a barra lateral de navegação principal. Isso lhe dá mais espaço na tela quando necessário, mantendo a navegação facilmente acessível."
+        },
+        "logo": {
+          "title": "Logo da Página Inicial",
+          "description": "Clique no logo Opportunity+ a qualquer momento para retornar a este painel principal. Isso serve como sua base inicial através da aplicação."
+        },
+        "globalSearch": {
+          "title": "Pesquisa Global",
+          "description": "Use este recurso de pesquisa poderoso para encontrar parceiros, contatos, interações e outros registros em todo o sistema. Digite palavras-chave e obtenha resultados instantâneos de todos os módulos."
+        },
+        "tourControl": {
+          "title": "Fazer um Tour",
+          "description": "Clique neste botão em qualquer página para iniciar um tour guiado específico para essa seção. Cada área da aplicação tem seu próprio tour detalhado para ajudá-lo a dominar os recursos disponíveis."
+        },
+        "globalFilters": {
+          "title": "Filtros Globais",
+          "description": "Acesse opções de filtragem avançadas para refinar resultados de pesquisa e visualizações de dados. Configure filtros salvos para critérios de pesquisa frequentemente utilizados."
+        },
+        "languageSelector": {
+          "title": "Seletor de Idioma",
+          "description": "Alterne entre idiomas suportados (Inglês, Francês, Espanhol, Português). A interface se adaptará imediatamente à sua preferência de idioma selecionada."
+        },
+        "aiAssistant": {
+          "title": "Alternar Assistente de IA",
+          "description": "Clique neste botão para abrir ou fechar o painel do Assistente de IA. Obtenha ajuda inteligente, automatize tarefas, e receba insights alimentados por tecnologia de IA avançada."
+        },
+        "notifications": {
+          "title": "Notificações",
+          "description": "Visualize notificações importantes do sistema, alertas e atualizações. Mantenha-se informado sobre atividades que requerem sua atenção ou ação."
+        },
+        "profileMenu": {
+          "title": "Menu de Perfil",
+          "description": "Acesse configurações da sua conta, preferências de usuário, opções de logout, e outros recursos de configuração pessoal deste menu suspenso."
+        },
+        "mainNavigation": {
+          "title": "Barra Lateral de Navegação Principal",
+          "description": "Esta barra lateral contém links para todas as seções principais: Gerenciamento de Parceiros, Banco de Dados de Contatos, Rastreamento de Interações, Ferramentas de IA, Relatórios, e funções Administrativas. Cada seção tem seus próprios recursos especializados e tours."
+        },
+        "welcomeDashboard": {
+          "title": "Painel de Boas-vindas",
+          "description": "Este é seu ponto de partida na aplicação. Daqui, você pode navegar para qualquer seção usando o menu da barra lateral, pesquisar informações específicas, ou acessar o assistente de IA para insights inteligentes e assistência."
+        }
+      }
+    },
+    "entitymanager": {
+      "title": "Tour do Gerenciador de Entidades",
+      "description": "O Gerenciador de Entidades é uma ferramenta administrativa poderosa projetada para dar controle granular sobre como os campos de dados são apresentados e acessados através de várias entidades do sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Gerenciador de Entidades",
+          "description": "Esta página serve como o centro central para administradores personalizarem a exibição e acesso de campos de dados para várias entidades como Parceiros, Contatos e Interações."
+        },
+        "header": {
+          "title": "Cabeçalho do Gerenciador de Entidades",
+          "description": "A seção de cabeçalho principal mostra o módulo atual e fornece contexto de navegação. Isso ajuda você a entender em qual seção administrativa está trabalhando atualmente."
+        },
+        "entityTabs": {
+          "title": "Abas de Seleção de Entidade",
+          "description": "Essas abas permitem alternar entre diferentes tipos de entidades (Parceiros, Contatos, Interações, etc.). Cada entidade tem sua própria configuração de campo que você pode personalizar independentemente."
+        },
+        "settings": {
+          "title": "Configurações de Entidade",
+          "description": "Acesse o painel de configurações principal para a entidade atualmente selecionada. Aqui você pode configurar opções de exibição, permissões de campo e outras configurações específicas da entidade."
+        },
+        "addField": {
+          "title": "Botão Adicionar Campo",
+          "description": "Clique neste botão para adicionar novos campos à configuração da entidade. Você pode selecionar entre campos de sistema disponíveis ou criar definições de campo personalizadas."
+        },
+        "availableFields": {
+          "title": "Pool de Campos Disponíveis",
+          "description": "Esta seção mostra todos os campos disponíveis que podem ser adicionados à configuração de exibição da entidade. Os campos são organizados por categorias e mostram seus tipos de dados e propriedades."
+        },
+        "listViewFields": {
+          "title": "Configuração de Visualização de Lista",
+          "description": "Configure quais campos aparecem nas visualizações de lista e sua ordem. Arraste e solte campos para reordená-los, ou use os controles para mostrar/ocultar campos específicos nas exibições de lista."
+        },
+        "cardPreview": {
+          "title": "Prévia ao Vivo",
+          "description": "Veja uma prévia em tempo real de como sua configuração de campo aparecerá para os usuários finais. Isso ajuda você a visualizar o impacto de suas mudanças antes de salvá-las."
+        },
+        "tourControl": {
+          "title": "Guia de Tour",
+          "description": "Acesse tours guiados para diferentes seções do Gerenciador de Entidades. Cada área tem tours específicos para ajudá-lo a entender e dominar as opções de configuração."
+        }
+      }
+    },
+    "aiprompt": {
+      "title": "Tour de Gerenciamento de Prompts de IA",
+      "description": "Interface administrativa para gerenciar prompts e configurações de IA. Crie, edite e teste prompts de IA com configurações de modelo avançadas.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Gerenciamento de Prompts de IA",
+          "description": "Esta página fornece uma interface abrangente para gerenciar prompts de IA. Crie, edite, teste e configure prompts de IA com configurações avançadas para desempenho ideal."
+        },
+        "header": {
+          "title": "Cabeçalho de Gerenciamento de Prompts de IA",
+          "description": "O cabeçalho principal mostra que você está na seção de Gerenciamento de Prompts de IA. Esta área administrativa é onde você configura e gerencia todos os modelos de prompts de IA."
+        },
+        "createPrompt": {
+          "title": "Criar Novo Prompt",
+          "description": "Clique neste botão para criar um novo prompt de IA. Você pode definir conteúdo de prompt, selecionar modelos de IA, configurar parâmetros como temperatura e valores top-p."
+        },
+        "searchSection": {
+          "title": "Busca e Filtros",
+          "description": "Use a funcionalidade de busca para encontrar rapidamente prompts específicos. Você pode buscar por nome de prompt, tipo, modelo ou conteúdo para localizar os prompts que precisa modificar."
+        },
+        "promptsTable": {
+          "title": "Tabela de Gerenciamento de Prompts",
+          "description": "Esta tabela exibe todos os seus prompts de IA com informações-chave como nome, tipo, modelo de IA e data de criação. Você pode classificar, filtrar e gerenciar prompts diretamente desta visualização."
+        },
+        "promptType": {
+          "title": "Coluna Tipo de Prompt",
+          "description": "Mostra a categoria ou tipo de cada prompt (ex. Assistente, Análise, Tradução). Isso ajuda a organizar prompts por seu propósito pretendido e caso de uso."
+        },
+        "aiModel": {
+          "title": "Coluna Modelo de IA",
+          "description": "Exibe qual modelo de IA (Gemini Pro, Gemini Flash, etc.) está configurado para cada prompt. Diferentes modelos têm diferentes capacidades e características de desempenho."
+        },
+        "editPrompt": {
+          "title": "Ações de Edição de Prompt",
+          "description": "Use estes botões de ação para editar, testar, duplicar ou excluir prompts existentes. Você também pode visualizar configurações detalhadas de prompts e métricas de desempenho."
+        },
+        "tourControl": {
+          "title": "Tours Guiados",
+          "description": "Acesse tours específicos para diferentes aspectos do gerenciamento de prompts de IA. Aprenda sobre configurações avançadas, estratégias de teste e melhores práticas."
+        }
+      }
+    },
+    "aiassistant": {
+      "title": "Tour do Assistente de IA",
+      "description": "O Assistente de IA fornece suporte inteligente e conversacional para ajudá-lo a navegar na aplicação, entender recursos e otimizar fluxos de trabalho.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Assistente de IA",
+          "description": "Este é seu centro central para interagir com o Assistente de IA. Obtenha ajuda instantânea, explore dados, automatize tarefas e receba insights inteligentes dentro da aplicação."
+        },
+        "chatSidebar": {
+          "title": "Barra Lateral de Chat",
+          "description": "A barra lateral fornece acesso rápido aos recursos de gerenciamento de chat. Visualize conversas recentes, pesquise histórico de chat e gerencie suas sessões do assistente de IA."
+        },
+        "newChat": {
+          "title": "Iniciar Novo Chat",
+          "description": "Clique neste botão para iniciar uma conversa fresca com o Assistente de IA. Isso limpa o contexto atual e inicia uma nova sessão para diferentes tópicos ou tarefas."
+        },
+        "searchSection": {
+          "title": "Busca de Chat",
+          "description": "Pesquise através de suas sessões de chat anteriores para encontrar rapidamente conversas específicas, tópicos ou informações que você discutiu com o Assistente de IA."
+        },
+        "chatHistory": {
+          "title": "Histórico de Chat",
+          "description": "Navegue por suas conversas recentes com o Assistente de IA. Você pode retomar discussões anteriores ou referenciar interações passadas para contexto."
+        },
+        "mainChatArea": {
+          "title": "Interface de Chat Principal",
+          "description": "Esta é a área de conversa principal onde você interage com o Assistente de IA. Digite suas perguntas, solicitações ou comandos e receba respostas inteligentes."
+        },
+        "welcomeScreen": {
+          "title": "Tela de Boas-vindas da IA",
+          "description": "Ao começar fresco, o Assistente de IA apresenta uma tela de boas-vindas com sugestões úteis e casos de uso comuns para ajudá-lo a começar rapidamente."
+        },
+        "samplePrompts": {
+          "title": "Prompts de Exemplo",
+          "description": "Use estes prompts de exemplo para entender as capacidades do Assistente de IA. Eles demonstram diferentes tipos de solicitações e ajudam você a aprender padrões de interação eficazes."
+        },
+        "inputArea": {
+          "title": "Área de Entrada de Mensagem",
+          "description": "Digite suas mensagens, perguntas ou solicitações aqui. Você também pode anexar arquivos, fazer upload de documentos ou usar entrada de voz para se comunicar com o Assistente de IA."
+        },
+        "sendButton": {
+          "title": "Enviar Mensagem",
+          "description": "Clique neste botão para enviar sua mensagem ao Assistente de IA. Você também pode pressionar Enter para enviar sua mensagem rapidamente enquanto digita."
+        },
+        "tourControl": {
+          "title": "Tours do Assistente de IA",
+          "description": "Acesse tours especializados para diferentes recursos do Assistente de IA. Aprenda sobre capacidades avançadas, manuseio de arquivos e técnicas de otimização."
+        }
+      }
+    },
+    "partners": {
+      "title": "Tour de Gerenciamento de Parceiros",
+      "description": "Aprenda a navegar, pesquisar e gerenciar organizações parceiras no sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Gerenciamento de Parceiros",
+          "description": "Este é o centro central para gerenciar todas as organizações parceiras. Você pode navegar, pesquisar, filtrar, criar, editar e gerenciar registros de parceiros desta página."
+        },
+        "header": {
+          "title": "Cabeçalho da Seção Parceiros",
+          "description": "Isso mostra que você está na seção Parceiros. O ícone e título ajudam você a identificar qual parte da aplicação está usando atualmente."
+        },
+        "newButton": {
+          "title": "Criar Novo Parceiro",
+          "description": "Clique neste botão para criar uma nova organização parceira. Você será levado a um formulário onde pode inserir todos os detalhes do parceiro."
+        },
+        "importButton": {
+          "title": "Importar Parceiros",
+          "description": "Use este botão para importar múltiplos registros de parceiros de um arquivo CSV ou Excel. Isso é útil para entrada de dados em massa."
+        },
+        "searchInput": {
+          "title": "Pesquisar Parceiros",
+          "description": "Digite aqui para pesquisar parceiros específicos por nome, tipo de organização, localização ou outros critérios. Os resultados filtrarão em tempo real conforme você digita."
+        },
+        "advancedSearch": {
+          "title": "Pesquisa Avançada",
+          "description": "Clique aqui para acessar opções de pesquisa e filtro mais detalhadas. Você pode combinar múltiplos critérios para encontrar exatamente os parceiros que está procurando."
+        },
+        "gridView": {
+          "title": "Lista de Parceiros",
+          "description": "Esta tabela mostra todas as suas organizações parceiras com informações-chave como nome, tipo, localização e status. Você pode classificar, filtrar e tomar ações em parceiros individuais."
+        },
+        "tourControl": {
+          "title": "Tours de Parceiros",
+          "description": "Acesse tours guiados específicos para gerenciamento de parceiros. Aprenda sobre criar parceiros, gerenciar relacionamentos e recursos avançados."
+        }
+      }
+    },
+    "contacts": {
+      "title": "Tour de Gerenciamento de Contatos",
+      "description": "Aprenda a navegar, pesquisar e gerenciar registros de contato no sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Gerenciamento de Contatos",
+          "description": "Este é o centro central para gerenciar todos os registros de contato. Você pode navegar, pesquisar, filtrar, criar, editar e gerenciar informações de contato desta página."
+        },
+        "header": {
+          "title": "Cabeçalho da Seção Contatos",
+          "description": "Isso mostra que você está na seção Contatos. O ícone e título ajudam você a identificar qual parte da aplicação está usando atualmente."
+        },
+        "newButton": {
+          "title": "Criar Novo Contato",
+          "description": "Clique neste botão para criar um novo registro de contato. Você será levado a um formulário onde pode inserir todos os detalhes do contato."
+        },
+        "importButton": {
+          "title": "Importar Contatos",
+          "description": "Use este botão para importar múltiplos registros de contatos de um arquivo CSV ou Excel. Isso é útil para entrada de dados em massa."
+        },
+        "scanButton": {
+          "title": "Digitalizar Cartão de Visita",
+          "description": "Use este recurso para digitalizar cartões de visita e extrair automaticamente informações de contato usando tecnologia de IA."
+        },
+        "searchInput": {
+          "title": "Pesquisar Contatos",
+          "description": "Digite aqui para pesquisar contatos específicos por nome, email, telefone, empresa ou outros critérios. Os resultados filtrarão em tempo real conforme você digita."
+        },
+        "advancedSearch": {
+          "title": "Pesquisa Avançada",
+          "description": "Clique aqui para acessar opções de pesquisa e filtro mais detalhadas. Você pode combinar múltiplos critérios para encontrar exatamente os contatos que está procurando."
+        },
+        "gridView": {
+          "title": "Lista de Contatos",
+          "description": "Esta tabela mostra todos os seus contatos com informações-chave como nome, email, telefone, empresa e afiliação de parceiro. Você pode classificar, filtrar e tomar ações em contatos individuais."
+        },
+        "tourControl": {
+          "title": "Tours de Contatos",
+          "description": "Acesse tours guiados específicos para gerenciamento de contatos. Aprenda sobre criar contatos, gerenciar relacionamentos e recursos avançados."
+        }
+      }
+    },
+    "contactview": {
+      "title": "Tour de Detalhes do Contato",
+      "description": "Aprenda a visualizar e gerenciar detalhes individuais do contato, informações e registros relacionados.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo aos Detalhes do Contato",
+          "description": "Esta página mostra informações abrangentes sobre um contato específico. Você pode visualizar, editar e gerenciar todos os aspectos do registro de contato daqui."
+        },
+        "contactHeader": {
+          "title": "Cabeçalho do Contato",
+          "description": "O cabeçalho do contato exibe o nome, título e informações-chave do contato. Isso dá uma visão rápida de quem você está visualizando."
+        },
+        "editButton": {
+          "title": "Editar Contato",
+          "description": "Clique neste botão para editar as informações do contato. Você pode atualizar detalhes pessoais, informações de contato e outros atributos."
+        },
+        "contactTabs": {
+          "title": "Abas de Informações do Contato",
+          "description": "Essas abas organizam as informações do contato em diferentes seções como detalhes pessoais, endereços, interações e informações do sistema."
+        },
+        "tourControl": {
+          "title": "Tours de Detalhe do Contato",
+          "description": "Acesse tours específicos para diferentes aspectos do gerenciamento de contatos e visualizações detalhadas."
+        }
+      }
+    },
+    "interactions": {
+      "title": "Tour de Gerenciamento de Interações",
+      "description": "Aprenda a navegar, pesquisar e gerenciar registros de interação no sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Gerenciamento de Interações",
+          "description": "Este é o centro central para gerenciar todos os registros de interação. Você pode navegar, pesquisar, filtrar, criar, editar e rastrear interações com contatos e parceiros."
+        },
+        "header": {
+          "title": "Cabeçalho da Seção Interações",
+          "description": "Isso mostra que você está na seção Interações. O ícone e título ajudam você a identificar qual parte da aplicação está usando atualmente."
+        },
+        "newButton": {
+          "title": "Criar Nova Interação",
+          "description": "Clique neste botão para registrar uma nova interação. Você pode registrar reuniões, chamadas, emails e outras comunicações com contatos."
+        },
+        "importButton": {
+          "title": "Importar Interações",
+          "description": "Use este botão para importar múltiplos registros de interação de um arquivo CSV ou Excel. Isso é útil para entrada de dados em massa."
+        },
+        "searchInput": {
+          "title": "Pesquisar Interações",
+          "description": "Digite aqui para pesquisar interações específicas por nome do contato, tipo de interação, data ou outros critérios. Os resultados filtrarão em tempo real conforme você digita."
+        },
+        "gridView": {
+          "title": "Lista de Interações",
+          "description": "Esta tabela mostra todos os seus registros de interação com informações-chave como contato, tipo, data e notas. Você pode classificar, filtrar e tomar ações em interações individuais."
+        },
+        "aiTranscribe": {
+          "title": "Transcrição de IA",
+          "description": "Use transcrição alimentada por IA para converter automaticamente gravações de reuniões ou notas em registros de interação estruturados."
+        },
+        "tourControl": {
+          "title": "Tours de Interações",
+          "description": "Acesse tours guiados específicos para gerenciamento de interações. Aprenda sobre registrar interações, rastrear comunicações e recursos avançados."
+        }
+      }
+    },
+    "partnerview": {
+      "title": "Tour de Detalhes do Parceiro",
+      "description": "Aprenda a visualizar e gerenciar detalhes individuais do parceiro, informações e registros relacionados.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo aos Detalhes do Parceiro",
+          "description": "Esta página mostra informações abrangentes sobre uma organização parceira específica. Você pode visualizar, editar e gerenciar todos os aspectos do registro de parceiro daqui."
+        },
+        "partnerHeader": {
+          "title": "Cabeçalho do Parceiro",
+          "description": "O cabeçalho do parceiro exibe o nome, tipo e informações-chave da organização. Isso dá uma visão rápida do parceiro que você está visualizando."
+        },
+        "editButton": {
+          "title": "Editar Parceiro",
+          "description": "Clique neste botão para editar as informações do parceiro. Você pode atualizar detalhes organizacionais, informações de contato e outros atributos."
+        },
+        "partnerInfo": {
+          "title": "Informações do Parceiro",
+          "description": "Esta seção exibe informações detalhadas sobre a organização parceira incluindo detalhes de contato, endereços e dados organizacionais."
+        },
+        "partnerTabs": {
+          "title": "Abas de Navegação do Parceiro",
+          "description": "Essas abas organizam as informações do parceiro em diferentes seções como detalhes, contatos, interações, acordos e análises."
+        },
+        "tourControl": {
+          "title": "Tours de Detalhe do Parceiro",
+          "description": "Acesse tours específicos para diferentes aspectos do gerenciamento de parceiros e visualizações detalhadas."
+        }
+      }
+    },
+    "partnertree": {
+      "title": "Tour de Gerenciamento da Árvore de Parceiros",
+      "description": "Aprenda a gerenciar a estrutura hierárquica de organizações parceiras e categorias.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo à Árvore de Parceiros",
+          "description": "Esta é a interface administrativa para gerenciar a estrutura hierárquica de organizações parceiras, categorias e grupos."
+        },
+        "treeView": {
+          "title": "Árvore de Hierarquia de Parceiros",
+          "description": "Esta visualização em árvore mostra a estrutura hierárquica de categorias e grupos de parceiros. Você pode expandir/contrair nós para navegar na hierarquia."
+        },
+        "addNode": {
+          "title": "Adicionar Novo Nó",
+          "description": "Use este botão para adicionar novas categorias, grupos ou unidades organizacionais à hierarquia de parceiros."
+        },
+        "editNode": {
+          "title": "Editar Nó",
+          "description": "Clique neste botão para editar as propriedades do nó selecionado na hierarquia, incluindo nome, descrição e relacionamentos pai."
+        },
+        "tourControl": {
+          "title": "Tours da Árvore de Parceiros",
+          "description": "Acesse tours guiados específicos para gerenciamento de hierarquia de parceiros e configuração de estrutura organizacional."
+        }
+      }
+    },
+    "usermanagement": {
+      "title": "Tour de Gerenciamento de Usuários",
+      "description": "Aprenda a gerenciar contas de usuário, permissões e controle de acesso no sistema.",
+      "steps": {
+        "welcome": {
+          "title": "Bem-vindo ao Gerenciamento de Usuários",
+          "description": "Esta é a interface administrativa para gerenciar contas de usuário, funções, permissões e controle de acesso em todo o sistema."
+        },
+        "header": {
+          "title": "Cabeçalho de Gerenciamento de Usuários",
+          "description": "O cabeçalho principal mostra que você está na seção de Gerenciamento de Usuários. Esta área administrativa é onde você configura acesso de usuário e permissões."
+        },
+        "usersList": {
+          "title": "Lista de Usuários",
+          "description": "Esta tabela exibe todas as contas de usuário com informações-chave como nome, email, funções e último login. Você pode gerenciar acesso de usuário e permissões desta visualização."
+        },
+        "addUser": {
+          "title": "Adicionar Novo Usuário",
+          "description": "Clique neste botão para criar uma nova conta de usuário. Você pode configurar seu perfil, atribuir funções e configurar suas permissões de acesso."
+        },
+        "editUser": {
+          "title": "Editar Usuário",
+          "description": "Use estes botões de ação para editar detalhes do usuário, modificar permissões, redefinir senhas ou desativar contas de usuário."
+        },
+        "roleManagement": {
+          "title": "Gerenciamento de Funções",
+          "description": "Acesse configurações de controle de acesso baseado em funções para definir funções de usuário, permissões e níveis de acesso de unidade organizacional."
+        },
+        "impersonation": {
+          "title": "Personificação de Usuário",
+          "description": "Recurso administrativo para personificar outros usuários para fins de teste ou para solucionar problemas específicos do usuário."
+        },
+        "filterSection": {
+          "title": "Filtros de Usuários",
+          "description": "Use estes filtros para pesquisar e refinar a lista de usuários por nome, email, função ou unidade organizacional. Você pode combinar múltiplos filtros para resultados precisos."
+        },
+        "tourControl": {
+          "title": "Tours de Gerenciamento de Usuários",
+          "description": "Acesse tours especializados para diferentes aspectos da administração de usuários, gerenciamento de funções e configuração de segurança."
+        }
+      }
     }
+  }
 }

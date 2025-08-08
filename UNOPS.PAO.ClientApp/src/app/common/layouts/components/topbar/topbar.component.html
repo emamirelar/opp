@@ -1,9 +1,9 @@
 <div class="layout-topbar flex justify-between gap-4 items-center">
 	<div class="layout-topbar-logo-container flex items-center">
-		<button pButton pRipple type="button" text class="p-link layout-menu-button flex-shrink-0" (click)="onMenuButtonClick()">
+		<button pButton pRipple type="button" text class="p-link layout-menu-button flex-shrink-0 menu-toggle-button" (click)="onMenuButtonClick()">
 			<i class="pi pi-bars"></i>
 		</button>
-		<a class="flex-shrink-0 cursor-pointer transition-opacity duration-200 hover:opacity-80"
+		<a class="flex-shrink-0 cursor-pointer transition-opacity duration-200 hover:opacity-80 homepage-logo"
 			routerLink="/"
 			title="Go to Homepage"
 			aria-label="Navigate to Homepage">
@@ -17,11 +17,14 @@
 	</div>
 
 	<!-- Search bar container -->
-	<div class="flex items-center gap-2 flex-1 max-w-2xl">
+	<div class="flex items-center gap-2 flex-1 max-w-2xl global-search-container">
 		<app-global-search-bar></app-global-search-bar>
 	</div>
 
 	<div class="flex items-center justify-end">
+		<!-- Tour Button -->
+		<app-tour-control></app-tour-control>
+		
 		<!-- Global Filters button (moved before globe icon) -->
 		<p-button
 			type="button"
@@ -30,14 +33,15 @@
 			aria-label="Global Filters"
 			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative mr-2"
 			(onClick)="openGlobalFilters()"
-			title="Global Filters">
+			title="Global Filters"
+			class="global-filters-button">
 			<ng-template pTemplate="content">
 				<i class="pi pi-sliders-h text-xl"></i>
 				<span *ngIf="isOrgUnitFilterActive" class="org-unit-filter-badge"></span>
 			</ng-template>
 		</p-button>
 		
-      <app-language-selector></app-language-selector>
+      <app-language-selector class="language-selector"></app-language-selector>
 	  		<p-button
 			(onClick)="onAIAssistantToggle()"
 			type="button"
@@ -48,18 +52,21 @@
 			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center ai-assistant-toggle-btn"
 			[class.hidden-on-mobile]="isOnAiPage()"
 			[pTooltip]="isMobile ? 'Open AI Assistant Page' : 'Toggle AI Assistant Panel'"
-			tooltipPosition="bottom">
+			tooltipPosition="bottom"
+			class="ai-assistant-toggle">
 			<ng-template pTemplate="content">
 				<img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-6 h-6" />
 			</ng-template>
 		</p-button>
+		
       <p-button
 			type="button"
 			[rounded]="true"
 			[text]="true"
 			aria-label="Notifications"
 			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative"
-			(onClick)="notificationPanel.toggle($event)">
+			(onClick)="notificationPanel.toggle($event)"
+			class="notifications-button">
 			<ng-template pTemplate="content">
 				<i class="pi pi-bell text-xl"></i>
 				<span *ngIf="unreadCount > 0" class="notification-badge">{{unreadCount}}</span>
@@ -115,7 +122,8 @@
                 [rounded]="true"
                 [text]="true"
                 styleClass="!w-10 !h-10 !p-0 flex items-center justify-center"
-                (onClick)="menu.toggle($event)">
+                (onClick)="menu.toggle($event)"
+                class="profile-menu-button">
             <ng-template pTemplate="content">
               <i class="pi pi-user text-xl"></i>
             </ng-template>

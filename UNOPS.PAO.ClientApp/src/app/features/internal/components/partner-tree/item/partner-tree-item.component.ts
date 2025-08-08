@@ -15,6 +15,7 @@ import { PartnerTree } from '../../../models/partner-tree.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
+import { PartnerTreeItemFooterComponent } from './partner-tree-item-footer.component';
 
 interface PartnerTreeFormControls {
   id: AbstractControl<number | null>;
@@ -40,7 +41,7 @@ interface PartnerTreeFormControls {
     CommonModule,
     TextareaModule,
     DialogModule,
-
+    PartnerTreeItemFooterComponent
   ],
   templateUrl: './partner-tree-item.component.html',
   standalone: true,
