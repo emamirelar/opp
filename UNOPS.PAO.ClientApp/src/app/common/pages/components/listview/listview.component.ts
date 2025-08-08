@@ -288,8 +288,8 @@ export class ListviewComponent<T = any> implements AfterViewInit {
         // Reload global filter information for UI display
         this.loadGlobalFilterInfo();
         
-        // Note: We don't reload data here since orgUnitId is not sent to API
-        // The filter is for UI display only
+        // Reload the listview data when filters change
+        this.refreshData();
       });
 
     // Cleanup resize observer on destroy
