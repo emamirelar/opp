@@ -1,0 +1,647 @@
+.dashboard-container {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: calc(100vh - 120px);
+  width: 100%;
+  max-width: none;
+}
+
+.dashboard-header {
+  @apply flex justify-between items-start mb-8;
+
+  .header-content {
+    .dashboard-title {
+      @apply text-3xl font-bold text-gray-800 mb-2;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .dashboard-subtitle {
+      @apply text-lg text-gray-600;
+    }
+  }
+
+  .refresh-btn {
+    @apply text-gray-600 hover:text-blue-600;
+  }
+}
+
+.summary-section {
+  @apply mb-8;
+
+  .integrated-card {
+    @apply transition-all duration-300;
+    border: none;
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    }
+
+    &.expanded {
+      @apply shadow-lg;
+      transform: translateY(-2px);
+    }
+
+      // Enhanced styling for different card types
+  &.partners-card {
+    &.expanded {
+      @apply ring-2 ring-blue-200;
+      
+      &::before {
+        background: linear-gradient(90deg, #2563eb, #3b82f6);
+      }
+    }
+  }
+
+  &.contacts-card {
+    // Green border for both collapsed and expanded states
+    &::before {
+      background: linear-gradient(90deg, #059669, #10b981);
+    }
+    
+    &.expanded {
+      @apply ring-2 ring-green-200;
+    }
+  }
+
+  &.org-updates-card {
+    // Purple border for both collapsed and expanded states
+    &::before {
+      background: linear-gradient(90deg, #7c3aed, #a855f7);
+    }
+    
+    &.expanded {
+      @apply ring-2 ring-purple-200;
+    }
+  }
+
+    // Card summary section (clickable header)
+    .card-summary {
+      @apply cursor-pointer transition-all duration-200 hover:bg-gray-50 p-6;
+      
+      &:hover .card-action i {
+        @apply text-blue-600 transform scale-110;
+      }
+    }
+
+    .card-content {
+      @apply flex items-center space-x-4;
+    }
+
+    // Expandable list content section
+    .card-list-content {
+      @apply border-t border-gray-100 bg-gray-50 p-6 pt-4;
+      animation: slideInDown 0.3s ease-out;
+      
+      .list-header {
+        @apply flex justify-between items-center mb-4 pb-3 border-b border-gray-200;
+        
+        .list-title {
+          @apply text-lg font-semibold text-gray-800;
+        }
+      }
+      
+      .entity-list-container {
+        @apply relative;
+        
+        .entity-list {
+          @apply space-y-3 max-h-64 overflow-y-auto pr-2;
+          
+          // Custom scrollbar styling
+          &::-webkit-scrollbar {
+            width: 4px;
+          }
+          
+          &::-webkit-scrollbar-track {
+            @apply bg-gray-100 rounded;
+          }
+          
+          &::-webkit-scrollbar-thumb {
+            @apply bg-gray-400 rounded hover:bg-gray-500;
+          }
+        }
+        
+        .entity-item {
+          @apply flex justify-between items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:bg-blue-50;
+          
+          .entity-info {
+            @apply flex-1;
+            
+            .entity-name {
+              @apply text-sm font-medium text-gray-800 mb-1;
+            }
+            
+            .entity-meta {
+              @apply text-xs text-gray-500;
+            }
+          }
+          
+          .entity-actions {
+            @apply flex items-center;
+            
+            .p-tag {
+              @apply text-xs;
+            }
+          }
+        }
+        
+        .entity-count-indicator {
+          @apply mt-3 p-2 bg-white rounded-md text-center border border-gray-200;
+        }
+      }
+      
+      .empty-state {
+        @apply text-center py-8 text-gray-500;
+        
+        i {
+          @apply mb-2;
+        }
+      }
+    }
+
+    .card-icon {
+      @apply w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl;
+      
+      &.partners-icon {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      }
+      
+      &.contacts-icon {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+
+      &.updates-icon {
+        background: linear-gradient(135deg, #a855f7, #7c3aed);
+      }
+      
+      &.interactions-icon {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      }
+      
+      &.actions-icon {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
+    }
+
+    .card-info {
+      @apply flex-1;
+
+      .card-title {
+        @apply text-sm font-medium text-gray-600 mb-1;
+        
+        .toggle-hint {
+          @apply text-xs font-normal text-gray-500 ml-2 transition-all duration-200;
+        }
+      }
+
+      .card-value {
+        @apply text-3xl font-bold text-gray-900 mb-1;
+      }
+
+      .card-subtitle {
+        @apply text-xs text-gray-500;
+      }
+    }
+
+    .card-action {
+      @apply text-gray-400 text-xl transition-all duration-200;
+      
+      i {
+        @apply transition-all duration-200;
+      }
+    }
+
+    &:hover {
+      .card-action {
+        @apply text-gray-600;
+      }
+    }
+  }
+}
+
+// Ensure integrated-card typography applies when used outside .summary-section (e.g., in .content-grid)
+.content-grid {
+  .integrated-card {
+    // Ensure icon appearance matches integrated cards in summary-section
+    .card-icon {
+      @apply w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl;
+      &.updates-icon {
+        background: linear-gradient(135deg, #a855f7, #7c3aed);
+      }
+    }
+
+    .card-info {
+      .card-title {
+        @apply text-sm font-medium text-gray-600 mb-1;
+        .toggle-hint {
+          @apply text-xs font-normal text-gray-500 ml-2 transition-all duration-200;
+        }
+      }
+      .card-value {
+        @apply text-3xl font-bold text-gray-900 mb-1;
+      }
+      .card-subtitle {
+        @apply text-xs text-gray-500;
+      }
+    }
+
+    // Ensure list typography matches the integrated cards in summary-section
+    .entity-item {
+      .entity-info {
+        .entity-name { @apply text-sm; }
+        .entity-meta { @apply text-xs; }
+      }
+      .entity-actions {
+        .p-tag { @apply text-xs; }
+      }
+    }
+  }
+}
+
+.content-grid {
+  @apply w-full;
+  
+  .data-card {
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+
+    &.urgent-card {
+      border-left: 4px solid #f59e0b;
+    }
+
+    .card-header {
+      @apply flex justify-between items-center p-4 border-b border-gray-100;
+
+      .section-title {
+        @apply text-lg font-semibold text-gray-800 flex items-center;
+      }
+    }
+  }
+}
+
+.entity-list-container {
+  @apply w-full;
+
+  .entity-list {
+    @apply space-y-3;
+
+    &.scrollable {
+      max-height: 400px;
+      @apply overflow-y-auto pr-2;
+      
+      // Custom scrollbar styling
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+        
+        &:hover {
+          background: #94a3b8;
+        }
+      }
+    }
+
+    // Compact list styling to match chart height
+    &.compact-list {
+      max-height: 240px;
+      @apply overflow-y-auto pr-2 space-y-2;
+      
+      // Custom scrollbar styling
+      &::-webkit-scrollbar {
+        width: 4px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 2px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 2px;
+        
+        &:hover {
+          background: #94a3b8;
+        }
+      }
+    }
+
+    .entity-item {
+      @apply flex justify-between items-center p-4 rounded-lg border border-gray-100 hover:border-blue-200 hover:bg-blue-50 cursor-pointer transition-all duration-200;
+
+      // Compact entity item
+      &.compact {
+        @apply p-3;
+
+        .entity-info {
+          @apply flex-1;
+
+          .entity-name {
+            @apply font-medium text-gray-900 mb-1 text-sm;
+          }
+
+          .entity-meta {
+            @apply text-xs text-gray-500;
+          }
+        }
+
+        .entity-actions {
+          @apply flex items-center;
+          
+          .p-tag {
+            @apply text-xs;
+          }
+        }
+      }
+
+      .entity-info {
+        @apply flex-1;
+
+        .entity-name {
+          @apply font-medium text-gray-900 mb-1;
+        }
+
+        .entity-meta {
+          @apply text-sm text-gray-500;
+        }
+      }
+
+      .entity-actions {
+        @apply flex items-center space-x-3;
+      }
+
+      &:hover {
+        transform: translateX(4px);
+      }
+    }
+  }
+
+  // Compact container to match chart sizes
+  &.compact {
+    min-height: 240px;
+    @apply flex flex-col;
+  }
+
+  .entity-count-indicator {
+    @apply mt-3 p-2 bg-gray-50 rounded-md text-center border-t border-gray-100;
+  }
+}
+
+// Compact card styling
+.compact-card {
+  min-height: 320px; // Match chart card heights
+  @apply flex flex-col;
+  
+  .p-card-body {
+    @apply flex-1 flex flex-col;
+  }
+  
+  // Special styling for partners list when connected to toggle card
+  &.partners-list-card {
+    @apply transition-all duration-300 ease-in-out;
+    @apply ring-1 ring-blue-100 border-t-4 border-t-blue-500;
+    
+    // Animate in
+    animation: slideInDown 0.3s ease-out;
+    
+    .section-title {
+      @apply text-blue-700;
+    }
+    
+    .card-header {
+      @apply bg-blue-50 -mx-6 -mt-6 px-6 pt-6 pb-4 mb-4;
+    }
+  }
+}
+
+.empty-state {
+  @apply text-center py-8;
+  
+  // Compact empty state
+  &.compact {
+    @apply py-4;
+    min-height: 200px;
+    @apply flex flex-col justify-center items-center;
+  }
+}
+
+.chart-container {
+  @apply flex justify-center items-center;
+  min-height: 240px;
+  
+  .p-chart {
+    @apply w-full;
+  }
+}
+
+// Animations
+@keyframes slideInDown {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.action-summary {
+  @apply space-y-3;
+
+  .action-item {
+    @apply flex items-center space-x-3 p-3 bg-orange-50 rounded-lg border border-orange-100;
+    
+    i {
+      @apply text-lg;
+    }
+    
+    span {
+      @apply text-sm font-medium text-orange-800;
+    }
+  }
+}
+
+// Quick actions styling now handled by .content-grid
+
+.quick-actions {
+  .p-button {
+    @apply transition-all duration-200 hover:scale-105;
+  }
+}
+
+// Org Unit Recent Updates Section
+.org-unit-updates-section {
+  @apply w-full;
+  
+  .section-subtitle {
+    @apply text-sm text-gray-500 block mt-1;
+  }
+  
+  .recent-updates-list {
+    @apply space-y-2;
+    
+    .update-item {
+      @apply flex items-center p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer;
+      
+      &:hover {
+        @apply transform translate-x-1;
+      }
+      
+      .update-icon {
+        @apply w-10 h-10 rounded-full flex items-center justify-center text-white text-base mr-3 flex-shrink-0;
+        
+        &.partner-icon {
+          @apply bg-blue-500;
+        }
+        
+        &.contact-icon {
+          @apply bg-green-500;
+        }
+        
+        &.interaction-icon {
+          @apply bg-purple-500;
+        }
+        
+        &.default-icon {
+          @apply bg-gray-500;
+        }
+      }
+      
+      .update-content {
+        @apply flex-1;
+        
+        .update-header {
+          @apply flex justify-between items-start mb-1;
+          
+          .update-title {
+            @apply text-base font-semibold text-gray-800 mb-0 line-clamp-1;
+          }
+          
+          .update-meta {
+            @apply flex items-center space-x-2 flex-shrink-0;
+            
+            .update-type {
+              @apply text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded;
+            }
+            
+            .p-tag {
+              @apply text-xs;
+            }
+          }
+        }
+        
+        .update-details {
+          @apply flex items-center space-x-3 text-xs text-gray-500;
+          
+          .update-date, .update-author {
+            @apply flex items-center;
+            
+            i {
+              @apply text-xs;
+            }
+          }
+        }
+      }
+      
+      .update-arrow {
+        @apply text-gray-400 text-lg ml-3 transition-all duration-200 flex-shrink-0;
+      }
+      
+      &:hover .update-arrow {
+        @apply text-blue-600 transform translate-x-1;
+      }
+    }
+  }
+}
+
+.loading-container {
+  .summary-card {
+    @apply p-6;
+  }
+}
+
+.error-container {
+  .p-card {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+
+  .dashboard-header {
+    @apply flex-col space-y-4;
+    
+    .header-content .dashboard-title {
+      @apply text-2xl;
+    }
+  }
+
+  .summary-section {
+    .summary-card .card-content {
+      @apply space-x-3;
+      
+      .card-icon {
+        @apply w-12 h-12 text-xl;
+      }
+      
+      .card-info .card-value {
+        @apply text-2xl;
+      }
+    }
+  }
+
+  .content-grid {
+    .data-card .card-header {
+      @apply flex-col items-start space-y-3;
+    }
+  }
+}
+
+// Animation keyframes
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dashboard-container > * {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.summary-section .summary-card {
+  animation: fadeInUp 0.6s ease-out;
+  animation-fill-mode: both;
+  
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.2s; }
+}

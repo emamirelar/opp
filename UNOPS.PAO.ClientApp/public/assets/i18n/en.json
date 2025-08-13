@@ -1269,5 +1269,49 @@
         }
       }
     }
+  },
+  "dashboard": {
+    "welcome": "Welcome to Opportunity+",
+    "subtitle": "Your personalized dashboard for managing partnerships and opportunities",
+    "refresh": "Refresh Dashboard",
+    "myPartners": "My Partners",
+    "myContacts": "My Contacts",
+    "myInteractions": "My Interactions",
+    "draftActions": "Actions Required",
+    "recentlyModified": "Recently created or updated",
+    "needsAction": "Need your attention",
+    "lastModified": "Last modified",
+    "viewAll": "View All",
+    "activityOverview": "Activity Overview",
+    "quickActions": "Quick Actions",
+    "newPartner": "New Partner",
+    "newContact": "New Contact",
+    "newInteraction": "New Interaction",
+    "createPartner": "Create Partner",
+    "createContact": "Create Contact",
+    "createInteraction": "Create Interaction",
+    "reviewActions": "Review Actions",
+    "noPartners": "No partners found",
+    "noContacts": "No contacts found",
+    "noInteractions": "No interactions found",
+    "noChartData": "No data available for chart",
+    "noDraftItems": "No draft items requiring action",
+    "draftPartners": "draft partners",
+    "draftContacts": "draft contacts",
+    "draftInteractions": "draft interactions",
+    "totalPartners": "partners total",
+    "totalContacts": "contacts total",
+    "totalInteractions": "interactions total",
+    "clickToShow": "click to show list",
+    "clickToHide": "click to hide list",
+    "orgUnitRecentUpdates": "Org Unit Recent Updates",
+    "orgUnitUpdatesSubtitle": "Top 10 recent changes in your organization unit",
+    "noRecentUpdates": "No recent updates in your organization unit",
+    "recentUpdates": "recent updates",
+    "totalUpdates": "updates total",
+    "retry": "Try Again",
+    "error": {
+      "title": "Unable to Load Dashboard"
+    }
   }
 }
