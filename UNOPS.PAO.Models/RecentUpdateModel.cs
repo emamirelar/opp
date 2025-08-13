@@ -10,7 +10,7 @@ public class RecentUpdateModel
     public string Name { get; set; }
     public string Type { get; set; } // Partner, Contact, Interaction
     public DateTime? LastModifiedDate { get; set; }
-    public string? LastModifiedBy { get; set; }
+    public int LastModifiedBy { get; set; }
     public string Status { get; set; }
     public object? EntityData { get; set; } // Contains the full entity data for detailed views
 }

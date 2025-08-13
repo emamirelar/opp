@@ -6,20 +6,23 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.Domain.Entities;
 using System.Collections.Generic;
+using System.Collections;
 using AutoMapper;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Managers;
+using UNOPS.PAO.UNOPSDomain.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services;
 
 /// <summary>
-/// Dedicated service for dashboard data retrieval with user-specific filtering
+/// Dedicated service for dashboard data retrieval with user-specific filtering and RBAC support
 /// This service keeps dashboard logic separate from core entity APIs
 /// </summary>
-public class DashboardService : IDashboardService
+public class DashboardService : BaseUNOPSManager, IDashboardService
 {
-    private readonly UNOPSAppDbContext _context;
     private readonly ILogger<DashboardService> _logger;
-    private readonly IMapper _mapper;
     private readonly IUserPreferenceService _userPreferenceService;
     private readonly IOrgUnitHierarchyService _hierarchyService;
 
@@ -27,19 +30,61 @@ public class DashboardService : IDashboardService
         UNOPSAppDbContext context, 
         ILogger<DashboardService> logger, 
         IMapper mapper,
+        IConfiguration configuration,
         IUserPreferenceService userPreferenceService,
-        IOrgUnitHierarchyService hierarchyService)
+        IOrgUnitHierarchyService hierarchyService,
+        IPermissionService permissionService = null,
+        IHttpContextAccessor httpContextAccessor = null)
+        : base(mapper, context, configuration, null, "Dashboard", permissionService, httpContextAccessor)
     {
-        _context = context;
         _logger = logger;
-        _mapper = mapper;
         _userPreferenceService = userPreferenceService;
         _hierarchyService = hierarchyService;
     }
 
     /// <summary>
+    /// Helper method to apply access control filters with a specific entity name
+    /// since the dashboard service handles multiple entity types
+    /// </summary>
+    private async Task<IEnumerable<T>> ApplyAccessControlFiltersWithEntityName<T>(IQueryable<T> query, ClaimsPrincipal user, string action, string entityName) where T : class
+    {
+        if (_permissionService == null)
+        {
+            _logger.LogWarning("No permission service available for RBAC filtering - returning empty list");
+            return new List<T>();
+        }
+
+        try
+        {
+            var result = await _permissionService.ApplyAccessControlFiltersAsync(query, user, action, entityName);
+            
+            // Cast the result back to the expected type, following the pattern from BaseUNOPSManager
+            if (result is List<T> typedList)
+            {
+                return typedList;
+            }
+            
+            // If it's some other enumerable, convert it
+            if (result is IEnumerable<T> enumerable)
+            {
+                return enumerable.ToList();
+            }
+            
+            // Fallback: return empty list
+            _logger.LogWarning("RBAC filtering returned unexpected type {Type} for entity {EntityName}", 
+                result?.GetType().Name ?? "null", entityName);
+            return new List<T>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error applying RBAC filters for entity {EntityName}", entityName);
+            return new List<T>();
+        }
+    }
+
+    /// <summary>
     /// Gets partners that are related to the current user (created by or last modified by)
-    /// and excludes Draft status partners
+    /// and excludes Draft status partners with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetMyPartnersAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -50,7 +95,7 @@ public class DashboardService : IDashboardService
             return new PaginationResponse<PartnerModel> { Records = new List<PartnerModel>(), TotalCount = 0 };
         }
 
-        _logger.LogInformation("Getting dashboard partners for user {UserId}", userId.Value);
+        _logger.LogInformation("Getting dashboard partners for user {UserId} with RBAC filtering", userId.Value);
 
         var query = _context.Set<UNOPSPartner>()
             .Include(p => p.PartnerGroup)
@@ -59,13 +104,17 @@ public class DashboardService : IDashboardService
                        && p.Status != "Draft")
             .OrderByDescending(p => p.LastModifiedDate ?? p.CreatedDate);
 
-        var totalCount = await query.CountAsync();
-        var entities = await query.Take(pageSize).ToListAsync();
+        // Apply RBAC access control filters before counting and pagination
+        var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Partner");
+        
+        var partnerArray = filteredData.ToArray();
+        var totalCount = partnerArray.Length;
+        var paginatedEntities = partnerArray.Take(pageSize).ToList();
         
         // Map entities to models to avoid circular references
-        var records = _mapper.Map<List<PartnerModel>>(entities);
+        var records = _mapper.Map<List<PartnerModel>>(paginatedEntities);
 
-        _logger.LogInformation("Found {Count} dashboard partners for user {UserId}", records.Count, userId.Value);
+        _logger.LogInformation("Found {Count} dashboard partners for user {UserId} after RBAC filtering", records.Count, userId.Value);
 
         return new PaginationResponse<PartnerModel>
         {
@@ -78,7 +127,7 @@ public class DashboardService : IDashboardService
 
     /// <summary>
     /// Gets contacts that are related to the current user (created by or last modified by)
-    /// and excludes Draft status contacts
+    /// and excludes Draft status contacts with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<ContactModel>> GetMyContactsAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -89,7 +138,7 @@ public class DashboardService : IDashboardService
             return new PaginationResponse<ContactModel> { Records = new List<ContactModel>(), TotalCount = 0 };
         }
 
-        _logger.LogInformation("Getting dashboard contacts for user {UserId}", userId.Value);
+        _logger.LogInformation("Getting dashboard contacts for user {UserId} with RBAC filtering", userId.Value);
 
         var query = _context.Set<UNOPSContact>()
             .Include(c => c.Partner)
@@ -97,13 +146,17 @@ public class DashboardService : IDashboardService
                        && c.Status != "Draft")
             .OrderByDescending(c => c.LastModifiedDate ?? c.CreatedDate);
 
-        var totalCount = await query.CountAsync();
-        var entities = await query.Take(pageSize).ToListAsync();
+        // Apply RBAC access control filters before counting and pagination
+        var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Contact");
+        
+        var contactArray = filteredData.ToArray();
+        var totalCount = contactArray.Length;
+        var paginatedEntities = contactArray.Take(pageSize).ToList();
         
         // Map entities to models to avoid circular references
-        var records = _mapper.Map<List<ContactModel>>(entities);
+        var records = _mapper.Map<List<ContactModel>>(paginatedEntities);
 
-        _logger.LogInformation("Found {Count} dashboard contacts for user {UserId}", records.Count, userId.Value);
+        _logger.LogInformation("Found {Count} dashboard contacts for user {UserId} after RBAC filtering", records.Count, userId.Value);
 
         return new PaginationResponse<ContactModel>
         {
@@ -115,7 +168,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
-    /// Gets draft partners that are related to the current user (created by or last modified by)
+    /// Gets draft partners that are related to the current user (created by or last modified by) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<PartnerModel>> GetMyDraftPartnersAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -126,7 +179,7 @@ public class DashboardService : IDashboardService
             return new PaginationResponse<PartnerModel> { Records = new List<PartnerModel>(), TotalCount = 0 };
         }
 
-        _logger.LogInformation("Getting draft partners for user {UserId}", userId.Value);
+        _logger.LogInformation("Getting draft partners for user {UserId} with RBAC filtering", userId.Value);
 
         var query = _context.Set<UNOPSPartner>()
             .Include(p => p.PartnerGroup)
@@ -134,13 +187,17 @@ public class DashboardService : IDashboardService
                        && p.Status == "Draft")
             .OrderByDescending(p => p.CreatedDate);
 
-        var totalCount = await query.CountAsync();
-        var entities = await query.Take(pageSize).ToListAsync();
+        // Apply RBAC access control filters before counting and pagination
+        var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Partner");
+        
+        var partnerArray = filteredData.ToArray();
+        var totalCount = partnerArray.Length;
+        var paginatedEntities = partnerArray.Take(pageSize).ToList();
         
         // Map entities to models to avoid circular references
-        var records = _mapper.Map<List<PartnerModel>>(entities);
+        var records = _mapper.Map<List<PartnerModel>>(paginatedEntities);
 
-        _logger.LogInformation("Found {Count} draft partners for user {UserId}", records.Count, userId.Value);
+        _logger.LogInformation("Found {Count} draft partners for user {UserId} after RBAC filtering", records.Count, userId.Value);
 
         return new PaginationResponse<PartnerModel>
         {
@@ -152,7 +209,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
-    /// Gets draft contacts that are related to the current user (created by or last modified by)
+    /// Gets draft contacts that are related to the current user (created by or last modified by) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<ContactModel>> GetMyDraftContactsAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -163,7 +220,7 @@ public class DashboardService : IDashboardService
             return new PaginationResponse<ContactModel> { Records = new List<ContactModel>(), TotalCount = 0 };
         }
 
-        _logger.LogInformation("Getting draft contacts for user {UserId}", userId.Value);
+        _logger.LogInformation("Getting draft contacts for user {UserId} with RBAC filtering", userId.Value);
 
         var query = _context.Set<UNOPSContact>()
             .Include(c => c.Partner)
@@ -171,13 +228,17 @@ public class DashboardService : IDashboardService
                        && c.Status == "Draft")
             .OrderByDescending(c => c.CreatedDate);
 
-        var totalCount = await query.CountAsync();
-        var entities = await query.Take(pageSize).ToListAsync();
+        // Apply RBAC access control filters before counting and pagination
+        var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Contact");
+        
+        var contactArray = filteredData.ToArray();
+        var totalCount = contactArray.Length;
+        var paginatedEntities = contactArray.Take(pageSize).ToList();
         
         // Map entities to models to avoid circular references
-        var records = _mapper.Map<List<ContactModel>>(entities);
+        var records = _mapper.Map<List<ContactModel>>(paginatedEntities);
 
-        _logger.LogInformation("Found {Count} draft contacts for user {UserId}", records.Count, userId.Value);
+        _logger.LogInformation("Found {Count} draft contacts for user {UserId} after RBAC filtering", records.Count, userId.Value);
 
         return new PaginationResponse<ContactModel>
         {
@@ -190,7 +251,7 @@ public class DashboardService : IDashboardService
 
     /// <summary>
     /// Gets interactions that are related to the current user (created by or last modified by)
-    /// and excludes Draft status interactions
+    /// and excludes Draft status interactions with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<InteractionModel>> GetMyInteractionsAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -201,7 +262,7 @@ public class DashboardService : IDashboardService
             return new PaginationResponse<InteractionModel> { Records = new List<InteractionModel>(), TotalCount = 0 };
         }
 
-        _logger.LogInformation("Getting dashboard interactions for user {UserId}", userId.Value);
+        _logger.LogInformation("Getting dashboard interactions for user {UserId} with RBAC filtering", userId.Value);
 
         var query = _context.Set<Interaction>()
             .Include(i => i.InteractionContacts)
@@ -210,13 +271,17 @@ public class DashboardService : IDashboardService
                        && i.Status != EntityStatus.Draft)
             .OrderByDescending(i => i.LastModifiedDate ?? i.CreatedDate);
 
-        var totalCount = await query.CountAsync();
-        var entities = await query.Take(pageSize).ToListAsync();
+        // Apply RBAC access control filters before counting and pagination
+        var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Interaction");
+        
+        var interactionArray = filteredData.ToArray();
+        var totalCount = interactionArray.Length;
+        var paginatedEntities = interactionArray.Take(pageSize).ToList();
         
         // Map entities to models to avoid circular references
-        var records = _mapper.Map<List<InteractionModel>>(entities);
+        var records = _mapper.Map<List<InteractionModel>>(paginatedEntities);
 
-        _logger.LogInformation("Found {Count} dashboard interactions for user {UserId}", records.Count, userId.Value);
+        _logger.LogInformation("Found {Count} dashboard interactions for user {UserId} after RBAC filtering", records.Count, userId.Value);
 
         return new PaginationResponse<InteractionModel>
         {
@@ -228,7 +293,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
-    /// Gets draft interactions that are related to the current user (created by or last modified by)
+    /// Gets draft interactions that are related to the current user (created by or last modified by) with RBAC filtering
     /// </summary>
     public async Task<PaginationResponse<InteractionModel>> GetMyDraftInteractionsAsync(ClaimsPrincipal user, int pageSize = 1000)
     {
@@ -239,7 +304,7 @@ public class DashboardService : IDashboardService
             return new PaginationResponse<InteractionModel> { Records = new List<InteractionModel>(), TotalCount = 0 };
         }
 
-        _logger.LogInformation("Getting draft interactions for user {UserId}", userId.Value);
+        _logger.LogInformation("Getting draft interactions for user {UserId} with RBAC filtering", userId.Value);
 
         var query = _context.Set<Interaction>()
             .Include(i => i.InteractionContacts)
@@ -248,13 +313,17 @@ public class DashboardService : IDashboardService
                        && i.Status == EntityStatus.Draft)
             .OrderByDescending(i => i.CreatedDate);
 
-        var totalCount = await query.CountAsync();
-        var entities = await query.Take(pageSize).ToListAsync();
+        // Apply RBAC access control filters before counting and pagination
+        var filteredData = await ApplyAccessControlFiltersWithEntityName(query, user, "read", "Interaction");
+        
+        var interactionArray = filteredData.ToArray();
+        var totalCount = interactionArray.Length;
+        var paginatedEntities = interactionArray.Take(pageSize).ToList();
         
         // Map entities to models to avoid circular references
-        var records = _mapper.Map<List<InteractionModel>>(entities);
+        var records = _mapper.Map<List<InteractionModel>>(paginatedEntities);
 
-        _logger.LogInformation("Found {Count} draft interactions for user {UserId}", records.Count, userId.Value);
+        _logger.LogInformation("Found {Count} draft interactions for user {UserId} after RBAC filtering", records.Count, userId.Value);
 
         return new PaginationResponse<InteractionModel>
         {
@@ -280,7 +349,7 @@ public class DashboardService : IDashboardService
 
     /// <summary>
     /// Gets recent updates from all entity types (Partners, Contacts, Interactions) 
-    /// combined and sorted by last modified date, filtered by user's global org unit filter
+    /// combined and sorted by last modified date, filtered by user's global org unit filter and RBAC
     /// </summary>
     public async Task<List<RecentUpdateModel>> GetOrgUnitRecentUpdatesAsync(ClaimsPrincipal user, int pageSize = 10)
     {
@@ -291,7 +360,7 @@ public class DashboardService : IDashboardService
             return new List<RecentUpdateModel>();
         }
 
-        _logger.LogInformation("Getting org unit recent updates for user {UserId}", userId.Value);
+        _logger.LogInformation("Getting org unit recent updates for user {UserId} with RBAC filtering", userId.Value);
 
         try
         {
@@ -326,20 +395,21 @@ public class DashboardService : IDashboardService
                 partnerQuery = partnerQuery.Where(p => validPartnerIds.Contains(p.Id));
             }
 
-            var recentPartners = await partnerQuery
-                .OrderByDescending(p => p.LastModifiedDate)
-                .Take(20)
-                .Select(p => new RecentUpdateModel
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Type = "Partner",
-                    LastModifiedDate = p.LastModifiedDate,
-                    LastModifiedBy = p.LastModifiedBy.ToString(),
-                    Status = p.Status.ToString(),
-                    EntityData = null
-                })
-                .ToListAsync();
+            // Apply RBAC filtering for partners
+            var filteredPartners = await ApplyAccessControlFiltersWithEntityName(
+                partnerQuery.OrderByDescending(p => p.LastModifiedDate).Take(20), 
+                user, "read", "Partner");
+            
+            var recentPartners = filteredPartners.Select(p => new RecentUpdateModel
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Type = "Partner",
+                LastModifiedDate = p.LastModifiedDate,
+                LastModifiedBy = p.LastModifiedBy,
+                Status = p.Status?.ToString() ?? "Unknown",
+                EntityData = null
+            }).ToList();
 
             allUpdates.AddRange(recentPartners);
 
@@ -360,20 +430,21 @@ public class DashboardService : IDashboardService
                 contactQuery = contactQuery.Where(c => validPartnerIds.Contains(c.PartnerId));
             }
 
-            var recentContacts = await contactQuery
-                .OrderByDescending(c => c.LastModifiedDate)
-                .Take(20)
-                .Select(c => new RecentUpdateModel
-                {
-                    Id = c.Id,
-                    Name = c.FirstName + " " + c.LastName,
-                    Type = "Contact",
-                    LastModifiedDate = c.LastModifiedDate,
-                    LastModifiedBy = c.LastModifiedBy.ToString(),
-                    Status = c.Status.ToString(),
-                    EntityData = null
-                })
-                .ToListAsync();
+            // Apply RBAC filtering for contacts
+            var filteredContacts = await ApplyAccessControlFiltersWithEntityName(
+                contactQuery.OrderByDescending(c => c.LastModifiedDate).Take(20), 
+                user, "read", "Contact");
+            
+            var recentContacts = filteredContacts.Select(c => new RecentUpdateModel
+            {
+                Id = c.Id,
+                Name = c.FirstName + " " + c.LastName,
+                Type = "Contact",
+                LastModifiedDate = c.LastModifiedDate,
+                LastModifiedBy = c.LastModifiedBy,
+                Status = c.Status?.ToString() ?? "Unknown",
+                EntityData = null
+            }).ToList();
 
             allUpdates.AddRange(recentContacts);
 
@@ -394,20 +465,21 @@ public class DashboardService : IDashboardService
                 interactionQuery = interactionQuery.Where(i => validInteractionIds.Contains(i.Id));
             }
 
-            var recentInteractions = await interactionQuery
-                .OrderByDescending(i => i.LastModifiedDate)
-                .Take(20)
-                .Select(i => new RecentUpdateModel
-                {
-                    Id = i.Id,
-                    Name = i.Subject ?? "Untitled Interaction",
-                    Type = "Interaction",
-                    LastModifiedDate = i.LastModifiedDate,
-                    LastModifiedBy = i.LastModifiedBy.ToString(),
-                    Status = i.Status.ToString(),
-                    EntityData = null
-                })
-                .ToListAsync();
+            // Apply RBAC filtering for interactions
+            var filteredInteractions = await ApplyAccessControlFiltersWithEntityName(
+                interactionQuery.OrderByDescending(i => i.LastModifiedDate).Take(20), 
+                user, "read", "Interaction");
+            
+            var recentInteractions = filteredInteractions.Select(i => new RecentUpdateModel
+            {
+                Id = i.Id,
+                Name = i.Subject ?? "Untitled Interaction",
+                Type = "Interaction",
+                LastModifiedDate = i.LastModifiedDate,
+                LastModifiedBy = i.LastModifiedBy,
+                Status = i.Status.ToString() ?? "Unknown",
+                EntityData = null
+            }).ToList();
 
             allUpdates.AddRange(recentInteractions);
 
@@ -418,7 +490,7 @@ public class DashboardService : IDashboardService
                 .Take(pageSize)
                 .ToList();
 
-            _logger.LogInformation("Found {Count} org unit recent updates (filtered: {Filtered})", 
+            _logger.LogInformation("Found {Count} org unit recent updates after RBAC filtering (org unit filtered: {Filtered})", 
                 sortedUpdates.Count, orgUnitIds != null);
             return sortedUpdates;
         }
@@ -427,5 +499,18 @@ public class DashboardService : IDashboardService
             _logger.LogError(ex, "Error retrieving org unit recent updates for user {UserId}", userId.Value);
             return new List<RecentUpdateModel>();
         }
+    }
+
+    /// <summary>
+    /// Dashboard service handles multiple entity types, so this method is not applicable.
+    /// Use the specific dashboard methods instead (GetMyPartnersAsync, GetMyContactsAsync, etc.)
+    /// </summary>
+    public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
+    {
+        // Dashboard service aggregates data from multiple entity types
+        // Individual entity access should go through their respective managers
+        throw new NotSupportedException(
+            "Dashboard service handles multiple entity types. " +
+            "Use GetMyPartnersAsync, GetMyContactsAsync, GetMyInteractionsAsync, or GetOrgUnitRecentUpdatesAsync instead.");
     }
 }
