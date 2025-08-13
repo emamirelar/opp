@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
@@ -12,10 +12,12 @@ import { ChartModule } from 'primeng/chart';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { forkJoin, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { PartnerService } from '../../../../features/internal/services/partner.service';
 import { ContactService } from '../../../../features/internal/services/contact.service';
 import { InteractionService } from '../../../../features/internal/services/interaction.service';
+import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { Partner } from '../../../../features/internal/models/partner.model';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Interaction } from '../../../../features/internal/models/interaction.model';
@@ -74,6 +76,8 @@ export class HomeDashboardComponent implements OnInit {
   private partnerService = inject(PartnerService);
   private contactService = inject(ContactService);
   private interactionService = inject(InteractionService);
+  private globalFilterService = inject(GlobalFilterService);
+  private destroyRef = inject(DestroyRef);
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -181,6 +185,14 @@ export class HomeDashboardComponent implements OnInit {
 
   ngOnInit() {
     this.loadDashboardData();
+
+    // Subscribe to global filter changes to automatically refresh dashboard
+    this.globalFilterService.filtersChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        console.log('Global filter changed - refreshing dashboard');
+        this.loadDashboardData();
+      });
   }
 
   private loadDashboardData() {

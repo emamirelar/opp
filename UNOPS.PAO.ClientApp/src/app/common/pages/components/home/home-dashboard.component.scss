@@ -49,6 +49,16 @@
   }
 }
 
+// Tooltip styling to prevent awkward wrapping
+:deep(.p-tooltip .p-tooltip-text) {
+  white-space: nowrap !important;
+  min-width: auto !important;
+  max-width: 200px;
+  word-break: keep-all;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+}
+
 .summary-section {
   @apply mb-8;
 
