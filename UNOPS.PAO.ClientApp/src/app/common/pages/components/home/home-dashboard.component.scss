@@ -1,3 +1,24 @@
+// Announcement Banner
+.announcement-banner {
+  @apply mb-6 rounded-lg overflow-hidden shadow-sm;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-left: 4px solid #1e40af;
+  
+  .announcement-content {
+    @apply p-4;
+    
+    .announcement-text {
+      @apply text-white text-sm leading-relaxed;
+      font-weight: 500;
+      
+      // Handle emoji spacing
+      :deep(.emoji) {
+        @apply mr-2;
+      }
+    }
+  }
+}
+
 .dashboard-container {
   padding: 1.5rem;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
