@@ -74,14 +74,47 @@
     }
   }
 
-  &.org-updates-card {
-    // Purple border for both collapsed and expanded states
+  &.interactions-card {
+    // Teal border for both collapsed and expanded states
     &::before {
-      background: linear-gradient(90deg, #7c3aed, #a855f7);
+      background: linear-gradient(90deg, #06b6d4, #0891b2);
+    }
+    
+    &.expanded {
+      @apply ring-2 ring-cyan-200;
+    }
+  }
+
+  &.opportunities-card {
+    // Soft lavender border for both collapsed and expanded states
+    &::before {
+      background: linear-gradient(90deg, #c084fc, #a855f7);
     }
     
     &.expanded {
       @apply ring-2 ring-purple-200;
+    }
+  }
+
+  &.actions-required-card {
+    // Orange border for both collapsed and expanded states
+    &::before {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+    
+    &.expanded {
+      @apply ring-2 ring-orange-200;
+    }
+  }
+
+  &.org-updates-card {
+    // Light orange border for both collapsed and expanded states
+    &::before {
+      background: linear-gradient(90deg, #fb923c, #f97316);
+    }
+    
+    &.expanded {
+      @apply ring-2 ring-orange-200;
     }
   }
 
@@ -133,6 +166,18 @@
         
         .entity-item {
           @apply flex justify-between items-center p-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer hover:bg-blue-50;
+
+          &.navigating {
+            @apply opacity-70 pointer-events-none bg-blue-50 border-2 border-blue-200;
+            
+            .entity-name {
+              @apply text-blue-800;
+            }
+            
+            .entity-meta {
+              @apply text-blue-600;
+            }
+          }
           
           .entity-info {
             @apply flex-1;
@@ -151,6 +196,11 @@
             
             .p-tag {
               @apply text-xs;
+            }
+            
+            :deep(.custom-spinner .p-progress-spinner-circle) {
+              stroke: #3b82f6;
+              stroke-width: 4;
             }
           }
         }
@@ -181,11 +231,15 @@
       }
 
       &.updates-icon {
-        background: linear-gradient(135deg, #a855f7, #7c3aed);
+        background: linear-gradient(135deg, #fb923c, #f97316);
       }
       
       &.interactions-icon {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+      }
+      
+      &.opportunities-icon {
+        background: linear-gradient(135deg, #c084fc, #a855f7);
       }
       
       &.actions-icon {

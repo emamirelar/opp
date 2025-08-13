@@ -801,60 +801,6 @@
         }
       }
     },
-    "homepage": {
-      "title": "Homepage Navigation Tour",
-      "description": "Learn how to navigate the main application interface, use the global search, access the AI assistant, and understand the core features available from the homepage.",
-      "steps": {
-        "welcome": {
-          "title": "Welcome to Opportunity+",
-          "description": "This is your central dashboard for managing partnerships and opportunities. From here, you can navigate to all sections, search for information, and access powerful AI-powered tools to enhance your workflow."
-        },
-        "menuToggle": {
-          "title": "Menu Toggle",
-          "description": "Click this button to expand or collapse the main navigation sidebar. This gives you more screen space when needed while keeping navigation easily accessible."
-        },
-        "logo": {
-          "title": "Homepage Logo",
-          "description": "Click the Opportunity+ logo at any time to return to this main dashboard. This serves as your home base throughout the application."
-        },
-        "globalSearch": {
-          "title": "Global Search",
-          "description": "Use this powerful search feature to find partners, contacts, interactions, and other records across the entire system. Type keywords and get instant results from all modules."
-        },
-        "tourControl": {
-          "title": "Take a Tour",
-          "description": "Click this button on any page to start a guided tour specific to that section. Each area of the application has its own detailed tour to help you master the available features."
-        },
-        "globalFilters": {
-          "title": "Global Filters",
-          "description": "Access advanced filtering options to narrow down search results and data views. Set up saved filters for frequently used search criteria."
-        },
-        "languageSelector": {
-          "title": "Language Selector",
-          "description": "Switch between supported languages (English, French, Spanish, Portuguese). The interface will immediately adapt to your selected language preference."
-        },
-        "aiAssistant": {
-          "title": "AI Assistant Toggle",
-          "description": "Click this button to open or close the AI Assistant panel. Get intelligent help, automate tasks, and receive insights powered by advanced AI technology."
-        },
-        "notifications": {
-          "title": "Notifications",
-          "description": "View important system notifications, alerts, and updates. Stay informed about activities that require your attention or action."
-        },
-        "profileMenu": {
-          "title": "Profile Menu",
-          "description": "Access your account settings, user preferences, logout options, and other personal configuration features from this dropdown menu."
-        },
-        "mainNavigation": {
-          "title": "Main Navigation Sidebar",
-          "description": "This sidebar contains links to all major sections: Partner Management, Contact Database, Interaction Tracking, AI Tools, Reports, and Administrative functions. Each section has its own specialized features and tours."
-        },
-        "welcomeDashboard": {
-          "title": "Welcome Dashboard",
-          "description": "This is your starting point in the application. From here, you can navigate to any section using the sidebar menu, search for specific information, or access the AI assistant for intelligent insights and assistance."
-        }
-      }
-    },
     "entitymanager": {
       "title": "Entity Manager Overview Tour",
       "description": "The Entity Manager is a powerful administrative tool designed to give you granular control over how data fields are presented and accessed across various entities within the system, such as Partners, Contacts, and Interactions.",
@@ -1277,8 +1223,9 @@
     "myPartners": "My Partners",
     "myContacts": "My Contacts",
     "myInteractions": "My Interactions",
+    "myOpportunities": "My Opportunities",
     "draftActions": "Actions Required",
-    "recentlyModified": "Recently created or updated",
+    "recentlyModified": "Created or Last Modified by Me",
     "needsAction": "Need your attention",
     "lastModified": "Last modified",
     "viewAll": "View All",
@@ -1290,7 +1237,11 @@
     "createPartner": "Create Partner",
     "createContact": "Create Contact",
     "createInteraction": "Create Interaction",
-    "reviewActions": "Review Actions",
+    "actionsRequired": "Actions Required",
+    "comingSoon": "Coming Soon",
+    "opportunitiesComingSoonMessage": "The opportunities module is currently under development and will be available soon.",
+    "totalDraftItems": "draft items total",
+    "draftItemsSubtitle": "Items requiring your attention",
     "noPartners": "No partners found",
     "noContacts": "No contacts found",
     "noInteractions": "No interactions found",

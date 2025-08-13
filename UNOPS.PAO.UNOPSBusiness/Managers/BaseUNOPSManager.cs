@@ -538,7 +538,15 @@ public abstract class BaseUNOPSManager
             "InteractionPartners",
             "InteractionUsers",
             "Projects",
-            "Documents" // Navigation properties that usually need special handling
+            "Documents", // Navigation properties that usually need special handling
+            // Audit fields that should be managed by the system, not from frontend
+            "CreatedDate",
+            "LastModifiedDate", 
+            "CreatedBy",
+            "LastModifiedBy",
+            "DeletedDate",
+            "DeletedBy",
+            "IsDeleted"
         };
     }
 

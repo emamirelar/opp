@@ -88,6 +88,9 @@ export class HomeDashboardComponent implements OnInit {
   // Visibility toggles for list views
   showPartnersListView = signal(false);
   showContactsListView = signal(false);
+  showInteractionsListView = signal(false);
+  showOpportunitiesListView = signal(false);
+  showActionsRequiredView = signal(false);
   showOrgUnitUpdatesView = signal(false);
 
   // Interaction chart filtering
@@ -99,6 +102,12 @@ export class HomeDashboardComponent implements OnInit {
   selectedDraftActionType = signal<string | null>(null);
   filteredDraftActions = signal<any[]>([]);
   selectedDraftActionColor = signal<string | null>(null);
+
+  // Org Unit Recent Updates filtering
+  selectedOrgUnitUpdateType = signal<string | null>(null);
+
+  // Navigation loading state
+  navigatingToEntity = signal<string | null>(null);
 
   // Chart data for interactions pie chart
   interactionsChartData = signal<any>(null);
@@ -178,106 +187,74 @@ export class HomeDashboardComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    // Load ALL user's entities (created or last modified by user, excluding Draft status)
-    // Using large pageSize to get all records, ignoring global filters
-    const myPartners$ = this.http.get<any>(`/api/partner`, {
+    // Load user's partners using dedicated dashboard API
+    const myPartners$ = this.http.get<any>(`/api/dashboard/my-partners`, {
       params: {
-        pageIndex: '1',
-        pageSize: '1000', // Large number to get all user records
-        orderBy: 'lastModifiedDate',
-        ascending: 'false',
-        relatedToMe: 'true', // User-specific filter
-        ignoreGlobalFilters: 'true' // Bypass any global filters
+        pageSize: '1000'
       }
     }).pipe(
-      map(response => (response.records || []).filter((p: any) => p.status !== 'Draft')),
+      map(response => response.records || []),
       catchError(err => {
         console.error('Error loading my partners:', err);
         return of([]);
       })
     );
 
-    const myContacts$ = this.http.get<any>(`/api/contact`, {
+    // Load user's contacts using dedicated dashboard API
+    const myContacts$ = this.http.get<any>(`/api/dashboard/my-contacts`, {
       params: {
-        pageIndex: '1',
-        pageSize: '1000', // Large number to get all user records
-        orderBy: 'lastModifiedDate',
-        ascending: 'false',
-        relatedToMe: 'true', // User-specific filter
-        ignoreGlobalFilters: 'true' // Bypass any global filters
+        pageSize: '1000'
       }
     }).pipe(
-      map(response => {
-        // Filter out Draft contacts to show only Active contacts
-        return (response.records || []).filter((c: any) => c.status !== 'Draft');
-      }),
+      map(response => response.records || []),
       catchError(err => {
         console.error('Error loading my contacts:', err);
         return of([]);
       })
     );
 
-    const myInteractions$ = this.interactionService.getAll({
-      pageIndex: 1,
-      pageSize: 1000, // Large number to get all user records
-      orderBy: 'date',
-      ascending: 'false'
+    // Load user's interactions using dedicated dashboard API
+    const myInteractions$ = this.http.get<any>(`/api/dashboard/my-interactions`, {
+      params: { pageSize: '1000' }
     }).pipe(
-      map(response => (response.body?.records || []).filter((i: any) => i.status !== 'Draft')),
+      map(response => response.records || []),
       catchError(err => {
         console.error('Error loading my interactions:', err);
         return of([]);
       })
     );
 
-    // Load ALL draft entities (that need action) - ignoring global filters
-    const draftPartners$ = this.http.get<any>(`/api/partner`, {
+    // Load user's draft partners using dedicated dashboard API
+    const draftPartners$ = this.http.get<any>(`/api/dashboard/my-draft-partners`, {
       params: {
-        pageIndex: '1',
-        pageSize: '1000',
-        orderBy: 'createdDate',
-        ascending: 'false',
-        status: 'Draft',
-        ignoreGlobalFilters: 'true'
+        pageSize: '1000'
       }
     }).pipe(
-      map(response => {
-        // Ensure only Draft status records are shown in Actions Required
-        return (response.records || []).filter((p: any) => p.status === 'Draft');
-      }),
+      map(response => response.records || []),
       catchError(err => {
         console.error('Error loading draft partners:', err);
         return of([]);
       })
     );
 
-    const draftContacts$ = this.http.get<any>(`/api/contact`, {
+    // Load user's draft contacts using dedicated dashboard API
+    const draftContacts$ = this.http.get<any>(`/api/dashboard/my-draft-contacts`, {
       params: {
-        pageIndex: '1',
-        pageSize: '1000',
-        orderBy: 'createdDate',
-        ascending: 'false',
-        status: 'Draft',
-        ignoreGlobalFilters: 'true'
+        pageSize: '1000'
       }
     }).pipe(
-      map(response => {
-        // Ensure only Draft status records are shown in Actions Required
-        return (response.records || []).filter((c: any) => c.status === 'Draft');
-      }),
+      map(response => response.records || []),
       catchError(err => {
         console.error('Error loading draft contacts:', err);
         return of([]);
       })
     );
 
-    const draftInteractions$ = this.interactionService.getAll({
-      pageIndex: 1,
-      pageSize: 1000,
-      orderBy: 'createdDate',
-      ascending: 'false'
+    // Load user's draft interactions using dedicated dashboard API
+    const draftInteractions$ = this.http.get<any>(`/api/dashboard/my-draft-interactions`, {
+      params: { pageSize: '1000' }
     }).pipe(
-      map(response => (response.body?.records || []).filter((i: any) => i.status === 'Draft')),
+      map(response => response.records || []),
       catchError(err => {
         console.error('Error loading draft interactions:', err);
         return of([]);
@@ -427,6 +404,21 @@ export class HomeDashboardComponent implements OnInit {
     this.router.navigate(['/partnerships/contacts'], { 
       queryParams: { relatedToMe: 'true' } 
     });
+  }
+
+  toggleInteractionsListView() {
+    // Toggle the visibility of the Interactions list view
+    this.showInteractionsListView.set(!this.showInteractionsListView());
+  }
+
+  toggleOpportunitiesListView() {
+    // Toggle the visibility of the Opportunities list view
+    this.showOpportunitiesListView.set(!this.showOpportunitiesListView());
+  }
+
+  toggleActionsRequiredView() {
+    // Toggle the visibility of the Actions Required list view
+    this.showActionsRequiredView.set(!this.showActionsRequiredView());
   }
 
   toggleOrgUnitUpdates() {
@@ -587,125 +579,55 @@ export class HomeDashboardComponent implements OnInit {
       return;
     }
     
+    // Set loading state immediately for visual feedback
+    const entityKey = `${entityType}-${entityId}`;
+    this.navigatingToEntity.set(entityKey);
+    
     const routes = {
-      'Partner': `/partnerships/partners/${entityId}`,
-      'Contact': `/partnerships/contacts/${entityId}`,
-      'Interaction': `/partnerships/interactions/${entityId}`
+      'Partner': ['partnerships', 'partners', entityId.toString()],
+      'Contact': ['partnerships', 'contacts', entityId.toString()],
+      'Interaction': ['partnerships', 'interactions', entityId.toString()]
     };
     
-    const route = routes[entityType as keyof typeof routes];
-    console.log('Navigating to route:', route);
+    const routeSegments = routes[entityType as keyof typeof routes];
+    console.log('Navigating to route segments:', routeSegments);
     
-    if (route) {
-      this.router.navigate([route]);
+    if (routeSegments) {
+      // Use router navigation with promise for better performance
+      this.router.navigate(routeSegments).then(
+        (success) => {
+          if (success) {
+            console.log('Navigation successful');
+          } else {
+            console.warn('Navigation failed');
+            this.navigatingToEntity.set(null); // Clear loading state if navigation fails
+          }
+        },
+        (error) => {
+          console.error('Navigation error:', error);
+          this.navigatingToEntity.set(null); // Clear loading state on error
+        }
+      );
     } else {
       console.error('No route found for entityType:', entityType);
+      this.navigatingToEntity.set(null); // Clear loading state
     }
   }
 
   private getOrgUnitRecentUpdates(): Observable<RecentUpdate[]> {
-    // Get recent updates from all entity types in the current org unit
-    // We'll make parallel calls to all three endpoints and combine the results
-    
-    const recentPartners$ = this.http.get<any>(`/api/partner`, {
+    // Use the new dashboard API endpoint for org unit recent updates
+    return this.http.get<RecentUpdate[]>('/api/dashboard/org-unit-recent-updates', {
       params: {
-        pageIndex: '1',
-        pageSize: '20', // Get more than 10 to allow for filtering
-        orderBy: 'lastModifiedDate',
-        ascending: 'false'
+        pageSize: '10'
       }
     }).pipe(
-      map(response => (response.records || []).map((partner: any) => ({
-        id: partner.id,
-        name: partner.name || 'Unnamed Partner',
-        type: 'Partner' as const,
-        lastModifiedDate: partner.lastModifiedDate || partner.createdDate,
-        lastModifiedBy: partner.lastModifiedBy || partner.createdBy || 'Unknown',
-        status: partner.status || 'Unknown',
-        entityData: partner
-      }))),
+      map(updates => {
+        console.log('Org Unit Recent Updates from Dashboard API:', updates.length, 'items');
+        return updates;
+      }),
       catchError(err => {
-        console.error('Error loading recent partners:', err);
+        console.error('Error loading org unit recent updates from dashboard API:', err);
         return of([]);
-      })
-    );
-
-    const recentContacts$ = this.http.get<any>(`/api/contact`, {
-      params: {
-        pageIndex: '1',
-        pageSize: '20',
-        orderBy: 'lastModifiedDate',
-        ascending: 'false'
-      }
-    }).pipe(
-      map(response => (response.records || []).map((contact: any) => ({
-        id: contact.id,
-        name: `${contact.firstName || ''} ${contact.lastName || ''}`.trim() || 'Unnamed Contact',
-        type: 'Contact' as const,
-        lastModifiedDate: contact.lastModifiedDate || contact.createdDate,
-        lastModifiedBy: contact.lastModifiedBy || contact.createdBy || 'Unknown',
-        status: contact.status || 'Unknown',
-        entityData: contact
-      }))),
-      catchError(err => {
-        console.error('Error loading recent contacts:', err);
-        return of([]);
-      })
-    );
-
-    const recentInteractions$ = this.http.get<any>(`/api/interactions`, {
-      params: {
-        pageIndex: '1',
-        pageSize: '20',
-        orderBy: 'lastModifiedDate',
-        ascending: 'false'
-      }
-    }).pipe(
-      map(response => (response.records || []).map((interaction: any) => ({
-        id: interaction.id,
-        name: interaction.subject || 'Unnamed Interaction',
-        type: 'Interaction' as const,
-        lastModifiedDate: interaction.date,
-        lastModifiedBy: interaction.lastModifiedBy || interaction.createdBy || 'Unknown',
-        status: interaction.status || 'Unknown',
-        entityData: interaction
-      }))),
-      catchError(err => {
-        console.error('Error loading recent interactions:', err);
-        return of([]);
-      })
-    );
-
-    // Combine all recent updates and sort by date
-    return forkJoin({
-      partners: recentPartners$,
-      contacts: recentContacts$,
-      interactions: recentInteractions$
-    }).pipe(
-      map(data => {
-        const allUpdates = [
-          ...data.partners,
-          ...data.contacts,
-          ...data.interactions
-        ];
-
-        // Sort by last modified date (most recent first) and take top 10
-        console.log('Org Unit Recent Updates Debug:', {
-          partners: data.partners.length,
-          contacts: data.contacts.length,
-          interactions: data.interactions.length,
-          total: allUpdates.length,
-          sample: allUpdates.slice(0, 2) // Show first 2 items for debugging
-        });
-        
-        const filtered = allUpdates.filter(update => update.lastModifiedDate); // Filter out items without dates
-        console.log('Filtered updates:', filtered.length, 'items with dates');
-        
-        const sorted = filtered.sort((a, b) => new Date(b.lastModifiedDate).getTime() - new Date(a.lastModifiedDate).getTime());
-        const final = sorted.slice(0, 10); // Take only top 10
-        
-        console.log('Final org unit updates:', final.length, 'items');
-        return final;
       })
     );
   }
@@ -737,9 +659,7 @@ export class HomeDashboardComponent implements OnInit {
     }
   }
 
-  getCurrentDate(): Date {
-    return new Date();
-  }
+
 
   getEntityId(id: any): number | null {
     if (id === null || id === undefined) {
@@ -752,8 +672,14 @@ export class HomeDashboardComponent implements OnInit {
     return result;
   }
 
+  isEntityNavigating(entityType: string, entityId: number | null | undefined): boolean {
+    if (entityId === null || entityId === undefined) return false;
+    const entityKey = `${entityType}-${entityId}`;
+    return this.navigatingToEntity() === entityKey;
+  }
+
   getDisplayDate(entity: any): string {
-    const date = entity.lastModifiedDate || entity.createdDate || this.getCurrentDate();
+    const date = entity.lastModifiedDate || entity.createdDate;
     return this.formatDate(date);
   }
 
@@ -773,5 +699,187 @@ export class HomeDashboardComponent implements OnInit {
       case 'Interaction': return 'interaction-icon';
       default: return 'default-icon';
     }
+  }
+
+  getInteractionTypes(): string[] {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData || !dashboardData.myInteractions) return [];
+    
+    // Get unique interaction types
+    const types = new Set(dashboardData.myInteractions.map((interaction: any) => interaction.type || 'Unknown'));
+    return Array.from(types).sort();
+  }
+
+  setInteractionFilter(type: string) {
+    this.selectedInteractionType.set(type);
+    this.showInteractionsByType(type);
+  }
+
+  getDisplayedInteractions(): any[] {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData || !dashboardData.myInteractions) return [];
+    
+    const selectedType = this.selectedInteractionType();
+    if (!selectedType) {
+      return dashboardData.myInteractions;
+    }
+    
+    return dashboardData.myInteractions.filter(
+      (interaction: any) => (interaction.type || 'Unknown') === selectedType
+    );
+  }
+
+  getTotalDraftActions(): number {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData) return 0;
+    
+    return dashboardData.draftActions.partners.length + 
+           dashboardData.draftActions.contacts.length + 
+           dashboardData.draftActions.interactions.length;
+  }
+
+  getDraftActionTypes(): string[] {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData) return [];
+    
+    const types: string[] = [];
+    if (dashboardData.draftActions.partners.length > 0) types.push('Partners');
+    if (dashboardData.draftActions.contacts.length > 0) types.push('Contacts');
+    if (dashboardData.draftActions.interactions.length > 0) types.push('Interactions');
+    
+    return types;
+  }
+
+  getDraftActionCount(type: string): number {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData) return 0;
+    
+    switch (type) {
+      case 'Partners':
+        return dashboardData.draftActions.partners.length;
+      case 'Contacts':
+        return dashboardData.draftActions.contacts.length;
+      case 'Interactions':
+        return dashboardData.draftActions.interactions.length;
+      default:
+        return 0;
+    }
+  }
+
+  setDraftActionFilter(type: string) {
+    this.selectedDraftActionType.set(type);
+    this.showDraftActionsByType(type);
+  }
+
+  getDisplayedDraftActions(): any[] {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData) return [];
+    
+    const selectedType = this.selectedDraftActionType();
+    if (!selectedType) {
+      // Return all draft actions combined
+      return [
+        ...dashboardData.draftActions.partners,
+        ...dashboardData.draftActions.contacts,
+        ...dashboardData.draftActions.interactions
+      ];
+    }
+    
+    switch (selectedType) {
+      case 'Partners':
+        return dashboardData.draftActions.partners;
+      case 'Contacts':
+        return dashboardData.draftActions.contacts;
+      case 'Interactions':
+        return dashboardData.draftActions.interactions;
+      default:
+        return [];
+    }
+  }
+
+  getDraftActionEntityType(item: any): string {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData) return 'Partner';
+    
+    // Determine entity type based on which array the item belongs to
+    if (dashboardData.draftActions.partners.some((p: any) => p.id === item.id)) return 'Partner';
+    if (dashboardData.draftActions.contacts.some((c: any) => c.id === item.id)) return 'Contact';
+    if (dashboardData.draftActions.interactions.some((i: any) => i.id === item.id)) return 'Interaction';
+    
+    return 'Partner'; // Default fallback
+  }
+
+  getDraftActionDisplayName(item: any): string {
+    const entityType = this.getDraftActionEntityType(item);
+    
+    switch (entityType) {
+      case 'Partner':
+        return item.name || 'Unnamed Partner';
+      case 'Contact':
+        return `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Unnamed Contact';
+      case 'Interaction':
+        return item.subject || 'Untitled Interaction';
+      default:
+        return 'Unknown Item';
+    }
+  }
+
+  getDraftActionType(item: any): string {
+    return this.getDraftActionEntityType(item);
+  }
+
+  getDraftActionDescription(item: any): string {
+    const entityType = this.getDraftActionEntityType(item);
+    
+    switch (entityType) {
+      case 'Contact':
+        return item.title || '';
+      case 'Interaction':
+        return item.description || '';
+      default:
+        return '';
+    }
+  }
+
+  // Org Unit Recent Updates filtering methods (client-side filtering)
+  getOrgUnitUpdateTypes(): string[] {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData || !dashboardData.orgUnitRecentUpdates) return [];
+    
+    const types = new Set<string>();
+    dashboardData.orgUnitRecentUpdates.forEach(update => {
+      if (update.type) {
+        types.add(update.type);
+      }
+    });
+    
+    return Array.from(types).sort();
+  }
+
+  getOrgUnitUpdateCount(type: string): number {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData || !dashboardData.orgUnitRecentUpdates) return 0;
+    
+    return dashboardData.orgUnitRecentUpdates.filter(update => update.type === type).length;
+  }
+
+  setOrgUnitUpdateFilter(type: string) {
+    this.selectedOrgUnitUpdateType.set(type);
+  }
+
+  clearOrgUnitUpdateFilter() {
+    this.selectedOrgUnitUpdateType.set(null);
+  }
+
+  getDisplayedOrgUnitUpdates(): RecentUpdate[] {
+    const dashboardData = this.dashboardData();
+    if (!dashboardData || !dashboardData.orgUnitRecentUpdates) return [];
+    
+    const selectedType = this.selectedOrgUnitUpdateType();
+    if (!selectedType) {
+      return dashboardData.orgUnitRecentUpdates;
+    }
+    
+    return dashboardData.orgUnitRecentUpdates.filter(update => update.type === selectedType);
   }
 }

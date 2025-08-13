@@ -66,7 +66,7 @@
           <div class="card-summary" (click)="navigateToPartners()">
             <div class="card-content">
               <div class="card-icon partners-icon">
-                <i class="pi pi-users"></i>
+                <i class="material-icons">corporate_fare</i>
               </div>
               <div class="card-info">
                 <h3 class="card-title">
@@ -95,18 +95,13 @@
           <!-- Expandable List Content -->
           @if (showPartnersListView()) {
             <div class="card-list-content">
-              <div class="list-header">
-                <h4 class="list-title">
-                  <i class="pi pi-users mr-2"></i>
-                  {{ 'dashboard.myPartners' | translate }}
-                </h4>
-              </div>
-
               @if (dashboardData()!.myPartners.length > 0) {
                 <div class="entity-list-container">
                   <div class="entity-list">
                     @for (partner of dashboardData()!.myPartners; track partner.id) {
-                      <div class="entity-item" (click)="navigateToEntity('Partner', getEntityId(partner.id)); $event.stopPropagation()">
+                      <div class="entity-item" 
+                           [class.navigating]="isEntityNavigating('Partner', getEntityId(partner.id))"
+                           (click)="navigateToEntity('Partner', getEntityId(partner.id)); $event.stopPropagation()">
                         <div class="entity-info">
                           <h4 class="entity-name">{{ partner.name }}</h4>
                           <p class="entity-meta">
@@ -114,10 +109,14 @@
                           </p>
                         </div>
                         <div class="entity-actions">
+                          @if (isEntityNavigating('Partner', getEntityId(partner.id))) {
+                            <p-progressSpinner [style]="{ width: '20px', height: '20px' }" styleClass="custom-spinner"></p-progressSpinner>
+                          } @else {
                           <p-tag
                             [value]="partner.status || 'Unknown'"
                             [severity]="getEntityStatusSeverity(partner.status || 'Unknown')">
                           </p-tag>
+                          }
                         </div>
                       </div>
                     }
@@ -147,7 +146,7 @@
           <div class="card-summary" (click)="navigateToContacts()">
             <div class="card-content">
               <div class="card-icon contacts-icon">
-                <i class="pi pi-user"></i>
+                <i class="material-icons">contacts</i>
               </div>
               <div class="card-info">
                 <h3 class="card-title">
@@ -176,18 +175,13 @@
           <!-- Expandable List Content -->
           @if (showContactsListView()) {
             <div class="card-list-content">
-              <div class="list-header">
-                <h4 class="list-title">
-                  <i class="pi pi-user mr-2"></i>
-                  {{ 'dashboard.myContacts' | translate }}
-                </h4>
-              </div>
-
               @if (dashboardData()!.myContacts.length > 0) {
                 <div class="entity-list-container">
                   <div class="entity-list">
                     @for (contact of dashboardData()!.myContacts; track contact.id) {
-                      <div class="entity-item" (click)="navigateToEntity('Contact', getEntityId(contact.id)); $event.stopPropagation()">
+                      <div class="entity-item" 
+                           [class.navigating]="isEntityNavigating('Contact', getEntityId(contact.id))"
+                           (click)="navigateToEntity('Contact', getEntityId(contact.id)); $event.stopPropagation()">
                         <div class="entity-info">
                           <h4 class="entity-name">{{ contact.firstName }} {{ contact.lastName }}</h4>
                           <p class="entity-meta">
@@ -195,10 +189,14 @@
                           </p>
                         </div>
                         <div class="entity-actions">
+                          @if (isEntityNavigating('Contact', getEntityId(contact.id))) {
+                            <p-progressSpinner [style]="{ width: '20px', height: '20px' }" styleClass="custom-spinner"></p-progressSpinner>
+                          } @else {
                           <p-tag
                             [value]="contact.status || 'Unknown'"
                             [severity]="getEntityStatusSeverity(contact.status || 'Unknown')">
                           </p-tag>
+                          }
                         </div>
                       </div>
                     }
@@ -211,7 +209,7 @@
                 </div>
               } @else {
                 <div class="empty-state">
-                  <i class="pi pi-user text-2xl text-gray-300 mb-2"></i>
+                  <i class="material-icons text-2xl text-gray-300 mb-2">contacts</i>
                   <p class="text-sm text-gray-500">{{ 'dashboard.noContacts' | translate }}</p>
                 </div>
               }
@@ -219,7 +217,272 @@
           }
         </p-card>
 
-        <!-- Org Unit Recent Updates Integrated Card (now in summary-section for consistency) -->
+        <!-- My Interactions Integrated Card -->
+        <p-card 
+          class="integrated-card interactions-card" 
+          [class.expanded]="showInteractionsListView()">
+          
+          <!-- Summary Header (clickable) -->
+          <div class="card-summary" (click)="toggleInteractionsListView()">
+            <div class="card-content">
+              <div class="card-icon interactions-icon">
+                <i class="material-icons">chat</i>
+              </div>
+              <div class="card-info">
+                <h3 class="card-title">
+                  {{ 'dashboard.myInteractions' | translate }}
+                  <span class="toggle-hint">
+                    @if (showInteractionsListView()) {
+                      ({{ 'dashboard.clickToHide' | translate }})
+                    } @else {
+                      ({{ 'dashboard.clickToShow' | translate }})
+                    }
+                  </span>
+                </h3>
+                <div class="card-value">{{ summary().totalMyInteractions || 0 }}</div>
+                <p class="card-subtitle">{{ 'dashboard.recentlyModified' | translate }}</p>
+              </div>
+            </div>
+            <div class="card-action">
+              @if (showInteractionsListView()) {
+                <i class="pi pi-chevron-up"></i>
+              } @else {
+                <i class="pi pi-chevron-down"></i>
+              }
+            </div>
+          </div>
+
+          <!-- Expandable List Content -->
+          @if (showInteractionsListView()) {
+            <div class="card-list-content">
+              <div class="list-header">
+                @if (selectedInteractionType()) {
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-times" 
+                    class="p-button-text p-button-sm"
+                    (click)="clearInteractionFilter(); $event.stopPropagation()"
+                    pTooltip="Clear filter">
+                  </button>
+                }
+              </div>
+
+              @if (dashboardData()!.myInteractions && dashboardData()!.myInteractions.length > 0) {
+                <!-- Interaction Type Filter Buttons -->
+                <div class="filter-buttons mb-4">
+                  <div class="flex flex-wrap gap-2">
+                    @for (type of getInteractionTypes(); track type) {
+                      <button 
+                        pButton 
+                        type="button" 
+                        [label]="type"
+                        [class]="selectedInteractionType() === type ? 'p-button-sm p-button-filled' : 'p-button-sm p-button-outlined'"
+                        (click)="setInteractionFilter(type); $event.stopPropagation()">
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="entity-list-container">
+                  <div class="entity-list">
+                    @for (interaction of getDisplayedInteractions(); track interaction.id) {
+                      <div class="entity-item" 
+                           [class.navigating]="isEntityNavigating('Interaction', getEntityId(interaction.id))"
+                           (click)="navigateToEntity('Interaction', getEntityId(interaction.id)); $event.stopPropagation()">
+                        <div class="entity-info">
+                          <h4 class="entity-name">{{ interaction.subject || 'Untitled Interaction' }}</h4>
+                          <p class="entity-meta">
+                            {{ interaction.type || 'Unknown Type' }} • {{ formatDate(interaction.date) }}
+                            @if (interaction.description) {
+                              • {{ interaction.description.length > 50 ? (interaction.description | slice:0:50) + '...' : interaction.description }}
+                            }
+                          </p>
+                        </div>
+                        <div class="entity-actions">
+                          @if (isEntityNavigating('Interaction', getEntityId(interaction.id))) {
+                            <p-progressSpinner [style]="{ width: '20px', height: '20px' }" styleClass="custom-spinner"></p-progressSpinner>
+                          } @else {
+                            <p-tag
+                              [value]="interaction.status || 'Unknown'"
+                              [severity]="getEntityStatusSeverity(interaction.status || 'Unknown')">
+                            </p-tag>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  @if (getDisplayedInteractions().length > 3) {
+                    <div class="entity-count-indicator">
+                      <span class="text-xs text-gray-500">{{ getDisplayedInteractions().length }} {{ 'dashboard.totalInteractions' | translate }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="empty-state">
+                  <i class="material-icons text-2xl text-gray-300 mb-2">chat</i>
+                  <p class="text-sm text-gray-500">{{ 'dashboard.noInteractions' | translate }}</p>
+                </div>
+              }
+            </div>
+          }
+        </p-card>
+
+        <!-- My Opportunities Integrated Card -->
+        <p-card 
+          class="integrated-card opportunities-card" 
+          [class.expanded]="showOpportunitiesListView()">
+          
+          <!-- Summary Header (clickable) -->
+          <div class="card-summary" (click)="toggleOpportunitiesListView()">
+            <div class="card-content">
+                      <div class="card-icon opportunities-icon">
+              <i class="material-symbols-outlined">crown</i>
+            </div>
+              <div class="card-info">
+                <h3 class="card-title">
+                  {{ 'dashboard.myOpportunities' | translate }}
+                  <span class="toggle-hint">
+                    @if (showOpportunitiesListView()) {
+                      ({{ 'dashboard.clickToHide' | translate }})
+                    } @else {
+                      ({{ 'dashboard.clickToShow' | translate }})
+                    }
+                  </span>
+                </h3>
+                <div class="card-value coming-soon">{{ 'dashboard.comingSoon' | translate }}</div>
+                <p class="card-subtitle">{{ 'dashboard.recentlyModified' | translate }}</p>
+              </div>
+            </div>
+            <div class="card-action">
+              @if (showOpportunitiesListView()) {
+                <i class="pi pi-chevron-up"></i>
+              } @else {
+                <i class="pi pi-chevron-down"></i>
+              }
+            </div>
+          </div>
+
+          <!-- Expandable List Content -->
+          @if (showOpportunitiesListView()) {
+            <div class="card-list-content">
+              <div class="coming-soon-state">
+                                  <div class="text-center p-8">
+                    <i class="material-symbols-outlined text-4xl text-yellow-400 mb-4">crown</i>
+                  <h3 class="text-lg font-semibold mb-2 text-gray-700">{{ 'dashboard.comingSoon' | translate }}</h3>
+                  <p class="text-gray-500 mb-4">{{ 'dashboard.opportunitiesComingSoonMessage' | translate }}</p>
+                </div>
+              </div>
+            </div>
+          }
+        </p-card>
+
+        <!-- Actions Required Integrated Card -->
+        <p-card 
+          class="integrated-card actions-required-card" 
+          [class.expanded]="showActionsRequiredView()">
+          
+          <!-- Summary Header (clickable) -->
+          <div class="card-summary" (click)="toggleActionsRequiredView()">
+            <div class="card-content">
+              <div class="card-icon actions-icon">
+                <i class="material-icons">warning</i>
+              </div>
+              <div class="card-info">
+                <h3 class="card-title">
+                  {{ 'dashboard.actionsRequired' | translate }}
+                  <span class="toggle-hint">
+                    @if (showActionsRequiredView()) {
+                      ({{ 'dashboard.clickToHide' | translate }})
+                    } @else {
+                      ({{ 'dashboard.clickToShow' | translate }})
+                    }
+                  </span>
+                </h3>
+                <div class="card-value">{{ getTotalDraftActions() }}</div>
+                <p class="card-subtitle">{{ 'dashboard.draftItemsSubtitle' | translate }}</p>
+              </div>
+            </div>
+            <div class="card-action">
+              @if (showActionsRequiredView()) {
+                <i class="pi pi-chevron-up"></i>
+              } @else {
+                <i class="pi pi-chevron-down"></i>
+              }
+            </div>
+          </div>
+
+          <!-- Expandable List Content -->
+          @if (showActionsRequiredView()) {
+            <div class="card-list-content">
+              <div class="list-header">
+                @if (selectedDraftActionType()) {
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-times" 
+                    class="p-button-text p-button-sm"
+                    (click)="clearDraftActionFilter(); $event.stopPropagation()"
+                    pTooltip="Clear filter">
+                  </button>
+                }
+              </div>
+
+              @if (getTotalDraftActions() > 0) {
+                <!-- Draft Action Type Filter Buttons -->
+                <div class="filter-buttons mb-4">
+                  <div class="flex flex-wrap gap-2">
+                    @for (type of getDraftActionTypes(); track type) {
+                      <button 
+                        pButton 
+                        type="button" 
+                        [label]="type + ' (' + getDraftActionCount(type) + ')'"
+                        [class]="selectedDraftActionType() === type ? 'p-button-sm p-button-filled' : 'p-button-sm p-button-outlined'"
+                        (click)="setDraftActionFilter(type); $event.stopPropagation()">
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="entity-list-container">
+                  <div class="entity-list">
+                    @for (item of getDisplayedDraftActions(); track item.id) {
+                      <div class="entity-item" (click)="navigateToEntity(getDraftActionEntityType(item), getEntityId(item.id)); $event.stopPropagation()">
+                        <div class="entity-info">
+                          <h4 class="entity-name">{{ getDraftActionDisplayName(item) }}</h4>
+                          <p class="entity-meta">
+                            {{ getDraftActionType(item) }} • {{ formatDate(item.createdDate || item.date) }}
+                            @if (getDraftActionDescription(item)) {
+                              • {{ getDraftActionDescription(item).length > 50 ? (getDraftActionDescription(item) | slice:0:50) + '...' : getDraftActionDescription(item) }}
+                            }
+                          </p>
+                        </div>
+                        <div class="entity-actions">
+                          <p-tag
+                            [value]="item.status || 'Draft'"
+                            [severity]="getEntityStatusSeverity(item.status || 'Draft')">
+                          </p-tag>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  @if (getDisplayedDraftActions().length > 3) {
+                    <div class="entity-count-indicator">
+                      <span class="text-xs text-gray-500">{{ getDisplayedDraftActions().length }} {{ 'dashboard.totalDraftItems' | translate }}</span>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="empty-state">
+                  <i class="material-icons text-2xl text-gray-300 mb-2">warning</i>
+                  <p class="text-sm text-gray-500">{{ 'dashboard.noDraftItems' | translate }}</p>
+                </div>
+              }
+            </div>
+          }
+        </p-card>
+
+        <!-- Org Unit Recent Updates Integrated Card -->
         <p-card 
           class="integrated-card org-updates-card" 
           [class.expanded]="showOrgUnitUpdatesView()">
@@ -227,7 +490,7 @@
           <div class="card-summary" (click)="toggleOrgUnitUpdates()">
             <div class="card-content">
               <div class="card-icon updates-icon">
-                <i class="pi pi-clock"></i>
+                <i class="material-icons">history</i>
               </div>
               <div class="card-info">
                 <h3 class="card-title">
@@ -257,16 +520,37 @@
           @if (showOrgUnitUpdatesView()) {
             <div class="card-list-content">
               <div class="list-header">
-                <h4 class="list-title">
-                  <i class="pi pi-clock mr-2"></i>
-                  {{ 'dashboard.orgUnitRecentUpdates' | translate }}
-                </h4>
+                @if (selectedOrgUnitUpdateType()) {
+                  <button 
+                    pButton 
+                    type="button" 
+                    icon="pi pi-times" 
+                    class="p-button-text p-button-sm"
+                    (click)="clearOrgUnitUpdateFilter(); $event.stopPropagation()"
+                    pTooltip="Clear filter">
+                  </button>
+                }
               </div>
 
               @if (dashboardData()!.orgUnitRecentUpdates.length > 0) {
+                <!-- Entity Type Filter Buttons -->
+                <div class="filter-buttons mb-4">
+                  <div class="flex flex-wrap gap-2">
+                    @for (type of getOrgUnitUpdateTypes(); track type) {
+                      <button 
+                        pButton 
+                        type="button" 
+                        [label]="type + ' (' + getOrgUnitUpdateCount(type) + ')'"
+                        [class]="selectedOrgUnitUpdateType() === type ? 'p-button-sm p-button-filled' : 'p-button-sm p-button-outlined'"
+                        (click)="setOrgUnitUpdateFilter(type); $event.stopPropagation()">
+                      </button>
+                    }
+                  </div>
+                </div>
+
                 <div class="entity-list-container">
                   <div class="entity-list">
-                    @for (update of dashboardData()!.orgUnitRecentUpdates; track update.id) {
+                    @for (update of getDisplayedOrgUnitUpdates(); track update.id) {
                       <div class="entity-item" (click)="navigateToEntity(update.type, update.id); $event.stopPropagation()">
                         <div class="entity-info">
                           <h4 class="entity-name">{{ update.name }}</h4>
@@ -283,220 +567,21 @@
                       </div>
                     }
                   </div>
-                  @if (dashboardData()!.orgUnitRecentUpdates.length > 3) {
+                  @if (getDisplayedOrgUnitUpdates().length > 3) {
                     <div class="entity-count-indicator">
-                      <span class="text-xs text-gray-500">{{ dashboardData()!.orgUnitRecentUpdates.length }} {{ 'dashboard.totalUpdates' | translate }}</span>
+                      <span class="text-xs text-gray-500">{{ getDisplayedOrgUnitUpdates().length }} {{ 'dashboard.totalUpdates' | translate }}</span>
                     </div>
                   }
                 </div>
               } @else {
                 <div class="empty-state">
-                  <i class="pi pi-clock text-2xl text-gray-300 mb-2"></i>
+                  <i class="material-icons text-2xl text-gray-300 mb-2">history</i>
                   <p class="text-sm text-gray-500">{{ 'dashboard.noRecentUpdates' | translate }}</p>
                 </div>
               }
             </div>
           }
         </p-card>
-
-      </div>
-    </div>
-
-    <!-- Charts and Actions Section -->
-    <div class="content-grid">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        <!-- My Interactions Pie Chart -->
-        <p-card class="data-card">
-          <ng-template pTemplate="header">
-            <div class="card-header">
-              <h2 class="section-title">
-                <i class="pi pi-chart-pie mr-2"></i>
-                {{ 'dashboard.myInteractions' | translate }}
-                @if (selectedInteractionType()) {
-                  <span class="text-sm font-normal text-gray-500 ml-2">
-                    - {{ selectedInteractionType() }}
-                  </span>
-                }
-              </h2>
-              @if (selectedInteractionType()) {
-                <button 
-                  pButton 
-                  type="button" 
-                  icon="pi pi-times" 
-                  class="p-button-text p-button-sm"
-                  (click)="clearInteractionFilter()"
-                  pTooltip="Clear filter">
-                </button>
-              }
-            </div>
-          </ng-template>
-
-          @if (interactionsChartData()) {
-            <div class="chart-container">
-              <p-chart
-                type="pie"
-                [data]="interactionsChartData()"
-                [options]="interactionsChartOptions()"
-                height="240px"
-                (onDataSelect)="onInteractionChartClick($event)">
-              </p-chart>
-            </div>
-            
-            <!-- Filtered Interactions List -->
-            @if (selectedInteractionType() && filteredInteractions().length > 0) {
-              <div class="filtered-interactions mt-4">
-                <div class="interactions-header mb-3">
-                  <h4 class="text-sm font-semibold text-gray-700">
-                    {{ selectedInteractionType() }} Interactions ({{ filteredInteractions().length }})
-                  </h4>
-                </div>
-                <div class="interactions-list max-h-48 overflow-y-auto space-y-2">
-                  @for (interaction of filteredInteractions(); track interaction.id) {
-                    <div class="interaction-item p-3 rounded-lg transition-colors cursor-pointer"
-                         [class]="getInteractionBackgroundClasses()"
-                         (click)="navigateToEntity('Interaction', getEntityId(interaction.id))">
-                      <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                          <h5 class="text-sm font-medium text-gray-800 mb-1">
-                            {{ interaction.subject || 'Untitled Interaction' }}
-                          </h5>
-                          <p class="text-xs text-gray-500">
-                            {{ formatDate(interaction.date) }}
-                            @if (interaction.description) {
-                              • {{ interaction.description.length > 50 ? (interaction.description | slice:0:50) + '...' : interaction.description }}
-                            }
-                          </p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <p-tag
-                            [value]="interaction.status || 'Unknown'"
-                            [severity]="getEntityStatusSeverity(interaction.status || 'Unknown')"
-                            class="text-xs">
-                          </p-tag>
-                          <i class="pi pi-chevron-right text-gray-400 text-xs"></i>
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-              </div>
-            } @else if (selectedInteractionType() && filteredInteractions().length === 0) {
-              <div class="filtered-interactions mt-4">
-                <div class="text-center py-4">
-                  <i class="pi pi-info-circle text-2xl text-gray-300 mb-2"></i>
-                  <p class="text-sm text-gray-500">No {{ selectedInteractionType() }} interactions found</p>
-                </div>
-              </div>
-            }
-          } @else {
-            <div class="empty-state">
-              <i class="pi pi-chart-pie text-4xl text-gray-300 mb-4"></i>
-              <p class="text-gray-500">{{ 'dashboard.noInteractions' | translate }}</p>
-            </div>
-          }
-        </p-card>
-
-        <!-- Actionable Items Bar Chart -->
-        <p-card class="data-card">
-          <ng-template pTemplate="header">
-            <div class="card-header">
-              <h2 class="section-title">
-                <i class="pi pi-chart-bar mr-2"></i>
-                {{ 'dashboard.draftActions' | translate }}
-                @if (selectedDraftActionType()) {
-                  <span class="text-sm font-normal text-gray-500 ml-2">
-                    - {{ selectedDraftActionType() }}
-                  </span>
-                }
-              </h2>
-              @if (selectedDraftActionType()) {
-                <button 
-                  pButton 
-                  type="button" 
-                  icon="pi pi-times" 
-                  class="p-button-text p-button-sm"
-                  (click)="clearDraftActionFilter()"
-                  pTooltip="Clear filter">
-                </button>
-              }
-            </div>
-          </ng-template>
-
-          @if (actionableChartData()) {
-            <div class="chart-container">
-              <p-chart 
-                type="bar" 
-                [data]="actionableChartData()" 
-                [options]="actionableChartOptions()"
-                height="240px"
-                (onDataSelect)="onDraftActionsChartClick($event)">
-              </p-chart>
-            </div>
-            
-            <!-- Filtered Draft Actions List -->
-            @if (selectedDraftActionType() && filteredDraftActions().length > 0) {
-              <div class="filtered-draft-actions mt-4">
-                <div class="draft-actions-header mb-3">
-                  <h4 class="text-sm font-semibold text-gray-700">
-                    Draft {{ selectedDraftActionType() }} ({{ filteredDraftActions().length }})
-                  </h4>
-                </div>
-                <div class="draft-actions-list max-h-48 overflow-y-auto space-y-2">
-                  @for (item of filteredDraftActions(); track item.id) {
-                    <div class="draft-action-item p-3 rounded-lg transition-colors cursor-pointer"
-                         [class]="getDraftActionBackgroundClasses()"
-                         (click)="navigateToEntity(selectedDraftActionType()?.slice(0, -1) || 'Partner', getEntityId(item.id))">
-                      <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                          <h5 class="text-sm font-medium text-gray-800 mb-1">
-                            @if (selectedDraftActionType() === 'Partners') {
-                              {{ item.name || 'Unnamed Partner' }}
-                            } @else if (selectedDraftActionType() === 'Contacts') {
-                              {{ item.firstName }} {{ item.lastName }}
-                            } @else if (selectedDraftActionType() === 'Interactions') {
-                              {{ item.subject || 'Untitled Interaction' }}
-                            }
-                          </h5>
-                          <p class="text-xs text-gray-500">
-                            {{ formatDate(item.createdDate || item.date) }}
-                            @if (item.description && selectedDraftActionType() === 'Interactions') {
-                              • {{ item.description.length > 50 ? (item.description | slice:0:50) + '...' : item.description }}
-                            } @else if (item.title && selectedDraftActionType() === 'Contacts') {
-                              • {{ item.title }}
-                            }
-                          </p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <p-tag
-                            [value]="item.status || 'Unknown'"
-                            [severity]="getEntityStatusSeverity(item.status || 'Unknown')"
-                            class="text-xs">
-                          </p-tag>
-                          <i class="pi pi-chevron-right text-gray-400 text-xs"></i>
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-              </div>
-            } @else if (selectedDraftActionType() && filteredDraftActions().length === 0) {
-              <div class="filtered-draft-actions mt-4">
-                <div class="text-center py-4">
-                  <i class="pi pi-info-circle text-2xl text-gray-300 mb-2"></i>
-                  <p class="text-sm text-gray-500">No draft {{ selectedDraftActionType()?.toLowerCase() }} found</p>
-                </div>
-              </div>
-            }
-          } @else {
-            <div class="empty-state">
-              <i class="pi pi-chart-bar text-4xl text-gray-300 mb-4"></i>
-              <p class="text-gray-500">{{ 'dashboard.noDraftItems' | translate }}</p>
-            </div>
-          }
-        </p-card>
-
-        <!-- Org Unit Recent Updates Integrated Card was moved to summary-section above -->
 
       </div>
     </div>
