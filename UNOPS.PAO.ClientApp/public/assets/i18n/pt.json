@@ -852,6 +852,14 @@
           "title": "Abas de Navegação do Parceiro",
           "description": "Essas abas organizam as informações do parceiro em diferentes seções como detalhes, contatos, interações, acordos e análises."
         },
+        "summaryInteractions": {
+          "title": "Resumo IA de Interações",
+          "description": "Este painel alimentado por IA fornece um resumo inteligente de todas as interações e comunicações com este parceiro. Ele analisa notas de reuniões, emails e outros engajamentos para dar insights chave e destaques."
+        },
+        "summaryNews": {
+          "title": "Resumo IA de Notícias do Parceiro",
+          "description": "Este painel alimentado por IA busca e resume notícias recentes e desenvolvimentos relacionados a esta organização parceira. Mantenha-se atualizado sobre suas últimas atividades, anúncios e desenvolvimentos do setor."
+        },
         "tourControl": {
           "title": "Tours de Detalhe do Parceiro",
           "description": "Acesse tours específicos para diferentes aspectos do gerenciamento de parceiros e visualizações detalhadas."

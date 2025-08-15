@@ -41,13 +41,13 @@ import { WelcomeTourService } from '../../services/welcome-tour.service';
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
     }
     
-    /* Special styling for AI prompt dialog context */
+    /* Special styling for AI prompt dialog context - match main top bar colors */
     :host.ai-prompt-tour-control ::ng-deep .tour-button {
-      background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%) !important;
+      background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%) !important;
     }
     
     :host.ai-prompt-tour-control ::ng-deep .tour-button:hover {
-      background: linear-gradient(135deg, #059669 0%, #2563eb 100%) !important;
+      background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
       transform: scale(1.05);
     }
   `]

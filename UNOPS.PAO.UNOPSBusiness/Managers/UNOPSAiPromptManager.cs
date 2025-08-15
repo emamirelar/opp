@@ -457,7 +457,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                 {
                     Success = true,
                     UpdatedCount = 0,
-                    Message = "All AI prompts are already using the latest available model configured in the system. If you think there is a newer model available, please contact the administrator.",
+                    Message = "All AI prompts are already using the latest available model configured in the system.",
                     LatestModel = latestModelDisplay,
                     AlreadyLatest = true
                 };

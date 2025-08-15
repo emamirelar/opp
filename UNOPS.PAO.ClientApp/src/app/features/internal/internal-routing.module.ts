@@ -152,8 +152,6 @@ const internalRoutes: Routes = [
       {
         path: 'leads',
         component: ComingSoonComponent,
-        // All authenticated users can access leads (External, Partner, Internal, Admin)
-        canActivate: [authGuard, routePermissionGuard],
         data: {
           breadcrumb: 'Leads',
           featureName: 'Leads'
@@ -162,8 +160,6 @@ const internalRoutes: Routes = [
       {
         path: 'initiatives',
         component: ComingSoonComponent,
-        // Only Internal and Admin users can access Initiatives
-        canActivate: [authGuard, routePermissionGuard],
         data: {
           breadcrumb: 'Initiatives',
           featureName: 'Initiatives'

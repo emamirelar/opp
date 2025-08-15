@@ -155,7 +155,7 @@
           @if (recordData().id && +(recordData().id!) > 0) {
             <app-link-list [entityType]="entityTypeContact"
                            [entityId]="+(recordData().id!)"
-                           [disabled]="false"
+                           [disabled]="!recordPermissions().permissions.canUpdate"
                            class="contact-links-section" />
           }
 

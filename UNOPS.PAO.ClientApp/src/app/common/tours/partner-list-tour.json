@@ -33,7 +33,7 @@
     },
     {
       "element": ".partner-new-button",
-      "fallbackType": "new-button",
+      "fallbackType": ".partner-new-button",
       "popover": {
         "titleKey": "tour.partners.steps.newButton.title",
         "descriptionKey": "tour.partners.steps.newButton.description",
@@ -52,7 +52,7 @@
       }
     },
     {
-      "element": "input[placeholder*=\"Search\"]",
+      "element": ".quick-search",
       "fallbackType": "search-input",
       "popover": {
         "titleKey": "tour.partners.steps.searchInput.title",
@@ -62,7 +62,7 @@
       }
     },
     {
-      "element": "p-button[icon=\"pi pi-search-plus\"]",
+      "element": ".advanced-search",
       "fallbackType": "advanced-search",
       "popover": {
         "titleKey": "tour.partners.steps.advancedSearch.title",

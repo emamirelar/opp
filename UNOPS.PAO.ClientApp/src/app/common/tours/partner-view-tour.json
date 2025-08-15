@@ -23,7 +23,7 @@
     },
     {
       "element": ".partner-header",
-      "fallbackType": "partner-header",
+      "fallbackType": ".partner-header",
       "popover": {
         "titleKey": "tour.partnerview.steps.partnerHeader.title",
         "descriptionKey": "tour.partnerview.steps.partnerHeader.description",
@@ -33,7 +33,7 @@
     },
     {
       "element": ".partner-edit-button",
-      "fallbackType": "edit-button",
+      "fallbackType": ".partner-edit-button",
       "popover": {
         "titleKey": "tour.partnerview.steps.editButton.title",
         "descriptionKey": "tour.partnerview.steps.editButton.description",
@@ -43,11 +43,31 @@
     },
     {
       "element": ".partner-information",
-      "fallbackType": "partner-info",
+      "fallbackType": ".partner-information",
       "popover": {
         "titleKey": "tour.partnerview.steps.partnerInfo.title",
         "descriptionKey": "tour.partnerview.steps.partnerInfo.description",
         "side": "left",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".summary-interactions",
+      "fallbackType": "summary-interactions",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.summaryInteractions.title",
+        "descriptionKey": "tour.partnerview.steps.summaryInteractions.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".summary-news",
+      "fallbackType": "summary-news",
+      "popover": {
+        "titleKey": "tour.partnerview.steps.summaryNews.title",
+        "descriptionKey": "tour.partnerview.steps.summaryNews.description",
+        "side": "bottom",
         "align": "start"
       }
     },
