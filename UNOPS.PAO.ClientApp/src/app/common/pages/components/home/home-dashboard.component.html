@@ -33,17 +33,15 @@
   <!-- Loading State -->
   @if (loading()) {
     <div class="loading-container">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        @for (item of [1,2,3,4]; track item) {
+      <!-- All 6 cards in the same responsive grid layout (matches summary-section) -->
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        @for (item of [1,2,3,4,5,6]; track item) {
           <p-card class="summary-card">
             <p-skeleton height="2rem" class="mb-3"></p-skeleton>
             <p-skeleton height="3rem" class="mb-2"></p-skeleton>
             <p-skeleton height="1rem"></p-skeleton>
           </p-card>
         }
-      </div>
-      <div class="mt-8">
-        <p-skeleton height="20rem"></p-skeleton>
       </div>
     </div>
   }
