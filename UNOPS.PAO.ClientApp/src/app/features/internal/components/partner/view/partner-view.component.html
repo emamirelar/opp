@@ -209,7 +209,7 @@
           @if (recordData().id && +(recordData().id!) > 0) {
             <app-link-list [entityType]="entityTypePartner"
                            [entityId]="+(recordData().id!)"
-                           [disabled]="false" />
+                           [disabled]="!recordPermissions().permissions.canUpdate" />
           }
 
           <p-divider></p-divider>

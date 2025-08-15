@@ -1157,6 +1157,14 @@
           "title": "Partner Navigation Tabs",
           "description": "These tabs organize the partner's information into different sections like details, contacts, interactions, agreements, and analytics."
         },
+        "summaryInteractions": {
+          "title": "AI Interactions Summary",
+          "description": "This AI-powered panel provides an intelligent summary of all interactions and communications with this partner. It analyzes meeting notes, emails, and other engagements to give you key insights and highlights."
+        },
+        "summaryNews": {
+          "title": "AI Partner News Summary",
+          "description": "This AI-powered panel searches for and summarizes recent news and developments related to this partner organization. Stay updated on their latest activities, announcements, and industry developments."
+        },
         "tourControl": {
           "title": "Partner Detail Tours",
           "description": "Access specific tours for different aspects of partner management and detailed views."

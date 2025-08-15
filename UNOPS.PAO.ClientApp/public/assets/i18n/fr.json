@@ -912,6 +912,14 @@
           "title": "Onglets de Navigation Partenaire",
           "description": "Ces onglets organisent les informations du partenaire en différentes sections comme détails, contacts, interactions, accords et analytics."
         },
+        "summaryInteractions": {
+          "title": "Résumé IA des Interactions",
+          "description": "Ce panneau alimenté par IA fournit un résumé intelligent de toutes les interactions et communications avec ce partenaire. Il analyse les notes de réunion, emails et autres engagements pour vous donner des insights clés et points saillants."
+        },
+        "summaryNews": {
+          "title": "Résumé IA des Actualités Partenaire",
+          "description": "Ce panneau alimenté par IA recherche et résume les actualités récentes et développements liés à cette organisation partenaire. Restez informé sur leurs dernières activités, annonces et développements sectoriels."
+        },
         "tourControl": {
           "title": "Tours de Détail de Partenaire",
           "description": "Accédez aux tours spécifiques pour différents aspects de la gestion des partenaires et vues détaillées."

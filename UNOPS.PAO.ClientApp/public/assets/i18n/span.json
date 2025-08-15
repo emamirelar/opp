@@ -847,6 +847,14 @@
           "title": "Pestañas de Navegación de Socio",
           "description": "Estas pestañas organizan la información del socio en diferentes secciones como detalles, contactos, interacciones, acuerdos y análisis."
         },
+        "summaryInteractions": {
+          "title": "Resumen IA de Interacciones",
+          "description": "Este panel alimentado por IA proporciona un resumen inteligente de todas las interacciones y comunicaciones con este socio. Analiza notas de reuniones, emails y otros compromisos para darte insights clave y aspectos destacados."
+        },
+        "summaryNews": {
+          "title": "Resumen IA de Noticias del Socio",
+          "description": "Este panel alimentado por IA busca y resume noticias recientes y desarrollos relacionados con esta organización socia. Mantente actualizado sobre sus últimas actividades, anuncios y desarrollos del sector."
+        },
         "tourControl": {
           "title": "Tours de Detalle de Socio",
           "description": "Accede a tours específicos para diferentes aspectos de gestión de socios y vistas detalladas."

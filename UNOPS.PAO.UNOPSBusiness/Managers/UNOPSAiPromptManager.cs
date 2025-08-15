@@ -461,7 +461,7 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                     LatestModel = latestModelDisplay,
                     AlreadyLatest = true
                 };
-            
+            }
 
             // Update all prompts to use the latest model
             foreach (var prompt in promptsToUpdate)
