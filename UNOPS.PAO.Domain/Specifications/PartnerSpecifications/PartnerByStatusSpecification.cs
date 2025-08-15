@@ -4,6 +4,7 @@ using UNOPS.PAO.Domain.Entities;
 
 /// <summary>
 /// Specification that filters partners by status
+/// Updated to use new SystemStatus enum field
 /// </summary>
 public class PartnerByStatusSpecification : BaseSpecification<Partner>
 {
@@ -12,7 +13,7 @@ public class PartnerByStatusSpecification : BaseSpecification<Partner>
     /// </summary>
     /// <param name="status">The status to filter by</param>
     public PartnerByStatusSpecification(string status)
-        : base(p => p.Status == status)
+        : base(p => p.SystemStatus.ToString() == status)
     {
         // Include related entities
     }

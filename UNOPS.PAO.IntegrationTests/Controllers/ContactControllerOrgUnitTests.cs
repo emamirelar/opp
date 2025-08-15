@@ -29,14 +29,18 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
         {
             var partner = new UNOPSPartner
             {
-                Name = name,
-                ShortName = name.Length > 10 ? name.Substring(0, 10) : name,
-                Status = "Active",
-                NewEngagement = "No",
-                PooledFund = "No",
-                DDRequired = "No",
-                DDEACDone = "No",
-                LevyPotentiallyApplies = "No",
+                // Enhanced Partner structure
+                PartnerDescription = name,
+                PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
+                PartnerCategoryId = 1, // Default test category
+                PartnerLiaisonOffice = "Default", // Default test liaison office
+                UNAndStateEntity = false,
+                SystemStatus = Domain.Enums.PartnerStatus.Active,
+                CanCreateNewOpportunities = false,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow
             };

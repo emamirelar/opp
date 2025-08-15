@@ -156,14 +156,18 @@ namespace UNOPS.PAO.Presentation.Controllers
                     {
                         var partnerRequest = new PartnerRequest
                         {
-                            Name = partnerGroup.PartnerName,
-                            ShortName = partnerGroup.PartnerName.Length > 10 ? partnerGroup.PartnerName.Substring(0, 10) : partnerGroup.PartnerName,
-                            Status = "Draft",
-                            NewEngagement = "Not Allowed",
-                            PooledFund = "No",
-                            DDRequired = "Yes",
-                            DDEACDone = "No",
-                            LevyPotentiallyApplies = "Potentially applies"
+                            // Enhanced Partner structure
+                            PartnerDescription = partnerGroup.PartnerName,
+                            PartnerShortDescription = partnerGroup.PartnerName.Length > 10 ? partnerGroup.PartnerName.Substring(0, 10) : partnerGroup.PartnerName,
+                            PartnerCategoryId = 1, // Default category - this should be set appropriately
+                            PartnerLiaisonOffice = "Default", // Default liaison office - this should be set appropriately
+                            UNAndStateEntity = false,
+                            SystemStatus = "Draft",
+                            CanCreateNewOpportunities = false, // Default to not allowed for auto-created partners
+                            PooledFund = false,
+                            DueDiligenceRequired = "Required",
+                            DueDiligenceApproval = "NotApproved",
+                            PartnerLevyStatus = "PotentiallyApplied"
                         };
 
                         var createdPartner = await _partnerManager.CreatePartnerAsync(User, partnerRequest);

@@ -13,8 +13,18 @@ public class UNOPSPartnerByStatusSpecification : BaseSpecification<UNOPSPartner>
     /// </summary>
     /// <param name="status">The status to filter by</param>
     public UNOPSPartnerByStatusSpecification(string? status)
-        : base(string.IsNullOrEmpty(status) ? p => true : p => p.Status == status)
+        : base(BuildPredicate(status))
     {
         // Include related entities
+    }
+    
+    private static System.Linq.Expressions.Expression<System.Func<UNOPSPartner, bool>> BuildPredicate(string? status)
+    {
+        if (string.IsNullOrEmpty(status))
+        {
+            return p => true;
+        }
+        
+        return p => p.SystemStatus.ToString() == status;
     }
 }

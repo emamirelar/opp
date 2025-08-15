@@ -548,14 +548,18 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var partner = new Partner 
             { 
                 Id = id, 
-                Name = name, 
-                Status = "Active",
-                ShortName = $"P{id}",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = name,
+                PartnerShortDescription = $"P{id}",
+                PartnerCategoryId = 1, // Default test category
+                PartnerLiaisonOffice = "Default", // Default test liaison office
+                UNAndStateEntity = false,
+                SystemStatus = Domain.Enums.PartnerStatus.Active,
+                CanCreateNewOpportunities = true,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
 
             // Add organization unit relationship
@@ -565,7 +569,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 {
                     OrganizationHierarchyId = organizationHierarchyId,
                     EntityId = partner.Id,
-                    EntityType = nameof(Partner)
+                    EntityType = nameof(Partner),
+                    Status = Domain.Entities.EntityStatus.Active
                 }
             };
 
@@ -577,14 +582,18 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             return new Partner 
             { 
                 Id = id, 
-                Name = name, 
-                Status = "Active",
-                ShortName = $"P{id}",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = name,
+                PartnerShortDescription = $"P{id}",
+                PartnerCategoryId = 1, // Default test category
+                PartnerLiaisonOffice = "Default", // Default test liaison office
+                UNAndStateEntity = false,
+                SystemStatus = Domain.Enums.PartnerStatus.Active,
+                CanCreateNewOpportunities = true,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
         }
     }

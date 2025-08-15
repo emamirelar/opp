@@ -52,6 +52,7 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
 
     /// <summary>
     /// Gets the appropriate ordering expression for the specified field
+    /// Updated to use enhanced Partner field structure inherited from base Partner entity
     /// </summary>
     /// <param name="orderByField">The field name to order by</param>
     /// <returns>The ordering expression</returns>
@@ -59,19 +60,33 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
     {
         return orderByField?.ToLowerInvariant() switch
         {
-            "name" => p => p.Name,
-            "shortname" => p => p.ShortName,
-            "status" => p => p.Status,
-            "phone" => p => p.Phone,
-            "website" => p => p.Website,
+            "partnerdescription" => p => p.PartnerDescription ?? "",
+            "partnershortdescription" => p => p.PartnerShortDescription ?? "",
+            "partnerlongdescription" => p => p.PartnerLongDescription ?? "",
+            "systemstatus" => p => p.SystemStatus,
             "createddate" => p => p.CreatedDate,
-            "address1city" => p => p.Address1City,
-            "addresscity" => p => p.Address1City,
-            "address1country" => p => p.Address1Country,
-            "addresscountry" => p => p.Address1Country,
-            "address1street" => p => p.Address1Street,
-            "addressstreet" => p => p.Address1Street,
-            _ => p => p.Name // Default to Name if no field specified or unknown field
+            "partnercode" => p => p.PartnerCode ?? "", // UNOPSPartner specific field
+            "partnercategoryid" => p => p.PartnerCategoryId,
+            "partnergroupcode" => p => p.PartnerGroupCode ?? "",
+            "partnerorgunitid" => p => p.PartnerOrgUnitId ?? 0,
+            "partnerinternalreportlevel" => p => p.PartnerInternalReportLevel ?? 0,
+            "partnerexternalreportlevel" => p => p.PartnerExternalReportLevel ?? 0,
+            "partnerlevelcode" => p => p.PartnerLevelCode ?? "",
+            "partnerlevelshort" => p => p.PartnerLevelShort ?? "",
+            "erpdimvalue" => p => p.ErpDimValue ?? 0,
+            "partnerliaisonoffice" => p => p.PartnerLiaisonOffice ?? "",
+            "unandstateentity" => p => p.UNAndStateEntity,
+            "partnerscope" => p => p.PartnerScope ?? 0,
+            "partnerappro​valstatus" => p => p.PartnerApprovalStatus,
+            "partnerapprovaldate" => p => p.PartnerApprovalDate ?? DateTime.MinValue,
+            "keyglobalpartner" => p => p.KeyGlobalPartner,
+            "unsecretariatpartner" => p => p.UNSecretariatPartner,
+            "duediligencerequired" => p => p.DueDiligenceRequired,
+            "duediligenceapproval" => p => p.DueDiligenceApproval,
+            "partnerlevystatus" => p => p.PartnerLevyStatus,
+            "pooledfundnew" => p => p.PooledFund,
+            "cancreatenewopportunities" => p => p.CanCreateNewOpportunities,
+            _ => p => p.PartnerDescription ?? "" // Default to PartnerDescription if no field specified or unknown field
         };
     }
 }

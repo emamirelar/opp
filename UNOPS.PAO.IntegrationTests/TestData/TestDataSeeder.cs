@@ -57,14 +57,24 @@ public static class TestDataSeeder
     public static UNOPSPartner CreatePartnerWithValidRelations(int? organizationHierarchyId = 1, string? status = "Active")
     {
         var partner = TestDataBuilder.GetPartnerFaker().Generate();
-        partner.Status = status ?? "Active";
         
-        // Ensure required fields are set
-        if (string.IsNullOrEmpty(partner.NewEngagement)) partner.NewEngagement = "false";
-        if (string.IsNullOrEmpty(partner.PooledFund)) partner.PooledFund = "false";
-        if (string.IsNullOrEmpty(partner.DDRequired)) partner.DDRequired = "false";
-        if (string.IsNullOrEmpty(partner.DDEACDone)) partner.DDEACDone = "false";
-        if (string.IsNullOrEmpty(partner.LevyPotentiallyApplies)) partner.LevyPotentiallyApplies = "false";
+        // Map status string to enum
+        partner.SystemStatus = status switch
+        {
+            "Active" => Domain.Enums.PartnerStatus.Active,
+            "Inactive" => Domain.Enums.PartnerStatus.Closed,
+            "Prospect" => Domain.Enums.PartnerStatus.Draft,
+            _ => Domain.Enums.PartnerStatus.Active
+        };
+        
+        // Ensure required fields are set for enhanced Partner structure
+        if (string.IsNullOrEmpty(partner.PartnerDescription)) partner.PartnerDescription = "Test Partner";
+        if (string.IsNullOrEmpty(partner.PartnerShortDescription)) partner.PartnerShortDescription = "TP";
+        if (partner.PartnerCategoryId == 0) partner.PartnerCategoryId = 1;
+        if (string.IsNullOrEmpty(partner.PartnerLiaisonOffice)) partner.PartnerLiaisonOffice = "Default";
+        
+        // Enhanced boolean fields (no need to check for string)
+        // These are already set by the faker with proper types
         
         // Add organization unit relationship if specified
         if (organizationHierarchyId.HasValue)
@@ -77,7 +87,7 @@ public static class TestDataSeeder
                     EntityId = partner.Id,
                     EntityType = nameof(UNOPSPartner),
                     Name = $"Partner-{partner.Id}-TestOrgUnit",
-                    Status = EntityStatus.Active
+                    Status = Domain.Entities.EntityStatus.Active
                 }
             };
         }

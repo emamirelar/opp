@@ -112,12 +112,10 @@ public class GmailAddonHelper
         {
             Id = partner.Id,
             Name = partner.Name,
-            PartnerCode = partner.PartnerCode,
-            Phone = partner.Phone,
+            PartnerCode = null, // PartnerCode field no longer exists in enhanced PartnerModel
+            Phone = null, // Phone field no longer exists in enhanced PartnerModel
             LogoUrl = partner.LogoUrl,
-            Location = !string.IsNullOrEmpty(partner.Address1City) && !string.IsNullOrEmpty(partner.Address1Country)
-                        ? $"{partner.Address1City}, {partner.Address1Country}"
-                        : null,
+            Location = null, // Address fields no longer exist in enhanced PartnerModel
             CanRead = true,
             Contacts = new List<GmailRelatedContact>()
         };

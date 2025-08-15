@@ -22,6 +22,6 @@ public class PagedPartnerSpecification : BaseSpecification<Partner>
             pageSize = 10;
             
         ApplyPaging((pageIndex - 1) * pageSize, pageSize);
-        ApplyOrderBy(p => p.Name);
+        ApplyOrderBy(p => p.PartnerDescription);
     }
 } 

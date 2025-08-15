@@ -12,27 +12,28 @@ public static class TestDataBuilder
     {
         return new Faker<UNOPSPartner>()
             .RuleFor(p => p.PartnerCode, f => $"P{f.Random.Number(1000, 9999)}")
-            .RuleFor(p => p.Name, f => f.Company.CompanyName())
-            .RuleFor(p => p.ShortName, f => f.Company.CatchPhrase())
-            .RuleFor(p => p.Status, f => f.PickRandom(new[] { "Active", "Inactive", "Prospect" }))
-            .RuleFor(p => p.NewEngagement, f => f.Random.Bool().ToString())
-            .RuleFor(p => p.Phone, f => f.Phone.PhoneNumber())
-            .RuleFor(p => p.Website, f => f.Internet.Url())
-            .RuleFor(p => p.Address1Street, f => f.Address.StreetAddress())
-            .RuleFor(p => p.Address1Street2, f => f.Random.Bool(0.3f) ? f.Address.SecondaryAddress() : null)
-            .RuleFor(p => p.Address1City, f => f.Address.City())
-            .RuleFor(p => p.Address1StateProvince, f => f.Address.State())
-            .RuleFor(p => p.Address1PostalCode, f => f.Address.ZipCode())
-            .RuleFor(p => p.Address1Country, f => f.Address.Country())
-            .RuleFor(p => p.GlobalKeyAccount, f => f.Random.Bool(0.2f))
-            .RuleFor(p => p.UNSecretariatEntity, f => f.Random.Bool(0.1f))
-            .RuleFor(p => p.DDRequired, f => f.Random.Bool(0.3f).ToString())
-            .RuleFor(p => p.DDEACDone, (f, p) => (p.DDRequired == "True" && f.Random.Bool(0.7f)).ToString())
-            .RuleFor(p => p.EACReference, (f, p) => p.DDEACDone == "True" ? $"EAC-{f.Random.Number(1000, 9999)}" : null)
-            .RuleFor(p => p.LevyPotentiallyApplies, f => f.Random.Bool(0.4f).ToString())
-            .RuleFor(p => p.ReasonForLevyNotApplying, (f, p) => p.LevyPotentiallyApplies == "False" ? f.Lorem.Sentence() : null)
-            .RuleFor(p => p.LevyTreatment, (f, p) => p.LevyPotentiallyApplies == "True" ? f.PickRandom(new[] { "Direct", "Indirect", "Exempt" }) : null)
-            .RuleFor(p => p.PooledFund, f => f.Random.Bool(0.15f).ToString())
+            // Enhanced Partner structure
+            .RuleFor(p => p.PartnerDescription, f => f.Company.CompanyName())
+            .RuleFor(p => p.PartnerShortDescription, f => f.Company.CompanySuffix())
+            .RuleFor(p => p.PartnerLongDescription, f => f.Lorem.Paragraph())
+            .RuleFor(p => p.PartnerCategoryId, f => f.Random.Number(1, 10))
+            .RuleFor(p => p.PartnerLiaisonOffice, f => f.PickRandom(new[] { "Default", "HQ", "Regional", "Country" }))
+            .RuleFor(p => p.UNAndStateEntity, f => f.Random.Bool(0.1f))
+            .RuleFor(p => p.SystemStatus, f => f.PickRandom<Domain.Enums.PartnerStatus>())
+            .RuleFor(p => p.PartnerScope, f => f.PickRandom<Domain.Enums.PartnerScope>())
+            .RuleFor(p => p.KeyGlobalPartner, f => f.Random.Bool(0.2f))
+            .RuleFor(p => p.UNSecretariatPartner, f => f.Random.Bool(0.1f))
+            .RuleFor(p => p.DueDiligenceRequired, f => f.PickRandom<Domain.Enums.DueDiligenceRequired>())
+            .RuleFor(p => p.DueDiligenceApproval, f => f.PickRandom<Domain.Enums.DueDiligenceApproval>())
+            .RuleFor(p => p.DueDiligenceApprovalDate, (f, p) => p.DueDiligenceApproval == Domain.Enums.DueDiligenceApproval.Approved ? f.Date.Past(1) : null)
+            .RuleFor(p => p.DueDiligenceExpiryDate, (f, p) => p.DueDiligenceApproval == Domain.Enums.DueDiligenceApproval.Approved ? f.Date.Future(1) : null)
+            .RuleFor(p => p.PartnerApprovalStatus, f => f.PickRandom<Domain.Enums.PartnerApprovalStatus>())
+            .RuleFor(p => p.PartnerLevyStatus, f => f.PickRandom<Domain.Enums.PartnerLevyStatus>())
+            .RuleFor(p => p.ReasonForLevy, (f, p) => p.PartnerLevyStatus != Domain.Enums.PartnerLevyStatus.DoesNotApply ? f.Lorem.Sentence() : null)
+            .RuleFor(p => p.LevyTreatment, (f, p) => p.PartnerLevyStatus == Domain.Enums.PartnerLevyStatus.PotentiallyApplied ? f.PickRandom(new[] { "Direct", "Indirect", "Exempt" }) : null)
+            .RuleFor(p => p.PooledFund, f => f.Random.Bool(0.15f))
+            .RuleFor(p => p.CanCreateNewOpportunities, f => f.Random.Bool(0.8f))
+            .RuleFor(p => p.ReasonForNoNewOpportunity, (f, p) => !p.CanCreateNewOpportunities ? f.Lorem.Sentence() : null)
             .RuleFor(p => p.PartnerGroupCode, f => f.PickRandom(new[] { "NGO", "GOV", "PRI", "UN" }))
             .RuleFor(p => p.CreatedDate, f => f.Date.Past(2))
             .RuleFor(p => p.LastModifiedDate, f => f.Date.Recent());
@@ -52,7 +53,7 @@ public static class TestDataBuilder
             PageSize = pageSize,
             SearchText = searchText,
             Status = status,
-            OrderBy = orderBy ?? "Name",
+            OrderBy = orderBy ?? "PartnerDescription",
             Ascending = ascending
         };
     }

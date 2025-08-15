@@ -38,12 +38,12 @@ public class TextSearchSpaceHandlingTests
         // Act - Simuler une recherche avec normalisation
         var normalizedSearch = NormalizeSearchText(searchTextWithSpaces);
         var filteredPartners = partners
-            .Where(p => p.Name.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase))
+            .Where(p => p.PartnerDescription.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert
         filteredPartners.Should().HaveCount(1);
-        filteredPartners.Single().Name.Should().Be("Global Tech Solutions");
+        filteredPartners.Single().PartnerDescription.Should().Be("Global Tech Solutions");
     }
 
     [Fact]
@@ -55,13 +55,13 @@ public class TextSearchSpaceHandlingTests
 
         // Act - Recherche actuelle (un seul terme)
         var currentSearch = partners
-            .Where(p => p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .Where(p => p.PartnerDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Act - Recherche améliorée (mots séparés avec OR)
         var words = SplitSearchTerms(searchText);
         var improvedSearch = partners
-            .Where(p => words.Any(word => p.Name.Contains(word, StringComparison.OrdinalIgnoreCase)))
+            .Where(p => words.Any(word => p.PartnerDescription.Contains(word, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         // Assert
@@ -69,7 +69,7 @@ public class TextSearchSpaceHandlingTests
         improvedSearch.Should().HaveCount(4, "Recherche améliorée trouve tous les partenaires contenant 'ACME' ou 'Global'");
         
         var expectedNames = new[] { "ACME Corporation", "ACME Global Services", "Global Tech Solutions", "Global Finance Corp" };
-        improvedSearch.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        improvedSearch.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class TextSearchSpaceHandlingTests
         // Act - Recherche AND (tous les mots doivent être présents)
         var words = SplitSearchTerms(searchText);
         var andSearch = partners
-            .Where(p => words.All(word => p.Name.Contains(word, StringComparison.OrdinalIgnoreCase)))
+            .Where(p => words.All(word => p.PartnerDescription.Contains(word, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         // Assert
@@ -103,7 +103,7 @@ public class TextSearchSpaceHandlingTests
         // Act - Une recherche vide devrait retourner tous les résultats
         var filteredPartners = partners
             .Where(p => string.IsNullOrWhiteSpace(searchText) || 
-                       p.Name.Contains(NormalizeSearchText(searchText), StringComparison.OrdinalIgnoreCase))
+                       p.PartnerDescription.Contains(NormalizeSearchText(searchText), StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert
@@ -130,7 +130,7 @@ public class TextSearchSpaceHandlingTests
             var normalized = NormalizeSearchText(searchText);
             
             var filteredPartners = partners
-                .Where(p => p.Name.Contains(normalized, StringComparison.OrdinalIgnoreCase))
+                .Where(p => p.PartnerDescription.Contains(normalized, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             // Assert - Devrait fonctionner sans erreur
@@ -155,7 +155,7 @@ public class TextSearchSpaceHandlingTests
         {
             // Act
             var filteredPartners = partners
-                .Where(p => p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                .Where(p => p.PartnerDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             // Assert - Toutes les variations devraient donner le même résultat
@@ -173,7 +173,7 @@ public class TextSearchSpaceHandlingTests
         // Act - Simuler recherche de phrase exacte
         var cleanPhrase = exactPhrase.Trim('"');
         var filteredPartners = partners
-            .Where(p => p.Name.Contains(cleanPhrase, StringComparison.OrdinalIgnoreCase))
+            .Where(p => p.PartnerDescription.Contains(cleanPhrase, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert
@@ -194,7 +194,7 @@ public class TextSearchSpaceHandlingTests
             .ToArray();
 
         var filteredPartners = partners
-            .Where(p => words.Any(word => p.Name.Contains(word, StringComparison.OrdinalIgnoreCase)))
+            .Where(p => words.Any(word => p.PartnerDescription.Contains(word, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         // Assert
@@ -216,7 +216,7 @@ public class TextSearchSpaceHandlingTests
         var words = SplitSearchTerms(normalizedSearch);
         
         var filteredPartners = partners
-            .Where(p => words.Any(word => p.Name.Contains(word, StringComparison.OrdinalIgnoreCase)))
+            .Where(p => words.Any(word => p.PartnerDescription.Contains(word, StringComparison.OrdinalIgnoreCase)))
             .Take(10)
             .ToList();
             
@@ -244,12 +244,12 @@ public class TextSearchSpaceHandlingTests
 
         // Act - Recherche insensible à la casse
         var filteredPartners = partners
-            .Where(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Where(p => p.PartnerDescription.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert
         filteredPartners.Should().NotBeEmpty($"Search for '{searchTerm}' should find at least one partner");
-        filteredPartners.Should().Contain(p => p.Name == expectedPartnerName, 
+        filteredPartners.Should().Contain(p => p.PartnerDescription == expectedPartnerName, 
             $"Search for '{searchTerm}' should find '{expectedPartnerName}'");
     }
 
@@ -271,11 +271,11 @@ public class TextSearchSpaceHandlingTests
             // Act - Recherche par mots multiples, insensible à la casse
             var words = SplitSearchTerms(searchText);
             var filteredPartners = partners
-                .Where(p => words.Any(word => p.Name.Contains(word, StringComparison.OrdinalIgnoreCase)))
+                .Where(p => words.Any(word => p.PartnerDescription.Contains(word, StringComparison.OrdinalIgnoreCase)))
                 .ToList();
 
             // Assert
-            filteredPartners.Should().Contain(p => p.Name == "Global Tech Solutions", 
+            filteredPartners.Should().Contain(p => p.PartnerDescription == "Global Tech Solutions", 
                 $"Search '{searchText}' should find 'Global Tech Solutions'");
         }
     }
@@ -296,8 +296,8 @@ public class TextSearchSpaceHandlingTests
         // Act - Simuler la recherche exacte insensible à la casse
         var filteredPartners = operatorType switch
         {
-            "is" => partners.Where(p => string.Equals(p.Status, searchValue, StringComparison.OrdinalIgnoreCase)).ToList(),
-            "is not" => partners.Where(p => !string.Equals(p.Status, searchValue, StringComparison.OrdinalIgnoreCase)).ToList(),
+            "is" => partners.Where(p => string.Equals(GetStatusAsString(p), searchValue, StringComparison.OrdinalIgnoreCase)).ToList(),
+            "is not" => partners.Where(p => !string.Equals(GetStatusAsString(p), searchValue, StringComparison.OrdinalIgnoreCase)).ToList(),
             _ => new List<UNOPSPartner>()
         };
 
@@ -328,7 +328,7 @@ public class TextSearchSpaceHandlingTests
         {
             // Act - Simuler l'opérateur "like" insensible à la casse
             var filteredPartners = partners
-                .Where(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .Where(p => p.PartnerDescription.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             // Assert
@@ -358,7 +358,7 @@ public class TextSearchSpaceHandlingTests
         {
             // Act - Simuler l'opérateur "not like" insensible à la casse
             var filteredPartners = partners
-                .Where(p => !p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .Where(p => !p.PartnerDescription.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
             // Assert
@@ -368,6 +368,19 @@ public class TextSearchSpaceHandlingTests
     }
 
     #region Helper Methods
+
+    // Helper method to get status as string for comparison compatibility
+    private static string GetStatusAsString(UNOPSPartner partner)
+    {
+        return partner.SystemStatus switch
+        {
+            Domain.Enums.PartnerStatus.Active => "Active",
+            Domain.Enums.PartnerStatus.Closed => "Inactive",
+            Domain.Enums.PartnerStatus.Draft => "Prospect",
+            Domain.Enums.PartnerStatus.Archived => "Archived",
+            _ => "Unknown"
+        };
+    }
 
     /// <summary>
     /// Normalise le texte de recherche en supprimant les espaces en trop et les caractères de contrôle
@@ -422,7 +435,7 @@ public class TextSearchSpaceHandlingTests
         {
             if (i < partners.Count)
             {
-                partners[i].Name = $"Global Tech Solutions {i}";
+                partners[i].PartnerDescription = $"Global Tech Solutions {i}";
             }
         }
         
@@ -431,17 +444,30 @@ public class TextSearchSpaceHandlingTests
 
     private static UNOPSPartner CreatePartner(string name, string status, string shortName)
     {
+        // Map old status to new enum
+        var systemStatus = status switch
+        {
+            "Active" => Domain.Enums.PartnerStatus.Active,
+            "Inactive" => Domain.Enums.PartnerStatus.Closed,
+            "Prospect" => Domain.Enums.PartnerStatus.Draft,
+            _ => Domain.Enums.PartnerStatus.Draft
+        };
+
         return new UNOPSPartner
         {
             Id = Random.Shared.Next(1, 1000),
-            Name = name,
-            Status = status,
-            ShortName = shortName,
-            NewEngagement = "true",
-            PooledFund = "false",
-            DDRequired = "false",
-            DDEACDone = "false",
-            LevyPotentiallyApplies = "false",
+            // Enhanced Partner structure
+            PartnerDescription = name,
+            PartnerShortDescription = shortName,
+            PartnerCategoryId = 1, // Default test category
+            PartnerLiaisonOffice = "Default", // Default test liaison office
+            UNAndStateEntity = false,
+            SystemStatus = systemStatus,
+            CanCreateNewOpportunities = true,
+            PooledFund = false,
+            DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+            DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+            PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
             PartnerCode = $"P{Random.Shared.Next(1000, 9999)}",
             PartnerGroupCode = "NGO",
             CreatedDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 100)),

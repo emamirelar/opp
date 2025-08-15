@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 using UNOPS.PAO.Domain.Infrastructure;
+using UNOPS.PAO.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
@@ -10,30 +11,6 @@ namespace UNOPS.PAO.Domain.Entities;
 public class Partner : ModifiableDeletableEntity
 {
     public int Id { get; set; }
-    public string Name { get; set; }
-    public string Status { get; set; }
-    public string NewEngagement { get; set; }
-    public string? Phone { get; set; }
-    public string? Website { get; set; }
-    public string? Address1Street { get; set; }
-    public string? Address1Street2 { get; set; }
-    public string? Address1City { get; set; }
-    public string? Address1StateProvince { get; set; }
-    public string? Address1PostalCode { get; set; }
-    public string? Address1Country { get; set; }
-    public string ShortName { get; set; }
-    //Level
-    //Group
-    //LiaisonOffice
-    public string PooledFund { get; set; }
-    public string DDRequired { get; set; }
-    public string DDEACDone { get; set; }
-    public string? EACReference { get; set; }
-    public Boolean GlobalKeyAccount { get; set; }
-    public Boolean UNSecretariatEntity { get; set; }
-    public string LevyPotentiallyApplies { get; set; }
-    public string? ReasonForLevyNotApplying { get; set; }
-    public string? LevyTreatment { get; set; }
     public string? LogoUrl { get; set; }
     public List<Document>? Documents { get; set; }
     
@@ -45,7 +22,99 @@ public class Partner : ModifiableDeletableEntity
     
     public string? PartnerGroupCode { get; set; }
 
+    // ========== SYSTEM GENERATED KEYS ==========
     
+    // System-generated unique identifiers
+    public Guid UniqueKey { get; set; } = Guid.NewGuid(); // System Generated
+    public Guid PartnerKey { get; set; } = Guid.NewGuid(); // System Generated
+    public Guid PartnerCategoryInternalKey { get; set; } = Guid.NewGuid(); // System Generated
+    public Guid PartnerCategoryKey { get; set; } = Guid.NewGuid(); // System Generated
+    public Guid PartnerTypeKey { get; set; } = Guid.NewGuid(); // System Generated
+    
+    // ========== ENHANCED PARTNER FIELDS ==========
+    
+    // Enhanced descriptions (required/main fields)
+    [MaxLength(500)]
+    public string PartnerDescription { get; set; } // Full name (required)
+    
+    [MaxLength(100)]  
+    public string PartnerShortDescription { get; set; } // Short name/acronym (required)
+    
+    [MaxLength(1000)]
+    public string? PartnerLongDescription { get; set; } // Optional long description
+    
+    // Category & Organization Unit
+    public int PartnerCategoryId { get; set; } // FK to Partner Category (required)
+    public int? PartnerOrgUnitId { get; set; } // Nullable if unmanaged
+    
+    // ========== REPORT LEVELS ==========
+    
+    // Report levels (1-5 based on partner group hierarchy)
+    public int? PartnerInternalReportLevel { get; set; } // 1-5 defined by Partner group Hierarchy in partner tree
+    public int? PartnerExternalReportLevel { get; set; } // External reporting level
+    
+    // ========== PARTNER LEVEL INFORMATION ==========
+    
+    // Partner level information from Partner Tree and BQ
+    [MaxLength(50)]
+    public string? PartnerLevelCode { get; set; } // Imported from BQ
+    
+    [MaxLength(100)]
+    public string? PartnerLevelShort { get; set; } // Imported from the Partner Tree
+    
+    [MaxLength(500)]
+    public string? PartnerLevelDescription { get; set; } // Imported from the Partner Tree
+    
+    // ERP Integration
+    public int? ErpDimValue { get; set; } // ERP dimension value
+    
+    // Liaison Office  
+    public string PartnerLiaisonOffice { get; set; } // Enum from predefined list (required)
+    
+    // UN & State Entity
+    public bool UNAndStateEntity { get; set; } = false;
+    
+    // Partner Scope
+    public PartnerScope? PartnerScope { get; set; } // Global / Regional / Local
+    
+    // ========== APPROVAL FIELDS (Admin only) ==========
+    public bool KeyGlobalPartner { get; set; } = false;
+    public bool UNSecretariatPartner { get; set; } = false;
+    
+    // Due Diligence Fields
+    public DueDiligenceRequired DueDiligenceRequired { get; set; } = DueDiligenceRequired.NotRequired;
+    public DueDiligenceApproval DueDiligenceApproval { get; set; } = DueDiligenceApproval.NotApproved;
+    public DateTime? DueDiligenceApprovalDate { get; set; }
+    public DateTime? DueDiligenceExpiryDate { get; set; }
+    
+    // Partner Approval Status
+    public PartnerApprovalStatus PartnerApprovalStatus { get; set; } = PartnerApprovalStatus.NotApproved;
+    public DateTime? PartnerApprovalDate { get; set; }
+    
+    [MaxLength(500)]
+    public string? PartnerApprovalReference { get; set; }
+    
+    // Levy Fields
+    public PartnerLevyStatus PartnerLevyStatus { get; set; } = PartnerLevyStatus.DoesNotApply;
+    
+    [MaxLength(500)]
+    public string? ReasonForLevy { get; set; }
+    
+    [MaxLength(500)]
+    public string? LevyTreatment { get; set; }
+    
+    // Operational Fields
+    public bool PooledFund { get; set; } = false;
+    public bool CanCreateNewOpportunities { get; set; } = true;
+    
+    [MaxLength(500)]
+    public string? ReasonForNoNewOpportunity { get; set; }
+    
+    // System Status (new enum-based status)
+    public PartnerStatus SystemStatus { get; set; } = PartnerStatus.Draft; // Draft / Active / Closed / Archived
+    
+    // Navigation properties
+
     // Collection of all contacts for this partner
     public virtual ICollection<Contact> Contacts { get; set; } = new HashSet<Contact>();
     
@@ -162,6 +231,42 @@ public class Partner : ModifiableDeletableEntity
         foreach (var relationship in relationshipsToRemove.ToList())
         {
             OrganizationUnitRelationships.Remove(relationship);
+        }
+    }
+
+    // ========== NEW WORKFLOW METHODS ==========
+    
+    /// <summary>
+    /// Checks if partner can be activated (has required fields)
+    /// </summary>
+    public bool CanBeActivated()
+    {
+        return !string.IsNullOrWhiteSpace(PartnerDescription) &&
+               !string.IsNullOrWhiteSpace(PartnerShortDescription) &&
+               PartnerCategoryId > 0 &&
+               !string.IsNullOrWhiteSpace(PartnerLiaisonOffice);
+    }
+    
+    /// <summary>
+    /// Checks if partner is approved
+    /// </summary>
+    public bool IsApproved => PartnerApprovalStatus == PartnerApprovalStatus.Approved;
+    
+    /// <summary>
+    /// Checks if due diligence is expiring (within 6 months)
+    /// </summary>
+    public bool IsDueDiligenceExpiring => DueDiligenceExpiryDate.HasValue && 
+        DueDiligenceExpiryDate.Value.AddMonths(-6) <= DateTime.UtcNow;
+        
+    /// <summary>
+    /// Generates Partner ID when activating partner
+    /// </summary>
+    public void ActivatePartner()
+    {
+        if (CanBeActivated() && SystemStatus == PartnerStatus.Draft)
+        {
+            SystemStatus = PartnerStatus.Active;
+            // Partner ID will be generated by the system/database
         }
     }
 }

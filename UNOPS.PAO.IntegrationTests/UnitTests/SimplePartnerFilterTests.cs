@@ -45,7 +45,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().OnlyContain(p => p.Status == targetStatus);
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "ACME Global Services" };
-        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().OnlyContain(p => p.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase));
         
         var expectedNames = new[] { "ACME Corporation", "ACME Global Services" };
-        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -75,17 +75,17 @@ public class SimplePartnerFilterTests
         var partners = GetTestPartners();
         var searchText = "Global";
 
-        // Act - Simulate search text filtering (searches both Name and ShortName)
+        // Act - Simulate search text filtering (searches both PartnerDescription and PartnerShortDescription)
         var filteredPartners = partners
-            .Where(p => (p.Name != null && p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
-                       (p.ShortName != null && p.ShortName.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
+            .Where(p => (p.PartnerDescription != null && p.PartnerDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                       (p.PartnerShortDescription != null && p.PartnerShortDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         // Assert - Should find 3 partners: "Global Tech Solutions", "Global Finance Corp", and "ACME Global Services"
         filteredPartners.Should().HaveCount(3);
         
         var expectedNames = new[] { "Global Tech Solutions", "Global Finance Corp", "ACME Global Services" };
-        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -97,8 +97,8 @@ public class SimplePartnerFilterTests
 
         // Act
         var filteredPartners = partners
-            .Where(p => (p.Name != null && p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
-                       (p.ShortName != null && p.ShortName.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
+            .Where(p => (p.PartnerDescription != null && p.PartnerDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                       (p.PartnerShortDescription != null && p.PartnerShortDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         // Assert
@@ -118,15 +118,15 @@ public class SimplePartnerFilterTests
         // Act - Combine multiple filters (AND logic)
         var filteredPartners = partners
             .Where(p => p.Status == targetStatus)
-            .Where(p => (p.Name != null && p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
-                       (p.ShortName != null && p.ShortName.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
+            .Where(p => (p.PartnerDescription != null && p.PartnerDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                       (p.PartnerShortDescription != null && p.PartnerShortDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         // Assert - Should find 2 Active partners containing "Global": "Global Tech Solutions" and "ACME Global Services"
         filteredPartners.Should().HaveCount(2);
         
         var expectedNames = new[] { "Global Tech Solutions", "ACME Global Services" };
-        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
         filteredPartners.Should().OnlyContain(p => p.Status == "Active");
     }
 
@@ -156,8 +156,8 @@ public class SimplePartnerFilterTests
         // Act - Empty search text should not filter anything
         var filteredPartners = partners
             .Where(p => string.IsNullOrEmpty(emptySearchText) || 
-                       (p.Name != null && p.Name.Contains(emptySearchText, StringComparison.OrdinalIgnoreCase)) ||
-                       (p.ShortName != null && p.ShortName.Contains(emptySearchText, StringComparison.OrdinalIgnoreCase)))
+                       (p.PartnerDescription != null && p.PartnerDescription.Contains(emptySearchText, StringComparison.OrdinalIgnoreCase)) ||
+                       (p.PartnerShortDescription != null && p.PartnerShortDescription.Contains(emptySearchText, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         // Assert
@@ -173,7 +173,7 @@ public class SimplePartnerFilterTests
 
         // Act
         var sortedPartners = partners
-            .OrderBy(p => p.Name)
+            .OrderBy(p => p.PartnerDescription)
             .ToList();
 
         // Assert
@@ -303,7 +303,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().OnlyContain(p => p.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchyId == targetOrgUnitId));
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions" };
-        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -325,7 +325,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().OnlyContain(p => p.OrganizationUnitRelationships.Any(r => orgUnitHierarchy.Contains(r.OrganizationHierarchyId)));
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "Beta Industries", "Global Finance Corp" };
-        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -404,20 +404,20 @@ public class SimplePartnerFilterTests
         // Ensure some variety for testing
         for (int i = 0; i < 1000; i++)
         {
-            if (i % 3 == 0) largeDataset[i].Status = "Active";
-            else if (i % 3 == 1) largeDataset[i].Status = "Inactive";
-            else largeDataset[i].Status = "Prospect";
+            if (i % 3 == 0) largeDataset[i].SystemStatus = Domain.Enums.PartnerStatus.Active;
+            else if (i % 3 == 1) largeDataset[i].SystemStatus = Domain.Enums.PartnerStatus.Closed;
+            else largeDataset[i].SystemStatus = Domain.Enums.PartnerStatus.Draft;
 
-            if (i % 10 == 0) largeDataset[i].Name = $"Test Company {i}";
+            if (i % 10 == 0) largeDataset[i].PartnerDescription = $"Test Company {i}";
         }
 
         // Act
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         
         var filteredPartners = largeDataset
-            .Where(p => p.Status == "Active")
-            .Where(p => p.Name.Contains("Test", StringComparison.OrdinalIgnoreCase))
-            .OrderBy(p => p.Name)
+            .Where(p => p.SystemStatus == Domain.Enums.PartnerStatus.Active)
+            .Where(p => p.PartnerDescription != null && p.PartnerDescription.Contains("Test", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => p.PartnerDescription)
             .Take(10)
             .ToList();
             

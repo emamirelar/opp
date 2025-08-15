@@ -119,8 +119,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 .Returns((UNOPSPartner p) => new PartnerModel 
                 { 
                     Id = p.Id, 
-                    Name = p.Name,
-                    Status = p.Status,
+                    PartnerDescription = p.PartnerDescription,
+                    SystemStatus = p.SystemStatus.ToString(),
                     PartnerGroupCode = p.PartnerGroupCode,
                     LogoUrl = null // Explicitly set to null to avoid issues
                 });
@@ -171,16 +171,20 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var partner = new UNOPSPartner
             {
                 Id = id,
-                Name = name,
-                Status = "Active",
-                NewEngagement = "false",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false",
+                // Enhanced Partner structure
+                PartnerDescription = name,
+                PartnerShortDescription = name.Replace(" ", ""),
+                PartnerCategoryId = 1, // Default test category
+                PartnerLiaisonOffice = "Default", // Default test liaison office
+                UNAndStateEntity = false,
+                SystemStatus = Domain.Enums.PartnerStatus.Active,
+                CanCreateNewOpportunities = false, // Default "false" equivalent
+                PooledFund = false, // Default "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "false" equivalent
                 PartnerCode = $"P{id:D4}",
                 PartnerGroupCode = "NGO",
-                ShortName = name.Replace(" ", ""),
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
             };
@@ -192,7 +196,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 {
                     OrganizationHierarchyId = organizationHierarchyId,
                     EntityId = partner.Id,
-                    EntityType = nameof(UNOPSPartner)
+                    EntityType = nameof(UNOPSPartner),
+                    Status = Domain.Entities.EntityStatus.Active
                 }
             };
 
@@ -225,10 +230,10 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var response = (PaginationResponse<PartnerModel>)result;
             
             response.Records.Should().HaveCount(2);
-            response.Records.Should().Contain(p => p.Name == "Partner Asia");
-            response.Records.Should().Contain(p => p.Name == "Partner Thailand");
-            response.Records.Should().NotContain(p => p.Name == "Partner Africa");
-            response.Records.Should().NotContain(p => p.Name == "Partner Kenya");
+            response.Records.Should().Contain(p => p.PartnerDescription == "Partner Asia");
+            response.Records.Should().Contain(p => p.PartnerDescription == "Partner Thailand");
+            response.Records.Should().NotContain(p => p.PartnerDescription == "Partner Africa");
+            response.Records.Should().NotContain(p => p.PartnerDescription == "Partner Kenya");
             
             // Verify hierarchy service was called
             _mockHierarchyService.Verify(x => x.GetDescendantIdsAsync(2), Times.Once);
@@ -285,7 +290,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var response = (PaginationResponse<PartnerModel>)result;
             
             response.Records.Should().HaveCount(1);
-            response.Records.Should().Contain(p => p.Name == "Partner Thailand");
+            response.Records.Should().Contain(p => p.PartnerDescription == "Partner Thailand");
         }
 
         [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]
@@ -382,7 +387,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var response = (PaginationResponse<PartnerModel>)result;
             
             response.Records.Should().HaveCount(6); // All partners are active
-            response.Records.Should().OnlyContain(p => p.Status == "Active");
+            response.Records.Should().OnlyContain(p => p.SystemStatus == "Active");
         }
 
         public void Dispose()

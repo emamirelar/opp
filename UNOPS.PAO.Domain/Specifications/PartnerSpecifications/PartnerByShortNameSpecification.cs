@@ -4,6 +4,7 @@ using UNOPS.PAO.Domain.Entities;
 
 /// <summary>
 /// Specification that filters partners by short name
+/// Updated to use new PartnerShortDescription field
 /// </summary>
 public class PartnerByShortNameSpecification : BaseSpecification<Partner>
 {
@@ -12,7 +13,7 @@ public class PartnerByShortNameSpecification : BaseSpecification<Partner>
     /// </summary>
     /// <param name="shortName">The short name to filter by</param>
     public PartnerByShortNameSpecification(string shortName)
-        : base(p => p.ShortName != null && p.ShortName.ToLower().Contains(shortName.ToLower()))
+        : base(p => p.PartnerShortDescription != null && p.PartnerShortDescription.ToLower().Contains(shortName.ToLower()))
     {
         // Include related entities
     }

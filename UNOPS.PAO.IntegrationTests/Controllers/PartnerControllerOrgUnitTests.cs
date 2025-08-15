@@ -32,16 +32,29 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
         private static UNOPSPartner CreateTestPartner(string name, string status, int organizationHierarchyId, int createdBy = 1)
         {
+            // Map old status to new enum
+            var systemStatus = status switch
+            {
+                "Active" => Domain.Enums.PartnerStatus.Active,
+                "Inactive" => Domain.Enums.PartnerStatus.Closed,
+                "Draft" => Domain.Enums.PartnerStatus.Draft,
+                _ => Domain.Enums.PartnerStatus.Draft
+            };
+
             var partner = new UNOPSPartner
             {
-                Name = name,
-                ShortName = name.Length > 10 ? name.Substring(0, 10) : name,
-                Status = status,
-                NewEngagement = "No",
-                PooledFund = "No",
-                DDRequired = "No",
-                DDEACDone = "No",
-                LevyPotentiallyApplies = "No",
+                // Enhanced Partner structure
+                PartnerDescription = name,
+                PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
+                PartnerCategoryId = 1, // Default test category
+                PartnerLiaisonOffice = "Default", // Default test liaison office
+                UNAndStateEntity = false,
+                SystemStatus = systemStatus,
+                CanCreateNewOpportunities = false,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow
             };
@@ -133,7 +146,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result!.TotalCount.Should().Be(4); // All partners in the hierarchy
             result!.Records.Should().HaveCount(4);
-            result!.Records.Select(r => r.Name).Should().BeEquivalentTo(new[]
+            result!.Records.Select(r => r.PartnerDescription).Should().BeEquivalentTo(new[]
             {
                 "Partner in Root",
                 "Partner in Child 1",
@@ -179,7 +192,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result!.TotalCount.Should().Be(3); // Middle and its two children
             result!.Records.Should().HaveCount(3);
-            result!.Records.Select(r => r.Name).Should().BeEquivalentTo(new[]
+            result!.Records.Select(r => r.PartnerDescription).Should().BeEquivalentTo(new[]
             {
                 "Partner at Middle",
                 "Partner at Leaf 1",
@@ -220,7 +233,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result!.TotalCount.Should().Be(1); // Only the leaf partner
             result!.Records.Should().HaveCount(1);
-            result!.Records.First().Name.Should().Be("Partner at Leaf");
+            result!.Records.First().PartnerDescription.Should().Be("Partner at Leaf");
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -253,7 +266,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result!.TotalCount.Should().Be(1); // Only active partner in org 400
             result!.Records.Should().HaveCount(1);
-            result!.Records.First().Name.Should().Be("Active Partner");
+            result!.Records.First().PartnerDescription.Should().Be("Active Partner");
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -286,7 +299,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result!.TotalCount.Should().Be(2); // Only "Alpha" partners in org 500
             result!.Records.Should().HaveCount(2);
-            result!.Records.Select(r => r.Name).Should().BeEquivalentTo(new[] { "Alpha Corporation", "Alpha Solutions" });
+            result!.Records.Select(r => r.PartnerDescription).Should().BeEquivalentTo(new[] { "Alpha Corporation", "Alpha Solutions" });
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -320,7 +333,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result!.Records.Should().HaveCount(5);
             result.PageIndex.Should().Be(2);
             result.PageSize.Should().Be(5);
-            result!.Records.Select(r => r.Name).Should().BeEquivalentTo(new[] 
+            result!.Records.Select(r => r.PartnerDescription).Should().BeEquivalentTo(new[] 
             { 
                 "Partner 06", "Partner 07", "Partner 08", "Partner 09", "Partner 10" 
             });
@@ -356,7 +369,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result!.TotalCount.Should().Be(2); // Only tech-related partners in org 700
             result!.Records.Should().HaveCount(2);
-            result!.Records.Select(r => r.Name).Should().BeEquivalentTo(new[] { "Technology Corp", "Tech Solutions" });
+            result!.Records.Select(r => r.PartnerDescription).Should().BeEquivalentTo(new[] { "Technology Corp", "Tech Solutions" });
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]

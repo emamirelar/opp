@@ -464,14 +464,18 @@ public class DateSearchTests
         return new UNOPSPartner
         {
             Id = Random.Shared.Next(1, 10000),
-            Name = name,
-            Status = "Active",
-            ShortName = name.Length > 10 ? name.Substring(0, 10) : name,
-            NewEngagement = "true",
-            PooledFund = "false",
-            DDRequired = "false",
-            DDEACDone = "false",
-            LevyPotentiallyApplies = "false",
+            // Enhanced Partner structure
+            PartnerDescription = name,
+            PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
+            PartnerCategoryId = 1, // Default test category
+            PartnerLiaisonOffice = "Default", // Default test liaison office
+            UNAndStateEntity = false,
+            SystemStatus = Domain.Enums.PartnerStatus.Active,
+            CanCreateNewOpportunities = true,
+            PooledFund = false,
+            DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+            DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+            PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
             PartnerCode = $"P{Random.Shared.Next(1000, 9999)}",
             PartnerGroupCode = "NGO",
             CreatedDate = createdDate,
