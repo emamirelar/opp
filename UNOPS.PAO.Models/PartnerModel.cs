@@ -62,6 +62,19 @@ public class PartnerModel
     public List<InteractionModel>? Interactions { get; set; }
     public List<ContactModel>? Contacts { get; set; }
     
+    // Audit fields from ModifiableDeletableEntity (read-only from frontend perspective)
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public DateTime? CreatedDate { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public DateTime? LastModifiedDate { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? CreatedBy { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? LastModifiedBy { get; set; }
+    
     /// <summary>
     /// Gets the primary organization unit (first relationship)
     /// </summary>

@@ -364,6 +364,9 @@ public class Startup
         services.AddScoped<IUserPreferenceService, UserPreferenceService>();
         services.AddScoped<IOrgUnitHierarchyService, OrgUnitHierarchyService>();
         services.AddScoped<IOrgUnitFilterService, OrgUnitFilterService>();
+        
+        // Register Dashboard service for user-specific filtering
+        services.AddScoped<IDashboardService, DashboardService>();
 
         // Register OrganizationHierarchy manager
         services.AddScoped<IOrganizationHierarchyManager, OrganizationHierarchyManager>();
