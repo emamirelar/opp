@@ -15,5 +15,5 @@ public interface IDashboardService
     Task<PaginationResponse<ContactModel>> GetMyDraftContactsAsync(ClaimsPrincipal user, int pageSize = 1000);
     Task<PaginationResponse<InteractionModel>> GetMyInteractionsAsync(ClaimsPrincipal user, int pageSize = 1000);
     Task<PaginationResponse<InteractionModel>> GetMyDraftInteractionsAsync(ClaimsPrincipal user, int pageSize = 1000);
-    Task<List<RecentUpdateModel>> GetOrgUnitRecentUpdatesAsync(ClaimsPrincipal user, int pageSize = 10);
+    Task<OrgUnitRecentUpdatesResponse> GetOrgUnitRecentUpdatesAsync(ClaimsPrincipal user, int pageSize = 10);
 }

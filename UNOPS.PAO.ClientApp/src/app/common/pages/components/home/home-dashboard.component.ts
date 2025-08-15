@@ -32,6 +32,7 @@ interface DashboardData {
     interactions: Interaction[];
   };
   orgUnitRecentUpdates: RecentUpdate[];
+  orgUnitName: string;
 }
 
 interface RecentUpdate {
@@ -42,6 +43,12 @@ interface RecentUpdate {
   lastModifiedBy: string;
   status: string;
   entityData?: any; // Additional entity-specific data
+}
+
+interface OrgUnitRecentUpdatesResponse {
+  updates: RecentUpdate[];
+  orgUnitName: string;
+  orgUnitId?: number;
 }
 
 interface DashboardSummary {
@@ -277,7 +284,10 @@ export class HomeDashboardComponent implements OnInit {
     const orgUnitRecentUpdates$ = this.getOrgUnitRecentUpdates().pipe(
       catchError(err => {
         console.error('Error loading org unit recent updates:', err);
-        return of([]);
+        return of({
+          updates: [],
+          orgUnitName: 'your organization unit'
+        });
       })
     );
 
@@ -301,7 +311,8 @@ export class HomeDashboardComponent implements OnInit {
             contacts: data.draftContacts,
             interactions: data.draftInteractions
           },
-          orgUnitRecentUpdates: data.orgUnitRecentUpdates
+          orgUnitRecentUpdates: data.orgUnitRecentUpdates.updates,
+          orgUnitName: data.orgUnitRecentUpdates.orgUnitName
         };
 
         this.dashboardData.set(dashboardData);
@@ -626,20 +637,27 @@ export class HomeDashboardComponent implements OnInit {
     }
   }
 
-  private getOrgUnitRecentUpdates(): Observable<RecentUpdate[]> {
+  private getOrgUnitRecentUpdates(): Observable<{updates: RecentUpdate[], orgUnitName: string}> {
     // Use the new dashboard API endpoint for org unit recent updates
-    return this.http.get<RecentUpdate[]>('/api/dashboard/org-unit-recent-updates', {
+    return this.http.get<OrgUnitRecentUpdatesResponse>('/api/dashboard/org-unit-recent-updates', {
       params: {
         pageSize: '10'
       }
     }).pipe(
-      map(updates => {
-        console.log('Org Unit Recent Updates from Dashboard API:', updates.length, 'items');
-        return updates;
+      map(response => {
+        console.log('Org Unit Recent Updates from Dashboard API:', response.updates.length, 'items');
+        console.log('Org Unit Name:', response.orgUnitName);
+        return {
+          updates: response.updates,
+          orgUnitName: response.orgUnitName
+        };
       }),
       catchError(err => {
         console.error('Error loading org unit recent updates from dashboard API:', err);
-        return of([]);
+        return of({
+          updates: [],
+          orgUnitName: 'your organization unit'
+        });
       })
     );
   }

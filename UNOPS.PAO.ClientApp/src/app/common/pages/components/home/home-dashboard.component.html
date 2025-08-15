@@ -515,7 +515,7 @@
                   </span>
                 </h3>
                 <div class="card-value">{{ dashboardData()!.orgUnitRecentUpdates.length }}</div>
-                <p class="card-subtitle">{{ 'dashboard.orgUnitUpdatesSubtitle' | translate }}</p>
+                <p class="card-subtitle">{{ 'dashboard.orgUnitUpdatesSubtitle' | translate: {orgUnitName: dashboardData()!.orgUnitName} }}</p>
               </div>
             </div>
             <div class="card-action">
@@ -587,7 +587,7 @@
               } @else {
                 <div class="empty-state">
                   <i class="material-symbols-outlined text-2xl text-gray-300 mb-2">history</i>
-                  <p class="text-sm text-gray-500">{{ 'dashboard.noRecentUpdates' | translate }}</p>
+                  <p class="text-sm text-gray-500">{{ 'dashboard.noRecentUpdates' | translate: {orgUnitName: dashboardData()!.orgUnitName} }}</p>
                 </div>
               }
             </div>

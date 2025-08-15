@@ -351,13 +351,13 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
     /// Gets recent updates from all entity types (Partners, Contacts, Interactions) 
     /// combined and sorted by last modified date, filtered by user's global org unit filter and RBAC
     /// </summary>
-    public async Task<List<RecentUpdateModel>> GetOrgUnitRecentUpdatesAsync(ClaimsPrincipal user, int pageSize = 10)
+    public async Task<OrgUnitRecentUpdatesResponse> GetOrgUnitRecentUpdatesAsync(ClaimsPrincipal user, int pageSize = 10)
     {
         var userId = GetCurrentUserId(user);
         if (!userId.HasValue)
         {
             _logger.LogWarning("No valid user ID found for org unit recent updates request");
-            return new List<RecentUpdateModel>();
+            return new OrgUnitRecentUpdatesResponse();
         }
 
         _logger.LogInformation("Getting org unit recent updates for user {UserId} with RBAC filtering", userId.Value);
@@ -367,13 +367,32 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             // Get user's global filters to check for org unit filtering
             var globalFilters = await _userPreferenceService.GetGlobalFiltersAsync(userId.ToString());
             List<int>? orgUnitIds = null;
+            string orgUnitName = "your organization unit";
+            int? orgUnitId = null;
             
             if (globalFilters?.OrgUnitId.HasValue == true)
             {
+                orgUnitId = globalFilters.OrgUnitId.Value;
+                
                 // Get descendant org unit IDs for hierarchical filtering
                 orgUnitIds = await _hierarchyService.GetDescendantIdsAsync(globalFilters.OrgUnitId.Value);
                 _logger.LogInformation("Applying org unit filter for {OrgUnitId}, including {Count} descendant units", 
                     globalFilters.OrgUnitId.Value, orgUnitIds.Count);
+
+                // Logic to get the Org Unit Name directly from database
+                var orgUnit = await _context.Set<OrganizationHierarchy>()
+                    .Where(oh => oh.Id == orgUnitId.Value)
+                    .Select(oh => new { oh.Name })
+                    .FirstOrDefaultAsync();
+                
+                if (orgUnit != null && !string.IsNullOrEmpty(orgUnit.Name))
+                {
+                    orgUnitName = orgUnit.Name;
+                }
+                else
+                {
+                    orgUnitName = $"Org Unit {orgUnitId.Value}";
+                }
             }
 
             var allUpdates = new List<RecentUpdateModel>();
@@ -492,12 +511,18 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
 
             _logger.LogInformation("Found {Count} org unit recent updates after RBAC filtering (org unit filtered: {Filtered})", 
                 sortedUpdates.Count, orgUnitIds != null);
-            return sortedUpdates;
+                
+            return new OrgUnitRecentUpdatesResponse
+            {
+                Updates = sortedUpdates,
+                OrgUnitName = orgUnitName,
+                OrgUnitId = orgUnitId
+            };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving org unit recent updates for user {UserId}", userId.Value);
-            return new List<RecentUpdateModel>();
+            return new OrgUnitRecentUpdatesResponse();
         }
     }
 
