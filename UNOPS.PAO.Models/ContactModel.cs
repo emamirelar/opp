@@ -26,6 +26,7 @@ public class ContactModel
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
     public string? ProfilePictureUrl { get; set; }
+    public string? Status { get; set; }
     
     public PartnerSummaryModel? Partner { get; set; }
     public List<DocumentModel>? Documents { get; set; }
@@ -42,6 +43,19 @@ public class ContactModel
     /// Permissions for this specific contact
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }
+    
+    // Audit fields from ModifiableDeletableEntity (read-only from frontend perspective)
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public DateTime? CreatedDate { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public DateTime? LastModifiedDate { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? CreatedBy { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? LastModifiedBy { get; set; }
 }
 
 /// <summary>

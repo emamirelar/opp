@@ -41,6 +41,19 @@ public class InteractionModel
     public EntityPermissionsModel? Permissions { get; set; }
     public string? GmailThreadId { get; set; }
     public string? GmailMessageId { get; set; }
+    
+    // Audit fields from ModifiableDeletableEntity (read-only from frontend perspective)
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public DateTime? CreatedDate { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public DateTime? LastModifiedDate { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? CreatedBy { get; set; }
+    
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? LastModifiedBy { get; set; }
 }
 
 public class InteractionContactModel

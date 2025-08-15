@@ -695,4 +695,12 @@ export class TopbarComponent implements OnInit, OnDestroy {
   isOnAiPage(): boolean {
     return this.isMobile && this.router.url.includes('/ai');
   }
+
+  /**
+   * Navigate to the home page when logo is clicked
+   */
+  navigateToHome(): void {
+    console.log('Logo clicked - navigating to home');
+    this.router.navigate(['/']);
+  }
 }
