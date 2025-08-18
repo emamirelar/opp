@@ -13,7 +13,7 @@ public class PartnerByStatusSpecification : BaseSpecification<Partner>
     /// </summary>
     /// <param name="status">The status to filter by</param>
     public PartnerByStatusSpecification(string status)
-        : base(p => p.SystemStatus.ToString() == status)
+        : base(p => p.Status.ToString() == status)
     {
         // Include related entities
     }

@@ -431,7 +431,7 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
-  getStatusSeverity(isActive: boolean): string {
+  getStatusSeverity(isActive: boolean): "success" | "info" | "warn" | "secondary" | "contrast" | "danger" | undefined {
     return isActive ? 'success' : 'danger';
   }
 

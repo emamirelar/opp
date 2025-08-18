@@ -64,10 +64,10 @@ public class PartnerControllerTests : IntegrationTestBase
         // Map old status to new enum
         var systemStatus = status switch
         {
-            "Active" => Domain.Enums.PartnerStatus.Active,
-            "Inactive" => Domain.Enums.PartnerStatus.Closed,
-            "Prospect" => Domain.Enums.PartnerStatus.Draft,
-            _ => Domain.Enums.PartnerStatus.Draft
+            "Active" => Domain.Entities.EntityStatus.Active,
+            "Inactive" => Domain.Entities.EntityStatus.Closed,
+            "Prospect" => Domain.Entities.EntityStatus.Draft,
+            _ => Domain.Entities.EntityStatus.Draft
         };
 
         var partner = new UNOPSPartner
@@ -77,9 +77,9 @@ public class PartnerControllerTests : IntegrationTestBase
             PartnerDescription = name,
             PartnerShortDescription = shortName,
             PartnerCategoryId = 1, // Default test category
-            PartnerLiaisonOffice = "Default", // Default test liaison office
+            LiaisonOfficeId = 1, // Default test liaison office
             UNAndStateEntity = false,
-            SystemStatus = systemStatus,
+            Status = systemStatus,
             CanCreateNewOpportunities = true, // Default for test partners
             PooledFund = false,
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
@@ -132,7 +132,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Assert
         response.Should().NotBeNull();
         response.Records.Should().HaveCount(5);
-        response.Records.Should().OnlyContain(p => p.SystemStatus == "Active");
+        response.Records.Should().OnlyContain(p => p.Status == "Active");
         response.TotalCount.Should().Be(5);
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "ACME Global Services", "Tech Innovations Ltd", "Alpha Partners" };
@@ -148,7 +148,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Assert
         response.Should().NotBeNull();
         response.Records.Should().HaveCount(3);
-        response.Records.Should().OnlyContain(p => p.SystemStatus == "Closed");
+        response.Records.Should().OnlyContain(p => p.Status == "Closed");
         response.TotalCount.Should().Be(3);
         
         var expectedNames = new[] { "Beta Industries", "Delta Corporation", "Omega Services" };
@@ -226,7 +226,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Assert
         response.Should().NotBeNull();
         response.Records.Should().HaveCount(2); // Global Tech Solutions and ACME Global Services
-        response.Records.Should().OnlyContain(p => p.SystemStatus == "Active");
+        response.Records.Should().OnlyContain(p => p.Status == "Active");
         response.Records.Should().OnlyContain(p => p.Name.Contains("Global"));
         
         var expectedNames = new[] { "Global Tech Solutions", "ACME Global Services" };
@@ -242,7 +242,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Assert
         response.Should().NotBeNull();
         response.Records.Should().HaveCount(2); // ACME Corporation and ACME Global Services
-        response.Records.Should().OnlyContain(p => p.SystemStatus == "Active");
+        response.Records.Should().OnlyContain(p => p.Status == "Active");
         response.Records.Should().OnlyContain(p => p.Name.Contains("ACME"));
     }
 
@@ -336,7 +336,7 @@ public class PartnerControllerTests : IntegrationTestBase
         
         // Assert
         response.Should().NotBeNull();
-        response.Records.Should().BeInAscendingOrder(p => p.SystemStatus);
+        response.Records.Should().BeInAscendingOrder(p => p.Status);
     }
 
     #endregion
@@ -466,8 +466,8 @@ public class PartnerControllerTests : IntegrationTestBase
             PartnerDescription = "New Test Partner",
             PartnerShortDescription = "NTP",
             PartnerCategoryId = 1,
-            PartnerLiaisonOffice = "Default",
-            SystemStatus = "Active",
+            LiaisonOfficeId = 1,
+            Status = "Active",
             PartnerGroupCode = "NGO"
         };
         
@@ -486,7 +486,7 @@ public class PartnerControllerTests : IntegrationTestBase
         {
             Id = 1,
             PartnerDescription = "Updated ACME Corporation",
-            SystemStatus = "Closed"
+            Status = "Closed"
         };
         
         // Act
@@ -495,7 +495,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Assert
         result.Should().NotBeNull();
         result.Name.Should().Be("Updated ACME Corporation");
-        result.SystemStatus.Should().Be("Closed");
+        result.Status.Should().Be("Closed");
     }
 
     [Fact(Skip = "Skipping non-GetAll tests for now")]

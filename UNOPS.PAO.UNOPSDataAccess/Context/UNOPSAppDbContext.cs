@@ -26,6 +26,9 @@ public class UNOPSAppDbContext : AppDbContext
 
     // Entity permission for RBAC
     public DbSet<EntityPermission> EntityPermissions { get; set; }
+    
+    // Reference data tables
+    public DbSet<LiaisonOffice> LiaisonOffices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,6 +60,22 @@ public class UNOPSAppDbContext : AppDbContext
         modelBuilder
             .Entity<Partner>()
             .Ignore("PartnerTree");
+
+        // Configure Partner to LiaisonOffice relationship
+        modelBuilder
+            .Entity<Partner>()
+            .HasOne(p => p.LiaisonOffice)
+            .WithMany(lo => lo.Partners)
+            .HasForeignKey(p => p.LiaisonOfficeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Configure LiaisonOffice entity
+        modelBuilder
+            .Entity<LiaisonOffice>()
+            .HasIndex(lo => lo.Code)
+            .IsUnique();
+
+
         
         modelBuilder
             .Entity<UNOPSLink>();

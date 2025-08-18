@@ -679,12 +679,13 @@ export class HomeDashboardComponent implements OnInit {
     });
   }
 
-  getEntityStatusSeverity(status: string | null | undefined): string {
+  getEntityStatusSeverity(status: string | null | undefined): "success" | "info" | "warn" | "secondary" | "contrast" | "danger" | undefined {
     switch (status?.toLowerCase()) {
       case 'active': return 'success';
-      case 'draft': return 'warning';
+      case 'draft': return 'warn';
       case 'inactive': return 'secondary';
       case 'closed': return 'danger';
+      case 'archived': return 'contrast';
       default: return 'info';
     }
   }

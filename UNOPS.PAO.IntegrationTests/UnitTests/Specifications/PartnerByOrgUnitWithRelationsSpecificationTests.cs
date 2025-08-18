@@ -110,26 +110,34 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var partner1 = new Partner 
             { 
                 Id = 1, 
-                Name = "Partner 1",
-                Status = "Active",
-                ShortName = "P1",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Partner 1",
+                PartnerShortDescription = "P1",
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true, // "true" equivalent
+                PooledFund = false, // "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
             };
             var partner2 = new Partner 
             { 
                 Id = 2, 
-                Name = "Partner 2",
-                Status = "Active",
-                ShortName = "P2",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Partner 2",
+                PartnerShortDescription = "P2",
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true, // "true" equivalent
+                PooledFund = false, // "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
             };
             
             // Create contacts
@@ -215,21 +223,26 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var partner1 = new Partner 
             { 
                 Id = 1, 
-                Name = "Direct Partner", 
-                Status = "Active",
-                ShortName = "DP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false",
+                // Enhanced Partner structure
+                PartnerDescription = "Direct Partner", 
+                PartnerShortDescription = "DP",
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true, // "true" equivalent
+                PooledFund = false, // "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // "false" equivalent
                 OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
                 {
                     new OrganizationUnitRelationship
                     {
                         OrganizationHierarchyId = orgUnitId,
                         EntityId = 1,
-                        EntityType = nameof(Partner)
+                        EntityType = nameof(Partner),
+                        Status = Domain.Entities.EntityStatus.Active
                     }
                 }
             };
@@ -238,14 +251,18 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var partner2 = new Partner 
             { 
                 Id = 2, 
-                Name = "Indirect Partner",
-                Status = "Active",
-                ShortName = "IP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Indirect Partner",
+                PartnerShortDescription = "IP",
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true, // "true" equivalent
+                PooledFund = false, // "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
             };
             var contact = new Contact 
             { 
@@ -280,14 +297,18 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var partner3 = new Partner 
             { 
                 Id = 3, 
-                Name = "Unrelated Partner",
-                Status = "Active",
-                ShortName = "UP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Unrelated Partner",
+                PartnerShortDescription = "UP",
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true, // "true" equivalent
+                PooledFund = false, // "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
             };
 
             await _dbContext.Partners.AddRangeAsync(partner1, partner2, partner3);
@@ -391,38 +412,50 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var partner1 = new Partner 
             { 
                 Id = 1, 
-                Name = "Partner 1",
-                Status = "Active",
-                ShortName = "P1",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Partner 1",
+                PartnerShortDescription = "P1",
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true, // "true" equivalent
+                PooledFund = false, // "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
             };
             var partner2 = new Partner 
             { 
                 Id = 2, 
-                Name = "Partner 2",
-                Status = "Active",
-                ShortName = "P2",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Partner 2",
+                PartnerShortDescription = "P2",
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true, // "true" equivalent
+                PooledFund = false, // "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
             };
             var partner3 = new Partner 
             { 
                 Id = 3, 
-                Name = "Partner 3",
-                Status = "Active",
-                ShortName = "P3",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Partner 3",
+                PartnerShortDescription = "P3",
+                PartnerCategoryId = 1,
+                LiaisonOfficeId = 1,
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true, // "true" equivalent
+                PooledFund = false, // "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // "false" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply // "false" equivalent
             };
             
             // Create contacts
@@ -552,9 +585,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 PartnerDescription = name,
                 PartnerShortDescription = $"P{id}",
                 PartnerCategoryId = 1, // Default test category
-                PartnerLiaisonOffice = "Default", // Default test liaison office
+                LiaisonOfficeId = 1, // Default test liaison office
                 UNAndStateEntity = false,
-                SystemStatus = Domain.Enums.PartnerStatus.Active,
+                Status = Domain.Entities.EntityStatus.Active,
                 CanCreateNewOpportunities = true,
                 PooledFund = false,
                 DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
@@ -586,9 +619,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 PartnerDescription = name,
                 PartnerShortDescription = $"P{id}",
                 PartnerCategoryId = 1, // Default test category
-                PartnerLiaisonOffice = "Default", // Default test liaison office
+                LiaisonOfficeId = 1, // Default test liaison office
                 UNAndStateEntity = false,
-                SystemStatus = Domain.Enums.PartnerStatus.Active,
+                Status = Domain.Entities.EntityStatus.Active,
                 CanCreateNewOpportunities = true,
                 PooledFund = false,
                 DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,

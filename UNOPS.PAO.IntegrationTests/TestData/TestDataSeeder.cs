@@ -59,19 +59,19 @@ public static class TestDataSeeder
         var partner = TestDataBuilder.GetPartnerFaker().Generate();
         
         // Map status string to enum
-        partner.SystemStatus = status switch
+        partner.Status = status switch
         {
-            "Active" => Domain.Enums.PartnerStatus.Active,
-            "Inactive" => Domain.Enums.PartnerStatus.Closed,
-            "Prospect" => Domain.Enums.PartnerStatus.Draft,
-            _ => Domain.Enums.PartnerStatus.Active
+            "Active" => Domain.Entities.EntityStatus.Active,
+            "Inactive" => Domain.Entities.EntityStatus.Closed,
+            "Prospect" => Domain.Entities.EntityStatus.Draft,
+            _ => Domain.Entities.EntityStatus.Active
         };
         
         // Ensure required fields are set for enhanced Partner structure
         if (string.IsNullOrEmpty(partner.PartnerDescription)) partner.PartnerDescription = "Test Partner";
         if (string.IsNullOrEmpty(partner.PartnerShortDescription)) partner.PartnerShortDescription = "TP";
         if (partner.PartnerCategoryId == 0) partner.PartnerCategoryId = 1;
-        if (string.IsNullOrEmpty(partner.PartnerLiaisonOffice)) partner.PartnerLiaisonOffice = "Default";
+        if (partner.LiaisonOfficeId == 0) partner.LiaisonOfficeId = 1;
         
         // Enhanced boolean fields (no need to check for string)
         // These are already set by the faker with proper types

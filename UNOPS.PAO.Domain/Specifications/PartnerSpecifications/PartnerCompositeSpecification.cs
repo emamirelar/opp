@@ -61,9 +61,9 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
             "partnerdescription" => p => p.PartnerDescription ?? "",
             "shortname" => p => p.PartnerShortDescription ?? "",
             "partnershortdescription" => p => p.PartnerShortDescription ?? "",
-            "status" => p => p.SystemStatus,
-            "systemstatus" => p => p.SystemStatus,
-            "partnerstatus" => p => p.SystemStatus,
+            "status" => p => p.Status,
+            "systemstatus" => p => p.Status,
+            "partnerstatus" => p => p.Status,
             "phone" => p => p.PartnerDescription ?? "", // Phone field deprecated, fallback to description
             "website" => p => p.PartnerDescription ?? "", // Website field deprecated, fallback to description
             "createddate" => p => p.CreatedDate,
@@ -76,7 +76,6 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
             "partnercategoryid" => p => p.PartnerCategoryId,
             "partnergroupcode" => p => p.PartnerGroupCode ?? "",
             "approvalstatus" => p => p.PartnerApprovalStatus,
-            "partnerscope" => p => p.PartnerScope ?? 0,
             _ => p => p.PartnerDescription ?? "" // Default to PartnerDescription if no field specified or unknown field
         };
     }

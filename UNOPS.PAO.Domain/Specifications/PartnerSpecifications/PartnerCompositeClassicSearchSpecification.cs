@@ -95,7 +95,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         // Add status filter if specified (using SystemStatus)
         if (!string.IsNullOrWhiteSpace(status))
         {
-            Expression<Func<Partner, bool>> statusFilter = p => p.SystemStatus.ToString() == status;
+            Expression<Func<Partner, bool>> statusFilter = p => p.Status.ToString() == status;
             predicate = CombineExpressions(predicate, statusFilter);
         }
         

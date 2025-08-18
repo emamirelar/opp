@@ -17,10 +17,9 @@ public static class TestDataBuilder
             .RuleFor(p => p.PartnerShortDescription, f => f.Company.CompanySuffix())
             .RuleFor(p => p.PartnerLongDescription, f => f.Lorem.Paragraph())
             .RuleFor(p => p.PartnerCategoryId, f => f.Random.Number(1, 10))
-            .RuleFor(p => p.PartnerLiaisonOffice, f => f.PickRandom(new[] { "Default", "HQ", "Regional", "Country" }))
+            .RuleFor(p => p.LiaisonOfficeId, f => f.Random.Int(1, 3)) // Reference to seeded liaison offices
             .RuleFor(p => p.UNAndStateEntity, f => f.Random.Bool(0.1f))
-            .RuleFor(p => p.SystemStatus, f => f.PickRandom<Domain.Enums.PartnerStatus>())
-            .RuleFor(p => p.PartnerScope, f => f.PickRandom<Domain.Enums.PartnerScope>())
+            .RuleFor(p => p.Status, f => f.PickRandom<Domain.Entities.EntityStatus>())
             .RuleFor(p => p.KeyGlobalPartner, f => f.Random.Bool(0.2f))
             .RuleFor(p => p.UNSecretariatPartner, f => f.Random.Bool(0.1f))
             .RuleFor(p => p.DueDiligenceRequired, f => f.PickRandom<Domain.Enums.DueDiligenceRequired>())

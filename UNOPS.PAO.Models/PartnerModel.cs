@@ -28,6 +28,8 @@ public class PartnerModel
     public string? PartnerCategoryCode { get; set; } // Partner category code
     public int? PartnerOrgUnitId { get; set; } // Nullable if unmanaged
     public string? PartnerOrgUnitName { get; set; }
+    public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice
+    public string? LiaisonOfficeName { get; set; } // Navigation property
     
     // Partner Group Information
     public string? PartnerGroupCode { get; set; }
@@ -46,14 +48,8 @@ public class PartnerModel
     // ERP Integration
     public int? ErpDimValue { get; set; } // ERP dimension value
 
-    // Liaison Office
-    public string PartnerLiaisonOffice { get; set; } // Enum from predefined list
-
     // UN & State Entity
     public bool UNAndStateEntity { get; set; }
-
-    // Partner Scope
-    public string? PartnerScope { get; set; } // "Local" / "Regional" / "Global"
 
     // ========== APPROVAL FIELDS (Admin only) ==========
     public bool KeyGlobalPartner { get; set; }
@@ -73,7 +69,7 @@ public class PartnerModel
     public string? ReasonForNoNewOpportunity { get; set; }
 
     // System Status
-    public string SystemStatus { get; set; } // Draft / Active / Closed / Archived
+    public string Status { get; set; } // Draft / Active / Closed / Archived
 
     // Logo URL
     public string? LogoUrl { get; set; }

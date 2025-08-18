@@ -25,6 +25,6 @@ public class UNOPSPartnerByStatusSpecification : BaseSpecification<UNOPSPartner>
             return p => true;
         }
         
-        return p => p.SystemStatus.ToString() == status;
+                        return p => p.Status.ToString() == status;
     }
 }

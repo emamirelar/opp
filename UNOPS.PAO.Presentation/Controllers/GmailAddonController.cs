@@ -162,7 +162,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                             PartnerCategoryId = 1, // Default category - this should be set appropriately
                             PartnerLiaisonOffice = "Default", // Default liaison office - this should be set appropriately
                             UNAndStateEntity = false,
-                            SystemStatus = "Draft",
+                            Status = "Draft",
                             CanCreateNewOpportunities = false, // Default to not allowed for auto-created partners
                             PooledFund = false,
                             DueDiligenceRequired = "Required",

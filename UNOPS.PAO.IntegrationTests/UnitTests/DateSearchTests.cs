@@ -468,9 +468,9 @@ public class DateSearchTests
             PartnerDescription = name,
             PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
             PartnerCategoryId = 1, // Default test category
-            PartnerLiaisonOffice = "Default", // Default test liaison office
+            LiaisonOfficeId = 1, // Default test liaison office
             UNAndStateEntity = false,
-            SystemStatus = Domain.Enums.PartnerStatus.Active,
+            Status = Domain.Entities.EntityStatus.Active,
             CanCreateNewOpportunities = true,
             PooledFund = false,
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,

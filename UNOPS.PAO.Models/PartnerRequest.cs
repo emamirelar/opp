@@ -20,6 +20,7 @@ public class PartnerRequest : ExtensibleModel
     // Category & Organization Unit
     public int PartnerCategoryId { get; set; } // FK to Partner Category (required)
     public int? PartnerOrgUnitId { get; set; } // Nullable if unmanaged
+    public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice (required)
     
     // Report Levels
     public int? PartnerInternalReportLevel { get; set; } // 1-5 defined by Partner group Hierarchy
@@ -36,9 +37,6 @@ public class PartnerRequest : ExtensibleModel
     
     // UN & State Entity
     public bool UNAndStateEntity { get; set; } = false;
-    
-    // Partner Scope
-    public string? PartnerScope { get; set; } // "Local" / "Regional" / "Global"
     
     // ========== APPROVAL FIELDS (Admin only) ==========
     public bool KeyGlobalPartner { get; set; } = false;
@@ -65,8 +63,8 @@ public class PartnerRequest : ExtensibleModel
     public bool CanCreateNewOpportunities { get; set; } = true;
     public string? ReasonForNoNewOpportunity { get; set; }
     
-    // System Status
-    public string SystemStatus { get; set; } = "Draft"; // "Draft" / "Active" / "Closed" / "Archived"
+    // Partner Status
+    public string Status { get; set; } = "Draft"; // "Draft" / "Active" / "Closed" / "Archived"
     
     // Partner Group
     public string? PartnerGroupCode { get; set; }

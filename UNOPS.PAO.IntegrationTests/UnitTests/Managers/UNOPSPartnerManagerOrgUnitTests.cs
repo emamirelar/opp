@@ -120,7 +120,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 { 
                     Id = p.Id, 
                     PartnerDescription = p.PartnerDescription,
-                    SystemStatus = p.SystemStatus.ToString(),
+                    Status = p.Status.ToString(),
                     PartnerGroupCode = p.PartnerGroupCode,
                     LogoUrl = null // Explicitly set to null to avoid issues
                 });
@@ -175,9 +175,9 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 PartnerDescription = name,
                 PartnerShortDescription = name.Replace(" ", ""),
                 PartnerCategoryId = 1, // Default test category
-                PartnerLiaisonOffice = "Default", // Default test liaison office
+                LiaisonOfficeId = 1, // Default test liaison office
                 UNAndStateEntity = false,
-                SystemStatus = Domain.Enums.PartnerStatus.Active,
+                Status = Domain.Entities.EntityStatus.Active,
                 CanCreateNewOpportunities = false, // Default "false" equivalent
                 PooledFund = false, // Default "false" equivalent
                 DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "false" equivalent
@@ -387,7 +387,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var response = (PaginationResponse<PartnerModel>)result;
             
             response.Records.Should().HaveCount(6); // All partners are active
-            response.Records.Should().OnlyContain(p => p.SystemStatus == "Active");
+            response.Records.Should().OnlyContain(p => p.Status == "Active");
         }
 
         public void Dispose()

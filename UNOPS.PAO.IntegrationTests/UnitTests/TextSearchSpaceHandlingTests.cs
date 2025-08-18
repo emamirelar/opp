@@ -372,12 +372,12 @@ public class TextSearchSpaceHandlingTests
     // Helper method to get status as string for comparison compatibility
     private static string GetStatusAsString(UNOPSPartner partner)
     {
-        return partner.SystemStatus switch
+        return partner.Status switch
         {
-            Domain.Enums.PartnerStatus.Active => "Active",
-            Domain.Enums.PartnerStatus.Closed => "Inactive",
-            Domain.Enums.PartnerStatus.Draft => "Prospect",
-            Domain.Enums.PartnerStatus.Archived => "Archived",
+            Domain.Entities.EntityStatus.Active => "Active",
+            Domain.Entities.EntityStatus.Closed => "Inactive",
+            Domain.Entities.EntityStatus.Draft => "Prospect",
+            Domain.Entities.EntityStatus.Archived => "Archived",
             _ => "Unknown"
         };
     }
@@ -447,10 +447,10 @@ public class TextSearchSpaceHandlingTests
         // Map old status to new enum
         var systemStatus = status switch
         {
-            "Active" => Domain.Enums.PartnerStatus.Active,
-            "Inactive" => Domain.Enums.PartnerStatus.Closed,
-            "Prospect" => Domain.Enums.PartnerStatus.Draft,
-            _ => Domain.Enums.PartnerStatus.Draft
+            "Active" => Domain.Entities.EntityStatus.Active,
+            "Inactive" => Domain.Entities.EntityStatus.Closed,
+            "Prospect" => Domain.Entities.EntityStatus.Draft,
+            _ => Domain.Entities.EntityStatus.Draft
         };
 
         return new UNOPSPartner
@@ -460,9 +460,9 @@ public class TextSearchSpaceHandlingTests
             PartnerDescription = name,
             PartnerShortDescription = shortName,
             PartnerCategoryId = 1, // Default test category
-            PartnerLiaisonOffice = "Default", // Default test liaison office
+            LiaisonOfficeId = 1, // Default test liaison office
             UNAndStateEntity = false,
-            SystemStatus = systemStatus,
+            Status = systemStatus,
             CanCreateNewOpportunities = true,
             PooledFund = false,
             DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,

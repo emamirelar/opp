@@ -101,7 +101,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             .Include(p => p.PartnerGroup)
             .Include(p => p.Projects)
             .Where(p => (p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value) 
-                       && p.Status != "Draft")
+                       && p.Status != Domain.Entities.EntityStatus.Draft)
             .OrderByDescending(p => p.LastModifiedDate ?? p.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -184,7 +184,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
         var query = _context.Set<UNOPSPartner>()
             .Include(p => p.PartnerGroup)
             .Where(p => (p.CreatedBy == userId.Value || p.LastModifiedBy == userId.Value) 
-                       && p.Status == "Draft")
+                       && p.Status == Domain.Entities.EntityStatus.Draft)
             .OrderByDescending(p => p.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -422,11 +422,11 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             var recentPartners = filteredPartners.Select(p => new RecentUpdateModel
             {
                 Id = p.Id,
-                Name = p.Name,
+                Name = p.PartnerDescription,
                 Type = "Partner",
                 LastModifiedDate = p.LastModifiedDate,
                 LastModifiedBy = p.LastModifiedBy,
-                Status = p.Status?.ToString() ?? "Unknown",
+                Status = p.Status.ToString(),
                 EntityData = null
             }).ToList();
 
@@ -461,7 +461,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                 Type = "Contact",
                 LastModifiedDate = c.LastModifiedDate,
                 LastModifiedBy = c.LastModifiedBy,
-                Status = c.Status?.ToString() ?? "Unknown",
+                Status = c.Status.ToString(),
                 EntityData = null
             }).ToList();
 
@@ -496,7 +496,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
                 Type = "Interaction",
                 LastModifiedDate = i.LastModifiedDate,
                 LastModifiedBy = i.LastModifiedBy,
-                Status = i.Status.ToString() ?? "Unknown",
+                Status = i.Status.ToString(),
                 EntityData = null
             }).ToList();
 

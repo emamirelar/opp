@@ -12,7 +12,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         {
         }
         
-        public TestPartnerSpecification(string status) : base(p => p.SystemStatus.ToString() == status)
+        public TestPartnerSpecification(string status) : base(p => p.Status.ToString() == status)
         {
         }
         
@@ -27,7 +27,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
         {
         }
         
-        public TestUNOPSPartnerSpecification(string status) : base(p => p.SystemStatus.ToString() == status)
+        public TestUNOPSPartnerSpecification(string status) : base(p => p.Status.ToString() == status)
         {
         }
         

@@ -33,13 +33,13 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
         private static UNOPSPartner CreateTestPartner(string name, string status, int organizationHierarchyId, int createdBy = 1)
         {
             // Map old status to new enum
-            var systemStatus = status switch
-            {
-                "Active" => Domain.Enums.PartnerStatus.Active,
-                "Inactive" => Domain.Enums.PartnerStatus.Closed,
-                "Draft" => Domain.Enums.PartnerStatus.Draft,
-                _ => Domain.Enums.PartnerStatus.Draft
-            };
+                    var systemStatus = status switch
+        {
+            "Active" => Domain.Entities.EntityStatus.Active,
+            "Inactive" => Domain.Entities.EntityStatus.Closed,
+            "Draft" => Domain.Entities.EntityStatus.Draft,
+            _ => Domain.Entities.EntityStatus.Draft
+        };
 
             var partner = new UNOPSPartner
             {
@@ -47,9 +47,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
                 PartnerDescription = name,
                 PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
                 PartnerCategoryId = 1, // Default test category
-                PartnerLiaisonOffice = "Default", // Default test liaison office
+                LiaisonOfficeId = 1, // Default test liaison office
                 UNAndStateEntity = false,
-                SystemStatus = systemStatus,
+                Status = systemStatus,
                 CanCreateNewOpportunities = false,
                 PooledFund = false,
                 DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
