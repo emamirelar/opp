@@ -13,6 +13,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.Sql(@"TRUNCATE TABLE public.""Partners"" CASCADE;");
             migrationBuilder.DropColumn(
                 name: "Address1City",
                 schema: "public",
