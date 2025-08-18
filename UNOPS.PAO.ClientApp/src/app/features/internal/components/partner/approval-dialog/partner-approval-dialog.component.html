@@ -1,0 +1,140 @@
+<div class="flex flex-col h-full gap-4">
+  <div class="flex flex-col gap-2 mb-4">
+    <h2 class="text-2xl font-bold">{{ 'title.approvePartner' | translate }}</h2>
+    <p class="text-gray-600">{{ 'description.approvePartner' | translate }}</p>
+    <div class="text-lg font-semibold text-blue-700">{{ partner.name }}</div>
+  </div>
+
+  @if( showValidationFailedError() === true ){
+  <p-message severity="error" icon="pi pi-info-circle" styleClass="mt-2 mb-3">{{ 'validation.pleaseFullAllRequired' | translate }}</p-message>
+  }
+
+  <form [formGroup]="formGroup" class="flex flex-col gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      <!-- Pooled Fund -->
+      <div class="flex flex-col gap-2">
+        <label for="pooledFund">{{ 'label.partner.pooledFund' | translate }} *</label>
+        <p-select formControlName="pooledFund" [options]="allYesNoData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [appendTo]="'body'"
+                  fluid="true" 
+                  id="pooledFund" 
+                  [ariaLabel]="'aria.selectPooledFund' | translate" />
+        @if( formGroup.get("pooledFund")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Pooled Fund is required.</p-message>
+        }
+      </div>
+
+      <!-- DD Required -->
+      <div class="flex flex-col gap-2">
+        <label for="ddRequired">{{ 'label.partner.ddRequired' | translate }} *</label>
+        <p-select formControlName="ddRequired" [options]="allYesNoData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [appendTo]="'body'"
+                  fluid="true" 
+                  id="ddRequired" 
+                  [ariaLabel]="'aria.selectDDRequired' | translate" />
+        @if( formGroup.get("ddRequired")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">DD Required is required.</p-message>
+        }
+      </div>
+
+      <!-- DD EAC Done -->
+      <div class="flex flex-col gap-2">
+        <label for="ddeacDone">{{ 'label.partner.ddeacDone' | translate }} *</label>
+        <p-select formControlName="ddeacDone" [options]="allYesNoData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [appendTo]="'body'"
+                  fluid="true" 
+                  id="ddeacDone" 
+                  [ariaLabel]="'aria.selectDDEACDone' | translate" />
+        @if( formGroup.get("ddeacDone")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">DD EAC Done is required.</p-message>
+        }
+      </div>
+
+      <!-- EAC Reference -->
+      <div class="flex flex-col gap-2">
+        <label>{{ "label.partner.eacReference" | translate }}</label>
+        <input pInputText fluid="true" formControlName="eacReference" />
+      </div>
+
+      <!-- Levy Potentially Applies -->
+      <div class="flex flex-col gap-2">
+        <label for="levyPotentiallyApplies">{{ 'label.partner.levyPotentiallyApplies' | translate }} *</label>
+        <p-select formControlName="levyPotentiallyApplies" [options]="allPartnerLevyAppliesData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [appendTo]="'body'"
+                  fluid="true" 
+                  id="levyPotentiallyApplies" 
+                  [ariaLabel]="'aria.selectLevyPotentiallyApplies' | translate" />
+        @if( formGroup.get("levyPotentiallyApplies")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Levy Potentially Applies is required.</p-message>
+        }
+      </div>
+
+      <!-- Reason For Levy Not Applying -->
+      <div class="flex flex-col gap-2">
+        <label for="reasonForLevyNotApplying">{{ 'label.partner.reasonForLevyNotApplying' | translate }}</label>
+        <p-select formControlName="reasonForLevyNotApplying" [options]="allPartnerReasonForLevyNotData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [appendTo]="'body'"
+                  fluid="true" 
+                  id="reasonForLevyNotApplying" 
+                  [ariaLabel]="'aria.selectReasonForLevyNotApplying' | translate" />
+      </div>
+
+      <!-- Levy Treatment -->
+      <div class="flex flex-col gap-2">
+        <label for="levyTreatment">{{ 'label.partner.levyTreatment' | translate }}</label>
+        <p-select formControlName="levyTreatment" [options]="allPartnerLevyTreatmentData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [appendTo]="'body'"
+                  fluid="true" 
+                  id="levyTreatment" 
+                  [ariaLabel]="'aria.selectLevyTreatment' | translate" />
+      </div>
+
+      <!-- Global Key Account -->
+      <div class="flex items-center gap-3">
+        <p-checkbox 
+          formControlName="globalKeyAccount"
+          [binary]="true" 
+          id="gka" />
+        <label for="gka">{{ "label.partner.globalKeyAccount" | translate }}</label>
+      </div>
+
+      <!-- UN Secretariat Entity -->
+      <div class="flex items-center gap-3">
+        <p-checkbox 
+          formControlName="unSecretariatEntity"
+          [binary]="true" 
+          id="unse" />
+        <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
+      </div>
+    </div>
+  </form>
+
+  <!-- Dialog Footer -->
+  <div class="flex justify-end gap-3 pt-4 border-t">
+    <p-button 
+      label="{{ 'button.cancel' | translate }}"
+      severity="secondary"
+      (onClick)="handleCancel()"
+      [disabled]="isLoading()" />
+    
+    <p-button 
+      label="{{ 'button.approve' | translate }}"
+      severity="success"
+      icon="pi pi-check"
+      (onClick)="handleApprove()"
+      [loading]="isLoading()" />
+  </div>
+</div>

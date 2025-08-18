@@ -37,6 +37,7 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
 import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { AuthService } from '../../../../../essentials/services/auth.service';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -105,6 +106,7 @@ export class PartnerEditDialogComponent implements OnInit {
       }),
       reasonForLevyNotApplying: new FormControl(null),
       levyTreatment: new FormControl(null),
+      partnerApprovalStatus: new FormControl('Approved'), // TODO: Set based on actual partner data
       address1Street: new FormControl(null),
       address1Street2: new FormControl(null),
       address1City: new FormControl(null),
@@ -136,9 +138,11 @@ export class PartnerEditDialogComponent implements OnInit {
   @Output() onRecordCreationSuccess = new EventEmitter<any>();
 
   partnerTreeService = inject(PartnerTreeService);
+  authService = inject(AuthService);
 
   showValidationFailedError = signal<boolean>(false);
   isLoading = signal<boolean>(false);
+  isAdmin = signal<boolean>(false);
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
   allYesNoData = this.cachedDataService.allYesNo;
@@ -148,6 +152,19 @@ export class PartnerEditDialogComponent implements OnInit {
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
   // Backend already filters for active organization units
   allOrganizationUnitsData = this.cachedDataService.allOrganizationUnits;
+
+  // Computed properties for approval section
+  isPartnerApproved = computed(() => {
+    return this.formGroup.get('partnerApprovalStatus')?.value === 'Approved';
+  });
+
+  showApprovalFields = computed(() => {
+    return this.isPartnerApproved();
+  });
+
+  approvalFieldsEnabled = computed(() => {
+    return this.isAdmin();
+  });
 
   // Signal to track form control changes
   private selectedOrgUnitsSignal = signal<number[]>([]);
@@ -191,6 +208,17 @@ export class PartnerEditDialogComponent implements OnInit {
   }
 
   ngOnInit() {
+    // Check admin role
+    this.authService.isAdmin().subscribe({
+      next: (isAdmin) => {
+        this.isAdmin.set(isAdmin);
+      },
+      error: (error) => {
+        console.error('Error checking admin role:', error);
+        this.isAdmin.set(false);
+      }
+    });
+
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';

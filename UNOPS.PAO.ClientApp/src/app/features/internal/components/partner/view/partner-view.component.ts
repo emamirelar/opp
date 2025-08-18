@@ -46,6 +46,10 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
+import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-approval-dialog.component';
+import { AuthService } from '../../../../../essentials/services/auth.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 /**
  * @uiEntity Partner
@@ -91,11 +95,12 @@ import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-
     TooltipModule,
     AiPanelComponent,
     RouterModule,
+    ConfirmDialogModule,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DialogService],
+  providers: [DialogService, ConfirmationService],
   styles: [`
     :host ::ng-deep .custom-avatar-size {
       width: 5rem !important;
@@ -118,6 +123,8 @@ export class PartnerViewComponent implements OnInit {
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
   permissionService = inject(PermissionUtilityService);
+  authService = inject(AuthService);
+  confirmationService = inject(ConfirmationService);
 
   // Permission management using utility service
   private permissionUtils = this.permissionService.createInstancePermissions('Partner');
@@ -169,6 +176,17 @@ export class PartnerViewComponent implements OnInit {
 
   ngOnInit() {
     console.log('PartnerView ngOnInit - showAiPanel value:', this.showAiPanel);
+
+    // Check admin role
+    this.authService.isAdmin().subscribe({
+      next: (isAdmin) => {
+        this.isAdmin.set(isAdmin);
+      },
+      error: (error) => {
+        console.error('Error checking admin role:', error);
+        this.isAdmin.set(false);
+      }
+    });
 
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
@@ -397,6 +415,83 @@ export class PartnerViewComponent implements OnInit {
 
   getUploadLogoUrl() {
     return this.partnerService.getUploadLogoUrl(this.recordId);
+  }
+
+  /**
+   * Check if current user is admin (Partnership Global Admin)
+   */
+  isAdmin = signal<boolean>(false);
+
+  /**
+   * Check if current user can edit the partner
+   * Rules: 
+   * - User must have update permissions
+   * - If partner is approved, only admin users can edit
+   * - If partner is not approved, regular users with permissions can edit
+   */
+  canEditPartner = computed(() => {
+    const hasUpdatePermission = this.recordPermissions().permissions.canUpdate;
+    const isApproved = this.recordData().approvalStatus === 'Approved';
+    
+    if (!hasUpdatePermission) {
+      return false;
+    }
+    
+    // If partner is approved, only admin can edit
+    if (isApproved) {
+      return this.isAdmin();
+    }
+    
+    // If partner is not approved, any user with update permission can edit
+    return true;
+  });
+
+  /**
+   * @uiButton approve_partner
+   * @description Opens approval confirmation dialog and then approval dialog for admin users to approve partners
+   * @label Approval
+   * @icon pi pi-check-circle
+   * @when_to_use When partner needs to be approved and user has admin privileges
+   * @permissions PARTNER_GLOB_ADMIN
+   */
+  handleApprovalClick() {
+    console.log('Approval button clicked for partner:', this.recordData().name);
+    
+    // Show confirmation dialog
+    this.confirmationService.confirm({
+      message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
+      header: 'Confirm Approval',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        console.log('Approval confirmed, opening approval dialog');
+        this.openApprovalDialog();
+      },
+      reject: () => {
+        console.log('Approval cancelled');
+      }
+    });
+  }
+
+  /**
+   * Opens the approval dialog with approval-related fields
+   */
+  private openApprovalDialog() {
+    const ref = this.dialogService.open(PartnerApprovalDialogComponent, {
+      header: 'Partner Approval',
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      data: {
+        partner: this.recordData()
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        // Reload partner details to show updated approval status
+        this._loadRecordDetails();
+      }
+    });
   }
 
   /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {

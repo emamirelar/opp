@@ -21,6 +21,13 @@ export interface Partner {
   levyPotentiallyApplies?: string | null;
   reasonForLevyNotApplying?: string | null;
   levyTreatment?: string | null;
+  
+  // Approval-related fields
+  approvalStatus?: string | null;
+  approvedBy?: string | null;
+  approvedDate?: Date | null;
+  partnerApprovalStatus?: string | null; // "Approved" | "Not Approved"
+  
   address1Street?: string | null;
   address1Street2?: string | null;
   address1City?: string | null;

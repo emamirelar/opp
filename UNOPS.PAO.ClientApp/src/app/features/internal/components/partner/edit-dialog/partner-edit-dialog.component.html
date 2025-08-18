@@ -127,82 +127,119 @@
         <p-message severity="error" variant="simple">Short Name must be entered.</p-message>
         }
       </div>
+    </div>
+
+    <!-- Approval Fields Section - Only visible if partner is approved -->
+    @if (showApprovalFields()) {
+    <div class="grid grid-cols-9 gap-4 mt-6">
+      <div class="text-xl col-span-full flex items-center gap-2">
+        {{ "title.partnerTitles.approvalFields" | translate }}
+        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+          {{ "status.approved" | translate }}
+        </span>
+      </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="pooledFund">{{ 'label.partner.pooledFund' | translate }}*</label>
         <p-select formControlName="pooledFund" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
+                  [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="pooledFund" [ariaLabel]="'aria.selectPooledFund' | translate" />
         @if( formGroup.get("pooledFund")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">Pooled Fund is required.</p-message>
         }
       </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="ddRequired">{{ 'label.partner.ddRequired' | translate }}*</label>
         <p-select formControlName="ddRequired" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
+                  [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="ddRequired" [ariaLabel]="'aria.selectDDRequired' | translate" />
         @if( formGroup.get("ddRequired")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">DD Required is required.</p-message>
         }
       </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="ddeacDone">{{ 'label.partner.ddeacDone' | translate }}*</label>
         <p-select formControlName="ddeacDone" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
+                  [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="ddeacDone" [ariaLabel]="'aria.selectDDEACDone' | translate" />
         @if( formGroup.get("ddeacDone")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">DD/EAC Done is required.</p-message>
         }
       </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label>{{ "label.partner.eacReference" | translate }}</label>
-        <input pInputText fluid="true" formControlName="eacReference" />
+        <input pInputText fluid="true" formControlName="eacReference" [disabled]="!approvalFieldsEnabled()" />
       </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="levyPotentiallyApplies">{{ 'label.partner.levyPotentiallyApplies' | translate }}*</label>
         <p-select formControlName="levyPotentiallyApplies" [options]="allPartnerLevyAppliesData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
+                  [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="levyPotentiallyApplies" [ariaLabel]="'aria.selectLevyPotentiallyApplies' | translate" />
         @if( formGroup.get("levyPotentiallyApplies")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">Levy Potentially Applies is required.</p-message>
         }
       </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="reasonForLevyNotApplying">{{ 'label.partner.reasonForLevyNotApplying' | translate }}</label>
         <p-select formControlName="reasonForLevyNotApplying" [options]="allPartnerReasonForLevyNotData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
+                  [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="reasonForLevyNotApplying" [ariaLabel]="'aria.selectReasonForLevyNotApplying' | translate" />
       </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="levyTreatment">{{ 'label.partner.levyTreatment' | translate }}</label>
         <p-select formControlName="levyTreatment" [options]="allPartnerLevyTreatmentData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
+                  [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="levyTreatment" [ariaLabel]="'aria.selectLevyTreatment' | translate" />
       </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <p-checkbox [binary]="true"
                     formControlName="globalKeyAccount"
+                    [disabled]="!approvalFieldsEnabled()"
                     inputId="gka" />
         <label for="gka">{{ "label.partner.globalKeyAccount" | translate }}</label>
       </div>
+      
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <p-checkbox [binary]="true"
                     formControlName="unSecretariatEntity"
+                    [disabled]="!approvalFieldsEnabled()"
                     inputId="unse" />
         <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
       </div>
+      
+      @if (!approvalFieldsEnabled()) {
+        <div class="col-span-full">
+          <p-message severity="info" icon="pi pi-info-circle" styleClass="w-full">
+            {{ 'message.approvalFieldsAdminOnly' | translate }}
+          </p-message>
+        </div>
+      }
     </div>
+    }
   </form>
 </div>

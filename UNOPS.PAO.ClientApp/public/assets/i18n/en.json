@@ -59,7 +59,8 @@
       "partnerInformation": "Partner Information",
       "addressInformation": "Address Information",
       "address1": "Address 1",
-      "additionalInformation": "Additional Information"
+      "additionalInformation": "Additional Information",
+      "approvalFields": "Approval Fields"
     },
     "partnerDetails": "Partner Details",
     "partnerDashboard": "Partner Dashboard",
@@ -75,7 +76,8 @@
     "seeLess": "See Less",
     "preFill": "AI Transcribe",
     "preFillOptions": "AI Transcribe",
-    "preFillFrom": "Transcribe Data"
+    "preFillFrom": "Transcribe Data",
+    "approvePartner": "Approve Partner"
   },
   "button": {
     "back": "Back",
@@ -102,6 +104,7 @@
     "active": "Mark as Active",
     "viewContacts": "View Contacts",
     "new": "New",
+    "approve": "Approve",
     "uploadImage": "Upload Image",
     "seeMore": "See More",
     "seeLess": "See Less",
@@ -231,6 +234,7 @@
     },
     "decisionDate": "Decision Date",
     "description": "Description",
+    "approvePartner": "Please fill in the required approval fields below and click 'Approve' to finalize the partner approval process.",
     "eligibilityCriteria": "Eligibility Criteria",
     "eligibleEntities": "Eligible Entities",
     "informationSession": "Information Session",
@@ -278,6 +282,8 @@
     "selectionMethodology": "Selection Methodology",
     "stage": "Stage",
     "status": "Status",
+    "approved": "Approved",
+    "notApproved": "Not Approved",
     "yes": "Yes",
     "interaction": {
       "type": "Type",
@@ -345,6 +351,7 @@
     "interactionDeleted": "Interaction successfully deleted",
     "errorDeletingInteraction": "Error while deleting interaction",
     "dropUrlToAddLink": "Drop URL or file to add link",
+    "approvalFieldsAdminOnly": "These approval fields can only be edited by Partnership Global Admin users.",
     "dropGoogleSheetsLink": "Drop a Google Sheets link",
     "failedToLoadImage": "Failed to load image",
     "failedToUploadImage": "Failed to upload image",

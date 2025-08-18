@@ -105,4 +105,17 @@ export class PartnerService {
     return `${this.apiUrl}/${recordId}/logo`;
   }
   
+  approvePartner(requestJson: any) {
+    this.isLoading.set(true);
+    return this.http.post(`${this.apiUrl}/${requestJson.id}/approve`, requestJson).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
+  }
+  
 }

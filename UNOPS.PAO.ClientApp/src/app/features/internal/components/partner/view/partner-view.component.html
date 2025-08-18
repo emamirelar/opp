@@ -13,15 +13,30 @@
       <p-panel class="{{infoLoading() ? 'opacity-50' : ''}} shadow-sm border border-solid border-gray-50 rounded-xl">
         <ng-template pTemplate="header">
           <div class="flex justify-between items-center w-full">
-            <span class="text-xl">Partner Information</span>
-            @if (recordPermissions().permissions.canUpdate) {
-              <p-button icon="pi pi-pencil"
-                        [rounded]="true"
-                        [text]="true"
-                        [size]="'small'"
-                        class="edit-button partner-edit-button"
-                        (onClick)="handleEditClick()"></p-button>
-            }
+            <div class="flex items-center gap-2">
+              <span class="text-xl">Partner Information</span>
+              @if (recordData().approvalStatus === 'Approved') {
+                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Approved</span>
+              } @else if (recordData().approvalStatus === 'Pending') {
+                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Pending Approval</span>
+              }
+            </div>
+            <div class="flex items-center gap-2">
+              @if (isAdmin() && recordData().approvalStatus !== 'Approved') {
+                <p-button label="Approval"
+                          [rounded]="true"
+                          class="approval-button"
+                          (onClick)="handleApprovalClick()"></p-button>
+              }
+              @if (canEditPartner()) {
+                <p-button icon="pi pi-pencil"
+                          [rounded]="true"
+                          [text]="true"
+                          [size]="'small'"
+                          class="edit-button partner-edit-button"
+                          (onClick)="handleEditClick()"></p-button>
+              }
+            </div>
           </div>
         </ng-template>
 
@@ -285,4 +300,7 @@
     </ng-template>
   </p-dialog>
 }
+
+<!-- Confirmation Dialog for Approval - Always available -->
+<p-confirmDialog></p-confirmDialog>
 <!--</p-blockui>-->
