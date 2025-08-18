@@ -1,0 +1,24 @@
+FROM node:18 AS spa-build
+WORKDIR /app/UNOPS.PAO.ClientApp
+
+COPY UNOPS.PAO.ClientApp/package.json ./
+RUN npm install
+COPY UNOPS.PAO.ClientApp/ ./
+
+RUN npm run build:qa
+
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /app
+COPY . .
+RUN dotnet restore ./UNOPS.PAO.Server
+
+COPY UNOPS.PAO.Server/ ./UNOPS.PAO.Server/
+RUN dotnet publish ./UNOPS.PAO.Server -c Test -o /app/out
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+WORKDIR /app
+
+COPY --from=build /app/out ./
+COPY --from=spa-build /app/UNOPS.PAO.ClientApp/dist/UNOPS.PAO.ClientApp/browser ./wwwroot
+
+ENTRYPOINT ["dotnet", "UNOPS.PAO.Server.dll"]
