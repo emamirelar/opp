@@ -234,15 +234,23 @@ public abstract class BaseUNOPSManager
             {
                 var entityPermissions = await GetEntityPermissionsAsync(user, _entityName);
                 
+                // Check if Partner is in a final state (Closed or Archived)
+                var isPartnerInFinalState = IsPartnerInFinalState(result);
+                
                 // Consolidate permissions from multiple roles into a single permissions object
                 // If ANY role grants a permission, it should be true
+                // However, override modification permissions if Partner is in final state
                 var consolidatedPermissions = new EntityPermissionsModel
                 {
                     CanRead = entityPermissions.Any(p => p.CanRead),
-                    CanCreate = entityPermissions.Any(p => p.CanCreate),
-                    CanUpdate = entityPermissions.Any(p => p.CanUpdate),
-                    CanDelete = entityPermissions.Any(p => p.CanDelete),
-                    CanEditFields = GetConsolidatedEditableFields(entityPermissions)
+                    CanCreate = isPartnerInFinalState ? false : entityPermissions.Any(p => p.CanCreate),
+                    CanUpdate = isPartnerInFinalState ? false : entityPermissions.Any(p => p.CanUpdate),
+                    CanDelete = isPartnerInFinalState ? false : entityPermissions.Any(p => p.CanDelete),
+                    CanEditFields = isPartnerInFinalState ? new List<string>() : GetConsolidatedEditableFields(entityPermissions),
+                    CanActivate = GetCanActivate(result, entityPermissions),
+                    CanClose = GetCanClose(result, entityPermissions),
+                    CanArchive = GetCanArchive(result, entityPermissions),
+                    CanApprove = GetCanApprove(result, entityPermissions)
                 };
 
                 // Check instance-level access if PermissionService is available and entity has data
@@ -627,5 +635,209 @@ public abstract class BaseUNOPSManager
 
         // Return the consolidated list of editable fields
         return allEditableFields.ToList();
+    }
+
+    /// <summary>
+    /// Determines if the user can activate a Partner entity based on mandatory fields and permissions
+    /// </summary>
+    private bool? GetCanActivate(object result, List<EntityPermission> entityPermissions)
+    {
+        // Only applicable to Partner entities
+        if (_entityName != "Partner" || result == null)
+            return null;
+
+        // Check if user has update permission (required for activation)
+        var hasUpdatePermission = entityPermissions.Any(p => p.CanUpdate);
+        if (!hasUpdatePermission)
+            return false;
+
+        // Use reflection to check if this is a Partner entity with the required methods
+        var resultType = result.GetType();
+        var hasMandatoryFieldsMethod = resultType.GetMethod("HasMandatoryFieldsForActivation");
+        var statusProperty = resultType.GetProperty("Status");
+
+        if (hasMandatoryFieldsMethod == null || statusProperty == null)
+            return null;
+
+        try
+        {
+            // Check if partner is in Draft status
+            var status = statusProperty.GetValue(result);
+            var isDraft = status?.ToString() == "Draft" || status?.ToString() == "3"; // EntityStatus.Draft = 3
+
+            if (!isDraft)
+                return false; // Can only activate Draft partners
+
+            // Check if all mandatory fields are filled
+            var hasMandatoryFields = (bool)hasMandatoryFieldsMethod.Invoke(result, null);
+            return hasMandatoryFields;
+        }
+        catch
+        {
+            // If reflection fails, return null (unknown)
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines if the user can close a Partner entity
+    /// </summary>
+    private bool? GetCanClose(object result, List<EntityPermission> entityPermissions)
+    {
+        // Only applicable to Partner entities
+        if (_entityName != "Partner" || result == null)
+            return null;
+
+        // Check if user has update permission (required for closing)
+        var hasUpdatePermission = entityPermissions.Any(p => p.CanUpdate);
+        if (!hasUpdatePermission)
+            return false;
+
+        // Use reflection to check partner status and approval status
+        var resultType = result.GetType();
+        var statusProperty = resultType.GetProperty("Status");
+        var approvalStatusProperty = resultType.GetProperty("PartnerApprovalStatus");
+
+        if (statusProperty == null || approvalStatusProperty == null)
+            return null;
+
+        try
+        {
+            // Check if partner is Active
+            var status = statusProperty.GetValue(result);
+            var isActive = status?.ToString() == "Active" || status?.ToString() == "1"; // EntityStatus.Active = 1
+            
+            if (!isActive)
+                return false; // Can only close Active partners
+
+            // Check if partner is NotApproved (only NotApproved partners can be closed by regular users)
+            var approvalStatus = approvalStatusProperty.GetValue(result);
+            var isNotApproved = approvalStatus?.ToString() == "NotApproved" || approvalStatus?.ToString() == "0"; // PartnerApprovalStatus.NotApproved = 0
+            
+            return isNotApproved;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines if the user can archive a Partner entity
+    /// </summary>
+    private bool? GetCanArchive(object result, List<EntityPermission> entityPermissions)
+    {
+        // Only applicable to Partner entities
+        if (_entityName != "Partner" || result == null)
+            return null;
+
+        // Check if user has update permission (required for archiving)
+        var hasUpdatePermission = entityPermissions.Any(p => p.CanUpdate);
+        if (!hasUpdatePermission)
+            return false;
+
+        // Use reflection to check partner status and approval status
+        var resultType = result.GetType();
+        var statusProperty = resultType.GetProperty("Status");
+        var approvalStatusProperty = resultType.GetProperty("PartnerApprovalStatus");
+
+        if (statusProperty == null || approvalStatusProperty == null)
+            return null;
+
+        try
+        {
+            // Check if partner is Active or Closed
+            var status = statusProperty.GetValue(result);
+            var isActive = status?.ToString() == "Active" || status?.ToString() == "1"; // EntityStatus.Active = 1
+            var isClosed = status?.ToString() == "Closed" || status?.ToString() == "2"; // EntityStatus.Closed = 2
+            
+            if (!isActive && !isClosed)
+                return false; // Can only archive Active or Closed partners
+
+            // Check if partner is NotApproved (only NotApproved partners can be archived by regular users)
+            var approvalStatus = approvalStatusProperty.GetValue(result);
+            var isNotApproved = approvalStatus?.ToString() == "NotApproved" || approvalStatus?.ToString() == "0"; // PartnerApprovalStatus.NotApproved = 0
+            
+            return isNotApproved;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines if the user can approve a Partner entity
+    /// </summary>
+    private bool? GetCanApprove(object result, List<EntityPermission> entityPermissions)
+    {
+        // Only applicable to Partner entities
+        if (_entityName != "Partner" || result == null)
+            return null;
+
+        // Check if user has admin-level permissions (only admins can approve)
+        // Admin users should have specific roles like PARTNER_GLOB_ADMIN
+        var hasAdminPermission = entityPermissions.Any(p => p.Role == "PARTNER_GLOB_ADMIN");
+        if (!hasAdminPermission)
+            return false;
+
+        // Use reflection to check partner status and approval status
+        var resultType = result.GetType();
+        var statusProperty = resultType.GetProperty("Status");
+        var approvalStatusProperty = resultType.GetProperty("PartnerApprovalStatus");
+
+        if (statusProperty == null || approvalStatusProperty == null)
+            return null;
+
+        try
+        {
+            // Check if partner is Active
+            var status = statusProperty.GetValue(result);
+            var isActive = status?.ToString() == "Active" || status?.ToString() == "1"; // EntityStatus.Active = 1
+            
+            if (!isActive)
+                return false; // Can only approve Active partners
+
+            // Check if partner is NotApproved (can't approve already approved partners)
+            var approvalStatus = approvalStatusProperty.GetValue(result);
+            var isNotApproved = approvalStatus?.ToString() == "NotApproved" || approvalStatus?.ToString() == "0"; // PartnerApprovalStatus.NotApproved = 0
+            
+            return isNotApproved;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Determines if a Partner entity is in a final state (Closed or Archived)
+    /// where modification permissions should be restricted
+    /// </summary>
+    private bool IsPartnerInFinalState(object result)
+    {
+        // Only applicable to Partner entities
+        if (_entityName != "Partner" || result == null)
+            return false;
+
+        // Use reflection to check partner status
+        var resultType = result.GetType();
+        var statusProperty = resultType.GetProperty("Status");
+
+        if (statusProperty == null)
+            return false;
+
+        try
+        {
+            var status = statusProperty.GetValue(result);
+            var isClosed = status?.ToString() == "Closed" || status?.ToString() == "2"; // EntityStatus.Closed = 2
+            var isArchived = status?.ToString() == "Archived" || status?.ToString() == "4"; // EntityStatus.Archived = 4
+            
+            return isClosed || isArchived;
+        }
+        catch
+        {
+            return false;
+        }
     }
 } 

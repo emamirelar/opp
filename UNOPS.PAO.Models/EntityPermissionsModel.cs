@@ -32,6 +32,30 @@ public class EntityPermissionsModel
     public List<string>? CanEditFields { get; set; }
 
     /// <summary>
+    /// Whether the user can activate this entity (based on mandatory fields completion and permissions)
+    /// Only applicable to certain entities like Partner
+    /// </summary>
+    public bool? CanActivate { get; set; }
+
+    /// <summary>
+    /// Whether the user can close this entity
+    /// Only applicable to certain entities like Partner
+    /// </summary>
+    public bool? CanClose { get; set; }
+
+    /// <summary>
+    /// Whether the user can archive this entity
+    /// Only applicable to certain entities like Partner
+    /// </summary>
+    public bool? CanArchive { get; set; }
+
+    /// <summary>
+    /// Whether the user can approve this entity
+    /// Only applicable to certain entities like Partner
+    /// </summary>
+    public bool? CanApprove { get; set; }
+
+    /// <summary>
     /// Additional metadata about permissions (optional)
     /// </summary>
     public string? PermissionSource { get; set; }
@@ -49,7 +73,11 @@ public class EntityPermissionsModel
         CanRead = false,
         CanCreate = false,
         CanUpdate = false,
-        CanDelete = false
+        CanDelete = false,
+        CanActivate = false,
+        CanClose = false,
+        CanArchive = false,
+        CanApprove = false
     };
 
     /// <summary>
@@ -60,7 +88,11 @@ public class EntityPermissionsModel
         CanRead = true,
         CanCreate = true,
         CanUpdate = true,
-        CanDelete = true
+        CanDelete = true,
+        CanActivate = true,
+        CanClose = true,
+        CanArchive = true,
+        CanApprove = true
     };
 
     /// <summary>
@@ -71,6 +103,10 @@ public class EntityPermissionsModel
         CanRead = true,
         CanCreate = false,
         CanUpdate = false,
-        CanDelete = false
+        CanDelete = false,
+        CanActivate = false,
+        CanClose = false,
+        CanArchive = false,
+        CanApprove = false
     };
 } 

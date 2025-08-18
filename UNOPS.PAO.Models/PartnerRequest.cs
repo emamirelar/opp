@@ -19,12 +19,12 @@ public class PartnerRequest : ExtensibleModel
     
     // Category & Organization Unit
     public int PartnerCategoryId { get; set; } // FK to Partner Category (required)
-    public int? PartnerOrgUnitId { get; set; } // Nullable if unmanaged
+
     public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice (required)
     
-    // Report Levels
-    public int? PartnerInternalReportLevel { get; set; } // 1-5 defined by Partner group Hierarchy
-    public int? PartnerExternalReportLevel { get; set; } // External reporting level
+    // Partner Focal Point
+    public int? PartnerFocalPointUserId { get; set; } // Business Developer UserId
+
     
     // Partner Level Information
     public string? PartnerLevelCode { get; set; } // Imported from BQ
@@ -73,4 +73,28 @@ public class PartnerRequest : ExtensibleModel
     /// Organization unit hierarchy IDs - managed automatically by the partner manager
     /// </summary>
     public List<int>? OrganizationHierarchyIds { get; set; }
+}
+
+public class ApprovalRequest
+{
+    public string? ApprovalNotes { get; set; }
+}
+
+public class StatusChangeRequest  
+{
+    public string Status { get; set; } = string.Empty; // Draft, Active, Closed, Archived
+    public string? Notes { get; set; }
+}
+
+public class ActivatePartnerRequest
+{
+    public string? Notes { get; set; }
+}
+
+public class PartnerValidationResult
+{
+    public bool IsValid { get; set; }
+    public List<string> MissingFields { get; set; } = new();
+    public bool CanBeActivated { get; set; }
+    public string? ValidationMessage { get; set; }
 }

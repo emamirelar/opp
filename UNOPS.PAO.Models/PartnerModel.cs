@@ -14,6 +14,8 @@ public class PartnerModel
     public Guid PartnerCategoryKey { get; set; } // System Generated
     public Guid PartnerTypeKey { get; set; } // System Generated
     
+
+    
     // ========== MAIN PARTNER FIELDS ==========
     public string PartnerDescription { get; set; } // Full name
     public string PartnerShortDescription { get; set; } // Short name or acronym
@@ -26,19 +28,20 @@ public class PartnerModel
     public int PartnerCategoryId { get; set; } // FK to Partner Category
     public string PartnerCategoryName { get; set; }
     public string? PartnerCategoryCode { get; set; } // Partner category code
-    public int? PartnerOrgUnitId { get; set; } // Nullable if unmanaged
-    public string? PartnerOrgUnitName { get; set; }
+
     public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice
     public string? LiaisonOfficeName { get; set; } // Navigation property
+    
+    // Partner Focal Point  
+    public int? PartnerFocalPointUserId { get; set; } // Business Developer UserId
+    public string? PartnerFocalPointUserName { get; set; } // Business Developer Name (from navigation)
     
     // Partner Group Information
     public string? PartnerGroupCode { get; set; }
     public string? PartnerGroupName { get; set; }
     public int? PartnerGroupId { get; set; }
     
-    // ========== REPORT LEVELS ==========
-    public int? PartnerInternalReportLevel { get; set; } // 1-5 defined by Partner group Hierarchy in partner tree
-    public int? PartnerExternalReportLevel { get; set; } // External reporting level
+
     
     // ========== PARTNER LEVEL INFORMATION ==========
     public string? PartnerLevelCode { get; set; } // Imported from BQ

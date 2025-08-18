@@ -170,8 +170,15 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         var entity = MapModelToEntity(model);
 
+        // Set a temporary Name field to satisfy NOT NULL constraint
+        entity.Name = "Partner - TBD";
+
         // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
+
+        // Set the correct Name field as "Partner - {Id}" after getting the ID
+        entity.Name = $"Partner - {entity.Id}";
+        await PartnerRepository.UpdateAsync(entity);
 
         // Handle organization unit hierarchy IDs if specified - AFTER saving the partner
         if (model.OrganizationHierarchyIds != null && model.OrganizationHierarchyIds.Any())
@@ -906,7 +913,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             var accessiblePartner = partnerList.FirstOrDefault();
             if (accessiblePartner != null)
             {
-                return await MapEntityToModelAsync(accessiblePartner, _mapper, user);
+                // First map to model using AutoMapper
+                var model = await MapEntityToModelAsync(accessiblePartner, _mapper, user);
+                // Then add permissions if needed
+                return await MapEntityToModelWithPermissionsAsync(model, user);
             }
         }
 
@@ -920,10 +930,27 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     public async Task<PartnerModel?> CreatePartnerAsync(ClaimsPrincipal user, PartnerRequest model)
     {
         // RBAC interceptor handles security enforcement
+        
+        // Validate minimum required fields (defensive check)
+        if (string.IsNullOrWhiteSpace(model.PartnerDescription))
+        {
+            throw new BusinessException("Partner Description is required for creation");
+        }
+        
+        // Ensure partner is created in Draft status
+        model.Status = "Draft";
+        
         var entity = MapModelToEntity(model);
+
+        // Set a temporary Name field to satisfy NOT NULL constraint
+        entity.Name = "Partner - TBD";
 
         // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
+
+        // Set the correct Name field as "Partner - {Id}" after getting the ID
+        entity.Name = $"Partner - {entity.Id}";
+        await PartnerRepository.UpdateAsync(entity);
 
         // Handle organization unit hierarchy IDs if specified - AFTER saving the partner
         if (model.OrganizationHierarchyIds != null && model.OrganizationHierarchyIds.Any())
@@ -960,7 +987,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
+        // First map to model using AutoMapper
         var resultModel = await MapEntityToModelAsync(entity, _mapper, user);
+        // Then add permissions
+        resultModel = await MapEntityToModelWithPermissionsAsync(resultModel, user);
         
         // Add permissions for frontend UI
         //resultModel.Permissions = await GetEntityPermissionsAsync(entity, user);
@@ -1061,6 +1091,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
+        
+        // Ensure Name is always set as "Partner - {Id}"
+        entity.Name = $"Partner - {entity.Id}";
+        
         await PartnerRepository.UpdateAsync(entity);
 
         var resultModel = MapEntityToModel(entity, _mapper);
@@ -1256,6 +1290,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
+
+        // Ensure Name is always set as "Partner - {Id}"
+        entity.Name = $"Partner - {entity.Id}";
 
         await PartnerRepository.UpdateAsync(entity);
 
@@ -1531,5 +1568,118 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         return query;
     }
 
+    #region Partner Status Management Methods
+
+    /// <summary>
+    /// Activates a draft partner after validating mandatory fields
+    /// </summary>
+    public async Task<PartnerModel?> ActivatePartnerAsync(ClaimsPrincipal user, int id, ActivatePartnerRequest request)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(id, ["LiaisonOffice"]);
+        if (entity == null)
+            return null;
+
+        // Check permissions through RBAC
+        var hasAccess = await (_permissionService?.HasInstanceAccessAsync("Partner", entity, user, "update") ?? Task.FromResult(false));
+        if (!hasAccess)
+            return null;
+
+        entity.ActivatePartner();
+        await PartnerRepository.UpdateAsync(entity);
+        
+        // Load relationships and return updated model
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        var model = await MapEntityToModelAsync(entity, _mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user);
+    }
+
+    /// <summary>
+    /// Closes an active partner (only for NotApproved partners)
+    /// </summary>
+    public async Task<PartnerModel?> ClosePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(id, ["LiaisonOffice"]);
+        if (entity == null)
+            return null;
+
+        // Check permissions through RBAC
+        var hasAccess = await (_permissionService?.HasInstanceAccessAsync("Partner", entity, user, "update") ?? Task.FromResult(false));
+        if (!hasAccess)
+            return null;
+
+        // Additional validation: only NotApproved partners can be closed by regular users
+        if (entity.PartnerApprovalStatus == PartnerApprovalStatus.Approved)
+        {
+            throw new UnauthorizedAccessException("Approved partners can only be closed by administrators.");
+        }
+
+        entity.ClosePartner();
+        await PartnerRepository.UpdateAsync(entity);
+        
+        // Load relationships and return updated model
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        var model = await MapEntityToModelAsync(entity, _mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user);
+    }
+
+    /// <summary>
+    /// Archives an active or closed partner (only for NotApproved partners)
+    /// </summary>
+    public async Task<PartnerModel?> ArchivePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(id, ["LiaisonOffice"]);
+        if (entity == null)
+            return null;
+
+        // Check permissions through RBAC
+        var hasAccess = await (_permissionService?.HasInstanceAccessAsync("Partner", entity, user, "update") ?? Task.FromResult(false));
+        if (!hasAccess)
+            return null;
+
+        // Additional validation: only NotApproved partners can be archived by regular users
+        if (entity.PartnerApprovalStatus == PartnerApprovalStatus.Approved)
+        {
+            throw new UnauthorizedAccessException("Approved partners can only be archived by administrators.");
+        }
+
+        entity.ArchivePartner();
+        await PartnerRepository.UpdateAsync(entity);
+        
+        // Load relationships and return updated model
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        var model = await MapEntityToModelAsync(entity, _mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user);
+    }
+
+    /// <summary>
+    /// Approves an active partner (Admin only) - locks data fields and records approval audit trail
+    /// </summary>
+    public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, ApprovalRequest request)
+    {
+        var entity = await PartnerRepository.GetByIdAsync(id, ["LiaisonOffice"]);
+        if (entity == null)
+            return null;
+
+        // Check if user has admin permissions for approval
+        var userRoles = user.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+        if (!userRoles.Contains("PARTNER_GLOB_ADMIN"))
+        {
+            throw new UnauthorizedAccessException("Only Partnership Global Administrators can approve partners.");
+        }
+
+        // Get user information for audit trail
+        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
+        var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
+
+        entity.ApprovePartner(int.Parse(userId), userName);
+        await PartnerRepository.UpdateAsync(entity);
+        
+        // Load relationships and return updated model
+        await entity.LoadOrganizationUnitRelationshipsAsync(_context);
+        var model = await MapEntityToModelAsync(entity, _mapper, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user);
+    }
+
+    #endregion
 
 }
