@@ -60,7 +60,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.Should().NotBeNull();
             // Should only return partners linked to orgUnitId
             result.Records.Should().OnlyContain(p => (p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || 
-                                                    p.Name == "Indirect Partner"); // Indirect partner has contact relation
+                                                    p.PartnerDescription == "Indirect Partner"); // Indirect partner has contact relation
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -100,8 +100,8 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result.Records.Should().NotBeNull();
             // Should filter by both name and org unit
-            result.Records.Should().OnlyContain(p => p.Name.Contains("Partner") && 
-                                                    ((p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || p.Name == "Indirect Partner"));
+            result.Records.Should().OnlyContain(p => p.PartnerDescription.Contains("Partner") && 
+                                                    ((p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || p.PartnerDescription == "Indirect Partner"));
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -121,7 +121,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result.Records.Should().NotBeNull();
             result.Records.Should().HaveCount(1);
-            result.Records.First().Name.Should().Be("Direct Partner");
+            result.Records.First().PartnerDescription.Should().Be("Direct Partner");
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -164,7 +164,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result.Records.Should().NotBeNull();
             // Should include partner with indirect relation through contact
-            result.Records.Should().Contain(p => p.Name == "Indirect Partner");
+            result.Records.Should().Contain(p => p.PartnerDescription == "Indirect Partner");
         }
 
         private async Task SeedTestDataForOrgUnitFilter(int orgUnitId)
@@ -242,14 +242,18 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             var partner1 = new UNOPSPartner 
             { 
                 Id = partnerId1, 
-                Name = "Direct Partner",
-                Status = "Active",
-                ShortName = "DP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Direct Partner",
+                PartnerShortDescription = "DP",
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
             // Add organization unit relationship
             partner1.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
@@ -265,14 +269,18 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             var partner2 = new UNOPSPartner 
             { 
                 Id = partnerId2, 
-                Name = "Other Partner",
-                Status = "Active",
-                ShortName = "OP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Other Partner",
+                PartnerShortDescription = "OP",
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
             // Add organization unit relationship for different org unit
             partner2.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
@@ -288,14 +296,18 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             var partner3 = new UNOPSPartner 
             { 
                 Id = partnerId3, 
-                Name = "Indirect Partner",
-                Status = "Active",
-                ShortName = "IP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Indirect Partner",
+                PartnerShortDescription = "IP",
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
             // No organization unit relationship for indirect partner
             
@@ -394,14 +406,18 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             var parentPartner = new UNOPSPartner 
             { 
                 Id = partnerId1, 
-                Name = "Parent Partner",
-                Status = "Active",
-                ShortName = "PP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Parent Partner",
+                PartnerShortDescription = "PP",
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
             // Add organization unit relationship for parent
             parentPartner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
@@ -417,14 +433,18 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             var childPartner = new UNOPSPartner 
             { 
                 Id = partnerId2, 
-                Name = "Child Partner",
-                Status = "Active",
-                ShortName = "CP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Child Partner",
+                PartnerShortDescription = "CP",
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
             // Add organization unit relationship for child
             childPartner.OrganizationUnitRelationships = new List<OrganizationUnitRelationship>
@@ -482,14 +502,18 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             var partner = new UNOPSPartner 
             { 
                 Id = partnerId, 
-                Name = "Indirect Partner",
-                Status = "Active",
-                ShortName = "IRP",
-                NewEngagement = "true",
-                PooledFund = "false",
-                DDRequired = "false",
-                DDEACDone = "false",
-                LevyPotentiallyApplies = "false"
+                // Enhanced Partner structure
+                PartnerDescription = "Indirect Partner",
+                PartnerShortDescription = "IRP",
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = true,
+                PooledFund = false,
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply
             };
             // No organization unit relationship - this partner is linked through contact interactions
             

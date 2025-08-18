@@ -6,33 +6,75 @@ namespace UNOPS.PAO.Models;
 
 public class PartnerModel
 {
-    public int Id { get; set; }
-    public string? PartnerCode { get; set; }
-    public string Name { get; set; }
-    public string Status { get; set; }
-    public string NewEngagement { get; set; }
-    public string? Phone { get; set; }
-    public string? Website { get; set; }
-    public string? Address1Street { get; set; }
-    public string? Address1Street2 { get; set; }
-    public string? Address1City { get; set; }
-    public string? Address1StateProvince { get; set; }
-    public string? Address1PostalCode { get; set; }
-    public string? Address1Country { get; set; }
-    public string ShortName { get; set; }
-    //Level
-    //Group
-    //LiaisonOffice
-    public string PooledFund { get; set; }
-    public string DDRequired { get; set; }
-    public string DDEACDone { get; set; }
-    public string? EACReference { get; set; }
-    public Boolean GlobalKeyAccount { get; set; }
-    public Boolean UNSecretariatEntity { get; set; }
-    public string LevyPotentiallyApplies { get; set; }
-    public string? ReasonForLevyNotApplying { get; set; }
-    public string? LevyTreatment { get; set; }
+    // ========== SYSTEM GENERATED KEYS ==========
+    public int Id { get; set; } // Partner ID - system-generated
+    public Guid UniqueKey { get; set; } // System Generated
+    public Guid PartnerKey { get; set; } // System Generated
+    public Guid PartnerCategoryInternalKey { get; set; } // System Generated
+    public Guid PartnerCategoryKey { get; set; } // System Generated
+    public Guid PartnerTypeKey { get; set; } // System Generated
     
+    // ========== MAIN PARTNER FIELDS ==========
+    public string PartnerDescription { get; set; } // Full name
+    public string PartnerShortDescription { get; set; } // Short name or acronym
+    public string? PartnerLongDescription { get; set; } // Optional long description
+    
+    // Backward compatibility field
+    public string Name { get; set; } // Maps to PartnerDescription for backward compatibility
+
+    // Category & Org Unit
+    public int PartnerCategoryId { get; set; } // FK to Partner Category
+    public string PartnerCategoryName { get; set; }
+    public string? PartnerCategoryCode { get; set; } // Partner category code
+    public int? PartnerOrgUnitId { get; set; } // Nullable if unmanaged
+    public string? PartnerOrgUnitName { get; set; }
+    public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice
+    public string? LiaisonOfficeName { get; set; } // Navigation property
+    
+    // Partner Group Information
+    public string? PartnerGroupCode { get; set; }
+    public string? PartnerGroupName { get; set; }
+    public int? PartnerGroupId { get; set; }
+    
+    // ========== REPORT LEVELS ==========
+    public int? PartnerInternalReportLevel { get; set; } // 1-5 defined by Partner group Hierarchy in partner tree
+    public int? PartnerExternalReportLevel { get; set; } // External reporting level
+    
+    // ========== PARTNER LEVEL INFORMATION ==========
+    public string? PartnerLevelCode { get; set; } // Imported from BQ
+    public string? PartnerLevelShort { get; set; } // Imported from the Partner Tree
+    public string? PartnerLevelDescription { get; set; } // Imported from the Partner Tree
+    
+    // ERP Integration
+    public int? ErpDimValue { get; set; } // ERP dimension value
+
+    // UN & State Entity
+    public bool UNAndStateEntity { get; set; }
+
+    // ========== APPROVAL FIELDS (Admin only) ==========
+    public bool KeyGlobalPartner { get; set; }
+    public bool UNSecretariatPartner { get; set; }
+    public string DueDiligenceRequired { get; set; } // "NotRequired" / "Required" 
+    public string DueDiligenceApproval { get; set; } // "NotApproved" / "Approved"
+    public DateTime? DueDiligenceApprovalDate { get; set; }
+    public DateTime? DueDiligenceExpiryDate { get; set; }
+    public string PartnerApprovalStatus { get; set; } // "NotApproved" / "Approved"
+    public DateTime? PartnerApprovalDate { get; set; }
+    public string? PartnerApprovalReference { get; set; }
+    public string PartnerLevyStatus { get; set; } // "DoesNotApply" / "PotentiallyApplied" / "PotentiallyNotApplied"
+    public string? ReasonForLevy { get; set; }
+    public string? LevyTreatment { get; set; }
+    public bool PooledFund { get; set; }
+    public bool CanCreateNewOpportunities { get; set; }
+    public string? ReasonForNoNewOpportunity { get; set; }
+
+    // System Status
+    public string Status { get; set; } // Draft / Active / Closed / Archived
+
+    // Logo URL
+    public string? LogoUrl { get; set; }
+
+    // ========== NAVIGATION PROPERTIES ==========
     // First 5 contacts by date (computed property will be handled in mapping)
     public List<ContactModel>? First5ContactsByDate { get; set; }
     
@@ -40,15 +82,6 @@ public class PartnerModel
     
     // Organization Unit Relationships
     public List<OrganizationUnitRelationshipModel>? OrganizationUnitRelationships { get; set; }
-    
-    public string? LogoUrl { get; set; }
-    public string? PartnerGroupCode{ get; set; }
-    public string? PartnerGroupName{ get; set; }
-    public int? PartnerGroupId { get; set; }
-    
-    public string? PartnerCategoryCode { get; set; }
-    public string? PartnerCategoryName { get; set; }
-    public int? PartnerCategoryId { get; set; }
     
     /// <summary>
     /// Projects associated with this partner through the many-to-many relationship

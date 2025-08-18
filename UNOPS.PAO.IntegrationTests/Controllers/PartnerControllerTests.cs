@@ -61,17 +61,30 @@ public class PartnerControllerTests : IntegrationTestBase
 
     private UNOPSPartner CreateTestPartner(int id, string name, string status, string shortName, int organizationHierarchyId)
     {
+        // Map old status to new enum
+        var systemStatus = status switch
+        {
+            "Active" => Domain.Entities.EntityStatus.Active,
+            "Inactive" => Domain.Entities.EntityStatus.Closed,
+            "Prospect" => Domain.Entities.EntityStatus.Draft,
+            _ => Domain.Entities.EntityStatus.Draft
+        };
+
         var partner = new UNOPSPartner
         {
             Id = id,
-            Name = name,
-            Status = status,
-            ShortName = shortName,
-            NewEngagement = "true",
-            PooledFund = "false",
-            DDRequired = "false",
-            DDEACDone = "false",
-            LevyPotentiallyApplies = "false",
+            // Enhanced Partner structure
+            PartnerDescription = name,
+            PartnerShortDescription = shortName,
+            PartnerCategoryId = 1, // Default test category
+            LiaisonOfficeId = 1, // Default test liaison office
+            UNAndStateEntity = false,
+            Status = systemStatus,
+            CanCreateNewOpportunities = true, // Default for test partners
+            PooledFund = false,
+            DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired,
+            DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved,
+            PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply,
             PartnerCode = $"P{id:D4}",
             PartnerGroupCode = "NGO",
             CreatedDate = DateTime.UtcNow.AddDays(-id),
@@ -123,7 +136,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(5);
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "ACME Global Services", "Tech Innovations Ltd", "Alpha Partners" };
-        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -135,11 +148,11 @@ public class PartnerControllerTests : IntegrationTestBase
         // Assert
         response.Should().NotBeNull();
         response.Records.Should().HaveCount(3);
-        response.Records.Should().OnlyContain(p => p.Status == "Inactive");
+        response.Records.Should().OnlyContain(p => p.Status == "Closed");
         response.TotalCount.Should().Be(3);
         
         var expectedNames = new[] { "Beta Industries", "Delta Corporation", "Omega Services" };
-        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -154,7 +167,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(2);
         
         var expectedNames = new[] { "ACME Corporation", "ACME Global Services" };
-        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -169,7 +182,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(3);
         
         var expectedNames = new[] { "Global Tech Solutions", "Global Finance Corp", "ACME Global Services" };
-        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -182,7 +195,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Should().NotBeNull();
         response.Records.Should().HaveCount(1);
         response.Records.Single().Name.Should().Be("Global Tech Solutions");
-        response.Records.Single().ShortName.Should().Be("GTS");
+        response.Records.Single().PartnerShortDescription.Should().Be("GTS");
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -217,7 +230,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Should().OnlyContain(p => p.Name.Contains("Global"));
         
         var expectedNames = new[] { "Global Tech Solutions", "ACME Global Services" };
-        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -297,7 +310,7 @@ public class PartnerControllerTests : IntegrationTestBase
         
         // Assert
         response.Should().NotBeNull();
-        response.Records.Should().BeInAscendingOrder(p => p.Name);
+        response.Records.Should().BeInAscendingOrder(p => p.PartnerDescription);
         response.Records.First().Name.Should().Be("ACME Corporation");
         response.Records.Last().Name.Should().Be("Tech Innovations Ltd");
     }
@@ -310,7 +323,7 @@ public class PartnerControllerTests : IntegrationTestBase
         
         // Assert
         response.Should().NotBeNull();
-        response.Records.Should().BeInDescendingOrder(p => p.Name);
+        response.Records.Should().BeInDescendingOrder(p => p.PartnerDescription);
         response.Records.First().Name.Should().Be("Tech Innovations Ltd");
         response.Records.Last().Name.Should().Be("ACME Corporation");
     }
@@ -341,7 +354,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Should().HaveCount(2); // Global Tech Solutions and Tech Innovations Ltd
         
         var expectedNames = new[] { "Global Tech Solutions", "Tech Innovations Ltd" };
-        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -450,9 +463,11 @@ public class PartnerControllerTests : IntegrationTestBase
         // Arrange
         var newPartner = new PartnerRequest
         {
-            Name = "New Test Partner",
+            PartnerDescription = "New Test Partner",
+            PartnerShortDescription = "NTP",
+            PartnerCategoryId = 1,
+            LiaisonOfficeId = 1,
             Status = "Active",
-            ShortName = "NTP",
             PartnerGroupCode = "NGO"
         };
         
@@ -470,8 +485,8 @@ public class PartnerControllerTests : IntegrationTestBase
         var updateRequest = new UpdatePartnerRequest
         {
             Id = 1,
-            Name = "Updated ACME Corporation",
-            Status = "Inactive"
+            PartnerDescription = "Updated ACME Corporation",
+            Status = "Closed"
         };
         
         // Act
@@ -480,7 +495,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Assert
         result.Should().NotBeNull();
         result.Name.Should().Be("Updated ACME Corporation");
-        result.Status.Should().Be("Inactive");
+        result.Status.Should().Be("Closed");
     }
 
     [Fact(Skip = "Skipping non-GetAll tests for now")]

@@ -110,8 +110,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 .Returns((UNOPSPartner source) => new PartnerModel
                 {
                     Id = source.Id,
-                    Name = source.Name,
-                    Status = source.Status,
+                    PartnerDescription = source.PartnerDescription,
+                    Status = source.Status.ToString(),
                     PartnerGroupCode = source.PartnerGroupCode
                 });
 
@@ -493,7 +493,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             
             response!.TotalCount.Should().Be(1);
             response!.Records.Should().HaveCount(1);
-            response!.Records.First().Name.Should().Be("Simple Test Partner");
+            response!.Records.First().PartnerDescription.Should().Be("Simple Test Partner");
         }
 
         [Fact]
@@ -540,14 +540,18 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var partner = new UNOPSPartner 
             { 
                 Id = id, 
-                Name = name, 
-                Status = "Active", 
-                ShortName = $"P{id}", 
-                DDEACDone = "false", 
-                DDRequired = "false", 
-                LevyPotentiallyApplies = "false", 
-                NewEngagement = "true", 
-                PooledFund = "false", 
+                // Enhanced Partner structure
+                PartnerDescription = name,
+                PartnerShortDescription = $"P{id}",
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "false" equivalent
+                CanCreateNewOpportunities = true, // Default "true" equivalent
+                PooledFund = false, // Default "false" equivalent
                 IsDeleted = false 
             };
 
@@ -558,7 +562,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 {
                     OrganizationHierarchyId = organizationHierarchyId,
                     EntityId = partner.Id,
-                    EntityType = nameof(UNOPSPartner)
+                    EntityType = nameof(UNOPSPartner),
+                    Status = Domain.Entities.EntityStatus.Active
                 }
             };
 
@@ -570,14 +575,18 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             return new UNOPSPartner 
             { 
                 Id = id, 
-                Name = name, 
-                Status = "Active", 
-                ShortName = $"P{id}", 
-                DDEACDone = "false", 
-                DDRequired = "false", 
-                LevyPotentiallyApplies = "false", 
-                NewEngagement = "true", 
-                PooledFund = "false", 
+                // Enhanced Partner structure
+                PartnerDescription = name,
+                PartnerShortDescription = $"P{id}",
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "false" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "false" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "false" equivalent
+                CanCreateNewOpportunities = true, // Default "true" equivalent
+                PooledFund = false, // Default "false" equivalent
                 IsDeleted = false 
             };
         }
