@@ -49,6 +49,7 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
 
     /// <summary>
     /// Gets the appropriate ordering expression for the specified field
+    /// Updated to use new enhanced Partner field structure
     /// </summary>
     /// <param name="orderByField">The field name to order by</param>
     /// <returns>The ordering expression</returns>
@@ -56,19 +57,26 @@ public class PartnerCompositeSpecification : GenericCompositeSpecification<Partn
     {
         return orderByField?.ToLowerInvariant() switch
         {
-            "name" => p => p.Name,
-            "shortname" => p => p.ShortName,
+            "name" => p => p.PartnerDescription ?? "",
+            "partnerdescription" => p => p.PartnerDescription ?? "",
+            "shortname" => p => p.PartnerShortDescription ?? "",
+            "partnershortdescription" => p => p.PartnerShortDescription ?? "",
             "status" => p => p.Status,
-            "phone" => p => p.Phone,
-            "website" => p => p.Website,
+            "systemstatus" => p => p.Status,
+            "partnerstatus" => p => p.Status,
+            "phone" => p => p.PartnerDescription ?? "", // Phone field deprecated, fallback to description
+            "website" => p => p.PartnerDescription ?? "", // Website field deprecated, fallback to description
             "createddate" => p => p.CreatedDate,
-            "address1city" => p => p.Address1City,
-            "addresscity" => p => p.Address1City,
-            "address1country" => p => p.Address1Country,
-            "addresscountry" => p => p.Address1Country,
-            "address1street" => p => p.Address1Street,
-            "addressstreet" => p => p.Address1Street,
-            _ => p => p.Name // Default to Name if no field specified or unknown field
+            "address1city" => p => p.PartnerDescription ?? "", // Address fields deprecated, fallback to description
+            "addresscity" => p => p.PartnerDescription ?? "",
+            "address1country" => p => p.PartnerDescription ?? "",
+            "addresscountry" => p => p.PartnerDescription ?? "",
+            "address1street" => p => p.PartnerDescription ?? "",
+            "addressstreet" => p => p.PartnerDescription ?? "",
+            "partnercategoryid" => p => p.PartnerCategoryId,
+            "partnergroupcode" => p => p.PartnerGroupCode ?? "",
+            "approvalstatus" => p => p.PartnerApprovalStatus,
+            _ => p => p.PartnerDescription ?? "" // Default to PartnerDescription if no field specified or unknown field
         };
     }
 } 

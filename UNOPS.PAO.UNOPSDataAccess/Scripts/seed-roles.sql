@@ -79,11 +79,11 @@ INSERT INTO public."EntityPermissions" (
     'Partner',
     'PARTNER_USER',
     true,
-    false,
+    true,
     true,
     false,
-    null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerOffice != null && PartnerOffice.Code == @userOrgUnit", "CanDelete": ""}'
+    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "PartnerDescription", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerOrgUnitId", "PartnerExternalReportLevel", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription", "ErpDimValue", "UNAndStateEntity", "KeyGlobalPartner", "UNSecretariatPartner", "DueDiligenceRequired", "DueDiligenceApproval", "DueDiligenceApprovalDate", "DueDiligenceExpiryDate", "PartnerApprovalStatus", "PartnerApprovalDate", "PartnerApprovalReference", "PartnerLevyStatus", "ReasonForLevy", "LevyTreatment", "PooledFund", "CanCreateNewOpportunities", "ReasonForNoNewOpportunity", "PartnerScope"], "CanDelete": []}',
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && LiaisonOffice != null && LiaisonOffice.Code == @userOrgUnit", "CanDelete": ""}'
 );
 
 -- Org Unit Admin role permissions for Partner
@@ -100,11 +100,11 @@ INSERT INTO public."EntityPermissions" (
     'Partner',
     'ORG_UNIT_ADMIN',
     true,
-    false,
+    true,
     true,
     false,
-    null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerOffice != null && PartnerOffice.Code == @userOrgUnit", "CanDelete": ""}'
+    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "PartnerDescription", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerOrgUnitId", "PartnerExternalReportLevel", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription", "ErpDimValue", "UNAndStateEntity", "KeyGlobalPartner", "UNSecretariatPartner", "DueDiligenceRequired", "DueDiligenceApproval", "DueDiligenceApprovalDate", "DueDiligenceExpiryDate", "PartnerApprovalStatus", "PartnerApprovalDate", "PartnerApprovalReference", "PartnerLevyStatus", "ReasonForLevy", "LevyTreatment", "PooledFund", "CanCreateNewOpportunities", "ReasonForNoNewOpportunity", "PartnerScope"], "CanDelete": []}',
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && LiaisonOffice != null && LiaisonOffice.Code == @userOrgUnit", "CanDelete": ""}'
 );
 
 -- Gmail General User role permissions for Partner (read selected fields only)

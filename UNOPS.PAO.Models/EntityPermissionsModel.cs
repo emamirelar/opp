@@ -26,6 +26,12 @@ public class EntityPermissionsModel
     public bool CanDelete { get; set; }
 
     /// <summary>
+    /// List of field names that the user can edit (based on PropertyFilter CanUpdate)
+    /// Empty list means user cannot edit any fields, null means no field-level restrictions
+    /// </summary>
+    public List<string>? CanEditFields { get; set; }
+
+    /// <summary>
     /// Additional metadata about permissions (optional)
     /// </summary>
     public string? PermissionSource { get; set; }

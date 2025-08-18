@@ -6,6 +6,7 @@ using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Reflection;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.Extensions.Configuration;
@@ -240,7 +241,8 @@ public abstract class BaseUNOPSManager
                     CanRead = entityPermissions.Any(p => p.CanRead),
                     CanCreate = entityPermissions.Any(p => p.CanCreate),
                     CanUpdate = entityPermissions.Any(p => p.CanUpdate),
-                    CanDelete = entityPermissions.Any(p => p.CanDelete)
+                    CanDelete = entityPermissions.Any(p => p.CanDelete),
+                    CanEditFields = GetConsolidatedEditableFields(entityPermissions)
                 };
 
                 // Check instance-level access if PermissionService is available and entity has data
@@ -575,5 +577,55 @@ public abstract class BaseUNOPSManager
         }
         
         return true;
+    }
+
+    /// <summary>
+    /// Consolidates editable fields from multiple roles' PropertyFilter CanUpdate arrays
+    /// Returns the union of all editable fields across all user roles
+    /// </summary>
+    private List<string>? GetConsolidatedEditableFields(List<EntityPermission> entityPermissions)
+    {
+        var allEditableFields = new HashSet<string>();
+        var hasPropertyFilters = false;
+
+        foreach (var permission in entityPermissions.Where(p => p.CanUpdate))
+        {
+            if (!string.IsNullOrEmpty(permission.PropertyFilter))
+            {
+                try
+                {
+                    var propertyFilterJson = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(permission.PropertyFilter);
+                    if (propertyFilterJson != null && propertyFilterJson.TryGetValue("CanUpdate", out var canUpdateFields))
+                    {
+                        hasPropertyFilters = true;
+                        
+                        // If CanUpdate is empty array, it means admin role can edit all fields
+                        if (canUpdateFields.Count == 0)
+                        {
+                            return null; // null means no field restrictions (can edit all fields)
+                        }
+                        
+                        // Add all fields from this role to the consolidated list
+                        foreach (var field in canUpdateFields)
+                        {
+                            allEditableFields.Add(field);
+                        }
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Invalid JSON, skip this permission's property filter
+                }
+            }
+        }
+
+        // If no PropertyFilters were found, return null (no field-level restrictions)
+        if (!hasPropertyFilters)
+        {
+            return null;
+        }
+
+        // Return the consolidated list of editable fields
+        return allEditableFields.ToList();
     }
 } 

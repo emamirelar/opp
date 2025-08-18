@@ -258,14 +258,18 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             var partner = new Partner
             {
                 Id = id,
-                Name = name,
-                ShortName = name.Length > 10 ? name.Substring(0, 10) : name,
-                Status = "Active",
-                NewEngagement = "No",
-                PooledFund = "No",
-                DDRequired = "No",
-                DDEACDone = "No",
-                LevyPotentiallyApplies = "No",
+                // Enhanced Partner structure
+                PartnerDescription = name,
+                PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
+                PartnerCategoryId = 1, // Default test category
+                LiaisonOfficeId = 1, // Default test liaison office
+                UNAndStateEntity = false,
+                Status = Domain.Entities.EntityStatus.Active,
+                CanCreateNewOpportunities = false, // Default "No" equivalent
+                PooledFund = false, // Default "No" equivalent
+                DueDiligenceRequired = Domain.Enums.DueDiligenceRequired.NotRequired, // Default "No" equivalent
+                DueDiligenceApproval = Domain.Enums.DueDiligenceApproval.NotApproved, // Default "No" equivalent
+                PartnerLevyStatus = Domain.Enums.PartnerLevyStatus.DoesNotApply, // Default "No" equivalent
                 CreatedBy = 1,
                 CreatedDate = DateTime.UtcNow
             };
@@ -279,7 +283,8 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                     {
                         OrganizationHierarchyId = organizationHierarchyId.Value,
                         EntityId = partner.Id,
-                        EntityType = nameof(Partner)
+                        EntityType = nameof(Partner),
+                        Status = Domain.Entities.EntityStatus.Active
                     }
                 };
             }

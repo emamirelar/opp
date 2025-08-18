@@ -52,8 +52,8 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         _organizationHierarchyId = organizationHierarchyId;
         // Include related entities
         
-        // Default ordering is by name
-        ApplyOrderBy(p => p.Name);
+        // Default ordering is by partner description
+        ApplyOrderBy(p => p.PartnerDescription);
     }
     
     /// <summary>
@@ -85,45 +85,31 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
             predicate = CombineExpressions(predicate, idFilter);
         }
         
-        // Add name filter if specified
+        // Add name filter if specified (using PartnerDescription)
         if (!string.IsNullOrWhiteSpace(name))
         {
-            Expression<Func<Partner, bool>> nameFilter = p => p.Name.ToLower().Contains(name.ToLower());
+            Expression<Func<Partner, bool>> nameFilter = p => p.PartnerDescription.ToLower().Contains(name.ToLower());
             predicate = CombineExpressions(predicate, nameFilter);
         }
         
-        // Add status filter if specified
+        // Add status filter if specified (using SystemStatus)
         if (!string.IsNullOrWhiteSpace(status))
         {
-            Expression<Func<Partner, bool>> statusFilter = p => p.Status == status;
+            Expression<Func<Partner, bool>> statusFilter = p => p.Status.ToString() == status;
             predicate = CombineExpressions(predicate, statusFilter);
         }
         
-        // Add new engagement filter if specified
+        // Add new engagement filter if specified (using CanCreateNewOpportunities)
         if (!string.IsNullOrWhiteSpace(newEngagement))
         {
-            Expression<Func<Partner, bool>> newEngagementFilter = p => p.NewEngagement == newEngagement;
+            Expression<Func<Partner, bool>> newEngagementFilter = p => newEngagement.ToLower() == "yes" ? p.CanCreateNewOpportunities : !p.CanCreateNewOpportunities;
             predicate = CombineExpressions(predicate, newEngagementFilter);
         }
         
-        // Add phone filter if specified
-        if (!string.IsNullOrWhiteSpace(phone))
-        {
-            Expression<Func<Partner, bool>> phoneFilter = p => p.Phone != null && p.Phone.Contains(phone);
-            predicate = CombineExpressions(predicate, phoneFilter);
-        }
-        
-        // Add website filter if specified
-        if (!string.IsNullOrWhiteSpace(website))
-        {
-            Expression<Func<Partner, bool>> websiteFilter = p => p.Website != null && p.Website.ToLower().Contains(website.ToLower());
-            predicate = CombineExpressions(predicate, websiteFilter);
-        }
-        
-        // Add short name filter if specified
+        // Add short name filter if specified (using PartnerShortDescription)
         if (!string.IsNullOrWhiteSpace(shortName))
         {
-            Expression<Func<Partner, bool>> shortNameFilter = p => p.ShortName.ToLower().Contains(shortName.ToLower());
+            Expression<Func<Partner, bool>> shortNameFilter = p => p.PartnerShortDescription.ToLower().Contains(shortName.ToLower());
             predicate = CombineExpressions(predicate, shortNameFilter);
         }
         
@@ -135,43 +121,15 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
             predicate = CombineExpressions(predicate, organizationHierarchyFilter);
         }
         
-        // Add address city filter if specified
-        if (!string.IsNullOrWhiteSpace(addressCity))
-        {
-            Expression<Func<Partner, bool>> cityFilter = p => p.Address1City != null && p.Address1City.ToLower().Contains(addressCity.ToLower());
-            predicate = CombineExpressions(predicate, cityFilter);
-        }
-        
-        // Add address state/province filter if specified
-        if (!string.IsNullOrWhiteSpace(addressStateProvince))
-        {
-            Expression<Func<Partner, bool>> stateProvinceFilter = p => p.Address1StateProvince != null && p.Address1StateProvince.ToLower().Contains(addressStateProvince.ToLower());
-            predicate = CombineExpressions(predicate, stateProvinceFilter);
-        }
-        
-        // Add address postal code filter if specified
-        if (!string.IsNullOrWhiteSpace(addressPostalCode))
-        {
-            Expression<Func<Partner, bool>> postalCodeFilter = p => p.Address1PostalCode != null && p.Address1PostalCode.Contains(addressPostalCode);
-            predicate = CombineExpressions(predicate, postalCodeFilter);
-        }
-        
-        // Add address country filter if specified
-        if (!string.IsNullOrWhiteSpace(addressCountry))
-        {
-            Expression<Func<Partner, bool>> countryFilter = p => p.Address1Country != null && p.Address1Country.ToLower().Contains(addressCountry.ToLower());
-            predicate = CombineExpressions(predicate, countryFilter);
-        }
-        
-        // Add text search filter if specified
+        // Add text search filter if specified (updated to use new fields)
         if (!string.IsNullOrWhiteSpace(searchText))
         {
             // Always perform case-insensitive search
             string lowerSearchText = searchText.ToLower();
             Expression<Func<Partner, bool>> textFilter = p => 
-                (p.Name != null && p.Name.ToLower().Contains(lowerSearchText)) ||
-                (p.ShortName != null && p.ShortName.ToLower().Contains(lowerSearchText)) ||
-                (p.Phone != null && p.Phone.Contains(lowerSearchText));
+                (p.PartnerDescription != null && p.PartnerDescription.ToLower().Contains(lowerSearchText)) ||
+                (p.PartnerShortDescription != null && p.PartnerShortDescription.ToLower().Contains(lowerSearchText)) ||
+                (p.PartnerLongDescription != null && p.PartnerLongDescription.ToLower().Contains(lowerSearchText));
             predicate = CombineExpressions(predicate, textFilter);
         }
         

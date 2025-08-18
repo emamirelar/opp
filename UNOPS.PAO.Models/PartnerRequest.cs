@@ -10,35 +10,67 @@ using UNOPS.PAO.Domain.Entities;
 
 public class PartnerRequest : ExtensibleModel
 {
-    public string? Name { get; set; }
-    public string Status { get; set; } = "Active";
-    public string? NewEngagement { get; set; }
-    public string? Phone { get; set; }
-    public string? Website { get; set; }
-    public string? Address1Street { get; set; }
-    public string? Address1Street2 { get; set; }
-    public string? Address1City { get; set; }
-    public string? Address1StateProvince { get; set; }
-    public string? Address1PostalCode { get; set; }
-    public string? Address1Country { get; set; }
-    public string? ShortName { get; set; }
-    //Level
-    //Group
-    //LiaisonOffice
-    public string? PooledFund { get; set; }
-    public string? DDRequired { get; set; }
-    public string? DDEACDone { get; set; }
-    public string? EACReference { get; set; }
-    public bool? GlobalKeyAccount { get; set; } = false;
-    public bool? UNSecretariatEntity { get; set; } = false;
-    public string? LevyPotentiallyApplies { get; set; }
-    public string? ReasonForLevyNotApplying { get; set; }
+    // ========== ENHANCED PARTNER FIELDS ==========
+    
+    // Core Partner Information
+    public string PartnerDescription { get; set; } // Full name (required)
+    public string PartnerShortDescription { get; set; } // Short name/acronym (required)
+    public string? PartnerLongDescription { get; set; } // Optional long description
+    
+    // Category & Organization Unit
+    public int PartnerCategoryId { get; set; } // FK to Partner Category (required)
+    public int? PartnerOrgUnitId { get; set; } // Nullable if unmanaged
+    public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice (required)
+    
+    // Report Levels
+    public int? PartnerInternalReportLevel { get; set; } // 1-5 defined by Partner group Hierarchy
+    public int? PartnerExternalReportLevel { get; set; } // External reporting level
+    
+    // Partner Level Information
+    public string? PartnerLevelCode { get; set; } // Imported from BQ
+    public string? PartnerLevelShort { get; set; } // Imported from the Partner Tree
+    public string? PartnerLevelDescription { get; set; } // Imported from the Partner Tree
+    public int? ErpDimValue { get; set; } // ERP dimension value
+    
+    // Liaison Office
+    public string PartnerLiaisonOffice { get; set; } // Enum from predefined list (required)
+    
+    // UN & State Entity
+    public bool UNAndStateEntity { get; set; } = false;
+    
+    // ========== APPROVAL FIELDS (Admin only) ==========
+    public bool KeyGlobalPartner { get; set; } = false;
+    public bool UNSecretariatPartner { get; set; } = false;
+    
+    // Due Diligence Fields
+    public string DueDiligenceRequired { get; set; } = "NotRequired"; // "NotRequired" / "Required"
+    public string DueDiligenceApproval { get; set; } = "NotApproved"; // "NotApproved" / "Approved"
+    public DateTime? DueDiligenceApprovalDate { get; set; }
+    public DateTime? DueDiligenceExpiryDate { get; set; }
+    
+    // Partner Approval Status
+    public string PartnerApprovalStatus { get; set; } = "NotApproved"; // "NotApproved" / "Approved"
+    public DateTime? PartnerApprovalDate { get; set; }
+    public string? PartnerApprovalReference { get; set; }
+    
+    // Levy Fields
+    public string PartnerLevyStatus { get; set; } = "DoesNotApply"; // "DoesNotApply" / "PotentiallyApplied" / "PotentiallyNotApplied"
+    public string? ReasonForLevy { get; set; }
     public string? LevyTreatment { get; set; }
-    //public List<int>? ContactIds { get; set; }
+    
+    // Operational Fields
+    public bool PooledFund { get; set; } = false;
+    public bool CanCreateNewOpportunities { get; set; } = true;
+    public string? ReasonForNoNewOpportunity { get; set; }
+    
+    // Partner Status
+    public string Status { get; set; } = "Draft"; // "Draft" / "Active" / "Closed" / "Archived"
+    
+    // Partner Group
+    public string? PartnerGroupCode { get; set; }
     
     /// <summary>
     /// Organization unit hierarchy IDs - managed automatically by the partner manager
     /// </summary>
     public List<int>? OrganizationHierarchyIds { get; set; }
-    public string? PartnerGroupCode { get; set; }
 }
