@@ -224,7 +224,7 @@ public abstract class BaseUNOPSManager
     /// <summary>
     /// Maps entity to model with permissions, handling cases where no user context is available
     /// </summary>
-    protected async Task<T> MapEntityToModelWithPermissionsAsync<T>(T result, ClaimsPrincipal user) where T : class
+    protected async Task<T> MapEntityToModelWithPermissionsAsync<T>(T result, ClaimsPrincipal user, object sourceEntity = null) where T : class
     {  
         // Add permissions using the helper method from BaseUNOPSManager
         // Only add permissions if user is provided and result has a Permissions property
@@ -254,15 +254,17 @@ public abstract class BaseUNOPSManager
                 };
 
                 // Check instance-level access if PermissionService is available and entity has data
-                if (_permissionService != null && result != null)
+                // Use sourceEntity if provided (for RBAC), otherwise fall back to result (model)
+                var entityForRBAC = sourceEntity ?? result;
+                if (_permissionService != null && entityForRBAC != null)
                 {
                     try
                     {
-                        // Check instance access for each permission type
-                        var hasReadInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, result, user, "read");
-                        var hasCreateInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, result, user, "create");
-                        var hasUpdateInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, result, user, "update");
-                        var hasDeleteInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, result, user, "delete");
+                        // Check instance access for each permission type using the actual entity
+                        var hasReadInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, entityForRBAC, user, "read");
+                        var hasCreateInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, entityForRBAC, user, "create");
+                        var hasUpdateInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, entityForRBAC, user, "update");
+                        var hasDeleteInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, entityForRBAC, user, "delete");
 
                         // Apply instance-level filtering: permission = defaultPermission && hasInstanceAccess
                         consolidatedPermissions.CanRead = consolidatedPermissions.CanRead && hasReadInstanceAccess;

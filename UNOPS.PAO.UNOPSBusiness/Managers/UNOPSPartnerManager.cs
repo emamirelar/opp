@@ -87,7 +87,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // Use the provided user or get current user context
         var userContext = user ?? GetCurrentUserOrSystemContext();
-        return await MapEntityToModelWithPermissionsAsync(result, userContext); ;
+        return await MapEntityToModelWithPermissionsAsync(result, userContext);
     }
 
     /*private async Task<PartnerModel> MapEntityToModelWithPermissionsAsync(UNOPSPartner entity, IMapper mapper, ClaimsPrincipal? user = null)
@@ -905,13 +905,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (filteredData is IEnumerable<UNOPSPartner> partnerList)
         {
             var accessiblePartner = partnerList.FirstOrDefault();
-            if (accessiblePartner != null)
-            {
-                // First map to model using AutoMapper
-                var model = await MapEntityToModelAsync(accessiblePartner, _mapper, user);
-                // Then add permissions if needed
-                return await MapEntityToModelWithPermissionsAsync(model, user);
-            }
+                    if (accessiblePartner != null)
+        {
+            // First map to model using AutoMapper
+            var model = await MapEntityToModelAsync(accessiblePartner, _mapper, user);
+            // Then add permissions using the entity (not model) for RBAC
+            return await MapEntityToModelWithPermissionsAsync(model, user, accessiblePartner);
+        }
         }
 
         // User doesn't have access to this entity
@@ -977,8 +977,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // First map to model using AutoMapper
         var resultModel = await MapEntityToModelAsync(entity, _mapper, user);
-        // Then add permissions
-        resultModel = await MapEntityToModelWithPermissionsAsync(resultModel, user);
+        // Then add permissions using the entity (not model) for RBAC
+        resultModel = await MapEntityToModelWithPermissionsAsync(resultModel, user, entity);
         
         // Add permissions for frontend UI
         //resultModel.Permissions = await GetEntityPermissionsAsync(entity, user);
@@ -1572,7 +1572,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Load relationships and return updated model
         await entity.LoadOrganizationUnitRelationshipsAsync(_context);
         var model = await MapEntityToModelAsync(entity, _mapper, user);
-        return await MapEntityToModelWithPermissionsAsync(model, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
     /// <summary>
@@ -1601,7 +1601,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Load relationships and return updated model
         await entity.LoadOrganizationUnitRelationshipsAsync(_context);
         var model = await MapEntityToModelAsync(entity, _mapper, user);
-        return await MapEntityToModelWithPermissionsAsync(model, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
     /// <summary>
@@ -1630,7 +1630,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Load relationships and return updated model
         await entity.LoadOrganizationUnitRelationshipsAsync(_context);
         var model = await MapEntityToModelAsync(entity, _mapper, user);
-        return await MapEntityToModelWithPermissionsAsync(model, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
     /// <summary>
@@ -1659,7 +1659,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Load relationships and return updated model
         await entity.LoadOrganizationUnitRelationshipsAsync(_context);
         var model = await MapEntityToModelAsync(entity, _mapper, user);
-        return await MapEntityToModelWithPermissionsAsync(model, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
     #endregion

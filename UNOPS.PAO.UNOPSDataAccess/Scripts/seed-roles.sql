@@ -82,11 +82,11 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     false,
-    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "PartnerDescription", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerFocalPointUserId", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription"], "CanDelete": []}',
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit)", "CanDelete": ""}'
+    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "Name", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerFocalPointUserId", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription"], "CanDelete": []}',
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit && r.OrganizationHierarchy.Type == 3)", "CanDelete": ""}'
 );
 
--- Org Unit Admin role permissions for Partner
+-- Org Unit Admin role permissions for Partner (NO ACCESS)
 INSERT INTO public."EntityPermissions" (
     "Entity", 
     "Role", 
@@ -100,11 +100,11 @@ INSERT INTO public."EntityPermissions" (
     'Partner',
     'ORG_UNIT_ADMIN',
     true,
-    true,
-    true,
     false,
-    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "PartnerDescription", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerFocalPointUserId", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription"], "CanDelete": []}',
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit)", "CanDelete": ""}'
+    false,
+    false,
+    null,
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
 );
 
 -- Gmail General User role permissions for Partner (read selected fields only)
