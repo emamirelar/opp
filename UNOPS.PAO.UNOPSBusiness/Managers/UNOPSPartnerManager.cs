@@ -1080,9 +1080,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
         
-        // Ensure Name is always set as "Partner - {Id}"
-        entity.Name = $"Partner - {entity.Id}";
-        
         await PartnerRepository.UpdateAsync(entity);
 
         var resultModel = MapEntityToModel(entity, _mapper);
@@ -1278,9 +1275,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
-
-        // Ensure Name is always set as "Partner - {Id}"
-        entity.Name = $"Partner - {entity.Id}";
 
         await PartnerRepository.UpdateAsync(entity);
 
