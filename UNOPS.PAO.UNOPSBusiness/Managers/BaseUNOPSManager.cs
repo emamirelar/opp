@@ -651,12 +651,11 @@ public abstract class BaseUNOPSManager
         if (!hasUpdatePermission)
             return false;
 
-        // Use reflection to check if this is a Partner entity with the required methods
         var resultType = result.GetType();
-        var hasMandatoryFieldsMethod = resultType.GetMethod("HasMandatoryFieldsForActivation");
         var statusProperty = resultType.GetProperty("Status");
+        var nameProperty = resultType.GetProperty("Name");
 
-        if (hasMandatoryFieldsMethod == null || statusProperty == null)
+        if (statusProperty == null || nameProperty == null)
             return null;
 
         try
@@ -668,8 +667,10 @@ public abstract class BaseUNOPSManager
             if (!isDraft)
                 return false; // Can only activate Draft partners
 
-            // Check if all mandatory fields are filled
-            var hasMandatoryFields = (bool)hasMandatoryFieldsMethod.Invoke(result, null);
+            // Check if mandatory fields are filled (Name is the only mandatory field for activation)
+            var name = nameProperty.GetValue(result) as string;
+            var hasMandatoryFields = !string.IsNullOrWhiteSpace(name);
+            
             return hasMandatoryFields;
         }
         catch
