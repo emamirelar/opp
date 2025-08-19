@@ -284,11 +284,16 @@
       ".search-container"
     ],
     "tour-control": [
+      "app-tour-control .tour-button",
+      "app-tour-control p-button",
+      "app-tour-control button",
       "app-tour-control",
       ".tour-control",
       "button[title*=\"tour\"]"
     ],
     "global-filters": [
+      ".global-filters-button .p-button",
+      ".global-filters-button button",
       ".global-filters-button",
       "p-button[title*=\"Global Filters\"]",
       "button[aria-label*=\"Global Filters\"]"
@@ -322,6 +327,46 @@
       ".homepage-welcome",
       ".home-header",
       ".welcome-message"
+    ],
+    "dashboard-header": [
+      ".dashboard-header",
+      ".home-header",
+      ".page-header"
+    ],
+    "refresh-button": [
+      ".refresh-btn",
+      "p-button[icon=\"pi pi-refresh\"]",
+      "button[title*=\"refresh\"]"
+    ],
+    "partners-card": [
+      ".partners-card",
+      ".integrated-card.partners-card",
+      ".card-summary"
+    ],
+    "contacts-card": [
+      ".contacts-card",
+      ".integrated-card.contacts-card",
+      ".card-summary"
+    ],
+    "interactions-card": [
+      ".interactions-card",
+      ".integrated-card.interactions-card",
+      ".card-summary"
+    ],
+    "opportunities-card": [
+      ".opportunities-card",
+      ".integrated-card.opportunities-card",
+      ".card-summary"
+    ],
+    "actions-required-card": [
+      ".actions-required-card",
+      ".integrated-card.actions-required-card",
+      ".card-summary"
+    ],
+    "org-updates-card": [
+      ".org-updates-card",
+      ".integrated-card.org-updates-card",
+      ".card-summary"
     ]
   }
 }

@@ -198,7 +198,7 @@ export class TourControlComponent implements OnInit {
           popover: {
             title: this.translateText(step.popover.titleKey || step.popover.title),
             description: this.translateText(step.popover.descriptionKey || step.popover.description),
-            side: step.popover.side === 'over' ? 'top' : step.popover.side,
+            side: step.popover.side === 'over' ? undefined : step.popover.side, // Let Driver.js handle 'over' positioning
             align: step.popover.align
           }
         };
@@ -288,12 +288,12 @@ export class TourControlComponent implements OnInit {
     const currentSegments = currentUrl.split('/').filter(s => s.length > 0);
     const patternSegments = routePattern.split('/').filter(s => s.length > 0);
     
-    // Must have same number of segments
-    if (currentSegments.length !== patternSegments.length) {
+    // Must have at least as many segments as the pattern (allows nested routes)
+    if (currentSegments.length < patternSegments.length) {
       return false;
     }
     
-    // Check each segment
+    // Check each segment of the pattern
     for (let i = 0; i < patternSegments.length; i++) {
       const patternSegment = patternSegments[i];
       const currentSegment = currentSegments[i];
@@ -437,6 +437,10 @@ export class TourControlComponent implements OnInit {
       showProgress: false,
       allowClose: true,
       popoverOffset: 10,
+      stagePadding: 20,
+      nextBtnText: '—›',
+      prevBtnText: '‹—',
+      doneBtnText: '✕',
       steps: [
         {
           popover: {

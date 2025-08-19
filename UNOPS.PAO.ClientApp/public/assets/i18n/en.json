@@ -795,9 +795,37 @@
           "title": "Main Navigation Menu",
           "description": "This sidebar contains links to all major application sections: Partner management, Contact database, Interaction tracking, AI tools, Reporting, and Administrative functions. Each section has its own specialized features and tours."
         },
-        "welcomeDashboard": {
-          "title": "Welcome Dashboard",
-          "description": "This is your starting point in the application. From here, you can navigate to any section using the sidebar menu, search for specific information, or access the AI assistant for intelligent insights and assistance."
+        "dashboardHeader": {
+          "title": "Dashboard Header",
+          "description": "Your personalized dashboard header shows the welcome message and provides quick access to refresh the dashboard data. The refresh button ensures you always have the most up-to-date information."
+        },
+        "refreshButton": {
+          "title": "Refresh Dashboard",
+          "description": "Click this refresh button to reload all dashboard data and get the latest information about your partners, contacts, interactions, and recent organizational updates."
+        },
+        "partnersCard": {
+          "title": "My Partners Dashboard Card",
+          "description": "This card shows a summary of partners you've recently modified or created. Click on the card to expand and see detailed partner information, or click individual partners to navigate to their full profiles."
+        },
+        "contactsCard": {
+          "title": "My Contacts Dashboard Card",
+          "description": "View and manage your recently modified contacts from this interactive card. Expand it to see contact details, filter by various criteria, or navigate directly to specific contact profiles."
+        },
+        "interactionsCard": {
+          "title": "My Interactions Dashboard Card",
+          "description": "Track your recent interactions with partners and contacts. This card allows you to filter interactions by type, view details, and quickly access full interaction records for follow-up actions."
+        },
+        "opportunitiesCard": {
+          "title": "My Opportunities Dashboard Card",
+          "description": "This section is designed for future opportunity management features. While currently showing 'Coming Soon', it will eventually display partnership opportunities, funding possibilities, and business development prospects."
+        },
+        "actionsRequiredCard": {
+          "title": "Actions Required Dashboard Card",
+          "description": "Stay on top of draft items that need your attention. This card shows draft partners, contacts, and interactions that require completion or review before they can be finalized and published."
+        },
+        "orgUpdatesCard": {
+          "title": "Organization Recent Updates Card",
+          "description": "Monitor recent updates from your organizational unit colleagues. This card displays the latest changes to partners, contacts, and interactions made by team members, helping you stay informed about collaborative activities."
         }
       }
     },
