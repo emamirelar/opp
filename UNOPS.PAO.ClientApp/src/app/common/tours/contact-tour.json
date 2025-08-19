@@ -42,8 +42,8 @@
       }
     },
     {
-      "element": "p-button[label=\"New Contact\"]",
-      "fallbackType": "new-button",
+      "element": ".contact-new-button",
+      "fallbackType": ".contact-new-button",
       "popover": {
         "titleKey": "tour.contacts.steps.newButton.title",
         "descriptionKey": "tour.contacts.steps.newButton.description",
@@ -52,8 +52,8 @@
       }
     },
     {
-      "element": "p-button[icon=\"pi pi-upload\"]",
-      "fallbackType": "import-button",
+      "element": ".contact-import-button",
+      "fallbackType": ".contact-import-button",
       "popover": {
         "titleKey": "tour.contacts.steps.importButton.title",
         "descriptionKey": "tour.contacts.steps.importButton.description",
@@ -62,8 +62,8 @@
       }
     },
     {
-      "element": "p-button[icon=\"pi pi-camera\"]",
-      "fallbackType": "scanner-button",
+      "element": ".contact-scanner-button",
+      "fallbackType": ".contact-scanner-button",
       "popover": {
         "titleKey": "tour.contacts.steps.scanButton.title",
         "descriptionKey": "tour.contacts.steps.scanButton.description",
@@ -72,8 +72,8 @@
       }
     },
     {
-      "element": "p-table",
-      "fallbackType": "grid-view",
+      "element": ".contact-listview",
+      "fallbackType": ".contact-listview",
       "popover": {
         "titleKey": "tour.contacts.steps.gridView.title",
         "descriptionKey": "tour.contacts.steps.gridView.description",

@@ -122,11 +122,81 @@
       }
     },
     {
-      "element": ".homepage-welcome",
-      "fallbackType": "welcome-message",
+      "element": ".dashboard-header",
+      "fallbackType": "dashboard-header",
       "popover": {
-        "titleKey": "tour.homepage.steps.welcomeDashboard.title",
-        "descriptionKey": "tour.homepage.steps.welcomeDashboard.description",
+        "titleKey": "tour.homepage.steps.dashboardHeader.title",
+        "descriptionKey": "tour.homepage.steps.dashboardHeader.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".refresh-btn",
+      "fallbackType": "refresh-button",
+      "popover": {
+        "titleKey": "tour.homepage.steps.refreshButton.title",
+        "descriptionKey": "tour.homepage.steps.refreshButton.description",
+        "side": "bottom",
+        "align": "start"
+      }
+    },
+    {
+      "element": ".partners-card",
+      "fallbackType": "partners-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.partnersCard.title",
+        "descriptionKey": "tour.homepage.steps.partnersCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".contacts-card",
+      "fallbackType": "contacts-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.contactsCard.title",
+        "descriptionKey": "tour.homepage.steps.contactsCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".interactions-card",
+      "fallbackType": "interactions-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.interactionsCard.title",
+        "descriptionKey": "tour.homepage.steps.interactionsCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".opportunities-card",
+      "fallbackType": "opportunities-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.opportunitiesCard.title",
+        "descriptionKey": "tour.homepage.steps.opportunitiesCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".actions-required-card",
+      "fallbackType": "actions-required-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.actionsRequiredCard.title",
+        "descriptionKey": "tour.homepage.steps.actionsRequiredCard.description",
+        "side": "top",
+        "align": "center"
+      }
+    },
+    {
+      "element": ".org-updates-card",
+      "fallbackType": "org-updates-card",
+      "popover": {
+        "titleKey": "tour.homepage.steps.orgUpdatesCard.title",
+        "descriptionKey": "tour.homepage.steps.orgUpdatesCard.description",
         "side": "top",
         "align": "center"
       }

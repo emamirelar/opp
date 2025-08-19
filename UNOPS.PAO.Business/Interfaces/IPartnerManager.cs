@@ -80,4 +80,10 @@ public interface IPartnerManager
     Task<PaginationResponse<PartnerModel>> GetPartnersByCategoryAsync(ClaimsPrincipal user, string partnerCategoryCode, PaginationRequest request);
 
     Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);
+    
+    // Partner Status Management Methods
+    Task<PartnerModel?> ActivatePartnerAsync(ClaimsPrincipal user, int id, ActivatePartnerRequest request);
+    Task<PartnerModel?> ClosePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);
+    Task<PartnerModel?> ArchivePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request);
+    Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, ApprovalRequest request);
 }

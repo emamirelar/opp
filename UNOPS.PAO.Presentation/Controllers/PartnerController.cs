@@ -73,6 +73,15 @@ public class PartnerController : BaseController
     [AccessControlled(EntityTypes.Partner, "create")]
     public async Task<IActionResult> Create([FromBody] PartnerRequest req)
     {
+        // Validate minimum required fields for creation
+        if (string.IsNullOrWhiteSpace(req.PartnerDescription))
+        {
+            return BadRequest(new { error = "Partner Description is required for creation" });
+        }
+        
+        // Ensure partner is created in Draft status
+        req.Status = "Draft";
+        
         var result = await _manager.CreatePartnerAsync(User, req);
         if (result == null)
         {
@@ -342,6 +351,110 @@ public class PartnerController : BaseController
             return NotFound(); // Partner not found or user doesn't have permission
         }
         return NoContent();
+    }
+
+    /// <summary>
+    /// Activates a draft partner after validating mandatory fields
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <param name="request">Activation request with optional notes</param>
+    /// <returns>Updated partner with new status</returns>
+    [HttpPost(APIDictionary.Partner + "/{id}/activate")]
+    [AccessControlled(EntityTypes.Partner, "update")]
+    public async Task<IActionResult> ActivatePartner(int id, [FromBody] ActivatePartnerRequest request)
+    {
+        try
+        {
+            var result = await _manager.ActivatePartnerAsync(User, id, request);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Closes an active partner (only for NotApproved partners)
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <param name="request">Close request with optional notes</param>
+    /// <returns>Updated partner with closed status</returns>
+    [HttpPost(APIDictionary.Partner + "/{id}/close")]
+    [AccessControlled(EntityTypes.Partner, "update")]
+    public async Task<IActionResult> ClosePartner(int id, [FromBody] StatusChangeRequest request)
+    {
+        try
+        {
+            var result = await _manager.ClosePartnerAsync(User, id, request);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Archives an active or closed partner (only for NotApproved partners)
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <param name="request">Archive request with optional notes</param>
+    /// <returns>Updated partner with archived status</returns>
+    [HttpPost(APIDictionary.Partner + "/{id}/archive")]
+    [AccessControlled(EntityTypes.Partner, "update")]
+    public async Task<IActionResult> ArchivePartner(int id, [FromBody] StatusChangeRequest request)
+    {
+        try
+        {
+            var result = await _manager.ArchivePartnerAsync(User, id, request);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Approves an active partner (Admin only) - locks data fields and records approval audit trail
+    /// </summary>
+    /// <param name="id">Partner ID</param>
+    /// <param name="request">Approval request with optional notes</param>
+    /// <returns>Updated partner with approved status</returns>
+    [HttpPost(APIDictionary.Partner + "/{id}/approve")]
+    [AccessControlled(EntityTypes.Partner, "update")]
+    public async Task<IActionResult> ApprovePartner(int id, [FromBody] ApprovalRequest request)
+    {
+        try
+        {
+            var result = await _manager.ApprovePartnerAsync(User, id, request);
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
     }
 
     /// <summary>

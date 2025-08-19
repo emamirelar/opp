@@ -269,6 +269,29 @@
     }
   }
   
+  /* Ensure proper spacing between topbar buttons to prevent highlight overlap */
+  .layout-topbar {
+    /* Add minimal spacing to the button container */
+    .flex.items-center.justify-end {
+      gap: 0.125rem; /* 2px gap between buttons - minimal but prevents overlap */
+    }
+    
+    /* Individual button spacing as fallback */
+    .global-filters-button,
+    .language-selector,
+    .ai-assistant-toggle,
+    .notifications-container,
+    .profile-menu-button {
+      margin-left: 0.0625rem; /* 1px margin */
+      margin-right: 0.0625rem; /* 1px margin */
+    }
+    
+    /* Ensure tour control has proper spacing */
+    app-tour-control {
+      margin-right: 0.25rem; /* Slightly more space after tour button */
+    }
+  }
+
   /* Tune button hover effects */
   .p-button.p-button-text:hover {
     background-color: var(--surface-hover);
@@ -286,6 +309,11 @@
   /* Hide AI Assistant button on mobile when on AI page */
   @media screen and (max-width: 768px) {
     .ai-assistant-toggle-btn.hidden-on-mobile {
+      display: none !important;
+    }
+    
+    /* Hide topbar buttons when search is expanded on mobile */
+    .search-expanded-hide-mobile {
       display: none !important;
     }
     
@@ -313,6 +341,25 @@
         i {
           font-size: 1.1rem !important;
         }
+      }
+      
+      /* Maintain minimal spacing on mobile */
+      .flex.items-center.justify-end {
+        gap: 0.0625rem; /* 1px gap on mobile - very minimal */
+      }
+      
+      /* Minimal margins on mobile */
+      .global-filters-button,
+      .language-selector,
+      .ai-assistant-toggle,
+      .notifications-container,
+      .profile-menu-button {
+        margin-left: 0.03125rem; /* 0.5px margin */
+        margin-right: 0.03125rem; /* 0.5px margin */
+      }
+      
+      app-tour-control {
+        margin-right: 0.125rem; /* Reduced space after tour button on mobile */
       }
       
       /* Optimize search bar for mobile */

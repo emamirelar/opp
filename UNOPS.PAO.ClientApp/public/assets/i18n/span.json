@@ -539,9 +539,37 @@
           "title": "Barra Lateral de Navegación Principal",
           "description": "Esta barra lateral contiene enlaces a todas las secciones principales: Gestión de Socios, Base de Datos de Contactos, Seguimiento de Interacciones, Herramientas de IA, Informes, y funciones Administrativas. Cada sección tiene sus propias características especializadas y tours."
         },
-        "welcomeDashboard": {
-          "title": "Tablero de Bienvenida",
-          "description": "Este es tu punto de partida en la aplicación. Desde aquí, puedes navegar a cualquier sección usando el menú de la barra lateral, buscar información específica, o acceder al asistente de IA para insights inteligentes y asistencia."
+        "dashboardHeader": {
+          "title": "Encabezado del Tablero",
+          "description": "El encabezado personalizado de tu tablero muestra el mensaje de bienvenida y proporciona acceso rápido para actualizar los datos del tablero. El botón de actualización te asegura tener siempre la información más actualizada."
+        },
+        "refreshButton": {
+          "title": "Actualizar Tablero",
+          "description": "Haz clic en este botón de actualización para recargar todos los datos del tablero y obtener la información más reciente sobre tus socios, contactos, interacciones y actualizaciones organizacionales recientes."
+        },
+        "partnersCard": {
+          "title": "Tarjeta del Tablero Mis Socios",
+          "description": "Esta tarjeta muestra un resumen de los socios que has modificado o creado recientemente. Haz clic en la tarjeta para expandir y ver información detallada de los socios, o haz clic en socios individuales para navegar a sus perfiles completos."
+        },
+        "contactsCard": {
+          "title": "Tarjeta del Tablero Mis Contactos",
+          "description": "Visualiza y gestiona tus contactos modificados recientemente desde esta tarjeta interactiva. Expándela para ver detalles de contactos, filtra por varios criterios, o navega directamente a perfiles de contactos específicos."
+        },
+        "interactionsCard": {
+          "title": "Tarjeta del Tablero Mis Interacciones",
+          "description": "Rastrea tus interacciones recientes con socios y contactos. Esta tarjeta te permite filtrar interacciones por tipo, ver detalles, y acceder rápidamente a registros completos de interacciones para acciones de seguimiento."
+        },
+        "opportunitiesCard": {
+          "title": "Tarjeta del Tablero Mis Oportunidades",
+          "description": "Esta sección está diseñada para futuras funciones de gestión de oportunidades. Aunque actualmente muestra 'Próximamente', eventualmente mostrará oportunidades de asociación, posibilidades de financiamiento y perspectivas de desarrollo comercial."
+        },
+        "actionsRequiredCard": {
+          "title": "Tarjeta del Tablero Acciones Requeridas",
+          "description": "Mantente al día con elementos en borrador que necesitan tu atención. Esta tarjeta muestra socios, contactos e interacciones en borrador que requieren finalización o revisión antes de que puedan ser finalizados y publicados."
+        },
+        "orgUpdatesCard": {
+          "title": "Tarjeta de Actualizaciones Recientes de la Organización",
+          "description": "Monitorea las actualizaciones recientes de tus colegas de la unidad organizacional. Esta tarjeta muestra los últimos cambios a socios, contactos e interacciones realizados por miembros del equipo, ayudándote a mantenerte informado sobre actividades colaborativas."
         }
       }
     },

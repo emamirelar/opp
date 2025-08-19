@@ -4,11 +4,10 @@
     [rounded]="true"
     [text]="false"
     [ariaLabel]="'tour.control.takeATour' | translate"
-    styleClass="tour-button !w-11 !h-11 !p-0 flex items-center justify-center mr-2 !bg-gradient-to-r !from-blue-500 !to-purple-600 hover:!from-blue-600 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-300"
+    styleClass="tour-button !w-10 !h-10 !p-0 flex items-center justify-center mr-2 !bg-gradient-to-r !from-blue-500 !to-purple-600 hover:!from-blue-600 hover:!to-purple-700 !border-0 !shadow-lg hover:!shadow-xl !transition-all !duration-300"
     [pTooltip]="'tour.control.takeATour' | translate"
     tooltipPosition="bottom"
-    (click)="detectTour()"
-    [title]="'tour.control.takeATour' | translate">
+    (click)="detectTour()">
     <ng-template pTemplate="content">
       <i class="pi pi-play-circle text-xl text-white animate-pulse"></i>
     </ng-template>

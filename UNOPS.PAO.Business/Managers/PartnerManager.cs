@@ -750,4 +750,33 @@ public class PartnerManager : IPartnerManager
         
         return query;
     }
+
+    // Partner Status Management Methods
+    public async Task<PartnerModel?> ActivatePartnerAsync(ClaimsPrincipal user, int id, ActivatePartnerRequest request)
+    {
+        // This implementation doesn't support activation since it works with Partner entities (not UNOPSPartner)
+        // Status workflows are managed by UNOPSPartnerManager
+        throw new NotSupportedException("Partner activation is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
+    }
+
+    public async Task<PartnerModel?> ClosePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
+    {
+        // This implementation doesn't support closing since it works with Partner entities (not UNOPSPartner)
+        // Status workflows are managed by UNOPSPartnerManager
+        throw new NotSupportedException("Partner closing is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
+    }
+
+    public async Task<PartnerModel?> ArchivePartnerAsync(ClaimsPrincipal user, int id, StatusChangeRequest request)
+    {
+        // This implementation doesn't support archiving since it works with Partner entities (not UNOPSPartner)
+        // Status workflows are managed by UNOPSPartnerManager
+        throw new NotSupportedException("Partner archiving is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
+    }
+
+    public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, ApprovalRequest request)
+    {
+        // This implementation doesn't support approval since it works with Partner entities (not UNOPSPartner)
+        // Status workflows are managed by UNOPSPartnerManager
+        throw new NotSupportedException("Partner approval is managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
+    }
 }

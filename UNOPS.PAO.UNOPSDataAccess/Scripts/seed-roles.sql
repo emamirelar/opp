@@ -62,7 +62,7 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     null,
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "", "CanDelete": ""}'
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "Status != 2 && Status != 4", "CanDelete": ""}'
 );
 
 -- Partnerships User role permissions for Partner
@@ -82,8 +82,8 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     false,
-    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "PartnerDescription", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerOrgUnitId", "PartnerExternalReportLevel", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription", "ErpDimValue", "UNAndStateEntity", "KeyGlobalPartner", "UNSecretariatPartner", "DueDiligenceRequired", "DueDiligenceApproval", "DueDiligenceApprovalDate", "DueDiligenceExpiryDate", "PartnerApprovalStatus", "PartnerApprovalDate", "PartnerApprovalReference", "PartnerLevyStatus", "ReasonForLevy", "LevyTreatment", "PooledFund", "CanCreateNewOpportunities", "ReasonForNoNewOpportunity", "PartnerScope"], "CanDelete": []}',
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && LiaisonOffice != null && LiaisonOffice.Code == @userOrgUnit", "CanDelete": ""}'
+    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "PartnerDescription", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerFocalPointUserId", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription"], "CanDelete": []}',
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit)", "CanDelete": ""}'
 );
 
 -- Org Unit Admin role permissions for Partner
@@ -103,8 +103,8 @@ INSERT INTO public."EntityPermissions" (
     true,
     true,
     false,
-    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "PartnerDescription", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerOrgUnitId", "PartnerExternalReportLevel", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription", "ErpDimValue", "UNAndStateEntity", "KeyGlobalPartner", "UNSecretariatPartner", "DueDiligenceRequired", "DueDiligenceApproval", "DueDiligenceApprovalDate", "DueDiligenceExpiryDate", "PartnerApprovalStatus", "PartnerApprovalDate", "PartnerApprovalReference", "PartnerLevyStatus", "ReasonForLevy", "LevyTreatment", "PooledFund", "CanCreateNewOpportunities", "ReasonForNoNewOpportunity", "PartnerScope"], "CanDelete": []}',
-    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && LiaisonOffice != null && LiaisonOffice.Code == @userOrgUnit", "CanDelete": ""}'
+    '{"CanRead": [], "CanCreate": [], "CanUpdate": ["Id", "PartnerDescription", "PartnerShortDescription", "PartnerLongDescription", "PartnerCategoryId", "PartnerFocalPointUserId", "PartnerLevelCode", "PartnerLevelShort", "PartnerLevelDescription"], "CanDelete": []}',
+    '{"CanRead": "", "CanCreate": "", "CanUpdate": "PartnerApprovalStatus == 0 && OrganizationUnitRelationships.Any(r => r.Status == 1 && !r.IsDeleted && r.OrganizationHierarchy.Code == @userOrgUnit)", "CanDelete": ""}'
 );
 
 -- Gmail General User role permissions for Partner (read selected fields only)

@@ -33,7 +33,7 @@
     },
     {
       "element": ".interaction-new-button",
-      "fallbackType": "new-button",
+      "fallbackType": ".interaction-new-button",
       "popover": {
         "titleKey": "tour.interactions.steps.newButton.title",
         "descriptionKey": "tour.interactions.steps.newButton.description",
@@ -43,7 +43,7 @@
     },
     {
       "element": ".interaction-import-button",
-      "fallbackType": "import-button",
+      "fallbackType": ".interaction-import-button",
       "popover": {
         "titleKey": "tour.interactions.steps.importButton.title",
         "descriptionKey": "tour.interactions.steps.importButton.description",
@@ -68,16 +68,6 @@
         "titleKey": "tour.interactions.steps.gridView.title",
         "descriptionKey": "tour.interactions.steps.gridView.description",
         "side": "top",
-        "align": "center"
-      }
-    },
-    {
-      "element": ".interaction-ai-transcribe",
-      "fallbackType": "ai-transcribe",
-      "popover": {
-        "titleKey": "tour.interactions.steps.aiTranscribe.title",
-        "descriptionKey": "tour.interactions.steps.aiTranscribe.description",
-        "side": "left",
         "align": "center"
       }
     },
