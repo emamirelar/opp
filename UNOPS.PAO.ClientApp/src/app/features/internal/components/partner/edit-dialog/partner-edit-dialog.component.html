@@ -27,19 +27,16 @@
       <!-- Partner Description (Full Name) -->
       <div class="col-span-9 flex flex-col gap-2">
         <label>{{ "label.partner.partnerDescription" | translate }} *</label>
-        <input pInputText fluid="true" formControlName="partnerDescription" />
-        @if( formGroup.get("partnerDescription")?.invalid && showValidationFailedError() ) {
+        <input pInputText fluid="true" formControlName="name" />
+        @if( formGroup.get("name")?.invalid && showValidationFailedError() ) {
         <p-message severity="error" variant="simple">Partner Description is required.</p-message>
         }
       </div>
       
       <!-- Partner Short Description -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="partnerShortDescription">{{ 'label.partner.partnerShortDescription' | translate }}*</label>
+        <label for="partnerShortDescription">{{ 'label.partner.partnerShortDescription' | translate }}</label>
         <input pInputText formControlName="partnerShortDescription" fluid="true" id="partnerShortDescription" />
-        @if( formGroup.get("partnerShortDescription")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Partner Short Description is required.</p-message>
-        }
       </div>
       
       <!-- Partner Long Description -->
@@ -50,7 +47,7 @@
       
       <!-- Partner Category -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="partnerCategoryId">{{ 'label.partner.partnerCategory' | translate }}*</label>
+        <label for="partnerCategoryId">{{ 'label.partner.partnerCategory' | translate }}</label>
         <p-select formControlName="partnerCategoryId" [options]="allPartnerCategoriesData()"
                   optionLabel="name"
                   optionValue="id"
@@ -58,14 +55,11 @@
                   placeholder="{{ 'label.partner.selectPartnerCategory' | translate }}"
                   [appendTo]="'body'"
                   fluid="true" id="partnerCategoryId" />
-        @if( formGroup.get("partnerCategoryId")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Partner Category is required.</p-message>
-        }
       </div>
       
       <!-- Partner Liaison Office -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="liaisonOfficeId">{{ 'label.partner.partnerLiaisonOffice' | translate }}*</label>
+        <label for="liaisonOfficeId">{{ 'label.partner.partnerLiaisonOffice' | translate }}</label>
         <p-select formControlName="liaisonOfficeId" [options]="allLiaisonOfficesData()"
                   optionLabel="name"
                   optionValue="id"
@@ -74,9 +68,6 @@
                   [appendTo]="'body'"
                   fluid="true" id="liaisonOfficeId"
                   [ariaLabel]="'aria.selectLiaisonOffice' | translate" />
-        @if( formGroup.get("liaisonOfficeId")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Partner Liaison Office is required.</p-message>
-        }
       </div>
       
       <!-- Partner Org Unit -->
@@ -169,30 +160,24 @@
       
       <!-- Due Diligence (Required) -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="dueDiligenceRequired">{{ 'label.partner.dueDiligenceRequired' | translate }}*</label>
+        <label for="dueDiligenceRequired">{{ 'label.partner.dueDiligenceRequired' | translate }}</label>
         <p-select formControlName="dueDiligenceRequired" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="dueDiligenceRequired" />
-        @if( formGroup.get("dueDiligenceRequired")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Due Diligence Required is required.</p-message>
-        }
       </div>
       
       <!-- Due Diligence (Approval) -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="dueDiligenceApproval">{{ 'label.partner.dueDiligenceApproval' | translate }}*</label>
+        <label for="dueDiligenceApproval">{{ 'label.partner.dueDiligenceApproval' | translate }}</label>
         <p-select formControlName="dueDiligenceApproval" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="dueDiligenceApproval" />
-        @if( formGroup.get("dueDiligenceApproval")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Due Diligence Approval is required.</p-message>
-        }
       </div>
       
       <!-- Due Diligence Approval Date -->
@@ -229,16 +214,13 @@
       
       <!-- Partner Levy -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="partnerLevyStatus">{{ 'label.partner.partnerLevyStatus' | translate }}*</label>
+        <label for="partnerLevyStatus">{{ 'label.partner.partnerLevyStatus' | translate }}</label>
         <p-select formControlName="partnerLevyStatus" [options]="allPartnerLevyAppliesData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="partnerLevyStatus" />
-        @if( formGroup.get("partnerLevyStatus")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Partner Levy Status is required.</p-message>
-        }
       </div>
       
       <!-- Reason for Levy -->

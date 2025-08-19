@@ -79,23 +79,13 @@ export class PartnerEditDialogComponent implements OnInit {
       partnerGroupCode: new FormControl(null),
       
       // ========== GENERAL FIELDS ==========
-      partnerDescription: new FormControl('', {
+      name: new FormControl('', {
         validators: [Validators.required]
       }),
-      partnerShortDescription: new FormControl(null, {
-        validators: [Validators.required]
-      }),
+      partnerShortDescription: new FormControl(null),
       partnerLongDescription: new FormControl(null),
-      partnerCategoryId: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      liaisonOfficeId: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      
-      // Backward compatibility (auto-synced with visible fields, no validators needed)
-      name: new FormControl(''),
-      shortName: new FormControl(null),
+      partnerCategoryId: new FormControl(null),
+      liaisonOfficeId: new FormControl(null),
       
       pooledFund: new FormControl(false),
       
@@ -285,20 +275,7 @@ export class PartnerEditDialogComponent implements OnInit {
     this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
     this.selectedOrgUnitSignal.set(firstElement);
     
-    // Sync backward compatibility fields with visible fields
-    this.formGroup.get('partnerDescription')?.valueChanges.subscribe(value => {
-      this.formGroup.get('name')?.setValue(value, { emitEvent: false });
-    });
-    
-    this.formGroup.get('partnerShortDescription')?.valueChanges.subscribe(value => {
-      this.formGroup.get('shortName')?.setValue(value, { emitEvent: false });
-    });
-    
-    // Initialize backward compatibility fields with current values
-    const currentDescription = this.formGroup.get('partnerDescription')?.value || '';
-    const currentShortDescription = this.formGroup.get('partnerShortDescription')?.value || null;
-    this.formGroup.get('name')?.setValue(currentDescription, { emitEvent: false });
-    this.formGroup.get('shortName')?.setValue(currentShortDescription, { emitEvent: false });
+
   }
 
 
@@ -385,11 +362,7 @@ export class PartnerEditDialogComponent implements OnInit {
       next: (data: any) => {
         this.recordData.set(data);
         
-        // Preserve the "Active" default if status is null or undefined
         const formData = { ...data };
-        if (!formData.status) {
-          formData.status = 'Active';
-        }
         
         // Handle organization unit relationships
         if (formData.organizationUnitRelationships) {
@@ -467,15 +440,10 @@ export class PartnerEditDialogComponent implements OnInit {
   onTranscriptionCompleted(data: any): void {
     if (data) {
       this.formGroup.patchValue({
-        // New field names
-        partnerDescription: data.partnerDescription || data.name || this.formGroup.get('partnerDescription')?.value,
+        // Primary fields
+        name: data.partnerDescription || data.name || this.formGroup.get('name')?.value,
         partnerShortDescription: data.partnerShortDescription || data.shortName || this.formGroup.get('partnerShortDescription')?.value,
         partnerLongDescription: data.partnerLongDescription || this.formGroup.get('partnerLongDescription')?.value,
-        
-        // Backward compatibility
-        name: data.partnerDescription || data.name || this.formGroup.get('name')?.value,
-        shortName: data.partnerShortDescription || data.shortName || this.formGroup.get('shortName')?.value,
-        
         partnerGroupCode: data.partnerGroupCode || this.formGroup.get('partnerGroupCode')?.value,
       });
 
