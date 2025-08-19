@@ -89,6 +89,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   notifications: Notification[] = [];
   unreadCount: number = 0;
   isDevelopment: boolean = false;
+  isSearchExpanded: boolean = false;
   private notificationSubscription?: Subscription;
   private userId: string = '';
   private previousNotifications: Notification[] = [];
@@ -702,5 +703,12 @@ export class TopbarComponent implements OnInit, OnDestroy {
   navigateToHome(): void {
     console.log('Logo clicked - navigating to home');
     this.router.navigate(['/']);
+  }
+
+  /**
+   * Handle search expansion state
+   */
+  onSearchExpanded(isExpanded: boolean): void {
+    this.isSearchExpanded = isExpanded;
   }
 }

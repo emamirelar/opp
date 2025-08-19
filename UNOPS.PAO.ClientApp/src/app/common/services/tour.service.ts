@@ -139,7 +139,7 @@ export class TourService {
           popover: {
             title: step.popover.title,
             description: step.popover.description,
-            side: step.popover.side === 'over' ? 'top' : step.popover.side,
+            side: step.popover.side === 'over' ? undefined : step.popover.side, // Let Driver.js handle 'over' positioning
             align: step.popover.align,
             showButtons: config.showButtons,
           }

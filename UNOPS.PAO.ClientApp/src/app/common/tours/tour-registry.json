@@ -284,11 +284,16 @@
       ".search-container"
     ],
     "tour-control": [
+      "app-tour-control .tour-button",
+      "app-tour-control p-button",
+      "app-tour-control button",
       "app-tour-control",
       ".tour-control",
       "button[title*=\"tour\"]"
     ],
     "global-filters": [
+      ".global-filters-button .p-button",
+      ".global-filters-button button",
       ".global-filters-button",
       "p-button[title*=\"Global Filters\"]",
       "button[aria-label*=\"Global Filters\"]"

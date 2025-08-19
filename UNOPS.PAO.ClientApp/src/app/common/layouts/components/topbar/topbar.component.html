@@ -19,12 +19,12 @@
 
 	<!-- Search bar container -->
 	<div class="flex items-center gap-2 flex-1 max-w-2xl global-search-container">
-		<app-global-search-bar></app-global-search-bar>
+		<app-global-search-bar (searchExpanded)="onSearchExpanded($event)"></app-global-search-bar>
 	</div>
 
-	<div class="flex items-center justify-end">
+	<div class="flex items-center justify-end" [class.search-expanded-hide-mobile]="isSearchExpanded">
 		<!-- Tour Button -->
-		<app-tour-control></app-tour-control>
+		<app-tour-control [class.search-expanded-hide-mobile]="isSearchExpanded"></app-tour-control>
 		
 		<!-- Global Filters button (moved before globe icon) -->
 		<p-button
@@ -32,7 +32,7 @@
 			[rounded]="true"
 			[text]="true"
 			aria-label="Global Filters"
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative mr-2"
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center relative"
 			(onClick)="openGlobalFilters()"
 			title="Global Filters"
 			class="global-filters-button">

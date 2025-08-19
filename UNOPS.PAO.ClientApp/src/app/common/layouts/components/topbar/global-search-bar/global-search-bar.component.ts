@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, HostListener, inject, signal, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, HostListener, inject, signal, ViewChild, ElementRef, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, filter, Subject, takeUntil } from 'rxjs';
@@ -101,6 +101,8 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   private readonly breakpoint = 992;
 
   translateService = inject(TranslateService);
+  
+  @Output() searchExpanded = new EventEmitter<boolean>();
 
   searchControl = new FormControl('');
   showResults = false;
@@ -232,6 +234,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
 
   toggleExpand(): void {
     this.isExpanded = true;
+    this.searchExpanded.emit(true);
     setTimeout(() => {
       this.onSearchFocus();
     }, 100);
@@ -240,6 +243,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   closeSearch(): void {
     if (this.isMobile) {
       this.isExpanded = false;
+      this.searchExpanded.emit(false);
     }
     this.showResults = false;
     this.showMobileDropdown.set(false);
@@ -271,6 +275,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
     
     if (this.isMobile) {
       this.isExpanded = false;
+      this.searchExpanded.emit(false);
     }
 
     // Navigate based on the active tab (entity type) instead of result.type
@@ -292,6 +297,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
       
       if (this.isMobile) {
         this.isExpanded = false;
+        this.searchExpanded.emit(false);
       }
       
       this.router.navigate(['/search'], {
@@ -663,9 +669,11 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
   checkScreenSize(): void {
     if (window.innerWidth >= this.breakpoint) {
       this.isExpanded = true;
+      this.searchExpanded.emit(true);
       this.showMobileDropdown.set(false);
     } else if (!this.searchControl.value) {
       this.isExpanded = false;
+      this.searchExpanded.emit(false);
     }
   }
 
@@ -685,6 +693,7 @@ export class GlobalSearchBarComponent implements OnInit, OnDestroy {
           setTimeout(() => {
             if (!this.searchControl.value?.trim() && !this.showResults && !this.isUserInteracting) {
               this.isExpanded = false;
+              this.searchExpanded.emit(false);
             }
           }, 150);
         }
