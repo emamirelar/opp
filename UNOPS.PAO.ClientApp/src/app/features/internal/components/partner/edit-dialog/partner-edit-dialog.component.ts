@@ -72,47 +72,51 @@ export class PartnerEditDialogComponent implements OnInit {
   recordPermissions = signal<any>({});
 
   public formGroup = new FormGroup({
-      organizationHierarchyIds: new FormControl<number[]>([], {
+      // Partner Org Unit - Array for backend compatibility (optional)
+      organizationHierarchyIds: new FormControl<number[]>([]),
+      // UI FormControl for single select (synced with array)
+      selectedOrgUnitId: new FormControl<number | null>(null),
+      partnerGroupCode: new FormControl(null),
+      
+      // ========== GENERAL FIELDS ==========
+      partnerDescription: new FormControl('', {
         validators: [Validators.required]
       }),
-      partnerGroupCode: new FormControl(null, {
+      partnerShortDescription: new FormControl(null, {
         validators: [Validators.required]
       }),
-      name: new FormControl('', {
+      partnerLongDescription: new FormControl(null),
+      partnerCategoryId: new FormControl(null, {
         validators: [Validators.required]
       }),
-      status: new FormControl('Active'),
-      newEngagement: new FormControl(null, {
+      liaisonOfficeId: new FormControl(null, {
         validators: [Validators.required]
       }),
-      phone: new FormControl(null),
-      shortName: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      pooledFund: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      ddRequired: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      ddeacDone: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      eacReference: new FormControl(null),
-      globalKeyAccount: new FormControl(false),
-      unSecretariatEntity: new FormControl(false),
-      levyPotentiallyApplies: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      reasonForLevyNotApplying: new FormControl(null),
+      
+      // Backward compatibility (auto-synced with visible fields, no validators needed)
+      name: new FormControl(''),
+      shortName: new FormControl(null),
+      
+      pooledFund: new FormControl(false),
+      
+      // ========== APPROVAL FIELDS ==========
+      keyGlobalPartner: new FormControl(false),
+      unAndStateEntity: new FormControl(false),
+      unSecretariatPartner: new FormControl(false),
+      dueDiligenceRequired: new FormControl(null),
+      dueDiligenceApproval: new FormControl(null),
+      dueDiligenceApprovalDate: new FormControl(null),
+      dueDiligenceExpiryDate: new FormControl(null),
+      partnerApprovalStatus: new FormControl('NotApproved'),
+      partnerApprovalDate: new FormControl(null),
+      partnerApprovalReference: new FormControl(null),
+      partnerLevyStatus: new FormControl(null),
+      reasonForLevy: new FormControl(null),
       levyTreatment: new FormControl(null),
-      partnerApprovalStatus: new FormControl('Approved'), // TODO: Set based on actual partner data
-      address1Street: new FormControl(null),
-      address1Street2: new FormControl(null),
-      address1City: new FormControl(null),
-      address1StateProvince: new FormControl(null),
-      address1PostalCode: new FormControl(null),
-      address1Country: new FormControl(null),
+      canCreateNewOpportunities: new FormControl(true),
+      reasonForNoNewOpportunity: new FormControl(null),
+      
+      // System fields
       discriminator: new FormControl(null),
       id: new FormControl(null),
       createdBy: new FormControl(null),
@@ -152,6 +156,8 @@ export class PartnerEditDialogComponent implements OnInit {
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
   // Backend already filters for active organization units
   allOrganizationUnitsData = this.cachedDataService.allOrganizationUnits;
+  allPartnerCategoriesData = this.cachedDataService.getPartnerCategoriesForSelect;
+  allLiaisonOfficesData = this.cachedDataService.allLiaisonOffices;
 
   // Computed properties for approval section
   isPartnerApproved = computed(() => {
@@ -166,22 +172,20 @@ export class PartnerEditDialogComponent implements OnInit {
     return this.isAdmin();
   });
 
-  // Signal to track form control changes
-  private selectedOrgUnitsSignal = signal<number[]>([]);
+  // Signal to track form control changes (first element of array for single org unit)
+  private selectedOrgUnitSignal = signal<number | null>(null);
 
-  // Custom counter for selected organization units 
-  getSelectedActiveOrgUnitsLabel = computed(() => {
-    const selectedIds = this.selectedOrgUnitsSignal();
-    if (!selectedIds.length) return this.translateService.instant('label.partner.selectOrganizationUnits');
+  // Get selected organization unit name for display
+  getSelectedOrgUnitLabel = computed(() => {
+    const selectedId = this.selectedOrgUnitSignal();
+    if (!selectedId) return this.translateService.instant('label.partner.selectPartnerOrgUnit');
     
-    // The backend already filters for active records, so we just count selected items
-    const count = selectedIds.length;
+    // Find the selected organization unit name
+    const orgUnits = this.allOrganizationUnitsData() as any[];
+    const selectedUnit = orgUnits.find((unit: any) => unit.id === selectedId);
     
-    return count === 1 
-      ? this.translateService.instant('label.partner.oneOrganizationUnitSelected')
-      : this.translateService.instant('label.partner.organizationUnitsSelected', { count });
+    return selectedUnit ? selectedUnit.name : this.translateService.instant('label.partner.selectPartnerOrgUnit');
   });
-  allPartnerCategoriesData = this.cachedDataService.partnerCategoryGroups;
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
   recordId: string = '';
   recordData = signal<any>({});
@@ -198,14 +202,18 @@ export class PartnerEditDialogComponent implements OnInit {
     });
   }
 
-  // Helper methods for organization hierarchy FormControl
+  // Helper methods for organization hierarchy FormControl (single select managing array)
   setOrganizationHierarchyIds(ids: number[]): void {
+    // Set the full array from backend, UI control will sync automatically
     this.formGroup.get('organizationHierarchyIds')?.setValue(ids || []);
   }
 
   getSelectedOrganizationHierarchyIds(): number[] {
+    // Return the full array for backend compatibility
     return this.formGroup.get('organizationHierarchyIds')?.value || [];
   }
+
+
 
   ngOnInit() {
     // Check admin role
@@ -254,14 +262,43 @@ export class PartnerEditDialogComponent implements OnInit {
       }
     });
     
-    // Track form control changes for organization units counter
-    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
-      this.selectedOrgUnitsSignal.set(value || []);
+    // Sync between selectedOrgUnitId (UI) and organizationHierarchyIds (backend array)
+    
+    // When UI FormControl changes, update the array FormControl
+    this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
+      const newArray = value ? [value] : [];
+      this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(value);
     });
     
-    // Initialize the signal with current form value
-    const currentValue = this.formGroup.get('organizationHierarchyIds')?.value || [];
-    this.selectedOrgUnitsSignal.set(currentValue);
+    // When array FormControl changes (from backend data), update UI FormControl
+    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
+      const array = value || [];
+      const firstElement = array.length > 0 ? array[0] : null;
+      this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(firstElement);
+    });
+    
+    // Initialize both controls
+    const currentArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
+    const firstElement = currentArray.length > 0 ? currentArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+    this.selectedOrgUnitSignal.set(firstElement);
+    
+    // Sync backward compatibility fields with visible fields
+    this.formGroup.get('partnerDescription')?.valueChanges.subscribe(value => {
+      this.formGroup.get('name')?.setValue(value, { emitEvent: false });
+    });
+    
+    this.formGroup.get('partnerShortDescription')?.valueChanges.subscribe(value => {
+      this.formGroup.get('shortName')?.setValue(value, { emitEvent: false });
+    });
+    
+    // Initialize backward compatibility fields with current values
+    const currentDescription = this.formGroup.get('partnerDescription')?.value || '';
+    const currentShortDescription = this.formGroup.get('partnerShortDescription')?.value || null;
+    this.formGroup.get('name')?.setValue(currentDescription, { emitEvent: false });
+    this.formGroup.get('shortName')?.setValue(currentShortDescription, { emitEvent: false });
   }
 
 
@@ -321,6 +358,15 @@ export class PartnerEditDialogComponent implements OnInit {
     } else {
       this.dialogConfig.data.requestingSaveSignal.set(false);
       this.showValidationFailedError.set(true);
+      
+      // Debug: Log which fields are invalid
+      console.log('Form validation failed. Invalid fields:');
+      Object.keys(this.formGroup.controls).forEach(key => {
+        const control = this.formGroup.get(key);
+        if (control && control.invalid) {
+          console.log(`- ${key}:`, control.errors);
+        }
+      });
     }
   }
 
@@ -388,8 +434,21 @@ export class PartnerEditDialogComponent implements OnInit {
 
         switch (key) {
           case 'organizationHierarchyIds':
-            // Pass organizationHierarchyIds directly to backend
-            requestJsonObj['organizationHierarchyIds'] = indexValue;
+            // Already an array, pass directly to backend
+            requestJsonObj['organizationHierarchyIds'] = indexValue || [];
+            break;
+          
+          case 'partnerCategoryId':
+          case 'liaisonOfficeId':
+            // Ensure ID fields are sent as integers (not strings)
+            requestJsonObj[key] = indexValue ? parseInt(indexValue, 10) : null;
+            break;
+          
+          case 'dueDiligenceApproval':
+          case 'dueDiligenceRequired':
+          case 'partnerLevyStatus':
+            // Populate empty string for these fields if value is empty
+            requestJsonObj[key] = indexValue || '';
             break;
 
           default:
@@ -408,15 +467,15 @@ export class PartnerEditDialogComponent implements OnInit {
   onTranscriptionCompleted(data: any): void {
     if (data) {
       this.formGroup.patchValue({
-        name: data.name || this.formGroup.get('name')?.value,
-        shortName: data.shortName || this.formGroup.get('shortName')?.value,
-        phone: data.phone || this.formGroup.get('phone')?.value,
-        address1Street: data.address1Street || this.formGroup.get('address1Street')?.value,
-        address1Street2: data.address1Street2 || this.formGroup.get('address1Street2')?.value,
-        address1City: data.address1City || this.formGroup.get('address1City')?.value,
-        address1StateProvince: data.address1StateProvince || this.formGroup.get('address1StateProvince')?.value,
-        address1PostalCode: data.address1PostalCode || this.formGroup.get('address1PostalCode')?.value,
-        address1Country: data.address1Country || this.formGroup.get('address1Country')?.value,
+        // New field names
+        partnerDescription: data.partnerDescription || data.name || this.formGroup.get('partnerDescription')?.value,
+        partnerShortDescription: data.partnerShortDescription || data.shortName || this.formGroup.get('partnerShortDescription')?.value,
+        partnerLongDescription: data.partnerLongDescription || this.formGroup.get('partnerLongDescription')?.value,
+        
+        // Backward compatibility
+        name: data.partnerDescription || data.name || this.formGroup.get('name')?.value,
+        shortName: data.partnerShortDescription || data.shortName || this.formGroup.get('shortName')?.value,
+        
         partnerGroupCode: data.partnerGroupCode || this.formGroup.get('partnerGroupCode')?.value,
       });
 

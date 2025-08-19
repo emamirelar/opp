@@ -83,6 +83,9 @@ export class CachedDataService {
   private allPartnerCategoriesData = signal([]);
   allPartnerCategories = this.allPartnerCategoriesData.asReadonly();
 
+  private allLiaisonOfficesData = signal<any[]>([]);
+  allLiaisonOffices = this.allLiaisonOfficesData.asReadonly();
+
   // Add signal for partner category and group structure
   private partnerCategoryGroupData = signal<PartnerCategoryGroup[]>([]);
   partnerCategoryGroups = this.partnerCategoryGroupData.asReadonly();
@@ -101,6 +104,11 @@ export class CachedDataService {
       name: group.partnerGroupName,
       value: group.partnerGroupCode
     }))
+  })) || []);
+
+  getPartnerCategoriesForSelect = computed(() => this.partnerCategoryGroups()?.map(category => ({
+    name: category.partnerCategoryName,
+    id: category.partnerCategoryId
   })) || []);
 
   private allContactsData = signal<any[]>([]);
@@ -127,6 +135,7 @@ export class CachedDataService {
     this.loadPartnerLevelTypeData();
     this.loadOrganizationUnits();
     this.loadPartnerCategoryGroups(); // Load category and group structure
+    this.loadLiaisonOffices();
     this.loadContacts();
     this.loadUsers();
     this.loadCurrentUserData();
@@ -159,7 +168,8 @@ export class CachedDataService {
     this.allPartnersData.set([]);
     this.allOrganizationUnitsData.set([]);
     this.allPartnerCategoriesData.set([]);
-    this.partnerCategoryGroupData.set([]); // Clear category and group structure
+    this.partnerCategoryGroupData.set([]); // Clear category and group structure    
+    this.allLiaisonOfficesData.set([]);
   }
 
   loadProjects(){
@@ -574,6 +584,24 @@ export class CachedDataService {
           this.isLoading.set(false);
         }
       });*/
+    }
+  }
+
+  loadLiaisonOffices() {
+    if ((this.allLiaisonOfficesData() == undefined) || (this.allLiaisonOfficesData().length <= 0)) {
+      // Default to empty array before API response
+      this.allLiaisonOfficesData.set([]);
+      this.isLoading.set(true);
+      this.http.get('/api/values/liaison-offices').subscribe({
+        next: (data: any) => {
+          this.allLiaisonOfficesData.set(Array.isArray(data) ? data : []);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.allLiaisonOfficesData.set([]);
+          this.isLoading.set(false);
+        }
+      });
     }
   }
 

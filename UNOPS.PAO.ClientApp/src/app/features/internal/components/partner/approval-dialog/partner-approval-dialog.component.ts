@@ -12,6 +12,8 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DialogModule } from 'primeng/dialog';
+import { DatePickerModule } from 'primeng/datepicker';
+import { TextareaModule } from 'primeng/textarea';
 
 // Services
 import { PartnerService } from '../../../services/partner.service';
@@ -38,7 +40,9 @@ import { Partner } from '../../../models/partner.model';
     ButtonModule,
     MessageModule,
     ProgressSpinnerModule,
-    DialogModule
+    DialogModule,
+    DatePickerModule,
+    TextareaModule
   ],
   templateUrl: './partner-approval-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -68,15 +72,22 @@ export class PartnerApprovalDialogComponent implements OnInit {
 
   initializeForm(): void {
     this.formGroup = this.fb.group({
-      ddRequired: [this.partner.ddRequired || '', Validators.required],
-      ddeacDone: [this.partner.ddeacDone || '', Validators.required],
-      eacReference: [this.partner.eacReference || ''],
-      levyPotentiallyApplies: [this.partner.levyPotentiallyApplies || '', Validators.required],
-      reasonForLevyNotApplying: [this.partner.reasonForLevyNotApplying || ''],
+      // Updated field names to match backend
+      dueDiligenceRequired: [this.partner.dueDiligenceRequired || '', Validators.required],
+      dueDiligenceApproval: [this.partner.dueDiligenceApproval || '', Validators.required],
+      dueDiligenceApprovalDate: [this.partner.dueDiligenceApprovalDate || null],
+      dueDiligenceExpiryDate: [this.partner.dueDiligenceExpiryDate || null],
+      partnerApprovalReference: [this.partner.partnerApprovalReference || ''],
+      partnerLevyStatus: [this.partner.partnerLevyStatus || '', Validators.required],
+      reasonForLevy: [this.partner.reasonForLevy || ''],
       levyTreatment: [this.partner.levyTreatment || ''],
-      pooledFund: [this.partner.pooledFund || '', Validators.required],
-      globalKeyAccount: [this.partner.globalKeyAccount || false],
-      unSecretariatEntity: [this.partner.unSecretariatEntity || false]
+      pooledFund: [this.partner.pooledFund || false],
+      keyGlobalPartner: [this.partner.keyGlobalPartner || false],
+      unAndStateEntity: [this.partner.unAndStateEntity || false],
+      unSecretariatPartner: [this.partner.unSecretariatPartner || false],
+      canCreateNewOpportunities: [this.partner.canCreateNewOpportunities || true],
+      reasonForNoNewOpportunity: [this.partner.reasonForNoNewOpportunity || ''],
+      partnerApprovalDate: [this.partner.partnerApprovalDate || null]
     });
   }
 
@@ -97,7 +108,7 @@ export class PartnerApprovalDialogComponent implements OnInit {
     const approvalData = {
       id: this.partner.id,
       ...this.formGroup.value,
-      approvalStatus: 'Approved'
+      partnerApprovalDate: new Date()
     };
 
     this.partnerService.approvePartner(approvalData).subscribe({

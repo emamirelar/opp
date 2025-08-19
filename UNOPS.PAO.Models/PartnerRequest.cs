@@ -33,7 +33,7 @@ public class PartnerRequest : ExtensibleModel
     public int? ErpDimValue { get; set; } // ERP dimension value
     
     // Liaison Office
-    public string PartnerLiaisonOffice { get; set; } // Enum from predefined list (required)
+    public string? PartnerLiaisonOffice { get; set; } // Enum from predefined list (required)
     
     // UN & State Entity
     public bool UNAndStateEntity { get; set; } = false;

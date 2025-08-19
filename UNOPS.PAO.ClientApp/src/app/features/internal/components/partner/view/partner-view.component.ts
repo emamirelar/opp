@@ -431,7 +431,7 @@ export class PartnerViewComponent implements OnInit {
    */
   canEditPartner = computed(() => {
     const hasUpdatePermission = this.recordPermissions().permissions.canUpdate;
-    const isApproved = this.recordData().approvalStatus === 'Approved';
+    const isApproved = this.recordData().partnerApprovalStatus === 'Approved';
     
     if (!hasUpdatePermission) {
       return false;

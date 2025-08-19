@@ -28,6 +28,7 @@ public class APIDictionary
     public const string Partners = APIPrefix + "values/partners";
     public const string OrganizationUnits = APIPrefix + "values/organization-units";
     public const string PartnerCategories = APIPrefix + "values/partner-categories";
+    public const string LiaisonOffices = APIPrefix + "values/liaison-offices";
     public const string Contacts = APIPrefix + "values/contacts";
     public const string Users = APIPrefix + "values/users";
     public const string GeminiModels = APIPrefix + "values/gemini-models";

@@ -18,86 +18,90 @@
       </app-ai-transcribe>
     </div>
     
+    <!-- General Fields Section -->
     <div class="grid grid-cols-9 gap-4">
       <div class="text-xl col-span-full">
         {{ "title.partnerTitles.partnerInformation" | translate }}
       </div>
+      
+      <!-- Partner Description (Full Name) -->
       <div class="col-span-9 flex flex-col gap-2">
-        <label>{{ "label.partner.name" | translate }} *</label>
-        <input pInputText fluid="true" formControlName="name" />
-        @if( formGroup.get("name")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Name must be entered.</p-message>
+        <label>{{ "label.partner.partnerDescription" | translate }} *</label>
+        <input pInputText fluid="true" formControlName="partnerDescription" />
+        @if( formGroup.get("partnerDescription")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Partner Description is required.</p-message>
         }
       </div>
+      
+      <!-- Partner Short Description -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="newEngagement">{{ 'label.partner.newEngagement' | translate }}*</label>
-        <p-select formControlName="newEngagement" [options]="allPartnerNewEngagementData()"
+        <label for="partnerShortDescription">{{ 'label.partner.partnerShortDescription' | translate }}*</label>
+        <input pInputText formControlName="partnerShortDescription" fluid="true" id="partnerShortDescription" />
+        @if( formGroup.get("partnerShortDescription")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Partner Short Description is required.</p-message>
+        }
+      </div>
+      
+      <!-- Partner Long Description -->
+      <div class="col-span-9 sm:col-span-6 flex flex-col gap-2">
+        <label for="partnerLongDescription">{{ 'label.partner.partnerLongDescription' | translate }}</label>
+        <textarea pTextarea formControlName="partnerLongDescription" fluid="true" id="partnerLongDescription" rows="2"></textarea>
+      </div>
+      
+      <!-- Partner Category -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="partnerCategoryId">{{ 'label.partner.partnerCategory' | translate }}*</label>
+        <p-select formControlName="partnerCategoryId" [options]="allPartnerCategoriesData()"
                   optionLabel="name"
                   optionValue="id"
+                  [showClear]="true"
+                  placeholder="{{ 'label.partner.selectPartnerCategory' | translate }}"
                   [appendTo]="'body'"
-                  fluid="true" id="newEngagement" [ariaLabel]="'aria.selectNewEngagement' | translate" />
-        @if( formGroup.get("newEngagement")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">New Engagement is required.</p-message>
+                  fluid="true" id="partnerCategoryId" />
+        @if( formGroup.get("partnerCategoryId")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Partner Category is required.</p-message>
         }
       </div>
+      
+      <!-- Partner Liaison Office -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="organizationHierarchyIds">{{ 'label.partner.organizationUnits' | translate }}*</label>
-        <p-multiselect 
-          formControlName="organizationHierarchyIds"
-                        [options]="allOrganizationUnitsData()"
+        <label for="liaisonOfficeId">{{ 'label.partner.partnerLiaisonOffice' | translate }}*</label>
+        <p-select formControlName="liaisonOfficeId" [options]="allLiaisonOfficesData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [showClear]="true"
+                  placeholder="{{ 'label.partner.selectPartnerLiaisonOffice' | translate }}"
+                  [appendTo]="'body'"
+                  fluid="true" id="liaisonOfficeId"
+                  [ariaLabel]="'aria.selectLiaisonOffice' | translate" />
+        @if( formGroup.get("liaisonOfficeId")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Partner Liaison Office is required.</p-message>
+        }
+      </div>
+      
+      <!-- Partner Org Unit -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="selectedOrgUnitId">{{ 'label.partner.partnerOrgUnit' | translate }}</label>
+        <p-select 
+          formControlName="selectedOrgUnitId"
+          [options]="allOrganizationUnitsData()"
           optionLabel="name"
           optionValue="id"
           [filter]="true"
           filterBy="name"
           [showClear]="true"
-          [showToggleAll]="true"
-          placeholder="{{ 'label.partner.selectOrganizationUnits' | translate }}"
+          placeholder="{{ 'label.partner.selectPartnerOrgUnit' | translate }}"
           [appendTo]="'body'"
           fluid="true" 
-          id="organizationHierarchyIds" 
-          [ariaLabel]="'aria.selectOrganizationUnits' | translate"
-          [selectedItemsLabel]="getSelectedActiveOrgUnitsLabel()">
-        </p-multiselect>
-        @if( formGroup.get("organizationHierarchyIds")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">At least one organization unit is required.</p-message>
-        }
-      </div>
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.phone" | translate }}</label>
-        <input pInputText fluid="true" formControlName="phone" />
-      </div>
+          id="selectedOrgUnitId"
+          [ariaLabel]="'aria.selectPartnerOrgUnit' | translate">
+        </p-select>
 
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.address1Street" | translate }}</label>
-        <input pInputText fluid="true" formControlName="address1Street" />
       </div>
+      
+      <!-- Partner Group -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.address1Street2" | translate }}</label>
-        <input pInputText fluid="true" formControlName="address1Street2" />
-      </div>
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.address1City" | translate }}</label>
-        <input pInputText fluid="true" formControlName="address1City" />
-      </div>
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.address1StateProvince" | translate }}</label>
-        <input pInputText fluid="true" formControlName="address1StateProvince" />
-      </div>
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.address1PostalCode" | translate }}</label>
-        <input pInputText fluid="true" formControlName="address1PostalCode" />
-      </div>
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.address1Country" | translate }}</label>
-        <input pInputText fluid="true" formControlName="address1Country" />
-      </div>
-
-      <p-divider class="col-span-full" />
-      <div class="text-xl col-span-full">
-        {{ "title.partnerTitles.additionalInformation" | translate }}
-      </div>
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="partnerGroupCode">{{ 'label.partnerTree.partnerGroup' | translate }}*</label>
+        <label for="partnerGroupCode">{{ 'label.partner.partnerGroup' | translate }}</label>
         <p-select formControlName="partnerGroupCode" [options]="allPartnerGroupsForSelect()"
                   optionLabel="name"
                   optionValue="value"
@@ -107,26 +111,17 @@
                   [showClear]="true"
                   placeholder="{{ 'label.partner.selectPartnerGroup' | translate }}"
                   [appendTo]="'body'"
-                  fluid="true" id="partnerGroupCode" [ariaLabel]="'aria.selectPartnerGroup' | translate"
-                  >
+                  fluid="true" id="partnerGroupCode">
           <ng-template let-group #group>
             <div class="flex items-center font-bold">
               <span>{{ group.name }}</span>
             </div>
           </ng-template>
         </p-select>
-        @if( formGroup.get("partnerGroupId")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Partner Group is required.</p-message>
-        }
-      </div>
 
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.shortName" | translate }} *</label>
-        <input pInputText fluid="true" formControlName="shortName" />
-        @if( formGroup.get("shortName")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Short Name must be entered.</p-message>
-        }
       </div>
+      
+
     </div>
 
     <!-- Approval Fields Section - Only visible if partner is approved -->
@@ -139,73 +134,125 @@
         </span>
       </div>
       
+      <!-- Key Global Partner -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="pooledFund">{{ 'label.partner.pooledFund' | translate }}*</label>
-        <p-select formControlName="pooledFund" [options]="allYesNoData()"
+        <div class="flex items-center gap-2">
+          <p-checkbox formControlName="keyGlobalPartner" 
+                      [disabled]="!approvalFieldsEnabled()"
+                      inputId="keyGlobalPartner">
+          </p-checkbox>
+          <label for="keyGlobalPartner">{{ 'label.partner.keyGlobalPartner' | translate }}</label>
+        </div>
+      </div>
+      
+      <!-- UN & State Entity -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <p-checkbox formControlName="unAndStateEntity" 
+                      [disabled]="!approvalFieldsEnabled()"
+                      inputId="unAndStateEntity">
+          </p-checkbox>
+          <label for="unAndStateEntity">{{ 'label.partner.unAndStateEntity' | translate }}</label>
+        </div>
+      </div>
+      
+      <!-- UN Secretariat Partner -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <div class="flex items-center gap-2">
+          <p-checkbox formControlName="unSecretariatPartner" 
+                      [disabled]="!approvalFieldsEnabled()"
+                      inputId="unSecretariatPartner">
+          </p-checkbox>
+          <label for="unSecretariatPartner">{{ 'label.partner.unSecretariatPartner' | translate }}</label>
+        </div>
+      </div>
+      
+      <!-- Due Diligence (Required) -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="dueDiligenceRequired">{{ 'label.partner.dueDiligenceRequired' | translate }}*</label>
+        <p-select formControlName="dueDiligenceRequired" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="pooledFund" [ariaLabel]="'aria.selectPooledFund' | translate" />
-        @if( formGroup.get("pooledFund")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Pooled Fund is required.</p-message>
+                  fluid="true" id="dueDiligenceRequired" />
+        @if( formGroup.get("dueDiligenceRequired")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Due Diligence Required is required.</p-message>
         }
       </div>
       
+      <!-- Due Diligence (Approval) -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="ddRequired">{{ 'label.partner.ddRequired' | translate }}*</label>
-        <p-select formControlName="ddRequired" [options]="allYesNoData()"
+        <label for="dueDiligenceApproval">{{ 'label.partner.dueDiligenceApproval' | translate }}*</label>
+        <p-select formControlName="dueDiligenceApproval" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="ddRequired" [ariaLabel]="'aria.selectDDRequired' | translate" />
-        @if( formGroup.get("ddRequired")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">DD Required is required.</p-message>
+                  fluid="true" id="dueDiligenceApproval" />
+        @if( formGroup.get("dueDiligenceApproval")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Due Diligence Approval is required.</p-message>
         }
       </div>
       
+      <!-- Due Diligence Approval Date -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="ddeacDone">{{ 'label.partner.ddeacDone' | translate }}*</label>
-        <p-select formControlName="ddeacDone" [options]="allYesNoData()"
+        <label for="dueDiligenceApprovalDate">{{ 'label.partner.dueDiligenceApprovalDate' | translate }}</label>
+        <p-datepicker formControlName="dueDiligenceApprovalDate" 
+                      [disabled]="!approvalFieldsEnabled()"
+                      fluid="true" id="dueDiligenceApprovalDate" />
+      </div>
+      
+      <!-- Due Diligence Expiry Date -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="dueDiligenceExpiryDate">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</label>
+        <p-datepicker formControlName="dueDiligenceExpiryDate" 
+                      [disabled]="!approvalFieldsEnabled()"
+                      fluid="true" id="dueDiligenceExpiryDate" />
+      </div>
+      
+      <!-- Partner Approval Date -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="partnerApprovalDate">{{ 'label.partner.partnerApprovalDate' | translate }}</label>
+        <p-datepicker formControlName="partnerApprovalDate" 
+                      [disabled]="!approvalFieldsEnabled()"
+                      fluid="true" id="partnerApprovalDate" />
+      </div>
+      
+      <!-- Partner Approval Reference -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="partnerApprovalReference">{{ 'label.partner.partnerApprovalReference' | translate }}</label>
+        <input pInputText formControlName="partnerApprovalReference" 
+               [disabled]="!approvalFieldsEnabled()"
+               fluid="true" id="partnerApprovalReference" />
+      </div>
+      
+      <!-- Partner Levy -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="partnerLevyStatus">{{ 'label.partner.partnerLevyStatus' | translate }}*</label>
+        <p-select formControlName="partnerLevyStatus" [options]="allPartnerLevyAppliesData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="ddeacDone" [ariaLabel]="'aria.selectDDEACDone' | translate" />
-        @if( formGroup.get("ddeacDone")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">DD/EAC Done is required.</p-message>
+                  fluid="true" id="partnerLevyStatus" />
+        @if( formGroup.get("partnerLevyStatus")?.invalid && showValidationFailedError() ) {
+        <p-message severity="error" variant="simple">Partner Levy Status is required.</p-message>
         }
       </div>
       
+      <!-- Reason for Levy -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label>{{ "label.partner.eacReference" | translate }}</label>
-        <input pInputText fluid="true" formControlName="eacReference" [disabled]="!approvalFieldsEnabled()" />
-      </div>
-      
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="levyPotentiallyApplies">{{ 'label.partner.levyPotentiallyApplies' | translate }}*</label>
-        <p-select formControlName="levyPotentiallyApplies" [options]="allPartnerLevyAppliesData()"
+        <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }}</label>
+        <p-select formControlName="reasonForLevy" [options]="allPartnerReasonForLevyNotData()"
                   optionLabel="name"
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="levyPotentiallyApplies" [ariaLabel]="'aria.selectLevyPotentiallyApplies' | translate" />
-        @if( formGroup.get("levyPotentiallyApplies")?.invalid && showValidationFailedError() ) {
-        <p-message severity="error" variant="simple">Levy Potentially Applies is required.</p-message>
-        }
+                  fluid="true" id="reasonForLevy" />
       </div>
       
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="reasonForLevyNotApplying">{{ 'label.partner.reasonForLevyNotApplying' | translate }}</label>
-        <p-select formControlName="reasonForLevyNotApplying" [options]="allPartnerReasonForLevyNotData()"
-                  optionLabel="name"
-                  optionValue="id"
-                  [appendTo]="'body'"
-                  [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="reasonForLevyNotApplying" [ariaLabel]="'aria.selectReasonForLevyNotApplying' | translate" />
-      </div>
-      
+      <!-- Levy Treatment -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="levyTreatment">{{ 'label.partner.levyTreatment' | translate }}</label>
         <p-select formControlName="levyTreatment" [options]="allPartnerLevyTreatmentData()"
@@ -213,24 +260,40 @@
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="levyTreatment" [ariaLabel]="'aria.selectLevyTreatment' | translate" />
+                  fluid="true" id="levyTreatment" />
       </div>
       
+      <!-- Pooled Fund -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <p-checkbox [binary]="true"
-                    formControlName="globalKeyAccount"
-                    [disabled]="!approvalFieldsEnabled()"
-                    inputId="gka" />
-        <label for="gka">{{ "label.partner.globalKeyAccount" | translate }}</label>
+        <div class="flex items-center gap-2">
+          <p-checkbox formControlName="pooledFund" 
+                      [disabled]="!approvalFieldsEnabled()"
+                      inputId="pooledFund">
+          </p-checkbox>
+          <label for="pooledFund">{{ 'label.partner.pooledFund' | translate }}</label>
+        </div>
       </div>
       
+      <!-- Can create new opportunities? -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <p-checkbox [binary]="true"
-                    formControlName="unSecretariatEntity"
-                    [disabled]="!approvalFieldsEnabled()"
-                    inputId="unse" />
-        <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
+        <div class="flex items-center gap-2">
+          <p-checkbox formControlName="canCreateNewOpportunities" 
+                      [disabled]="!approvalFieldsEnabled()"
+                      inputId="canCreateNewOpportunities">
+          </p-checkbox>
+          <label for="canCreateNewOpportunities">{{ 'label.partner.canCreateNewOpportunities' | translate }}</label>
+        </div>
       </div>
+      
+      <!-- Reason -->
+      <div class="col-span-9 sm:col-span-6 flex flex-col gap-2">
+        <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</label>
+        <textarea pTextarea formControlName="reasonForNoNewOpportunity" 
+                  [disabled]="!approvalFieldsEnabled()"
+                  fluid="true" id="reasonForNoNewOpportunity" rows="2"></textarea>
+      </div>
+
+
       
       @if (!approvalFieldsEnabled()) {
         <div class="col-span-full">

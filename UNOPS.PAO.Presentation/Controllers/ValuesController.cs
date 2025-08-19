@@ -92,6 +92,12 @@ public class ValuesController : BaseController
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOrganizationUnits()));
     }
 
+    [HttpGet(APIDictionary.LiaisonOffices)]
+    public async Task<ActionResult> GetLiaisonOffices()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetLiaisonOffices()));
+    }
+
     [HttpGet(APIDictionary.Contacts)]
     public async Task<ActionResult> GetContacts()
     {

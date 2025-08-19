@@ -15,14 +15,14 @@
           <div class="flex justify-between items-center w-full">
             <div class="flex items-center gap-2">
               <span class="text-xl">Partner Information</span>
-              @if (recordData().approvalStatus === 'Approved') {
+              @if (recordData().partnerApprovalStatus === 'Approved') {
                 <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Approved</span>
-              } @else if (recordData().approvalStatus === 'Pending') {
+              } @else if (recordData().partnerApprovalStatus === 'NotApproved') {
                 <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Pending Approval</span>
               }
             </div>
             <div class="flex items-center gap-2">
-              @if (isAdmin() && recordData().approvalStatus !== 'Approved') {
+              @if (isAdmin() && recordData().partnerApprovalStatus !== 'Approved') {
                 <p-button label="Approval"
                           [rounded]="true"
                           class="approval-button"
@@ -93,7 +93,7 @@
 
             @if(getPrimaryOrganizationUnit(recordData())){
             <div class="flex flex-col gap-2">
-              <div class="text-sm">{{ 'label.partner.organizationUnits' | translate }}</div>
+              <div class="text-sm">{{ 'label.partner.partnerOrgUnit' | translate }}</div>
               <div>{{getPrimaryOrganizationUnit(recordData())?.name}}</div>
               @if(recordData().organizationUnitRelationships && recordData().organizationUnitRelationships!.length > 1) {
                 <div class="text-xs text-gray-500">
@@ -128,34 +128,34 @@
                 <div>{{recordData().pooledFund}}</div>
               </div>
               }
-              @if(recordData().ddRequired){
+              @if(recordData().dueDiligenceRequired){
               <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.ddRequired' | translate }}</div>
-                <div>{{recordData().ddRequired}}</div>
+                <div class="text-sm">{{ 'label.partner.dueDiligenceRequired' | translate }}</div>
+                <div>{{recordData().dueDiligenceRequired}}</div>
               </div>
               }
-              @if(recordData().ddeacDone){
+              @if(recordData().dueDiligenceApproval){
               <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.ddeacDone' | translate }}</div>
-                <div>{{recordData().ddeacDone}}</div>
+                <div class="text-sm">{{ 'label.partner.dueDiligenceApproval' | translate }}</div>
+                <div>{{recordData().dueDiligenceApproval}}</div>
               </div>
               }
-              @if(recordData().eacReference){
+              @if(recordData().partnerApprovalReference){
               <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.eacReference' | translate }}</div>
-                <div>{{recordData().eacReference}}</div>
+                <div class="text-sm">{{ 'label.partner.partnerApprovalReference' | translate }}</div>
+                <div>{{recordData().partnerApprovalReference}}</div>
               </div>
               }
-              @if(recordData().levyPotentiallyApplies){
+              @if(recordData().partnerLevyStatus){
               <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.levyPotentiallyApplies' | translate }}</div>
-                <div>{{recordData().levyPotentiallyApplies}}</div>
+                <div class="text-sm">{{ 'label.partner.partnerLevyStatus' | translate }}</div>
+                <div>{{recordData().partnerLevyStatus}}</div>
               </div>
               }
-              @if(recordData().reasonForLevyNotApplying){
+              @if(recordData().reasonForLevy){
               <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.reasonForLevyNotApplying' | translate }}</div>
-                <div>{{recordData().reasonForLevyNotApplying}}</div>
+                <div class="text-sm">{{ 'label.partner.reasonForLevy' | translate }}</div>
+                <div>{{recordData().reasonForLevy}}</div>
               </div>
               }
               @if(recordData().levyTreatment){
@@ -165,26 +165,20 @@
               </div>
               }
               <div class="flex gap-2">
-                <label for="gka">{{ "label.partner.globalKeyAccount" | translate }}</label>
+                <label for="gka">{{ "label.partner.keyGlobalPartner" | translate }}</label>
                 <p-checkbox [binary]="true"
                             [disabled]="true"
-                            [ngModel]="recordData().globalKeyAccount"
+                            [ngModel]="recordData().keyGlobalPartner"
                             inputId="gka" />
               </div>
               <div class="flex gap-2">
-                <label for="unse">{{ "label.partner.unSecretariatEntity" | translate }}</label>
+                <label for="unse">{{ "label.partner.unSecretariatPartner" | translate }}</label>
                 <p-checkbox [binary]="true"
                             [disabled]="true"
-                            [ngModel]="recordData().unSecretariatEntity"
+                            [ngModel]="recordData().unSecretariatPartner"
                             inputId="unse" />
               </div>
               <!-- Other Partner Information Fields -->
-              @if(recordData().newEngagement){
-                <div class="flex flex-col gap-2">
-                  <div class="text-sm">{{ 'label.partner.newEngagement' | translate }}</div>
-                  <div>{{recordData().newEngagement}}</div>
-                </div>
-              }
 
 
             }
