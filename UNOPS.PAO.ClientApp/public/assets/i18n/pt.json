@@ -544,9 +544,37 @@
           "title": "Barra Lateral de Navegação Principal",
           "description": "Esta barra lateral contém links para todas as seções principais: Gerenciamento de Parceiros, Banco de Dados de Contatos, Rastreamento de Interações, Ferramentas de IA, Relatórios, e funções Administrativas. Cada seção tem seus próprios recursos especializados e tours."
         },
-        "welcomeDashboard": {
-          "title": "Painel de Boas-vindas",
-          "description": "Este é seu ponto de partida na aplicação. Daqui, você pode navegar para qualquer seção usando o menu da barra lateral, pesquisar informações específicas, ou acessar o assistente de IA para insights inteligentes e assistência."
+        "dashboardHeader": {
+          "title": "Cabeçalho do Painel",
+          "description": "O cabeçalho personalizado do seu painel mostra a mensagem de boas-vindas e fornece acesso rápido para atualizar os dados do painel. O botão de atualização garante que você sempre tenha as informações mais atualizadas."
+        },
+        "refreshButton": {
+          "title": "Atualizar Painel",
+          "description": "Clique neste botão de atualização para recarregar todos os dados do painel e obter as informações mais recentes sobre seus parceiros, contatos, interações e atualizações organizacionais recentes."
+        },
+        "partnersCard": {
+          "title": "Cartão do Painel Meus Parceiros",
+          "description": "Este cartão mostra um resumo dos parceiros que você modificou ou criou recentemente. Clique no cartão para expandir e ver informações detalhadas dos parceiros, ou clique em parceiros individuais para navegar para seus perfis completos."
+        },
+        "contactsCard": {
+          "title": "Cartão do Painel Meus Contatos",
+          "description": "Visualize e gerencie seus contatos modificados recentemente deste cartão interativo. Expanda-o para ver detalhes dos contatos, filtre por vários critérios, ou navegue diretamente para perfis de contatos específicos."
+        },
+        "interactionsCard": {
+          "title": "Cartão do Painel Minhas Interações",
+          "description": "Acompanhe suas interações recentes com parceiros e contatos. Este cartão permite filtrar interações por tipo, ver detalhes, e acessar rapidamente registros completos de interações para ações de acompanhamento."
+        },
+        "opportunitiesCard": {
+          "title": "Cartão do Painel Minhas Oportunidades",
+          "description": "Esta seção é projetada para futuras funcionalidades de gerenciamento de oportunidades. Embora atualmente mostre 'Em Breve', eventualmente exibirá oportunidades de parceria, possibilidades de financiamento e perspectivas de desenvolvimento comercial."
+        },
+        "actionsRequiredCard": {
+          "title": "Cartão do Painel Ações Necessárias",
+          "description": "Mantenha-se atualizado com itens em rascunho que precisam da sua atenção. Este cartão mostra parceiros, contatos e interações em rascunho que requerem finalização ou revisão antes que possam ser finalizados e publicados."
+        },
+        "orgUpdatesCard": {
+          "title": "Cartão de Atualizações Recentes da Organização",
+          "description": "Monitore atualizações recentes dos seus colegas da unidade organizacional. Este cartão exibe as últimas mudanças em parceiros, contatos e interações feitas por membros da equipe, ajudando você a se manter informado sobre atividades colaborativas."
         }
       }
     },

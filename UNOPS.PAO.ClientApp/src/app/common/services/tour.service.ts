@@ -228,15 +228,55 @@ export class TourService {
       return true;
     }
     
-    // Check if current URL starts with the tour route (for detail pages)
-    if (cleanCurrentUrl.startsWith(cleanTourRoute)) {
+    // Handle Angular route parameters (e.g., :id, :recordId)
+    if (this.matchesRoutePattern(cleanCurrentUrl, cleanTourRoute)) {
+      return true;
+    }
+    
+    // Check if current URL starts with the tour route (for static routes)
+    if (!cleanTourRoute.includes(':') && cleanCurrentUrl.startsWith(cleanTourRoute)) {
       // Make sure it's a logical extension (e.g., /partnerships/partners/123)
       const remainder = cleanCurrentUrl.substring(cleanTourRoute.length);
       return remainder === '' || remainder.startsWith('/') || remainder.startsWith('?');
     }
     
-    // Pattern matching for dynamic routes
+    // Legacy wildcard matching for * patterns
     return this.wildcardMatch(cleanCurrentUrl, cleanTourRoute);
+  }
+
+  /**
+   * Check if URL matches a route pattern with Angular parameters
+   */
+  private matchesRoutePattern(url: string, pattern: string): boolean {
+    // Split both URL and pattern into segments
+    const urlSegments = url.split('/').filter(segment => segment !== '');
+    const patternSegments = pattern.split('/').filter(segment => segment !== '');
+    
+    // Must have at least as many segments as the pattern (allows nested routes)
+    if (urlSegments.length < patternSegments.length) {
+      return false;
+    }
+    
+    // Check each segment of the pattern
+    for (let i = 0; i < patternSegments.length; i++) {
+      const patternSegment = patternSegments[i];
+      const urlSegment = urlSegments[i];
+      
+      // If pattern segment is a parameter (starts with :), it matches any non-empty segment
+      if (patternSegment.startsWith(':')) {
+        if (!urlSegment || urlSegment.trim() === '') {
+          return false;
+        }
+        continue;
+      }
+      
+      // For static segments, they must match exactly
+      if (patternSegment !== urlSegment) {
+        return false;
+      }
+    }
+    
+    return true;
   }
 
   private wildcardMatch(url: string, pattern: string): boolean {
@@ -454,5 +494,13 @@ export class TourService {
     }
     
     return tourConfigs;
+  }
+
+  /**
+   * Manually test route detection (for debugging)
+   */
+  async testRouteDetection(url?: string): Promise<string[]> {
+    const testUrl = url || this.router.url;
+    return this.findToursForRoute(testUrl);
   }
 }

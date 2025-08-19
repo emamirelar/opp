@@ -288,12 +288,12 @@ export class TourControlComponent implements OnInit {
     const currentSegments = currentUrl.split('/').filter(s => s.length > 0);
     const patternSegments = routePattern.split('/').filter(s => s.length > 0);
     
-    // Must have same number of segments
-    if (currentSegments.length !== patternSegments.length) {
+    // Must have at least as many segments as the pattern (allows nested routes)
+    if (currentSegments.length < patternSegments.length) {
       return false;
     }
     
-    // Check each segment
+    // Check each segment of the pattern
     for (let i = 0; i < patternSegments.length; i++) {
       const patternSegment = patternSegments[i];
       const currentSegment = currentSegments[i];

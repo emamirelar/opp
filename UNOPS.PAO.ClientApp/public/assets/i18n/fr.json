@@ -776,9 +776,37 @@
           "title": "Barre Latérale de Navigation Principale",
           "description": "Cette barre latérale contient des liens vers toutes les sections principales : Gestion des Partenaires, Base de Données des Contacts, Suivi des Interactions, Outils IA, Rapports, et fonctions Administratives. Chaque section a ses propres fonctionnalités spécialisées et tours."
         },
-        "welcomeDashboard": {
-          "title": "Tableau de Bord de Bienvenue",
-          "description": "C'est votre point de départ dans l'application. D'ici, vous pouvez naviguer vers n'importe quelle section en utilisant le menu de la barre latérale, rechercher des informations spécifiques, ou accéder à l'assistant IA pour des insights intelligents et de l'assistance."
+        "dashboardHeader": {
+          "title": "En-tête du Tableau de Bord",
+          "description": "L'en-tête personnalisé de votre tableau de bord affiche le message de bienvenue et donne un accès rapide au rafraîchissement des données. Le bouton de rafraîchissement vous assure d'avoir toujours les informations les plus récentes."
+        },
+        "refreshButton": {
+          "title": "Rafraîchir le Tableau de Bord",
+          "description": "Cliquez sur ce bouton de rafraîchissement pour recharger toutes les données du tableau de bord et obtenir les dernières informations sur vos partenaires, contacts, interactions et mises à jour organisationnelles récentes."
+        },
+        "partnersCard": {
+          "title": "Carte Tableau de Bord Mes Partenaires",
+          "description": "Cette carte affiche un résumé des partenaires que vous avez récemment modifiés ou créés. Cliquez sur la carte pour l'étendre et voir les informations détaillées des partenaires, ou cliquez sur des partenaires individuels pour naviguer vers leurs profils complets."
+        },
+        "contactsCard": {
+          "title": "Carte Tableau de Bord Mes Contacts",
+          "description": "Visualisez et gérez vos contacts récemment modifiés depuis cette carte interactive. Étendez-la pour voir les détails des contacts, filtrez selon divers critères, ou naviguez directement vers des profils de contacts spécifiques."
+        },
+        "interactionsCard": {
+          "title": "Carte Tableau de Bord Mes Interactions",
+          "description": "Suivez vos interactions récentes avec les partenaires et contacts. Cette carte vous permet de filtrer les interactions par type, voir les détails, et accéder rapidement aux enregistrements complets d'interaction pour les actions de suivi."
+        },
+        "opportunitiesCard": {
+          "title": "Carte Tableau de Bord Mes Opportunités",
+          "description": "Cette section est conçue pour les futures fonctionnalités de gestion des opportunités. Bien qu'elle affiche actuellement 'Bientôt Disponible', elle affichera éventuellement les opportunités de partenariat, les possibilités de financement et les perspectives de développement commercial."
+        },
+        "actionsRequiredCard": {
+          "title": "Carte Tableau de Bord Actions Requises",
+          "description": "Restez au fait des éléments brouillon qui nécessitent votre attention. Cette carte affiche les partenaires, contacts et interactions brouillon qui nécessitent une finalisation ou révision avant qu'ils puissent être finalisés et publiés."
+        },
+        "orgUpdatesCard": {
+          "title": "Carte Mises à Jour Récentes de l'Organisation",
+          "description": "Surveillez les mises à jour récentes de vos collègues d'unité organisationnelle. Cette carte affiche les derniers changements aux partenaires, contacts et interactions effectués par les membres de l'équipe, vous aidant à rester informé des activités collaboratives."
         }
       }
     },
