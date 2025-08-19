@@ -53,7 +53,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         // Include related entities
         
         // Default ordering is by partner description
-        ApplyOrderBy(p => p.PartnerDescription);
+        ApplyOrderBy(p => p.Name);
     }
     
     /// <summary>
@@ -88,7 +88,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
         // Add name filter if specified (using PartnerDescription)
         if (!string.IsNullOrWhiteSpace(name))
         {
-            Expression<Func<Partner, bool>> nameFilter = p => p.PartnerDescription.ToLower().Contains(name.ToLower());
+            Expression<Func<Partner, bool>> nameFilter = p => p.Name.ToLower().Contains(name.ToLower());
             predicate = CombineExpressions(predicate, nameFilter);
         }
         
@@ -127,7 +127,7 @@ public class PartnerCompositeClassicSearchSpecification : BaseSpecification<Part
             // Always perform case-insensitive search
             string lowerSearchText = searchText.ToLower();
             Expression<Func<Partner, bool>> textFilter = p => 
-                (p.PartnerDescription != null && p.PartnerDescription.ToLower().Contains(lowerSearchText)) ||
+                (p.Name != null && p.Name.ToLower().Contains(lowerSearchText)) ||
                 (p.PartnerShortDescription != null && p.PartnerShortDescription.ToLower().Contains(lowerSearchText)) ||
                 (p.PartnerLongDescription != null && p.PartnerLongDescription.ToLower().Contains(lowerSearchText));
             predicate = CombineExpressions(predicate, textFilter);

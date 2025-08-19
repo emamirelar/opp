@@ -170,14 +170,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         var entity = MapModelToEntity(model);
 
-        // Set a temporary Name field to satisfy NOT NULL constraint
-        entity.Name = "Partner - TBD";
-
         // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
-
-        // Set the correct Name field as "Partner - {Id}" after getting the ID
-        entity.Name = $"Partner - {entity.Id}";
         await PartnerRepository.UpdateAsync(entity);
 
         // Handle organization unit hierarchy IDs if specified - AFTER saving the partner
@@ -932,9 +926,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // RBAC interceptor handles security enforcement
         
         // Validate minimum required fields (defensive check)
-        if (string.IsNullOrWhiteSpace(model.PartnerDescription))
+        if (string.IsNullOrWhiteSpace(model.Name))
         {
-            throw new BusinessException("Partner Description is required for creation");
+            throw new BusinessException("Partner Name is required for creation");
         }
         
         // Ensure partner is created in Draft status
@@ -942,14 +936,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         
         var entity = MapModelToEntity(model);
 
-        // Set a temporary Name field to satisfy NOT NULL constraint
-        entity.Name = "Partner - TBD";
-
         // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
-
-        // Set the correct Name field as "Partner - {Id}" after getting the ID
-        entity.Name = $"Partner - {entity.Id}";
         await PartnerRepository.UpdateAsync(entity);
 
         // Handle organization unit hierarchy IDs if specified - AFTER saving the partner

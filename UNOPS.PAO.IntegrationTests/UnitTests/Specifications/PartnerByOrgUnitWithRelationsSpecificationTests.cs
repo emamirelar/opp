@@ -111,7 +111,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = 1, 
                 // Enhanced Partner structure
-                PartnerDescription = "Partner 1",
+                Name = "Partner 1",
                 PartnerShortDescription = "P1",
                 PartnerCategoryId = 1,
                 LiaisonOfficeId = 1,
@@ -127,7 +127,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = 2, 
                 // Enhanced Partner structure
-                PartnerDescription = "Partner 2",
+                Name = "Partner 2",
                 PartnerShortDescription = "P2",
                 PartnerCategoryId = 1,
                 LiaisonOfficeId = 1,
@@ -224,7 +224,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = 1, 
                 // Enhanced Partner structure
-                PartnerDescription = "Direct Partner", 
+                Name = "Direct Partner", 
                 PartnerShortDescription = "DP",
                 PartnerCategoryId = 1,
                 LiaisonOfficeId = 1,
@@ -252,7 +252,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = 2, 
                 // Enhanced Partner structure
-                PartnerDescription = "Indirect Partner",
+                Name = "Indirect Partner",
                 PartnerShortDescription = "IP",
                 PartnerCategoryId = 1,
                 LiaisonOfficeId = 1,
@@ -298,7 +298,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = 3, 
                 // Enhanced Partner structure
-                PartnerDescription = "Unrelated Partner",
+                Name = "Unrelated Partner",
                 PartnerShortDescription = "UP",
                 PartnerCategoryId = 1,
                 LiaisonOfficeId = 1,
@@ -413,7 +413,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = 1, 
                 // Enhanced Partner structure
-                PartnerDescription = "Partner 1",
+                Name = "Partner 1",
                 PartnerShortDescription = "P1",
                 PartnerCategoryId = 1,
                 LiaisonOfficeId = 1,
@@ -429,7 +429,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = 2, 
                 // Enhanced Partner structure
-                PartnerDescription = "Partner 2",
+                Name = "Partner 2",
                 PartnerShortDescription = "P2",
                 PartnerCategoryId = 1,
                 LiaisonOfficeId = 1,
@@ -445,7 +445,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = 3, 
                 // Enhanced Partner structure
-                PartnerDescription = "Partner 3",
+                Name = "Partner 3",
                 PartnerShortDescription = "P3",
                 PartnerCategoryId = 1,
                 LiaisonOfficeId = 1,
@@ -582,7 +582,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = id, 
                 // Enhanced Partner structure
-                PartnerDescription = name,
+                Name = name,
                 PartnerShortDescription = $"P{id}",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office
@@ -616,7 +616,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
             { 
                 Id = id, 
                 // Enhanced Partner structure
-                PartnerDescription = name,
+                Name = name,
                 PartnerShortDescription = $"P{id}",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office

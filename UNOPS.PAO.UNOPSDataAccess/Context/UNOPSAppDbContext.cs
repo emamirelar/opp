@@ -69,6 +69,13 @@ public class UNOPSAppDbContext : AppDbContext
             .HasForeignKey(p => p.LiaisonOfficeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Configure unique constraint for ErpDimValue (allows null but enforces uniqueness when not null)
+        modelBuilder
+            .Entity<Partner>()
+            .HasIndex(p => p.ErpDimValue)
+            .IsUnique()
+            .HasFilter("\"ErpDimValue\" IS NOT NULL");
+
         // Configure LiaisonOffice entity
         modelBuilder
             .Entity<LiaisonOffice>()

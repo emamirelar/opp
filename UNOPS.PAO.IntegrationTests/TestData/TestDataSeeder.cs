@@ -68,7 +68,7 @@ public static class TestDataSeeder
         };
         
         // Ensure required fields are set for enhanced Partner structure
-        if (string.IsNullOrEmpty(partner.PartnerDescription)) partner.PartnerDescription = "Test Partner";
+        if (string.IsNullOrEmpty(partner.Name)) partner.Name = "Test Partner";
         if (string.IsNullOrEmpty(partner.PartnerShortDescription)) partner.PartnerShortDescription = "TP";
         if (partner.PartnerCategoryId == 0) partner.PartnerCategoryId = 1;
         if (partner.LiaisonOfficeId == 0) partner.LiaisonOfficeId = 1;

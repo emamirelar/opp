@@ -110,7 +110,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 .Returns((UNOPSPartner source) => new PartnerModel
                 {
                     Id = source.Id,
-                    PartnerDescription = source.PartnerDescription,
+                    Name = source.Name,
                     Status = source.Status.ToString(),
                     PartnerGroupCode = source.PartnerGroupCode
                 });
@@ -493,7 +493,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             
             response!.TotalCount.Should().Be(1);
             response!.Records.Should().HaveCount(1);
-            response!.Records.First().PartnerDescription.Should().Be("Simple Test Partner");
+            response!.Records.First().Name.Should().Be("Simple Test Partner");
         }
 
         [Fact]
@@ -541,7 +541,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             { 
                 Id = id, 
                 // Enhanced Partner structure
-                PartnerDescription = name,
+                Name = name,
                 PartnerShortDescription = $"P{id}",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office
@@ -576,7 +576,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             { 
                 Id = id, 
                 // Enhanced Partner structure
-                PartnerDescription = name,
+                Name = name,
                 PartnerShortDescription = $"P{id}",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office

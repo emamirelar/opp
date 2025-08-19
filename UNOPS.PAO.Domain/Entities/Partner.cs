@@ -33,18 +33,15 @@ public class Partner : ModifiableDeletableEntity
     
     // ========== ENHANCED PARTNER FIELDS ==========
     
-    // Enhanced descriptions (required/main fields)
-    [MaxLength(500)]
-    public string PartnerDescription { get; set; } // Full name (required)
-    
+    // Enhanced descriptions - using inherited Name field as primary identifier
     [MaxLength(100)]  
-    public string PartnerShortDescription { get; set; } // Short name/acronym (required)
+    public string? PartnerShortDescription { get; set; } // Short name/acronym (optional)
     
     [MaxLength(1000)]
     public string? PartnerLongDescription { get; set; } // Optional long description
     
     // Category (Organization Units are managed through OrganizationUnitRelationships)
-    public int PartnerCategoryId { get; set; } // FK to Partner Category (required)
+    public int? PartnerCategoryId { get; set; } // FK to Partner Category (optional)
     
     // ========== PARTNER LEVEL INFORMATION ==========
     
@@ -62,7 +59,7 @@ public class Partner : ModifiableDeletableEntity
     public int? ErpDimValue { get; set; } // ERP dimension value
     
     // Liaison Office  
-    public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice (required)
+    public int? LiaisonOfficeId { get; set; } // FK to LiaisonOffice (optional)
     
     // Partner Focal Point - Selection from active directory to serve as partner team  
     public int? PartnerFocalPointUserId { get; set; } // Business Developer UserId
@@ -235,7 +232,7 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     public bool CanBeActivated()
     {
-        return !string.IsNullOrWhiteSpace(PartnerDescription) &&
+        return !string.IsNullOrWhiteSpace(Name) &&
                !string.IsNullOrWhiteSpace(PartnerShortDescription) &&
                PartnerCategoryId > 0 &&
                LiaisonOfficeId > 0;
@@ -257,7 +254,7 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     public bool HasMinimumFieldsForCreation()
     {
-        return !string.IsNullOrWhiteSpace(PartnerDescription);
+        return !string.IsNullOrWhiteSpace(Name);
     }
     
     /// <summary>
@@ -265,10 +262,7 @@ public class Partner : ModifiableDeletableEntity
     /// </summary>
     public bool HasMandatoryFieldsForActivation()
     {
-        return !string.IsNullOrWhiteSpace(PartnerDescription) &&
-               !string.IsNullOrWhiteSpace(PartnerShortDescription) &&
-               PartnerCategoryId > 0 &&
-               LiaisonOfficeId > 0;
+        return !string.IsNullOrWhiteSpace(Name);
     }
     
     /// <summary>
@@ -278,8 +272,8 @@ public class Partner : ModifiableDeletableEntity
     {
         var errors = new List<string>();
         
-        if (string.IsNullOrWhiteSpace(PartnerDescription))
-            errors.Add("Partner Description is required");
+        if (string.IsNullOrWhiteSpace(Name))
+            errors.Add("Partner Name is required");
             
         return errors;
     }
@@ -291,17 +285,8 @@ public class Partner : ModifiableDeletableEntity
     {
         var errors = new List<string>();
         
-        if (string.IsNullOrWhiteSpace(PartnerDescription))
-            errors.Add("Partner Description is required");
-            
-        if (string.IsNullOrWhiteSpace(PartnerShortDescription))
-            errors.Add("Partner Short Description is required");
-            
-        if (PartnerCategoryId <= 0)
-            errors.Add("Partner Category is required");
-            
-        if (LiaisonOfficeId <= 0)
-            errors.Add("Liaison Office is required");
+        if (string.IsNullOrWhiteSpace(Name))
+            errors.Add("Partner Name is required");
             
         return errors;
     }

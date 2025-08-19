@@ -13,7 +13,7 @@ public class PartnerByNameSpecification : BaseSpecification<Partner>
     /// </summary>
     /// <param name="name">The partner name to filter by</param>
     public PartnerByNameSpecification(string name)
-        : base(p => p.PartnerDescription != null && p.PartnerDescription.ToLower().Contains(name.ToLower()))
+        : base(p => p.Name != null && p.Name.ToLower().Contains(name.ToLower()))
     {
         // Include related entities
     }

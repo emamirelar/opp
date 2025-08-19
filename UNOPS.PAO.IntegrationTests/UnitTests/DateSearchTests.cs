@@ -465,7 +465,7 @@ public class DateSearchTests
         {
             Id = Random.Shared.Next(1, 10000),
             // Enhanced Partner structure
-            PartnerDescription = name,
+            Name = name,
             PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
             PartnerCategoryId = 1, // Default test category
             LiaisonOfficeId = 1, // Default test liaison office

@@ -74,7 +74,7 @@ public class PartnerController : BaseController
     public async Task<IActionResult> Create([FromBody] PartnerRequest req)
     {
         // Validate minimum required fields for creation
-        if (string.IsNullOrWhiteSpace(req.PartnerDescription))
+        if (string.IsNullOrWhiteSpace(req.Name))
         {
             return BadRequest(new { error = "Partner Description is required for creation" });
         }

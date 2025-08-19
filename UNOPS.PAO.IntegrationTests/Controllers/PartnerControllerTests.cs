@@ -74,7 +74,7 @@ public class PartnerControllerTests : IntegrationTestBase
         {
             Id = id,
             // Enhanced Partner structure
-            PartnerDescription = name,
+            Name = name,
             PartnerShortDescription = shortName,
             PartnerCategoryId = 1, // Default test category
             LiaisonOfficeId = 1, // Default test liaison office
@@ -136,7 +136,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(5);
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "ACME Global Services", "Tech Innovations Ltd", "Alpha Partners" };
-        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -152,7 +152,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(3);
         
         var expectedNames = new[] { "Beta Industries", "Delta Corporation", "Omega Services" };
-        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -167,7 +167,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(2);
         
         var expectedNames = new[] { "ACME Corporation", "ACME Global Services" };
-        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -182,7 +182,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.TotalCount.Should().Be(3);
         
         var expectedNames = new[] { "Global Tech Solutions", "Global Finance Corp", "ACME Global Services" };
-        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -230,7 +230,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Should().OnlyContain(p => p.Name.Contains("Global"));
         
         var expectedNames = new[] { "Global Tech Solutions", "ACME Global Services" };
-        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -310,7 +310,7 @@ public class PartnerControllerTests : IntegrationTestBase
         
         // Assert
         response.Should().NotBeNull();
-        response.Records.Should().BeInAscendingOrder(p => p.PartnerDescription);
+        response.Records.Should().BeInAscendingOrder(p => p.Name);
         response.Records.First().Name.Should().Be("ACME Corporation");
         response.Records.Last().Name.Should().Be("Tech Innovations Ltd");
     }
@@ -323,7 +323,7 @@ public class PartnerControllerTests : IntegrationTestBase
         
         // Assert
         response.Should().NotBeNull();
-        response.Records.Should().BeInDescendingOrder(p => p.PartnerDescription);
+        response.Records.Should().BeInDescendingOrder(p => p.Name);
         response.Records.First().Name.Should().Be("Tech Innovations Ltd");
         response.Records.Last().Name.Should().Be("ACME Corporation");
     }
@@ -354,7 +354,7 @@ public class PartnerControllerTests : IntegrationTestBase
         response.Records.Should().HaveCount(2); // Global Tech Solutions and Tech Innovations Ltd
         
         var expectedNames = new[] { "Global Tech Solutions", "Tech Innovations Ltd" };
-        response.Records.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        response.Records.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -463,7 +463,7 @@ public class PartnerControllerTests : IntegrationTestBase
         // Arrange
         var newPartner = new PartnerRequest
         {
-            PartnerDescription = "New Test Partner",
+            Name = "New Test Partner",
             PartnerShortDescription = "NTP",
             PartnerCategoryId = 1,
             LiaisonOfficeId = 1,
@@ -485,7 +485,7 @@ public class PartnerControllerTests : IntegrationTestBase
         var updateRequest = new UpdatePartnerRequest
         {
             Id = 1,
-            PartnerDescription = "Updated ACME Corporation",
+            Name = "Updated ACME Corporation",
             Status = "Closed"
         };
         

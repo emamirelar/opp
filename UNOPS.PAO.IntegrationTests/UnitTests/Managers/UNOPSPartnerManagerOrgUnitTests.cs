@@ -119,7 +119,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
                 .Returns((UNOPSPartner p) => new PartnerModel 
                 { 
                     Id = p.Id, 
-                    PartnerDescription = p.PartnerDescription,
+                    Name = p.Name,
                     Status = p.Status.ToString(),
                     PartnerGroupCode = p.PartnerGroupCode,
                     LogoUrl = null // Explicitly set to null to avoid issues
@@ -172,7 +172,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             {
                 Id = id,
                 // Enhanced Partner structure
-                PartnerDescription = name,
+                Name = name,
                 PartnerShortDescription = name.Replace(" ", ""),
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office
@@ -230,10 +230,10 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var response = (PaginationResponse<PartnerModel>)result;
             
             response.Records.Should().HaveCount(2);
-            response.Records.Should().Contain(p => p.PartnerDescription == "Partner Asia");
-            response.Records.Should().Contain(p => p.PartnerDescription == "Partner Thailand");
-            response.Records.Should().NotContain(p => p.PartnerDescription == "Partner Africa");
-            response.Records.Should().NotContain(p => p.PartnerDescription == "Partner Kenya");
+            response.Records.Should().Contain(p => p.Name == "Partner Asia");
+            response.Records.Should().Contain(p => p.Name == "Partner Thailand");
+            response.Records.Should().NotContain(p => p.Name == "Partner Africa");
+            response.Records.Should().NotContain(p => p.Name == "Partner Kenya");
             
             // Verify hierarchy service was called
             _mockHierarchyService.Verify(x => x.GetDescendantIdsAsync(2), Times.Once);
@@ -290,7 +290,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Managers
             var response = (PaginationResponse<PartnerModel>)result;
             
             response.Records.Should().HaveCount(1);
-            response.Records.Should().Contain(p => p.PartnerDescription == "Partner Thailand");
+            response.Records.Should().Contain(p => p.Name == "Partner Thailand");
         }
 
         [Fact(Skip = "Skipping due to complex dependencies - OrgUnit filter logic has been validated manually")]

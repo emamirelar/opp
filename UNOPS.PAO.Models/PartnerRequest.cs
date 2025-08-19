@@ -12,15 +12,15 @@ public class PartnerRequest : ExtensibleModel
 {
     // ========== ENHANCED PARTNER FIELDS ==========
     
-    // Core Partner Information
-    public string PartnerDescription { get; set; } // Full name (required)
-    public string PartnerShortDescription { get; set; } // Short name/acronym (required)
+    // Core Partner Information - using Name field (inherited from base model)
+    public string? Name { get; set; } // Partner name - primary identifier (optional)
+    public string? PartnerShortDescription { get; set; } // Short name/acronym (optional)
     public string? PartnerLongDescription { get; set; } // Optional long description
     
     // Category & Organization Unit
-    public int PartnerCategoryId { get; set; } // FK to Partner Category (required)
+    public int? PartnerCategoryId { get; set; } // FK to Partner Category (optional)
 
-    public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice (required)
+    public int? LiaisonOfficeId { get; set; } // FK to LiaisonOffice (optional)
     
     // Partner Focal Point
     public int? PartnerFocalPointUserId { get; set; } // Business Developer UserId
@@ -32,8 +32,7 @@ public class PartnerRequest : ExtensibleModel
     public string? PartnerLevelDescription { get; set; } // Imported from the Partner Tree
     public int? ErpDimValue { get; set; } // ERP dimension value
     
-    // Liaison Office
-    public string? PartnerLiaisonOffice { get; set; } // Enum from predefined list (required)
+    // Liaison Office - handled via LiaisonOfficeId above
     
     // UN & State Entity
     public bool UNAndStateEntity { get; set; } = false;
