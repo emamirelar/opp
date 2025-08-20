@@ -38,6 +38,14 @@
             "addresses": "Endereços",
             "systemInformation": "Informações do Sistema"
         },
+        "interactionTitles": {
+            "primaryInformation": "Informações Principais",
+            "participants": "Participantes",
+            "details": "Detalhes",
+            "organization": "Organização",
+            "aiAssistant": "Assistente IA",
+            "information": "Informação"
+        },
         "partnerDetails": "Detalhes do Parceiro",
         "partnerDashboard": "Painel do Parceiro",
         "admin": "Administração",
@@ -150,7 +158,9 @@
           },
           "selectType": "Selecione um tipo",
           "selectContact": "Selecione um contato",
-          "contact": "Contato"
+          "contact": "Contato",
+          "noPartnersSelected": "Nenhum parceiro selecionado",
+          "aiGeneratedSummary": "Resumo Gerado por IA"
         },
         "link": {
           "url": "URL",

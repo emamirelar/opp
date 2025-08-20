@@ -122,7 +122,7 @@ export class PartnerTabsComponent implements OnInit {
   }
 
   getUploadLogoUrl(): string {
-    return `/api/partners/${this.recordId}/upload-logo`;
+    return `/api/partner/${this.recordId}/logo`;
   }
 
   _loadRecordDetails(): void {
