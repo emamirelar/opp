@@ -87,7 +87,7 @@ export class PartnerEditDialogComponent implements OnInit {
       partnerLongDescription: new FormControl(null),
       partnerCategoryId: new FormControl(null),
       liaisonOfficeId: new FormControl(null),
-      partnerFocalPoint: new FormControl(null),
+      partnerFocalPointUserId: new FormControl(null),
       status: new FormControl('Draft'), 
       
       pooledFund: new FormControl(false),
@@ -226,8 +226,14 @@ export class PartnerEditDialogComponent implements OnInit {
 
   // Helper methods for organization hierarchy FormControl (single select managing array)
   setOrganizationHierarchyIds(ids: number[]): void {
-    // Set the full array from backend, UI control will sync automatically
-    this.formGroup.get('organizationHierarchyIds')?.setValue(ids || []);
+    // Set the full array from backend
+    const idsArray = ids || [];
+    this.formGroup.get('organizationHierarchyIds')?.setValue(idsArray);
+    
+    // Manually sync the UI control to ensure it updates (for AI transcription)
+    const firstElement = idsArray.length > 0 ? idsArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement);
+    this.selectedOrgUnitSignal.set(firstElement);
   }
 
   getSelectedOrganizationHierarchyIds(): number[] {
@@ -331,6 +337,8 @@ export class PartnerEditDialogComponent implements OnInit {
         };
 
         // For import edits, just return the updated record without saving to server
+        // Mark as updated so the import dialog knows to apply the changes
+        updatedRecord._updated = true;
         this.dialogRef.close(updatedRecord);
         return;
       }
@@ -472,14 +480,50 @@ export class PartnerEditDialogComponent implements OnInit {
     if (data) {
       this.formGroup.patchValue({
         // Primary fields
-        name: data.partnerDescription || data.name || this.formGroup.get('name')?.value,
-        partnerShortDescription: data.partnerShortDescription || data.shortName || this.formGroup.get('partnerShortDescription')?.value,
+        name: data.name || this.formGroup.get('name')?.value,
+        partnerShortDescription: data.partnerShortDescription || this.formGroup.get('partnerShortDescription')?.value,
         partnerLongDescription: data.partnerLongDescription || this.formGroup.get('partnerLongDescription')?.value,
         partnerGroupCode: data.partnerGroupCode || this.formGroup.get('partnerGroupCode')?.value,
+        
+        // Category and liaison office
+        partnerCategoryId: data.partnerCategoryId || this.formGroup.get('partnerCategoryId')?.value,
+        liaisonOfficeId: data.liaisonOfficeId || this.formGroup.get('liaisonOfficeId')?.value,
+        
+        // Focal point
+        partnerFocalPointUserId: data.partnerFocalPointUserId || this.formGroup.get('partnerFocalPointUserId')?.value,
+        
+        // Status fields
+        status: data.status || this.formGroup.get('status')?.value,
+        partnerApprovalStatus: data.partnerApprovalStatus || this.formGroup.get('partnerApprovalStatus')?.value,
+        
+        // Due diligence fields
+        dueDiligenceRequired: data.dueDiligenceRequired || this.formGroup.get('dueDiligenceRequired')?.value,
+        dueDiligenceApproval: data.dueDiligenceApproval || this.formGroup.get('dueDiligenceApproval')?.value,
+        dueDiligenceApprovalDate: data.dueDiligenceApprovalDate || this.formGroup.get('dueDiligenceApprovalDate')?.value,
+        dueDiligenceExpiryDate: data.dueDiligenceExpiryDate || this.formGroup.get('dueDiligenceExpiryDate')?.value,
+        
+        // Partner types
+        keyGlobalPartner: data.keyGlobalPartner ?? this.formGroup.get('keyGlobalPartner')?.value,
+        unAndStateEntity: data.unAndStateEntity ?? this.formGroup.get('unAndStateEntity')?.value,
+        unSecretariatPartner: data.unSecretariatPartner ?? this.formGroup.get('unSecretariatPartner')?.value,
+        
+        // Levy fields
+        partnerLevyStatus: data.partnerLevyStatus || this.formGroup.get('partnerLevyStatus')?.value,
+        reasonForLevy: data.reasonForLevy || this.formGroup.get('reasonForLevy')?.value,
+        levyTreatment: data.levyTreatment || this.formGroup.get('levyTreatment')?.value,
+        
+        // Additional fields
+        pooledFund: data.pooledFund ?? this.formGroup.get('pooledFund')?.value,
+        canCreateNewOpportunities: data.canCreateNewOpportunities ?? this.formGroup.get('canCreateNewOpportunities')?.value,
+        reasonForNoNewOpportunity: data.reasonForNoNewOpportunity || this.formGroup.get('reasonForNoNewOpportunity')?.value
       });
 
-      // Handle organization hierarchy IDs from AI transcription
-      if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds)) {
+      // Handle organization unit relationships from AI transcription
+      if (data.organizationUnitRelationships && Array.isArray(data.organizationUnitRelationships)) {
+        this.setOrganizationHierarchyIds(data.organizationUnitRelationships);
+      }
+      // Fallback for legacy organizationHierarchyIds
+      else if (data.organizationHierarchyIds && Array.isArray(data.organizationHierarchyIds)) {
         this.setOrganizationHierarchyIds(data.organizationHierarchyIds);
       }
 
