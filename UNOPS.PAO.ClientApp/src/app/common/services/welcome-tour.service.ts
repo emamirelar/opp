@@ -18,7 +18,7 @@ export interface WelcomeTourState {
 export class WelcomeTourService {
   private router = inject(Router);
   private translateService = inject(TranslateService);
-  
+
   private readonly STORAGE_KEY = 'unops-welcome-tour-state';
   private readonly WELCOME_DELAY = 1500; // 1.5 seconds delay for smooth experience
 
@@ -48,7 +48,7 @@ export class WelcomeTourService {
 
   private shouldShowWelcomeTour(): boolean {
     const state = this.getWelcomeTourState();
-    
+
     // Don't show if user has already seen welcome or completed homepage tour
     if (state.hasSeenWelcome || state.hasCompletedHomepageTour) {
       return false;
@@ -64,18 +64,19 @@ export class WelcomeTourService {
 
   private async showWelcomeTour(): Promise<void> {
     console.log('🎉 Showing welcome tour for first-time user');
-    
+
     // Get current language
     const currentLang = this.translateService.currentLang || this.translateService.defaultLang || 'en';
-    
+
     // Create welcome messages
     const welcomeMessages = this.getWelcomeMessages(currentLang);
-    
+
     // Show fancy welcome overlay first
     const welcomeDriver = driver({
       showProgress: false,
       allowClose: false,
       popoverOffset: 20,
+      stagePadding: 5,
       steps: [
         {
           popover: {
@@ -92,7 +93,7 @@ export class WelcomeTourService {
       onDestroyed: () => {
         // Mark welcome as seen
         this.markWelcomeAsSeen();
-        
+
         // Start homepage tour after a brief pause
         setTimeout(() => {
           this.startHomepageTour();
@@ -116,7 +117,7 @@ export class WelcomeTourService {
 
       // Convert tour steps (using simplified version of tour-control logic)
       const driverSteps = this.convertToDriverSteps(tourConfig, registry.fallbackSelectors);
-      
+
       if (driverSteps.length === 0) {
         console.warn('❌ No valid steps found for homepage tour');
         return;
@@ -124,6 +125,7 @@ export class WelcomeTourService {
 
       // Create tour instance with custom completion handler
       const homepageTour = driver({
+        stagePadding: 5,
         showProgress: true,
         allowClose: true,
         popoverOffset: 10,
@@ -136,7 +138,7 @@ export class WelcomeTourService {
       });
 
       homepageTour.drive();
-      
+
     } catch (error) {
       console.error('❌ Failed to start homepage tour in welcome sequence:', error);
     }
@@ -147,7 +149,7 @@ export class WelcomeTourService {
     return tourConfig.steps
       .map((step: any, index: number) => {
         const element = this.findBestElement(step, fallbackSelectors);
-        
+
         if (!element && step.element) {
           console.warn(`⚠️ Welcome tour step ${index + 1} skipped - element not found: "${step.element}"`);
           return null;
@@ -193,10 +195,10 @@ export class WelcomeTourService {
     try {
       const element = document.querySelector(selector);
       if (!element) return false;
-      
+
       const style = window.getComputedStyle(element as HTMLElement);
-      return style.display !== 'none' && 
-             style.visibility !== 'hidden' && 
+      return style.display !== 'none' &&
+             style.visibility !== 'hidden' &&
              style.opacity !== '0';
     } catch {
       return false;
@@ -214,7 +216,7 @@ export class WelcomeTourService {
   // Public methods for managing tour state
   public getWelcomeTourState(): WelcomeTourState {
     const stored = localStorage.getItem(this.STORAGE_KEY);
-    
+
     if (stored) {
       try {
         return JSON.parse(stored);
@@ -246,18 +248,18 @@ export class WelcomeTourService {
   public markHomepageTourCompleted(): void {
     const state = this.getWelcomeTourState();
     state.hasCompletedHomepageTour = true;
-    
+
     if (!state.completedTours.includes('homepage-tour')) {
       state.completedTours.push('homepage-tour');
     }
-    
+
     this.saveWelcomeTourState(state);
     console.log('✅ Homepage tour marked as completed');
   }
 
   public markTourCompleted(tourId: string): void {
     const state = this.getWelcomeTourState();
-    
+
     if (!state.completedTours.includes(tourId)) {
       state.completedTours.push(tourId);
       this.saveWelcomeTourState(state);
@@ -294,14 +296,14 @@ export class WelcomeTourService {
 
   private translateText(textOrKey: string): string {
     if (!textOrKey) return '';
-    
+
     // If it looks like a translation key (contains dots), translate it
     if (textOrKey.includes('.') && !textOrKey.includes(' ')) {
       const translated = this.translateService.instant(textOrKey);
       // If translation key not found, it returns the key itself
       return translated !== textOrKey ? translated : textOrKey;
     }
-    
+
     // Otherwise, return as is (for backward compatibility with existing literal text)
     return textOrKey;
   }
