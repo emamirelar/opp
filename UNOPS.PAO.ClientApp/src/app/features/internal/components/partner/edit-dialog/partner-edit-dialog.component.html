@@ -54,7 +54,8 @@
                   [showClear]="true"
                   placeholder="{{ 'label.partner.selectPartnerCategory' | translate }}"
                   [appendTo]="'body'"
-                  fluid="true" id="partnerCategoryId" />
+                  fluid="true" id="partnerCategoryId"
+                  [ariaLabel]="'aria.selectPartnerCategory' | translate" />
       </div>
       
       <!-- Partner Org Unit -->
@@ -78,8 +79,8 @@
       
       <!-- Partner Focal Point -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="partnerFocalPoint">{{ 'label.partner.partnerFocalPoint' | translate }}</label>
-        <p-select formControlName="partnerFocalPoint" [options]="allUsersData()"
+        <label for="partnerFocalPointUserId">{{ 'label.partner.partnerFocalPoint' | translate }}</label>
+        <p-select formControlName="partnerFocalPointUserId" [options]="allUsersData()"
                   optionLabel="name"
                   optionValue="id"
                   [filter]="true"
@@ -87,7 +88,7 @@
                   [showClear]="true"
                   placeholder="{{ 'label.partner.selectPartnerFocalPoint' | translate }}"
                   [appendTo]="'body'"
-                  fluid="true" id="partnerFocalPoint"
+                  fluid="true" id="partnerFocalPointUserId"
                   [ariaLabel]="'aria.selectPartnerFocalPoint' | translate" />
       </div>
       
@@ -117,7 +118,8 @@
                   [showClear]="true"
                   placeholder="{{ 'label.partner.selectPartnerGroup' | translate }}"
                   [appendTo]="'body'"
-                  fluid="true" id="partnerGroupCode">
+                  fluid="true" id="partnerGroupCode"
+                  [ariaLabel]="'aria.selectPartnerGroup' | translate">
           <ng-template let-group #group>
             <div class="flex items-center font-bold">
               <span>{{ group.name }}</span>
@@ -134,7 +136,8 @@
                   optionLabel="label"
                   optionValue="value"
                   [appendTo]="'body'"
-                  fluid="true" id="status">
+                  fluid="true" id="status"
+                  [ariaLabel]="'aria.selectStatus' | translate">
         </p-select>
       </div>
       }
@@ -192,7 +195,8 @@
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="dueDiligenceRequired" />
+                  fluid="true" id="dueDiligenceRequired"
+                  [ariaLabel]="'aria.selectDueDiligenceRequired' | translate" />
       </div>
       
       <!-- Due Diligence (Approval) -->
@@ -203,7 +207,8 @@
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="dueDiligenceApproval" />
+                  fluid="true" id="dueDiligenceApproval"
+                  [ariaLabel]="'aria.selectDueDiligenceApproval' | translate" />
       </div>
       
       <!-- Due Diligence Approval Date -->
@@ -246,7 +251,8 @@
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="partnerLevyStatus" />
+                  fluid="true" id="partnerLevyStatus"
+                  [ariaLabel]="'aria.selectPartnerLevyStatus' | translate" />
       </div>
       
       <!-- Reason for Levy - Only show when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied" -->
@@ -258,7 +264,8 @@
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="reasonForLevy" />
+                  fluid="true" id="reasonForLevy"
+                  [ariaLabel]="'aria.selectReasonForLevy' | translate" />
       </div>
       }
       
@@ -270,7 +277,8 @@
                   optionValue="id"
                   [appendTo]="'body'"
                   [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="levyTreatment" />
+                  fluid="true" id="levyTreatment"
+                  [ariaLabel]="'aria.selectLevyTreatment' | translate" />
       </div>
       
       <!-- Pooled Fund -->

@@ -37,14 +37,7 @@ public class PartnerModel
     public string? PartnerGroupCode { get; set; }
     public string? PartnerGroupName { get; set; }
     public int? PartnerGroupId { get; set; }
-    
-
-    
-    // ========== PARTNER LEVEL INFORMATION ==========
-    public string? PartnerLevelCode { get; set; } // Imported from BQ
-    public string? PartnerLevelShort { get; set; } // Imported from the Partner Tree
-    public string? PartnerLevelDescription { get; set; } // Imported from the Partner Tree
-    
+        
     // ERP Integration
     public int? ErpDimValue { get; set; } // ERP dimension value
 

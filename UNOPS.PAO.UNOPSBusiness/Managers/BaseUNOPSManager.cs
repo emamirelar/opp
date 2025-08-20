@@ -641,6 +641,7 @@ public abstract class BaseUNOPSManager
 
     /// <summary>
     /// Determines if the user can activate a Partner entity based on mandatory fields and permissions
+    /// Mandatory fields for activation: Name, PartnerShortDescription, PartnerCategoryId, PartnerLiaisonOfficeId
     /// </summary>
     private bool? GetCanActivate(object result, List<EntityPermission> entityPermissions)
     {
@@ -656,6 +657,9 @@ public abstract class BaseUNOPSManager
         var resultType = result.GetType();
         var statusProperty = resultType.GetProperty("Status");
         var nameProperty = resultType.GetProperty("Name");
+        var shortDescriptionProperty = resultType.GetProperty("PartnerShortDescription") ?? resultType.GetProperty("ShortDescription");
+        var categoryProperty = resultType.GetProperty("PartnerCategoryId") ?? resultType.GetProperty("CategoryId");
+        var liaisonOfficeProperty = resultType.GetProperty("PartnerLiaisonOfficeId") ?? resultType.GetProperty("LiaisonOfficeId");
 
         if (statusProperty == null || nameProperty == null)
             return null;
@@ -669,9 +673,21 @@ public abstract class BaseUNOPSManager
             if (!isDraft)
                 return false; // Can only activate Draft partners
 
-            // Check if mandatory fields are filled (Name is the only mandatory field for activation)
+            // Check if all mandatory fields are filled
             var name = nameProperty.GetValue(result) as string;
-            var hasMandatoryFields = !string.IsNullOrWhiteSpace(name);
+            var hasName = !string.IsNullOrWhiteSpace(name);
+            
+            var shortDescription = shortDescriptionProperty?.GetValue(result) as string;
+            var hasShortDescription = !string.IsNullOrWhiteSpace(shortDescription);
+            
+            var categoryId = categoryProperty?.GetValue(result);
+            var hasCategory = categoryId != null && !categoryId.Equals(0) && !string.IsNullOrWhiteSpace(categoryId.ToString());
+            
+            var liaisonOfficeId = liaisonOfficeProperty?.GetValue(result);
+            var hasLiaisonOffice = liaisonOfficeId != null && !liaisonOfficeId.Equals(0) && !string.IsNullOrWhiteSpace(liaisonOfficeId.ToString());
+            
+            // All mandatory fields must be filled for activation
+            var hasMandatoryFields = hasName && hasShortDescription && hasCategory && hasLiaisonOffice;
             
             return hasMandatoryFields;
         }

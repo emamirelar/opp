@@ -452,17 +452,11 @@ export class PartnerEditDialogComponent implements OnInit {
           
           case 'partnerCategoryId':
           case 'liaisonOfficeId':
+          case 'partnerFocalPointUserId':
             // Ensure ID fields are sent as integers (not strings)
             requestJsonObj[key] = indexValue ? parseInt(indexValue, 10) : null;
             break;
           
-          case 'dueDiligenceApproval':
-          case 'dueDiligenceRequired':
-          case 'partnerLevyStatus':
-            // Populate empty string for these fields if value is empty
-            requestJsonObj[key] = indexValue || '';
-            break;
-
           default:
             requestJsonObj[key] = indexValue;
             break;
