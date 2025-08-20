@@ -68,8 +68,6 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
             "partnercode" => p => p.PartnerCode ?? "", // UNOPSPartner specific field
             "partnercategoryid" => p => p.PartnerCategoryId,
             "partnergroupcode" => p => p.PartnerGroupCode ?? "",
-            "partnerlevelcode" => p => p.PartnerLevelCode ?? "",
-            "partnerlevelshort" => p => p.PartnerLevelShort ?? "",
             "erpdimvalue" => p => p.ErpDimValue ?? 0,
             "partnerliaisonoffice" => p => p.LiaisonOffice.Name ?? "",
             "unandstateentity" => p => p.UNAndStateEntity,

@@ -43,18 +43,6 @@ public class Partner : ModifiableDeletableEntity
     // Category (Organization Units are managed through OrganizationUnitRelationships)
     public int? PartnerCategoryId { get; set; } // FK to Partner Category (optional)
     
-    // ========== PARTNER LEVEL INFORMATION ==========
-    
-    // Partner level information from Partner Tree and BQ
-    [MaxLength(50)]
-    public string? PartnerLevelCode { get; set; } // Imported from BQ
-    
-    [MaxLength(100)]
-    public string? PartnerLevelShort { get; set; } // Imported from the Partner Tree
-    
-    [MaxLength(500)]
-    public string? PartnerLevelDescription { get; set; } // Imported from the Partner Tree
-    
     // ERP Integration
     public int? ErpDimValue { get; set; } // ERP dimension value
     
@@ -72,8 +60,8 @@ public class Partner : ModifiableDeletableEntity
     public bool UNSecretariatPartner { get; set; } = false;
     
     // Due Diligence Fields
-    public DueDiligenceRequired DueDiligenceRequired { get; set; } = DueDiligenceRequired.NotRequired;
-    public DueDiligenceApproval DueDiligenceApproval { get; set; } = DueDiligenceApproval.NotApproved;
+    public DueDiligenceRequired DueDiligenceRequired { get; set; }
+    public DueDiligenceApproval DueDiligenceApproval { get; set; }
     public DateTime? DueDiligenceApprovalDate { get; set; }
     public DateTime? DueDiligenceExpiryDate { get; set; }
     
@@ -87,7 +75,7 @@ public class Partner : ModifiableDeletableEntity
     public string? PartnerApprovalReference { get; set; } // Approval notes/reference
     
     // Levy Fields
-    public PartnerLevyStatus PartnerLevyStatus { get; set; } = PartnerLevyStatus.DoesNotApply;
+    public PartnerLevyStatus PartnerLevyStatus { get; set; }
     
     [MaxLength(500)]
     public string? ReasonForLevy { get; set; }
@@ -97,7 +85,7 @@ public class Partner : ModifiableDeletableEntity
     
     // Operational Fields
     public bool PooledFund { get; set; } = false;
-    public bool CanCreateNewOpportunities { get; set; } = true;
+    public bool CanCreateNewOpportunities { get; set; }
     
     [MaxLength(500)]
     public string? ReasonForNoNewOpportunity { get; set; }

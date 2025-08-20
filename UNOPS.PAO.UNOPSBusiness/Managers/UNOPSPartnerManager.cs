@@ -168,6 +168,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
     {
+        // Ensure partner is created in Draft status
+        if (model != null) {
+            model.Status = EntityStatus.Draft.ToString();
+        }
+
         var entity = MapModelToEntity(model);
 
         // Save the partner first to get its ID
