@@ -25,7 +25,7 @@
       </div>
       
       <!-- Partner Description (Full Name) -->
-      <div class="col-span-9 flex flex-col gap-2">
+      <div class="col-span-9 sm:col-span-6 flex flex-col gap-2">
         <label>{{ "label.partner.partnerDescription" | translate }} *</label>
         <input pInputText fluid="true" formControlName="name" />
         @if( formGroup.get("name")?.invalid && showValidationFailedError() ) {
@@ -40,7 +40,7 @@
       </div>
       
       <!-- Partner Long Description -->
-      <div class="col-span-9 sm:col-span-6 flex flex-col gap-2">
+      <div class="col-span-9 flex flex-col gap-2">
         <label for="partnerLongDescription">{{ 'label.partner.partnerLongDescription' | translate }}</label>
         <textarea pTextarea formControlName="partnerLongDescription" fluid="true" id="partnerLongDescription" rows="2"></textarea>
       </div>
@@ -55,19 +55,6 @@
                   placeholder="{{ 'label.partner.selectPartnerCategory' | translate }}"
                   [appendTo]="'body'"
                   fluid="true" id="partnerCategoryId" />
-      </div>
-      
-      <!-- Partner Liaison Office -->
-      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
-        <label for="liaisonOfficeId">{{ 'label.partner.partnerLiaisonOffice' | translate }}</label>
-        <p-select formControlName="liaisonOfficeId" [options]="allLiaisonOfficesData()"
-                  optionLabel="name"
-                  optionValue="id"
-                  [showClear]="true"
-                  placeholder="{{ 'label.partner.selectPartnerLiaisonOffice' | translate }}"
-                  [appendTo]="'body'"
-                  fluid="true" id="liaisonOfficeId"
-                  [ariaLabel]="'aria.selectLiaisonOffice' | translate" />
       </div>
       
       <!-- Partner Org Unit -->
@@ -87,13 +74,41 @@
           id="selectedOrgUnitId"
           [ariaLabel]="'aria.selectPartnerOrgUnit' | translate">
         </p-select>
-
+      </div>
+      
+      <!-- Partner Focal Point -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="partnerFocalPoint">{{ 'label.partner.partnerFocalPoint' | translate }}</label>
+        <p-select formControlName="partnerFocalPoint" [options]="allUsersData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [filter]="true"
+                  filterBy="name"
+                  [showClear]="true"
+                  placeholder="{{ 'label.partner.selectPartnerFocalPoint' | translate }}"
+                  [appendTo]="'body'"
+                  fluid="true" id="partnerFocalPoint"
+                  [ariaLabel]="'aria.selectPartnerFocalPoint' | translate" />
+      </div>
+      
+      <!-- Partner Liaison Office -->
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="liaisonOfficeId">{{ 'label.partner.partnerLiaisonOffice' | translate }}</label>
+        <p-select formControlName="liaisonOfficeId" [options]="allLiaisonOfficesData()"
+                  optionLabel="name"
+                  optionValue="id"
+                  [showClear]="true"
+                  placeholder="{{ 'label.partner.selectPartnerLiaisonOffice' | translate }}"
+                  [appendTo]="'body'"
+                  fluid="true" id="liaisonOfficeId"
+                  [ariaLabel]="'aria.selectLiaisonOffice' | translate" />
       </div>
       
       <!-- Partner Group -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="partnerGroupCode">{{ 'label.partner.partnerGroup' | translate }}</label>
         <p-select formControlName="partnerGroupCode" [options]="allPartnerGroupsForSelect()"
+                  [disabled]="!isAdmin()"
                   optionLabel="name"
                   optionValue="value"
                   [group]="true"
@@ -109,9 +124,20 @@
             </div>
           </ng-template>
         </p-select>
-
       </div>
       
+      <!-- Status Field - Only visible if user has close/archive permissions -->
+      @if (showStatusField()) {
+      <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
+        <label for="status">{{ 'label.status' | translate }}</label>
+        <p-select formControlName="status" [options]="statusOptions()"
+                  optionLabel="label"
+                  optionValue="value"
+                  [appendTo]="'body'"
+                  fluid="true" id="status">
+        </p-select>
+      </div>
+      }
 
     </div>
 
@@ -223,7 +249,8 @@
                   fluid="true" id="partnerLevyStatus" />
       </div>
       
-      <!-- Reason for Levy -->
+      <!-- Reason for Levy - Only show when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied" -->
+      @if (shouldShowReasonForLevy()) {
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">
         <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }}</label>
         <p-select formControlName="reasonForLevy" [options]="allPartnerReasonForLevyNotData()"
@@ -233,6 +260,7 @@
                   [disabled]="!approvalFieldsEnabled()"
                   fluid="true" id="reasonForLevy" />
       </div>
+      }
       
       <!-- Levy Treatment -->
       <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">

@@ -117,5 +117,18 @@ export class PartnerService {
         }
       }));
   }
+
+  activatePartner(id: string) {
+    this.isLoading.set(true);
+    return this.http.post(`${this.apiUrl}/${id}/activate`, {}).pipe(tap(
+      {
+        next: (event) => {
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          this.isLoading.set(false);
+        }
+      }));
+  }
   
 }

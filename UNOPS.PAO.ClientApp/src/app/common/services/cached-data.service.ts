@@ -305,14 +305,14 @@ export class CachedDataService {
 
   loadPartnerLevyAppliesData() {
     let partnerLevyApplies: any = [{
-      id: 'Potentially does not apply',
-      name: 'Potentially does not apply'
+      id: 'DoesNotApply',
+      name: 'Does Not Apply'
     }, {
-      id: 'Does not apply',
-      name: 'Does not apply'
+      id: 'PotentiallyApplied',
+      name: 'Potentially Applied'
     }, {
-      id: 'Potentially applies',
-      name: 'Potentially applies'
+      id: 'PotentiallyNotApplied',
+      name: 'Potentially Not Applied'
     }];
     this.allPartnerLevyAppliesData.set(partnerLevyApplies);
   }

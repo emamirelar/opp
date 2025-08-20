@@ -13,6 +13,7 @@ export interface Partner {
   partnerLongDescription?: string | null; // Optional long description
   partnerCategoryId?: number | null; // FK to Partner Category (required)
   liaisonOfficeId?: number | null; // FK to LiaisonOffice (required)
+  partnerFocalPoint?: number | null; // FK to User (Partner Focal Point)
   
   // Backward compatibility
   name?: string | null; // Maps to partnerDescription for backward compatibility

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, signal, inject, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -72,22 +72,22 @@ export class PartnerApprovalDialogComponent implements OnInit {
 
   initializeForm(): void {
     this.formGroup = this.fb.group({
-      // Updated field names to match backend
-      dueDiligenceRequired: [this.partner.dueDiligenceRequired || '', Validators.required],
-      dueDiligenceApproval: [this.partner.dueDiligenceApproval || '', Validators.required],
-      dueDiligenceApprovalDate: [this.partner.dueDiligenceApprovalDate || null],
-      dueDiligenceExpiryDate: [this.partner.dueDiligenceExpiryDate || null],
-      partnerApprovalReference: [this.partner.partnerApprovalReference || ''],
-      partnerLevyStatus: [this.partner.partnerLevyStatus || '', Validators.required],
-      reasonForLevy: [this.partner.reasonForLevy || ''],
-      levyTreatment: [this.partner.levyTreatment || ''],
-      pooledFund: [this.partner.pooledFund || false],
+      // Exact order as specified with backend field names
       keyGlobalPartner: [this.partner.keyGlobalPartner || false],
       unAndStateEntity: [this.partner.unAndStateEntity || false],
       unSecretariatPartner: [this.partner.unSecretariatPartner || false],
-      canCreateNewOpportunities: [this.partner.canCreateNewOpportunities || true],
-      reasonForNoNewOpportunity: [this.partner.reasonForNoNewOpportunity || ''],
-      partnerApprovalDate: [this.partner.partnerApprovalDate || null]
+      dueDiligenceRequired: [this.partner.dueDiligenceRequired || ''],
+      dueDiligenceApproval: [this.partner.dueDiligenceApproval || ''],
+      dueDiligenceApprovalDate: [this.partner.dueDiligenceApprovalDate || null],
+      dueDiligenceExpiryDate: [this.partner.dueDiligenceExpiryDate || null],
+      partnerApprovalDate: [this.partner.partnerApprovalDate || null],
+      partnerApprovalReference: [this.partner.partnerApprovalReference || ''],
+      partnerLevyStatus: [this.partner.partnerLevyStatus || ''],
+      reasonForLevy: [this.partner.reasonForLevy || ''],
+      levyTreatment: [this.partner.levyTreatment || ''],
+      pooledFund: [this.partner.pooledFund || false],
+      canCreateNewOpportunities: [this.partner.canCreateNewOpportunities || false],
+      reasonForNoNewOpportunity: [this.partner.reasonForNoNewOpportunity || '']
     });
   }
 
@@ -96,6 +96,12 @@ export class PartnerApprovalDialogComponent implements OnInit {
   allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
   allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
+
+  // Show "Reason for Levy" only when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied"
+  shouldShowReasonForLevy = computed(() => {
+    const partnerLevyStatus = this.formGroup.get('partnerLevyStatus')?.value;
+    return (partnerLevyStatus === 'DoesNotApply' || partnerLevyStatus === 'PotentiallyNotApplied');
+  });
 
   handleApprove(): void {
     if (this.formGroup.invalid) {
@@ -108,6 +114,7 @@ export class PartnerApprovalDialogComponent implements OnInit {
     const approvalData = {
       id: this.partner.id,
       ...this.formGroup.value,
+      partnerApprovalStatus: 'Approved',
       partnerApprovalDate: new Date()
     };
 

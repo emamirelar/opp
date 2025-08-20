@@ -38,6 +38,7 @@ import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthService } from '../../../../../essentials/services/auth.service';
+import { ENTITY_STATUS_OPTIONS } from '../../../models/entity-status.enum';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -86,6 +87,8 @@ export class PartnerEditDialogComponent implements OnInit {
       partnerLongDescription: new FormControl(null),
       partnerCategoryId: new FormControl(null),
       liaisonOfficeId: new FormControl(null),
+      partnerFocalPoint: new FormControl(null),
+      status: new FormControl('Draft'), 
       
       pooledFund: new FormControl(false),
       
@@ -100,7 +103,7 @@ export class PartnerEditDialogComponent implements OnInit {
       partnerApprovalStatus: new FormControl('NotApproved'),
       partnerApprovalDate: new FormControl(null),
       partnerApprovalReference: new FormControl(null),
-      partnerLevyStatus: new FormControl(null),
+      partnerLevyStatus: new FormControl(''),
       reasonForLevy: new FormControl(null),
       levyTreatment: new FormControl(null),
       canCreateNewOpportunities: new FormControl(true),
@@ -148,10 +151,17 @@ export class PartnerEditDialogComponent implements OnInit {
   allOrganizationUnitsData = this.cachedDataService.allOrganizationUnits;
   allPartnerCategoriesData = this.cachedDataService.getPartnerCategoriesForSelect;
   allLiaisonOfficesData = this.cachedDataService.allLiaisonOffices;
+  allUsersData = this.cachedDataService.allUsers;
 
   // Computed properties for approval section
   isPartnerApproved = computed(() => {
     return this.formGroup.get('partnerApprovalStatus')?.value === 'Approved';
+  });
+
+  // Show "Reason for Levy" only when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied"
+  shouldShowReasonForLevy = computed(() => {
+    const partnerLevyStatus = this.formGroup.get('partnerLevyStatus')?.value;
+    return (partnerLevyStatus === 'DoesNotApply' || partnerLevyStatus === 'PotentiallyNotApplied');
   });
 
   showApprovalFields = computed(() => {
@@ -161,6 +171,28 @@ export class PartnerEditDialogComponent implements OnInit {
   approvalFieldsEnabled = computed(() => {
     return this.isAdmin();
   });
+
+  // Status management constants and computed properties
+  private readonly STATUS_OPTIONS = ENTITY_STATUS_OPTIONS;
+
+  /**
+   * Get all available status options with translated labels
+   */
+  statusOptions = computed(() => {
+    return this.STATUS_OPTIONS.map(option => ({
+      value: option.value,
+      label: this.translateService.instant(option.labelKey)
+    }));
+  });
+
+  /**
+   * Check if status field should be visible
+   */
+  showStatusField = computed(() => {
+    return !!(this.recordData().permissions?.canClose || this.recordData().permissions?.canArchive);
+  });
+
+
 
   // Signal to track form control changes (first element of array for single org unit)
   private selectedOrgUnitSignal = signal<number | null>(null);
@@ -229,11 +261,8 @@ export class PartnerEditDialogComponent implements OnInit {
           this.record = this.dialogConfig.data?.record;
           this.recordData.set(this.dialogConfig.data.record);
           
-          // Preserve the "Active" default if status is null or undefined
+          // Status is already a string, no conversion needed
           const formData = { ...this.dialogConfig.data.record };
-          if (!formData.status) {
-            formData.status = 'Active';
-          }
           
           // Handle organization unit relationships
           if (formData.organizationUnitRelationships) {
@@ -363,6 +392,8 @@ export class PartnerEditDialogComponent implements OnInit {
         this.recordData.set(data);
         
         const formData = { ...data };
+        
+        // Status is already a string, no conversion needed
         
         // Handle organization unit relationships
         if (formData.organizationUnitRelationships) {

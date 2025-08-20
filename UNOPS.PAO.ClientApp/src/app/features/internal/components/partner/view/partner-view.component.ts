@@ -448,11 +448,11 @@ export class PartnerViewComponent implements OnInit {
 
   /**
    * @uiButton approve_partner
-   * @description Opens approval confirmation dialog and then approval dialog for admin users to approve partners
-   * @label Approval
+   * @description Opens approval confirmation dialog and then approval dialog for users to approve partners
+   * @label Approve
    * @icon pi pi-check-circle
-   * @when_to_use When partner needs to be approved and user has admin privileges
-   * @permissions PARTNER_GLOB_ADMIN
+   * @when_to_use When partner needs to be approved and user has approval privileges
+   * @permissions canApprove
    */
   handleApprovalClick() {
     console.log('Approval button clicked for partner:', this.recordData().name);
@@ -490,6 +490,58 @@ export class PartnerViewComponent implements OnInit {
       if (result) {
         // Reload partner details to show updated approval status
         this._loadRecordDetails();
+      }
+    });
+  }
+
+  /**
+   * @uiButton activate_partner
+   * @description Opens activation confirmation dialog and activates the partner
+   * @label Activate
+   * @icon pi pi-power-off
+   * @when_to_use When partner needs to be activated and user has activation privileges
+   * @permissions canActivate
+   */
+  handleActivateClick() {
+    console.log('Activate button clicked for partner:', this.recordData().name);
+    
+    // Show confirmation dialog
+    this.confirmationService.confirm({
+      message: this.translateService.instant('message.confirmPartnerActivation', { 
+        partnerName: this.recordData().name 
+      }),
+      header: this.translateService.instant('message.confirmActivation'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        console.log('Activation confirmed, calling API');
+        this.activatePartner();
+      },
+      reject: () => {
+        console.log('Activation cancelled');
+      }
+    });
+  }
+
+  /**
+   * Calls the activate API endpoint
+   */
+  private activatePartner() {
+    this.partnerService.activatePartner(this.recordId).subscribe({
+      next: (result) => {
+        console.log('Partner activated successfully:', result);
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('message.partnerActivatedSuccessfully', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status and permissions
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Error activating partner:', error);
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('message.failedToActivatePartner')
+        });
       }
     });
   }
@@ -544,6 +596,8 @@ export class PartnerViewComponent implements OnInit {
   toggleFullContent() {
     this.showFullContent.set(!this.showFullContent());
   }
+
+
 
   // Note: To document buttons/actions, add @uiButton JSDoc comments above existing methods
   // Example for documenting existing methods:
