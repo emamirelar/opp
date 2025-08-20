@@ -46,6 +46,10 @@ import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { GoBackComponent } from '../../../../../common/reusables/components/go-back/go-back.component';
 import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.component';
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
+import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-approval-dialog.component';
+import { AuthService } from '../../../../../essentials/services/auth.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
 
 /**
  * @uiEntity Partner
@@ -91,11 +95,12 @@ import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-
     TooltipModule,
     AiPanelComponent,
     RouterModule,
+    ConfirmDialogModule,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [DialogService],
+  providers: [DialogService, ConfirmationService],
   styles: [`
     :host ::ng-deep .custom-avatar-size {
       width: 5rem !important;
@@ -118,6 +123,8 @@ export class PartnerViewComponent implements OnInit {
   languageService = inject(LanguageService);
   cdr = inject( ChangeDetectorRef);
   permissionService = inject(PermissionUtilityService);
+  authService = inject(AuthService);
+  confirmationService = inject(ConfirmationService);
 
   // Permission management using utility service
   private permissionUtils = this.permissionService.createInstancePermissions('Partner');
@@ -169,6 +176,17 @@ export class PartnerViewComponent implements OnInit {
 
   ngOnInit() {
     console.log('PartnerView ngOnInit - showAiPanel value:', this.showAiPanel);
+
+    // Check admin role
+    this.authService.isAdmin().subscribe({
+      next: (isAdmin) => {
+        this.isAdmin.set(isAdmin);
+      },
+      error: (error) => {
+        console.error('Error checking admin role:', error);
+        this.isAdmin.set(false);
+      }
+    });
 
     // If recordId is provided via Input (AI layout), load data directly
     if (this.recordId && this.recordId !== '') {
@@ -399,6 +417,135 @@ export class PartnerViewComponent implements OnInit {
     return this.partnerService.getUploadLogoUrl(this.recordId);
   }
 
+  /**
+   * Check if current user is admin (Partnership Global Admin)
+   */
+  isAdmin = signal<boolean>(false);
+
+  /**
+   * Check if current user can edit the partner
+   * Rules: 
+   * - User must have update permissions
+   * - If partner is approved, only admin users can edit
+   * - If partner is not approved, regular users with permissions can edit
+   */
+  canEditPartner = computed(() => {
+    const hasUpdatePermission = this.recordPermissions().permissions.canUpdate;
+    const isApproved = this.recordData().partnerApprovalStatus === 'Approved';
+    
+    if (!hasUpdatePermission) {
+      return false;
+    }
+    
+    // If partner is approved, only admin can edit
+    if (isApproved) {
+      return this.isAdmin();
+    }
+    
+    // If partner is not approved, any user with update permission can edit
+    return true;
+  });
+
+  /**
+   * @uiButton approve_partner
+   * @description Opens approval confirmation dialog and then approval dialog for users to approve partners
+   * @label Approve
+   * @icon pi pi-check-circle
+   * @when_to_use When partner needs to be approved and user has approval privileges
+   * @permissions canApprove
+   */
+  handleApprovalClick() {
+    console.log('Approval button clicked for partner:', this.recordData().name);
+    
+    // Show confirmation dialog
+    this.confirmationService.confirm({
+      message: `Are you sure you want to approve the partner "${this.recordData().name}"? This action cannot be undone.`,
+      header: 'Confirm Approval',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        console.log('Approval confirmed, opening approval dialog');
+        this.openApprovalDialog();
+      },
+      reject: () => {
+        console.log('Approval cancelled');
+      }
+    });
+  }
+
+  /**
+   * Opens the approval dialog with approval-related fields
+   */
+  private openApprovalDialog() {
+    const ref = this.dialogService.open(PartnerApprovalDialogComponent, {
+      header: 'Partner Approval',
+      width: '90vw',
+      style: { maxWidth: '800px' },
+      closable: true,
+      data: {
+        partner: this.recordData()
+      }
+    });
+
+    ref.onClose.subscribe((result) => {
+      if (result) {
+        // Reload partner details to show updated approval status
+        this._loadRecordDetails();
+      }
+    });
+  }
+
+  /**
+   * @uiButton activate_partner
+   * @description Opens activation confirmation dialog and activates the partner
+   * @label Activate
+   * @icon pi pi-power-off
+   * @when_to_use When partner needs to be activated and user has activation privileges
+   * @permissions canActivate
+   */
+  handleActivateClick() {
+    console.log('Activate button clicked for partner:', this.recordData().name);
+    
+    // Show confirmation dialog
+    this.confirmationService.confirm({
+      message: this.translateService.instant('message.confirmPartnerActivation', { 
+        partnerName: this.recordData().name 
+      }),
+      header: this.translateService.instant('message.confirmActivation'),
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        console.log('Activation confirmed, calling API');
+        this.activatePartner();
+      },
+      reject: () => {
+        console.log('Activation cancelled');
+      }
+    });
+  }
+
+  /**
+   * Calls the activate API endpoint
+   */
+  private activatePartner() {
+    this.partnerService.activatePartner(this.recordId).subscribe({
+      next: (result) => {
+        console.log('Partner activated successfully:', result);
+        this.feedbackDialogService.showSuccessToast({ 
+          detail: this.translateService.instant('message.partnerActivatedSuccessfully', { 
+            partnerName: this.recordData().name 
+          })
+        });
+        // Reload partner details to show updated status and permissions
+        this._loadRecordDetails();
+      },
+      error: (error) => {
+        console.error('Error activating partner:', error);
+        this.feedbackDialogService.showErrorToast({ 
+          detail: this.translateService.instant('message.failedToActivatePartner')
+        });
+      }
+    });
+  }
+
   /*selectOrganizationalStructure(type: 'summary' | 'risk' | 'news') {
 
 
@@ -449,6 +596,8 @@ export class PartnerViewComponent implements OnInit {
   toggleFullContent() {
     this.showFullContent.set(!this.showFullContent());
   }
+
+
 
   // Note: To document buttons/actions, add @uiButton JSDoc comments above existing methods
   // Example for documenting existing methods:

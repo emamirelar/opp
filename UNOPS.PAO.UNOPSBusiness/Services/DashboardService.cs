@@ -422,7 +422,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
             var recentPartners = filteredPartners.Select(p => new RecentUpdateModel
             {
                 Id = p.Id,
-                Name = p.PartnerDescription,
+                Name = p.Name,
                 Type = "Partner",
                 LastModifiedDate = p.LastModifiedDate,
                 LastModifiedBy = p.LastModifiedBy,

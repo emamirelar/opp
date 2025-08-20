@@ -60,7 +60,7 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
     {
         return orderByField?.ToLowerInvariant() switch
         {
-            "partnerdescription" => p => p.PartnerDescription ?? "",
+            "partnerdescription" => p => p.Name ?? "",
             "partnershortdescription" => p => p.PartnerShortDescription ?? "",
             "partnerlongdescription" => p => p.PartnerLongDescription ?? "",
             "systemstatus" => p => p.Status,
@@ -82,7 +82,7 @@ public class UNOPSPartnerCompositeSpecification : GenericCompositeSpecification<
             "partnerlevystatus" => p => p.PartnerLevyStatus,
             "pooledfundnew" => p => p.PooledFund,
             "cancreatenewopportunities" => p => p.CanCreateNewOpportunities,
-            _ => p => p.PartnerDescription ?? "" // Default to PartnerDescription if no field specified or unknown field
+            _ => p => p.Name ?? "" // Default to PartnerDescription if no field specified or unknown field
         };
     }
 }

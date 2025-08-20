@@ -81,7 +81,7 @@ public class ValuesController : BaseController
             return allPartners.Select(p => new PartnerValueModel
             {
                 Id = p.Id,
-                Name = p.PartnerDescription ?? ""
+                Name = p.Name ?? ""
             }).ToList();
         });
     }
@@ -90,6 +90,12 @@ public class ValuesController : BaseController
     public async Task<ActionResult> GetOrganizationUnits()
     {
         return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetOrganizationUnits()));
+    }
+
+    [HttpGet(APIDictionary.LiaisonOffices)]
+    public async Task<ActionResult> GetLiaisonOffices()
+    {
+        return await HandleOperationAsync(async () => await Task.FromResult(_manager.GetLiaisonOffices()));
     }
 
     [HttpGet(APIDictionary.Contacts)]

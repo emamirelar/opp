@@ -17,19 +17,16 @@ public class PartnerModel
 
     
     // ========== MAIN PARTNER FIELDS ==========
-    public string PartnerDescription { get; set; } // Full name
-    public string PartnerShortDescription { get; set; } // Short name or acronym
+    public string Name { get; set; } // Partner name - primary identifier
+    public string? PartnerShortDescription { get; set; } // Short name or acronym (optional)
     public string? PartnerLongDescription { get; set; } // Optional long description
-    
-    // Backward compatibility field
-    public string Name { get; set; } // Maps to PartnerDescription for backward compatibility
 
     // Category & Org Unit
-    public int PartnerCategoryId { get; set; } // FK to Partner Category
-    public string PartnerCategoryName { get; set; }
+    public int? PartnerCategoryId { get; set; } // FK to Partner Category (optional)
+    public string? PartnerCategoryName { get; set; }
     public string? PartnerCategoryCode { get; set; } // Partner category code
 
-    public int LiaisonOfficeId { get; set; } // FK to LiaisonOffice
+    public int? LiaisonOfficeId { get; set; } // FK to LiaisonOffice (optional)
     public string? LiaisonOfficeName { get; set; } // Navigation property
     
     // Partner Focal Point  

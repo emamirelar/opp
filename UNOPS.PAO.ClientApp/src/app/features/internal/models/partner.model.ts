@@ -6,21 +6,39 @@ import { OrganizationHierarchyModel } from '../../../models/organization-hierarc
 export interface Partner {
   id?: string | null;
   partnerCode?: string | null;
-  name?: string | null;
-  shortName?: string | null;
+  
+  // ========== GENERAL FIELDS ==========
+  partnerDescription?: string | null; // Full name (required) - was "name"
+  partnerShortDescription?: string | null; // Short name/acronym (required) - was "shortName"
+  partnerLongDescription?: string | null; // Optional long description
+  partnerCategoryId?: number | null; // FK to Partner Category (required)
+  liaisonOfficeId?: number | null; // FK to LiaisonOffice (required)
+  partnerFocalPoint?: number | null; // FK to User (Partner Focal Point)
+  
+  // Backward compatibility
+  name?: string | null; // Maps to partnerDescription for backward compatibility
+  shortName?: string | null; // Maps to partnerShortDescription for backward compatibility
+  
   status?: string | null;
-  newEngagement?: string | null;
-  phone?: string | null;
-  website?: string | null;
-  pooledFund?: string | null;
-  ddRequired?: string | null;
-  ddeacDone?: string | null;
-  eacReference?: string | null;
-  globalKeyAccount?: boolean | null;
-  unSecretariatEntity?: boolean | null;
-  levyPotentiallyApplies?: string | null;
-  reasonForLevyNotApplying?: string | null;
+  pooledFund?: boolean | null;
+  
+  // ========== APPROVAL FIELDS ==========
+  keyGlobalPartner?: boolean | null; // was "globalKeyAccount"
+  unAndStateEntity?: boolean | null; // New field
+  unSecretariatPartner?: boolean | null; // was "unSecretariatEntity"
+  dueDiligenceRequired?: string | null; // was "ddRequired" 
+  dueDiligenceApproval?: string | null; // was "ddeacDone"
+  dueDiligenceApprovalDate?: Date | null; // New field
+  dueDiligenceExpiryDate?: Date | null; // New field
+  partnerApprovalStatus?: string | null; // "NotApproved" | "Approved"
+  partnerApprovalDate?: Date | null; // New field
+  partnerApprovalReference?: string | null; // was "eacReference"
+  partnerLevyStatus?: string | null; // was "levyPotentiallyApplies"
+  reasonForLevy?: string | null; // was "reasonForLevyNotApplying"
   levyTreatment?: string | null;
+  canCreateNewOpportunities?: boolean | null; // New field
+  reasonForNoNewOpportunity?: string | null; // New field (Reason)
+  
   address1Street?: string | null;
   address1Street2?: string | null;
   address1City?: string | null;
@@ -45,7 +63,6 @@ export interface Partner {
   partnerGroupId?: number | null;
   partnerGroupCode?: string | null;
   partnerGroupName?: string | null;
-  partnerCategoryId?: number | null;
   partnerCategoryCode?: string | null;
   partnerCategoryName?: string | null;
   

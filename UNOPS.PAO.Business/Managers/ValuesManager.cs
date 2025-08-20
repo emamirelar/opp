@@ -40,4 +40,7 @@ public class ValuesManager : IApplicationService
 
     public IEnumerable<UserValueModel> GetUsers()
          => repository.GetUsers().Select(mapper.Map<UserValueModel>);
+
+    public IEnumerable<LiaisonOfficeModel> GetLiaisonOffices()
+         => repository.GetLiaisonOffices().Select(mapper.Map<LiaisonOfficeModel>);
 }

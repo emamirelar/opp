@@ -13,7 +13,7 @@ public static class TestDataBuilder
         return new Faker<UNOPSPartner>()
             .RuleFor(p => p.PartnerCode, f => $"P{f.Random.Number(1000, 9999)}")
             // Enhanced Partner structure
-            .RuleFor(p => p.PartnerDescription, f => f.Company.CompanyName())
+            .RuleFor(p => p.Name, f => f.Company.CompanyName())
             .RuleFor(p => p.PartnerShortDescription, f => f.Company.CompanySuffix())
             .RuleFor(p => p.PartnerLongDescription, f => f.Lorem.Paragraph())
             .RuleFor(p => p.PartnerCategoryId, f => f.Random.Number(1, 10))
@@ -52,7 +52,7 @@ public static class TestDataBuilder
             PageSize = pageSize,
             SearchText = searchText,
             Status = status,
-            OrderBy = orderBy ?? "PartnerDescription",
+            OrderBy = orderBy ?? "Name",
             Ascending = ascending
         };
     }

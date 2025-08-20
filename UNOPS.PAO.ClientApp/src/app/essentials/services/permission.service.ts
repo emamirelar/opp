@@ -36,6 +36,10 @@ export interface EntityPermissions {
     canCreate: boolean;
     canUpdate: boolean;
     canDelete: boolean;
+    canApprove?: boolean;
+    canActivate?: boolean;
+    canClose?: boolean;
+    canArchive?: boolean;
   };
 }
 

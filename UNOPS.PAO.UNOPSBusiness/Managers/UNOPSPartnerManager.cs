@@ -87,7 +87,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // Use the provided user or get current user context
         var userContext = user ?? GetCurrentUserOrSystemContext();
-        return await MapEntityToModelWithPermissionsAsync(result, userContext); ;
+        return await MapEntityToModelWithPermissionsAsync(result, userContext);
     }
 
     /*private async Task<PartnerModel> MapEntityToModelWithPermissionsAsync(UNOPSPartner entity, IMapper mapper, ClaimsPrincipal? user = null)
@@ -170,14 +170,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     {
         var entity = MapModelToEntity(model);
 
-        // Set a temporary Name field to satisfy NOT NULL constraint
-        entity.Name = "Partner - TBD";
-
         // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
-
-        // Set the correct Name field as "Partner - {Id}" after getting the ID
-        entity.Name = $"Partner - {entity.Id}";
         await PartnerRepository.UpdateAsync(entity);
 
         // Handle organization unit hierarchy IDs if specified - AFTER saving the partner
@@ -911,13 +905,13 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         if (filteredData is IEnumerable<UNOPSPartner> partnerList)
         {
             var accessiblePartner = partnerList.FirstOrDefault();
-            if (accessiblePartner != null)
-            {
-                // First map to model using AutoMapper
-                var model = await MapEntityToModelAsync(accessiblePartner, _mapper, user);
-                // Then add permissions if needed
-                return await MapEntityToModelWithPermissionsAsync(model, user);
-            }
+                    if (accessiblePartner != null)
+        {
+            // First map to model using AutoMapper
+            var model = await MapEntityToModelAsync(accessiblePartner, _mapper, user);
+            // Then add permissions using the entity (not model) for RBAC
+            return await MapEntityToModelWithPermissionsAsync(model, user, accessiblePartner);
+        }
         }
 
         // User doesn't have access to this entity
@@ -932,9 +926,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // RBAC interceptor handles security enforcement
         
         // Validate minimum required fields (defensive check)
-        if (string.IsNullOrWhiteSpace(model.PartnerDescription))
+        if (string.IsNullOrWhiteSpace(model.Name))
         {
-            throw new BusinessException("Partner Description is required for creation");
+            throw new BusinessException("Partner Name is required for creation");
         }
         
         // Ensure partner is created in Draft status
@@ -942,14 +936,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         
         var entity = MapModelToEntity(model);
 
-        // Set a temporary Name field to satisfy NOT NULL constraint
-        entity.Name = "Partner - TBD";
-
         // Save the partner first to get its ID
         await PartnerRepository.AddAsync(entity);
-
-        // Set the correct Name field as "Partner - {Id}" after getting the ID
-        entity.Name = $"Partner - {entity.Id}";
         await PartnerRepository.UpdateAsync(entity);
 
         // Handle organization unit hierarchy IDs if specified - AFTER saving the partner
@@ -989,8 +977,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // First map to model using AutoMapper
         var resultModel = await MapEntityToModelAsync(entity, _mapper, user);
-        // Then add permissions
-        resultModel = await MapEntityToModelWithPermissionsAsync(resultModel, user);
+        // Then add permissions using the entity (not model) for RBAC
+        resultModel = await MapEntityToModelWithPermissionsAsync(resultModel, user, entity);
         
         // Add permissions for frontend UI
         //resultModel.Permissions = await GetEntityPermissionsAsync(entity, user);
@@ -1091,9 +1079,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
-        
-        // Ensure Name is always set as "Partner - {Id}"
-        entity.Name = $"Partner - {entity.Id}";
         
         await PartnerRepository.UpdateAsync(entity);
 
@@ -1290,9 +1275,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
         PatchNonNullProperties(model, entity);
-
-        // Ensure Name is always set as "Partner - {Id}"
-        entity.Name = $"Partner - {entity.Id}";
 
         await PartnerRepository.UpdateAsync(entity);
 
@@ -1590,7 +1572,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Load relationships and return updated model
         await entity.LoadOrganizationUnitRelationshipsAsync(_context);
         var model = await MapEntityToModelAsync(entity, _mapper, user);
-        return await MapEntityToModelWithPermissionsAsync(model, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
     /// <summary>
@@ -1619,7 +1601,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Load relationships and return updated model
         await entity.LoadOrganizationUnitRelationshipsAsync(_context);
         var model = await MapEntityToModelAsync(entity, _mapper, user);
-        return await MapEntityToModelWithPermissionsAsync(model, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
     /// <summary>
@@ -1648,7 +1630,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Load relationships and return updated model
         await entity.LoadOrganizationUnitRelationshipsAsync(_context);
         var model = await MapEntityToModelAsync(entity, _mapper, user);
-        return await MapEntityToModelWithPermissionsAsync(model, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
     /// <summary>
@@ -1677,7 +1659,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         // Load relationships and return updated model
         await entity.LoadOrganizationUnitRelationshipsAsync(_context);
         var model = await MapEntityToModelAsync(entity, _mapper, user);
-        return await MapEntityToModelWithPermissionsAsync(model, user);
+        return await MapEntityToModelWithPermissionsAsync(model, user, entity);
     }
 
     #endregion

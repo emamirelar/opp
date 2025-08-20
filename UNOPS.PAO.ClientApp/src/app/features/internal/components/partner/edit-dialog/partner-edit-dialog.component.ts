@@ -37,6 +37,8 @@ import { AiTranscribeComponent } from '../../../../../common/reusables/component
 import { JsonPipe } from '@angular/common';
 import { PartnerTreeService } from '../../../services/partner-tree.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { AuthService } from '../../../../../essentials/services/auth.service';
+import { ENTITY_STATUS_OPTIONS } from '../../../models/entity-status.enum';
 
 @Component({
   selector: 'app-partner-edit-dialog',
@@ -71,46 +73,43 @@ export class PartnerEditDialogComponent implements OnInit {
   recordPermissions = signal<any>({});
 
   public formGroup = new FormGroup({
-      organizationHierarchyIds: new FormControl<number[]>([], {
-        validators: [Validators.required]
-      }),
-      partnerGroupCode: new FormControl(null, {
-        validators: [Validators.required]
-      }),
+      // Partner Org Unit - Array for backend compatibility (optional)
+      organizationHierarchyIds: new FormControl<number[]>([]),
+      // UI FormControl for single select (synced with array)
+      selectedOrgUnitId: new FormControl<number | null>(null),
+      partnerGroupCode: new FormControl(null),
+      
+      // ========== GENERAL FIELDS ==========
       name: new FormControl('', {
         validators: [Validators.required]
       }),
-      status: new FormControl('Active'),
-      newEngagement: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      phone: new FormControl(null),
-      shortName: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      pooledFund: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      ddRequired: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      ddeacDone: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      eacReference: new FormControl(null),
-      globalKeyAccount: new FormControl(false),
-      unSecretariatEntity: new FormControl(false),
-      levyPotentiallyApplies: new FormControl(null, {
-        validators: [Validators.required]
-      }),
-      reasonForLevyNotApplying: new FormControl(null),
+      partnerShortDescription: new FormControl(null),
+      partnerLongDescription: new FormControl(null),
+      partnerCategoryId: new FormControl(null),
+      liaisonOfficeId: new FormControl(null),
+      partnerFocalPoint: new FormControl(null),
+      status: new FormControl('Draft'), 
+      
+      pooledFund: new FormControl(false),
+      
+      // ========== APPROVAL FIELDS ==========
+      keyGlobalPartner: new FormControl(false),
+      unAndStateEntity: new FormControl(false),
+      unSecretariatPartner: new FormControl(false),
+      dueDiligenceRequired: new FormControl(null),
+      dueDiligenceApproval: new FormControl(null),
+      dueDiligenceApprovalDate: new FormControl(null),
+      dueDiligenceExpiryDate: new FormControl(null),
+      partnerApprovalStatus: new FormControl('NotApproved'),
+      partnerApprovalDate: new FormControl(null),
+      partnerApprovalReference: new FormControl(null),
+      partnerLevyStatus: new FormControl(''),
+      reasonForLevy: new FormControl(null),
       levyTreatment: new FormControl(null),
-      address1Street: new FormControl(null),
-      address1Street2: new FormControl(null),
-      address1City: new FormControl(null),
-      address1StateProvince: new FormControl(null),
-      address1PostalCode: new FormControl(null),
-      address1Country: new FormControl(null),
+      canCreateNewOpportunities: new FormControl(true),
+      reasonForNoNewOpportunity: new FormControl(null),
+      
+      // System fields
       discriminator: new FormControl(null),
       id: new FormControl(null),
       createdBy: new FormControl(null),
@@ -136,9 +135,11 @@ export class PartnerEditDialogComponent implements OnInit {
   @Output() onRecordCreationSuccess = new EventEmitter<any>();
 
   partnerTreeService = inject(PartnerTreeService);
+  authService = inject(AuthService);
 
   showValidationFailedError = signal<boolean>(false);
   isLoading = signal<boolean>(false);
+  isAdmin = signal<boolean>(false);
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
   allYesNoData = this.cachedDataService.allYesNo;
@@ -148,23 +149,65 @@ export class PartnerEditDialogComponent implements OnInit {
   allPartnerScopesData = this.cachedDataService.allPartnerScope;
   // Backend already filters for active organization units
   allOrganizationUnitsData = this.cachedDataService.allOrganizationUnits;
+  allPartnerCategoriesData = this.cachedDataService.getPartnerCategoriesForSelect;
+  allLiaisonOfficesData = this.cachedDataService.allLiaisonOffices;
+  allUsersData = this.cachedDataService.allUsers;
 
-  // Signal to track form control changes
-  private selectedOrgUnitsSignal = signal<number[]>([]);
-
-  // Custom counter for selected organization units 
-  getSelectedActiveOrgUnitsLabel = computed(() => {
-    const selectedIds = this.selectedOrgUnitsSignal();
-    if (!selectedIds.length) return this.translateService.instant('label.partner.selectOrganizationUnits');
-    
-    // The backend already filters for active records, so we just count selected items
-    const count = selectedIds.length;
-    
-    return count === 1 
-      ? this.translateService.instant('label.partner.oneOrganizationUnitSelected')
-      : this.translateService.instant('label.partner.organizationUnitsSelected', { count });
+  // Computed properties for approval section
+  isPartnerApproved = computed(() => {
+    return this.formGroup.get('partnerApprovalStatus')?.value === 'Approved';
   });
-  allPartnerCategoriesData = this.cachedDataService.partnerCategoryGroups;
+
+  // Show "Reason for Levy" only when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied"
+  shouldShowReasonForLevy = computed(() => {
+    const partnerLevyStatus = this.formGroup.get('partnerLevyStatus')?.value;
+    return (partnerLevyStatus === 'DoesNotApply' || partnerLevyStatus === 'PotentiallyNotApplied');
+  });
+
+  showApprovalFields = computed(() => {
+    return this.isPartnerApproved();
+  });
+
+  approvalFieldsEnabled = computed(() => {
+    return this.isAdmin();
+  });
+
+  // Status management constants and computed properties
+  private readonly STATUS_OPTIONS = ENTITY_STATUS_OPTIONS;
+
+  /**
+   * Get all available status options with translated labels
+   */
+  statusOptions = computed(() => {
+    return this.STATUS_OPTIONS.map(option => ({
+      value: option.value,
+      label: this.translateService.instant(option.labelKey)
+    }));
+  });
+
+  /**
+   * Check if status field should be visible
+   */
+  showStatusField = computed(() => {
+    return !!(this.recordData().permissions?.canClose || this.recordData().permissions?.canArchive);
+  });
+
+
+
+  // Signal to track form control changes (first element of array for single org unit)
+  private selectedOrgUnitSignal = signal<number | null>(null);
+
+  // Get selected organization unit name for display
+  getSelectedOrgUnitLabel = computed(() => {
+    const selectedId = this.selectedOrgUnitSignal();
+    if (!selectedId) return this.translateService.instant('label.partner.selectPartnerOrgUnit');
+    
+    // Find the selected organization unit name
+    const orgUnits = this.allOrganizationUnitsData() as any[];
+    const selectedUnit = orgUnits.find((unit: any) => unit.id === selectedId);
+    
+    return selectedUnit ? selectedUnit.name : this.translateService.instant('label.partner.selectPartnerOrgUnit');
+  });
   allPartnerGroupsForSelect = this.cachedDataService.getPartnerGroupsForSelect;
   recordId: string = '';
   recordData = signal<any>({});
@@ -181,16 +224,31 @@ export class PartnerEditDialogComponent implements OnInit {
     });
   }
 
-  // Helper methods for organization hierarchy FormControl
+  // Helper methods for organization hierarchy FormControl (single select managing array)
   setOrganizationHierarchyIds(ids: number[]): void {
+    // Set the full array from backend, UI control will sync automatically
     this.formGroup.get('organizationHierarchyIds')?.setValue(ids || []);
   }
 
   getSelectedOrganizationHierarchyIds(): number[] {
+    // Return the full array for backend compatibility
     return this.formGroup.get('organizationHierarchyIds')?.value || [];
   }
 
+
+
   ngOnInit() {
+    // Check admin role
+    this.authService.isAdmin().subscribe({
+      next: (isAdmin) => {
+        this.isAdmin.set(isAdmin);
+      },
+      error: (error) => {
+        console.error('Error checking admin role:', error);
+        this.isAdmin.set(false);
+      }
+    });
+
     this.activatedRoute.paramMap.subscribe({
       next: (paramMap) => {
         this.recordId = paramMap.get("recordId") || '';
@@ -203,11 +261,8 @@ export class PartnerEditDialogComponent implements OnInit {
           this.record = this.dialogConfig.data?.record;
           this.recordData.set(this.dialogConfig.data.record);
           
-          // Preserve the "Active" default if status is null or undefined
+          // Status is already a string, no conversion needed
           const formData = { ...this.dialogConfig.data.record };
-          if (!formData.status) {
-            formData.status = 'Active';
-          }
           
           // Handle organization unit relationships
           if (formData.organizationUnitRelationships) {
@@ -226,14 +281,30 @@ export class PartnerEditDialogComponent implements OnInit {
       }
     });
     
-    // Track form control changes for organization units counter
-    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
-      this.selectedOrgUnitsSignal.set(value || []);
+    // Sync between selectedOrgUnitId (UI) and organizationHierarchyIds (backend array)
+    
+    // When UI FormControl changes, update the array FormControl
+    this.formGroup.get('selectedOrgUnitId')?.valueChanges.subscribe(value => {
+      const newArray = value ? [value] : [];
+      this.formGroup.get('organizationHierarchyIds')?.setValue(newArray, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(value);
     });
     
-    // Initialize the signal with current form value
-    const currentValue = this.formGroup.get('organizationHierarchyIds')?.value || [];
-    this.selectedOrgUnitsSignal.set(currentValue);
+    // When array FormControl changes (from backend data), update UI FormControl
+    this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
+      const array = value || [];
+      const firstElement = array.length > 0 ? array[0] : null;
+      this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+      this.selectedOrgUnitSignal.set(firstElement);
+    });
+    
+    // Initialize both controls
+    const currentArray = this.formGroup.get('organizationHierarchyIds')?.value || [];
+    const firstElement = currentArray.length > 0 ? currentArray[0] : null;
+    this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
+    this.selectedOrgUnitSignal.set(firstElement);
+    
+
   }
 
 
@@ -293,6 +364,15 @@ export class PartnerEditDialogComponent implements OnInit {
     } else {
       this.dialogConfig.data.requestingSaveSignal.set(false);
       this.showValidationFailedError.set(true);
+      
+      // Debug: Log which fields are invalid
+      console.log('Form validation failed. Invalid fields:');
+      Object.keys(this.formGroup.controls).forEach(key => {
+        const control = this.formGroup.get(key);
+        if (control && control.invalid) {
+          console.log(`- ${key}:`, control.errors);
+        }
+      });
     }
   }
 
@@ -311,11 +391,9 @@ export class PartnerEditDialogComponent implements OnInit {
       next: (data: any) => {
         this.recordData.set(data);
         
-        // Preserve the "Active" default if status is null or undefined
         const formData = { ...data };
-        if (!formData.status) {
-          formData.status = 'Active';
-        }
+        
+        // Status is already a string, no conversion needed
         
         // Handle organization unit relationships
         if (formData.organizationUnitRelationships) {
@@ -360,8 +438,21 @@ export class PartnerEditDialogComponent implements OnInit {
 
         switch (key) {
           case 'organizationHierarchyIds':
-            // Pass organizationHierarchyIds directly to backend
-            requestJsonObj['organizationHierarchyIds'] = indexValue;
+            // Already an array, pass directly to backend
+            requestJsonObj['organizationHierarchyIds'] = indexValue || [];
+            break;
+          
+          case 'partnerCategoryId':
+          case 'liaisonOfficeId':
+            // Ensure ID fields are sent as integers (not strings)
+            requestJsonObj[key] = indexValue ? parseInt(indexValue, 10) : null;
+            break;
+          
+          case 'dueDiligenceApproval':
+          case 'dueDiligenceRequired':
+          case 'partnerLevyStatus':
+            // Populate empty string for these fields if value is empty
+            requestJsonObj[key] = indexValue || '';
             break;
 
           default:
@@ -380,15 +471,10 @@ export class PartnerEditDialogComponent implements OnInit {
   onTranscriptionCompleted(data: any): void {
     if (data) {
       this.formGroup.patchValue({
-        name: data.name || this.formGroup.get('name')?.value,
-        shortName: data.shortName || this.formGroup.get('shortName')?.value,
-        phone: data.phone || this.formGroup.get('phone')?.value,
-        address1Street: data.address1Street || this.formGroup.get('address1Street')?.value,
-        address1Street2: data.address1Street2 || this.formGroup.get('address1Street2')?.value,
-        address1City: data.address1City || this.formGroup.get('address1City')?.value,
-        address1StateProvince: data.address1StateProvince || this.formGroup.get('address1StateProvince')?.value,
-        address1PostalCode: data.address1PostalCode || this.formGroup.get('address1PostalCode')?.value,
-        address1Country: data.address1Country || this.formGroup.get('address1Country')?.value,
+        // Primary fields
+        name: data.partnerDescription || data.name || this.formGroup.get('name')?.value,
+        partnerShortDescription: data.partnerShortDescription || data.shortName || this.formGroup.get('partnerShortDescription')?.value,
+        partnerLongDescription: data.partnerLongDescription || this.formGroup.get('partnerLongDescription')?.value,
         partnerGroupCode: data.partnerGroupCode || this.formGroup.get('partnerGroupCode')?.value,
       });
 

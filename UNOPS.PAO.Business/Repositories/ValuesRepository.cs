@@ -24,7 +24,7 @@ public class ValuesRepository
 
     public IQueryable<Partner> GetPartners()
         => context.Partners
-            .Where(x => x.Status.Equals("Active") && !x.IsDeleted);
+            .Where(x => x.Status == EntityStatus.Active && !x.IsDeleted);
     
     // Get flat list of organization units by type
     public IEnumerable<OrganizationHierarchy> GetOrganizationsByType(OrganizationUnitType type)
@@ -106,6 +106,9 @@ public class ValuesRepository
 
     public IEnumerable<PAOUser> GetUsers()
         => context.PAOUsers;
+
+    public IEnumerable<LiaisonOffice> GetLiaisonOffices() 
+        => context.LiaisonOffices.Where(x => x.IsActive && !x.IsDeleted);
 
     // Get organization hierarchy optimized for PrimeNG organization chart
     public async Task<IEnumerable<OrganizationHierarchyPrimeModel>> GetOrganizationHierarchyPrime()

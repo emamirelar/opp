@@ -22,7 +22,7 @@ public class SimplePartnerFilterTests
 
         // Assert
         partners.Should().HaveCount(10);
-        partners.Should().OnlyContain(p => !string.IsNullOrEmpty(p.PartnerDescription));
+        partners.Should().OnlyContain(p => !string.IsNullOrEmpty(p.Name));
         partners.Should().OnlyContain(p => p.Status != null);
         partners.Should().OnlyContain(p => new[] { Domain.Entities.EntityStatus.Active, Domain.Entities.EntityStatus.Closed, Domain.Entities.EntityStatus.Draft }.Contains(p.Status));
         partners.Should().OnlyContain(p => new[] { "NGO", "GOV", "PRI", "UN" }.Contains(p.PartnerGroupCode!));
@@ -45,7 +45,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().OnlyContain(p => p.Status == targetStatus);
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "ACME Global Services" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -57,15 +57,15 @@ public class SimplePartnerFilterTests
 
         // Act - Simulate name filtering
         var filteredPartners = partners
-            .Where(p => p.PartnerDescription.Contains(searchName, StringComparison.OrdinalIgnoreCase))
+            .Where(p => p.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert
         filteredPartners.Should().HaveCount(2);
-        filteredPartners.Should().OnlyContain(p => p.PartnerDescription.Contains(searchName, StringComparison.OrdinalIgnoreCase));
+        filteredPartners.Should().OnlyContain(p => p.Name.Contains(searchName, StringComparison.OrdinalIgnoreCase));
         
         var expectedNames = new[] { "ACME Corporation", "ACME Global Services" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -75,9 +75,9 @@ public class SimplePartnerFilterTests
         var partners = GetTestPartners();
         var searchText = "Global";
 
-        // Act - Simulate search text filtering (searches both PartnerDescription and PartnerShortDescription)
+        // Act - Simulate search text filtering (searches both Name and PartnerShortDescription)
         var filteredPartners = partners
-            .Where(p => (p.PartnerDescription != null && p.PartnerDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+            .Where(p => (p.Name != null && p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
                        (p.PartnerShortDescription != null && p.PartnerShortDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
@@ -85,7 +85,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().HaveCount(3);
         
         var expectedNames = new[] { "Global Tech Solutions", "Global Finance Corp", "ACME Global Services" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -97,13 +97,13 @@ public class SimplePartnerFilterTests
 
         // Act
         var filteredPartners = partners
-            .Where(p => (p.PartnerDescription != null && p.PartnerDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+            .Where(p => (p.Name != null && p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
                        (p.PartnerShortDescription != null && p.PartnerShortDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
         // Assert
         filteredPartners.Should().HaveCount(1);
-        filteredPartners.Single().PartnerDescription.Should().Be("Global Tech Solutions");
+        filteredPartners.Single().Name.Should().Be("Global Tech Solutions");
         filteredPartners.Single().PartnerShortDescription.Should().Be("GTS");
     }
 
@@ -118,7 +118,7 @@ public class SimplePartnerFilterTests
         // Act - Combine multiple filters (AND logic)
         var filteredPartners = partners
             .Where(p => p.Status == targetStatus)
-            .Where(p => (p.PartnerDescription != null && p.PartnerDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+            .Where(p => (p.Name != null && p.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
                        (p.PartnerShortDescription != null && p.PartnerShortDescription.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
@@ -126,7 +126,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().HaveCount(2);
         
         var expectedNames = new[] { "Global Tech Solutions", "ACME Global Services" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
         filteredPartners.Should().OnlyContain(p => p.Status == Domain.Entities.EntityStatus.Active);
     }
 
@@ -156,7 +156,7 @@ public class SimplePartnerFilterTests
         // Act - Empty search text should not filter anything
         var filteredPartners = partners
             .Where(p => string.IsNullOrEmpty(emptySearchText) || 
-                       (p.PartnerDescription != null && p.PartnerDescription.Contains(emptySearchText, StringComparison.OrdinalIgnoreCase)) ||
+                       (p.Name != null && p.Name.Contains(emptySearchText, StringComparison.OrdinalIgnoreCase)) ||
                        (p.PartnerShortDescription != null && p.PartnerShortDescription.Contains(emptySearchText, StringComparison.OrdinalIgnoreCase)))
             .ToList();
 
@@ -173,13 +173,13 @@ public class SimplePartnerFilterTests
 
         // Act
         var sortedPartners = partners
-            .OrderBy(p => p.PartnerDescription)
+            .OrderBy(p => p.Name)
             .ToList();
 
         // Assert
-        sortedPartners.Should().BeInAscendingOrder(p => p.PartnerDescription);
-        sortedPartners.First().PartnerDescription.Should().Be("ACME Corporation");
-        sortedPartners.Last().PartnerDescription.Should().Be("Global Tech Solutions");
+        sortedPartners.Should().BeInAscendingOrder(p => p.Name);
+        sortedPartners.First().Name.Should().Be("ACME Corporation");
+        sortedPartners.Last().Name.Should().Be("Global Tech Solutions");
     }
 
     [Fact]
@@ -190,20 +190,20 @@ public class SimplePartnerFilterTests
 
         // Act
         var sortedPartners = partners
-            .OrderByDescending(p => p.PartnerDescription)
+            .OrderByDescending(p => p.Name)
             .ToList();
 
         // Assert
-        sortedPartners.Should().BeInDescendingOrder(p => p.PartnerDescription);
-        sortedPartners.First().PartnerDescription.Should().Be("Global Tech Solutions");
-        sortedPartners.Last().PartnerDescription.Should().Be("ACME Corporation");
+        sortedPartners.Should().BeInDescendingOrder(p => p.Name);
+        sortedPartners.First().Name.Should().Be("Global Tech Solutions");
+        sortedPartners.Last().Name.Should().Be("ACME Corporation");
     }
 
     [Fact]
     public void PartnerPagination_FirstPage_ReturnsCorrectItems()
     {
         // Arrange
-        var partners = GetTestPartners().OrderBy(p => p.PartnerDescription).ToList();
+        var partners = GetTestPartners().OrderBy(p => p.Name).ToList();
         var pageSize = 2;
         var pageIndex = 1; // First page
 
@@ -215,15 +215,15 @@ public class SimplePartnerFilterTests
 
         // Assert
         pagedPartners.Should().HaveCount(2);
-        pagedPartners[0].PartnerDescription.Should().Be("ACME Corporation");
-        pagedPartners[1].PartnerDescription.Should().Be("ACME Global Services");
+        pagedPartners[0].Name.Should().Be("ACME Corporation");
+        pagedPartners[1].Name.Should().Be("ACME Global Services");
     }
 
     [Fact]
     public void PartnerPagination_SecondPage_ReturnsCorrectItems()
     {
         // Arrange
-        var partners = GetTestPartners().OrderBy(p => p.PartnerDescription).ToList();
+        var partners = GetTestPartners().OrderBy(p => p.Name).ToList();
         var pageSize = 2;
         var pageIndex = 2; // Second page
 
@@ -235,15 +235,15 @@ public class SimplePartnerFilterTests
 
         // Assert
         pagedPartners.Should().HaveCount(2);
-        pagedPartners[0].PartnerDescription.Should().Be("Beta Industries");
-        pagedPartners[1].PartnerDescription.Should().Be("Global Finance Corp");
+        pagedPartners[0].Name.Should().Be("Beta Industries");
+        pagedPartners[1].Name.Should().Be("Global Finance Corp");
     }
 
     [Fact]
     public void PartnerPagination_LastPage_ReturnsRemainingItems()
     {
         // Arrange
-        var partners = GetTestPartners().OrderBy(p => p.PartnerDescription).ToList();
+        var partners = GetTestPartners().OrderBy(p => p.Name).ToList();
         var pageSize = 2;
         var pageIndex = 3; // Last page
 
@@ -255,7 +255,7 @@ public class SimplePartnerFilterTests
 
         // Assert
         pagedPartners.Should().HaveCount(1); // Only one item left
-        pagedPartners[0].PartnerDescription.Should().Be("Global Tech Solutions");
+        pagedPartners[0].Name.Should().Be("Global Tech Solutions");
     }
 
     [Fact]
@@ -303,7 +303,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().OnlyContain(p => p.OrganizationUnitRelationships.Any(r => r.OrganizationHierarchyId == targetOrgUnitId));
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -325,7 +325,7 @@ public class SimplePartnerFilterTests
         filteredPartners.Should().OnlyContain(p => p.OrganizationUnitRelationships.Any(r => orgUnitHierarchy.Contains(r.OrganizationHierarchyId)));
         
         var expectedNames = new[] { "ACME Corporation", "Global Tech Solutions", "Beta Industries", "Global Finance Corp" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -363,7 +363,7 @@ public class SimplePartnerFilterTests
 
         // Assert - Only active partners in org unit 10
         filteredPartners.Should().HaveCount(1);
-        filteredPartners.Single().PartnerDescription.Should().Be("ACME Corporation");
+        filteredPartners.Single().Name.Should().Be("ACME Corporation");
         filteredPartners.Single().Status.Should().Be(Domain.Entities.EntityStatus.Active);
         filteredPartners.Single().OrganizationUnitRelationships.Should().Contain(r => r.OrganizationHierarchyId == 10);
     }
@@ -408,7 +408,7 @@ public class SimplePartnerFilterTests
             else if (i % 3 == 1) largeDataset[i].Status = Domain.Entities.EntityStatus.Closed;
             else largeDataset[i].Status = Domain.Entities.EntityStatus.Draft;
 
-            if (i % 10 == 0) largeDataset[i].PartnerDescription = $"Test Company {i}";
+            if (i % 10 == 0) largeDataset[i].Name = $"Test Company {i}";
         }
 
         // Act
@@ -416,8 +416,8 @@ public class SimplePartnerFilterTests
         
         var filteredPartners = largeDataset
             .Where(p => p.Status == Domain.Entities.EntityStatus.Active)
-            .Where(p => p.PartnerDescription != null && p.PartnerDescription.Contains("Test", StringComparison.OrdinalIgnoreCase))
-            .OrderBy(p => p.PartnerDescription)
+            .Where(p => p.Name != null && p.Name.Contains("Test", StringComparison.OrdinalIgnoreCase))
+            .OrderBy(p => p.Name)
             .Take(10)
             .ToList();
             
@@ -428,7 +428,7 @@ public class SimplePartnerFilterTests
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(100); // Should be very fast with LINQ in-memory
         
         filteredPartners.Should().OnlyContain(p => p.Status == Domain.Entities.EntityStatus.Active);
-        filteredPartners.Should().OnlyContain(p => p.PartnerDescription.Contains("Test", StringComparison.OrdinalIgnoreCase));
+        filteredPartners.Should().OnlyContain(p => p.Name.Contains("Test", StringComparison.OrdinalIgnoreCase));
     }
 
     #region Helper Methods
@@ -472,7 +472,7 @@ public class SimplePartnerFilterTests
         {
             Id = Random.Shared.Next(1, 1000),
             // Enhanced Partner structure
-            PartnerDescription = name,
+            Name = name,
             PartnerShortDescription = shortName,
             PartnerCategoryId = 1, // Default test category
             LiaisonOfficeId = 1, // Default test liaison office

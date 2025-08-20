@@ -30,7 +30,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             var partner = new UNOPSPartner
             {
                 // Enhanced Partner structure
-                PartnerDescription = name,
+                Name = name,
                 PartnerShortDescription = name.Length > 10 ? name.Substring(0, 10) : name,
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office

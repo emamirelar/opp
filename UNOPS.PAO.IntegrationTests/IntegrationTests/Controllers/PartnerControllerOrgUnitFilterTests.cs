@@ -60,7 +60,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Records.Should().NotBeNull();
             // Should only return partners linked to orgUnitId
             result.Records.Should().OnlyContain(p => (p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || 
-                                                    p.PartnerDescription == "Indirect Partner"); // Indirect partner has contact relation
+                                                    p.Name == "Indirect Partner"); // Indirect partner has contact relation
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -100,8 +100,8 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result.Records.Should().NotBeNull();
             // Should filter by both name and org unit
-            result.Records.Should().OnlyContain(p => p.PartnerDescription.Contains("Partner") && 
-                                                    ((p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || p.PartnerDescription == "Indirect Partner"));
+            result.Records.Should().OnlyContain(p => p.Name.Contains("Partner") && 
+                                                    ((p.GetPrimaryOrganizationUnit() != null && p.GetPrimaryOrganizationUnit().Id == orgUnitId) || p.Name == "Indirect Partner"));
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -121,7 +121,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result.Records.Should().NotBeNull();
             result.Records.Should().HaveCount(1);
-            result.Records.First().PartnerDescription.Should().Be("Direct Partner");
+            result.Records.First().Name.Should().Be("Direct Partner");
         }
 
         [Fact(Skip = "Skipping due to authorization issues in test environment")]
@@ -164,7 +164,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             result.Should().NotBeNull();
             result.Records.Should().NotBeNull();
             // Should include partner with indirect relation through contact
-            result.Records.Should().Contain(p => p.PartnerDescription == "Indirect Partner");
+            result.Records.Should().Contain(p => p.Name == "Indirect Partner");
         }
 
         private async Task SeedTestDataForOrgUnitFilter(int orgUnitId)
@@ -243,7 +243,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             { 
                 Id = partnerId1, 
                 // Enhanced Partner structure
-                PartnerDescription = "Direct Partner",
+                Name = "Direct Partner",
                 PartnerShortDescription = "DP",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office
@@ -270,7 +270,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             { 
                 Id = partnerId2, 
                 // Enhanced Partner structure
-                PartnerDescription = "Other Partner",
+                Name = "Other Partner",
                 PartnerShortDescription = "OP",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office
@@ -297,7 +297,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             { 
                 Id = partnerId3, 
                 // Enhanced Partner structure
-                PartnerDescription = "Indirect Partner",
+                Name = "Indirect Partner",
                 PartnerShortDescription = "IP",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office
@@ -407,7 +407,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             { 
                 Id = partnerId1, 
                 // Enhanced Partner structure
-                PartnerDescription = "Parent Partner",
+                Name = "Parent Partner",
                 PartnerShortDescription = "PP",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office
@@ -434,7 +434,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             { 
                 Id = partnerId2, 
                 // Enhanced Partner structure
-                PartnerDescription = "Child Partner",
+                Name = "Child Partner",
                 PartnerShortDescription = "CP",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office
@@ -503,7 +503,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             { 
                 Id = partnerId, 
                 // Enhanced Partner structure
-                PartnerDescription = "Indirect Partner",
+                Name = "Indirect Partner",
                 PartnerShortDescription = "IRP",
                 PartnerCategoryId = 1, // Default test category
                 LiaisonOfficeId = 1, // Default test liaison office

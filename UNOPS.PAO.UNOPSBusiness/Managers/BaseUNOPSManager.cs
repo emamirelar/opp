@@ -224,7 +224,7 @@ public abstract class BaseUNOPSManager
     /// <summary>
     /// Maps entity to model with permissions, handling cases where no user context is available
     /// </summary>
-    protected async Task<T> MapEntityToModelWithPermissionsAsync<T>(T result, ClaimsPrincipal user) where T : class
+    protected async Task<T> MapEntityToModelWithPermissionsAsync<T>(T result, ClaimsPrincipal user, object sourceEntity = null) where T : class
     {  
         // Add permissions using the helper method from BaseUNOPSManager
         // Only add permissions if user is provided and result has a Permissions property
@@ -254,15 +254,17 @@ public abstract class BaseUNOPSManager
                 };
 
                 // Check instance-level access if PermissionService is available and entity has data
-                if (_permissionService != null && result != null)
+                // Use sourceEntity if provided (for RBAC), otherwise fall back to result (model)
+                var entityForRBAC = sourceEntity ?? result;
+                if (_permissionService != null && entityForRBAC != null)
                 {
                     try
                     {
-                        // Check instance access for each permission type
-                        var hasReadInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, result, user, "read");
-                        var hasCreateInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, result, user, "create");
-                        var hasUpdateInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, result, user, "update");
-                        var hasDeleteInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, result, user, "delete");
+                        // Check instance access for each permission type using the actual entity
+                        var hasReadInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, entityForRBAC, user, "read");
+                        var hasCreateInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, entityForRBAC, user, "create");
+                        var hasUpdateInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, entityForRBAC, user, "update");
+                        var hasDeleteInstanceAccess = await _permissionService.HasInstanceAccessAsync(_entityName, entityForRBAC, user, "delete");
 
                         // Apply instance-level filtering: permission = defaultPermission && hasInstanceAccess
                         consolidatedPermissions.CanRead = consolidatedPermissions.CanRead && hasReadInstanceAccess;
@@ -651,12 +653,11 @@ public abstract class BaseUNOPSManager
         if (!hasUpdatePermission)
             return false;
 
-        // Use reflection to check if this is a Partner entity with the required methods
         var resultType = result.GetType();
-        var hasMandatoryFieldsMethod = resultType.GetMethod("HasMandatoryFieldsForActivation");
         var statusProperty = resultType.GetProperty("Status");
+        var nameProperty = resultType.GetProperty("Name");
 
-        if (hasMandatoryFieldsMethod == null || statusProperty == null)
+        if (statusProperty == null || nameProperty == null)
             return null;
 
         try
@@ -668,8 +669,10 @@ public abstract class BaseUNOPSManager
             if (!isDraft)
                 return false; // Can only activate Draft partners
 
-            // Check if all mandatory fields are filled
-            var hasMandatoryFields = (bool)hasMandatoryFieldsMethod.Invoke(result, null);
+            // Check if mandatory fields are filled (Name is the only mandatory field for activation)
+            var name = nameProperty.GetValue(result) as string;
+            var hasMandatoryFields = !string.IsNullOrWhiteSpace(name);
+            
             return hasMandatoryFields;
         }
         catch

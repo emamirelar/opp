@@ -41,6 +41,7 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<DocumentType> DocumentTypes { get; set; }
     public DbSet<UNOPS.PAO.Domain.Entities.Link> Links { get; set; }
     public DbSet<OrganizationHierarchy> OrganizationHierarchies { get; set; }
+    public DbSet<LiaisonOffice> LiaisonOffices { get; set; }
 
     public DbSet<EntityEmbeddings> EntityEmbeddings { get; set; }
     public DbSet<InteractionContact> InteractionContacts { get; set; }

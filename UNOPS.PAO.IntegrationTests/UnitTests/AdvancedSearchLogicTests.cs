@@ -41,14 +41,14 @@ public class AdvancedSearchLogicTests
         // Act - Simuler la logique AND
         var filteredPartners = partners
             .Where(p => GetStatusAsString(p) == "Active")
-            .Where(p => p.PartnerDescription.Contains("Global", StringComparison.OrdinalIgnoreCase))
+            .Where(p => p.Name.Contains("Global", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert - Trouve "Global Tech Solutions" et "ACME Global Services" (tous deux Active + contiennent Global)
         filteredPartners.Should().HaveCount(2);
         
         var expectedNames = new[] { "Global Tech Solutions", "ACME Global Services" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
         filteredPartners.Should().OnlyContain(p => GetStatusAsString(p) == "Active");
     }
 
@@ -80,14 +80,14 @@ public class AdvancedSearchLogicTests
         // Act - Simuler la logique OR correcte
         var filteredPartners = partners
             .Where(p => GetStatusAsString(p) == "Inactive" || 
-                       p.PartnerDescription.Contains("ACME", StringComparison.OrdinalIgnoreCase))
+                       p.Name.Contains("ACME", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert - Devrait trouver: Beta Industries (Inactive) + ACME Corporation + ACME Global Services
         filteredPartners.Should().HaveCount(3);
         
         var expectedNames = new[] { "Beta Industries", "ACME Corporation", "ACME Global Services" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class AdvancedSearchLogicTests
 
         // Act - Simuler la logique complexe : (Active AND Global) OR Prospect
         var filteredPartners = partners
-            .Where(p => (GetStatusAsString(p) == "Active" && p.PartnerDescription.Contains("Global", StringComparison.OrdinalIgnoreCase)) ||
+            .Where(p => (GetStatusAsString(p) == "Active" && p.Name.Contains("Global", StringComparison.OrdinalIgnoreCase)) ||
                        GetStatusAsString(p) == "Prospect")
             .ToList();
 
@@ -135,7 +135,7 @@ public class AdvancedSearchLogicTests
         filteredPartners.Should().HaveCount(3);
         
         var expectedNames = new[] { "Global Tech Solutions", "ACME Global Services", "Global Finance Corp" };
-        filteredPartners.Select(p => p.PartnerDescription).Should().BeEquivalentTo(expectedNames);
+        filteredPartners.Select(p => p.Name).Should().BeEquivalentTo(expectedNames);
     }
 
     [Fact]
@@ -190,7 +190,7 @@ public class AdvancedSearchLogicTests
         var filteredPartners = partners
             .Where(p => GetStatusAsString(p) == "Active" || 
                        GetStatusAsString(p) == "Inactive" || 
-                       p.PartnerDescription.Contains("Finance", StringComparison.OrdinalIgnoreCase))
+                       p.Name.Contains("Finance", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert - Tous sauf Global Finance Corp qui est Prospect (mais contient Finance, donc inclus)
@@ -199,7 +199,7 @@ public class AdvancedSearchLogicTests
         // Vérifier que tous les statuts attendus sont présents
         filteredPartners.Should().Contain(p => GetStatusAsString(p) == "Active");
         filteredPartners.Should().Contain(p => GetStatusAsString(p) == "Inactive");
-        filteredPartners.Should().Contain(p => p.PartnerDescription.Contains("Finance"));
+        filteredPartners.Should().Contain(p => p.Name.Contains("Finance"));
     }
 
     [Fact]
@@ -218,12 +218,12 @@ public class AdvancedSearchLogicTests
         // Act - Logique AND par défaut
         var filteredPartners = partners
             .Where(p => GetStatusAsString(p) == "Active")
-            .Where(p => p.PartnerDescription.Contains("Tech", StringComparison.OrdinalIgnoreCase))
+            .Where(p => p.Name.Contains("Tech", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // Assert
         filteredPartners.Should().HaveCount(1);
-        filteredPartners.Single().PartnerDescription.Should().Be("Global Tech Solutions");
+        filteredPartners.Single().Name.Should().Be("Global Tech Solutions");
     }
 
     [Fact]
@@ -248,8 +248,8 @@ public class AdvancedSearchLogicTests
             {
                 "is" => partners.Where(p => GetStatusAsString(p) == testCase.Value).ToList(),
                 "is not" => partners.Where(p => GetStatusAsString(p) != testCase.Value).ToList(),
-                "like" => partners.Where(p => p.PartnerDescription.Contains(testCase.Value, StringComparison.OrdinalIgnoreCase)).ToList(),
-                "not like" => partners.Where(p => !p.PartnerDescription.Contains(testCase.Value, StringComparison.OrdinalIgnoreCase)).ToList(),
+                "like" => partners.Where(p => p.Name.Contains(testCase.Value, StringComparison.OrdinalIgnoreCase)).ToList(),
+                "not like" => partners.Where(p => !p.Name.Contains(testCase.Value, StringComparison.OrdinalIgnoreCase)).ToList(),
                 _ => new List<UNOPSPartner>()
             };
 
@@ -405,7 +405,7 @@ public class AdvancedSearchLogicTests
         {
             Id = Random.Shared.Next(1, 1000),
             // Enhanced Partner structure
-            PartnerDescription = name,
+            Name = name,
             PartnerShortDescription = shortName,
             PartnerCategoryId = 1, // Default test category
             LiaisonOfficeId = 1, // Default test liaison office

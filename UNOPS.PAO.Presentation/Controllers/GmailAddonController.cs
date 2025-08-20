@@ -157,10 +157,10 @@ namespace UNOPS.PAO.Presentation.Controllers
                         var partnerRequest = new PartnerRequest
                         {
                             // Enhanced Partner structure
-                            PartnerDescription = partnerGroup.PartnerName,
+                            Name = partnerGroup.PartnerName,
                             PartnerShortDescription = partnerGroup.PartnerName.Length > 10 ? partnerGroup.PartnerName.Substring(0, 10) : partnerGroup.PartnerName,
                             PartnerCategoryId = 1, // Default category - this should be set appropriately
-                            PartnerLiaisonOffice = "Default", // Default liaison office - this should be set appropriately
+                            LiaisonOfficeId = 1, // Default liaison office ID - this should be set appropriately
                             UNAndStateEntity = false,
                             Status = "Draft",
                             CanCreateNewOpportunities = false, // Default to not allowed for auto-created partners

@@ -172,7 +172,7 @@ export class ContactEditDialogComponent implements OnInit {
       const payload = this._getRequestPayload();
 
       // Reset requesting save signal immediately
-      this.dialogConfig.data.requestingSaveSignal.set(false);
+      this.requestingSaveSignal.set(false);
 
       // Check if this is an import edit (we're only updating local data, not saving to server)
       if (this.record && this.record.isImportEdit) {
