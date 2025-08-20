@@ -68,6 +68,30 @@
               ],
               "outputHashing": "all"
             },
+            "qa": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                }
+              },
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "3mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "2mb"
+                }
+              ],
+              "fileReplacements": [
+              ],
+              "outputHashing": "all"
+            },
             "test": {
               "optimization": {
                 "scripts": true,
