@@ -344,7 +344,6 @@ public class Partner : ModifiableDeletableEntity
         }
         
         PartnerApprovalStatus = PartnerApprovalStatus.Approved;
-        PartnerApprovalDate = DateTime.UtcNow;
         PartnerApprovalReference = $"Approved by {approverName} (ID: {approverId})";
     }
     

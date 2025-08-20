@@ -44,9 +44,12 @@
         <p-select formControlName="dueDiligenceRequired" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
+                  [placeholder]="'label.partner.selectDDRequired' | translate"
                   [appendTo]="'body'"
                   fluid="true" 
-                  id="dueDiligenceRequired" />
+                  [showClear]="true"
+                  id="dueDiligenceRequired"
+                  [ariaLabel]="'aria.selectDueDiligenceRequired' | translate" />
       </div>
 
       <!-- 5. Due Diligence (Approval) -->
@@ -55,9 +58,12 @@
         <p-select formControlName="dueDiligenceApproval" [options]="allYesNoData()"
                   optionLabel="name"
                   optionValue="id"
+                  [placeholder]="'label.partner.selectDDEACDone' | translate"
                   [appendTo]="'body'"
                   fluid="true" 
-                  id="dueDiligenceApproval" />
+                  [showClear]="true"
+                  id="dueDiligenceApproval"
+                  [ariaLabel]="'aria.selectDueDiligenceApproval' | translate" />
       </div>
 
       <!-- 6. Due Diligence Approval Date -->
@@ -93,9 +99,12 @@
         <p-select formControlName="partnerLevyStatus" [options]="allPartnerLevyAppliesData()"
                   optionLabel="name"
                   optionValue="id"
+                  [placeholder]="'label.partner.selectLevyPotentiallyApplies' | translate"
                   [appendTo]="'body'"
                   fluid="true" 
-                  id="partnerLevyStatus" />
+                  [showClear]="true"
+                  id="partnerLevyStatus"
+                  [ariaLabel]="'aria.selectPartnerLevyStatus' | translate" />
       </div>
 
       <!-- 11. Reason for Levy - Only show when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied" -->
@@ -105,9 +114,12 @@
         <p-select formControlName="reasonForLevy" [options]="allPartnerReasonForLevyNotData()"
                   optionLabel="name"
                   optionValue="id"
+                  [placeholder]="'label.partner.selectReasonForLevyNotApplying' | translate"
                   [appendTo]="'body'"
                   fluid="true" 
-                  id="reasonForLevy" />
+                  [showClear]="true"
+                  id="reasonForLevy"
+                  [ariaLabel]="'aria.selectReasonForLevy' | translate" />
       </div>
       }
 
@@ -117,9 +129,12 @@
         <p-select formControlName="levyTreatment" [options]="allPartnerLevyTreatmentData()"
                   optionLabel="name"
                   optionValue="id"
+                  [placeholder]="'label.partner.selectLevyTreatment' | translate"
                   [appendTo]="'body'"
                   fluid="true" 
-                  id="levyTreatment" />
+                  [showClear]="true"
+                  id="levyTreatment"
+                  [ariaLabel]="'aria.selectLevyTreatment' | translate" />
       </div>
 
       <!-- 13. Pooled Fund -->
@@ -159,7 +174,6 @@
     
     <p-button 
       label="{{ 'button.approve' | translate }}"
-      severity="success"
       icon="pi pi-check"
       (onClick)="handleApprove()"
       [loading]="isLoading()" />

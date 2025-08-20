@@ -1636,7 +1636,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Approves an active partner (Admin only) - locks data fields and records approval audit trail
     /// </summary>
-    public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, ApprovalRequest request)
+    public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request)
     {
         var entity = await PartnerRepository.GetByIdAsync(id, ["LiaisonOffice"]);
         if (entity == null)
@@ -1649,10 +1649,15 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             throw new UnauthorizedAccessException("Only Partnership Global Administrators can approve partners.");
         }
 
+        // Update all approval fields from the request before approving
+        // This follows the same pattern as UpdatePartnerAsync
+        PatchNonNullProperties(request, entity);
+
         // Get user information for audit trail
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
         var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
 
+        // Now approve the partner (this sets the approval status and audit trail)
         entity.ApprovePartner(int.Parse(userId), userName);
         await PartnerRepository.UpdateAsync(entity);
         

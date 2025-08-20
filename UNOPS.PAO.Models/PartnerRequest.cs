@@ -42,18 +42,18 @@ public class PartnerRequest : ExtensibleModel
     public bool UNSecretariatPartner { get; set; } = false;
     
     // Due Diligence Fields
-    public string DueDiligenceRequired { get; set; } = "NotRequired"; // "NotRequired" / "Required"
-    public string DueDiligenceApproval { get; set; } = "NotApproved"; // "NotApproved" / "Approved"
+    public string? DueDiligenceRequired { get; set; } = "NotRequired"; // "NotRequired" / "Required"
+    public string? DueDiligenceApproval { get; set; } = "NotApproved"; // "NotApproved" / "Approved"
     public DateTime? DueDiligenceApprovalDate { get; set; }
     public DateTime? DueDiligenceExpiryDate { get; set; }
     
     // Partner Approval Status
-    public string PartnerApprovalStatus { get; set; } = "NotApproved"; // "NotApproved" / "Approved"
+    public string? PartnerApprovalStatus { get; set; } = "NotApproved"; // "NotApproved" / "Approved"
     public DateTime? PartnerApprovalDate { get; set; }
     public string? PartnerApprovalReference { get; set; }
     
     // Levy Fields
-    public string PartnerLevyStatus { get; set; } = "DoesNotApply"; // "DoesNotApply" / "PotentiallyApplied" / "PotentiallyNotApplied"
+    public string? PartnerLevyStatus { get; set; } = "DoesNotApply"; // "DoesNotApply" / "PotentiallyApplied" / "PotentiallyNotApplied"
     public string? ReasonForLevy { get; set; }
     public string? LevyTreatment { get; set; }
     
@@ -63,7 +63,7 @@ public class PartnerRequest : ExtensibleModel
     public string? ReasonForNoNewOpportunity { get; set; }
     
     // Partner Status
-    public string Status { get; set; } = "Draft"; // "Draft" / "Active" / "Closed" / "Archived"
+    public string? Status { get; set; } = "Draft"; // "Draft" / "Active" / "Closed" / "Archived"
     
     // Partner Group
     public string? PartnerGroupCode { get; set; }
@@ -74,10 +74,7 @@ public class PartnerRequest : ExtensibleModel
     public List<int>? OrganizationHierarchyIds { get; set; }
 }
 
-public class ApprovalRequest
-{
-    public string? ApprovalNotes { get; set; }
-}
+
 
 public class StatusChangeRequest  
 {
