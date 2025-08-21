@@ -55,6 +55,7 @@ export class PartnerApprovalDialogComponent implements OnInit {
   formGroup!: FormGroup;
   isLoading = signal(false);
   showValidationFailedError = signal(false);
+  partnerLevyStatusValue = signal<string>('');
   
   partner: Partner;
 
@@ -68,6 +69,19 @@ export class PartnerApprovalDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeForm();
+    
+    // Subscribe to form changes to update the signal for reactive computed properties
+    this.formGroup.get('partnerLevyStatus')?.valueChanges.subscribe(value => {
+      this.partnerLevyStatusValue.set(value || '');
+      
+      // Clear reasonForLevy when it should be hidden
+      if (value !== 'DoesNotApply' && value !== 'PotentiallyNotApplied') {
+        this.formGroup.get('reasonForLevy')?.setValue('');
+      }
+    });
+    
+    // Initialize the signal with the current form value
+    this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
   }
 
   initializeForm(): void {
@@ -87,19 +101,20 @@ export class PartnerApprovalDialogComponent implements OnInit {
       levyTreatment: [this.partner.levyTreatment || ''],
       pooledFund: [this.partner.pooledFund || false],
       canCreateNewOpportunities: [this.partner.canCreateNewOpportunities || false],
-      reasonForNoNewOpportunity: [this.partner.reasonForNoNewOpportunity || '']
+      reasonForNoNewOpportunity: [this.partner.reasonForNoNewOpportunity || '', Validators.required]
     });
   }
 
   // Cached data - these match the edit dialog
-  allYesNoData = this.cachedDataService.allYesNo;
+  allDueDiligenceRequiredData = this.cachedDataService.allDueDiligenceRequired;
+  allDueDiligenceApprovalData = this.cachedDataService.allDueDiligenceApproval;
   allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
   allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
 
   // Show "Reason for Levy" only when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied"
   shouldShowReasonForLevy = computed(() => {
-    const partnerLevyStatus = this.formGroup.get('partnerLevyStatus')?.value;
+    const partnerLevyStatus = this.partnerLevyStatusValue();
     return (partnerLevyStatus === 'DoesNotApply' || partnerLevyStatus === 'PotentiallyNotApplied');
   });
 
@@ -111,14 +126,9 @@ export class PartnerApprovalDialogComponent implements OnInit {
 
     this.isLoading.set(true);
     
-    const approvalData = {
-      id: this.partner.id,
-      ...this.formGroup.value,
-      partnerApprovalStatus: 'Approved',
-      partnerApprovalDate: new Date()
-    };
+    const payload = this._getRequestPayload();
 
-    this.partnerService.approvePartner(approvalData).subscribe({
+    this.partnerService.approvePartner(payload).subscribe({
       next: (data: any) => {
         this.isLoading.set(false);
         this.feedbackDialogService.showSuccessToast({ detail: 'Partner approved successfully!' });
@@ -129,6 +139,28 @@ export class PartnerApprovalDialogComponent implements OnInit {
         this.feedbackDialogService.showErrorToast({ detail: 'Failed to approve partner' });
       }
     });
+  }
+
+  _getRequestPayload() {
+    let valueObj = this.formGroup.value,
+    requestJsonObj: any = {};
+
+    for (let key in valueObj) {
+      if (valueObj.hasOwnProperty(key)) {
+        let indexValue = (valueObj as any)[key];
+
+        switch (key) {
+          default:
+            requestJsonObj[key] = indexValue;
+            break;
+        }
+      }
+    }
+
+    // Add required fields for approval
+    requestJsonObj['id'] = this.partner.id;
+
+    return requestJsonObj;
   }
 
   handleCancel(): void {

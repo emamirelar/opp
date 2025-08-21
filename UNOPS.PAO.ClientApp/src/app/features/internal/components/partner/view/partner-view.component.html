@@ -112,10 +112,10 @@
             </div>
             }
 
-            @if(recordData().partnerFocalPoint){
+            @if(recordData().partnerFocalPointUserName){
             <div class="flex flex-col gap-2">
               <div class="text-sm">{{ 'label.partner.partnerFocalPoint' | translate }}</div>
-              <div>{{recordData().partnerFocalPoint}}</div>
+              <div>{{recordData().partnerFocalPointUserName}}</div>
             </div>
             }
 
@@ -165,27 +165,6 @@
               }
 
               <!-- ========== APPROVAL FIELDS ========== -->
-              <div class="flex gap-2">
-                <label for="kgp">{{ "label.partner.keyGlobalPartner" | translate }}</label>
-                <p-checkbox [binary]="true"
-                            [disabled]="true"
-                            [ngModel]="recordData().keyGlobalPartner"
-                            inputId="kgp" />
-              </div>
-              <div class="flex gap-2">
-                <label for="unse">{{ "label.partner.unAndStateEntity" | translate }}</label>
-                <p-checkbox [binary]="true"
-                            [disabled]="true"
-                            [ngModel]="recordData().unAndStateEntity"
-                            inputId="unse" />
-              </div>
-              <div class="flex gap-2">
-                <label for="unsp">{{ "label.partner.unSecretariatPartner" | translate }}</label>
-                <p-checkbox [binary]="true"
-                            [disabled]="true"
-                            [ngModel]="recordData().unSecretariatPartner"
-                            inputId="unsp" />
-              </div>
               @if(recordData().dueDiligenceRequired){
               <div class="flex flex-col gap-2">
                 <div class="text-sm">{{ 'label.partner.dueDiligenceRequired' | translate }}</div>
@@ -240,6 +219,35 @@
                 <div>{{recordData().levyTreatment}}</div>
               </div>
               }
+              @if(recordData().reasonForNoNewOpportunity){
+              <div class="flex flex-col gap-2">
+                <div class="text-sm">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</div>
+                <div>{{recordData().reasonForNoNewOpportunity}}</div>
+              </div>
+              }
+
+              <!-- ========== CHECKBOX FIELDS ========== -->
+              <div class="flex gap-2">
+                <label for="kgp">{{ "label.partner.keyGlobalPartner" | translate }}</label>
+                <p-checkbox [binary]="true"
+                            [disabled]="true"
+                            [ngModel]="recordData().keyGlobalPartner"
+                            inputId="kgp" />
+              </div>
+              <div class="flex gap-2">
+                <label for="unse">{{ "label.partner.unAndStateEntity" | translate }}</label>
+                <p-checkbox [binary]="true"
+                            [disabled]="true"
+                            [ngModel]="recordData().unAndStateEntity"
+                            inputId="unse" />
+              </div>
+              <div class="flex gap-2">
+                <label for="unsp">{{ "label.partner.unSecretariatPartner" | translate }}</label>
+                <p-checkbox [binary]="true"
+                            [disabled]="true"
+                            [ngModel]="recordData().unSecretariatPartner"
+                            inputId="unsp" />
+              </div>
               <div class="flex gap-2">
                 <label for="pf">{{ "label.partner.pooledFund" | translate }}</label>
                 <p-checkbox [binary]="true"
@@ -254,12 +262,6 @@
                             [ngModel]="recordData().canCreateNewOpportunities"
                             inputId="cno" />
               </div>
-              @if(recordData().reasonForNoNewOpportunity){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</div>
-                <div>{{recordData().reasonForNoNewOpportunity}}</div>
-              </div>
-              }
 
             }
 

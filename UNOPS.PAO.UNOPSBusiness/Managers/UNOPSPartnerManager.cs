@@ -85,6 +85,18 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
+        // Populate PartnerFocalPointUserName if PartnerFocalPointUserId exists
+        if (result.PartnerFocalPointUserId.HasValue && result.PartnerFocalPointUserId.Value > 0)
+        {
+            var focalPointUser = await _context.PAOUsers
+                .Where(u => u.Id == result.PartnerFocalPointUserId.Value)
+                .FirstOrDefaultAsync();
+            if (focalPointUser != null)
+            {
+                result.PartnerFocalPointUserName = focalPointUser.Email;
+            }
+        }
+
         // Use the provided user or get current user context
         var userContext = user ?? GetCurrentUserOrSystemContext();
         return await MapEntityToModelWithPermissionsAsync(result, userContext);
@@ -168,6 +180,11 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     public async Task<PartnerModel> CreatePartnerAsync(PartnerRequest model)
     {
+        // Ensure partner is created in Draft status
+        if (model != null) {
+            model.Status = EntityStatus.Draft.ToString();
+        }
+
         var entity = MapModelToEntity(model);
 
         // Save the partner first to get its ID
@@ -1076,8 +1093,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         {
             await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationHierarchyIds);
         }
-
+        
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
+        // PatchNonNullProperties now automatically handles string-to-enum conversion
         PatchNonNullProperties(model, entity);
         
         await PartnerRepository.UpdateAsync(entity);
@@ -1274,6 +1292,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         }
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
+        // PatchNonNullProperties now automatically handles string-to-enum conversion
         PatchNonNullProperties(model, entity);
 
         await PartnerRepository.UpdateAsync(entity);
@@ -1636,7 +1655,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     /// <summary>
     /// Approves an active partner (Admin only) - locks data fields and records approval audit trail
     /// </summary>
-    public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, ApprovalRequest request)
+    public async Task<PartnerModel?> ApprovePartnerAsync(ClaimsPrincipal user, int id, UpdatePartnerRequest request)
     {
         var entity = await PartnerRepository.GetByIdAsync(id, ["LiaisonOffice"]);
         if (entity == null)
@@ -1649,10 +1668,16 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             throw new UnauthorizedAccessException("Only Partnership Global Administrators can approve partners.");
         }
 
+        // Update all approval fields from the request before approving
+        // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
+        // PatchNonNullProperties now automatically handles string-to-enum conversion
+        PatchNonNullProperties(request, entity);
+
         // Get user information for audit trail
         var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0";
         var userName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown Admin";
 
+        // Now approve the partner (this sets the approval status and audit trail)
         entity.ApprovePartner(int.Parse(userId), userName);
         await PartnerRepository.UpdateAsync(entity);
         

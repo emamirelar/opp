@@ -87,7 +87,7 @@ export class PartnerEditDialogComponent implements OnInit {
       partnerLongDescription: new FormControl(null),
       partnerCategoryId: new FormControl(null),
       liaisonOfficeId: new FormControl(null),
-      partnerFocalPoint: new FormControl(null),
+      partnerFocalPointUserId: new FormControl(null),
       status: new FormControl('Draft'), 
       
       pooledFund: new FormControl(false),
@@ -100,13 +100,12 @@ export class PartnerEditDialogComponent implements OnInit {
       dueDiligenceApproval: new FormControl(null),
       dueDiligenceApprovalDate: new FormControl(null),
       dueDiligenceExpiryDate: new FormControl(null),
-      partnerApprovalStatus: new FormControl('NotApproved'),
       partnerApprovalDate: new FormControl(null),
       partnerApprovalReference: new FormControl(null),
-      partnerLevyStatus: new FormControl(''),
+      partnerLevyStatus: new FormControl(null),
       reasonForLevy: new FormControl(null),
       levyTreatment: new FormControl(null),
-      canCreateNewOpportunities: new FormControl(true),
+      canCreateNewOpportunities: new FormControl(false),
       reasonForNoNewOpportunity: new FormControl(null),
       
       // System fields
@@ -140,9 +139,11 @@ export class PartnerEditDialogComponent implements OnInit {
   showValidationFailedError = signal<boolean>(false);
   isLoading = signal<boolean>(false);
   isAdmin = signal<boolean>(false);
+  partnerLevyStatusValue = signal<string>('');
   allPartnerStatusData = this.cachedDataService.allPartnerStatus;
   allPartnerNewEngagementData = this.cachedDataService.allPartnerNewEngagement;
-  allYesNoData = this.cachedDataService.allYesNo;
+  allDueDiligenceRequiredData = this.cachedDataService.allDueDiligenceRequired;
+  allDueDiligenceApprovalData = this.cachedDataService.allDueDiligenceApproval;
   allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
   allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
@@ -154,35 +155,39 @@ export class PartnerEditDialogComponent implements OnInit {
   allUsersData = this.cachedDataService.allUsers;
 
   // Computed properties for approval section
-  isPartnerApproved = computed(() => {
-    return this.formGroup.get('partnerApprovalStatus')?.value === 'Approved';
-  });
-
   // Show "Reason for Levy" only when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied"
   shouldShowReasonForLevy = computed(() => {
-    const partnerLevyStatus = this.formGroup.get('partnerLevyStatus')?.value;
+    const partnerLevyStatus = this.partnerLevyStatusValue();
     return (partnerLevyStatus === 'DoesNotApply' || partnerLevyStatus === 'PotentiallyNotApplied');
   });
 
   showApprovalFields = computed(() => {
-    return this.isPartnerApproved();
+    return this.recordData()?.partnerApprovalStatus === 'Approved';
   });
 
   approvalFieldsEnabled = computed(() => {
     return this.isAdmin();
   });
 
+  // Check if reason field should be required (when approval fields are visible and enabled)
+  reasonFieldRequired = computed(() => {
+    return this.showApprovalFields() && this.approvalFieldsEnabled();
+  });
+
   // Status management constants and computed properties
   private readonly STATUS_OPTIONS = ENTITY_STATUS_OPTIONS;
 
   /**
-   * Get all available status options with translated labels
+   * Get available status options with translated labels (Active, Closed, Archived only)
    */
   statusOptions = computed(() => {
-    return this.STATUS_OPTIONS.map(option => ({
-      value: option.value,
-      label: this.translateService.instant(option.labelKey)
-    }));
+    const allowedStatuses = ['Active', 'Closed', 'Archived'];
+    return this.STATUS_OPTIONS
+      .filter(option => allowedStatuses.includes(option.value))
+      .map(option => ({
+        value: option.value,
+        label: this.translateService.instant(option.labelKey)
+      }));
   });
 
   /**
@@ -220,6 +225,21 @@ export class PartnerEditDialogComponent implements OnInit {
     effect(() => {
       if (this.dialogConfig.data?.requestingSaveSignal?.()) {
         this.handleSave();
+      }
+    });
+
+    // Effect to handle conditional validation for reason field
+    effect(() => {
+      const shouldRequireReason = this.showApprovalFields() && this.approvalFieldsEnabled();
+      const reasonControl = this.formGroup?.get('reasonForNoNewOpportunity');
+      
+      if (reasonControl) {
+        if (shouldRequireReason) {
+          reasonControl.setValidators([Validators.required]);
+        } else {
+          reasonControl.clearValidators();
+        }
+        reasonControl.updateValueAndValidity();
       }
     });
   }
@@ -271,7 +291,21 @@ export class PartnerEditDialogComponent implements OnInit {
             delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
           }
           
+          // Convert ISO date strings to Date objects for DatePicker components (dialog path)
+          if (formData.dueDiligenceApprovalDate && typeof formData.dueDiligenceApprovalDate === 'string') {
+            formData.dueDiligenceApprovalDate = new Date(formData.dueDiligenceApprovalDate);
+          }
+          if (formData.dueDiligenceExpiryDate && typeof formData.dueDiligenceExpiryDate === 'string') {
+            formData.dueDiligenceExpiryDate = new Date(formData.dueDiligenceExpiryDate);
+          }
+          if (formData.partnerApprovalDate && typeof formData.partnerApprovalDate === 'string') {
+            formData.partnerApprovalDate = new Date(formData.partnerApprovalDate);
+          }
+          
           this.formGroup.patchValue(formData);
+          
+          // Initialize the partnerLevyStatus signal after patching form data
+          this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
           
           // Set loading to false after a short delay to ensure form is properly initialized
           setTimeout(() => {
@@ -304,6 +338,18 @@ export class PartnerEditDialogComponent implements OnInit {
     this.formGroup.get('selectedOrgUnitId')?.setValue(firstElement, { emitEvent: false });
     this.selectedOrgUnitSignal.set(firstElement);
     
+    // Subscribe to partnerLevyStatus changes to update the signal for reactive computed properties
+    this.formGroup.get('partnerLevyStatus')?.valueChanges.subscribe(value => {
+      this.partnerLevyStatusValue.set(value || '');
+      
+      // Clear reasonForLevy when it should be hidden
+      if (value !== 'DoesNotApply' && value !== 'PotentiallyNotApplied') {
+        this.formGroup.get('reasonForLevy')?.setValue(null);
+      }
+    });
+    
+    // Initialize the signal with the current form value
+    this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
 
   }
 
@@ -402,7 +448,22 @@ export class PartnerEditDialogComponent implements OnInit {
           delete formData.organizationUnitRelationships; // Remove from formData to avoid patch conflict
         }
         
+        // Convert ISO date strings to Date objects for DatePicker components
+        if (formData.dueDiligenceApprovalDate && typeof formData.dueDiligenceApprovalDate === 'string') {
+          formData.dueDiligenceApprovalDate = new Date(formData.dueDiligenceApprovalDate);
+        }
+        if (formData.dueDiligenceExpiryDate && typeof formData.dueDiligenceExpiryDate === 'string') {
+          formData.dueDiligenceExpiryDate = new Date(formData.dueDiligenceExpiryDate);
+        }
+        if (formData.partnerApprovalDate && typeof formData.partnerApprovalDate === 'string') {
+          formData.partnerApprovalDate = new Date(formData.partnerApprovalDate);
+        }
+        
         this.formGroup.patchValue(formData);
+        
+        // Initialize the partnerLevyStatus signal after patching form data
+        this.partnerLevyStatusValue.set(this.formGroup.get('partnerLevyStatus')?.value || '');
+                
         this.isLoading.set(false);
       },
       error: (error) => {
@@ -444,17 +505,11 @@ export class PartnerEditDialogComponent implements OnInit {
           
           case 'partnerCategoryId':
           case 'liaisonOfficeId':
+          case 'partnerFocalPointUserId':
             // Ensure ID fields are sent as integers (not strings)
             requestJsonObj[key] = indexValue ? parseInt(indexValue, 10) : null;
             break;
           
-          case 'dueDiligenceApproval':
-          case 'dueDiligenceRequired':
-          case 'partnerLevyStatus':
-            // Populate empty string for these fields if value is empty
-            requestJsonObj[key] = indexValue || '';
-            break;
-
           default:
             requestJsonObj[key] = indexValue;
             break;

@@ -436,7 +436,7 @@ public class PartnerController : BaseController
     /// <returns>Updated partner with approved status</returns>
     [HttpPost(APIDictionary.Partner + "/{id}/approve")]
     [AccessControlled(EntityTypes.Partner, "update")]
-    public async Task<IActionResult> ApprovePartner(int id, [FromBody] ApprovalRequest request)
+    public async Task<IActionResult> ApprovePartner(int id, [FromBody] UpdatePartnerRequest request)
     {
         try
         {

@@ -43,18 +43,6 @@ public class Partner : ModifiableDeletableEntity
     // Category (Organization Units are managed through OrganizationUnitRelationships)
     public int? PartnerCategoryId { get; set; } // FK to Partner Category (optional)
     
-    // ========== PARTNER LEVEL INFORMATION ==========
-    
-    // Partner level information from Partner Tree and BQ
-    [MaxLength(50)]
-    public string? PartnerLevelCode { get; set; } // Imported from BQ
-    
-    [MaxLength(100)]
-    public string? PartnerLevelShort { get; set; } // Imported from the Partner Tree
-    
-    [MaxLength(500)]
-    public string? PartnerLevelDescription { get; set; } // Imported from the Partner Tree
-    
     // ERP Integration
     public int? ErpDimValue { get; set; } // ERP dimension value
     
@@ -72,8 +60,8 @@ public class Partner : ModifiableDeletableEntity
     public bool UNSecretariatPartner { get; set; } = false;
     
     // Due Diligence Fields
-    public DueDiligenceRequired DueDiligenceRequired { get; set; } = DueDiligenceRequired.NotRequired;
-    public DueDiligenceApproval DueDiligenceApproval { get; set; } = DueDiligenceApproval.NotApproved;
+    public DueDiligenceRequired? DueDiligenceRequired { get; set; }
+    public DueDiligenceApproval? DueDiligenceApproval { get; set; }
     public DateTime? DueDiligenceApprovalDate { get; set; }
     public DateTime? DueDiligenceExpiryDate { get; set; }
     
@@ -85,9 +73,12 @@ public class Partner : ModifiableDeletableEntity
     
     [MaxLength(500)]
     public string? PartnerApprovalReference { get; set; } // Approval notes/reference
-    
+
+    [MaxLength(500)]
+    public string? PartnerApprovedBy { get; set; }
+
     // Levy Fields
-    public PartnerLevyStatus PartnerLevyStatus { get; set; } = PartnerLevyStatus.DoesNotApply;
+    public PartnerLevyStatus? PartnerLevyStatus { get; set; }
     
     [MaxLength(500)]
     public string? ReasonForLevy { get; set; }
@@ -97,7 +88,7 @@ public class Partner : ModifiableDeletableEntity
     
     // Operational Fields
     public bool PooledFund { get; set; } = false;
-    public bool CanCreateNewOpportunities { get; set; } = true;
+    public bool CanCreateNewOpportunities { get; set; } = false;
     
     [MaxLength(500)]
     public string? ReasonForNoNewOpportunity { get; set; }
@@ -342,10 +333,9 @@ public class Partner : ModifiableDeletableEntity
         {
             throw new InvalidOperationException("Only Active partners can be approved.");
         }
-        
+        string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
         PartnerApprovalStatus = PartnerApprovalStatus.Approved;
-        PartnerApprovalDate = DateTime.UtcNow;
-        PartnerApprovalReference = $"Approved by {approverName} (ID: {approverId})";
+        PartnerApprovedBy = $"Approved by {approverName} (ID: {approverId}) on {currentDate}";
     }
     
     /// <summary>

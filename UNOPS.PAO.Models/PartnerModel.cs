@@ -37,14 +37,7 @@ public class PartnerModel
     public string? PartnerGroupCode { get; set; }
     public string? PartnerGroupName { get; set; }
     public int? PartnerGroupId { get; set; }
-    
-
-    
-    // ========== PARTNER LEVEL INFORMATION ==========
-    public string? PartnerLevelCode { get; set; } // Imported from BQ
-    public string? PartnerLevelShort { get; set; } // Imported from the Partner Tree
-    public string? PartnerLevelDescription { get; set; } // Imported from the Partner Tree
-    
+        
     // ERP Integration
     public int? ErpDimValue { get; set; } // ERP dimension value
 
@@ -54,14 +47,14 @@ public class PartnerModel
     // ========== APPROVAL FIELDS (Admin only) ==========
     public bool KeyGlobalPartner { get; set; }
     public bool UNSecretariatPartner { get; set; }
-    public string DueDiligenceRequired { get; set; } // "NotRequired" / "Required" 
-    public string DueDiligenceApproval { get; set; } // "NotApproved" / "Approved"
+    public string? DueDiligenceRequired { get; set; } // "NotRequired" / "Required" 
+    public string? DueDiligenceApproval { get; set; } // "NotApproved" / "Approved"
     public DateTime? DueDiligenceApprovalDate { get; set; }
     public DateTime? DueDiligenceExpiryDate { get; set; }
     public string PartnerApprovalStatus { get; set; } // "NotApproved" / "Approved"
     public DateTime? PartnerApprovalDate { get; set; }
     public string? PartnerApprovalReference { get; set; }
-    public string PartnerLevyStatus { get; set; } // "DoesNotApply" / "PotentiallyApplied" / "PotentiallyNotApplied"
+    public string? PartnerLevyStatus { get; set; } // "DoesNotApply" / "PotentiallyApplied" / "PotentiallyNotApplied"
     public string? ReasonForLevy { get; set; }
     public string? LevyTreatment { get; set; }
     public bool PooledFund { get; set; }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UNOPS.PAO.UNOPSDataAccess.Context;
@@ -11,9 +12,11 @@ using UNOPS.PAO.UNOPSDataAccess.Context;
 namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 {
     [DbContext(typeof(UNOPSAppDbContext))]
-    partial class UNOPSAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250820180737_PartnerEcosystemFieldsUpdated")]
+    partial class PartnerEcosystemFieldsUpdated
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1079,7 +1082,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(13)
                         .HasColumnType("character varying(13)");
 
-                    b.Property<int?>("DueDiligenceApproval")
+                    b.Property<int>("DueDiligenceApproval")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("DueDiligenceApprovalDate")
@@ -1088,7 +1091,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<DateTime?>("DueDiligenceExpiryDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("DueDiligenceRequired")
+                    b.Property<int>("DueDiligenceRequired")
                         .HasColumnType("integer");
 
                     b.Property<int?>("ErpDimValue")
@@ -1130,10 +1133,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<int>("PartnerApprovalStatus")
                         .HasColumnType("integer");
 
-                    b.Property<string>("PartnerApprovedBy")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<int?>("PartnerCategoryId")
                         .HasColumnType("integer");
 
@@ -1152,7 +1151,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<Guid>("PartnerKey")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("PartnerLevyStatus")
+                    b.Property<int>("PartnerLevyStatus")
                         .HasColumnType("integer");
 
                     b.Property<string>("PartnerLongDescription")
