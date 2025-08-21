@@ -51,11 +51,11 @@ public class ContactController : BaseController
     /// Creates a new contact with comprehensive personal and professional details.
     /// </summary>
     /// <param name="req">Contact creation request with required fields</param>
-    /// <param name="req.firstName">Contact's first name (required)</param>
-    /// <param name="req.lastName">Contact's last name (required)</param>
-    /// <param name="req.email">Primary email address (required)</param>
-    /// <param name="req.partnerId">Associated partner organization ID (required)</param>
-    /// <param name="req.title">Job title/position (required)</param>
+    /// <param name="req.firstName">Contact's first name (optional)</param>
+    /// <param name="req.lastName">Contact's last name (required) - validation enforced</param>
+    /// <param name="req.email">Primary email address (required) - validation enforced for format and presence</param>
+    /// <param name="req.partnerId">Associated partner organization ID (required) - must be valid existing partner</param>
+    /// <param name="req.title">Job title/position (required) - validation enforced</param>
     /// <param name="req.salutation">Title/salutation (Mr., Ms., Dr., etc.)</param>
     /// <param name="req.middleName">Middle name or initial</param>
     /// <param name="req.suffix">Name suffix (Jr., Sr., III, etc.)</param>
@@ -79,6 +79,43 @@ public class ContactController : BaseController
     [AccessControlled(EntityTypes.Contact, "create")]
     public async Task<ActionResult> Create([FromBody] ContactRequest req)
     {
+        // Validate mandatory fields for contact creation
+        var validationErrors = new List<string>();
+        
+        if (string.IsNullOrWhiteSpace(req.LastName))
+        {
+            validationErrors.Add("LastName is required for contact creation");
+        }
+        
+        if (string.IsNullOrWhiteSpace(req.Title))
+        {
+            validationErrors.Add("Title is required for contact creation");
+        }
+        
+        if (string.IsNullOrWhiteSpace(req.Email))
+        {
+            validationErrors.Add("Email is required for contact creation");
+        }
+        else if (!IsValidEmail(req.Email))
+        {
+            validationErrors.Add("Email format is invalid");
+        }
+        
+        if (req.PartnerId <= 0)
+        {
+            validationErrors.Add("PartnerId is required and must be a valid partner ID");
+        }
+        
+        // Return validation errors if any
+        if (validationErrors.Any())
+        {
+            var errorMessage = $"Missing required fields for contact creation: {string.Join(", ", validationErrors)}";
+            return BadRequest(new { 
+                error = errorMessage,
+                missingFields = validationErrors
+            });
+        }
+        
         var result = await _manager.CreateContactAsync(req);
         if (result == null)
         {
@@ -547,5 +584,31 @@ public class ContactController : BaseController
         });
     }
 
+    #endregion
+    
+    #region Private Helper Methods
+    
+    /// <summary>
+    /// Validates email format using a simple regex pattern
+    /// </summary>
+    /// <param name="email">Email address to validate</param>
+    /// <returns>True if email format is valid, false otherwise</returns>
+    private static bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+            
+        try
+        {
+            // Use .NET's built-in email validation
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    
     #endregion
 }
