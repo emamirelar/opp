@@ -268,6 +268,18 @@ const internalRoutes: Routes = [
         path: 'partner/:recordId',
         redirectTo: 'partnerships/partners/:recordId',
         pathMatch: 'prefix'
+      },
+      {
+        path: 'ai',
+        loadComponent: () => import('../../features/ai/ai-content.component').then(m => m.AiContentComponent),
+        canActivate: [authGuard],
+        data: { breadcrumb: 'AI Assistant', icon: 'pi pi-sparkles', routeId: 'ai-route' }
+      },
+      {
+        path: 'ai/:sessionId',
+        loadComponent: () => import('../../features/ai/ai-content.component').then(m => m.AiContentComponent),
+        canActivate: [authGuard],
+        data: { breadcrumb: 'AI Assistant', icon: 'pi pi-sparkles', routeId: 'ai-session-route' }
       }
     ],
   },

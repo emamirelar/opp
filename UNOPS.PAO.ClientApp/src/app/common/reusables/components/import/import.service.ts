@@ -30,11 +30,31 @@ export interface ImportAnalysisResponse {
   providedIn: 'root',
 })
 export class ImportService {
-  private readonly apiUrl = '/api/import';
+  private readonly apiUrl = '/api';
   private processingFile = false;
   private activeJobId: string | null = null;
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Get the correct entity-specific API endpoint based on the import type
+   * @param type The import type (e.g., 'bulk_partner_action', 'bulk_contact_action')
+   * @returns The entity-specific API endpoint
+   */
+  private getEntitySpecificEndpoint(type: string): string {
+    // Extract entity type from the import type and map to correct APIDictionary paths
+    if (type.includes('partner')) {
+      return `${this.apiUrl}/partner`;  // Singular: /api/partner
+    } else if (type.includes('contact')) {
+      return `${this.apiUrl}/contact`;   // Singular: /api/contact
+    } else if (type.includes('interaction')) {
+      return `${this.apiUrl}/interactions`; // Plural: /api/interactions
+    } else {
+      // Default to the original import endpoint if entity cannot be determined
+      console.warn(`Unknown import type: ${type}. Using default import endpoint.`);
+      return `${this.apiUrl}/import`;
+    }
+  }
 
   /**
    * Get the active job ID if one exists
@@ -62,7 +82,10 @@ export class ImportService {
       fileId
     };
 
-    return this.http.post<ImportAnalysisResponse>(`${this.apiUrl}/analyse-file`, payload)
+    // Determine the entity-specific endpoint based on the type
+    const entityEndpoint = this.getEntitySpecificEndpoint(type);
+    
+    return this.http.post<ImportAnalysisResponse>(`${entityEndpoint}/analyse-file`, payload)
       .pipe(
         map(response => {
           this.processingFile = false;
@@ -145,6 +168,9 @@ export class ImportService {
       type,
       records: processedRecords
     };
-    return this.http.post(`${this.apiUrl}/bulk-upload`, payload);
+    // Determine the entity-specific endpoint based on the type
+    const entityEndpoint = this.getEntitySpecificEndpoint(type);
+    
+    return this.http.post(`${entityEndpoint}/bulk-upload`, payload);
   }
 }

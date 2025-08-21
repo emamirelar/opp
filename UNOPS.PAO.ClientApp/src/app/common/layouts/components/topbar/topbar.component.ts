@@ -35,6 +35,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { TourControlComponent } from '../../../components/tour-control/tour-control.component';
 import { ConfigurationService } from '../../../../essentials/services/configuration.service';
+import { AiAssistantData } from '../../../reusables/widgets/ai-assistant/ai-assistant.data';
+import { FormsModule } from '@angular/forms';
 
 interface UserInfo {
   userId: number;
@@ -71,7 +73,8 @@ interface UserInfo {
     ProfileDialogComponent,
     GlobalFiltersDialogComponent,
     TranslateModule,
-    TourControlComponent
+    TourControlComponent,
+    FormsModule
   ],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
@@ -113,6 +116,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
   // Mobile detection
   isMobile: boolean = false;
 
+  // Chat history properties
+  chatSessions: any[] = [];
+  isLoadingChatSessions: boolean = false;
+  chatSearchQuery: string = '';
+  filteredChatSessions: any[] = [];
+  isNewChatDisabled: boolean = false;
+
   constructor(
     public layoutService: LayoutService,
     private notificationService: NotificationService,
@@ -122,7 +132,8 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private router: Router,
     private globalFilterService: GlobalFilterService,
-    private configurationService: ConfigurationService
+    private configurationService: ConfigurationService,
+    private aiAssistantData: AiAssistantData
   ) {
     // Check if we're in development mode
     this.isDevelopment = this.checkIfDevelopment();
@@ -191,6 +202,18 @@ export class TopbarComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error subscribing to global filter changes:', error);
+      }
+    });
+
+    // Load chat sessions if on AI page
+    if (this.isOnAiPage()) {
+      this.loadChatSessions();
+    }
+
+    // Listen for route changes to load chat sessions when navigating to AI page
+    this.router.events.subscribe(() => {
+      if (this.isOnAiPage()) {
+        this.loadChatSessions();
       }
     });
   }
@@ -679,14 +702,8 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   onMenuButtonClick() {
-    // Check if we're on the AI route
-    if (this.router.url.startsWith('/ai')) {
-      // On AI route, toggle the AI sidebar collapse
-      this.layoutService.onAiSidebarToggle();
-    } else {
-      // On regular routes, toggle the main sidebar
-      this.layoutService.onMenuToggle();
-    }
+    // Always toggle the main sidebar (removed AI-specific logic)
+    this.layoutService.onMenuToggle();
   }
 
   private detectMobile() {
@@ -694,7 +711,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   isOnAiPage(): boolean {
-    return this.isMobile && this.router.url.includes('/ai');
+    return this.router.url.includes('/ai');
   }
 
   /**
@@ -710,5 +727,120 @@ export class TopbarComponent implements OnInit, OnDestroy {
    */
   onSearchExpanded(isExpanded: boolean): void {
     this.isSearchExpanded = isExpanded;
+  }
+
+  // Chat history methods
+  async loadChatSessions(): Promise<void> {
+    if (!this.isOnAiPage()) return;
+    
+    this.isLoadingChatSessions = true;
+    this.cdr.markForCheck();
+    
+    try {
+      const response = await this.http.post<any[]>('/api/ai-assistant/get-user-sessions', {}).toPromise();
+      if (response) {
+        const sortedSessions = response.sort((a, b) => 
+          new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+        );
+        this.chatSessions = sortedSessions;
+        this.filteredChatSessions = [...sortedSessions];
+      }
+    } catch (error) {
+      console.error('Error loading chat sessions:', error);
+      this.chatSessions = [];
+      this.filteredChatSessions = [];
+    } finally {
+      this.isLoadingChatSessions = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  onChatSearchInput(event: any): void {
+    const query = event.target.value.toLowerCase().trim();
+    this.chatSearchQuery = query;
+    
+    if (!query) {
+      this.filteredChatSessions = [...this.chatSessions];
+    } else {
+      this.filteredChatSessions = this.chatSessions.filter(session =>
+        (session.title || '').toLowerCase().includes(query)
+      );
+    }
+    this.cdr.markForCheck();
+  }
+
+  clearChatSearch(): void {
+    this.chatSearchQuery = '';
+    this.filteredChatSessions = [...this.chatSessions];
+    this.cdr.markForCheck();
+  }
+
+  startNewChat(): void {
+    this.aiAssistantData.clearConversation();
+    this.router.navigate(['/ai'], { replaceUrl: true });
+    this.isNewChatDisabled = true;
+    setTimeout(() => this.isNewChatDisabled = false, 1000);
+  }
+
+  openChatSession(session: any): void {
+    this.router.navigate(['/ai', session.id], { replaceUrl: true });
+    this.aiAssistantData.switchToSession(session.id).subscribe({
+      error: (error) => console.error('Failed to switch session:', error)
+    });
+  }
+
+  isSelectedChatSession(session: any): boolean {
+    const currentSessionId = this.aiAssistantData.currentSessionId();
+    return currentSessionId === session.id;
+  }
+
+  async toggleChatStar(session: any, event: Event): Promise<void> {
+    event.stopPropagation();
+    
+    try {
+      const newStarredState = !session.starred;
+      
+      // Optimistically update UI
+      session.starred = newStarredState;
+      this.cdr.markForCheck();
+      
+      // Call backend API
+      await this.http.post('/api/ai-assistant/update-star', {
+        sessionId: session.id,
+        starred: newStarredState
+      }).toPromise();
+      
+      // Reload sessions to ensure consistency
+      await this.loadChatSessions();
+      
+    } catch (error) {
+      console.error('Error updating star status:', error);
+      // Revert optimistic update on error
+      session.starred = !session.starred;
+      this.cdr.markForCheck();
+    }
+  }
+
+  formatChatDate(dateString: string): string {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 1) {
+      return 'Today';
+    } else if (diffDays === 2) {
+      return 'Yesterday';
+    } else if (diffDays <= 7) {
+      return `${diffDays - 1} days ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
+  }
+
+  trackByChatId(index: number, session: any): string {
+    return session.id || index;
   }
 }

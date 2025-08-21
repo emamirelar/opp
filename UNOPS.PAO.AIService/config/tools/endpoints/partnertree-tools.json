@@ -1,13 +1,12 @@
 {
   "entity": "PartnerTree",
-  "description": "Manages the hierarchical classification and organization of partners, including categories, groups, and their relationships. It allows for structuring partners into a logical taxonomy.",
+  "description": "Manages the hierarchical structure of partners, including categories and groups, for organizational classification and navigation.",
   "synonyms": [
-    "partner hierarchy",
-    "partner classification",
-    "partner category",
-    "partner group",
-    "partner taxonomy",
-    "partner structure"
+    "Partner hierarchy",
+    "Partner classification",
+    "Partner categories",
+    "Partner groups",
+    "Partner taxonomy"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -157,107 +156,6 @@
         "Load partner tree for navigation"
       ],
       "when_to_use": "Use this when the user needs to see the complete partner organizational structure, hierarchy, or when building navigation trees."
-    },
-    {
-      "name": "GetPartnersByPartnerGroup",
-      "url": "/api/partner-tree/by-partner-group-code/{code}",
-      "method": "GET",
-      "description": "Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting.",
-      "parameters": {
-        "code": {
-          "type": "string",
-          "required": false,
-          "description": "Partner group code to filter by (e.g., 'GOV', 'NGO', 'UNAGENCY')"
-        },
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing page size and index"
-        }
-      },
-      "example_uses": [
-        "Show all government partners (GOV group)",
-        "List all NGO partners with pagination",
-        "Get UN agency partners sorted by name",
-        "Find partners in a specific partner group classification",
-        "Show commercial partners (COMM group) with 20 per page"
-      ],
-      "when_to_use": "Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification."
-    },
-    {
-      "name": "GetPartnersByPartnerCategory",
-      "url": "/api/partner-tree/by-partner-category-code/{code}",
-      "method": "GET",
-      "description": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting.",
-      "parameters": {
-        "code": {
-          "type": "string",
-          "required": false,
-          "description": "Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')"
-        },
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing page size and index"
-        }
-      },
-      "example_uses": [
-        "Show all national partners in this category",
-        "List international partners with pagination",
-        "Get bilateral partners sorted by name",
-        "Find partners in a specific operational category",
-        "Show multilateral partners with 15 per page",
-        "Filter partners by geographic or operational scope"
-      ],
-      "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification."
-    },
-    {
-      "name": "GetAllPartnerCategories",
-      "url": "/api/partner-tree/categories-summary",
-      "method": "GET",
-      "description": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.",
-      "parameters": {},
-      "example_uses": [
-        "Get all partner categories with counts",
-        "Show partner distribution by category",
-        "Generate partner category statistics",
-        "Create partner category breakdown chart",
-        "Display partner classification overview",
-        "Draw diagram of partner categories with counts"
-      ],
-      "when_to_use": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization."
-    },
-    {
-      "name": "GetAllPartnerGroups",
-      "url": "/api/partner-tree/groups-summary",
-      "method": "GET",
-      "description": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation.",
-      "parameters": {},
-      "example_uses": [
-        "Get all partner groups with counts",
-        "Show partner distribution by group",
-        "Generate partner group statistics",
-        "Create partner group breakdown chart",
-        "Display partner group overview",
-        "Draw diagram of partner groups with counts"
-      ],
-      "when_to_use": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping."
-    },
-    {
-      "name": "GetPartnerCategorizationOverview",
-      "url": "/api/partner-tree/categorization-overview",
-      "method": "GET",
-      "description": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation.",
-      "parameters": {},
-      "example_uses": [
-        "Get complete partner categorization overview",
-        "Show partner distribution across categories and groups",
-        "Generate comprehensive partner statistics",
-        "Create partner organization chart",
-        "Display complete partner taxonomy with counts",
-        "Draw diagram showing partner categories and groups with distribution"
-      ],
-      "when_to_use": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups."
     }
   ]
 }

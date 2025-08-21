@@ -1,11 +1,11 @@
 {
   "entity": "SystemAdmin",
-  "description": "Manages system-level administrative tasks, such as database migrations and other backend operations.",
+  "description": "Manages core system administration tasks, including database migrations and other backend maintenance operations.",
   "synonyms": [
     "System Administrator",
-    "Admin",
-    "System Management",
-    "Backend Operations",
+    "Admin Tools",
+    "Backend Management",
+    "System Operations",
     "Maintenance"
   ],
   "mandatoryFields": [],
@@ -14,14 +14,14 @@
       "name": "RunMigrations",
       "url": "api/system-admin/migrations/run",
       "method": "GET",
-      "description": "Initiates the process of running pending database migrations to update the system's database schema to the latest version. This operation is typically performed by system administrators during deployment or maintenance to ensure data consistency and compatibility with new application features.",
+      "description": "Initiates and runs pending database migrations to update the system's database schema. This operation is typically performed during system deployment or upgrades to ensure the database structure is up-to-date with the application's requirements.",
       "parameters": {},
       "example_uses": [
         "Run the latest database migrations for the system.",
         "Execute all pending system database updates.",
-        "Apply the necessary schema changes to the database for the current application version."
+        "Update the application's database schema to the newest version."
       ],
-      "when_to_use": "Use this endpoint when the system's database schema needs to be updated to reflect changes from new application versions or features. This is a critical administrative task usually performed after a new deployment or during a system upgrade to ensure the application functions correctly with the database."
+      "when_to_use": "Use this endpoint when the system's database schema needs to be updated to match the current application version, typically after a new deployment or an application upgrade. This ensures data consistency and compatibility."
     }
   ]
 }

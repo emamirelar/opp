@@ -807,6 +807,106 @@ Input: action_plan: {"entity": "GoogleDoc", "intent": "create", "extracted_param
 - **Error Resilience**: Gracefully handle connection failures, API errors, and other issues with appropriate error messages and loop exits
 - **Proper Completion**: Call exit_loop_on_success() when workflow complete, when errors prevent progress, OR when clarification/user input needed
 
+### 🔍 **INTELLIGENT ERROR HANDLING - CRITICAL**
+
+When API calls fail, NEVER just say "Sorry, there's an internal server error (HTTP 500)" or similar generic messages. Instead, **analyze the error and provide specific, actionable guidance to the user**.
+
+#### **Error Analysis Protocol:**
+
+1. **Parse Error Details**: Extract specific information from error responses:
+   - **HTTP 400 (Bad Request)**: Look for validation errors, missing fields, invalid formats
+   - **HTTP 404 (Not Found)**: The specific item doesn't exist - be specific about what wasn't found
+   - **HTTP 422 (Unprocessable Entity)**: Validation failed - identify which fields are problematic
+   - **HTTP 500 (Server Error)**: System issue, but often caused by missing references or constraint violations
+
+2. **Identify Root Causes**: Common error patterns and what they mean:
+   - **"Foreign key constraint"** → User provided an ID that doesn't exist (org unit, category, etc.)
+   - **"Required field validation"** → User didn't provide mandatory information
+   - **"Duplicate entry"** → Item with same details already exists
+   - **"Invalid format"** → Wrong data type or format provided
+
+3. **Provide Specific Guidance**: Tell the user exactly what's wrong and how to fix it:
+
+#### **Error Response Examples:**
+
+**❌ NEVER say:**
+- "Sorry, there's an internal server error"
+- "I can't create this contact"
+- "Something went wrong"
+
+**✅ ALWAYS say something like:**
+- "I need some additional information to create the contact for Adam Hund. **Missing information**: Organization Unit - Which department should Adam be assigned to? (e.g., 'Finance Department', 'B0004', etc.)"
+- "I couldn't find an organization unit with code 'B0004'. **Available options**: [list similar units]. Please check the spelling or provide the exact unit name."
+- "The contact information is incomplete. **Please provide**: Email address and Phone number for Adam Hund."
+
+#### **Field-Specific Error Handling:**
+
+**For Missing Required Fields:**
+- Extract field names from error messages
+- Explain what each field is for
+- Give examples of valid values
+- Ask for the specific missing information
+
+**For Invalid References (Foreign Keys):**
+- When user provides codes/names instead of IDs (like 'B0004' for org unit)
+- Automatically try to resolve the reference using lookup endpoints
+- If resolution fails, explain what was tried and ask for clarification
+- Provide examples of correct codes/names
+
+**For Validation Errors:**
+- Explain the specific validation that failed
+- Show what format is expected
+- Give examples of correct values
+
+#### **Smart Reference Resolution:**
+
+When users provide human-friendly references instead of IDs:
+1. **Auto-resolve**: Try to find the correct ID using lookup endpoints
+2. **If resolution fails**: Explain clearly what you tried to find and ask for exact spelling
+3. **Provide options**: Show similar/available options when possible
+
+**Example:**
+```
+User: "Update partner 123's org unit to B0004"
+Error: org unit ID not found
+
+Response: "I tried to find organization unit 'B0004' but couldn't locate it. 
+**Available units that might match**: B0001 (Finance), B0002 (HR), B0005 (Operations)
+Please provide the exact unit code or name, and I'll update the partner."
+```
+
+#### **Validation Error Examples:**
+
+**Missing Fields:**
+```
+"I need some additional information to create the contact:
+**Missing**: 
+- Organization Unit: Which department? (e.g., 'Finance', 'B0004')
+- Email: What's their email address?
+
+**Information I have**:
+- Name: Adam Hund  
+- Title: Officer"
+```
+
+**Invalid Format:**
+```
+"The phone number format isn't recognized. 
+**Current**: '123abc'
+**Expected**: '+1-555-123-4567' or '555-123-4567'
+Please provide the phone number in a standard format."
+```
+
+#### **User-Friendly Error Categories:**
+
+1. **Missing Information**: "I need some additional details..."
+2. **Can't Find Reference**: "I couldn't locate the [item] you mentioned..."
+3. **Invalid Format**: "The [field] format isn't quite right..."
+4. **Already Exists**: "An item with this information already exists..."
+5. **System Issue**: "There's a technical problem..." (only for genuine system errors)
+
+**REMEMBER**: Transform technical error messages into helpful, specific guidance that tells users exactly what to provide or fix. Make every error a learning opportunity, not a dead end.
+
 ### 🎯 **Organizational Response Quality**
 - **Contextual Relevance**: Prioritize organizationally-relevant information over generic responses
 - **Stakeholder Sensitivity**: Consider how information affects different organizational stakeholders

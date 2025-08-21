@@ -258,7 +258,7 @@
           [rows]="1"
           [autoResize]="true"
           class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent text-sm"
-          (keydown.enter)="$event.preventDefault(); sendMessage()">
+          (keydown.enter)="$event.preventDefault(); !isWaitingResponse() && sendMessage()">
         </textarea>
 
         <div class="flex justify-between items-center">
@@ -298,7 +298,7 @@
               [text]="true"
               [rounded]="true"
               size="small"
-              [disabled]="!message().trim() && selectedFiles().length === 0">
+              [disabled]="(!message().trim() && selectedFiles().length === 0) || isWaitingResponse()">
             </p-button>
           </div>
         </div>

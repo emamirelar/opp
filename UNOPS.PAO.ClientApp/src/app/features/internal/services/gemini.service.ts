@@ -37,8 +37,28 @@ export class GeminiService {
   }
 
   private parseGeminiResponseToJson(body: any) {
+    // Handle the new direct JSON response format from our enhanced AI Transcribe
+    if (typeof body === 'string') {
+      try {
+        // If it's a string that looks like JSON, parse it
+        const trimmed = body.trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          return JSON.parse(trimmed);
+        }
+        // If it's wrapped in markdown code blocks, clean it
+        const cleanedMessage = trimmed
+          .replace(/^```json\s*/, '')
+          .replace(/```$/, '');
+        return JSON.parse(cleanedMessage);
+      } catch (e) {
+        console.error('Failed to parse JSON response:', e);
+        return '';
+      }
+    }
+    
+    // Handle the old Gemini API format (fallback)
     if (!body.candidates?.[0]?.content?.parts?.[0]?.text) {
-      return '';
+      return body; // Return as-is if it's already an object
     }
     const cleanedMessage = body?.candidates?.[0]?.content?.parts?.[0]?.text
       .replace(/^```json\s*/, '')

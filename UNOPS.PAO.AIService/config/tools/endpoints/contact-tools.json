@@ -1,17 +1,14 @@
 {
   "entity": "Contact",
-  "description": "A contact represents an individual associated with an organization or interaction, storing personal and professional details such as name, email, phone, title, and departmental information.",
+  "description": "Manages contact information, including personal, professional, and organizational details for individuals associated with partners or other entities.",
   "synonyms": [
     "person",
     "individual",
     "staff",
-    "employee",
+    "personnel",
     "associate"
   ],
-  "mandatoryFields": [
-    "firstName",
-    "lastName"
-  ],
+  "mandatoryFields": [],
   "searchMetadata": {
     "directFields": [
       "id",
@@ -125,98 +122,42 @@
       "when_to_use": "Use this when the user asks to add, create, register, or set up a new contact."
     },
     {
-      "name": "ListAllContacts",
+      "name": "Get",
       "url": "/api/contact",
       "method": "GET",
-      "description": "Retrieves all contacts with basic pagination and ordering (no search criteria).",
+      "description": "Retrieves a list of contacts with advanced filtering, pagination, search capabilities, and access control. For advanced search, use the `searchCriteria` parameter with a JSON array of objects, where each object has `field`, `operator`, and `value` properties. Example: `[{\"field\":\"firstName\",\"operator\":\"like\",\"value\":\"John\"}]`. Available fields for search include: `id`, `salutation`, `firstName`, `middleName`, `lastName`, `suffix`, `title`, `department`, `description`, `email`, `phone`, `mobile`, `assistant`, `assistantPhone`, `assistantEmail`, `status`, `mailingStreet`, `mailingStreet2`, `mailingCity`, `mailingStateProvince`, `mailingPostalCode`, `mailingCountry`, `profilePictureUrl`, `partnerId`, `partnerName`, `partnerStatus`, `partnerShortName`. Nested fields for search include: `partner.name`, `partner.status`, `partner.shortName`, `partner.phone`, `partner.website`, `partner.address1City`, `partner.address1Country`. Available operators are: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are: `createdDate`, `modifiedDate`.",
       "parameters": {
-        "pageIndex": {
-          "type": "integer",
+        "request": {
+          "type": "object",
           "required": false,
-          "description": "Page number (1-based, default: 1)"
+          "description": "Contact filter request containing search and pagination parameters"
         },
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of items per page (default: 20)"
-        },
-        "orderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Field to order results by (optional)"
-        },
-        "ascending": {
+        "advancedSearch": {
           "type": "boolean",
           "required": false,
-          "description": "Sort direction - true for ascending, false for descending (default: true)"
-        }
-      },
-      "example_uses": [
-        "Show me all contacts",
-        "List all contacts in the system",
-        "Display the contact directory",
-        "Get all contact records",
-        "Browse contacts"
-      ],
-      "when_to_use": "Use this when the user wants to see ALL contacts without any search criteria or when asking for a general contact list."
-    },
-    {
-      "name": "SearchContacts",
-      "url": "/api/contact/search",
-      "method": "GET",
-      "description": "Performs simple text search across multiple contact fields (name, email, title, etc.). This endpoint supports simple text search via the 'searchText' parameter. For more complex, structured searches, use the 'AdvancedSearchContacts' endpoint.",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters"
-        },
-        "searchText": {
-          "type": "string",
-          "required": false,
-          "description": "Text to search across contact name, email, title, and other basic fields"
-        }
-      },
-      "example_uses": [
-        "Search for contacts named John",
-        "Find contacts with @unicef.org email",
-        "Search for contacts containing 'Smith'",
-        "Find contact with phone number 555-1234",
-        "Look for contacts with title 'Manager'"
-      ],
-      "when_to_use": "Use this for simple name, email, title, or basic field searches. NOT for partner relationship searches."
-    },
-    {
-      "name": "AdvancedSearchContacts",
-      "url": "/api/contact/advanced-search",
-      "method": "GET",
-      "description": "Performs advanced search with structured criteria including relationships with partners, departments, and complex filters. This endpoint supports complex, structured searches using the 'searchCriteria' parameter. The 'searchCriteria' should be a JSON array of objects, where each object has 'field', 'operator', and 'value' properties. Fields can be direct (e.g., 'firstName', 'email') or nested (e.g., 'partner.name', 'partner.status'). Available operators include 'like', 'is', 'not', 'contains', 'startsWith', 'endsWith', 'between', 'greaterThan', 'lessThan', 'greaterThanOrEqual', 'lessThanOrEqual', 'on', 'not on', 'this week', 'this month', 'this year'. For date fields like 'createdDate' or 'modifiedDate', use date-specific operators. Example: `[{\"field\": \"firstName\", \"operator\": \"like\", \"value\": \"John\"}, {\"field\": \"partner.name\", \"operator\": \"is\", \"value\": \"UNICEF\"}]`",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters"
+          "description": "Enable advanced search mode"
         },
         "searchCriteria": {
           "type": "string",
           "required": false,
-          "description": "JSON array of search criteria objects with field, operator, value, and logicalOperator"
+          "description": "JSON string containing advanced search filters"
         },
         "searchText": {
           "type": "string",
           "required": false,
-          "description": "Optional additional text search to combine with criteria"
+          "description": "Text to search across contact fields (override for request.searchText)"
         }
       },
       "example_uses": [
-        "Find contacts from UNICEF partner organization",
-        "Show contacts in Finance department created this month",
-        "Get contacts working at Asian Infrastructure partners",
-        "Find contacts where partner status is Active",
-        "List contacts from climate-related interactions",
-        "Search for contacts by department and creation date"
+        "Show me all contacts",
+        "List contacts with email domain @unicef.org",
+        "Find contacts working at government partners",
+        "Search for contacts named John",
+        "Show contacts from my office only",
+        "Get contacts sorted by last name",
+        "Find technical experts in partner organizations"
       ],
-      "when_to_use": "Use this for searches involving partner relationships, departments, dates, status, or any complex multi-field criteria."
+      "when_to_use": "Use this when the user asks to search, list, filter, or browse contacts."
     },
     {
       "name": "Get",
@@ -347,69 +288,6 @@
         "Add headshot to contact record"
       ],
       "when_to_use": "Use this when the user wants to add or update a contact's profile picture or photo."
-    },
-    {
-      "name": "ScanContactData",
-      "url": "/api/contact/scan-data",
-      "method": "POST",
-      "description": "Scans and processes uploaded files for contact data extraction using AI-powered analysis.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": "File scan request containing the file to be processed"
-        }
-      },
-      "example_uses": [
-        "Scan business cards for contact information",
-        "Upload contact forms for processing",
-        "Analyze contact documents with AI",
-        "Extract data from contact lists",
-        "Process contact information from uploaded files"
-      ],
-      "when_to_use": "Use this when the user wants to upload and scan documents for contact data extraction using AI."
-    },
-    {
-      "name": "AnalyseContactData",
-      "url": "/api/contact/analyse-file",
-      "method": "POST",
-      "description": "Analyzes uploaded files and extracts structured contact data using AI-powered data analysis.",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Analysis request containing file and analysis parameters"
-        }
-      },
-      "example_uses": [
-        "Analyze contact directories for structured data extraction",
-        "Extract contact information from uploaded forms",
-        "Process contact documents with AI",
-        "Convert contact files into structured database entries",
-        "Analyze business card data for key information"
-      ],
-      "when_to_use": "Use this when the user wants to analyze files and extract structured contact data for database import."
-    },
-    {
-      "name": "BulkUploadContacts",
-      "url": "/api/contact/bulk-upload",
-      "method": "POST",
-      "description": "Bulk uploads multiple contact records using AI-assisted data processing and validation.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": "Bulk upload request containing contact data"
-        }
-      },
-      "example_uses": [
-        "Bulk upload 500 contacts from Excel",
-        "Import multiple contacts from CSV file",
-        "Mass upload contact data with AI validation",
-        "Bulk import contact records with duplicate detection",
-        "Upload large contact dataset with automated processing"
-      ],
-      "when_to_use": "Use this when the user wants to upload multiple contact records at once with AI-assisted processing."
     }
   ]
 }

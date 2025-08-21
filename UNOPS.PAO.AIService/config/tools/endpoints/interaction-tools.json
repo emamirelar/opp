@@ -1,13 +1,14 @@
 {
   "entity": "Interaction",
-  "description": "Manages communication records, meetings, calls, and other forms of engagement with partners and contacts. It allows for creation, retrieval, update, deletion, and advanced searching of interaction data.",
+  "description": "Manages records of all communications and engagements, such as meetings, calls, and emails, with partners and contacts. It allows for creation, retrieval, update, and deletion of interaction details, including participants, type, date, and associated entities.",
   "synonyms": [
     "meeting",
     "call",
     "communication",
     "engagement",
-    "record",
-    "log"
+    "activity",
+    "log",
+    "event"
   ],
   "mandatoryFields": [
     "type",
@@ -40,11 +41,6 @@
         "department",
         "phone",
         "mobile"
-      ],
-      "partner": [
-        "name",
-        "status",
-        "shortName"
       ]
     },
     "operators": [
@@ -109,7 +105,7 @@
         "req": {
           "type": "object",
           "required": false,
-          "description": "Interaction creation request with all required details (e.g., type, date, subject, description, participants)."
+          "description": "Interaction creation request with all required details"
         }
       },
       "example_uses": [
@@ -120,93 +116,38 @@
       "when_to_use": "Use this when the user asks to create, add, record, or log a new interaction, meeting, call, or communication."
     },
     {
-      "name": "ListAllInteractions",
+      "name": "GetAll",
       "url": "/api/interactions",
       "method": "GET",
-      "description": "Retrieves all interactions with basic pagination and ordering (no search criteria). This endpoint is for general listing and does not support advanced filtering. For specific searches, use the 'SearchInteractions' or 'AdvancedSearchInteractions' endpoints.",
+      "description": "Retrieves a list of interactions with advanced filtering, pagination, search capabilities, and access control. This endpoint supports advanced search using the `searchCriteria` parameter. To use advanced search, set `advancedSearch` to `true` and provide a JSON array of criteria in the `searchCriteria` parameter. Each criterion should be an object with `field`, `operator`, and `value` properties. For example: `[{\"field\": \"type\", \"operator\": \"is\", \"value\": \"Meeting\"}, {\"field\": \"date\", \"operator\": \"between\", \"value\": \"2024-01-01,2024-12-31\"}]`. Available fields for search include: `id`, `contactId`, `type`, `date`, `fromDate`, `toDate`, `description`, `subject`, `contactName`, `contactFirstName`, `contactLastName`, `contactEmail`, `partnerName`, `partnerStatus`, and nested fields like `contact.firstName`, `contact.lastName`, `contact.email`, `contact.title`, `contact.department`, `contact.phone`, `contact.mobile`. Operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`.",
       "parameters": {
-        "pageIndex": {
-          "type": "integer",
+        "request": {
+          "type": "object",
           "required": false,
-          "description": "Page number (1-based, default: 1)"
+          "description": "Interaction filter request containing search and pagination parameters"
         },
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of items per page (default: 20)"
-        },
-        "orderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Field to order results by (optional)"
-        },
-        "ascending": {
+        "advancedSearch": {
           "type": "boolean",
           "required": false,
-          "description": "Sort direction - true for ascending, false for descending (default: true)"
-        }
-      },
-      "example_uses": [
-        "Show me all interactions",
-        "List all interactions in the system",
-        "Display the interaction history"
-      ],
-      "when_to_use": "Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list."
-    },
-    {
-      "name": "SearchInteractions",
-      "url": "/api/interactions/search",
-      "method": "GET",
-      "description": "Performs simple text search across multiple interaction fields (subject, description, etc.). This endpoint is suitable for keyword-based searches. For structured and relationship-based searches, use 'AdvancedSearchInteractions'.",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters"
-        },
-        "searchText": {
-          "type": "string",
-          "required": false,
-          "description": "Text to search across interaction subject, description, and other basic fields"
-        }
-      },
-      "example_uses": [
-        "Search for interactions about project",
-        "Find interactions containing 'meeting notes'",
-        "Search for interactions with 'UNICEF' mentioned"
-      ],
-      "when_to_use": "Use this for simple keyword searches across interaction content. NOT for relationship-based searches."
-    },
-    {
-      "name": "AdvancedSearchInteractions",
-      "url": "/api/interactions/advanced-search",
-      "method": "GET",
-      "description": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters. The 'searchCriteria' parameter expects a JSON array of objects, where each object defines a filter condition. Each condition must have a 'field', 'operator', and 'value'. An optional 'logicalOperator' (AND/OR) can be used to combine conditions. Available fields for searching include direct fields like 'type', 'date', 'subject', and nested fields like 'partner.name' or 'contact.email'. Refer to the 'searchMetadata' section for a full list of searchable fields and supported operators (e.g., 'like', 'is', 'between', 'greaterThan').",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters"
+          "description": "Enable advanced search mode"
         },
         "searchCriteria": {
           "type": "string",
           "required": false,
-          "description": "JSON array of search criteria objects with field, operator, value, and optional logicalOperator. Example: [{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}, {\"field\": \"date\", \"operator\": \"between\", \"value\": \"2024-01-01,2024-12-31\", \"logicalOperator\": \"AND\"}]"
+          "description": "JSON string containing advanced search filters"
         },
         "searchText": {
           "type": "string",
           "required": false,
-          "description": "Optional additional text search to combine with criteria"
+          "description": "Text to search across interaction fields (override for request.searchText)"
         }
       },
       "example_uses": [
-        "Find interactions with UNICEF partners",
-        "Show meetings with John Smith contact",
-        "Get email interactions this week",
-        "Find conference calls from Finance department contacts",
-        "List interactions by type and date range"
+        "Show me all interactions",
+        "List meetings from last month",
+        "Find interactions with UNICEF partners"
       ],
-      "when_to_use": "Use this for searches involving partner relationships, contact details, dates, interaction types, or multiple field combinations."
+      "when_to_use": "Use this when the user asks to search, list, filter, or browse interactions, meetings, calls, or communications."
     },
     {
       "name": "Get",
@@ -236,7 +177,7 @@
         "req": {
           "type": "object",
           "required": false,
-          "description": "Interaction update request containing modified fields (e.g., interaction ID, new time, new location, updated participants)."
+          "description": "Interaction update request containing modified fields"
         }
       },
       "example_uses": [
@@ -283,63 +224,6 @@
         "Get access rights for this interaction"
       ],
       "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for interaction management."
-    },
-    {
-      "name": "ScanInteractionData",
-      "url": "/api/interactions/scan-data",
-      "method": "POST",
-      "description": "Scans and processes uploaded files for interaction data extraction using AI-powered analysis.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": "File scan request containing the file to be processed"
-        }
-      },
-      "example_uses": [
-        "Scan meeting notes for interaction details",
-        "Upload email threads for processing",
-        "Analyze call transcripts with AI"
-      ],
-      "when_to_use": "Use this when the user wants to upload and scan documents for interaction data extraction using AI."
-    },
-    {
-      "name": "AnalyseInteractionData",
-      "url": "/api/interactions/analyse-file",
-      "method": "POST",
-      "description": "Analyzes uploaded files and extracts structured interaction data using AI-powered data analysis.",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Analysis request containing file and analysis parameters"
-        }
-      },
-      "example_uses": [
-        "Analyze meeting transcripts for structured data extraction",
-        "Extract interaction information from uploaded logs",
-        "Process communication documents with AI"
-      ],
-      "when_to_use": "Use this when the user wants to analyze files and extract structured interaction data for database import."
-    },
-    {
-      "name": "BulkUploadInteractions",
-      "url": "/api/interactions/bulk-upload",
-      "method": "POST",
-      "description": "Bulk uploads multiple interaction records using AI-assisted data processing and validation.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": "Bulk upload request containing interaction data"
-        }
-      },
-      "example_uses": [
-        "Bulk upload 200 interactions from Excel",
-        "Import multiple interactions from CSV file",
-        "Mass upload interaction data with AI validation"
-      ],
-      "when_to_use": "Use this when the user wants to upload multiple interaction records at once with AI-assisted processing."
     }
   ]
 }

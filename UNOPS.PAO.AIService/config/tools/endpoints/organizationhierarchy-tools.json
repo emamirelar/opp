@@ -1,61 +1,41 @@
 {
   "entity": "OrganizationHierarchy",
-  "description": "Manages the organizational structure and hierarchy within the system, including departments, teams, and reporting lines.",
+  "description": "Manages and provides access to the hierarchical structure of organizations, departments, and reporting lines within the system.",
   "synonyms": [
-    "Org Structure",
-    "Organizational Chart",
-    "Department Hierarchy",
-    "Reporting Lines",
-    "Org Unit"
+    "Org Hierarchy",
+    "Organizational Structure",
+    "Department Tree",
+    "Reporting Structure",
+    "Company Hierarchy",
+    "Orgunit"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "GetOrganizationHierarchy",
-      "url": "api/organization-hierarchy",
+      "url": "/api/organization-hierarchy",
       "method": "GET",
-      "description": "Retrieves the complete organizational hierarchy structure.",
+      "description": "Retrieves the current and active organizational hierarchy. This endpoint provides the most up-to-date structure of the organization.",
       "parameters": {},
       "example_uses": [
-        "Show me the entire organizational structure.",
-        "Get the full company hierarchy.",
-        "Display all organizational units."
+        "Show me the current organizational structure.",
+        "Can I get the latest company hierarchy?",
+        "Retrieve the active organizational tree."
       ],
-      "when_to_use": "Use this when you need to view the complete, top-level organizational structure without specific filters."
+      "when_to_use": "Use this endpoint to fetch the most current and active organizational hierarchy for display, navigation, or general information purposes."
     },
     {
       "name": "GetOrganizationHierarchyLegacy",
-      "url": "api/organization-hierarchy/legacy",
+      "url": "/api/organization-hierarchy/legacy",
       "method": "GET",
-      "description": "Retrieves the legacy version of the organizational hierarchy structure.",
+      "description": "Retrieves a legacy or historical version of the organizational hierarchy. This might be used for compatibility with older systems, historical reporting, or specific archival needs.",
       "parameters": {},
       "example_uses": [
-        "Show me the old organizational structure.",
-        "Get the legacy company hierarchy.",
-        "Display the previous version of organizational units."
+        "Get the old organizational hierarchy.",
+        "Retrieve the legacy company structure.",
+        "I need the historical organizational tree for reporting."
       ],
-      "when_to_use": "Use this when you specifically need to access the older or legacy representation of the organizational hierarchy."
-    },
-    {
-      "name": "GetOrganizationHierarchyById",
-      "url": "api/organization-hierarchy/{id}",
-      "method": "GET",
-      "description": "Retrieves a specific organizational unit by ID with complete details including hierarchy information.",
-      "parameters": {
-        "id": {
-          "type": "integer",
-          "required": true,
-          "description": "Organizational unit ID"
-        }
-      },
-      "example_uses": [
-        "Show me details for org unit ID 138",
-        "Get information about organizational unit 123",
-        "What is org unit 456?",
-        "Display org unit details for ID 789",
-        "Get description of organizational unit 321"
-      ],
-      "when_to_use": "Use this when the user asks for specific organizational unit details by ID."
+      "when_to_use": "Use this endpoint when you specifically need to access an older, deprecated, or historical version of the organizational hierarchy, typically for backward compatibility, historical data analysis, or specific reporting requirements that rely on past structures."
     }
   ]
 }
