@@ -257,7 +257,7 @@ public class UserPreferenceService : IUserPreferenceService
             UserId = userId,
             FirstName = firstName,
             LastName = "",
-            Status = Domain.Enums.EntityStatus.Active,
+            Status = EntityStatus.Active,
             CreatedBy = userId,
             CreatedDate = DateTime.UtcNow,
             LastModifiedBy = userId,
