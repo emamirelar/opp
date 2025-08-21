@@ -1,18 +1,18 @@
 {
   "entity": "Global",
-  "description": "Manages global application settings, user-specific preferences, persistent filters, language settings, and provides a comprehensive intelligent search across all system entities.",
+  "description": "Manages global user settings, preferences, filters, and provides a system-wide intelligent search functionality across all entities.",
   "synonyms": [
     "System Settings",
-    "User Settings",
-    "Preferences",
+    "User Preferences",
     "Application Settings",
-    "General Settings"
+    "Global Configuration",
+    "User Defaults"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "GetUserPreferences",
-      "url": "api/global/user-preferences",
+      "url": "api/global/api/global/user-preferences",
       "method": "GET",
       "description": "Retrieves user-specific preferences and settings for interface customization and default behaviors.",
       "parameters": {
@@ -25,15 +25,13 @@
       "example_uses": [
         "Get my user preferences and settings",
         "Show user interface customizations",
-        "Get default language and timezone settings",
-        "Retrieve user's saved preferences",
-        "Show personalization settings"
+        "Get default language and timezone settings"
       ],
       "when_to_use": "Use this when the user asks for their preferences, settings, customizations, or when loading user interface defaults."
     },
     {
       "name": "UpdateUserPreferences",
-      "url": "api/global/user-preferences",
+      "url": "api/global/api/global/user-preferences",
       "method": "PUT",
       "description": "Updates user-specific preferences and settings for interface customization and default behaviors.",
       "parameters": {
@@ -51,15 +49,13 @@
       "example_uses": [
         "Update my language preference to French",
         "Change my timezone to EST",
-        "Set theme to dark mode",
-        "Update notification settings",
-        "Save my dashboard preferences"
+        "Set theme to dark mode"
       ],
       "when_to_use": "Use this when the user wants to update their preferences, settings, or interface customizations."
     },
     {
       "name": "GetGlobalFilters",
-      "url": "api/global/filters",
+      "url": "api/global/api/global/filters",
       "method": "GET",
       "description": "Retrieves user's global filter settings and preferences for consistent filtering across all views.",
       "parameters": {
@@ -72,15 +68,13 @@
       "example_uses": [
         "Get my global filter settings",
         "Show saved filter preferences",
-        "Retrieve default filters for all pages",
-        "Get user's persistent filter configuration",
-        "Show global search and filter defaults"
+        "Retrieve default filters for all pages"
       ],
       "when_to_use": "Use this when loading user's saved filter settings or when applying consistent filters across multiple views."
     },
     {
       "name": "UpdateGlobalFilters",
-      "url": "api/global/filters",
+      "url": "api/global/api/global/filters",
       "method": "PUT",
       "description": "Updates user's global filter settings and preferences for consistent filtering across all views.",
       "parameters": {
@@ -98,15 +92,13 @@
       "example_uses": [
         "Save my default organizational unit filter",
         "Update global date range preferences",
-        "Set default status filters for all views",
-        "Save search behavior preferences",
-        "Update persistent filter settings"
+        "Set default status filters for all views"
       ],
       "when_to_use": "Use this when the user wants to save filter preferences that apply across all views and pages."
     },
     {
       "name": "ResetGlobalFilters",
-      "url": "api/global/filters/reset",
+      "url": "api/global/api/global/filters/reset",
       "method": "POST",
       "description": "Resets user's global filter settings to system defaults, clearing all custom filter preferences.",
       "parameters": {
@@ -119,30 +111,26 @@
       "example_uses": [
         "Reset my filter settings to defaults",
         "Clear all saved filter preferences",
-        "Restore default filtering behavior",
-        "Reset global search preferences",
-        "Clear personalized filter settings"
+        "Restore default filtering behavior"
       ],
       "when_to_use": "Use this when the user wants to clear their saved filter preferences and return to system defaults."
     },
     {
       "name": "GetPreferredLanguage",
-      "url": "api/global/preferred-language",
+      "url": "api/global/api/global/preferred-language",
       "method": "GET",
       "description": "Retrieves the current user's preferred language setting for interface localization.",
       "parameters": {},
       "example_uses": [
         "Get my preferred language setting",
         "Show current language preference",
-        "What language is my interface set to?",
-        "Get user's localization setting",
-        "Check current language configuration"
+        "What language is my interface set to?"
       ],
       "when_to_use": "Use this when loading interface language settings or when determining localization preferences."
     },
     {
       "name": "UpdatePreferredLanguage",
-      "url": "api/global/preferred-language",
+      "url": "api/global/api/global/preferred-language",
       "method": "PUT",
       "description": "Updates the current user's preferred language setting for interface localization.",
       "parameters": {
@@ -155,17 +143,15 @@
       "example_uses": [
         "Change my language to French",
         "Set interface language to Spanish",
-        "Update my language preference to English",
-        "Switch to Arabic interface",
-        "Change localization to Portuguese"
+        "Update my language preference to English"
       ],
       "when_to_use": "Use this when the user wants to change their interface language or localization preferences."
     },
     {
       "name": "IntelligentGlobalSearch",
-      "url": "api/global/search",
+      "url": "api/global/api/global/search",
       "method": "GET",
-      "description": "Performs intelligent global search across all entities using hybrid text and semantic search capabilities. Automatically determines optimal search strategy based on query characteristics and complexity. This endpoint performs a free-text, intelligent global search. Use the `q` parameter for your natural language query. It automatically determines the optimal search strategy (text or semantic) based on the query.",
+      "description": "Performs intelligent global search across all entities using hybrid text and semantic search capabilities. Automatically determines optimal search strategy based on query characteristics and complexity.",
       "parameters": {
         "q": {
           "type": "string",
@@ -186,12 +172,7 @@
       "example_uses": [
         "Search for \"UNICEF project manager\"",
         "Find \"meetings about climate change\"",
-        "Look for \"john.doe@example.com\"",
-        "Search \"partners in Bangladesh\"",
-        "Find \"documents related to health\"",
-        "Search for \"WHO collaboration agreements\"",
-        "Look for \"procurement experts\"",
-        "Find \"project coordinators in Africa\""
+        "Look for \"john.doe@example.com\""
       ],
       "when_to_use": "Use this when the user performs any search operation across the system - it automatically chooses between text search for exact matches and semantic search for conceptual queries."
     }

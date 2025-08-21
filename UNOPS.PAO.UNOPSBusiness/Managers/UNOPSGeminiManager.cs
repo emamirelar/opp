@@ -248,15 +248,39 @@ public class UNOPSGeminiManager : IGeminiManager
         string type = req?.Type;
 
         if (!string.IsNullOrEmpty(type)) {
-            var promptData = (await GetPromptData(type)).FirstOrDefault();
-
-            if (promptData == null)
+            // For partner_action type, use the enhanced AiContextualService approach
+            if (type.Equals("partner_action", StringComparison.OrdinalIgnoreCase))
             {
-                return "";
-            }
+                var promptData = (await _aiService.GetPromptData("partner_action")).FirstOrDefault();
+                if (promptData == null)
+                {
+                    return "";
+                }
 
-            // Fetch result from Gemini
-            return await FetchResultFromGemini(promptData, extractedText);
+                // Send to Gemini with the extracted text
+                var geminiResponse = await _aiService.FetchResultFromGemini(promptData, extractedText);
+                var parsedResponse = _aiService.GetDetailsFromGeminiResponse(geminiResponse);
+
+                // Process dependents to convert text to IDs using enhanced logic
+                var dependents = parsedResponse["dependents"]?.ToString();
+                var processedResponse = await _aiService.GetDependentDropdownValues(dependents, parsedResponse, promptData);
+
+                // Return the processed response as JSON string
+                return Newtonsoft.Json.JsonConvert.SerializeObject(processedResponse);
+            }
+            else
+            {
+                // For other types, use the existing logic
+                var promptData = (await GetPromptData(type)).FirstOrDefault();
+
+                if (promptData == null)
+                {
+                    return "";
+                }
+
+                // Fetch result from Gemini
+                return await FetchResultFromGemini(promptData, extractedText);
+            }
         }
 
         return extractedText;

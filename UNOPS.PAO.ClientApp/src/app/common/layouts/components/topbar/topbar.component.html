@@ -43,7 +43,25 @@
 		</p-button>
 		
       <app-language-selector class="language-selector"></app-language-selector>
-	  		<p-button
+	  		
+		<!-- Chat History Button (only visible on AI page) -->
+		<p-button
+			*ngIf="isOnAiPage()"
+			(onClick)="chatHistoryPanel.toggle($event)"
+			type="button"
+			[rounded]="true"
+			[text]="true"
+			ariaLabel="Chat History"
+			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center chat-history-btn"
+			pTooltip="Chat History"
+			tooltipPosition="bottom"
+			class="chat-history-toggle">
+			<ng-template pTemplate="content">
+				<i class="pi pi-history text-xl"></i>
+			</ng-template>
+		</p-button>
+		
+		<p-button
 			(onClick)="onAIAssistantToggle()"
 			type="button"
 			[rounded]="true"
@@ -120,6 +138,79 @@
           </div>
         </div>
       </p-overlayPanel>
+      
+      <!-- Chat History Panel -->
+      <p-overlayPanel #chatHistoryPanel [style]="{width: '400px', maxHeight: '500px'}">
+        <div class="chat-history-panel">
+          <div class="chat-history-header">
+            <h3>Chat History</h3>
+            <p-button 
+              icon="pi pi-plus" 
+              label="New Chat" 
+              size="small"
+              (onClick)="startNewChat(); chatHistoryPanel.hide()"
+              [disabled]="isNewChatDisabled"
+              class="new-chat-btn">
+            </p-button>
+          </div>
+          
+          <!-- Search -->
+          <div class="chat-search-container" *ngIf="chatSessions.length > 0">
+            <div class="search-input-wrapper">
+              <input 
+                type="text" 
+                [(ngModel)]="chatSearchQuery"
+                (input)="onChatSearchInput($event)"
+                placeholder="Search chats..."
+                class="search-input"
+              />
+              <i class="pi pi-search search-icon"></i>
+              <button 
+                *ngIf="chatSearchQuery"
+                (click)="clearChatSearch()"
+                class="clear-search-btn"
+                type="button">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="chat-history-list">
+            <div *ngIf="isLoadingChatSessions" class="loading-message">
+              <div class="loading-spinner"></div>
+              <span>Loading chats...</span>
+            </div>
+            
+            <div *ngIf="!isLoadingChatSessions && chatSessions.length === 0" class="no-chats-message">
+              <span class="text-sm text-gray-500">No chat history yet</span>
+            </div>
+            
+            <div *ngFor="let session of filteredChatSessions; trackBy: trackByChatId" 
+                 class="chat-history-item"
+                 [class.active]="isSelectedChatSession(session)"
+                 (click)="openChatSession(session); chatHistoryPanel.hide()">
+              <div class="chat-item-content">
+                <div class="chat-title">{{ session.title || 'Untitled Chat' }}</div>
+                <div class="chat-date">{{ formatChatDate(session.lastUpdated) }}</div>
+              </div>
+              <div class="chat-item-actions">
+                <button 
+                  class="star-btn"
+                  [class.starred]="session.starred"
+                  (click)="toggleChatStar(session, $event)"
+                  title="{{session.starred ? 'Unstar' : 'Star'}} this chat">
+                  <i class="pi" [ngClass]="session.starred ? 'pi-star-fill' : 'pi-star'"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div *ngIf="!isLoadingChatSessions && filteredChatSessions.length === 0 && chatSessions.length > 0" class="no-results-message">
+              <span class="text-sm text-gray-500">No chats match your search</span>
+            </div>
+          </div>
+        </div>
+      </p-overlayPanel>
+      
       <div class="ml-auto">
         <div class="flex items-center gap-2">
           <p-button

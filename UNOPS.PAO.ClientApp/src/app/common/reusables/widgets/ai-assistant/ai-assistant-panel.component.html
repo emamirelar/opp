@@ -113,14 +113,14 @@
         </p-menu>
       </div>
 
-      <!-- Fullscreen button -->
+      <!-- Fullscreen/Minimize toggle button -->
       <p-button 
-        icon="pi pi-external-link"
+        [icon]="isInFullscreenMode() ? 'pi pi-window-minimize' : 'pi pi-window-maximize'"
         [text]="true"
         [rounded]="true"
         size="small"
-        pTooltip="{{ 'aiAssistant.openFullscreen' | translate }}"
-        (onClick)="openFullscreen()"
+        [pTooltip]="isInFullscreenMode() ? 'Minimize to popup' : 'Expand to fullscreen'"
+        (onClick)="toggleFullscreen()"
         tooltipPosition="left">
       </p-button>
 
@@ -169,8 +169,8 @@
       </div>
     </div>
 
-    <!-- Welcome state - Gemini style -->
-    <div *ngIf="aiAssistantData.chatHistory().length === 0" class="flex flex-col items-center justify-center h-full text-center px-6 py-4 max-w-4xl mx-auto ai-welcome-screen">
+    <!-- Welcome state - Gemini style (only on first page load) -->
+    <div *ngIf="aiAssistantData.chatHistory().length === 0 && aiAssistantData.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-6 py-4 max-w-4xl mx-auto ai-welcome-screen">
       <!-- Personalized Greeting -->
       <div class="mb-6">
         <h1 class="text-4xl md:text-5xl font-normal text-[var(--text-color)] mb-4">
@@ -225,6 +225,19 @@
             <span>Data analysis</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- New Chat blank state (when user manually starts new chat) -->
+    <div *ngIf="aiAssistantData.chatHistory().length === 0 && !aiAssistantData.isFirstPageLoad()" class="flex flex-col items-center justify-center h-full text-center px-6 py-4 max-w-4xl mx-auto ai-new-chat-screen">
+      <div class="mb-8">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--primary-color)] bg-opacity-10 flex items-center justify-center">
+          <img src="images/AI_visual_64.svg" alt="AI Assistant" class="w-8 h-8 opacity-70" />
+        </div>
+        <h2 class="text-2xl font-normal text-[var(--text-color)] mb-2">New Chat</h2>
+        <p class="text-[var(--text-color-secondary)] max-w-md">
+          Start a conversation by typing your question or request below.
+        </p>
       </div>
     </div>
 

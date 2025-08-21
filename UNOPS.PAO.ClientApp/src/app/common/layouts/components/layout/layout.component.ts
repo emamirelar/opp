@@ -86,6 +86,8 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
       this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
           this.updateBreadcrumbs(this.activatedRoute.root);
           this.hideMenu();
+          // Re-initialize splitter panels when route changes (to handle AI route vs normal routes)
+          this.initializeSplitterPanels();
       });
       
       // Listen for AI assistant state changes to add/remove outside click listeners
@@ -155,22 +157,39 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit{
   }
 
   private initializeSplitterPanels(): void {
-    this._splitterPanels = [
-      {
-        id: 'main-content',
-        template: this.mainContentTemplate,
-        resizable: true,
-        visible: true,
-        data: { title: 'Main Content' }
-      },
-      {
-        id: 'ai-assistant',
-        template: this.aiAssistantTemplate,
-        resizable: true,
-        visible: true, // Always visible, but size will be 0 when inactive
-        data: { title: 'AI Assistant' }
-      }
-    ];
+    // Check if we're on the AI route - if so, only show main content
+    const isOnAiRoute = this.router.url.startsWith('/ai');
+    
+    if (isOnAiRoute) {
+      // On AI route, only show main content panel (AI content component handles the AI display)
+      this._splitterPanels = [
+        {
+          id: 'main-content',
+          template: this.mainContentTemplate,
+          resizable: false, // Not resizable when in AI fullscreen mode
+          visible: true,
+          data: { title: 'Main Content' }
+        }
+      ];
+    } else {
+      // Normal layout with both main content and AI assistant panels
+      this._splitterPanels = [
+        {
+          id: 'main-content',
+          template: this.mainContentTemplate,
+          resizable: true,
+          visible: true,
+          data: { title: 'Main Content' }
+        },
+        {
+          id: 'ai-assistant',
+          template: this.aiAssistantTemplate,
+          resizable: true,
+          visible: true, // Always visible, but size will be 0 when inactive
+          data: { title: 'AI Assistant' }
+        }
+      ];
+    }
   }
 
   updateBreadcrumbs(route: any) {

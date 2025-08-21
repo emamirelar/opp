@@ -162,7 +162,7 @@ export class PartnerEditDialogComponent implements OnInit {
   });
 
   showApprovalFields = computed(() => {
-    return this.recordData()?.partnerApprovalStatus === 'Approved';
+    return this.recordData()?.partnerApprovalStatus === 1; // 1 = Approved enum value
   });
 
   approvalFieldsEnabled = computed(() => {
@@ -549,7 +549,7 @@ export class PartnerEditDialogComponent implements OnInit {
         
         // Status fields
         status: data.status || this.formGroup.get('status')?.value,
-        partnerApprovalStatus: data.partnerApprovalStatus || this.formGroup.get('partnerApprovalStatus')?.value,
+        partnerApprovalDate: data.partnerApprovalDate || this.formGroup.get('partnerApprovalDate')?.value,
         
         // Due diligence fields
         dueDiligenceRequired: data.dueDiligenceRequired || this.formGroup.get('dueDiligenceRequired')?.value,
