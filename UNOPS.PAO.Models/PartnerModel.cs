@@ -81,6 +81,9 @@ public class PartnerModel
     /// </summary>
     public List<ProjectSummaryModel>? Projects { get; set; }
     
+    // ========== CONDITIONAL TAGS ==========
+    public List<EntityTagModel>? Tags => CalculateConditionalTags(); // Dynamic conditional tags
+    
     /// <summary>
     /// Permissions for this specific partner
     /// </summary>
@@ -108,6 +111,66 @@ public class PartnerModel
     {
         return OrganizationUnitRelationships?.FirstOrDefault()?.OrganizationHierarchy;
     }
+    
+    /// <summary>
+    /// Calculate conditional tags based on partner's current state for frontend display
+    /// </summary>
+    public List<EntityTagModel> CalculateConditionalTags()
+    {
+        var tags = new List<EntityTagModel>();
+        
+        // Partner Status Tags
+        if (!string.IsNullOrEmpty(Status))
+        {
+            var statusColor = Status switch
+            {
+                "Draft" => "bg-gray-100 text-gray-800",
+                "Active" => "bg-blue-100 text-blue-800", 
+                "Closed" => "bg-red-100 text-red-800",
+                "Archived" => "bg-yellow-100 text-yellow-800",
+                _ => "bg-gray-100 text-gray-800"
+            };
+            tags.Add(new EntityTagModel { Tag = Status, Color = statusColor });
+        }
+        
+        // Partner Approval Status Tags  
+        if (!string.IsNullOrEmpty(PartnerApprovalStatus))
+        {
+            var approvalTag = PartnerApprovalStatus switch
+            {
+                "Approved" => "Approved",
+                "NotApproved" => "Pending Approval",
+                _ => PartnerApprovalStatus
+            };
+            var approvalColor = PartnerApprovalStatus switch
+            {
+                "Approved" => "bg-green-100 text-green-800",
+                "NotApproved" => "bg-yellow-100 text-yellow-800",
+                _ => "bg-gray-100 text-gray-800"
+            };
+            tags.Add(new EntityTagModel { Tag = approvalTag, Color = approvalColor });
+        }
+        
+        // Due Diligence Expiry Tags
+        if (DueDiligenceExpiryDate.HasValue)
+        {
+            var now = DateTime.UtcNow;
+            var expiryDate = DueDiligenceExpiryDate.Value;
+            
+            if (expiryDate < now)
+            {
+                // Already expired
+                tags.Add(new EntityTagModel { Tag = "DD Expired", Color = "bg-red-100 text-red-800" });
+            }
+            else if (expiryDate <= now.AddMonths(6))
+            {
+                // Expiring within 6 months
+                tags.Add(new EntityTagModel { Tag = "DD Expiring", Color = "bg-yellow-100 text-yellow-800" });
+            }
+        }
+        
+        return tags;
+    }
 }
 
 /// <summary>
@@ -125,4 +188,4 @@ public class ProjectSummaryModel
     public string BudgetDuration { get; set; }
     public Double? BudgetAmount { get; set; }
     public Double? ExpenditureAmount { get; set; }
-}   
+}

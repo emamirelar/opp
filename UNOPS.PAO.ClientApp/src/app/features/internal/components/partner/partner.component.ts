@@ -269,6 +269,28 @@ export class PartnerComponent implements OnDestroy, OnInit {
         next: (columns) => {
           // Convert backend columns to frontend format and add template functions
           const processedColumns = columns.map(col => this.processColumn(col));
+          
+          // Always add tags column if not already present
+          const hasTagsColumn = processedColumns.some(col => col.field === 'tags');
+          if (!hasTagsColumn) {
+            processedColumns.push({
+              field: 'tags',
+              label: 'Status',
+              sortable: false,
+              type: 'template',
+              width: '15%',
+              templateFn: (rowData: any) => {
+                if (!rowData?.tags || !Array.isArray(rowData.tags) || rowData.tags.length === 0) {
+                  return '';
+                }
+                
+                return rowData.tags.map((tag: any) => 
+                  `<span class="px-2 py-1 text-xs rounded-full ${tag.color} whitespace-nowrap">${tag.tag}</span>`
+                ).join(' ');
+              }
+            });
+          }
+          
           this.columns.set(processedColumns);
           this.columnsLoading.set(false);
           this.cdr.detectChanges();
@@ -314,6 +336,21 @@ export class PartnerComponent implements OnDestroy, OnInit {
     if (column.type === 'multiple-avatars') {
       // Use the configured fallback field from the API
       processedColumn.firstLetterFallbackField = column.firstLetterFallbackField || 'first5ContactsByDate.firstName';
+    }
+
+    // Add special handling for tags field
+    if (column.field === 'tags' || column.type === 'tags') {
+      processedColumn.type = 'template';
+      processedColumn.templateFn = (rowData: any) => {
+        const tags = rowData?.tags;
+        if (!tags || !Array.isArray(tags) || tags.length === 0) {
+          return '';
+        }
+        
+        return tags.map((tag: any) => 
+          `<span class="px-2 py-1 text-xs rounded-full ${tag.color} whitespace-nowrap">${tag.tag}</span>`
+        ).join(' ');
+      };
     }
 
     return processedColumn;
@@ -394,6 +431,23 @@ export class PartnerComponent implements OnDestroy, OnInit {
         sortable: false,
         type: 'multiple-avatars',
         width: '10%',
+      },
+      {
+        field: 'tags',
+        label: 'Status',
+        sortable: false,
+        type: 'template',
+        width: '15%',
+        templateFn: (rowData: any) => {
+          const tags = rowData?.tags;
+          if (!tags || !Array.isArray(tags) || tags.length === 0) {
+            return '';
+          }
+          
+          return tags.map((tag: any) => 
+            `<span class="px-2 py-1 text-xs rounded-full ${tag.color} whitespace-nowrap">${tag.tag}</span>`
+          ).join(' ');
+        }
       }
     ];
     
