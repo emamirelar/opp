@@ -158,16 +158,10 @@ namespace UNOPS.PAO.Presentation.Controllers
                         {
                             // Enhanced Partner structure
                             Name = partnerGroup.PartnerName,
-                            PartnerShortDescription = partnerGroup.PartnerName.Length > 10 ? partnerGroup.PartnerName.Substring(0, 10) : partnerGroup.PartnerName,
-                            PartnerCategoryId = 1, // Default category - this should be set appropriately
-                            LiaisonOfficeId = 1, // Default liaison office ID - this should be set appropriately
                             UNAndStateEntity = false,
-                            Status = "Draft",
+                            Status = EntityStatus.Draft.ToString(),
                             CanCreateNewOpportunities = false, // Default to not allowed for auto-created partners
-                            PooledFund = false,
-                            DueDiligenceRequired = "Required",
-                            DueDiligenceApproval = "NotApproved",
-                            PartnerLevyStatus = "PotentiallyApplied"
+                            PooledFund = false
                         };
 
                         var createdPartner = await _partnerManager.CreatePartnerAsync(User, partnerRequest);
