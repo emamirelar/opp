@@ -72,7 +72,8 @@ public class UserPreferenceService : IUserPreferenceService
             var userProfile = await _context.Set<UserProfile>().FirstOrDefaultAsync(up => up.UserId == userId);
             if (userProfile == null)
             {
-                throw new InvalidOperationException($"UserProfile does not exist for UserId: {userId}. Cannot create UserPreference.");
+                // Auto-create UserProfile if it doesn't exist
+                await CreateUserProfileAsync(userId);
             }
             
             var globalFilters = new GlobalFilters
@@ -136,7 +137,8 @@ public class UserPreferenceService : IUserPreferenceService
             var userProfile = await _context.Set<UserProfile>().FirstOrDefaultAsync(up => up.UserId == userIdInt);
             if (userProfile == null)
             {
-                throw new InvalidOperationException($"UserProfile does not exist for UserId: {userIdInt}. Cannot create UserPreference.");
+                // Auto-create UserProfile if it doesn't exist
+                await CreateUserProfileAsync(userIdInt);
             }
             
             userPreferences.UserId = userIdInt;
@@ -188,7 +190,8 @@ public class UserPreferenceService : IUserPreferenceService
             var userProfile = await _context.Set<UserProfile>().FirstOrDefaultAsync(up => up.UserId == userIdInt);
             if (userProfile == null)
             {
-                throw new InvalidOperationException($"UserProfile does not exist for UserId: {userIdInt}. Cannot create UserPreference.");
+                // Auto-create UserProfile if it doesn't exist
+                await CreateUserProfileAsync(userIdInt);
             }
             
             var userPreference = new UserPreference
@@ -227,5 +230,42 @@ public class UserPreferenceService : IUserPreferenceService
             };
             await _context.SaveChangesAsync();
         }
+    }
+
+    /// <summary>
+    /// Creates a UserProfile for the specified user ID with default values
+    /// </summary>
+    private async Task CreateUserProfileAsync(int userId)
+    {
+        // Get user information to create a meaningful profile
+        var userEmail = _userResolver.GetUserEmail();
+        var firstName = "Unknown User";
+        
+        if (!string.IsNullOrEmpty(userEmail))
+        {
+            // Extract first name from email prefix (e.g., john.doe@example.com -> john)
+            var emailPrefix = userEmail.Split('@')[0];
+            var nameParts = emailPrefix.Split('.', '_', '-');
+            if (nameParts.Length > 0 && !string.IsNullOrEmpty(nameParts[0]))
+            {
+                firstName = char.ToUpper(nameParts[0][0]) + nameParts[0].Substring(1).ToLower();
+            }
+        }
+
+        var userProfile = new UserProfile
+        {
+            UserId = userId,
+            FirstName = firstName,
+            LastName = "",
+            Status = Domain.Enums.EntityStatus.Active,
+            CreatedBy = userId,
+            CreatedDate = DateTime.UtcNow,
+            LastModifiedBy = userId,
+            IsDeleted = false,
+            DeletedBy = 0
+        };
+
+        _context.Set<UserProfile>().Add(userProfile);
+        await _context.SaveChangesAsync();
     }
 }
