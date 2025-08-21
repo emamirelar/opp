@@ -758,4 +758,13 @@ export class ListviewCardComponent<T = any> implements OnChanges, AfterViewInit,
     const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     return text.replace(regex, '<span class="search-highlight">$1</span>');
   }
+
+  /**
+   * Get tags from item in a type-safe way
+   * This method handles the generic type T and checks for tags property
+   */
+  getItemTags(item: T): any[] | null {
+    const itemAsAny = item as any;
+    return itemAsAny?.tags && Array.isArray(itemAsAny.tags) ? itemAsAny.tags : null;
+  }
 }

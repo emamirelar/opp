@@ -522,7 +522,8 @@
     "pleaseFullAllRequired": "Please fill all the required details.",
     "partnerRequired": "Partner must be entered.",
     "lastNameRequired": "Last Name must be entered.",
-    "emailRequired": "Email must be entered."
+    "emailRequired": "Email must be entered.",
+    "reasonRequired": "Reason is required."
   },
   "loading": {
     "contactData": "Loading contact data...",

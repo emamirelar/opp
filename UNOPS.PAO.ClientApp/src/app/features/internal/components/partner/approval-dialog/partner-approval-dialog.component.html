@@ -11,37 +11,10 @@
   <form [formGroup]="formGroup" class="flex flex-col gap-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       
-      <!-- 1. Key Global Partner -->
-      <div class="flex items-center gap-3">
-        <p-checkbox 
-          formControlName="keyGlobalPartner"
-          [binary]="true" 
-          id="keyGlobalPartner" />
-        <label for="keyGlobalPartner">{{ "label.partner.keyGlobalPartner" | translate }}</label>
-      </div>
-
-      <!-- 2. UN & State entity -->
-      <div class="flex items-center gap-3">
-        <p-checkbox 
-          formControlName="unAndStateEntity"
-          [binary]="true" 
-          id="unAndStateEntity" />
-        <label for="unAndStateEntity">{{ "label.partner.unAndStateEntity" | translate }}</label>
-      </div>
-
-      <!-- 3. UN Secretariat Partner -->
-      <div class="flex items-center gap-3">
-        <p-checkbox 
-          formControlName="unSecretariatPartner"
-          [binary]="true" 
-          id="unSecretariatPartner" />
-        <label for="unSecretariatPartner">{{ "label.partner.unSecretariatPartner" | translate }}</label>
-      </div>
-
-      <!-- 4. Due Diligence (Required) -->
+      <!-- Due Diligence (Required) -->
       <div class="flex flex-col gap-2">
         <label for="dueDiligenceRequired">{{ 'label.partner.dueDiligenceRequired' | translate }}</label>
-        <p-select formControlName="dueDiligenceRequired" [options]="allYesNoData()"
+        <p-select formControlName="dueDiligenceRequired" [options]="allDueDiligenceRequiredData()"
                   optionLabel="name"
                   optionValue="id"
                   [placeholder]="'label.partner.selectDDRequired' | translate"
@@ -52,10 +25,10 @@
                   [ariaLabel]="'aria.selectDueDiligenceRequired' | translate" />
       </div>
 
-      <!-- 5. Due Diligence (Approval) -->
+      <!-- Due Diligence (Approval) -->
       <div class="flex flex-col gap-2">
         <label for="dueDiligenceApproval">{{ 'label.partner.dueDiligenceApproval' | translate }}</label>
-        <p-select formControlName="dueDiligenceApproval" [options]="allYesNoData()"
+        <p-select formControlName="dueDiligenceApproval" [options]="allDueDiligenceApprovalData()"
                   optionLabel="name"
                   optionValue="id"
                   [placeholder]="'label.partner.selectDDEACDone' | translate"
@@ -66,34 +39,34 @@
                   [ariaLabel]="'aria.selectDueDiligenceApproval' | translate" />
       </div>
 
-      <!-- 6. Due Diligence Approval Date -->
+      <!-- Due Diligence Approval Date -->
       <div class="flex flex-col gap-2">
         <label for="dueDiligenceApprovalDate">{{ 'label.partner.dueDiligenceApprovalDate' | translate }}</label>
         <p-datepicker formControlName="dueDiligenceApprovalDate" 
                       fluid="true" id="dueDiligenceApprovalDate" />
       </div>
 
-      <!-- 7. Due diligence expiry date -->
+      <!-- Due diligence expiry date -->
       <div class="flex flex-col gap-2">
         <label for="dueDiligenceExpiryDate">{{ 'label.partner.dueDiligenceExpiryDate' | translate }}</label>
         <p-datepicker formControlName="dueDiligenceExpiryDate" 
                       fluid="true" id="dueDiligenceExpiryDate" />
       </div>
 
-      <!-- 8. Partner Approval Date -->
+      <!-- Partner Approval Date -->
       <div class="flex flex-col gap-2">
         <label for="partnerApprovalDate">{{ 'label.partner.partnerApprovalDate' | translate }}</label>
         <p-datepicker formControlName="partnerApprovalDate" 
                       fluid="true" id="partnerApprovalDate" />
       </div>
 
-      <!-- 9. Partner Approval Reference -->
+      <!-- Partner Approval Reference -->
       <div class="flex flex-col gap-2">
         <label for="partnerApprovalReference">{{ "label.partner.partnerApprovalReference" | translate }}</label>
         <input pInputText fluid="true" formControlName="partnerApprovalReference" id="partnerApprovalReference" />
       </div>
 
-      <!-- 10. Partner Levy -->
+      <!-- Partner Levy -->
       <div class="flex flex-col gap-2">
         <label for="partnerLevyStatus">{{ 'label.partner.partnerLevyStatus' | translate }}</label>
         <p-select formControlName="partnerLevyStatus" [options]="allPartnerLevyAppliesData()"
@@ -107,7 +80,7 @@
                   [ariaLabel]="'aria.selectPartnerLevyStatus' | translate" />
       </div>
 
-      <!-- 11. Reason for Levy - Only show when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied" -->
+      <!-- Reason for Levy - Only show when Partner Levy is "DoesNotApply" or "PotentiallyNotApplied" -->
       @if (shouldShowReasonForLevy()) {
       <div class="flex flex-col gap-2">
         <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }}</label>
@@ -123,7 +96,7 @@
       </div>
       }
 
-      <!-- 12. Levy Treatment -->
+      <!-- Levy Treatment -->
       <div class="flex flex-col gap-2">
         <label for="levyTreatment">{{ 'label.partner.levyTreatment' | translate }}</label>
         <p-select formControlName="levyTreatment" [options]="allPartnerLevyTreatmentData()"
@@ -137,7 +110,48 @@
                   [ariaLabel]="'aria.selectLevyTreatment' | translate" />
       </div>
 
-      <!-- 13. Pooled Fund -->
+    </div>
+
+    <!-- Reason (full width) -->
+    <div class="flex flex-col gap-2">
+      <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }} *</label>
+      <textarea pTextarea formControlName="reasonForNoNewOpportunity" 
+                fluid="true" id="reasonForNoNewOpportunity" rows="3"></textarea>
+      @if( formGroup.get("reasonForNoNewOpportunity")?.invalid && showValidationFailedError() ) {
+      <p-message severity="error" variant="simple">{{ 'validation.reasonRequired' | translate }}</p-message>
+      }
+    </div>
+
+    <!-- Checkbox fields moved to the end -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <!-- Key Global Partner -->
+      <div class="flex items-center gap-3">
+        <p-checkbox 
+          formControlName="keyGlobalPartner"
+          [binary]="true" 
+          id="keyGlobalPartner" />
+        <label for="keyGlobalPartner">{{ "label.partner.keyGlobalPartner" | translate }}</label>
+      </div>
+
+      <!-- UN & State entity -->
+      <div class="flex items-center gap-3">
+        <p-checkbox 
+          formControlName="unAndStateEntity"
+          [binary]="true" 
+          id="unAndStateEntity" />
+        <label for="unAndStateEntity">{{ "label.partner.unAndStateEntity" | translate }}</label>
+      </div>
+
+      <!-- UN Secretariat Partner -->
+      <div class="flex items-center gap-3">
+        <p-checkbox 
+          formControlName="unSecretariatPartner"
+          [binary]="true" 
+          id="unSecretariatPartner" />
+        <label for="unSecretariatPartner">{{ "label.partner.unSecretariatPartner" | translate }}</label>
+      </div>
+
+      <!-- Pooled Fund -->
       <div class="flex items-center gap-3">
         <p-checkbox 
           formControlName="pooledFund"
@@ -146,7 +160,7 @@
         <label for="pooledFund">{{ "label.partner.pooledFund" | translate }}</label>
       </div>
 
-      <!-- 14. Can create new opportunities? -->
+      <!-- Can create new opportunities? -->
       <div class="flex items-center gap-3">
         <p-checkbox 
           formControlName="canCreateNewOpportunities"
@@ -154,13 +168,6 @@
           id="canCreateNewOpportunities" />
         <label for="canCreateNewOpportunities">{{ "label.partner.canCreateNewOpportunities" | translate }}</label>
       </div>
-    </div>
-
-    <!-- 15. Reason (full width) -->
-    <div class="flex flex-col gap-2">
-      <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</label>
-      <textarea pTextarea formControlName="reasonForNoNewOpportunity" 
-                fluid="true" id="reasonForNoNewOpportunity" rows="3"></textarea>
     </div>
   </form>
 

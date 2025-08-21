@@ -59,6 +59,12 @@ export class CachedDataService {
   private allYesNoData = signal([]);
   allYesNo = this.allYesNoData.asReadonly();
 
+  private allDueDiligenceRequiredData = signal([]);
+  allDueDiligenceRequired = this.allDueDiligenceRequiredData.asReadonly();
+
+  private allDueDiligenceApprovalData = signal([]);
+  allDueDiligenceApproval = this.allDueDiligenceApprovalData.asReadonly();
+
   private allPartnerLevyAppliesData = signal([]);
   allPartnerLevyApplies = this.allPartnerLevyAppliesData.asReadonly();
 
@@ -131,6 +137,8 @@ export class CachedDataService {
     this.loadPartnerScopeData();
     this.loadPartnerStatus();
     this.loadYesNo();
+    this.loadDueDiligenceRequiredData();
+    this.loadDueDiligenceApprovalData();
     this.loadPartners();
     this.loadPartnerLevelTypeData();
     this.loadOrganizationUnits();
@@ -161,6 +169,8 @@ export class CachedDataService {
     this.allPartnerStatusData.set([]);
     this.allPartnerNewEngagementData.set([]);
     this.allYesNoData.set([]);
+    this.allDueDiligenceRequiredData.set([]);
+    this.allDueDiligenceApprovalData.set([]);
     this.allPartnerLevyAppliesData.set([]);
     this.allPartnerReasonForLevyNotData.set([]);
     this.allPartnerLevyTreatmentData.set([]);
@@ -301,6 +311,28 @@ export class CachedDataService {
       name: 'No'
     }];
     this.allYesNoData.set(yesNo);
+  }
+
+  loadDueDiligenceRequiredData() {
+    let dueDiligenceRequired: any = [{
+      id: 'Required',
+      name: 'Required'
+    }, {
+      id: 'NotRequired',
+      name: 'Not Required'
+    }];
+    this.allDueDiligenceRequiredData.set(dueDiligenceRequired);
+  }
+
+  loadDueDiligenceApprovalData() {
+    let dueDiligenceApproval: any = [{
+      id: 'Approved',
+      name: 'Approved'
+    }, {
+      id: 'NotApproved',
+      name: 'Not Approved'
+    }];
+    this.allDueDiligenceApprovalData.set(dueDiligenceApproval);
   }
 
   loadPartnerLevyAppliesData() {

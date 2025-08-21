@@ -85,6 +85,18 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
             }
         }
 
+        // Populate PartnerFocalPointUserName if PartnerFocalPointUserId exists
+        if (result.PartnerFocalPointUserId.HasValue && result.PartnerFocalPointUserId.Value > 0)
+        {
+            var focalPointUser = await _context.PAOUsers
+                .Where(u => u.Id == result.PartnerFocalPointUserId.Value)
+                .FirstOrDefaultAsync();
+            if (focalPointUser != null)
+            {
+                result.PartnerFocalPointUserName = focalPointUser.Email;
+            }
+        }
+
         // Use the provided user or get current user context
         var userContext = user ?? GetCurrentUserOrSystemContext();
         return await MapEntityToModelWithPermissionsAsync(result, userContext);
@@ -1081,8 +1093,9 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         {
             await UpdateOrganizationUnitRelationshipsDifferentialAsync(entity.Id, model.OrganizationHierarchyIds);
         }
-
+        
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
+        // PatchNonNullProperties now automatically handles string-to-enum conversion
         PatchNonNullProperties(model, entity);
         
         await PartnerRepository.UpdateAsync(entity);
@@ -1279,6 +1292,7 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         }
 
         // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
+        // PatchNonNullProperties now automatically handles string-to-enum conversion
         PatchNonNullProperties(model, entity);
 
         await PartnerRepository.UpdateAsync(entity);
@@ -1655,7 +1669,8 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         }
 
         // Update all approval fields from the request before approving
-        // This follows the same pattern as UpdatePartnerAsync
+        // PatchNonNullProperties now automatically excludes navigation properties like OrganizationUnitRelationships
+        // PatchNonNullProperties now automatically handles string-to-enum conversion
         PatchNonNullProperties(request, entity);
 
         // Get user information for audit trail

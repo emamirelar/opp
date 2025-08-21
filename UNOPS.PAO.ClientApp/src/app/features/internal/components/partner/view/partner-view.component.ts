@@ -48,6 +48,7 @@ import { PartnerEditDialogComponent } from '../edit-dialog/partner-edit-dialog.c
 import { PartnerEditDialogFooterComponent } from '../edit-dialog/footer/partner-edit-dialog-footer.component';
 import { PartnerApprovalDialogComponent } from '../approval-dialog/partner-approval-dialog.component';
 import { AuthService } from '../../../../../essentials/services/auth.service';
+import { EntityTagsComponent } from '../../../../../common/components/entity-tags/entity-tags.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 
@@ -96,6 +97,7 @@ import { ConfirmationService } from 'primeng/api';
     AiPanelComponent,
     RouterModule,
     ConfirmDialogModule,
+    EntityTagsComponent,
   ],
   templateUrl: './partner-view.component.html',
   standalone: true,

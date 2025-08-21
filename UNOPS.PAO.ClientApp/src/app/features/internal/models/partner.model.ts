@@ -2,8 +2,9 @@ import { PartnerTree } from "./partner-tree.model";
 import { EntityPermissionSet } from './shared-types';
 import { OrganizationUnitRelationshipModel } from './organization-unit-relationship.model';
 import { OrganizationHierarchyModel } from '../../../models/organization-hierarchy.model';
+import { EntityTag, TaggedEntity } from '../../../common/models/entity-tag.model';
 
-export interface Partner {
+export interface Partner extends TaggedEntity {
   id?: string | null;
   partnerCode?: string | null;
   
@@ -13,7 +14,8 @@ export interface Partner {
   partnerLongDescription?: string | null; // Optional long description
   partnerCategoryId?: number | null; // FK to Partner Category (required)
   liaisonOfficeId?: number | null; // FK to LiaisonOffice (required)
-  partnerFocalPoint?: number | null; // FK to User (Partner Focal Point)
+  partnerFocalPointUserId?: number | null; // FK to User (Partner Focal Point)
+  partnerFocalPointUserName?: string | null; // Partner Focal Point User Name
   
   // Backward compatibility
   name?: string | null; // Maps to partnerDescription for backward compatibility
