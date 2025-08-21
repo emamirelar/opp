@@ -131,33 +131,92 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         public async Task<dynamic> RetrieveEntityId(string entityName, string? vectorEmbedding, string? searchText=null, float similarityThreshold=0.3f, float embeddingThreshold=0.7f, string? where=null)
         {
-            var sql = "SELECT entityId from public.retrieve_similarity_results(@entityName, @searchText, @embedding, @similarityThreshold, @embeddingThreshold, @where) LIMIT 1";
-
             entityName = entityName.Pluralize();
 
+            // Step 1: Try similarity search first (faster) if we have search text
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                var similarityResult = await ExecuteSimilaritySearch(entityName, searchText, similarityThreshold, where);
+                
+                if (similarityResult != null && !(similarityResult is DBNull))
+                {
+                    return similarityResult; // Found via similarity - return immediately
+                }
+            }
+            
+            // Step 2: If similarity fails or we only have embedding, use embedding search
+            if (!string.IsNullOrEmpty(vectorEmbedding))
+            {
+                var embeddingResult = await ExecuteEmbeddingSearch(entityName, vectorEmbedding, embeddingThreshold, where);
+                return embeddingResult;
+            }
+            
+            // Step 3: If we have search text but no embedding, generate embedding and search
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                var generatedEmbedding = await CreateEmbeddingForText(searchText);
+                if (!string.IsNullOrEmpty(generatedEmbedding))
+                {
+                    var embeddingResult = await ExecuteEmbeddingSearch(entityName, generatedEmbedding, embeddingThreshold, where);
+                    
+                    // If embedding search also fails but we have a vector, log for future searches
+                    if ((embeddingResult == null || embeddingResult is DBNull))
+                    {
+                        Console.WriteLine($"No match found for '{searchText}' in '{entityName}', but embedding created for future searches.");
+                    }
+                    
+                    return embeddingResult;
+                }
+            }
+            
+            return null;
+        }
+
+        private async Task<dynamic> ExecuteSimilaritySearch(string entityName, string searchText, float similarityThreshold, string whereCondition)
+        {
+            var sql = "SELECT entityId, score, search_type FROM public.retrieve_similarity_search(@entityName, @searchText, @similarityThreshold, @where) LIMIT 1";
+            
             var parameters = new[] 
             {
                 new NpgsqlParameter("@entityName", NpgsqlTypes.NpgsqlDbType.Text) { Value = entityName },
                 new NpgsqlParameter("@searchText", NpgsqlTypes.NpgsqlDbType.Text) { Value = searchText },
-                new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)vectorEmbedding ?? DBNull.Value },
                 new NpgsqlParameter("@similarityThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = similarityThreshold },
-                new NpgsqlParameter("@embeddingThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = embeddingThreshold },
-                new NpgsqlParameter("@where", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)where ?? DBNull.Value }
+                new NpgsqlParameter("@where", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)whereCondition ?? DBNull.Value }
             };
 
-            // Execute the stored procedure using ExecuteSqlRaw
             var connection = _context.Database.GetDbConnection();
             if (connection.State != ConnectionState.Open)
-            {
                 await connection.OpenAsync();
-            }
 
-            await using var command = connection.CreateCommand();
+            using var command = connection.CreateCommand();
             command.CommandText = sql;
             command.Parameters.AddRange(parameters);
 
             var result = await command.ExecuteScalarAsync();
+            return result;
+        }
 
+        private async Task<dynamic> ExecuteEmbeddingSearch(string entityName, string embeddingVector, float embeddingThreshold, string whereCondition)
+        {
+            var sql = "SELECT entityId, score, search_type FROM public.retrieve_embedding_search(@entityName, @embedding, @embeddingThreshold, @where) LIMIT 1";
+            
+            var parameters = new[] 
+            {
+                new NpgsqlParameter("@entityName", NpgsqlTypes.NpgsqlDbType.Text) { Value = entityName },
+                new NpgsqlParameter("@embedding", NpgsqlTypes.NpgsqlDbType.Text) { Value = embeddingVector },
+                new NpgsqlParameter("@embeddingThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = embeddingThreshold },
+                new NpgsqlParameter("@where", NpgsqlTypes.NpgsqlDbType.Text) { Value = (object?)whereCondition ?? DBNull.Value }
+            };
+
+            var connection = _context.Database.GetDbConnection();
+            if (connection.State != ConnectionState.Open)
+                await connection.OpenAsync();
+
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            command.Parameters.AddRange(parameters);
+
+            var result = await command.ExecuteScalarAsync();
             return result;
         }
 
@@ -605,6 +664,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                         var text = responseObject[dependent];
                         if (text != null)
                         {
+                            // Special case: OrganizationUnitRelationships (many-to-many)
+                            if (dependent == "organizationUnitRelationships")
+                            {
+                                await HandleOrganizationUnitRelationships(responseObject, text);
+                                continue;
+                            }
+                            
                             // Check if the dependent field is already an array of text values
                             if (text is JArray textArray)
                             {
@@ -763,20 +829,29 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         private async Task<dynamic> GetEntityIdFromText(string text, string dependent)
         {
-            // Convert dependent to entity name using the same logic as before
-            string entityName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(
-                dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
-                    dependent.Substring(0, dependent.Length - 3) : 
-                    dependent.Replace("Id", "")
-            );
+            // Convert dependent to entity name - remove "Id"/"Ids" and capitalize first letter only
+            string baseEntityName = dependent.EndsWith("Ids", StringComparison.OrdinalIgnoreCase) ? 
+                dependent.Substring(0, dependent.Length - 3) : 
+                dependent.Replace("Id", "", StringComparison.OrdinalIgnoreCase);
+            
+            // Capitalize only the first letter, preserving existing capitalization
+            string entityName = string.IsNullOrEmpty(baseEntityName) ? 
+                baseEntityName : 
+                char.ToUpper(baseEntityName[0]) + baseEntityName.Substring(1);
             
             string whereCondition = "1=1"; // Default WHERE condition
             
-            // Special case for Orgunit - should look at OrganizationHierarchies table
-            if (entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
+            // Special case for OrganizationUnitRelationships - should look at OrganizationHierarchies table
+            if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase))
             {
                 entityName = "OrganizationHierarchies";
-                whereCondition = "\"Type\" = 'OrgUnit'"; // 3 corresponds to OrgUnit enum value
+                whereCondition = "\"Type\" = 'OrgUnit'"; // OrgUnit enum value stored as string
+            }
+            // Special case for Orgunit - should look at OrganizationHierarchies table
+            else if (entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "OrganizationHierarchies";
+                whereCondition = "\"Type\" = 'OrgUnit'"; // OrgUnit enum value stored as string
             }
             // Special case for User/UserIds - should look at UserProfile table (which has searchable Name field)
             else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase))
@@ -791,6 +866,31 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             }
             
             return await RetrieveEntityId(entityName, null, text, 0.3f, 0.7f, whereCondition);
+        }
+        
+        private async Task HandleOrganizationUnitRelationships(dynamic responseObject, dynamic orgUnitText)
+        {
+            var orgUnitIds = new JArray();
+            
+            if (orgUnitText is JArray orgUnitArray)
+            {
+                // Handle array of org unit names
+                foreach (var orgUnitName in orgUnitArray)
+                {
+                    var orgUnitId = await GetEntityIdFromText(orgUnitName?.ToString(), "organizationUnitRelationships");
+                    if (orgUnitId != null && !(orgUnitId is DBNull))
+                        orgUnitIds.Add(orgUnitId);
+                }
+            }
+            else if (orgUnitText != null)
+            {
+                // Handle single org unit name
+                var orgUnitId = await GetEntityIdFromText(orgUnitText.ToString(), "organizationUnitRelationships");
+                if (orgUnitId != null && !(orgUnitId is DBNull))
+                    orgUnitIds.Add(orgUnitId);
+            }
+            
+            responseObject["organizationUnitRelationships"] = orgUnitIds;
         }
         
         private async Task AddEmailToResponse(dynamic responseObject, dynamic entityId)

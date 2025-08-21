@@ -66,9 +66,6 @@ public class APIDictionary
     public const string AiAssistantUpdateArchive = APIPrefix + "ai-assistant/update-archive";
     public const string AiAssistantUpdateTitle = APIPrefix + "ai-assistant/update-title";
     public const string GenerateEmbeddings = APIPrefix + "generate-embeddings";
-    public const string AnalyseFile = APIPrefix + "import/analyse-file";
-
-    public const string BulkUpload = APIPrefix + "import/bulk-upload";
 
     public const string Link = APIPrefix + "links";
 

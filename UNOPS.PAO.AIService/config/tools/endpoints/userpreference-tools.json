@@ -1,12 +1,12 @@
 {
   "entity": "UserPreference",
-  "description": "Manages user-specific settings and preferences, such as default organizational units, for personalized application behavior and filtering.",
+  "description": "Manages user-specific settings and preferences within the system, such as default organizational unit.",
   "synonyms": [
     "user settings",
-    "personal preferences",
-    "account settings",
-    "user configuration",
-    "profile settings"
+    "preferences",
+    "user config",
+    "my settings",
+    "personal settings"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -14,7 +14,7 @@
       "name": "GetDefaultOrgUnit",
       "url": "api/user-preferences/default-org-unit",
       "method": "GET",
-      "description": "Retrieves the current user's default organizational unit preference for filtering and access control. This setting determines the primary organizational context for the user within the application.",
+      "description": "Retrieves the current user's default organizational unit preference for filtering and access control.",
       "parameters": {},
       "example_uses": [
         "Get my default organizational unit setting",
@@ -29,7 +29,7 @@
       "name": "SetDefaultOrgUnit",
       "url": "api/user-preferences/default-org-unit",
       "method": "PUT",
-      "description": "Updates the current user's default organizational unit preference for filtering and access control. This allows users to change their primary organizational context within the application.",
+      "description": "Updates the current user's default organizational unit preference for filtering and access control.",
       "parameters": {
         "request": {
           "type": "object",

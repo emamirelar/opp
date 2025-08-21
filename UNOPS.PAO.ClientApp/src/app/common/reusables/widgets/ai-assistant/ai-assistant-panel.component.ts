@@ -11,7 +11,7 @@ import { Menu } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AiAssistantData } from './ai-assistant.data';
-import { signal } from '@angular/core';
+import { signal, computed } from '@angular/core';
 import { LayoutService } from '../../../layouts/services/layout.service';
 import { AiAssistantScanComponent } from './scan/ai-assistant-scan.component';
 import { SafeUrlPipe } from './safe-url.pipe';
@@ -79,6 +79,11 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   
   // User info for personalized greeting
   userName = signal<string>('');
+  
+  // Check if AI is currently in fullscreen mode (on AI route)
+  isInFullscreenMode = computed(() => {
+    return this.router.url.startsWith('/ai');
+  });
   
   // Example prompts for welcome message - Gemini style business-specific
   examplePrompts = [
@@ -189,8 +194,12 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   closeAiAssistant(): void {
     // Check if we're on the AI route
     if (this.router.url.startsWith('/ai')) {
-      // On AI route, navigate back to home or previous page
+      // On AI route, navigate back to home to return to popup mode
       this.router.navigate(['/']);
+      // After navigation, open the AI assistant in popup mode
+      setTimeout(() => {
+        this.layoutService.onAIAssistantToggle();
+      }, 100);
     } else {
       // In overlay mode, close the overlay
       this.layoutService.onAIAssistantToggle();
@@ -759,68 +768,46 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   // Open AI assistant in fullscreen mode
   openFullscreen(): void {
-    // For hash-based routing, we need to construct the URL properly
-    const baseUrl = window.location.origin + window.location.pathname;
     const currentSessionId = this.aiAssistantData.currentSessionId();
     
-    // Include sessionId in URL if available
-    const hashUrl = currentSessionId 
-      ? `${baseUrl}#/ai/${currentSessionId}`
-      : `${baseUrl}#/ai`;
-    
-    window.open(hashUrl, '_blank');
+    // Navigate within the same browser tab to the AI route
+    if (currentSessionId) {
+      this.router.navigate(['/ai', currentSessionId]);
+    } else {
+      this.router.navigate(['/ai']);
+    }
   }
 
-  // Sequential content display methods
+  // Minimize AI assistant from fullscreen mode
+  minimizeFullscreen(): void {
+    // Navigate back to home page when minimizing from fullscreen
+    this.router.navigate(['/']);
+  }
+
+  // Toggle between fullscreen and popup modes
+  toggleFullscreen(): void {
+    if (this.isInFullscreenMode()) {
+      this.minimizeFullscreen();
+    } else {
+      this.openFullscreen();
+    }
+  }
+
+  // Sequential content display methods (modified to show all content immediately)
   shouldShowContentItem(messageIndex: number, itemIndex: number): boolean {
-    const displayState = this.contentDisplayState();
-    const chatHistory = this.aiAssistantData.chatHistory();
-    
-    // Find the most recent AI message index
-    let mostRecentAiMessageIndex = -1;
-    for (let i = chatHistory.length - 1; i >= 0; i--) {
-      const message = chatHistory[i];
-      if (message && !message.isUser && message.result && message.result.length > 0) {
-        mostRecentAiMessageIndex = i;
-        break;
-      }
-    }
-    
-    // If this is not the most recent AI message, show all content immediately
-    if (messageIndex !== mostRecentAiMessageIndex) {
-      return true;
-    }
-    
-    // For the most recent AI message, apply sequential display
-    const visibleItems = displayState[messageIndex] || 0;
-    return itemIndex < visibleItems;
+    // Always show all content immediately - no typewriting effect
+    return true;
   }
 
-  // Check if sources should be displayed (after content is complete)
+  // Check if sources should be displayed (modified to show immediately)
   shouldShowSources(messageIndex: number): boolean {
-    const chatHistory = this.aiAssistantData.chatHistory();
-    const message = chatHistory[messageIndex];
-    
-    // If message is from history, always show sources immediately
-    if (message && message.isFromHistory) {
-      return true;
-    }
-    
-    // For new messages, check if it's the most recent and if content is complete
-    if (this.isNewMessage(messageIndex)) {
-      const displayState = this.contentDisplayState();
-      const visibleItems = displayState[messageIndex] || 0;
-      const totalItems = message.result ? message.result.length : 0;
-      
-      // Show sources only when all content items are visible
-      return visibleItems > totalItems;
-    }
-    
-    // For older messages, show sources immediately
+    // Always show sources immediately - no delayed display
     return true;
   }
 
   onContentItemComplete(messageIndex: number, itemIndex: number): void {
+    // Since we removed typewriting effect, just scroll to bottom immediately
+    this.scrollToBottom();
     const chatHistory = this.aiAssistantData.chatHistory();
     
     // Find the most recent AI message index
@@ -886,28 +873,10 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Check if a message is the most recent AI message (for typewriter effect)
+  // Check if a message is the most recent AI message (simplified since no typewriter effect)
   isNewMessage(messageIndex: number): boolean {
-    const chatHistory = this.aiAssistantData.chatHistory();
-    const message = chatHistory[messageIndex];
-    
-    // If message is from history, never apply typewriter effect
-    if (message && message.isFromHistory) {
-      return false;
-    }
-    
-    // Find the most recent AI message index
-    let mostRecentAiMessageIndex = -1;
-    for (let i = chatHistory.length - 1; i >= 0; i--) {
-      const msg = chatHistory[i];
-      if (msg && !msg.isUser && msg.result && msg.result.length > 0) {
-        mostRecentAiMessageIndex = i;
-        break;
-      }
-    }
-    
-    // Only the most recent AI message should have typewriter effect (and not from history)
-    return messageIndex === mostRecentAiMessageIndex;
+    // No longer needed for typewriter effect, but keeping for compatibility
+    return false;
   }
 
   // Handler for cardClicked event from content-renderer/entity-grid

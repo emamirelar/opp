@@ -127,8 +127,23 @@ def parse_screen_url_callback(callback_context: CallbackContext, llm_request=Non
     """
     try:
         session_state = callback_context.state
-        screen_url_str = session_state.get('screen_url', '')
-        user_focus_context_str = session_state.get('user_focus_context', '')
+        
+        # Handle Google ADK State object
+        print(f"🔍 [CALLBACK] Session state type: {type(session_state)}")
+        
+        # Extract values from State object
+        try:
+            if hasattr(session_state, 'get'):
+                screen_url_str = session_state.get('screen_url', '') or ''
+                user_focus_context_str = session_state.get('user_focus_context', '') or ''
+            else:
+                screen_url_str = getattr(session_state, 'screen_url', '') or ''
+                user_focus_context_str = getattr(session_state, 'user_focus_context', '') or ''
+            print(f"🔍 [CALLBACK] Successfully extracted URLs")
+        except Exception as e:
+            print(f"❌ [CALLBACK] Error extracting URLs: {e}")
+            screen_url_str = ''
+            user_focus_context_str = ''
         
         print(f"🎯 [SCREEN] Processing URLs: screen_url='{screen_url_str}', user_focus_context='{user_focus_context_str}'")
         
@@ -190,9 +205,17 @@ def parse_screen_url_callback(callback_context: CallbackContext, llm_request=Non
         
     except Exception as e:
         print(f"❌ [SCREEN] Error in enhanced parse_screen_url_callback: {e}")
+        # Extract URLs for error context
+        try:
+            error_screen_url = getattr(session_state, 'screen_url', '') or (session_state.get('screen_url', '') if hasattr(session_state, 'get') else '')
+            error_user_focus = getattr(session_state, 'user_focus_context', '') or (session_state.get('user_focus_context', '') if hasattr(session_state, 'get') else '')
+        except:
+            error_screen_url = 'unknown'
+            error_user_focus = 'unknown'
+            
         error_context = {
-            "original_screen_url": session_state.get('screen_url', ''),
-            "original_user_focus_context": session_state.get('user_focus_context', ''),
+            "original_screen_url": error_screen_url,
+            "original_user_focus_context": error_user_focus,
             "error": str(e),
             "screen_type": "error"
         }
@@ -538,23 +561,113 @@ def gather_screen_context(tool_context: ToolContext) -> dict:
         # Get session state from tool context
         session_state = tool_context.state
         
+        # Handle Google ADK State object
+        print(f"🔍 [FUNCTION] Session state type: {type(session_state)}")
+        
+        # Extract data from Google ADK State object
+        screen_url = ''
+        user_focus_context = ''
+        user_viewing_panel = {}
+        
+        try:
+            # Google ADK State objects typically have dict-like access
+            if hasattr(session_state, 'get'):
+                screen_url = session_state.get('screen_url', '') or ''
+                user_focus_context = session_state.get('user_focus_context', '') or ''
+                user_viewing_panel = session_state.get('user_viewing_panel', {}) or {}
+                print(f"🔍 [FUNCTION] Accessed via get() method")
+            else:
+                # Fallback: try attribute access
+                screen_url = getattr(session_state, 'screen_url', '') or ''
+                user_focus_context = getattr(session_state, 'user_focus_context', '') or ''
+                user_viewing_panel = getattr(session_state, 'user_viewing_panel', {}) or {}
+                print(f"🔍 [FUNCTION] Accessed via attributes")
+        except Exception as e:
+            print(f"❌ [FUNCTION] Error accessing session state: {e}")
+            # Return minimal error context for homepage
+            if hasattr(session_state, '__str__') and 'screen_url' in str(session_state):
+                return {
+                    "screen_name": "Dashboard",
+                    "screen_url": "/",
+                    "screen_type": "homepage",
+                    "screen_data": {"message": "Fallback homepage context"}
+                }
+            else:
+                return {
+                    "screen_name": "Error Page",
+                    "screen_url": "unknown",
+                    "screen_type": "error", 
+                    "screen_data": {"error": f"Cannot access session state: {e}"}
+                }
+        
         # Import here to avoid circular imports
         from ai_assistant.utils.common_callbacks import invoke_api_tool, construct_api_url
         
-        # Extract entity and ID from structured state data
-        screen_url_obj = session_state.get('screen_url', {})
-        user_viewing_panel = session_state.get('user_viewing_panel', {})
+        # Debug: Print extracted values
+        print(f"🔍 [FUNCTION] Extracted screen_url: '{screen_url}'")
+        print(f"🔍 [FUNCTION] Extracted user_focus_context: '{user_focus_context}'")
+        print(f"🔍 [FUNCTION] Extracted user_viewing_panel: {user_viewing_panel}")
         
-        # First priority: screen_url object
-        entity = screen_url_obj.get('entity', '')
-        entity_id = screen_url_obj.get('id', None)
-        section = screen_url_obj.get('section', '')
+        print(f"🔍 [FUNCTION] Parsing URLs directly:")
+        print(f"🔍 [FUNCTION] screen_url: '{screen_url}'")
+        print(f"🔍 [FUNCTION] user_focus_context: '{user_focus_context}'")
         
-        # Second priority: user_viewing_panel if screen_url is empty
+        # Determine which URL to use for parsing
+        url_to_parse = user_focus_context if user_focus_context else screen_url
+        print(f"🔍 [FUNCTION] Using URL for parsing: '{url_to_parse}'")
+        
+        # Parse the URL to extract entity and ID
+        # Expected URL patterns:
+        # "/" -> homepage
+        # "/partnerships/partners" -> entity: partners, id: None
+        # "/partnerships/partners/123" -> entity: partners, id: 123
+        # "/partnerships/contacts/456" -> entity: contacts, id: 456
+        # "/ai" -> entity: None (special case)
+        
+        entity = ''
+        entity_id = None
+        section = ''
+        
+        if url_to_parse and url_to_parse != '/':
+            # Remove leading slash and split by '/'
+            path_parts = url_to_parse.strip('/').split('/')
+            print(f"🔍 [FUNCTION] URL path parts: {path_parts}")
+            
+            if len(path_parts) >= 1 and path_parts[0]:
+                first_part = path_parts[0]
+                
+                # Handle special routes
+                if first_part == 'ai':
+                    print("🤖 [FUNCTION] AI route detected - no entity context needed")
+                    entity = ''
+                elif len(path_parts) >= 2 and path_parts[1]:
+                    # Normal entity routes like /partnerships/partners
+                    entity = path_parts[1]
+                    print(f"🔍 [FUNCTION] Detected entity: {entity}")
+                    
+                    if len(path_parts) >= 3 and path_parts[2]:
+                        # Third part might be entity ID
+                        potential_id = path_parts[2]
+                        if potential_id.isdigit():
+                            entity_id = int(potential_id)
+                            print(f"🔍 [FUNCTION] Detected numeric entity_id: {entity_id}")
+                        elif potential_id not in ['new', 'edit', 'list']:  # Skip action words
+                            entity_id = potential_id
+                            print(f"🔍 [FUNCTION] Detected string entity_id: {entity_id}")
+                            
+                    if len(path_parts) >= 4:
+                        # Fourth part might be section/action
+                        section = path_parts[3]
+                        print(f"🔍 [FUNCTION] Detected section: {section}")
+                else:
+                    # If only one part, it might be the entity directly
+                    entity = first_part
+                    print(f"🔍 [FUNCTION] Single part entity: {entity}")
+        
+        # Fallback: check user_viewing_panel if no entity found from URL
         if not entity and user_viewing_panel:
             entity = user_viewing_panel.get('entity', '')
             entity_id = user_viewing_panel.get('entity_id', None)
-            # Convert string ID to int if needed
             if entity_id and isinstance(entity_id, str) and entity_id.isdigit():
                 entity_id = int(entity_id)
         
@@ -565,17 +678,34 @@ def gather_screen_context(tool_context: ToolContext) -> dict:
         
         # Handle empty entity case gracefully - no context needed
         if not entity:
-            print("📭 [FUNCTION] No entity found in screen_url or user_viewing_panel - returning empty context")
-            empty_context = {
-                "screen_name": "Application",
-                "screen_url": "",
-                "screen_type": "app",
-                "screen_data": {
-                    "message": "No specific screen context available",
-                    "context_available": False
+            print("📭 [FUNCTION] No entity found - checking if this is homepage")
+            
+            # Check if this is homepage/dashboard
+            if url_to_parse == '/' or url_to_parse == '' or not url_to_parse:
+                print("🏠 [FUNCTION] Detected homepage - returning appropriate context")
+                homepage_context = {
+                    "screen_name": "Dashboard",
+                    "screen_url": "/",
+                    "screen_type": "homepage", 
+                    "screen_data": {
+                        "message": "Welcome to the homepage",
+                        "context_available": True,
+                        "view_type": "homepage"
+                    }
                 }
-            }
-            return empty_context
+                return homepage_context
+            else:
+                print("📭 [FUNCTION] No entity found in non-homepage context - returning empty context")
+                empty_context = {
+                    "screen_name": "Application",
+                    "screen_url": url_to_parse,
+                    "screen_type": "app",
+                    "screen_data": {
+                        "message": "No specific screen context available",
+                        "context_available": False
+                    }
+                }
+                return empty_context
         
         final_entity = entity
         final_id = entity_id
@@ -591,11 +721,11 @@ def gather_screen_context(tool_context: ToolContext) -> dict:
             display_url += f"/{section}"
         
         # Handle special cases for non-API entities
-        if final_entity in ['dashboard', '']:
+        if final_entity in ['dashboard', ''] or url_to_parse in ['/', '']:
             print("📭 [FUNCTION] Dashboard/Home route - returning general context")
             dashboard_context = {
                 "screen_name": "Dashboard",
-                "screen_url": display_url,
+                "screen_url": "/" if url_to_parse in ['/', ''] else display_url,
                 "screen_type": "dashboard",
                 "screen_data": {
                     "message": "Dashboard screen context",
@@ -645,9 +775,33 @@ def gather_screen_context(tool_context: ToolContext) -> dict:
         
         # Find the entity configuration with enhanced matching
         entity_config = find_matching_entity(final_entity, entities_config)
+        original_search_entity = final_entity  # Keep track of what we were originally looking for
+        
+        # If no entity found, try fallback search in Values entity for org units and other common lookups
+        if not entity_config:
+            print(f"⚠️ [FUNCTION] {final_entity} entity not found, trying fallback to Values...")
+            
+            # Define fallback mappings for common requests that should use Values entity
+            values_fallback_keywords = [
+                'org', 'orgunit', 'organizationunit', 'organizationunits', 'organization',
+                'department', 'departments', 'unit', 'units', 'hierarchy',
+                'currency', 'currencies', 'country', 'countries', 'eligible', 'lookup', 'lookups'
+            ]
+            
+            # Check if the entity matches any Values fallback keywords
+            final_entity_lower = final_entity.lower()
+            should_use_values = any(keyword in final_entity_lower for keyword in values_fallback_keywords)
+            
+            if should_use_values:
+                # Try to find Values entity
+                values_entity = find_matching_entity('values', entities_config)
+                if values_entity:
+                    print(f"✅ [FUNCTION] Using Values entity as fallback for '{final_entity}'")
+                    entity_config = values_entity
+                    final_entity = 'values'  # Update the entity name for endpoint search
         
         if not entity_config:
-            print(f"⚠️ [FUNCTION] {final_entity} entity not found in tools.json")
+            print(f"⚠️ [FUNCTION] {final_entity} entity not found in tools.json and no fallback available")
             error_context = {
                 "screen_name": f"{final_entity.title()} Page",
                 "screen_url": display_url,
@@ -671,14 +825,37 @@ def gather_screen_context(tool_context: ToolContext) -> dict:
                     target_endpoint = endpoint
                     break
         else:
-            # List view - look for GetEntities endpoints  
+            # List view - look for GetEntities endpoints
+            # Special handling for org units and other Values entity requests
+            original_entity_lower = original_search_entity.lower() if original_search_entity != final_entity else None
+            
+            # Priority search for specific endpoints
             for endpoint in entity_config.get('endpoints', []):
                 endpoint_name = endpoint.get('name', '').lower()
+                endpoint_url = endpoint.get('url', '').lower()
+                
+                # Special case: if looking for org units, prioritize GetOrganizationUnits
+                if original_entity_lower and any(term in original_entity_lower for term in ['org', 'unit', 'organization']):
+                    if 'organization' in endpoint_name and 'unit' in endpoint_name:
+                        target_endpoint = endpoint
+                        print(f"🎯 [FUNCTION] Found specific org units endpoint: {endpoint_name}")
+                        break
+                
+                # General pattern matching for list endpoints
                 if ('get' in endpoint_name and 
                     ('s' in endpoint_name[-1:] or 'list' in endpoint_name) and
                     'byid' not in endpoint_name):
                     target_endpoint = endpoint
-                    break
+                    # Don't break here - continue looking for more specific matches
+            
+            # If still no target found, try any GET endpoint without ID parameter
+            if not target_endpoint:
+                for endpoint in entity_config.get('endpoints', []):
+                    endpoint_name = endpoint.get('name', '').lower()
+                    endpoint_url = endpoint.get('url', '').lower()
+                    if 'get' in endpoint_name and '{id}' not in endpoint_url:
+                        target_endpoint = endpoint
+                        break
         
         if not target_endpoint:
             print(f"⚠️ [FUNCTION] No appropriate endpoint found for {actual_entity_name} (ID: {final_id})")

@@ -7,6 +7,7 @@
     "start": "run-script-os",
     "build": "ng build",
     "build:test": "ng build --configuration test",
+    "build:qa": "ng build --configuration qa",
     "build:prod": "ng build --configuration production",
     "build:ssr": "ng run UNOPS.PAO.ClientApp:server:dev",
     "watch": "ng build --watch --configuration development",

@@ -14,7 +14,7 @@ export class TourService {
   private availableTours: string[] = [];
 
   public preferences$ = this.preferencesSubject.asObservable();
-  
+
   constructor(private router: Router) {
     this.initializeTours();
     this.setupRouteListener();
@@ -26,13 +26,13 @@ export class TourService {
       // Load tour registry to get all available tour files dynamically
       const registryModule = await import('../tours/tour-registry.json');
       const registry = registryModule.default || registryModule;
-      
+
       // Extract all tour file names from the registry
       const knownTourFiles = registry.routes.map((route: any) => route.tourFile);
-      
+
       // Remove duplicates (in case multiple routes use the same tour)
       const uniqueTourFiles = [...new Set(knownTourFiles)];
-      
+
       console.log('🔍 Discovered tour files from registry:', uniqueTourFiles);
 
       // Filter out any tours that don't actually exist
@@ -48,7 +48,7 @@ export class TourService {
           console.warn(`⚠️ Tour file referenced in registry but not found: ${tourId}.json`);
         }
       }
-      
+
       this.availableTours = existingTours;
       console.log(`✅ Successfully loaded ${this.availableTours.length} tour files:`, this.availableTours);
     } catch (error) {
@@ -101,13 +101,14 @@ export class TourService {
     }
 
     const driverSteps = this.convertToDriverSteps(tourConfig);
-    
+
     if (driverSteps.length === 0) {
       console.warn(`No valid steps found for tour ${tourId}`);
       return false;
     }
 
     this.currentDriver = driver({
+      stagePadding: 5,
       showProgress: true,
       allowClose: tourConfig.allowClose,
       popoverOffset: tourConfig.popoverOffset,
@@ -127,7 +128,7 @@ export class TourService {
     return config.steps
       .map((step, index) => {
         const element = this.findBestElement(step);
-        
+
         // Skip steps where no element is found (except welcome/overview steps)
         if (!element && step.element) {
           console.warn(`Element not found for step ${index + 1} in tour ${config.tourId}`);
@@ -182,7 +183,7 @@ export class TourService {
 
     // Find tours that match the current route
     const matchingTours = await this.findToursForRoute(url);
-    
+
     for (const tourId of matchingTours) {
       if (this.shouldShowTour(tourId, TourTrigger.AUTO)) {
         // Delay to ensure page elements are rendered
@@ -199,14 +200,14 @@ export class TourService {
    */
   private async findToursForRoute(url: string): Promise<string[]> {
     const matchingTours: string[] = [];
-    
+
     for (const tourId of this.availableTours) {
       const config = await this.loadTour(tourId);
       if (config && this.routeMatches(url, config.route)) {
         matchingTours.push(tourId);
       }
     }
-    
+
     return matchingTours;
   }
 
@@ -218,28 +219,28 @@ export class TourService {
     if (tourRoute === 'Modal dialog (no direct route)' || !tourRoute || tourRoute.trim() === '') {
       return false;
     }
-    
+
     // Clean up URLs for comparison
     const cleanCurrentUrl = currentUrl.split('?')[0].split('#')[0]; // Remove query params and fragments
     const cleanTourRoute = tourRoute.split('?')[0].split('#')[0];
-    
+
     // Exact match
     if (cleanCurrentUrl === cleanTourRoute) {
       return true;
     }
-    
+
     // Handle Angular route parameters (e.g., :id, :recordId)
     if (this.matchesRoutePattern(cleanCurrentUrl, cleanTourRoute)) {
       return true;
     }
-    
+
     // Check if current URL starts with the tour route (for static routes)
     if (!cleanTourRoute.includes(':') && cleanCurrentUrl.startsWith(cleanTourRoute)) {
       // Make sure it's a logical extension (e.g., /partnerships/partners/123)
       const remainder = cleanCurrentUrl.substring(cleanTourRoute.length);
       return remainder === '' || remainder.startsWith('/') || remainder.startsWith('?');
     }
-    
+
     // Legacy wildcard matching for * patterns
     return this.wildcardMatch(cleanCurrentUrl, cleanTourRoute);
   }
@@ -251,17 +252,17 @@ export class TourService {
     // Split both URL and pattern into segments
     const urlSegments = url.split('/').filter(segment => segment !== '');
     const patternSegments = pattern.split('/').filter(segment => segment !== '');
-    
+
     // Must have at least as many segments as the pattern (allows nested routes)
     if (urlSegments.length < patternSegments.length) {
       return false;
     }
-    
+
     // Check each segment of the pattern
     for (let i = 0; i < patternSegments.length; i++) {
       const patternSegment = patternSegments[i];
       const urlSegment = urlSegments[i];
-      
+
       // If pattern segment is a parameter (starts with :), it matches any non-empty segment
       if (patternSegment.startsWith(':')) {
         if (!urlSegment || urlSegment.trim() === '') {
@@ -269,13 +270,13 @@ export class TourService {
         }
         continue;
       }
-      
+
       // For static segments, they must match exactly
       if (patternSegment !== urlSegment) {
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -289,22 +290,22 @@ export class TourService {
    */
   private shouldShowTour(tourId: string, trigger: TourTrigger): boolean {
     const preferences = this.preferencesSubject.value;
-    
+
     // Check if tour was already completed
     if (preferences.completedTours.includes(tourId)) {
       return false;
     }
-    
+
     // Check if tour was skipped (only block auto triggers)
     if (trigger === TourTrigger.AUTO && preferences.skippedTours.includes(tourId)) {
       return false;
     }
-    
+
     // Check onboarding preferences
     if (trigger === TourTrigger.ONBOARDING && !preferences.showOnboarding) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -313,15 +314,15 @@ export class TourService {
    */
   private trackTourProgress(tourId: string, stepIndex: number, action: string) {
     const preferences = this.preferencesSubject.value;
-    
+
     preferences.tourProgress[tourId] = {
       tourId,
       completed: false,
       currentStep: stepIndex
     };
-    
+
     this.updatePreferences(preferences);
-    
+
     // Analytics/logging could be added here
     console.log(`Tour ${tourId}: ${action} at step ${stepIndex}`);
   }
@@ -331,7 +332,7 @@ export class TourService {
    */
   private handleTourClose(tourId: string, stepIndex: number, completed: boolean) {
     const preferences = this.preferencesSubject.value;
-    
+
     if (completed) {
       preferences.completedTours.push(tourId);
       preferences.tourProgress[tourId] = {
@@ -346,14 +347,14 @@ export class TourService {
         preferences.skippedTours.push(tourId);
       }
     }
-    
+
     this.updatePreferences(preferences);
   }
 
   /**
    * Public API methods
    */
-  
+
   stopCurrentTour() {
     if (this.currentDriver) {
       this.currentDriver.destroy();
@@ -371,7 +372,7 @@ export class TourService {
 
   resetTourProgress(tourId?: string) {
     const preferences = this.preferencesSubject.value;
-    
+
     if (tourId) {
       preferences.completedTours = preferences.completedTours.filter(id => id !== tourId);
       preferences.skippedTours = preferences.skippedTours.filter(id => id !== tourId);
@@ -381,7 +382,7 @@ export class TourService {
       preferences.skippedTours = [];
       preferences.tourProgress = {};
     }
-    
+
     this.updatePreferences(preferences);
   }
 
@@ -404,7 +405,7 @@ export class TourService {
         console.warn('Failed to parse stored tour preferences:', error);
       }
     }
-    
+
     return {
       autoStart: true,
       completedTours: [],
@@ -425,10 +426,10 @@ export class TourService {
   /**
    * Special tour types
    */
-  
+
   async startOnboardingFlow() {
     const onboardingTours = ['partner-tour', 'contact-tour', 'interaction-tour'];
-    
+
     for (const tourId of onboardingTours) {
       if (this.shouldShowTour(tourId, TourTrigger.ONBOARDING)) {
         await this.startTour(tourId, TourTrigger.ONBOARDING);
@@ -443,12 +444,12 @@ export class TourService {
       'business-cards': 'businesscardscanner-tour',
       'entity-manager': 'entitymanager-tour'
     };
-    
+
     const tourId = featureTourMap[feature];
     if (tourId) {
       return this.startTour(tourId, TourTrigger.FEATURE_ANNOUNCEMENT);
     }
-    
+
     return false;
   }
 
@@ -468,12 +469,12 @@ export class TourService {
       'usermanagement': 'usermanagement-tour',
       'interactionlist': 'interactionlist-tour'
     };
-    
+
     const tourId = entityTourMap[entityType.toLowerCase()];
     if (tourId) {
       return this.startTour(tourId, TourTrigger.MANUAL);
     }
-    
+
     console.warn(`No tour found for entity type: ${entityType}`);
     return false;
   }
@@ -485,14 +486,14 @@ export class TourService {
     const currentUrl = this.router.url;
     const matchingTourIds = await this.findToursForRoute(currentUrl);
     const tourConfigs: TourConfig[] = [];
-    
+
     for (const tourId of matchingTourIds) {
       const config = await this.loadTour(tourId);
       if (config) {
         tourConfigs.push(config);
       }
     }
-    
+
     return tourConfigs;
   }
 

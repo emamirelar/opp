@@ -1,17 +1,15 @@
 {
   "entity": "Partner",
-  "description": "Manages partner organizations, including their creation, retrieval, updates, and deletion. It also provides capabilities for searching, categorizing, and analyzing partner data, as well as managing permissions and uploading associated files like logos.",
+  "description": "Manages information about partner organizations, including their details, contacts, addresses, and organizational metadata.",
   "synonyms": [
     "organization",
-    "collaborator",
     "entity",
+    "institution",
     "partner group",
     "partner category"
   ],
   "mandatoryFields": [
-    "name",
-    "email",
-    "addressCountry"
+    "name"
   ],
   "searchMetadata": {
     "directFields": [
@@ -22,8 +20,8 @@
       "phone",
       "website",
       "shortName",
-      "organizationHierarchyId",
-      "organizationHierarchyName",
+      "partnerOfficeId",
+      "partnerOfficeName",
       "partnerCategoryId",
       "partnerCategoryName",
       "addressCity",
@@ -35,11 +33,7 @@
       "createdDate",
       "modifiedDate"
     ],
-    "nestedFields": {
-      "contact": [
-        "firstName"
-      ]
-    },
+    "nestedFields": {},
     "operators": [
       "like",
       "is",
@@ -110,91 +104,38 @@
       "when_to_use": "Use this when the user asks to add, create, register, or set up a new partner."
     },
     {
-      "name": "ListAllPartners",
+      "name": "GetAll",
       "url": "api/partner",
       "method": "GET",
-      "description": "Retrieves all partners with basic pagination and ordering (no search criteria).",
+      "description": "Retrieves a list of partners with advanced filtering, pagination, search capabilities, and access control. This endpoint supports advanced search using the `searchCriteria` parameter. To use advanced search, set `advancedSearch` to `true` and provide a JSON array of criteria in the `searchCriteria` parameter. Each criterion should be an object with `field`, `operator`, and `value`. Available fields include: `id`, `name`, `status`, `newEngagement`, `phone`, `website`, `shortName`, `partnerOfficeId`, `partnerOfficeName`, `partnerCategoryId`, `partnerCategoryName`, `addressCity`, `addressStateProvince`, `addressPostalCode`, `addressCountry`, `description`, `email`, `createdDate`, `modifiedDate`. Available operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are `createdDate`, `modifiedDate`. Example: `[{\"field\":\"name\",\"operator\":\"like\",\"value\":\"Foundation\"},{\"field\":\"status\",\"operator\":\"is\",\"value\":\"Active\"}]`.",
       "parameters": {
-        "pageIndex": {
-          "type": "integer",
+        "request": {
+          "type": "object",
           "required": false,
-          "description": "Page number (1-based, default: 1)"
+          "description": "Partner filter request containing search and pagination parameters"
         },
-        "pageSize": {
-          "type": "integer",
-          "required": false,
-          "description": "Number of items per page (default: 20)"
-        },
-        "orderBy": {
-          "type": "string",
-          "required": false,
-          "description": "Field to order results by (optional)"
-        },
-        "ascending": {
+        "advancedSearch": {
           "type": "boolean",
           "required": false,
-          "description": "Sort direction - true for ascending, false for descending (default: true)"
-        }
-      },
-      "example_uses": [
-        "Show me all partners",
-        "List all partners in the system",
-        "Display the partner directory"
-      ],
-      "when_to_use": "Use this when the user wants to see ALL partners without any search criteria or when asking for a general partner list."
-    },
-    {
-      "name": "SearchPartners",
-      "url": "api/partner/search",
-      "method": "GET",
-      "description": "Performs simple text search across multiple partner fields (name, description, etc.). This endpoint supports basic text search using the `searchText` parameter. For more advanced, structured searches, use the `AdvancedSearchPartners` endpoint.",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters"
-        },
-        "searchText": {
-          "type": "string",
-          "required": false,
-          "description": "Text to search across partner name, description, and other basic fields"
-        }
-      },
-      "example_uses": [
-        "Search for partners named UNICEF",
-        "Find partners containing 'Government'",
-        "Search for partners with 'Development' in description"
-      ],
-      "when_to_use": "Use this for simple name, description, or basic field searches. NOT for complex criteria or relationship searches."
-    },
-    {
-      "name": "AdvancedSearchPartners",
-      "url": "api/partner/advanced-search",
-      "method": "GET",
-      "description": "Performs advanced search with structured criteria including status, dates, relationships, and complex filters. This endpoint allows for highly specific searches using the `searchCriteria` parameter, which expects a JSON array of objects. Each object should have `field`, `operator`, and `value` properties. For example: `[{\"field\": \"name\", \"operator\": \"like\", \"value\": \"Foundation\"}, {\"field\": \"status\", \"operator\": \"is\", \"value\": \"Active\"}]`. Available fields for search include: `id`, `name`, `status`, `newEngagement`, `phone`, `website`, `shortName`, `organizationHierarchyId`, `organizationHierarchyName`, `partnerCategoryId`, `partnerCategoryName`, `addressCity`, `addressStateProvince`, `addressPostalCode`, `addressCountry`, `description`, `email`, `createdDate`, `modifiedDate`, and nested field `contact.firstName`. Available operators are: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are `createdDate`, `modifiedDate`.",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters"
+          "description": "Enable advanced search mode"
         },
         "searchCriteria": {
           "type": "string",
           "required": false,
-          "description": "JSON array of search criteria objects with field, operator, value, and logicalOperator"
+          "description": "JSON string containing advanced search filters"
         },
         "searchText": {
           "type": "string",
           "required": false,
-          "description": "Optional additional text search to combine with criteria"
+          "description": "Text to search across partner fields (override for request.searchText)"
         }
       },
       "example_uses": [
-        "Find active government partners",
-        "Show partners with global key account status",
-        "Get partners created this month"
+        "Show me all partners",
+        "List partners containing 'UNICEF' in the name",
+        "Find partners with global key account status"
       ],
-      "when_to_use": "Use this for searches involving partner status, dates, types, complex criteria, or multiple field combinations."
+      "when_to_use": "Use this when the user asks to search, list, filter, or browse partners."
     },
     {
       "name": "Get",
@@ -343,102 +284,6 @@
         "Get bilateral partners sorted by name"
       ],
       "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification."
-    },
-    {
-      "name": "GetAllPartnerCategories",
-      "url": "api/partner/categories-summary",
-      "method": "GET",
-      "description": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.",
-      "parameters": {},
-      "example_uses": [
-        "Get all partner categories with counts",
-        "Show partner distribution by category",
-        "Generate partner category statistics"
-      ],
-      "when_to_use": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization."
-    },
-    {
-      "name": "GetAllPartnerGroups",
-      "url": "api/partner/groups-summary",
-      "method": "GET",
-      "description": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation.",
-      "parameters": {},
-      "example_uses": [
-        "Get all partner groups with counts",
-        "Show partner distribution by group",
-        "Generate partner group statistics"
-      ],
-      "when_to_use": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping."
-    },
-    {
-      "name": "GetPartnerCategorizationOverview",
-      "url": "api/partner/categorization-overview",
-      "method": "GET",
-      "description": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation.",
-      "parameters": {},
-      "example_uses": [
-        "Get complete partner categorization overview",
-        "Show partner distribution across categories and groups",
-        "Generate comprehensive partner statistics"
-      ],
-      "when_to_use": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups."
-    },
-    {
-      "name": "ScanPartnerData",
-      "url": "api/partner/scan-data",
-      "method": "POST",
-      "description": "Scans and processes uploaded files for partner data extraction using AI-powered analysis.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": "File scan request containing the file to be processed"
-        }
-      },
-      "example_uses": [
-        "Scan partner contract document for data extraction",
-        "Upload partner registration form for processing",
-        "Analyze partner profile document with AI"
-      ],
-      "when_to_use": "Use this when the user wants to upload and scan documents for partner data extraction using AI."
-    },
-    {
-      "name": "AnalysePartnerData",
-      "url": "api/partner/analyse-file",
-      "method": "POST",
-      "description": "Analyzes uploaded files and extracts structured partner data using AI-powered data analysis.",
-      "parameters": {
-        "request": {
-          "type": "object",
-          "required": false,
-          "description": "Analysis request containing file and analysis parameters"
-        }
-      },
-      "example_uses": [
-        "Analyze partner documents for structured data extraction",
-        "Extract partner information from uploaded forms",
-        "Process partner onboarding documents with AI"
-      ],
-      "when_to_use": "Use this when the user wants to analyze files and extract structured partner data for database import."
-    },
-    {
-      "name": "BulkUploadPartners",
-      "url": "api/partner/bulk-upload",
-      "method": "POST",
-      "description": "Bulk uploads multiple partner records using AI-assisted data processing and validation.",
-      "parameters": {
-        "req": {
-          "type": "object",
-          "required": false,
-          "description": "Bulk upload request containing partner data"
-        }
-      },
-      "example_uses": [
-        "Bulk upload 100 partner organizations from Excel",
-        "Import multiple partners from CSV file",
-        "Mass upload partner data with AI validation"
-      ],
-      "when_to_use": "Use this when the user wants to upload multiple partner records at once with AI-assisted processing."
     }
   ]
 }

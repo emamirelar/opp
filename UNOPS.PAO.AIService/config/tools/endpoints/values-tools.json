@@ -1,131 +1,131 @@
 {
   "entity": "Values",
-  "description": "Provides access to various static and dynamic lookup data and lists of entities such as currencies, countries, application types, partners, contacts, and users.",
+  "description": "Manages and provides access to various lookup values and reference data such as currencies, countries, application types, and simplified lists of partners, contacts, and users.",
   "synonyms": [
-    "lookups",
-    "reference data",
-    "static data",
-    "system values",
-    "enumerations"
+    "Lookups",
+    "Reference Data",
+    "Utility Data",
+    "System Values",
+    "Master Data"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "GetCurrencies",
-      "url": "/api/values/currency",
+      "url": "api/values/currency",
       "method": "GET",
       "description": "Retrieves a list of all available currencies.",
       "parameters": {},
       "example_uses": [
         "How can I get a list of all supported currencies?",
-        "Show me the available currency codes.",
+        "Show me the currency codes.",
         "I need to see all currency options."
       ],
-      "when_to_use": "When you need a comprehensive list of currencies for selection or reference."
+      "when_to_use": "Use this endpoint when you need a comprehensive list of all currencies supported by the system, for display or selection purposes."
     },
     {
       "name": "GetEligibleEntities",
-      "url": "/api/values/eligible-entity",
+      "url": "api/values/eligible-entity",
       "method": "GET",
       "description": "Retrieves a list of entities that are eligible for certain operations or classifications.",
       "parameters": {},
       "example_uses": [
         "What are the eligible entities?",
         "List all entities that qualify.",
-        "I need to know which entities are eligible."
+        "Can you provide the list of eligible organizations?"
       ],
-      "when_to_use": "When you need to identify entities that meet specific eligibility criteria."
+      "when_to_use": "Use this endpoint to retrieve a list of entities that meet specific eligibility criteria within the system."
     },
     {
       "name": "GetCountries",
-      "url": "/api/values/country",
+      "url": "api/values/country",
       "method": "GET",
       "description": "Retrieves a list of all countries.",
       "parameters": {},
       "example_uses": [
-        "Can you give me a list of all countries?",
-        "Show me the country codes.",
-        "I need to select a country from a list."
+        "Show me all countries.",
+        "List the available countries.",
+        "I need a list of countries for a dropdown."
       ],
-      "when_to_use": "When you need a comprehensive list of countries for selection or reference."
+      "when_to_use": "Use this endpoint to get a complete list of countries, typically for geographical selection or reference."
     },
     {
       "name": "GetApplicationTypes",
-      "url": "/api/values/application-type",
+      "url": "api/values/application-type",
       "method": "GET",
-      "description": "Retrieves a list of all available application types.",
+      "description": "Retrieves a list of all defined application types.",
       "parameters": {},
       "example_uses": [
         "What are the different application types?",
-        "List all available application categories.",
-        "I need to know the types of applications."
+        "List all application categories.",
+        "Show me the types of applications."
       ],
-      "when_to_use": "When you need to identify the various types of applications supported by the system."
+      "when_to_use": "Use this endpoint to retrieve a list of various application types, useful for categorization or filtering."
     },
     {
       "name": "GetPartners",
-      "url": "/api/values/partners",
+      "url": "api/values/partners",
       "method": "GET",
-      "description": "Retrieves a list of all partners.",
+      "description": "Retrieves a simplified list of all partners. For detailed partner information or search, use the dedicated Partner entity endpoints.",
       "parameters": {},
       "example_uses": [
-        "Can I get a list of all partners?",
-        "Show me the registered partners.",
-        "I need to see all partner organizations."
+        "List all partners.",
+        "Show me a quick list of partners.",
+        "I need a basic list of partner names."
       ],
-      "when_to_use": "When you need a general list of all partners, typically for lookup or display purposes."
+      "when_to_use": "Use this endpoint for a high-level overview or selection of partners when detailed information is not required. For comprehensive partner management, refer to the 'Partner' entity."
     },
     {
       "name": "GetOrganizationUnits",
-      "url": "/api/values/organization-units",
+      "url": "api/values/organization-units",
       "method": "GET",
-      "description": "Retrieves a list of all organizational units.",
+      "description": "Retrieves a list of all organizational units within the system.",
       "parameters": {},
       "example_uses": [
-        "What are the organizational units?",
+        "What are the organization units?",
         "List all departments.",
-        "I need to see the structure of the organization."
+        "Show me the organizational structure."
       ],
-      "when_to_use": "When you need a list of internal organizational units for categorization or assignment."
+      "when_to_use": "Use this endpoint to get a list of all organizational units, typically for hierarchical display or assignment."
     },
     {
       "name": "GetContacts",
-      "url": "/api/values/contacts",
+      "url": "api/values/contacts",
       "method": "GET",
-      "description": "Retrieves a list of all contacts.",
+      "description": "Retrieves a simplified list of all contacts. For detailed contact information or search, use the dedicated Contact entity endpoints.",
       "parameters": {},
       "example_uses": [
-        "Can I get a list of all contacts?",
-        "Show me the registered contacts.",
-        "I need to see all contact persons."
+        "List all contacts.",
+        "Show me a quick list of contacts.",
+        "I need a basic list of contact names."
       ],
-      "when_to_use": "When you need a general list of all contacts, typically for lookup or display purposes."
+      "when_to_use": "Use this endpoint for a high-level overview or selection of contacts when detailed information is not required. For comprehensive contact management, refer to the 'Contact' entity."
     },
     {
       "name": "GetUsers",
-      "url": "/api/values/users",
+      "url": "api/values/users",
       "method": "GET",
-      "description": "Retrieves a list of all users.",
+      "description": "Retrieves a list of all users registered in the system.",
       "parameters": {},
       "example_uses": [
-        "Can I get a list of all users?",
-        "Show me the registered system users.",
-        "I need to see all active users."
+        "List all system users.",
+        "Show me who the users are.",
+        "I need a list of all registered accounts."
       ],
-      "when_to_use": "When you need a general list of all system users, typically for lookup or display purposes."
+      "when_to_use": "Use this endpoint to get a list of all system users, typically for administrative purposes or user assignment."
     },
     {
       "name": "GetGeminiModels",
-      "url": "/api/values/gemini-models",
+      "url": "api/values/gemini-models",
       "method": "GET",
       "description": "Retrieves a list of available Gemini AI models.",
       "parameters": {},
       "example_uses": [
         "What Gemini models are available?",
-        "List all AI models.",
-        "I need to know which Gemini models I can use."
+        "List the AI models.",
+        "Show me the supported Gemini versions."
       ],
-      "when_to_use": "When you need to identify the available Gemini AI models for integration or use."
+      "when_to_use": "Use this endpoint to retrieve a list of available Gemini AI models, useful for configuring AI-powered features."
     }
   ]
 }

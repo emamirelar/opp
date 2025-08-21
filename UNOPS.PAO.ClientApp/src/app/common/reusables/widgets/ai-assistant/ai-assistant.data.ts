@@ -45,6 +45,7 @@ export class AiAssistantData {
   textToSpeech = signal(false);
   private _titleGeneratedForSession: { [key: string]: boolean } = {};
   private _isLoadingPastChat = false; // Flag to track when loading past chats
+  readonly isFirstPageLoad = signal<boolean>(true); // Track if this is first page load vs manual new chat
 
   // Subject to emit chat history changes (for scrolling to bottom)
   private _chatHistoryChanged = new Subject<void>();
@@ -81,6 +82,11 @@ export class AiAssistantData {
       return of();
     }
 
+    // Mark as no longer first page load when user sends first message
+    if (this.isFirstPageLoad()) {
+      this.isFirstPageLoad.set(false);
+    }
+
     this.addUserMessage(message, files);
     this.isLoading.set(true);
 
@@ -101,6 +107,9 @@ export class AiAssistantData {
     // No active session, just reset state
     this.currentSessionId.set(null);
     this.isLoading.set(false);
+    
+    // Mark as manual new chat (not first page load)
+    this.isFirstPageLoad.set(false);
   }
 
   private loadOrCreateSession(): Observable<void> {

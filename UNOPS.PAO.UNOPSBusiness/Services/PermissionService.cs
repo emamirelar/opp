@@ -498,7 +498,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 // Instead of converting to dictionary, work directly with the entity type
                 // This preserves navigation properties and allows proper LINQ evaluation
                 var entityType = entity.GetType();
-                
+
                 // Create a generic method to handle the dynamic LINQ evaluation
                 var method = typeof(PermissionService).GetMethod(nameof(EvaluateFilterOnEntity), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 var genericMethod = method.MakeGenericMethod(entityType);

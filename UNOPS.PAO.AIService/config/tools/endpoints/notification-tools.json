@@ -1,6 +1,6 @@
 {
   "entity": "Notification",
-  "description": "Manages user notifications, including fetching, marking as read, and administrative updates.",
+  "description": "Manages user notifications, including retrieving, marking as read, and updating notification details.",
   "synonyms": [
     "alert",
     "message",
@@ -21,15 +21,15 @@
         "unreadOnly": {
           "type": "boolean",
           "required": false,
-          "description": "If true, only unread notifications are returned."
+          "description": "If true, only unread notifications will be returned."
         }
       },
       "example_uses": [
         "Get all my notifications.",
         "Show me only my unread notifications.",
-        "List all notifications I have received."
+        "Retrieve the list of recent alerts."
       ],
-      "when_to_use": "Use this to display a user's notification feed or to check for new, unread alerts."
+      "when_to_use": "Use this endpoint to fetch a user's notifications, optionally filtering for unread ones, to display in an inbox or notification center."
     },
     {
       "name": "MarkAsRead",
@@ -40,7 +40,7 @@
         "notificationId": {
           "type": "integer",
           "required": true,
-          "description": "Notification ID to mark as read"
+          "description": "The unique identifier of the notification to mark as read."
         }
       },
       "example_uses": [
@@ -61,7 +61,7 @@
         "notificationId": {
           "type": "integer",
           "required": true,
-          "description": "Notification ID to update"
+          "description": "The unique identifier of the notification to update."
         },
         "request": {
           "type": "object",

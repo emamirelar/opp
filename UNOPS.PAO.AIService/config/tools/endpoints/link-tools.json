@@ -1,25 +1,25 @@
 {
   "entity": "Link",
-  "description": "Manages external and internal links associated with various business entities such as projects, partners, or contracts. These links can point to documents, websites, or other relevant resources.",
+  "description": "Manages associations or connections between different entities within the system, such as partners, projects, or other business objects.",
   "synonyms": [
-    "hyperlink",
-    "URL",
-    "resource link",
-    "document link",
-    "web link"
+    "association",
+    "connection",
+    "relationship",
+    "reference",
+    "binding"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "GetLinks",
-      "url": "api/links",
+      "url": "/api/links",
       "method": "GET",
-      "description": "Retrieves a list of links associated with a specific entity (e.g., Project, Partner, Contract) and its unique identifier. Supports optional pagination for managing large result sets.",
+      "description": "Retrieves a paginated list of links associated with a specific entity and its identifier. This allows fetching all connections related to a particular business object.",
       "parameters": {
         "entity": {
           "type": "string",
           "required": true,
-          "description": "The type of entity the links are associated with (e.g., 'Project', 'Partner', 'Contract')."
+          "description": "The type of the entity for which to retrieve links (e.g., 'Partner', 'Project')."
         },
         "entityId": {
           "type": "integer",
@@ -29,59 +29,59 @@
         "parameters": {
           "type": "object",
           "required": false,
-          "description": "Pagination parameters including page number, page size, and optional sorting criteria."
+          "description": "Pagination and sorting parameters (e.g., page number, page size, sort order)."
         }
       },
       "example_uses": [
-        "Get all links for a project with ID 123.",
-        "Retrieve the first 10 links associated with partner ID 456.",
-        "Find all document links related to contract ID 789, sorted by creation date."
+        "Get all links associated with a partner whose ID is 123.",
+        "Retrieve connections related to project 456, showing the first 10 results.",
+        "List all associations for the 'Contact' entity with ID 789."
       ],
-      "when_to_use": "Use this endpoint when you need to fetch all links related to a particular business entity (e.g., a specific project, partner, or contract) given its type and ID, and you may want to paginate the results."
+      "when_to_use": "Use this endpoint to fetch existing links for a particular business entity, such as a partner, project, or contact, when you know its type and ID and need to see its related connections."
     },
     {
       "name": "Create",
-      "url": "api/links",
+      "url": "/api/links",
       "method": "POST",
-      "description": "Creates a new link entry in the system, associating it with a specified entity.",
+      "description": "Creates a new link between entities. This establishes a new association record in the system.",
       "parameters": {
         "req": {
           "type": "object",
           "required": false,
-          "description": "The request body containing the details for the new link, including its URL, description, and the entity it's associated with."
+          "description": "The request body containing the details for the new link, including the entities to be linked and any link-specific properties."
         }
       },
       "example_uses": [
-        "Create a new link for a project, pointing to its external documentation.",
-        "Add a new resource link to a partner's profile.",
-        "Register a new internal document link for a contract."
+        "Create a new link between a partner and a project.",
+        "Establish a new association record for a document and a task.",
+        "Add a connection entry to the system for two related items."
       ],
-      "when_to_use": "Use this endpoint to add a new link to the system, connecting it to a specific business entity."
+      "when_to_use": "Use this endpoint to establish a new relationship or connection between two or more entities in the system."
     },
     {
       "name": "Update",
-      "url": "api/links",
+      "url": "/api/links",
       "method": "PUT",
-      "description": "Updates an existing link's details based on its unique identifier.",
+      "description": "Updates an existing link. This allows modification of an established association record.",
       "parameters": {
         "req": {
           "type": "object",
           "required": false,
-          "description": "The request body containing the updated details for the link, including its ID, new URL, description, or associated entity."
+          "description": "The request body containing the updated details for the link, including its ID and any properties to be modified."
         }
       },
       "example_uses": [
-        "Update the URL of an existing link.",
-        "Modify the description of a link associated with a project.",
-        "Change the entity type or ID that a specific link is associated with."
+        "Modify the details of an existing link, such as changing its description.",
+        "Update an association record to reflect a change in status.",
+        "Change the properties of a connection between two entities."
       ],
-      "when_to_use": "Use this endpoint to modify the properties of an existing link record in the system."
+      "when_to_use": "Use this endpoint to modify the details or properties of an already existing link."
     },
     {
       "name": "Delete",
-      "url": "api/links",
+      "url": "/api/links",
       "method": "DELETE",
-      "description": "Deletes a link from the system using its unique identifier.",
+      "description": "Deletes a link by its unique identifier. This permanently removes the association record from the system.",
       "parameters": {
         "id": {
           "type": "integer",
@@ -91,10 +91,10 @@
       },
       "example_uses": [
         "Delete the link with ID 123.",
-        "Remove an outdated or incorrect link from the system.",
-        "Permanently delete a specific link record."
+        "Remove a specific association between two entities.",
+        "Break a connection by its identifier."
       ],
-      "when_to_use": "Use this endpoint to permanently remove a link from the system when it is no longer needed."
+      "when_to_use": "Use this endpoint to permanently remove a specific link from the system using its unique identifier."
     }
   ]
 }

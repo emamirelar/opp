@@ -17,7 +17,7 @@ import { WelcomeTourService } from '../../services/welcome-tour.service';
       position: relative;
       overflow: hidden;
     }
-    
+
     :host ::ng-deep .tour-button::before {
       content: '';
       position: absolute;
@@ -28,24 +28,24 @@ import { WelcomeTourService } from '../../services/welcome-tour.service';
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
       transition: left 0.6s;
     }
-    
+
     :host ::ng-deep .tour-button:hover::before {
       left: 100%;
     }
-    
+
     :host ::ng-deep .tour-button .p-button-label {
       color: white !important;
     }
-    
+
     :host ::ng-deep .tour-button:focus {
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
     }
-    
+
     /* Special styling for AI prompt dialog context - match main top bar colors */
     :host.ai-prompt-tour-control ::ng-deep .tour-button {
       background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%) !important;
     }
-    
+
     :host.ai-prompt-tour-control ::ng-deep .tour-button:hover {
       background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%) !important;
       transform: scale(1.05);
@@ -85,7 +85,7 @@ export class TourControlComponent implements OnInit {
     if (this.hideNotificationDot) {
       return false;
     }
-    
+
     // Show notification dot to encourage tour usage
     // Could be enhanced to check if user has taken tours recently
     return true;
@@ -99,13 +99,13 @@ export class TourControlComponent implements OnInit {
 
   async detectTour() {
     console.log('🎯 Starting tour...');
-    
+
     try {
       // Load tour registry
       const registry = await this.loadTourRegistry();
-      
+
       let tourFileName = null;
-      
+
       // Check for custom tour file first (for dialogs)
       if (this.customTourFile) {
         tourFileName = this.customTourFile;
@@ -114,7 +114,7 @@ export class TourControlComponent implements OnInit {
         // Get current URL and find matching tour from registry
         const currentUrl = this.router.url;
         console.log('📍 Current URL:', currentUrl);
-        
+
         for (const route of registry.routes) {
           if (this.matchesRoute(currentUrl, route.pattern)) {
             tourFileName = route.tourFile;
@@ -123,25 +123,26 @@ export class TourControlComponent implements OnInit {
           }
         }
       }
-      
+
       if (tourFileName) {
         // Load tour configuration (uses translation keys now)
         const tourModule = await import(`../../tours/${tourFileName}.json`);
         const tourConfig = tourModule.default || tourModule;
         console.log('📋 Loaded tour:', this.translateText(tourConfig.titleKey || tourConfig.title));
-        
+
         // Convert tour steps to Driver.js format
         const driverSteps = this.convertToDriverSteps(tourConfig, registry.fallbackSelectors);
-        
+
         if (driverSteps.length === 0) {
           console.warn('❌ No valid steps found for tour');
           return;
         }
-        
+
         // Start the tour with Driver.js
         console.log('🚀 Starting Driver.js tour with', driverSteps.length, 'steps');
-        
+
         const driverInstance = driver({
+          stagePadding: 5,
           showProgress: true,
           allowClose: tourConfig.allowClose !== false,
           popoverOffset: tourConfig.popoverOffset || 10,
@@ -154,13 +155,13 @@ export class TourControlComponent implements OnInit {
             }
           }
         });
-        
+
         driverInstance.drive();
-        
+
       } else {
         console.log('❌ No tour found for current route');
         console.log('📝 Available routes:', registry.routes.map((r: any) => r.pattern));
-        
+
         // Show fallback tour for missing pages
         this.showFallbackTour();
       }
@@ -171,11 +172,11 @@ export class TourControlComponent implements OnInit {
 
   private convertToDriverSteps(tourConfig: any, fallbackSelectors: any): any[] {
     console.log('🔄 Converting tour steps and checking element eligibility...');
-    
+
     const validSteps = tourConfig.steps
       .map((step: any, index: number) => {
         const element = this.findBestElement(step, fallbackSelectors);
-        
+
         if (!element && step.element) {
           console.warn(`⚠️ Step ${index + 1} skipped - element not found, hidden, or disabled: "${step.element}"`);
           console.warn(`   📝 Step title key: "${step.popover?.titleKey}"`);
@@ -211,14 +212,14 @@ export class TourControlComponent implements OnInit {
 
   private translateText(textOrKey: string): string {
     if (!textOrKey) return '';
-    
+
     // If it looks like a translation key (contains dots), translate it
     if (textOrKey.includes('.') && !textOrKey.includes(' ')) {
       const translated = this.translateService.instant(textOrKey);
       // If translation key not found, it returns the key itself
       return translated !== textOrKey ? translated : textOrKey;
     }
-    
+
     // Otherwise, return as is (for backward compatibility with existing literal text)
     return textOrKey;
   }
@@ -263,23 +264,23 @@ export class TourControlComponent implements OnInit {
     // Clean URLs (remove query params and fragments)
     const cleanCurrentUrl = currentUrl.split('?')[0].split('#')[0];
     const cleanRoutePattern = routePattern.split('?')[0].split('#')[0];
-    
+
     // Exact match
     if (cleanCurrentUrl === cleanRoutePattern) {
       return true;
     }
-    
+
     // Handle parameterized routes (e.g., /partnerships/partners/:id)
     if (cleanRoutePattern.includes(':')) {
       return this.matchesParameterizedRoute(cleanCurrentUrl, cleanRoutePattern);
     }
-    
+
     // Handle exact prefix matches for non-parameterized routes
     if (cleanCurrentUrl.startsWith(cleanRoutePattern)) {
       const remainder = cleanCurrentUrl.substring(cleanRoutePattern.length);
       return remainder === '' || remainder.startsWith('/') || remainder.startsWith('?');
     }
-    
+
     return false;
   }
 
@@ -287,17 +288,17 @@ export class TourControlComponent implements OnInit {
     // Split both URLs into segments
     const currentSegments = currentUrl.split('/').filter(s => s.length > 0);
     const patternSegments = routePattern.split('/').filter(s => s.length > 0);
-    
+
     // Must have at least as many segments as the pattern (allows nested routes)
     if (currentSegments.length < patternSegments.length) {
       return false;
     }
-    
+
     // Check each segment of the pattern
     for (let i = 0; i < patternSegments.length; i++) {
       const patternSegment = patternSegments[i];
       const currentSegment = currentSegments[i];
-      
+
       // If pattern segment is a parameter (starts with :), it matches any value
       if (patternSegment.startsWith(':')) {
         // Parameter can be any non-empty value
@@ -306,13 +307,13 @@ export class TourControlComponent implements OnInit {
         }
         continue;
       }
-      
+
       // Otherwise, segments must match exactly
       if (patternSegment !== currentSegment) {
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -324,8 +325,8 @@ export class TourControlComponent implements OnInit {
       }
 
       // Skip other invalid selectors
-      if (selector.includes('|') || 
-          selector.includes('.|') || 
+      if (selector.includes('|') ||
+          selector.includes('.|') ||
           selector.includes(':has(')) {
         return null;
       }
@@ -338,7 +339,7 @@ export class TourControlComponent implements OnInit {
       if (!cleanSelector) return null;
 
       const element = document.querySelector(cleanSelector);
-      
+
       // Check if element exists and is visible/enabled for tour purposes
       if (element && this.isElementTourEligible(element)) {
         return element;
@@ -358,11 +359,11 @@ export class TourControlComponent implements OnInit {
    */
   private isElementTourEligible(element: Element): boolean {
     const htmlElement = element as HTMLElement;
-    
+
     // Check if element is visible
     const style = window.getComputedStyle(htmlElement);
-    if (style.display === 'none' || 
-        style.visibility === 'hidden' || 
+    if (style.display === 'none' ||
+        style.visibility === 'hidden' ||
         style.opacity === '0') {
       console.log(`🚫 Skipping hidden element: ${element.tagName}${element.className ? '.' + element.className.split(' ').join('.') : ''}`);
       return false;
@@ -376,8 +377,8 @@ export class TourControlComponent implements OnInit {
     }
 
     // Check if button/input is disabled
-    if (htmlElement instanceof HTMLButtonElement || 
-        htmlElement instanceof HTMLInputElement || 
+    if (htmlElement instanceof HTMLButtonElement ||
+        htmlElement instanceof HTMLInputElement ||
         htmlElement instanceof HTMLSelectElement ||
         htmlElement instanceof HTMLTextAreaElement) {
       if (htmlElement.disabled) {
@@ -432,12 +433,12 @@ export class TourControlComponent implements OnInit {
 
   private showFallbackTour() {
     console.log('🎯 Showing fallback tour message');
-    
+
     const driverInstance = driver({
+      stagePadding: 8,
       showProgress: false,
       allowClose: true,
       popoverOffset: 10,
-      stagePadding: 20,
       nextBtnText: '—›',
       prevBtnText: '‹—',
       doneBtnText: '✕',
@@ -452,7 +453,7 @@ export class TourControlComponent implements OnInit {
         }
       ]
     });
-    
+
     driverInstance.drive();
   }
 }
