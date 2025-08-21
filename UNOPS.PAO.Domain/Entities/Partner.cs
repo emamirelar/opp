@@ -60,8 +60,8 @@ public class Partner : ModifiableDeletableEntity
     public bool UNSecretariatPartner { get; set; } = false;
     
     // Due Diligence Fields
-    public DueDiligenceRequired DueDiligenceRequired { get; set; }
-    public DueDiligenceApproval DueDiligenceApproval { get; set; }
+    public DueDiligenceRequired? DueDiligenceRequired { get; set; }
+    public DueDiligenceApproval? DueDiligenceApproval { get; set; }
     public DateTime? DueDiligenceApprovalDate { get; set; }
     public DateTime? DueDiligenceExpiryDate { get; set; }
     
@@ -73,9 +73,12 @@ public class Partner : ModifiableDeletableEntity
     
     [MaxLength(500)]
     public string? PartnerApprovalReference { get; set; } // Approval notes/reference
-    
+
+    [MaxLength(500)]
+    public string? PartnerApprovedBy { get; set; }
+
     // Levy Fields
-    public PartnerLevyStatus PartnerLevyStatus { get; set; }
+    public PartnerLevyStatus? PartnerLevyStatus { get; set; }
     
     [MaxLength(500)]
     public string? ReasonForLevy { get; set; }
@@ -85,7 +88,7 @@ public class Partner : ModifiableDeletableEntity
     
     // Operational Fields
     public bool PooledFund { get; set; } = false;
-    public bool CanCreateNewOpportunities { get; set; }
+    public bool CanCreateNewOpportunities { get; set; } = false;
     
     [MaxLength(500)]
     public string? ReasonForNoNewOpportunity { get; set; }
@@ -330,9 +333,9 @@ public class Partner : ModifiableDeletableEntity
         {
             throw new InvalidOperationException("Only Active partners can be approved.");
         }
-        
+        string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
         PartnerApprovalStatus = PartnerApprovalStatus.Approved;
-        PartnerApprovalReference = $"Approved by {approverName} (ID: {approverId})";
+        PartnerApprovedBy = $"Approved by {approverName} (ID: {approverId}) on {currentDate}";
     }
     
     /// <summary>

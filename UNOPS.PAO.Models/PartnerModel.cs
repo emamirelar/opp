@@ -47,14 +47,14 @@ public class PartnerModel
     // ========== APPROVAL FIELDS (Admin only) ==========
     public bool KeyGlobalPartner { get; set; }
     public bool UNSecretariatPartner { get; set; }
-    public string DueDiligenceRequired { get; set; } // "NotRequired" / "Required" 
-    public string DueDiligenceApproval { get; set; } // "NotApproved" / "Approved"
+    public string? DueDiligenceRequired { get; set; } // "NotRequired" / "Required" 
+    public string? DueDiligenceApproval { get; set; } // "NotApproved" / "Approved"
     public DateTime? DueDiligenceApprovalDate { get; set; }
     public DateTime? DueDiligenceExpiryDate { get; set; }
     public string PartnerApprovalStatus { get; set; } // "NotApproved" / "Approved"
     public DateTime? PartnerApprovalDate { get; set; }
     public string? PartnerApprovalReference { get; set; }
-    public string PartnerLevyStatus { get; set; } // "DoesNotApply" / "PotentiallyApplied" / "PotentiallyNotApplied"
+    public string? PartnerLevyStatus { get; set; } // "DoesNotApply" / "PotentiallyApplied" / "PotentiallyNotApplied"
     public string? ReasonForLevy { get; set; }
     public string? LevyTreatment { get; set; }
     public bool PooledFund { get; set; }

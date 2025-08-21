@@ -54,7 +54,7 @@ public class PartnerRequest : ExtensibleModel
     
     // Operational Fields
     public bool PooledFund { get; set; } = false;
-    public bool CanCreateNewOpportunities { get; set; }
+    public bool CanCreateNewOpportunities { get; set; } = false;
     public string? ReasonForNoNewOpportunity { get; set; }
     
     // Partner Status

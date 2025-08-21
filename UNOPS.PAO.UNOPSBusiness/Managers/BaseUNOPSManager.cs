@@ -527,6 +527,27 @@ public abstract class BaseUNOPSManager
 
                 try
                 {
+                    // Special handling for string-to-enum conversion
+                    if (value is string stringValue && !string.IsNullOrWhiteSpace(stringValue))
+                    {
+                        var underlyingTargetType = Nullable.GetUnderlyingType(targetProp.PropertyType) ?? targetProp.PropertyType;
+                        if (underlyingTargetType.IsEnum)
+                        {
+                            // Try to parse the string as enum
+                            if (Enum.TryParse(underlyingTargetType, stringValue, ignoreCase: true, out var enumValue))
+                            {
+                                targetProp.SetValue(target, enumValue);
+                                continue;
+                            }
+                            else
+                            {
+                                // Skip if enum parsing fails - invalid enum value
+                                continue;
+                            }
+                        }
+                    }
+                    
+                    // Default direct assignment for compatible types
                     targetProp.SetValue(target, value);
                 }
                 catch
@@ -576,6 +597,13 @@ public abstract class BaseUNOPSManager
         
         // Check if target type is assignable from source type
         if (targetType.IsAssignableFrom(sourceType)) return true;
+        
+        // String to enum conversion (including nullable enums)
+        if (sourceType == typeof(string))
+        {
+            var underlyingTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+            if (underlyingTargetType.IsEnum) return true;
+        }
         
         // Skip complex collection types that likely need manual handling
         if (typeof(System.Collections.IEnumerable).IsAssignableFrom(sourceType) && 

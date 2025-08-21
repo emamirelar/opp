@@ -101,12 +101,13 @@ export class PartnerApprovalDialogComponent implements OnInit {
       levyTreatment: [this.partner.levyTreatment || ''],
       pooledFund: [this.partner.pooledFund || false],
       canCreateNewOpportunities: [this.partner.canCreateNewOpportunities || false],
-      reasonForNoNewOpportunity: [this.partner.reasonForNoNewOpportunity || '']
+      reasonForNoNewOpportunity: [this.partner.reasonForNoNewOpportunity || '', Validators.required]
     });
   }
 
   // Cached data - these match the edit dialog
-  allYesNoData = this.cachedDataService.allYesNo;
+  allDueDiligenceRequiredData = this.cachedDataService.allDueDiligenceRequired;
+  allDueDiligenceApprovalData = this.cachedDataService.allDueDiligenceApproval;
   allPartnerLevyAppliesData = this.cachedDataService.allPartnerLevyApplies;
   allPartnerReasonForLevyNotData = this.cachedDataService.allPartnerReasonForLevyNot;
   allPartnerLevyTreatmentData = this.cachedDataService.allPartnerLevyTreatment;
