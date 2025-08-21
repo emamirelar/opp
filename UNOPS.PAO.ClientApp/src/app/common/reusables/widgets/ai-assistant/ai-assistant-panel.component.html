@@ -622,7 +622,7 @@
           placeholder="{{ 'aiAssistant.typeMessageOrPaste' | translate }}"
           [rows]="1"
           class="w-full resize-none border-0 focus:ring-0 focus:outline-none bg-transparent text-sm"
-          (keydown.enter)="$event.preventDefault(); sendMessage()">
+          (keydown.enter)="$event.preventDefault(); !isWaitingResponse() && sendMessage()">
         </textarea>
 
         <div class="flex justify-between items-center mt-2">
@@ -673,7 +673,7 @@
             <p-button
               icon="pi pi-send"
               (onClick)="sendMessage()"
-              [disabled]="!message().trim() && selectedFiles().length === 0"
+              [disabled]="(!message().trim() && selectedFiles().length === 0) || isWaitingResponse()"
               [rounded]="true"
               size="small"
               severity="primary"
