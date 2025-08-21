@@ -244,43 +244,20 @@
         @if (shouldShowReasonForLevy()) {
         <div class="flex flex-col gap-2">
           <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }}</label>
-          <p-select formControlName="reasonForLevy" [options]="allPartnerReasonForLevyNotData()"
-                    optionLabel="name"
-                    optionValue="id"
-                    [showClear]="true"
-                    [appendTo]="'body'"
-                    [disabled]="!approvalFieldsEnabled()"
-                    placeholder="{{ 'label.partner.selectReasonForLevyNotApplying' | translate }}"
-                    fluid="true" id="reasonForLevy"
-                    [ariaLabel]="'aria.selectReasonForLevy' | translate" />
+          <input pInputText formControlName="reasonForLevy" 
+                 [disabled]="!approvalFieldsEnabled()"
+                 fluid="true" id="reasonForLevy" />
         </div>
         }
         
         <!-- Levy Treatment -->
         <div class="flex flex-col gap-2">
         <label for="levyTreatment">{{ 'label.partner.levyTreatment' | translate }}</label>
-        <p-select formControlName="levyTreatment" [options]="allPartnerLevyTreatmentData()"
-                  optionLabel="name"
-                  optionValue="id"
-                  [showClear]="true"
-                  [appendTo]="'body'"
-                  [disabled]="!approvalFieldsEnabled()"
-                  placeholder="{{ 'label.partner.selectLevyTreatment' | translate }}"
-                  fluid="true" id="levyTreatment"
-                  [ariaLabel]="'aria.selectLevyTreatment' | translate" />
+        <input pInputText formControlName="levyTreatment" 
+               [disabled]="!approvalFieldsEnabled()"
+               fluid="true" id="levyTreatment" />
         </div>
         
-      </div>
-
-      <!-- Reason -->
-      <div class="flex flex-col gap-2">
-        <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}@if (reasonFieldRequired()) { *}</label>
-        <textarea pTextarea formControlName="reasonForNoNewOpportunity" 
-                  [disabled]="!approvalFieldsEnabled()"
-                  fluid="true" id="reasonForNoNewOpportunity" rows="2"></textarea>
-        @if( formGroup.get("reasonForNoNewOpportunity")?.invalid && showValidationFailedError() && reasonFieldRequired() ) {
-        <p-message severity="error" variant="simple">{{ 'validation.reasonRequired' | translate }}</p-message>
-        }
       </div>
 
       <!-- Checkbox fields moved to the end -->
@@ -336,6 +313,18 @@
         </div>
 
       </div>
+      
+      <!-- Reason -->
+      <div class="flex flex-col gap-2">
+        <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}@if (reasonFieldRequired()) { *}</label>
+        <textarea pTextarea formControlName="reasonForNoNewOpportunity" 
+                  [disabled]="!approvalFieldsEnabled()"
+                  fluid="true" id="reasonForNoNewOpportunity" rows="2"></textarea>
+        @if( formGroup.get("reasonForNoNewOpportunity")?.invalid && showValidationFailedError() && reasonFieldRequired() ) {
+        <p-message severity="error" variant="simple">{{ 'validation.reasonRequired' | translate }}</p-message>
+        }
+      </div>
+
       @if (!approvalFieldsEnabled()) {
         <div class="w-full">
           <p-message severity="info" icon="pi pi-info-circle" styleClass="w-full">
