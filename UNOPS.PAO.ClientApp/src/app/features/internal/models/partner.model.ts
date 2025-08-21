@@ -2,8 +2,9 @@ import { PartnerTree } from "./partner-tree.model";
 import { EntityPermissionSet } from './shared-types';
 import { OrganizationUnitRelationshipModel } from './organization-unit-relationship.model';
 import { OrganizationHierarchyModel } from '../../../models/organization-hierarchy.model';
+import { EntityTag, TaggedEntity } from '../../../common/models/entity-tag.model';
 
-export interface Partner {
+export interface Partner extends TaggedEntity {
   id?: string | null;
   partnerCode?: string | null;
   

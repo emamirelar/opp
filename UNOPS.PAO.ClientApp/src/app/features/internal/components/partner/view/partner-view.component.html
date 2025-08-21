@@ -15,11 +15,7 @@
           <div class="flex justify-between items-center w-full">
             <div class="flex items-center gap-2">
               <span class="text-xl">Partner Information</span>
-              @if (recordData().partnerApprovalStatus === 'Approved') {
-                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Approved</span>
-              } @else if (recordData().partnerApprovalStatus === 'NotApproved') {
-                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">Pending Approval</span>
-              }
+              <app-entity-tags [tags]="recordData().tags"></app-entity-tags>
             </div>
             <div class="flex items-center gap-2">
               @if (recordData().permissions?.canApprove) {
