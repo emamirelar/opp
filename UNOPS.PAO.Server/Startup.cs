@@ -425,7 +425,12 @@ public class Startup
         if (!CurrentEnvironment.IsEnvironment("Testing"))
         {
             services.AddHostedService<PubSubPullService>(); // Register your background service
+            services.AddHostedService<DueDiligenceNotificationService>(); // Register due diligence notification service
         }
+        
+        // Register email services
+        services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+        services.AddScoped<IEmailService, EmailService>();
     }
 
     private void AddServices(ServiceRegistry services)
