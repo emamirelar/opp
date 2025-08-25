@@ -1,53 +1,53 @@
 {
   "entity": "DocumentType",
-  "description": "Manages various types of documents associated with different entities within the system, such as partners, projects, or interactions.",
+  "description": "Manages different types of documents that can be associated with various business entities within the system.",
   "synonyms": [
-    "Document Category",
-    "Doc Type",
-    "File Type",
-    "Record Type",
-    "Document Classification"
+    "document category",
+    "doc type",
+    "file type",
+    "record type",
+    "document classification"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "GetAll",
-      "url": "api/document-type/{entityName}",
+      "url": "/api/document-type/{entityName}",
       "method": "GET",
-      "description": "Retrieves a list of document types, optionally filtered by an associated entity name, with support for pagination and ordering. This endpoint allows users to fetch document types relevant to specific parts of the system, such as 'Partner' or 'Project'.",
+      "description": "Retrieves a paginated and sortable list of document types. Optionally, results can be filtered by an associated entity name. This endpoint supports pagination and sorting.",
       "parameters": {
         "entityName": {
           "type": "string",
           "required": false,
-          "description": "The name of the entity to filter document types by (e.g., 'Partner', 'Project')."
+          "description": "The name of the entity to filter document types by (e.g., 'Partner', 'Project', 'Contract'). If not provided, all document types are returned."
         },
         "pageIndex": {
           "type": "integer",
           "required": false,
-          "description": "The 0-based index of the page to retrieve. Defaults to 0 if not specified."
+          "description": "The page number for pagination. Use -1 for no pagination (default: -1)."
         },
         "pageSize": {
           "type": "integer",
           "required": false,
-          "description": "The number of items per page. Defaults to 10."
+          "description": "The number of items per page for pagination (default: 10)."
         },
         "orderBy": {
           "type": "string",
           "required": false,
-          "description": "The field name to sort the results by (e.g., 'Name', 'Id')."
+          "description": "The field name to sort the results by (e.g., 'Name', 'Description')."
         },
         "ascending": {
           "type": "boolean",
           "required": false,
-          "description": "Determines the sort order. True for ascending, false for descending. Defaults to true."
+          "description": "Whether to sort in ascending order (true) or descending order (false) (default: true)."
         }
       },
       "example_uses": [
-        "Get all available document types.",
-        "List document types associated with the 'Partner' entity, showing 20 per page.",
-        "Retrieve document types for 'Project' entity, sorted by name in descending order."
+        "Get all document types available in the system.",
+        "List document types specifically for the 'Partner' entity.",
+        "Retrieve document types, paginated with 20 items per page and sorted by name in ascending order."
       ],
-      "when_to_use": "Use this endpoint when you need to retrieve a list of available document types, either globally or specific to a particular entity (like 'Partner' or 'Project'), with options for pagination and sorting."
+      "when_to_use": "Use this endpoint to fetch a list of document types, either globally or specific to a particular business entity, for display, selection, or validation purposes in user interfaces or automated processes."
     }
   ]
 }

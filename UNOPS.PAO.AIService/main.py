@@ -51,7 +51,6 @@ except ImportError:
 
 # Framework imports
 from ai_assistant.utils.api_config_manager import config_manager
-from ai_assistant.tools import create_google_drive_tool
 from ai_assistant.utils.framework_config import get_config, initialize_config
 
 # Import routers
@@ -67,7 +66,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global variables
-google_drive_tool = None
 app = None
 
 
@@ -88,21 +86,9 @@ async def lifespan(app_instance: FastAPI):
     
     config_manager.load_tools_config(tools_config_path)
 
-    # Initialize Google Drive tool if enabled
-    global google_drive_tool
-    config = get_config()
-    google_drive_config = config.get('google_drive', {})
-    agent_config = config.get('agent', {})
-
-    if google_drive_config.get('enabled', False) and agent_config.get('enable_google_drive_agent', False):
-        try:
-            google_drive_tool = await create_google_drive_tool()
-            logger.info("✅ Google Drive tool initialized successfully")
-        except Exception as e:
-            logger.warning(f"⚠️ Google Drive tool initialization failed: {str(e)}")
-            logger.info("📝 Application will continue without Google Drive integration")
-    else:
-        logger.info("📝 Google Drive tool disabled in configuration")
+    # External API tools are initialized automatically through the agent system
+    # No additional tool initialization needed for external APIs
+    logger.info("✅ External API tools will be initialized through agent system")
 
     # Initialize action logging table if enabled
     action_logging_config = config.get('action_logging', {})
@@ -127,9 +113,7 @@ async def lifespan(app_instance: FastAPI):
 
     # Cleanup
     logger.info("🛑 FastAPI server shutting down...")
-    if google_drive_tool:
-        await google_drive_tool.cleanup()
-        logger.info("✅ Google Drive tool cleaned up")
+    logger.info("✅ External API tools cleaned up automatically")
 
 
 # Initialize configuration and create the FastAPI app globally

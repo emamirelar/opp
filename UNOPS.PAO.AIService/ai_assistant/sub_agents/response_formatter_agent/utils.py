@@ -191,6 +191,32 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
     - **Integration examples:**
       - "Here are the results! Would you like me to create a visual diagram showing their relationships?"
       - "I found contact statistics by region. Should I generate a chart to visualize this distribution?"
+
+    **📄 PROACTIVE GOOGLE DOC SUGGESTIONS:**
+    **🚨 CRITICAL: When content would be valuable as a document, ALWAYS suggest Google Doc creation**
+    
+    **WHEN TO SUGGEST GOOGLE DOCS (even if not originally requested):**
+    - **Comprehensive entity summaries** (partner details, contact profiles, interaction reports)
+    - **Lists with substantial details** (multiple partners with descriptions, detailed contact information)
+    - **Research or analysis results** (findings, recommendations, detailed explanations)
+    - **Multi-section content** (information organized with headers, categories, detailed breakdowns)
+    - **Professional reports** (status updates, project summaries, organizational information)
+    - **Any content > 3-4 sentences** that would benefit from document formatting
+    
+    **HOW TO INTEGRATE GOOGLE DOC SUGGESTIONS:**
+    - **In your markdown message**: Add suggestions naturally in the conversation flow
+    - **Examples**:
+      - "Here's the detailed partner information! Would you like me to create a **comprehensive Google Doc** with this partner summary for easy sharing and reference?"
+      - "I found extensive contact details! Should I **generate a Google Doc** with all this information formatted professionally?"
+      - "This analysis would make a great report! Want me to **create a Google Doc** with all these findings properly organized?"
+      - "Here are the interaction details! Would you like me to **compile this into a Google Doc** for documentation purposes?"
+    
+    **INTEGRATION WITH SUGGESTED RESPONSES:**
+    - **Include Google Doc options** in suggestedUserResponses when content is substantial
+    - **Examples**: 
+      - ["Create Google Doc with this summary", "Export to Google Sheets", "Generate visual diagram"]
+      - ["Save as Google Doc", "Create detailed report", "Show partner relationships"]
+      - ["Compile into document", "Generate comprehensive report", "Create visual breakdown"]
     
     **🎨 MERMAID DIAGRAM CREATION:**
     When users request visual representations using terms like "draw", "create a diagram", "visualize", "flowchart", "sequence diagram", "depiction", "illustrate", "map out", or similar:
@@ -236,6 +262,7 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
     - **State Diagrams**: State transitions (`stateDiagram-v2`)
     
     **📈 CHARTJS FORMAT (for statistical charts):**
+    **🚨 CRITICAL: DATASETS MUST BE ARRAY OF OBJECTS, NOT STRINGS**
     ```json
     {
       "type": "chartjs",
@@ -243,11 +270,13 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
       "message": {
         "title": "Chart Title",
         "data": {
-          "labels": ["Label 1", "Label 2", "Label 3"],
+          "labels": ["Category A", "Category B", "Category C"],
           "datasets": [{
-            "label": "Dataset Name",
-            "data": [15, 2, 8],
-            "backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"]
+            "label": "Count",
+            "data": [42, 18, 25],
+            "backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"],
+            "borderColor": ["#FF6384", "#36A2EB", "#FFCE56"],
+            "borderWidth": 1
           }]
         },
         "options": {
@@ -262,6 +291,20 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
     }
     ```
     
+    **🚨 CHARTJS DATASET RULES:**
+    - **datasets MUST be an array containing objects** - NEVER strings or plain arrays
+    - **Each dataset object MUST have:**
+      - `"label"`: String describing the dataset
+      - `"data"`: Array of numbers (e.g., [42, 18, 25])
+      - `"backgroundColor"`: Array of color strings (e.g., ["#FF6384", "#36A2EB"])
+    - **WRONG FORMAT:** `"datasets": ["string1", "string2"]` ❌
+    - **CORRECT FORMAT:** `"datasets": [{"label": "Count", "data": [42, 18], "backgroundColor": ["#FF6384", "#36A2EB"]}]` ✅
+    
+    **🚨 CHARTJS OPTIONS RULES:**
+    - **plugins MUST be an object** - NEVER an array of strings
+    - **WRONG FORMAT:** `"plugins": ["   ", "  "]` ❌
+    - **CORRECT FORMAT:** `"plugins": {"legend": {"position": "top"}, "title": {"display": true, "text": "Chart Title"}}` ✅
+    
     **🔄 MERMAID FORMAT (for structural diagrams):**
     ```json
     {
@@ -275,6 +318,16 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
 
 **CONTEXT INFORMATION:**
 """ + context_info + """
+
+**🚨 CRITICAL CHART DATA FORMATTING RULES:**
+- **For chartjs type**: datasets MUST be an array of objects, NOT strings
+- **WRONG**: `"datasets": ["   ", "  ", "    "]` ❌
+- **CORRECT**: `"datasets": [{"label": "Count", "data": [15, 5, 8], "backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"]}]` ✅
+- **plugins MUST be an object**, NOT an array of strings  
+- **WRONG**: `"plugins": ["   ", "  "]` ❌
+- **CORRECT**: `"plugins": {"legend": {"position": "top"}}` ✅
+- **NEVER use empty strings or spaces in any array**
+- **ALWAYS include actual numerical data in the data array**
 
 **🎯 OUTPUT FORMAT - RETURN EXACTLY THIS STRUCTURE:**
 
@@ -295,7 +348,9 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
 					"datasets": [{
 						"label": "Partners",
 						"data": [15, 5, 8],
-						"backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"]
+						"backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56"],
+						"borderColor": ["#FF6384", "#36A2EB", "#FFCE56"],
+						"borderWidth": 1
 					}]
 				},
 				"options": {
@@ -376,17 +431,21 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
 - **MUST be plain array of strings** - Never nested arrays or objects
 - **INTELLIGENT GENERATION**: Analyze available entities and context to generate appropriate suggestions
 - **For greetings**: Generate contextual suggestions based on configured entities (if Partner/Contact/Interaction entities are available, suggest actions like "Search partners", "Find contacts", "View interactions")
+- **For substantial data responses**: ALWAYS consider Google Doc suggestions alongside visualizations
+  - "Create Google Doc with this summary", "Generate comprehensive report", "Save as document"
 - **For data responses**: Include diagram/chart suggestions when appropriate like "Draw a diagram of this data", "Create a visual representation"
 - **For diagram requests**: When users ask to draw/visualize, suggest related diagrams like "Draw partner relationships", "Visualize category breakdown"
+- **For detailed content**: When response contains comprehensive information, suggest document creation
 - **For other responses**: Be specific to current context - Based on what just happened, not generic prompts
 - **ACTIONABLE and concrete** - User can click and get immediate, relevant results
 - **EMPTY array if no meaningful suggestions** - Better than generic ones
 
 **✅ GOOD suggestedUserResponses EXAMPLES:**
 - ["Edit this record", "View related items", "Create new entry"]
-- ["Export this data to Google Sheets", "Create a diagram of this data", "Generate summary report"]
-- ["Find similar records", "Update details", "Create visualization"]
-- ["Show me a visual diagram", "Export to Google Sheets", "Create organizational chart"]
+- ["Create Google Doc with this summary", "Export to Google Sheets", "Generate visual diagram"]
+- ["Save as Google Doc", "Create detailed report", "Show partner relationships"]
+- ["Compile into document", "Create visualization", "Export data"]
+- ["Generate comprehensive Google Doc", "Create organizational chart", "Export summary"]
 - [] (empty if no meaningful actions)
 
 **❌ BAD suggestedUserResponses EXAMPLES:**

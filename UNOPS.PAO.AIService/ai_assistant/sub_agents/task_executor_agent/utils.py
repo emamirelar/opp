@@ -285,53 +285,54 @@ google_doc_wrapper = GoogleDocToolWrapper()
 logging.info(f"✅ Google Sheet wrapper initialized in task executor (available: {google_sheet_wrapper.available})")
 logging.info(f"✅ Google Doc wrapper initialized in task executor (available: {google_doc_wrapper.available})")
 
-# Google Drive search functions - provide stub implementations
-def search_google_drive_knowledge(query: str) -> str:
-    """Search Google Drive knowledge base"""
+# External API tools - provide stub implementations
+
+def search_external_drive_service(query: str, external_endpoint_url: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
+    """Search using external service for file IDs, then read content from Google Drive"""
     try:
-        from ai_assistant.tools import search_google_drive_knowledge as real_search
-        return real_search(query)
+        from ai_assistant.tools import search_external_drive_service as real_search
+        return real_search(query, external_endpoint_url, auth_headers)
     except ImportError:
         return json.dumps({
-            "results": [],
-            "message": "Google Drive knowledge search not available in current environment",
-            "query": query
+            "error": "External drive search service not available in current environment",
+            "query": query,
+            "endpoint": external_endpoint_url
         })
 
-def search_google_drive_content(search_text: str) -> str:
-    """Search Google Drive content"""
+def search_unops_google_drive(query: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
+    """Convenience function for UNOPS external Google Drive search service"""
     try:
-        from ai_assistant.tools import search_google_drive_content as real_search
-        return real_search(search_text)
+        from ai_assistant.tools import search_unops_google_drive as real_search
+        return real_search(query, auth_headers)
     except ImportError:
         return json.dumps({
-            "results": [],
-            "message": "Google Drive content search not available in current environment",
-            "search_text": search_text
+            "error": "UNOPS external drive search service not available in current environment",
+            "query": query,
+            "endpoint": "https://api.ai.dev.unops.org/v1/tools/google-drive/search"
         })
 
-def search_google_drive(query: str) -> str:
-    """Search Google Drive files"""
+def read_content_from_url(url: str, include_json: bool = True, output_format: str = "markdown", title: str = "", description: str = "") -> str:
+    """Read content from any URL using the external convert/url API"""
     try:
-        from ai_assistant.tools import search_google_drive as real_search
-        return real_search(query)
+        from ai_assistant.tools import read_content_from_url as real_reader
+        return real_reader(url, include_json, output_format, title, description)
     except ImportError:
         return json.dumps({
-            "results": [],
-            "message": "Google Drive file search not available in current environment",
-            "query": query
+            "error": "URL content reader service not available in current environment",
+            "url": url,
+            "endpoint": "https://api.ai.dev.unops.org/v1/convert/url"
         })
 
-def read_google_drive_file(file_id: str) -> str:
-    """Read Google Drive file content"""
+def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+    """Convert markdown content to Google Doc using external API"""
     try:
-        from ai_assistant.tools import read_google_drive_file as real_read
-        return real_read(file_id)
+        from ai_assistant.tools import convert_markdown_to_google_doc as real_converter
+        return real_converter(markdown_content, filename, metadata)
     except ImportError:
         return json.dumps({
-            "content": "",
-            "message": "Google Drive file reading not available in current environment",
-            "file_id": file_id
+            "error": "Markdown to Google Doc converter service not available in current environment",
+            "filename": filename,
+            "endpoint": "https://api.ai.dev.unops.org/v1/convert/markdown-to-google-doc"
         })
 
 # Audio processing functions - provide stub implementations
@@ -591,15 +592,19 @@ def get_entity_api_tools_config(entity_name: str) -> str:
 
 def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = "{}") -> str:
     """
-    Find the best endpoint for a given entity and intent combination with retry logic
+    Intelligent endpoint finder that works with task planner JSON plans
+    
+    This function is designed to process plans from the task_planner_agent and find the optimal
+    API endpoint for executing the planned step. It includes enhanced scoring, retry logic,
+    and smart parameter mapping for better task execution.
     
     Args:
-        entity_name: The entity name (e.g., "Partner", "Contact", "Global")
-        intent: The intent (e.g., "search", "create", "update")
-        extracted_params: JSON string of extracted parameters from user query (e.g., '{"id": 123, "type": "OrgUnit"}')
+        entity_name: The entity name from task planner (e.g., "Partner", "Contact", "Document")
+        intent: The intent from task planner (e.g., "search", "create", "update", "delete")
+        extracted_params: JSON string of parameters from task planner step (e.g., '{"query": "ACME", "step": 1}')
         
     Returns:
-        JSON string containing endpoint details with attempt information
+        JSON string containing endpoint details, retry information, and execution guidance
     """
     try:
         from ai_assistant.utils.api_config_manager import config_manager
@@ -643,7 +648,7 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
             return candidates
         
         def score_endpoint_for_intent_standalone(endpoint: dict, intent: str, entity_name: str, extracted_params: dict = None) -> int:
-            """Standalone scoring function matching the enhanced algorithm in api_config_manager"""
+            """Enhanced scoring function optimized for task planner integration"""
             score = 0
             endpoint_name = endpoint.get('name', '').lower()
             description = endpoint.get('description', '').lower()
@@ -653,36 +658,62 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
             example_uses = endpoint.get('example_uses', [])
             parameters = endpoint.get('parameters', {})
             
-            # Intent to HTTP method mapping
+            # Enhanced intent to HTTP method mapping for task planner
             intent_method_mapping = {
                 'search': 'GET', 'list': 'GET', 'get': 'GET', 'find': 'GET', 'retrieve': 'GET',
                 'create': 'POST', 'add': 'POST', 'new': 'POST', 'insert': 'POST',
-                'update': 'PUT', 'modify': 'PUT', 'edit': 'PUT', 'change': 'PUT',
+                'update': 'PUT', 'modify': 'PUT', 'edit': 'PUT', 'change': 'PUT', 'patch': 'PATCH',
                 'delete': 'DELETE', 'remove': 'DELETE', 'destroy': 'DELETE'
             }
             
             target_method = intent_method_mapping.get(intent.lower(), 'GET')
             
-            # Must match HTTP method - this is critical
+            # CRITICAL: Must match HTTP method
             if method != target_method:
                 return 0  # Wrong method = zero score
 
-            # Base scoring for intent matching
+            # ENHANCED: Base scoring for intent matching
             intent_lower = intent.lower()
             if intent_lower == endpoint_name:
-                score += 50  # Perfect match
+                score += 60  # Perfect match - increased for task planner accuracy
             elif intent_lower in endpoint_name:
-                score += 30  # Intent is part of name
+                score += 40  # Intent is part of name - increased
             elif any(synonym in endpoint_name for synonym in intent_method_mapping.keys() if intent_method_mapping[synonym] == target_method):
-                score += 20  # Related intent word in name
+                score += 25  # Related intent word in name - increased
             
-            # Intent in description and when_to_use
+            # ENHANCED: Intent matching in description and when_to_use
             intent_keywords = [intent_lower] + [k for k, v in intent_method_mapping.items() if v == target_method]
             for keyword in intent_keywords:
                 if keyword in description:
-                    score += 15
+                    score += 20  # Increased weight
                 if keyword in when_to_use:
-                    score += 15
+                    score += 20  # Increased weight
+            
+            # NEW: Smart parameter matching for task planner
+            if extracted_params:
+                param_bonus = 0
+                
+                # Bonus for endpoints that expect the parameters we have
+                if 'id' in extracted_params and 'id' in url:
+                    param_bonus += 15  # ID-based endpoint bonus
+                if 'query' in extracted_params and ('search' in endpoint_name or 'find' in endpoint_name):
+                    param_bonus += 15  # Search endpoint bonus
+                if 'comprehensive_search' in extracted_params and extracted_params.get('comprehensive_search'):
+                    if 'search' in endpoint_name or 'find' in endpoint_name:
+                        param_bonus += 10  # Comprehensive search bonus
+                
+                # NEW: Task planner step information bonus
+                if 'step' in extracted_params:
+                    param_bonus += 5  # Multi-step workflow bonus
+                if 'previous_step_result' in extracted_params:
+                    param_bonus += 5  # Sequential dependency bonus
+                
+                score += param_bonus
+            
+            # NEW: Entity-specific endpoint bonus
+            entity_lower = entity_name.lower()
+            if entity_lower in endpoint_name or entity_lower in url:
+                score += 10  # Entity name match bonus
             
             return max(0, score)
         
@@ -736,6 +767,14 @@ def find_entity_endpoint(entity_name: str, intent: str, extracted_params: str = 
                 "fallback_endpoints": fallback_endpoints,
                 "has_fallbacks": len(fallback_endpoints) > 0,
                 "recommendation": f"If this endpoint fails, try the fallback endpoints in order. Always try at least 2 endpoints before giving up."
+            },
+            # NEW: Task completion guidance for loop management
+            "execution_guidance": {
+                "next_action": "call_invoke_api_tool",
+                "requires_followup": intent.lower() in ['create', 'update'],
+                "exit_after_success": True,
+                "exit_after_retries_exhausted": True,
+                "task_planner_step_complete": True if params_dict and 'step' in params_dict else False
             }
         }
         
@@ -928,14 +967,14 @@ def build_task_executor_tools():
         FunctionTool(func=get_entity_search_examples)
     ]
 
-    # Add Google Drive tools (always available with stubs)
+    # Add External API tools (always available with stubs)
     tools.extend([
-        FunctionTool(func=search_google_drive_knowledge),
-        FunctionTool(func=search_google_drive),
-        FunctionTool(func=read_google_drive_file),
-        FunctionTool(func=search_google_drive_content),
+        FunctionTool(func=search_unops_google_drive),
+        FunctionTool(func=search_external_drive_service),
+        FunctionTool(func=read_content_from_url),
+        FunctionTool(func=convert_markdown_to_google_doc),
     ])
-    logging.info("✅ Added Google Drive tools to task executor (with fallback implementations)")
+    logging.info("✅ Added External API tools to task executor (with fallback implementations)")
 
     # Add Google Sheets tools (always available with local wrapper)
     tools.extend([
@@ -944,9 +983,8 @@ def build_task_executor_tools():
     ])
     logging.info(f"✅ Added Google Sheets tools to task executor (available: {google_sheet_wrapper.available})")
 
-    # Add Google Docs tools (always available with local wrapper)
-    tools.append(FunctionTool(func=create_google_doc_from_text_data))
-    logging.info(f"✅ Added Google Docs tools to task executor (available: {google_doc_wrapper.available})")
+    # Note: Google Doc creation uses convert_markdown_to_google_doc (already added above)
+    logging.info(f"✅ Google Doc creation available via convert_markdown_to_google_doc (available: {google_doc_wrapper.available})")
 
     # Add Speech-to-Text tools (always available with stubs)
     tools.extend([

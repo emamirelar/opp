@@ -1,7 +1,7 @@
 """
-Entity Detection Agent Utilities
+Task Planner Agent Utilities
 
-This module contains utility functions for entity detection, including
+This module contains utility functions for task planner, including
 dynamic prompt building and callback functions.
 """
 
@@ -242,10 +242,13 @@ User: "Tell me everything about partners"
 → {{"action_plan": [{{"entity": "Partner", "intent": "search", "confidence": 0.95, "extracted_params": {{"comprehensive_search": true}}}}]}}
 
 User: "Find all information about ACME Corp"
-→ {{"action_plan": [{{"entity": "Organization", "intent": "search", "confidence": 0.9, "extracted_params": {{"name": "ACME Corp", "comprehensive_search": true}}}}]}}
+→ {{"action_plan": [{{"entity": "Organization or OrgUnit or OrganizationHierarchy or Organisation", "intent": "search", "confidence": 0.9, "extracted_params": {{"name": "ACME Corp", "comprehensive_search": true}}}}]}}
 
 User: "Get me details of organization XYZ and any other files about them"
-→ {{"action_plan": [{{"entity": "Organization", "intent": "search", "confidence": 0.9, "extracted_params": {{"name": "XYZ", "comprehensive_search": true}}}}]}}
+→ {{"action_plan": [{{"entity": "Organization  or OrgUnit or OrganizationHierarchy or Organisatio", "intent": "search", "confidence": 0.9, "extracted_params": {{"name": "XYZ", "comprehensive_search": true}}}}]}}
+
+IMPORTANT:Use your knowledge to determine the correct entity name presented to you. There could be typos or variations in the entity name.
+Also, it could also be part of another entity called "Global" or something else. So if none of the entities match, try your best judgement as a fallback.
 
 **Google Drive & Permission Requests:**
 User: "Search Google Drive for documents"
@@ -329,33 +332,39 @@ User: "Yes, proceed"
 
 def dynamic_instruction_callback(ctx: CallbackContext) -> str:
     """
-    Generate dynamic instruction for entity detection agent based on available entities from tools.json
+    Generate dynamic instruction for task planning agent with action-based format
     """
     try:
         # Load tools config to get available entities
         tools_config = config_manager.load_tools_config()
         entities = tools_config.get("entities", [])
         
-        if not entities:
-            logger.warning("No entities found in tools config")
-            return get_fallback_instruction()
-        
-        # Build dynamic entity list
+        # Build dynamic entity list (with fallback if empty)
         entity_descriptions = []
+        
+        # Always include built-in Google Workspace entities
+        builtin_entities = [
+            "**Partner**: Partner organizations and business relationships",
+            "**Contact**: Individual contact information and details", 
+            "**Document**: File and document management",
+            "**Interaction**: Communication and interaction tracking",
+            "**GoogleDrive**: Search Google Drive for documents and files",
+            "**GoogleDoc**: Create Google Documents with content",
+            "**GoogleSheet**: Create Google Spreadsheets with data"
+        ]
+        entity_descriptions.extend(builtin_entities)
+        
+        # Add entities from config if available
         for entity in entities:
             if isinstance(entity, dict):
                 # Handle both "name" and "entity" field names
                 name = entity.get("name") or entity.get("entity")
-                if name:
+                if name and name not in ["Partner", "Contact", "Document", "Interaction"]:  # Avoid duplicates
                     description = entity.get("description", f"{name} entity")
-                    synonyms = entity.get("synonyms", [])
-                    
-                    entity_desc = f"- **{name}**: {description}"
-                    if synonyms:
-                        entity_desc += f" (also: {', '.join(synonyms)})"
+                    entity_desc = f"**{name}**: {description}"
                     entity_descriptions.append(entity_desc)
         
-        entities_text = "\n".join(entity_descriptions)
+        entities_text = "\n".join([f"• {desc}" for desc in entity_descriptions])
         
         # Get current screen context from session state
         screen_context_info = ""
@@ -406,106 +415,167 @@ User is not viewing a specific entity.
 User requests will need to specify entities explicitly.
 """
         
-        return f"""
-You are a background entity detection and action planning agent with EXTREME CONTEXT AWARENESS.
+        return f"""🎯 **TASK PLANNER AGENT - ACTION-BASED PLANNING**
+
+You are a smart action planner that analyzes user requests and creates step-by-step action plans.
 
 {screen_context_info}
 
-**CRITICAL: You should NOT respond to the user's request or message. Your only job is to analyze their request and create an action plan in JSON format.**
+**YOUR JOB**: Break down user requests into logical ACTION steps. Define WHAT to do, not HOW to do it.
 
-YOUR TASK: Analyze user input using BOTH their request AND screen context to detect entities and create structured action plans.
-
-AVAILABLE ENTITIES IN THIS SYSTEM:
+**🎯 AVAILABLE ENTITIES:**
 {entities_text}
 
-{context_examples}
+**🚨 CRITICAL OUTPUT FORMAT**
+Return ONLY a JSON array with this EXACT structure - NO other properties:
 
-Your job is to:
-1. **CHECK SCREEN CONTEXT FIRST**: Use entity_in_focus and entity_id_in_focus to resolve "this", "update this", "delete this"
-2. **SUPER INTELLIGENT MULTI-ENTITY DETECTION**: Analyze for multiple entities in complex requests
-3. **SPECIAL HANDLING FOR LINK & DOCUMENT**: Always check if Link or Document operations should use their own entity endpoints
-4. Detect if the user mentions any of these entities (combining request + screen context)
-5. Determine what action they want (CREATE, READ, UPDATE, DELETE, SEARCH)  
-6. Extract any parameters or context including entity IDs from screen
-7. Create a structured action plan that may involve MULTIPLE entities
-
-**🧠 SUPER INTELLIGENT MULTI-ENTITY EXAMPLES:**
-
-**Complex Request: "Update this partner with link xyz.com"**
-DETECTION: This involves TWO entities:
-- Primary: Partner (from screen context)
-- Secondary: Link (because "link xyz.com" suggests Link entity operations)
-ACTION PLAN: Check BOTH Partner endpoints AND Link endpoints for the best approach
-
-**Complex Request: "Add document ABC.pdf to this contact"**
-DETECTION: This involves TWO entities:
-- Primary: Contact (from screen context)  
-- Secondary: Document (because "document ABC.pdf" suggests Document entity operations)
-ACTION PLAN: Check BOTH Contact endpoints AND Document endpoints
-
-**Complex Request: "Remove the link from partner 123"**
-DETECTION: This involves TWO entities:
-- Primary: Partner (explicitly mentioned)
-- Secondary: Link (link removal might use Link entity endpoints)
-ACTION PLAN: Check BOTH Partner endpoints AND Link endpoints
-
-**INTELLIGENCE RULES:**
-- When user mentions "link", "URL", "hyperlink" → ALWAYS consider Link entity
-- When user mentions "document", "file", "attachment" → ALWAYS consider Document entity  
-- When combining operations (e.g., "add X to Y"), check BOTH entities for endpoints
-- Screen context provides the PRIMARY entity, but analyze for SECONDARY entities too
-
-You should NOT engage in conversation with the user. You should ONLY return the action plan data in JSON format.
-
-**OUTPUT FORMAT**: Always return JSON with:
-{{
-    "entities_detected": [...],
-    "primary_action": "...",
-    "action_plan": [...],
-    "multi_entity_analysis": {{
-        "has_multiple_entities": true/false,
-        "primary_entity": "EntityName",
-        "secondary_entities": ["Entity1", "Entity2"],
-        "reasoning": "Explanation of why multiple entities detected"
+```json
+[
+  {{
+    "step": 1,
+    "action": "What needs to be accomplished (in plain English)",
+    "entity": "Partner|Contact|Document|GoogleDrive|GoogleDoc|GoogleSheet|etc",
+    "intent": "Search|Create|Update|Delete",
+    "params": {{
+      "key": "value if user specified criteria"
     }}
-}}
+  }}
+]
+```
 
-**MULTI-ENTITY ACTION PLAN EXAMPLES:**
+**🚫 FORBIDDEN PROPERTIES** - NEVER include these:
+- ❌ "entities_detected"
+- ❌ "primary_action" 
+- ❌ "tool_code"
+- ❌ "parameters"
+- ❌ "purpose"
+- ❌ "multi_entity_analysis"
 
-For "Update this partner with link xyz.com":
-{{
-    "entities_detected": ["Partner", "Link"],
-    "primary_action": "update_with_link",
-    "action_plan": [
-        {{
-            "entity": "Partner", 
-            "intent": "update", 
-            "entity_id": 1729,
-            "secondary_operation": "add_link",
-            "confidence": 0.9
-        }},
-        {{
-            "entity": "Link",
-            "intent": "create", 
-            "target_entity": "Partner",
-            "target_entity_id": 1729,
-            "extracted_params": {{"url": "xyz.com"}},
-            "confidence": 0.95
-        }}
-    ],
-    "multi_entity_analysis": {{
-        "has_multiple_entities": true,
-        "primary_entity": "Partner", 
-        "secondary_entities": ["Link"],
-        "reasoning": "User wants to update a partner by adding a link - requires both Partner context and Link entity operations"
+**✅ ONLY ALLOWED PROPERTIES:**
+- ✅ "step" (number)
+- ✅ "action" (plain English description)
+- ✅ "entity" (from available entities list)
+- ✅ "intent" (Search|Create|Update|Delete)
+- ✅ "params" (object with user criteria)
+
+**📝 ACTION PLANNING EXAMPLES:**
+
+**User: "Get list of partners"**
+```json
+[
+  {{
+    "step": 1,
+    "action": "Search for partners",
+    "entity": "Partner",
+    "intent": "Search",
+    "params": {{}}
+  }}
+]
+```
+
+**User: "Can you summarize this partner information into a google doc?"**
+```json
+[
+  {{
+    "step": 1,
+    "action": "Get partner information",
+    "entity": "Partner", 
+    "intent": "Search",
+    "params": {{}}
+  }},
+  {{
+    "step": 2,
+    "action": "Create Google Doc with partner summary",
+    "entity": "GoogleDoc",
+    "intent": "Create",
+    "params": {{
+      "title": "Partner Summary"
     }}
-}}
+  }}
+]
+```
 
-**CRITICAL: Always include entity_id in action_plan when available from screen context!**
-**CRITICAL: Always detect secondary entities like Link/Document for comprehensive operations!**
+**User: "Find partners in Bangladesh"**
+```json
+[
+  {{
+    "step": 1,
+    "action": "Search for partners in Bangladesh",
+    "entity": "Partner",
+    "intent": "Search",
+    "params": {{
+      "location": "Bangladesh"
+    }}
+  }}
+]
+```
 
-Do this immediately without any conversation with the user.
-"""
+**User: "Search for Opportunity+ related documents"**
+```json
+[
+  {{
+    "step": 1,
+    "action": "Search for Opportunity+ documents in application",
+    "entity": "Document",
+    "intent": "Search",
+    "params": {{
+      "query": "Opportunity+"
+    }}
+  }},
+  {{
+    "step": 2,
+    "action": "Search Google Drive for Opportunity+ related files",
+    "entity": "GoogleDrive",
+    "intent": "Search",
+    "params": {{
+      "query": "Opportunity+ documents files"
+    }}
+  }}
+]
+```
+
+**User: "Find information about climate change"**
+```json
+[
+  {{
+    "step": 1,
+    "action": "Search for climate change information in database",
+    "entity": "Document",
+    "intent": "Search",
+    "params": {{
+      "query": "climate change"
+    }}
+  }},
+  {{
+    "step": 2,
+    "action": "Search Google Drive for climate change documents",
+    "entity": "GoogleDrive", 
+    "intent": "Search",
+    "params": {{
+      "query": "climate change"
+    }}
+  }}
+]
+```
+
+**🚫 NON-ENTITY REQUESTS (Return Empty Array):**
+For greetings, thank you, simple conversations: `[]`
+
+**🎯 ENTITY DETECTION RULES:**
+- Partner/Contact/Document requests → Use corresponding entity
+- "Google doc", "document creation" → GoogleDoc entity
+- "Google drive", "search files" → GoogleDrive entity  
+- "Spreadsheet", "Google sheets" → GoogleSheet entity
+- Multi-step requests → Multiple action steps
+
+**🔍 COMPREHENSIVE DOCUMENT SEARCH RULES:**
+When users search for documents, information, or files, create MULTIPLE search steps for comprehensive results:
+- **Document searches**: Always include BOTH Document entity AND GoogleDrive entity
+- **Information searches**: Search internal data AND Google Drive for complete coverage
+- **Keywords triggering multi-source search**: "documents", "files", "information about", "search for", "find", "related to"
+- **Exception**: Only use single source if user explicitly specifies "only in app" or "only in Google Drive"
+
+**CRITICAL**: Output ONLY the JSON array. No other text or properties."""
         
     except Exception as e:
         logger.error(f"Error generating dynamic instruction: {e}")
@@ -513,21 +583,29 @@ Do this immediately without any conversation with the user.
 
 def get_fallback_instruction() -> str:
     """Fallback instruction when entity loading fails"""
-    return """
-You are a background entity detection and action planning agent.
+    return """🎯 **TASK PLANNER AGENT - FALLBACK MODE**
 
-**CRITICAL: You should NOT respond to the user's request or message. Your only job is to analyze their request and create an action plan in JSON format.**
+You are a task planner that creates action plans from user requests.
 
-Since entity configuration is not available, create a basic action plan structure:
+**OUTPUT FORMAT**: Return ONLY a JSON array:
 
-{{
-    "entities_detected": [],
-    "primary_action": "general_query",
-    "action_plan": []
-}}
+```json
+[
+  {
+    "step": 1,
+    "action": "Description of what to do",
+    "entity": "Partner|Contact|Document",
+    "intent": "Search|Create|Update|Delete", 
+    "params": {}
+  }
+]
+```
 
-Do this immediately without any conversation with the user.
-"""
+**For greetings or unclear requests**: Return empty array `[]`
+
+**Available entities**: Partner, Contact, Document, GoogleDrive, GoogleDoc, GoogleSheet
+
+Output ONLY the JSON array. No other text."""
 
 
 def build_dynamic_prompt(ctx: CallbackContext) -> str:

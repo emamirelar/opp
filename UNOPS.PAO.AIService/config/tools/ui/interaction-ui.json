@@ -19,7 +19,7 @@
     {
       "route": "Modal dialog (no direct route)",
       "name": "InteractionModalComponent",
-      "description": "This modal allows users to create new interaction records or edit existing ones. It supports various communication types like meetings, calls, and emails, and includes features for adding participants, uploading documents, and leveraging AI for transcription to automatically populate details.",
+      "description": "This modal allows users to create new interaction records or edit existing ones. Interactions can include various types of communications like meetings, calls, and emails. It supports adding participants, uploading relevant documents, and leveraging AI for transcribing and extracting details from audio or image files.",
       "capabilities": [
         "create_interaction",
         "edit_interaction",
@@ -37,7 +37,7 @@
           "action": "save_interaction",
           "description": "Saves or creates an interaction record with all form data, including participants, documents, and interaction details.",
           "when_to_use": [
-            "When all required fields are filled and you want to save the interaction to the system."
+            "When all required fields are filled and you want to save the interaction to the system"
           ]
         },
         {
@@ -47,7 +47,7 @@
           "action": "delete_interaction",
           "description": "Permanently deletes an interaction record after a confirmation dialog. Use with caution as this action cannot be undone.",
           "when_to_use": [
-            "When an interaction was recorded incorrectly or is no longer relevant and needs to be removed from the system."
+            "When an interaction was recorded incorrectly or is no longer relevant (use with caution)"
           ]
         },
         {
@@ -55,9 +55,11 @@
           "label": "Process Transcription",
           "icon": "pi pi-microphone",
           "action": "process_transcription",
-          "description": "Processes AI transcription results from uploaded audio, image, or text files and automatically fills relevant form fields with extracted interaction data.",
+          "description": "Processes AI transcription results from uploaded files (audio, image, or text) and automatically fills relevant form fields with extracted interaction data.",
           "when_to_use": [
-            "After uploading an audio recording, image, or text file from an interaction to automatically extract and populate details using AI."
+            "After uploading audio",
+            "image",
+            "or text to extract interaction details automatically using AI"
           ]
         }
       ],
@@ -66,15 +68,18 @@
       "search": {},
       "filters": [],
       "help_guidance": {
-        "when_stuck": "To create or edit an interaction, ensure you fill in the interaction type (e.g., Meeting, Phone Call), the date, and a subject. You can add participants by typing their email addresses or selecting existing contacts. For quick data entry, use the AI transcription feature to process audio or image files and automatically populate interaction details.",
+        "when_stuck": "To create an interaction, ensure you fill in the interaction type (e.g., Meeting, Call), the date, and a subject. You can add participants by typing their email addresses or selecting existing contacts. For quick data entry, consider using the AI transcription feature to populate details from audio or image files.",
         "common_tasks": [
-          "Recording a meeting: Select 'Meeting' as the type, specify the date and time, add participants, and include detailed notes in the description.",
-          "Logging a phone call: Choose 'Phone Call' as the type, select the contact involved, and summarize the conversation.",
-          "Adding participants: Enter email addresses for new participants or select existing contacts from your contact list.",
-          "Using AI transcription: Upload an audio file, image, or text document, then click the 'Process Transcription' button to let AI extract key information and populate the form.",
-          "Attaching documents: Use the document section to upload relevant files such as meeting agendas, notes, or related documents.",
-          "Setting follow-up: Add future interaction reminders or next steps in the description or a dedicated follow-up field if available, to ensure continuity."
-        ]
+          "Recording a meeting: Select 'Meeting' type, add the date/time, list all participants, and include detailed notes about the discussion.",
+          "Logging a phone call: Choose 'Phone Call' type, specify the contact, and summarize the conversation.",
+          "Adding participants: Type email addresses into the participant field or select from your contact list if they are already in the system.",
+          "Using AI transcription: After uploading an audio or image file, click the 'Process Transcription' button to automatically extract and populate interaction details.",
+          "Attaching documents: Use the document section to upload any relevant files, such as meeting agendas, notes, or contracts.",
+          "Setting follow-up: Add future interaction reminders or next steps to ensure continuity in your engagements."
+        ],
+        "troubleshooting": [],
+        "getting_started": "To get started, open the 'Create Interaction' modal. First, select the 'Type' of interaction (e.g., Meeting, Call). Then, enter the 'Date' and a brief 'Subject'. You can then add participants and any relevant notes or attachments. Click 'Save' to record your first interaction.",
+        "keyboard_shortcuts": []
       }
     }
   ]

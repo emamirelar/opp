@@ -1,0 +1,55 @@
+{
+  "entity": "Engagement",
+  "description": "An engagement represents a formal agreement, project, or interaction between UNOPS and a partner, outlining specific activities, objectives, and collaborations.",
+  "synonyms": [
+    "project",
+    "collaboration",
+    "agreement",
+    "activity",
+    "initiative"
+  ],
+  "mandatoryFields": [],
+  "endpoints": [
+    {
+      "name": "GetEngagementsByPartner",
+      "url": "api/engagement/partner/{partnerId}",
+      "method": "GET",
+      "description": "Retrieves all engagements for a specific partner with complete details. This endpoint supports pagination and sorting of results.",
+      "parameters": {
+        "partnerId": {
+          "type": "integer",
+          "required": true,
+          "description": "Partner ID to filter engagements by"
+        },
+        "pageIndex": {
+          "type": "integer",
+          "required": false,
+          "description": "Page number (1-based, default: 1)"
+        },
+        "pageSize": {
+          "type": "integer",
+          "required": false,
+          "description": "Number of items per page (default: 20)"
+        },
+        "orderBy": {
+          "type": "string",
+          "required": false,
+          "description": "Field to order results by (optional)"
+        },
+        "ascending": {
+          "type": "boolean",
+          "required": false,
+          "description": "Sort direction - true for ascending, false for descending (default: true)"
+        }
+      },
+      "example_uses": [
+        "Show all engagements for partner 123",
+        "List engagements for specific partner organization",
+        "Get partner engagement history",
+        "Display partner's project engagements",
+        "Show engagement records for a partner"
+      ],
+      "when_to_use": "Use this when the user wants to see all engagements associated with a specific partner."
+    }
+  ]
+}

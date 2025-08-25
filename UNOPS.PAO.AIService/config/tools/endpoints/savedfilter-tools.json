@@ -1,118 +1,220 @@
 {
   "entity": "SavedFilter",
-  "description": "Manages user-defined saved filters, allowing users to store and reuse complex search criteria for various entities within the system.",
+  "description": "Manages user-defined saved search filters for various entities. These filters can store complex search criteria, simple search text, and sorting preferences for later reuse.",
   "synonyms": [
     "filter",
     "saved search",
     "custom filter",
-    "search template",
+    "search preset",
     "user filter"
   ],
   "mandatoryFields": [
-    "name",
-    "filterCriteria"
+    "Id",
+    "IsAdvancedSearch",
+    "PageIndex",
+    "PageSize"
   ],
   "endpoints": [
     {
       "name": "CreateSavedFilter",
-      "url": "api/SavedFilter",
+      "url": "api/savedfilter",
       "method": "POST",
-      "description": "Creates a new saved filter based on the provided criteria. This allows users to store and reuse specific search configurations.",
+      "description": "Create a new saved filter. This filter can store search criteria, search text, and advanced search settings for a specific entity type.",
       "parameters": {
-        "request": {
-          "type": "object",
+        "Name": {
+          "type": "string",
+          "required": false,
+          "description": "The name of the saved filter."
+        },
+        "Description": {
+          "type": "string",
+          "required": false,
+          "description": "A description for the saved filter."
+        },
+        "EntityType": {
+          "type": "string",
+          "required": false,
+          "description": "The type of entity this filter applies to (e.g., 'Partner', 'Project')."
+        },
+        "SearchCriteria": {
+          "type": "string",
+          "required": false,
+          "description": "JSON string representing advanced search criteria (e.g., '[{\"field\": \"Name\", \"operator\": \"contains\", \"value\": \"test\"}]')."
+        },
+        "SearchText": {
+          "type": "string",
+          "required": false,
+          "description": "Simple text to search within the entity."
+        },
+        "IsAdvancedSearch": {
+          "type": "boolean",
           "required": true,
-          "description": "The request body containing the details for the new saved filter, including its name, description, and the filter criteria."
+          "description": "Indicates if the filter uses advanced search criteria (true) or simple search text (false)."
+        },
+        "OrderBy": {
+          "type": "string",
+          "required": false,
+          "description": "The field name to order the search results by."
+        },
+        "Ascending": {
+          "type": "boolean",
+          "required": false,
+          "description": "True for ascending order, false for descending."
         }
       },
       "example_uses": [
-        "Create a new saved filter named 'My Projects in Africa' for the 'Project' entity.",
-        "I want to save a filter that shows all 'Partners' with 'Active' status and 'High' risk.",
-        "Can you help me create a new saved filter for 'Interactions' that occurred last month?"
+        "Create a new saved filter named 'My Active Partners' for the 'Partner' entity, using advanced search criteria.",
+        "Save a simple text search 'Project X' as a filter for 'Projects'.",
+        "Define a filter to sort 'Contacts' by 'Name' in ascending order."
       ],
-      "when_to_use": "Use this endpoint when a user wants to permanently store a set of search parameters for future use, avoiding the need to re-enter them repeatedly."
+      "when_to_use": "Use this to persist a specific search configuration for later reuse, allowing users to quickly apply complex or frequently used search parameters."
     },
     {
       "name": "UpdateSavedFilter",
-      "url": "api/SavedFilter",
+      "url": "api/savedfilter",
       "method": "PUT",
-      "description": "Updates an existing saved filter with new information. This can include changing its name, description, or the underlying filter criteria.",
+      "description": "Update an existing saved filter. You can modify its name, description, search criteria, and other settings.",
       "parameters": {
-        "request": {
-          "type": "object",
+        "Id": {
+          "type": "integer",
           "required": true,
-          "description": "The request body containing the updated details for the saved filter. The filter is identified by its ID within this request."
+          "description": "The unique identifier of the saved filter to update."
+        },
+        "Name": {
+          "type": "string",
+          "required": false,
+          "description": "The new name for the saved filter."
+        },
+        "Description": {
+          "type": "string",
+          "required": false,
+          "description": "The new description for the saved filter."
+        },
+        "SearchCriteria": {
+          "type": "string",
+          "required": false,
+          "description": "New JSON string representing advanced search criteria."
+        },
+        "SearchText": {
+          "type": "string",
+          "required": false,
+          "description": "New simple text to search within the entity."
+        },
+        "IsAdvancedSearch": {
+          "type": "boolean",
+          "required": true,
+          "description": "Indicates if the filter uses advanced search criteria (true) or simple search text (false)."
+        },
+        "OrderBy": {
+          "type": "string",
+          "required": false,
+          "description": "The new field name to order the search results by."
+        },
+        "Ascending": {
+          "type": "boolean",
+          "required": false,
+          "description": "New value for ascending order (true) or descending (false)."
         }
       },
       "example_uses": [
-        "Update the 'My Projects in Africa' filter to also include projects with 'Pending' status.",
-        "I need to rename my 'High Risk Partners' filter to 'Critical Partners'.",
-        "Modify the saved filter for 'Interactions' to only show those from the last 7 days."
+        "Update the description of saved filter with ID 123 to 'Partners in Europe'.",
+        "Modify the search criteria for filter 456 to include only active projects.",
+        "Change the name of filter 789 from 'Old Filter' to 'New Filter Name'."
       ],
-      "when_to_use": "Use this endpoint when a user needs to modify the details or criteria of an already existing saved filter."
+      "when_to_use": "Use this to modify the details or search parameters of an already existing saved filter."
     },
     {
       "name": "DeleteSavedFilter",
-      "url": "api/SavedFilter/{id}",
+      "url": "api/savedfilter/{id}",
       "method": "DELETE",
-      "description": "Deletes a specific saved filter identified by its unique ID. This action is irreversible.",
+      "description": "Delete a specific saved filter by its ID.",
       "parameters": {
         "id": {
           "type": "integer",
           "required": true,
-          "description": "The unique identifier of the saved filter to be deleted."
+          "description": "The unique identifier of the saved filter to delete."
         }
       },
       "example_uses": [
-        "Delete the saved filter with ID 123.",
-        "Remove the 'Old Archived Projects' filter.",
-        "Can you delete the filter I created last year that I no longer use?"
+        "Delete the saved filter with ID 10.",
+        "Remove the filter that I no longer need, identified by its ID.",
+        "Can you delete filter number 5?"
       ],
-      "when_to_use": "Use this endpoint when a user wants to permanently remove a saved filter from the system."
+      "when_to_use": "Use this to permanently remove a saved filter that is no longer needed."
     },
     {
       "name": "GetSavedFilter",
-      "url": "api/SavedFilter/{id}",
+      "url": "api/savedfilter/{id}",
       "method": "GET",
-      "description": "Retrieves the details of a specific saved filter by its unique identifier.",
+      "description": "Retrieve the details of a specific saved filter by its unique ID.",
       "parameters": {
         "id": {
           "type": "integer",
           "required": true,
-          "description": "The unique identifier of the saved filter to retrieve."
+          "description": "The unique identifier of the saved filter."
         }
       },
       "example_uses": [
-        "Get the details of saved filter with ID 456.",
-        "Show me the criteria for the 'Active Grants' filter.",
-        "What are the parameters stored in the filter named 'My Default View'?"
+        "Get the details of saved filter 123.",
+        "Show me the configuration for filter ID 45.",
+        "Retrieve the saved filter named 'My Projects' if you know its ID."
       ],
-      "when_to_use": "Use this endpoint when a user needs to view the specific configuration or details of a single saved filter."
+      "when_to_use": "Use this to fetch the full configuration and details of a single saved filter when its ID is known."
     },
     {
       "name": "GetSavedFilters",
-      "url": "api/SavedFilter",
+      "url": "api/savedfilter",
       "method": "GET",
-      "description": "Retrieves a paginated list of saved filters for the current user. This endpoint supports advanced search capabilities through the 'advancedSearch' query parameter, allowing complex filtering of the saved filters themselves. The 'advancedSearch' parameter expects a JSON array of criteria, where each criterion is an object with 'field', 'operator', and 'value'.\n\nExample advancedSearch criteria:\n```json\n[\n  {\"field\": \"name\", \"operator\": \"contains\", \"value\": \"Project\"},\n  {\"field\": \"entityType\", \"operator\": \"is\", \"value\": \"Project\"},\n  {\"field\": \"isPublic\", \"operator\": \"is\", \"value\": true},\n  {\"field\": \"createdDate\", \"operator\": \"between\", \"value\": [\"2023-01-01\", \"2023-12-31\"]}\n]\n```\n\nAvailable operators include: 'like', 'is', 'not', 'contains', 'startsWith', 'between'.\nCommon fields for filtering saved filters include: 'name', 'description', 'entityType', 'isPublic', 'createdBy', 'createdDate', 'lastModifiedDate'.",
+      "description": "Retrieve a paginated list of saved filters for the current user. You can filter by entity type or search text. This endpoint supports advanced search capabilities via the `SearchCriteria` parameter (though not directly exposed as a query parameter here, it's part of the saved filter's definition). For advanced search, criteria should be a JSON array of objects, each with 'field', 'operator', and 'value'. Example: `[{\"field\": \"Name\", \"operator\": \"contains\", \"value\": \"test\"}]`.",
       "parameters": {
-        "request": {
-          "type": "object",
+        "EntityType": {
+          "type": "string",
           "required": false,
-          "description": "An object containing search and pagination parameters. This can include 'pageIndex', 'pageSize', 'sortBy', 'sortOrder', and 'advancedSearch' for complex filtering."
+          "description": "Optional filter to retrieve filters only for a specific entity type."
+        },
+        "SearchText": {
+          "type": "string",
+          "required": false,
+          "description": "Optional text to search within the filter names or descriptions."
+        },
+        "OrderBy": {
+          "type": "string",
+          "required": false,
+          "description": "The field name to order the results by."
+        },
+        "Ascending": {
+          "type": "boolean",
+          "required": false,
+          "description": "True for ascending order, false for descending."
+        },
+        "Direction": {
+          "type": "boolean",
+          "required": false,
+          "description": "Direction of sorting (true for ascending, false for descending)."
+        },
+        "PageIndex": {
+          "type": "integer",
+          "required": true,
+          "description": "The page number to retrieve (1-based index)."
+        },
+        "PageSize": {
+          "type": "integer",
+          "required": true,
+          "description": "The number of items per page."
         }
       },
       "example_uses": [
-        "List all saved filters I have created.",
-        "Show me all saved filters related to 'Partners', paginated with 10 items per page.",
-        "Find all public saved filters that were created in the last month and contain 'Report' in their name."
+        "List all saved filters for the 'Project' entity type, showing 10 per page.",
+        "Find all saved filters that contain 'report' in their name or description.",
+        "Get the first page of all my saved filters, ordered by name."
       ],
-      "when_to_use": "Use this endpoint when a user wants to browse, search, or filter their collection of saved filters, or retrieve a list of all available saved filters."
+      "when_to_use": "Use this to browse, search, or paginate through the list of saved filters available to the user."
     },
     {
       "name": "ApplySavedFilter",
-      "url": "api/SavedFilter/{id}/apply",
+      "url": "api/savedfilter/{id}/apply",
       "method": "GET",
-      "description": "Applies a specific saved filter by its ID and returns the configured filter request object. This allows the client to dynamically construct a search query based on the saved filter's criteria, optionally overriding pagination parameters.",
+      "description": "Apply a specific saved filter by its ID and retrieve the corresponding search request object. This allows the client to understand the exact search parameters defined by the saved filter, which can then be used to query the actual entity data.",
       "parameters": {
         "id": {
           "type": "integer",
@@ -122,39 +224,39 @@
         "pageIndex": {
           "type": "integer",
           "required": false,
-          "description": "Optional page index to override the one stored in the saved filter (default: 1)."
+          "description": "Page index for pagination (default: 1)."
         },
         "pageSize": {
           "type": "integer",
           "required": false,
-          "description": "Optional page size to override the one stored in the saved filter (default: 10)."
+          "description": "Page size for pagination (default: 10)."
         }
       },
       "example_uses": [
-        "Apply the saved filter with ID 789 to get its search parameters.",
-        "I want to use the 'All Active Projects' filter, but only for the second page of results.",
-        "Retrieve the search criteria from my 'Default Partner View' filter."
+        "Apply saved filter 123 and get the search parameters.",
+        "What are the search criteria defined in filter ID 45?",
+        "Retrieve the search request object for filter 'My Active Projects'."
       ],
-      "when_to_use": "Use this endpoint when a user wants to retrieve the actual search criteria defined within a saved filter, typically to then execute a search on another entity using those criteria."
+      "when_to_use": "Use this to programmatically retrieve the search configuration stored within a saved filter, typically before executing a search on the actual entity data using those parameters."
     },
     {
       "name": "GetFilterStatistics",
-      "url": "api/SavedFilter/statistics",
+      "url": "api/savedfilter/statistics",
       "method": "GET",
-      "description": "Retrieves usage statistics for saved filters, providing insights into their popularity or distribution. Optionally, statistics can be filtered by a specific entity type.",
+      "description": "Get usage statistics for saved filters, optionally filtered by entity type. This provides insights into how frequently filters are used or other relevant metrics.",
       "parameters": {
         "entityType": {
           "type": "string",
           "required": false,
-          "description": "Optional parameter to filter statistics by a specific entity type (e.g., 'Project', 'Partner')."
+          "description": "Optional entity type filter to get statistics for specific filters."
         }
       },
       "example_uses": [
-        "Get overall usage statistics for all saved filters.",
-        "Show me the statistics for saved filters related to 'Interactions'.",
-        "How many saved filters are there for each entity type?"
+        "Show me the usage statistics for all saved filters.",
+        "Get statistics for saved filters related to 'Partners'.",
+        "How many times have 'Project' filters been applied?"
       ],
-      "when_to_use": "Use this endpoint to gain analytical insights into how saved filters are being used across different entities or overall."
+      "when_to_use": "Use this to monitor the usage and popularity of saved filters, potentially for reporting or optimization purposes."
     }
   ]
 }
