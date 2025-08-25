@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using UNOPS.PAO.Business.Managers;
+using UNOPS.PAO.Business;
 
 namespace UNOPS.PAO.UNOPSBusiness.Services;
 
@@ -68,7 +69,8 @@ public class DueDiligenceNotificationService : BackgroundService
 
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<UNOPSAppDbContext>();
-            var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+            var paoEmailSender = scope.ServiceProvider.GetRequiredService<PAOEmailSender>();
+            var urlService = scope.ServiceProvider.GetRequiredService<IUrlService>();
             var notificationManager = scope.ServiceProvider.GetRequiredService<NotificationManager>();
 
             // Calculate the warning threshold date (6 months from now)
@@ -119,12 +121,21 @@ public class DueDiligenceNotificationService : BackgroundService
                         continue;
                     }
 
-                    var emailSent = await emailService.SendDueDiligenceExpiryNotificationAsync(
+                    var monthsUntilExpiry = Math.Round((partner.DueDiligenceExpiryDate.Value - DateTime.UtcNow).TotalDays / 30.44, 1);
+                    var daysRemaining = (int)(partner.DueDiligenceExpiryDate.Value - DateTime.UtcNow).TotalDays;
+                    var partnerUrl = urlService.BuildEntityUrl("partner", partner.Id);
+
+                    await paoEmailSender.SendDueDiligenceExpiryNotificationAsync(
                         userInfo.UserEmail,
                         userInfo.Name ?? "User",
                         partner.Name ?? "Unknown Partner",
                         partner.DueDiligenceExpiryDate.Value,
-                        partner.Id); // Pass partner ID for direct link
+                        partnerUrl,
+                        (decimal)monthsUntilExpiry,
+                        daysRemaining);
+
+                    // Email sending succeeded (PAOEmailSender doesn't return bool, so we assume success if no exception)
+                    var emailSent = true;
 
                     if (emailSent)
                     {
