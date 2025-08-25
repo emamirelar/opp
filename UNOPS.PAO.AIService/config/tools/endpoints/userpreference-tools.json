@@ -1,12 +1,12 @@
 {
   "entity": "UserPreference",
-  "description": "Manages user-specific settings and preferences within the system, such as default organizational unit.",
+  "description": "Manages user-specific settings and preferences within the system, such such as default organizational unit for filtering and access control.",
   "synonyms": [
     "user settings",
-    "preferences",
-    "user config",
-    "my settings",
-    "personal settings"
+    "personal preferences",
+    "account settings",
+    "my preferences",
+    "user config"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -19,9 +19,7 @@
       "example_uses": [
         "Get my default organizational unit setting",
         "What's my default org unit preference?",
-        "Show my default office assignment",
-        "Get current organizational unit filter",
-        "Check my default org unit setting"
+        "Show my default office assignment"
       ],
       "when_to_use": "Use this when loading user's default organizational unit for filtering or when determining the user's default office context."
     },
@@ -31,18 +29,16 @@
       "method": "PUT",
       "description": "Updates the current user's default organizational unit preference for filtering and access control.",
       "parameters": {
-        "request": {
-          "type": "object",
+        "OrgUnitId": {
+          "type": "integer",
           "required": false,
-          "description": "Default org unit request containing the new setting"
+          "description": "The ID of the organizational unit to set as the user's default. Set to null to clear the default."
         }
       },
       "example_uses": [
         "Set my default org unit to Headquarters",
         "Change my default office to Field Office 123",
-        "Update my organizational unit preference",
-        "Set default org unit filter to my office",
-        "Clear my default org unit setting"
+        "Update my organizational unit preference"
       ],
       "when_to_use": "Use this when the user wants to change their default organizational unit for filtering and access control purposes."
     }

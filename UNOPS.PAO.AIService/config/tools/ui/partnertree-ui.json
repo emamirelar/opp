@@ -17,7 +17,7 @@
     {
       "route": "/admin/partner-tree",
       "name": "PartnerTreeComponent",
-      "description": "This page provides the administrative interface for managing your organization's hierarchical structure. You can view, edit, and organize partner categories and groups in a tree-like format, allowing for clear visualization and management of your business relationships and internal structures.",
+      "description": "This page provides the administrative interface for managing your organization's partner hierarchy. You can view, edit, and organize partner categories and groups in a hierarchical tree format, allowing for a clear representation of your business structure.",
       "capabilities": [
         "view_partner_tree",
         "create_partner_level",
@@ -33,29 +33,36 @@
           "label": "New Partner Level",
           "icon": "pi pi-plus",
           "action": "create_partner_level",
-          "description": "Opens a dialog to create a new organizational node, such as a category, group, or level, within the partner hierarchy tree.",
+          "description": "This button opens a dialog to create a new organizational node, such as a category, group, or level, within the partner hierarchy tree. Use this to expand or refine your organizational structure.",
           "when_to_use": [
             "When you need to add a new organizational category to the partner tree structure.",
             "When you need to add a new group to the partner tree structure.",
-            "When you need to add a new level to the partner hierarchy."
+            "When you need to add a new level to the partner tree structure."
           ]
         }
       ],
       "forms": [],
       "tabs": [],
-      "search": {},
+      "search": {
+        "placeholder": "",
+        "description": "Search functionality is not explicitly defined for this page. You may need to navigate the tree manually.",
+        "help_text": "Currently, there are no specific search tips available for this page."
+      },
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're unsure how to proceed, use the tree view to navigate the organizational structure. Click the '+' button to create new partner levels. Use the expand/collapse controls (arrows next to nodes) to view different levels of the hierarchy. To edit details of an existing partner level, simply click on its row in the tree.",
+        "when_stuck": "If you're unsure how to proceed, remember that the main view is a hierarchical tree. To add new elements, click the 'New Partner Level' button. To explore the structure, use the expand/collapse icons next to each node. To modify an existing partner level, simply click on its row in the tree.",
         "common_tasks": [
-          "Creating partner levels: Click the 'New Partner Level' button to add new organizational nodes to your hierarchy.",
-          "Editing partner structure: Click on any existing tree node (partner level) to open its details for modification.",
-          "Managing hierarchy: Utilize the tree structure to organize and reorder partner categories and groups as needed.",
-          "Viewing organizational structure: Expand and collapse nodes within the tree to explore different levels of your hierarchy.",
-          "Administrative management: Configure and maintain organizational relationships and reporting structures within the tree."
+          "Creating partner levels: Click the 'New Partner Level' button at the top of the page to add new organizational nodes to your hierarchy.",
+          "Editing partner structure: Click on any existing tree node (row) to open its details for modification.",
+          "Managing hierarchy: Use the drag-and-drop functionality (if available) or the edit options to re-organize partner categories and groups within the tree.",
+          "Viewing organizational structure: Click the arrow icons next to parent nodes to expand or collapse sections of the tree, revealing or hiding sub-levels.",
+          "Administrative management: Utilize the tree structure to define and configure relationships between different parts of your organization."
         ],
-        "troubleshooting": [],
-        "getting_started": "",
+        "troubleshooting": [
+          "Problem: Cannot find a specific partner level → Solution: Try expanding all parent nodes to reveal hidden sub-levels. If still not found, it might not exist or is under a different parent than expected.",
+          "Problem: 'New Partner Level' button is disabled → Solution: Ensure you have the necessary permissions to create new levels. Contact your administrator if you believe this is an error."
+        ],
+        "getting_started": "Welcome to the Partner Tree management page! To begin, familiarize yourself with the existing organizational structure displayed in the tree view. Your first task might be to add a new top-level category by clicking 'New Partner Level', or to expand existing nodes to see their sub-categories.",
         "keyboard_shortcuts": []
       }
     }

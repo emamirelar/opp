@@ -1,14 +1,24 @@
 {
   "entity": "UserProfile",
-  "description": "Manages the profile and personal information for users within the system, including their contact details, settings, roles, and permissions.",
+  "description": "Manages user profiles, personal information, and preferences for authenticated users.",
   "synonyms": [
-    "User Profile",
-    "My Profile",
-    "Account Settings",
     "User Info",
-    "Personal Details"
+    "Account Settings",
+    "My Profile",
+    "User Preferences",
+    "Profile"
   ],
-  "mandatoryFields": [],
+  "mandatoryFields": [
+    "UserId",
+    "TextToSpeech",
+    "Id",
+    "Status",
+    "CreatedBy",
+    "CreatedDate",
+    "LastModifiedBy",
+    "IsDeleted",
+    "DeletedBy"
+  ],
   "endpoints": [
     {
       "name": "UpdateProfile",
@@ -19,15 +29,15 @@
         "profile": {
           "type": "object",
           "required": false,
-          "description": "Updated profile model containing new information"
+          "description": "Updated profile model containing new information. Fields like Email, FirstName, LastName are optional."
         }
       },
       "example_uses": [
-        "Update my profile with my new contact details.",
-        "I need to change my address in my user profile.",
-        "Can you help me update my personal information?"
+        "Update my profile with a new email address.",
+        "Change my first and last name in my user profile.",
+        "I want to update my contact details."
       ],
-      "when_to_use": "Use this endpoint when an authenticated user wants to modify their own profile details such as name, contact information, or other personal attributes."
+      "when_to_use": "Use this endpoint when a user wants to update their basic profile information such as email, first name, or last name."
     },
     {
       "name": "UpdateUserInfo",
@@ -38,15 +48,15 @@
         "userInfo": {
           "type": "object",
           "required": false,
-          "description": "Updated user information object containing profile changes"
+          "description": "Updated user information object containing profile changes. Required fields include UserId, TextToSpeech, Id, Status, CreatedBy, CreatedDate, LastModifiedBy, IsDeleted, and DeletedBy."
         }
       },
       "example_uses": [
-        "I want to update my user settings.",
-        "Modify my account information.",
-        "Can I change my user preferences?"
+        "Update my user settings, including text-to-speech preference.",
+        "Change my organizational unit and language settings.",
+        "I need to update my user ID and status."
       ],
-      "when_to_use": "Use this endpoint to update a broader set of user information and settings, potentially including profile details, preferences, or other user-specific configurations."
+      "when_to_use": "Use this endpoint to update comprehensive user information, including system-level settings like user ID, text-to-speech preference, language, and organizational unit."
     },
     {
       "name": "GetUserProfileDetails",
@@ -57,15 +67,15 @@
         "email": {
           "type": "string",
           "required": false,
-          "description": "Optional specific email to get user info for (if not provided, uses current authenticated user)"
+          "description": "Optional specific email to get user info for (if not provided, uses current authenticated user)."
         }
       },
       "example_uses": [
         "Get my current user profile details.",
-        "Show me all the information associated with my account.",
-        "Retrieve the profile details for 'john.doe@example.com'."
+        "Retrieve the profile information for 'john.doe@example.com'.",
+        "Show me all my user settings and preferences."
       ],
-      "when_to_use": "Use this endpoint to fetch all available information about the current authenticated user, or to retrieve details for a specific user by providing their email address (requires appropriate administrative permissions)."
+      "when_to_use": "Use this endpoint to fetch the complete profile and settings for the current authenticated user, or for a specific user if an email is provided (for administrative access)."
     }
   ]
 }

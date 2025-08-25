@@ -14,7 +14,7 @@
     {
       "route": "/partnerships/contacts/:recordId",
       "name": "ContactTabsComponent",
-      "description": "This page serves as the central hub for viewing and managing all information related to a specific contact. It organizes various contact details into distinct, navigable tabs, allowing users to quickly access personal information, communication history, and other relevant data without leaving the contact's profile.",
+      "description": "This page serves as the central hub for viewing and managing all information related to a specific contact. It organizes various contact details into distinct, navigable tabs, allowing users to quickly access personal information, communication history, and other related data without leaving the contact's profile.",
       "capabilities": [
         "navigate_contact_sections",
         "view_contact_details",
@@ -24,25 +24,18 @@
       "buttons": [],
       "forms": [],
       "tabs": [],
-      "search": {
-        "placeholder": "",
-        "description": "",
-        "help_text": ""
-      },
+      "search": {},
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're looking for specific contact information, use the tabs at the top of the page to navigate between different sections. The contact's photo and essential details (like name and title) are always visible at the top for quick reference. Each tab is designed to display a different category of information, such as personal details, interaction history, or linked records. If a tab isn't loading, ensure you have an active internet connection or try refreshing the page.",
+        "when_stuck": "If you're looking for specific information about a contact, use the tabs at the top of the page to navigate between different sections. For example, personal details are typically under a 'Details' or 'Overview' tab, while communication history will be under an 'Interactions' or 'Activity' tab. The contact's photo and essential identifying information remain visible at the top of the screen regardless of which tab you're on. If you need to return to the list of contacts, look for a 'Back' button or a navigation link.",
         "common_tasks": [
-          "Viewing contact details: To see the primary personal and professional information for the contact, click on the 'Details' tab (or the default tab that loads first).",
-          "Checking interactions: To review all past communications, meetings, or notes related to this contact, switch to the 'Interactions' tab.",
+          "Viewing contact details: To see the primary information about the contact, such as their name, email, and phone number, click on the main 'Details' or 'Overview' tab.",
+          "Checking interactions: To review past communications, notes, or activities related to this contact, switch to the 'Interactions' or 'Activity' tab.",
           "Navigating between sections: Simply click on the header of the desired tab (e.g., 'Details', 'Interactions', 'Files') to switch views and access different categories of information.",
-          "Going back to the contact list: To return to the list of all contacts, use the 'Back' button typically located in the top-left corner of the page or your browser's back functionality."
+          "Going back to the contact list: To exit the individual contact's profile and return to the main list of contacts, use the 'Back' button, typically located in the top-left corner of the page or browser."
         ],
-        "troubleshooting": [
-          "Problem: A tab is empty or not loading content → Solution: Check your internet connection. If the issue persists, try refreshing the page. The data might be loading slowly or there might be no information available for that specific section.",
-          "Problem: Cannot find specific contact information → Solution: Ensure you are on the correct tab. Information is categorized to keep the view organized. If it's not in 'Details', try 'Interactions' or other relevant tabs."
-        ],
-        "getting_started": "When you first open a contact's profile, you'll land on the default tab, usually 'Details', which provides an overview of their key information. To explore other aspects of the contact, simply click on the other tab headers available (e.g., 'Interactions', 'Files', 'Notes'). Each tab will present a different set of data relevant to that category.",
+        "troubleshooting": [],
+        "getting_started": "When you first open a contact's profile, you will land on the default tab, usually 'Details' or 'Overview', which provides a summary of their information. To explore other aspects of the contact, such as their communication history or associated files, simply click on the respective tab. Each tab is designed to present a specific set of information in an organized manner.",
         "keyboard_shortcuts": []
       }
     }

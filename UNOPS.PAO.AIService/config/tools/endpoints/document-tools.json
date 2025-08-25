@@ -1,14 +1,16 @@
 {
   "entity": "Document",
-  "description": "Manages documents, files, and attachments associated with various entities like partners, contacts, or interactions. It allows for retrieval of all documents for a given entity, fetching details of a specific document by ID, and updating document metadata.",
+  "description": "Manages files and associated metadata linked to various entities like partners, contacts, or interactions. This includes retrieving, updating, and associating documents.",
   "synonyms": [
     "file",
     "attachment",
     "record",
-    "paperwork",
-    "report"
+    "uploaded file",
+    "digital asset"
   ],
-  "mandatoryFields": [],
+  "mandatoryFields": [
+    "Id"
+  ],
   "endpoints": [
     {
       "name": "GetAll",
@@ -65,10 +67,15 @@
       "method": "PUT",
       "description": "Updates an existing document's metadata, description, and properties with permission validation.",
       "parameters": {
-        "req": {
-          "type": "object",
+        "Id": {
+          "type": "integer",
+          "required": true,
+          "description": "The ID of the document to update."
+        },
+        "DocumentTypeId": {
+          "type": "integer",
           "required": false,
-          "description": "Document update request containing modified fields"
+          "description": "The ID of the document type."
         }
       },
       "example_uses": [

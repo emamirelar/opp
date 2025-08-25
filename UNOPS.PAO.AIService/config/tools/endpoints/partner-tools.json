@@ -284,6 +284,20 @@
         "Get bilateral partners sorted by name"
       ],
       "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification."
+    },
+    {
+      "name": "GetMetadataInfo",
+      "url": "api/partner/metadata-info",
+      "method": "GET",
+      "description": "Describes the Partner entity structure including all field configurations",
+      "parameters": {},
+      "example_uses": [
+        "What is a partner?",
+        "What fields are available for partners?",
+        "Tell me about the structure of the partner entity.",
+        "Get metadata for partner entity."
+      ],
+      "when_to_use": "Use this to retrieve metadata about the Partner entity, such as its fields and their configurations."
     }
   ]
 }

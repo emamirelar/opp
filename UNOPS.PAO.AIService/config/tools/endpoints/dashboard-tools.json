@@ -1,0 +1,68 @@
+{
+  "entity": "Partner",
+  "description": "Manages partners related to the current user's dashboard, including active and draft partners. These endpoints provide filtered views of partners relevant to the current user's activities.",
+  "synonyms": [
+    "partner",
+    "partners",
+    "organization",
+    "company",
+    "firm",
+    "partner group",
+    "partner category"
+  ],
+  "mandatoryFields": [],
+  "searchMetadata": {
+    "directFields": [],
+    "nestedFields": {},
+    "operators": [
+      "like",
+      "is",
+      "not",
+      "contains",
+      "startsWith",
+      "between"
+    ],
+    "dateFields": [],
+    "exampleCriteria": []
+  },
+  "endpoints": [
+    {
+      "name": "GetMyPartners",
+      "url": "api/dashboard/my-partners",
+      "method": "GET",
+      "description": "Retrieves a list of partners associated with the current user's dashboard. These are partners created or modified by the current user, excluding those in draft status. This endpoint does not support advanced search criteria but allows for pagination.",
+      "parameters": {
+        "pageSize": {
+          "type": "integer",
+          "required": false,
+          "description": "Number of records to return (default: 1000)"
+        }
+      },
+      "example_uses": [
+        "Show me the partners I'm currently working on.",
+        "List all active partners I've created or modified.",
+        "How many partners are currently assigned to my dashboard, showing 50 at a time?"
+      ],
+      "when_to_use": "Use this endpoint to quickly access a paginated list of active partners relevant to the current user's activities on their dashboard."
+    },
+    {
+      "name": "GetMyDraftPartners",
+      "url": "api/dashboard/my-draft-partners",
+      "method": "GET",
+      "description": "Retrieves a list of draft partners associated with the current user's dashboard. These are partners created or modified by the current user that are still in draft status. This endpoint does not support advanced search criteria but allows for pagination.",
+      "parameters": {
+        "pageSize": {
+          "type": "integer",
+          "required": false,
+          "description": "Number of records to return (default: 1000)"
+        }
+      },
+      "example_uses": [
+        "Show me my draft partners.",
+        "List all partners I'm still working on.",
+        "Are there any unfinished partner records I need to complete, showing 20 per page?"
+      ],
+      "when_to_use": "Use this endpoint to view and manage partners that are still in draft mode and require further action from the current user."
+    }
+  ]
+}

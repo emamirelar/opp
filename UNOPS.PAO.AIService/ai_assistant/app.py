@@ -41,7 +41,6 @@ except ImportError:
 
 # Framework imports
 from ai_assistant.utils.api_config_manager import config_manager
-from ai_assistant.tools import create_google_drive_tool
 from ai_assistant.utils.framework_config import get_config
 
 # Import routers
@@ -58,7 +57,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Global variables
-google_drive_tool = None
+# External API tools are handled automatically by the agent system
 
 
 @asynccontextmanager
@@ -66,15 +65,12 @@ async def lifespan(app_instance: FastAPI):
     """
     Application lifecycle manager for startup/shutdown events
     """
-    global google_drive_tool
-    
     # Startup
     logger.info("🚀 Starting UNOPS AI Agent application...")
     
     try:
-        # Initialize Google Drive tool
-        google_drive_tool = await create_google_drive_tool()
-        logger.info("✅ Google Drive tool initialized")
+        # External API tools are initialized automatically by the agent system
+        logger.info("✅ External API tools will be initialized by agent system")
         
         # Load entity configurations
         config_manager.load_tools_config()
@@ -92,12 +88,7 @@ async def lifespan(app_instance: FastAPI):
     finally:
         # Shutdown
         logger.info("🔄 Shutting down UNOPS AI Agent application...")
-        
-        if google_drive_tool:
-            # Clean up Google Drive tool if needed
-            pass
-        
-        logger.info("✅ Google Drive tool cleaned up")
+        logger.info("✅ External API tools cleaned up automatically")
 
 
 def create_app():
@@ -166,8 +157,8 @@ def add_routers_and_endpoints(app: FastAPI):
     app.include_router(action_log_router)
     logger.info("✅ Action log router included")
 
-    # Add framework endpoints
-    add_framework_endpoints(google_drive_tool)
+    # Add framework endpoints (external API tools handled automatically)
+    add_framework_endpoints(None)
     from routers.framework import router as framework_router
     
     app.include_router(framework_router)

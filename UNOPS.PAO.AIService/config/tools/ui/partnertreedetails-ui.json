@@ -15,7 +15,7 @@
     {
       "route": "/admin/partner-tree/:recordId",
       "name": "PartnerTreeDetailsComponent",
-      "description": "This page provides a detailed view of a specific node within the partner organizational tree. It is designed for administrators to manage and configure organizational hierarchies, allowing for the viewing and editing of partner tree structure, relationships, and associated hierarchical data. Users can update organizational details, define parent-child relationships, and adjust the positioning of partners within the overall organizational chart.",
+      "description": "This page provides a detailed view of a specific node within the partner organizational tree. Users can view, manage, and edit the organizational details, relationships, and hierarchical positioning of a partner. This is crucial for maintaining an accurate representation of the company's organizational structure and reporting lines.",
       "capabilities": [
         "view_partner_tree_node",
         "edit_tree_structure",
@@ -26,19 +26,23 @@
       "buttons": [],
       "forms": [],
       "tabs": [],
-      "search": {},
+      "search": {
+        "placeholder": "",
+        "description": "",
+        "help_text": ""
+      },
       "filters": [],
       "help_guidance": {
-        "when_stuck": "This page displays detailed information about a specific node in your partner organizational tree. If you're unsure what to do, focus on the form fields to review and edit the organizational details, relationships, and hierarchical positioning of this partner. Remember that any changes you make here will directly affect how this partner appears in organizational charts and other hierarchical views across the system. Ensure all mandatory fields are completed before saving.",
+        "when_stuck": "This page displays detailed information about a specific node in your partner organizational tree. If you're unsure what to do, review the existing organizational information and relationships. You can use the available form fields (if any are present) to modify details such as the partner's name, type, or its position within the hierarchy. Any changes you make here will directly impact how this partner appears in organizational charts and other hierarchical views across the system. Ensure all changes accurately reflect your company's structure.",
         "common_tasks": [
-          "Viewing tree node details: Review the organizational information, attributes, and existing relationships of the selected partner node.",
-          "Editing organizational data: Modify specific fields related to the partner's hierarchy, structure, or other descriptive data.",
-          "Managing relationships: Update or define parent-child relationships to correctly position this partner within the organizational tree.",
-          "Configuring hierarchy: Adjust the organizational positioning and reporting lines to reflect the correct structure.",
-          "Updating structure: Make necessary changes to how the organization is represented in the system, ensuring accuracy and consistency."
+          "Viewing tree node details: To understand a partner's place in the hierarchy, simply navigate to this page for the specific partner. Review the displayed organizational information and its relationships to other nodes.",
+          "Editing organizational data: To update a partner's details, locate the relevant fields on the page (e.g., name, description, type) and enter the new information. Remember to save any changes.",
+          "Managing relationships: To change a partner's parent or child relationships within the organization tree, look for fields or sections related to 'Parent' or 'Children'. Select the appropriate new parent or link/unlink child nodes as needed.",
+          "Configuring hierarchy: To adjust a partner's position or reporting lines, modify the hierarchical fields to ensure proper organizational positioning. This might involve changing its direct parent or its level in the tree.",
+          "Updating structure: To make broader changes to how the organization is represented, modify the relevant fields that define the partner's role and connections within the system's organizational structure."
         ],
         "troubleshooting": [],
-        "getting_started": "",
+        "getting_started": "To get started, select a partner from the main partner tree view to open its detailed information page. Here, you can explore all the attributes and relationships of that specific partner node. Familiarize yourself with the displayed data before attempting any edits.",
         "keyboard_shortcuts": []
       }
     }

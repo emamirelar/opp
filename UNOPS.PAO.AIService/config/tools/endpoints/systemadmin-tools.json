@@ -1,12 +1,12 @@
 {
   "entity": "SystemAdmin",
-  "description": "Manages core system administration tasks, including database migrations and other backend maintenance operations.",
+  "description": "Manages system-level administrative tasks, primarily focused on database maintenance and schema updates.",
   "synonyms": [
     "System Administrator",
-    "Admin Tools",
-    "Backend Management",
-    "System Operations",
-    "Maintenance"
+    "Admin",
+    "System Management",
+    "Database Admin",
+    "Migration Tool"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -14,14 +14,14 @@
       "name": "RunMigrations",
       "url": "api/system-admin/migrations/run",
       "method": "GET",
-      "description": "Initiates and runs pending database migrations to update the system's database schema. This operation is typically performed during system deployment or upgrades to ensure the database structure is up-to-date with the application's requirements.",
+      "description": "Initiates the execution of pending database migrations to update the system's data schema. This operation ensures the database structure is up-to-date with the latest application version.",
       "parameters": {},
       "example_uses": [
         "Run the latest database migrations for the system.",
-        "Execute all pending system database updates.",
-        "Update the application's database schema to the newest version."
+        "Update the system's database schema to the newest version.",
+        "Execute any pending database changes required by the application."
       ],
-      "when_to_use": "Use this endpoint when the system's database schema needs to be updated to match the current application version, typically after a new deployment or an application upgrade. This ensures data consistency and compatibility."
+      "when_to_use": "Use this endpoint to manually trigger database schema updates, typically after a new application deployment or when database changes are required to be applied to align with the current application code."
     }
   ]
 }

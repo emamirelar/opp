@@ -1,14 +1,19 @@
 {
   "entity": "PartnerTree",
-  "description": "Manages the hierarchical structure of partners, including categories and groups, for organizational classification and navigation.",
+  "description": "Manages the hierarchical structure of partners, including categories, groups, and their relationships. It allows for the creation, retrieval, update, and deletion of nodes within this organizational tree, and provides insights into partner categorization and grouping.",
   "synonyms": [
-    "Partner hierarchy",
-    "Partner classification",
-    "Partner categories",
-    "Partner groups",
-    "Partner taxonomy"
+    "Partner Hierarchy",
+    "Partner Classification",
+    "Partner Structure",
+    "Partner Taxonomy",
+    "Partner Group",
+    "Partner Category"
   ],
-  "mandatoryFields": [],
+  "mandatoryFields": [
+    "Id",
+    "PartnerCategoryEditable",
+    "PartnerGroupEditable"
+  ],
   "endpoints": [
     {
       "name": "Create",
@@ -19,15 +24,13 @@
         "req": {
           "type": "object",
           "required": false,
-          "description": "Partner tree data model with hierarchy information"
+          "description": "Partner tree data model with hierarchy information. Contains fields like Id (required), Name, Description, Code, Type, Parent, Status, PartnerCategoryEditable (required), PartnerGroupEditable (required), PartnerCategoryId, PartnerCategoryCode, PartnerCategoryName, PartnerGroupId, PartnerGroupCode, PartnerGroupName."
         }
       },
       "example_uses": [
         "Create a new partner category for Government",
         "Add a partner group under UN Agencies",
-        "Create NGO subcategory classification",
-        "Add new partner hierarchy node",
-        "Set up partner organization structure"
+        "Create NGO subcategory classification"
       ],
       "when_to_use": "Use this when the user asks to create, add, or set up new partner categories, groups, or hierarchy structures."
     },
@@ -40,7 +43,7 @@
         "sortBy": {
           "type": "string",
           "required": false,
-          "description": "Field to sort by (default: \"Name\")"
+          "description": "Field to sort by (default: 'Name')"
         },
         "ascending": {
           "type": "boolean",
@@ -51,9 +54,7 @@
       "example_uses": [
         "Show all partner categories and groups",
         "List partner hierarchy structure",
-        "Get partner classification tree",
-        "Show partner organization taxonomy",
-        "List all partner categories sorted by name"
+        "Get partner classification tree"
       ],
       "when_to_use": "Use this when the user asks to see partner categories, groups, hierarchy, or classification structure."
     },
@@ -72,9 +73,7 @@
       "example_uses": [
         "Show me details for partner category ID 123",
         "Get information about partner group 456",
-        "Display hierarchy node 789",
-        "Show complete partner tree node details",
-        "Get partner classification details"
+        "Display hierarchy node 789"
       ],
       "when_to_use": "Use this when the user asks for specific partner tree node details by ID or when you need complete hierarchy information."
     },
@@ -87,15 +86,13 @@
         "req": {
           "type": "array",
           "required": false,
-          "description": "Array of partner tree data models to update"
+          "description": "Array of partner tree data models to update. Each model can contain fields like Id (required), Name, Description, Code, Type, Parent, Status, PartnerCategoryEditable (required), PartnerGroupEditable (required), PartnerCategoryId, PartnerCategoryCode, PartnerCategoryName, PartnerGroupId, PartnerGroupCode, PartnerGroupName."
         }
       },
       "example_uses": [
         "Update partner category names and descriptions",
         "Reorganize partner tree hierarchy",
-        "Modify partner group classifications",
-        "Update multiple tree nodes at once",
-        "Restructure partner organization taxonomy"
+        "Modify partner group classifications"
       ],
       "when_to_use": "Use this when the user asks to update, modify, edit, or reorganize partner tree structure or classifications."
     },
@@ -114,9 +111,7 @@
       "example_uses": [
         "Delete partner category ID 123",
         "Remove partner group 456 from hierarchy",
-        "Delete obsolete partner classification",
-        "Remove unused tree node",
-        "Clean up partner taxonomy structure"
+        "Delete obsolete partner classification"
       ],
       "when_to_use": "Use this when the user asks to delete, remove, or eliminate a partner category, group, or tree node."
     },
@@ -135,9 +130,7 @@
       "example_uses": [
         "Check my permissions for partner category 123",
         "What can I do with partner group 456?",
-        "Get access rights for this tree node",
-        "Verify tree permissions before editing",
-        "Can I modify this partner classification?"
+        "Get access rights for this tree node"
       ],
       "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for partner tree management."
     },
@@ -150,12 +143,109 @@
       "example_uses": [
         "Show partner hierarchy structure",
         "Get complete partner taxonomy tree",
-        "Display partner organization chart",
-        "Show category and group relationships",
-        "Get partner classification structure",
-        "Load partner tree for navigation"
+        "Display partner organization chart"
       ],
       "when_to_use": "Use this when the user needs to see the complete partner organizational structure, hierarchy, or when building navigation trees."
+    },
+    {
+      "name": "GetPartnersByPartnerGroup",
+      "url": "/api/partner-tree/by-partner-group-code/{code}",
+      "method": "GET",
+      "description": "Retrieves a paginated list of partners filtered by specific partner group code with access control and sorting.",
+      "parameters": {
+        "code": {
+          "type": "string",
+          "required": false,
+          "description": "Partner group code to filter by (e.g., 'GOV', 'NGO', 'UNAGENCY')"
+        },
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Pagination request containing page size and index. Includes OrderBy (string), Ascending (boolean), Direction (boolean), PageIndex (integer, required), PageSize (integer, required)."
+        }
+      },
+      "example_uses": [
+        "Show all government partners (GOV group)",
+        "List all NGO partners with pagination",
+        "Get UN agency partners sorted by name"
+      ],
+      "when_to_use": "Use this when the user asks to filter or search partners by partner group, organization type, or institutional classification."
+    },
+    {
+      "name": "GetPartnersByPartnerCategory",
+      "url": "/api/partner-tree/by-partner-category-code/{code}",
+      "method": "GET",
+      "description": "Retrieves a paginated list of partners filtered by specific partner category code with access control and sorting.",
+      "parameters": {
+        "code": {
+          "type": "string",
+          "required": false,
+          "description": "Partner category code to filter by (e.g., 'NATIONAL', 'INTERNATIONAL', 'BILATERAL')"
+        },
+        "request": {
+          "type": "object",
+          "required": false,
+          "description": "Pagination request containing page size and index. Includes OrderBy (string), Ascending (boolean), Direction (boolean), PageIndex (integer, required), PageSize (integer, required)."
+        }
+      },
+      "example_uses": [
+        "Show all national partners in this category",
+        "List international partners with pagination",
+        "Get bilateral partners sorted by name"
+      ],
+      "when_to_use": "Use this when the user asks to filter or search partners by partner category, operational scope, or geographic classification."
+    },
+    {
+      "name": "GetAllPartnerCategories",
+      "url": "/api/partner-tree/categories-summary",
+      "method": "GET",
+      "description": "Retrieves all partner categories with their partner counts for statistical analysis and diagram generation.",
+      "parameters": {},
+      "example_uses": [
+        "Get all partner categories with counts",
+        "Show partner distribution by category",
+        "Generate partner category statistics"
+      ],
+      "when_to_use": "Use this when the user wants to see partner distribution across categories, generate statistics, or create visual diagrams of partner categorization."
+    },
+    {
+      "name": "GetAllPartnerGroups",
+      "url": "/api/partner-tree/groups-summary",
+      "method": "GET",
+      "description": "Retrieves all partner groups with their partner counts for statistical analysis and diagram generation.",
+      "parameters": {},
+      "example_uses": [
+        "Get all partner groups with counts",
+        "Show partner distribution by group",
+        "Generate partner group statistics"
+      ],
+      "when_to_use": "Use this when the user wants to see partner distribution across groups, generate statistics, or create visual diagrams of partner grouping."
+    },
+    {
+      "name": "GetPartnerCategorizationOverview",
+      "url": "/api/partner-tree/categorization-overview",
+      "method": "GET",
+      "description": "Retrieves complete partner categorization overview with both categories and groups including partner counts for comprehensive analysis and diagram generation.",
+      "parameters": {},
+      "example_uses": [
+        "Get complete partner categorization overview",
+        "Show partner distribution across categories and groups",
+        "Generate comprehensive partner statistics"
+      ],
+      "when_to_use": "Use this when the user wants a complete overview of partner organization, comprehensive statistics, or to create detailed diagrams showing both categories and groups."
+    },
+    {
+      "name": "Describe",
+      "url": "/api/partner-tree/describe",
+      "method": "GET",
+      "description": "Describes the PartnerTree entity structure including all field configurations.",
+      "parameters": {},
+      "example_uses": [
+        "Describe the PartnerTree entity structure",
+        "Show me the fields for PartnerTree",
+        "What are the configurations for PartnerTree?"
+      ],
+      "when_to_use": "Use this when you need to understand the data model and field configurations of the PartnerTree entity."
     }
   ]
 }

@@ -15,7 +15,7 @@
     {
       "route": "/admin/entity-manager",
       "name": "EntityManagerComponent",
-      "description": "This administrative page provides a powerful interface for customizing how data fields are presented and managed across various entities within the system, such as Partners, Contacts, and Interactions. Users can control field visibility, define the order of columns in lists, and set permissions for who can view specific fields, ensuring data is displayed optimally for different user roles and workflows.",
+      "description": "This administrative page provides a powerful interface for customizing how data fields are presented across various entities like Partners, Contacts, and Interactions. Users can control field visibility, reorder columns, and manage permissions to ensure data is displayed optimally and securely.",
       "capabilities": [
         "configure_entity_fields",
         "reorder_columns",
@@ -27,19 +27,23 @@
       "buttons": [],
       "forms": [],
       "tabs": [],
-      "search": {},
+      "search": {
+        "placeholder": "",
+        "description": "",
+        "help_text": ""
+      },
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're unsure how to proceed, remember to first select the specific entity you wish to configure from the dropdown menu. Once an entity is chosen, you can then use the different tabs (e.g., Field Configuration, Field Ordering, Permissions) to make your adjustments. The 'Field Configuration' tab allows you to show or hide columns, 'Field Ordering' enables drag-and-drop reordering of fields, and the 'Permissions' tab lets you control access. All changes you make are automatically saved as you go.",
+        "when_stuck": "If you're unsure how to proceed, first select an entity (e.g., 'Partners' or 'Contacts') from the dropdown menu. Once an entity is selected, you can use the available tabs (e.g., Field Configuration, Field Ordering, Permissions) to customize its fields. Remember that changes are typically auto-saved as you make them, so you can see the effects immediately by navigating to the respective entity's list view.",
         "common_tasks": [
-          "Configuring field visibility: Select the desired entity from the dropdown, navigate to the 'Field Configuration' tab, and then toggle the checkboxes next to the fields to show or hide them.",
-          "Reordering columns: After selecting an entity, go to the 'Field Ordering' tab. You can then click and drag fields to arrange them in your preferred display order.",
-          "Managing permissions: Select an entity, then switch to the 'Permissions' tab to define which user roles or groups have access to view specific fields.",
-          "Customizing display: Use the 'Display Settings' tab (if available) to configure labels, icons, and other visual aspects of the fields.",
-          "Testing changes: After making your configurations, navigate to the relevant entity's list or detail view (e.g., Partners list) to verify that your changes have been applied correctly."
+          "Configuring field visibility: Select the desired entity, navigate to the 'Field Configuration' tab, and then use the checkboxes to show or hide specific columns.",
+          "Reordering columns: After selecting an entity, go to the 'Field Ordering' tab. You can then drag and drop fields to arrange them in your preferred display order.",
+          "Managing permissions: To control who can view or edit specific fields, select the entity, go to the 'Permissions' tab, and adjust the access settings for each field.",
+          "Customizing display: Use the 'Display Settings' section (if available) to configure labels, icons, or other visual aspects of the fields.",
+          "Testing changes: After making modifications, navigate to the list view or detail page of the entity you configured to verify that your changes have been applied correctly."
         ],
         "troubleshooting": [],
-        "getting_started": "To begin customizing entity fields, first select the specific entity (e.g., Partners, Contacts, Interactions) from the dropdown menu. Once an entity is selected, navigate through the available tabs (Field Configuration, Field Ordering, Permissions, Display Settings) to adjust field visibility, reorder columns, manage access permissions, and customize display properties. All changes are automatically saved.",
+        "getting_started": "To begin, select an entity from the dropdown at the top of the page. This will load the configuration options for that specific entity. You can then use the tabs to manage field visibility, order, and permissions. Start with 'Field Configuration' to decide which columns are visible in lists and forms.",
         "keyboard_shortcuts": []
       }
     }
