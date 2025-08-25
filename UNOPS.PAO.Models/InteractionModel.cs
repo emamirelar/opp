@@ -36,6 +36,21 @@ public class InteractionModel
     public List<DocumentModel>? Documents { get; set; }
 
     /// <summary>
+    /// Full contact entities associated with this interaction
+    /// </summary>
+    public List<ContactModel>? Contacts { get; set; }
+
+    /// <summary>
+    /// Full partner entities associated with this interaction
+    /// </summary>
+    public List<PartnerModel>? Partners { get; set; }
+
+    /// <summary>
+    /// Full user entities associated with this interaction
+    /// </summary>
+    public List<UserValueModel>? Users { get; set; }
+
+    /// <summary>
     /// Permissions for this specific interaction
     /// </summary>
     public EntityPermissionsModel? Permissions { get; set; }

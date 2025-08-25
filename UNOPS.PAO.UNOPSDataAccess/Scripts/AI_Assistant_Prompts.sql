@@ -318,4 +318,49 @@ Return a JSON array with the same order as input, where each element contains:
 - Maintain the same order as the input domains
 
 Example input: ["microsoft.com", "google.com", "unknowndomain123.com"]
-Example output: [{"domain": "microsoft.com", "organization": "Microsoft Corporation"}, {"domain": "google.com", "organization": "Google Inc."}, {"domain": "unknowndomain123.com", "organization": "Unknown"}]', NOW(), 'Domain Organization Lookup', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }', 'europe-west4', 'gemini-2.5-flash', 'unops-partneropportunity', '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]', NULL, 'GetPartnerNamesFromGeminiAsync', 'Batch lookup of organization names from email domains using Gemini AI', false);
+Example output: [{"domain": "microsoft.com", "organization": "Microsoft Corporation"}, {"domain": "google.com", "organization": "Google Inc."}, {"domain": "unknowndomain123.com", "organization": "Unknown"}]', NOW(), 'Domain Organization Lookup', 1, '{ "role": "user", "parts": [ { "text": "{promptData}" } ] }', '{ "temperature": 0.1, "top_p": 0.2, "max_output_tokens": 2048 }', 'europe-west4', 'gemini-2.5-flash', 'unops-partneropportunity', '[{ "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "OFF" }, { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "OFF" }, { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "OFF" }, {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "OFF" }]', NULL, 'GetPartnerNamesFromGeminiAsync', 'Batch lookup of organization names from email domains using Gemini AI', false),
+
+('interaction_summary', 'I am providing interaction data. I need you to generate a comprehensive summary in Markdown format, using the following template:
+
+## Interaction Summary
+
+**Date:** [Interaction Date]  
+**Type:** [Interaction Type]  
+**Subject:** [Interaction Subject]  
+**Status:** [Interaction Status]
+
+**Key Details:**
+- **Location:** [Location if available]
+- **Duration/Context:** [Any timing or contextual information available]
+
+**Participants:**
+
+**UNOPS Team:**
+- [User Name, Title/Role if available]
+
+**External Participants:**
+- **[Contact Name]** ([Contact Title]) from [Partner Organization]
+- [Additional contacts if multiple]
+
+**Partner Organization(s):**
+- **[Partner Name]:** [Partner status and brief context about relationship with UNOPS]
+
+**Discussion Points:**
+[Provide a detailed summary of the interaction description, highlighting key topics discussed, decisions made, and important information exchanged]
+
+**Associated Documents:**
+[List any documents linked to this interaction]
+
+**Context & Background:**
+- **Previous Interactions:** [Brief mention of recent related interactions if context suggests ongoing engagement]
+- **Partnership Status:** [Brief assessment of the partnership relationship based on available data]
+
+**Key Outcomes & Next Steps:**
+[Identify any action items, follow-up requirements, or next steps mentioned in the interaction]
+
+**Additional Notes:**
+[Any other relevant information, concerns, or observations]
+
+Please format the response as clean Markdown without code blocks or backticks. Use the interaction data provided to fill in as much detail as possible. If any information is missing or not available in the data, simply omit that section. Focus on creating a clear, comprehensive summary that captures the essence and importance of this interaction within the broader context of UNOPS partnerships.
+
+Data: {promptData}', NOW(), 'Interaction', 1, '{"role":"user","parts":[{"text":"{promptData}"}]}', '{"temperature":0.7,"top_p":0.2,"max_output_tokens":8192}', 'europe-west4', 'gemini-2.5-flash', 'unops-partneropportunity', NULL, NULL, 'GetInteractionDetailsAsync', 'Generates a comprehensive summary of interaction details including participants, content, context, and outcomes in a structured Markdown format.', true);

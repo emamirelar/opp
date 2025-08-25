@@ -1,18 +1,120 @@
+// Main form styling
+.interaction-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+}
+
+// Field containers
+.field-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.875rem;
+  }
+}
+
+// Partners display styling
 .partners-display {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
+.partners-chips-container {
+  min-height: 2.5rem;
+  display: flex;
+  align-items: flex-start;
+}
+
 .chips-container {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  width: 100%;
 }
 
 .partner-chip {
-  background: #e9ecef;
-  padding: 0.25rem 0.5rem;
-  border-radius: 16px;
-  color: #495057;
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  i {
+    opacity: 0.9;
+  }
+}
+
+.no-partners-message {
+  color: #6b7280;
+  font-style: italic;
+  font-size: 0.875rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px dashed #d1d5db;
+  text-align: center;
+}
+
+// AI & Documents containers for p-panel integration
+.ai-transcribe-container {
+  // Remove custom styling since p-panel handles the container
+  .interaction-ai-transcribe {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+}
+
+.documents-container {
+  // Remove custom styling since p-panel handles the container
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .partner-chip {
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+// Enhanced focus states for better accessibility
+.field-container input:focus,
+.field-container p-select:focus-within,
+.field-container p-multiselect:focus-within,
+.field-container p-autocomplete:focus-within,
+.field-container p-calendar:focus-within,
+.field-container textarea:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+// Better visual hierarchy for required fields
+.field-container label:has(+ input[required]),
+.field-container label:has(+ p-select[required]),
+.field-container label:contains('*') {
+  position: relative;
+  
+  &::after {
+    content: ' *';
+    color: #ef4444;
+    font-weight: 600;
+  }
 }

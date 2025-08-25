@@ -31,6 +31,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { PanelModule } from 'primeng/panel';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
+import {Divider} from 'primeng/divider';
 
 /**
  * @uiEntity Interaction
@@ -69,8 +70,9 @@ import { FeedbackDialogService } from '../../../../../common/reusables/services/
     ChipModule,
     AutoCompleteModule,
     HttpClientModule,
-      AiTranscribeComponent,
-      PanelModule
+    AiTranscribeComponent,
+    PanelModule,
+    Divider
   ],
   providers: [
     ConfirmationService,
@@ -88,7 +90,7 @@ export class InteractionModalComponent {
 
   record?: Interaction;
   isSaving = signal(false);
-  
+
   // Input property for recordId when used in AI layout
   @Input() recordId: string = '';
 
@@ -118,15 +120,15 @@ export class InteractionModalComponent {
   // Signal to track form control changes
   private selectedOrgUnitsSignal = signal<number[]>([]);
 
-  // Custom counter for selected organization units 
+  // Custom counter for selected organization units
   getSelectedActiveOrgUnitsLabel = computed(() => {
     const selectedIds = this.selectedOrgUnitsSignal();
     if (!selectedIds.length) return this.translateService.instant('label.interaction.selectOrganizationUnits');
-    
+
     // The backend already filters for active records, so we just count selected items
     const count = selectedIds.length;
-    
-    return count === 1 
+
+    return count === 1
       ? this.translateService.instant('label.interaction.oneOrganizationUnitSelected')
       : this.translateService.instant('label.interaction.organizationUnitsSelected', { count });
   });
@@ -166,7 +168,7 @@ export class InteractionModalComponent {
       location: [''],
       subject: ['', Validators.required],
       createdBy: [null],
-      
+
       previousContactIds: [[]],
       previousEmails: [[]],
       previousPhones: [[]],
@@ -220,7 +222,7 @@ export class InteractionModalComponent {
     const initialData = this.dialogConfig.data?.initialData;
     const recordData = this.dialogConfig.data?.record; // Data for import edits
     // Check if this is an import edit to adjust validation
-    const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+    const isImportEdit = this.dialogConfig.data?.isImportEdit ||
                         this.dialogConfig.data?.record?.isImportEdit ||
                         this.dialogConfig.data?.record?.skipServerSave;
 
@@ -258,7 +260,7 @@ export class InteractionModalComponent {
       // Pre-populate form with initial data for new records (e.g., partnerId)
       if (initialData && Object.keys(initialData).length > 0) {
         this.formGroup.patchValue(initialData);
-        
+
         // If partnerId is provided, also set it in partnerIds array
         if (initialData.partnerId) {
           this.formGroup.patchValue({
@@ -282,12 +284,12 @@ export class InteractionModalComponent {
       this.dialogConfig.data.isSaving = this.isSaving;
       this.dialogConfig.data.recordPermissions = this.recordPermissions;
     }
-    
+
     // Track form control changes for organization units counter
     this.formGroup.get('organizationHierarchyIds')?.valueChanges.subscribe(value => {
       this.selectedOrgUnitsSignal.set(value || []);
     });
-    
+
     // Initialize the signal with current form value
     const currentValue = this.formGroup.get('organizationHierarchyIds')?.value || [];
     this.selectedOrgUnitsSignal.set(currentValue);
@@ -382,38 +384,38 @@ export class InteractionModalComponent {
    */
   onSubmit(): void {
     const formValue = this.formGroup.value;
-    
+
     // Set contactId to first contact from contactIds for backward compatibility
     if (formValue.contactIds && formValue.contactIds.length > 0) {
       formValue.contactId = formValue.contactIds[0];
       this.formGroup.patchValue({ contactId: formValue.contactId });
     }
-    
+
     // Keep organizationHierarchyIds as is - no conversion needed
     // The backend now expects organizationHierarchyIds directly
-    
+
     if (this.formGroup.valid) {
       // Clear validation error if form is now valid
       this.showValidationFailedError.set(false);
-      
+
       // Check if this is an import edit (we're only updating local data, not saving to server)
-      const isImportEdit = this.dialogConfig.data?.isImportEdit || 
+      const isImportEdit = this.dialogConfig.data?.isImportEdit ||
                           this.dialogConfig.data?.record?.isImportEdit ||
                           this.dialogConfig.data?.record?.skipServerSave;
-      
+
       if (isImportEdit) {
         // This is an import edit, skipping server save
         // Just update the record with the form values and mark it as updated
         if (this.record) {
           Object.assign(this.record, formValue);
           this.record._updated = true;
-          
+
           // Close the dialog with the updated record
           this.dialogRef.close(this.record);
           return;
         }
       }
-      
+
       // Only set loading state for actual server saves
 
       // Check permissions before saving
