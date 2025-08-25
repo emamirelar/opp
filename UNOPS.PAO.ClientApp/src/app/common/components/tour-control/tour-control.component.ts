@@ -138,25 +138,34 @@ export class TourControlComponent implements OnInit {
           return;
         }
 
-        // Start the tour with Driver.js
-        console.log('🚀 Starting Driver.js tour with', driverSteps.length, 'steps');
-
-        const driverInstance = driver({
-          stagePadding: 5,
-          showProgress: true,
-          allowClose: tourConfig.allowClose !== false,
-          popoverOffset: tourConfig.popoverOffset || 10,
-          steps: driverSteps,
-          onDestroyed: () => {
-            // Mark tour as completed when user finishes or closes
-            if (tourConfig.tourId) {
-              this.welcomeTourService.markTourCompleted(tourConfig.tourId);
-              console.log(`✅ Tour "${tourConfig.tourId}" marked as completed`);
-            }
-          }
+        // Scroll to top before starting the tour
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
         });
 
-        driverInstance.drive();
+        // Start the tour with Driver.js after scroll completes
+        console.log('🚀 Starting Driver.js tour with', driverSteps.length, 'steps');
+        
+        setTimeout(() => {
+          const driverInstance = driver({
+            stagePadding: 5,
+            showProgress: true,
+            allowClose: tourConfig.allowClose !== false,
+            popoverOffset: tourConfig.popoverOffset || 10,
+            steps: driverSteps,
+            smoothScroll: false,
+            onDestroyed: () => {
+              // Mark tour as completed when user finishes or closes
+              if (tourConfig.tourId) {
+                this.welcomeTourService.markTourCompleted(tourConfig.tourId);
+                console.log(`✅ Tour "${tourConfig.tourId}" marked as completed`);
+              }
+            }
+          });
+
+          driverInstance.drive();
+        }, 500);
 
       } else {
         console.log('❌ No tour found for current route');
