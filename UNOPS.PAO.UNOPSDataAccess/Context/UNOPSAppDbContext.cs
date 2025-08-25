@@ -34,6 +34,10 @@ public class UNOPSAppDbContext : AppDbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Configure AiPrompt table mapping
+        modelBuilder.Entity<AiPrompt>()
+            .ToTable("AiPrompt"); // Map to table "AiPrompt" without "s"
+
         modelBuilder
             .Entity<UNOPSContact>();
         //.HasPrincipalKey(x => x.ContactNumber);
@@ -168,4 +172,7 @@ public class UNOPSAppDbContext : AppDbContext
     // New entity configuration DbSets
     public DbSet<EntityManager> EntityManagers { get; set; }
     public DbSet<EntityFieldManager> EntityFieldManagers { get; set; }
+    
+    // AI-related DbSets
+    public DbSet<AiPrompt> AiPrompts { get; set; }
 }
