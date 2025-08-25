@@ -166,7 +166,17 @@ public class UserPreferenceService : IUserPreferenceService
         var userPreferences = await _context.UserPreferences
             .FirstOrDefaultAsync(up => up.UserId == userIdInt);
         
-        return userPreferences?.GlobalFilters ?? new GlobalFilters();
+        var globalFilters = userPreferences?.GlobalFilters ?? new GlobalFilters();
+        
+        // Populate org unit name if orgUnitId exists
+        if (globalFilters.OrgUnitId.HasValue)
+        {
+            var orgUnit = await _context.OrganizationHierarchies
+                .FirstOrDefaultAsync(oh => oh.Id == globalFilters.OrgUnitId.Value);
+            globalFilters.OrgUnitName = orgUnit?.Name;
+        }
+        
+        return globalFilters;
     }
 
     public async Task UpdateGlobalFiltersAsync(string userId, GlobalFilters globalFilters)

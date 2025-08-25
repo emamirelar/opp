@@ -46,6 +46,13 @@ export class GlobalFilterService {
     this.filtersChangedSubject.next();
   }
 
+  // Method to clear all filters (used during reset)
+  clearAllFilters(): void {
+    this.setFilterEnabled(false);
+    this.setSelectedOrgUnitId(null);
+    this.triggerFiltersChanged();
+  }
+
   isFilterEnabled(): boolean {
     return this.filterEnabledSubject.value;
   }

@@ -9,6 +9,8 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
 using UNOPS.PAO.UNOPSBusiness.Specifications;
 using Microsoft.Extensions.DependencyInjection;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Managers;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -31,20 +33,19 @@ using UNOPS.PAO.Presentation;
 public class ContactController : BaseController
 {
     private readonly IContactManager _manager;
-    private readonly IOrgUnitFilterService _orgUnitFilterService;
     private readonly IGeminiManager _geminiManager;
+    private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
 
     public ContactController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
         ILogger<ContactController> logger,
-        IAuthorizationService authorizationService,
-        IOrgUnitFilterService orgUnitFilterService)
+        IAuthorizationService authorizationService)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.ContactManager;
-        _orgUnitFilterService = orgUnitFilterService;
         _geminiManager = manager.GeminiManager;
+        _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
     }
 
     /// <summary>
@@ -163,9 +164,8 @@ public class ContactController : BaseController
                 Ascending = ascending
             };
             
-            // Use OrgUnitFilterService to create the appropriate specification for listing all
-            var unosContactSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(request, User);
-            var specification = new ContactSpecificationAdapter(unosContactSpec);
+            // Create simple specification - global filters will be applied by the manager
+            var specification = new ContactCompositeSpecification(request);
             
             var result = await _manager.GetContactsWithSpecificationAsync(User, specification, request);
             return (PaginationResponse<ContactModel>)result;
@@ -219,13 +219,7 @@ public class ContactController : BaseController
                 "Contact",
                 filterRequest => new ContactCompositeSpecification(filterRequest),
                 async (userId, spec, pagination) => {
-                    // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
-                    if (pagination is ContactFilterRequest contactPagination && contactPagination.OrgUnitId.HasValue)
-                    {
-                        var orgUnitSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(contactPagination, User);
-                        var adaptedSpec = new ContactSpecificationAdapter(orgUnitSpec);
-                        return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, adaptedSpec, contactPagination);
-                    }
+                    // Use regular specification - global filters handled automatically by BaseRepository
                     return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
                 },
                 CurrentUserId, _logger);
@@ -290,13 +284,7 @@ public class ContactController : BaseController
                 "Contact",
                 filterRequest => new ContactCompositeSpecification(filterRequest),
                 async (userId, spec, pagination) => {
-                    // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
-                    if (pagination is ContactFilterRequest contactPagination && contactPagination.OrgUnitId.HasValue)
-                    {
-                        var orgUnitSpec = await _orgUnitFilterService.CreateContactSpecificationAsync(contactPagination, User);
-                        var adaptedSpec = new ContactSpecificationAdapter(orgUnitSpec);
-                        return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, adaptedSpec, contactPagination);
-                    }
+                    // Use regular specification - global filters handled automatically by BaseRepository
                     return (PaginationResponse<ContactModel>)await _manager.GetContactsWithSpecificationAsync(User, spec, (ContactFilterRequest)pagination);
                 },
                 CurrentUserId, _logger);
@@ -611,4 +599,24 @@ public class ContactController : BaseController
     }
     
     #endregion
+
+    /// <summary>
+    /// Describes the Contact entity structure including all field configurations
+    /// </summary>
+    /// <returns>Entity and field metadata for Contact</returns>
+    [HttpGet(APIDictionary.Contact + "/metadata-info")]
+    [AccessControlled(EntityTypes.Contact, "read")]
+    public async Task<ActionResult> GetMetadataInfo()
+    {
+        try
+        {
+            var entityDetails = await _entityConfigurationManager.GetEntityConfigurationDetailsAsync(User, "Contact");
+            return Ok(entityDetails);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving Contact entity description");
+            return StatusCode(500, new { error = "Failed to retrieve Contact entity description" });
+        }
+    }
 }
