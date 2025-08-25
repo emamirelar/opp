@@ -231,6 +231,9 @@ export class GlobalFiltersDialogComponent implements OnInit {
       // Immediately clear loading state
       this.resetting = false;
       
+      // Clear the GlobalFilterService localStorage first
+      this.globalFilterService.clearAllFilters();
+      
       // Reload filters from server to show the actual reset values
       await this.loadFilters();
       

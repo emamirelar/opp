@@ -20,26 +20,27 @@ using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Specifications;
 using UNOPS.PAO.Domain.Specifications;
 using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Managers;
 
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]
 public class PartnerController : BaseController
 {
     private readonly IPartnerManager _manager;
-    private readonly IOrgUnitFilterService _orgUnitFilterService;
     private readonly IGeminiManager _geminiManager;
+    private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
 
     public PartnerController(
         IManagerWrapper manager, 
         UserResolverService<int> userResolverService, 
         IAuthorizationService authorizationService,
-        ILogger<PartnerController> logger,
-        IOrgUnitFilterService orgUnitFilterService)
+        ILogger<PartnerController> logger)
         : base(logger, authorizationService, userResolverService)
     {
         _manager = manager.PartnerManager;
-        _orgUnitFilterService = orgUnitFilterService;
         _geminiManager = manager.GeminiManager;
+        _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
     }
 
     /// <summary>
@@ -129,9 +130,8 @@ public class PartnerController : BaseController
                 Ascending = ascending
             };
             
-            // Use OrgUnitFilterService to create the appropriate specification for listing all
-            var unosPartnerSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(request, User);
-            var specification = new PartnerSpecificationAdapter(unosPartnerSpec);
+            // Create simple specification - global filters will be applied by the manager
+            var specification = new PartnerCompositeSpecification(request);
             
             var result = await _manager.GetPartnersWithSpecificationAsync(User, specification, request);
             return (PaginationResponse<PartnerModel>)result;
@@ -185,13 +185,7 @@ public class PartnerController : BaseController
                 "Partner",
                 filterRequest => new PartnerCompositeSpecification(filterRequest),
                 async (userId, spec, pagination) => {
-                    // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
-                    if (pagination is PartnerFilterRequest partnerPagination && partnerPagination.OrgUnitId.HasValue)
-                    {
-                        var orgUnitSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(partnerPagination, User);
-                        var adaptedSpec = new PartnerSpecificationAdapter(orgUnitSpec);
-                        return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, adaptedSpec, partnerPagination);
-                    }
+                    // Use regular specification - global filters handled automatically by BaseRepository
                     return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
                 },
                 CurrentUserId, _logger);
@@ -256,13 +250,7 @@ public class PartnerController : BaseController
                 "Partner",
                 filterRequest => new PartnerCompositeSpecification(filterRequest),
                 async (userId, spec, pagination) => {
-                    // If OrgUnitId is specified, use the OrgUnitFilterService to create a proper specification
-                    if (pagination is PartnerFilterRequest partnerPagination && partnerPagination.OrgUnitId.HasValue)
-                    {
-                        var orgUnitSpec = await _orgUnitFilterService.CreatePartnerSpecificationAsync(partnerPagination, User);
-                        var adaptedSpec = new PartnerSpecificationAdapter(orgUnitSpec);
-                        return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, adaptedSpec, partnerPagination);
-                    }
+                    // Use regular specification - global filters handled automatically by BaseRepository
                     return (PaginationResponse<PartnerModel>)await _manager.GetPartnersWithSpecificationAsync(User, spec, (PartnerFilterRequest)pagination);
                 },
                 CurrentUserId, _logger);
@@ -875,4 +863,24 @@ public class PartnerController : BaseController
     }
 
     #endregion
+
+    /// <summary>
+    /// Describes the Partner entity structure including all field configurations
+    /// </summary>
+    /// <returns>Entity and field metadata for Partner</returns>
+    [HttpGet(APIDictionary.Partner + "/metadata-info")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult> GetMetadataInfo()
+    {
+        try
+        {
+            var entityDetails = await _entityConfigurationManager.GetEntityConfigurationDetailsAsync(User, "Partner");
+            return Ok(entityDetails);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving Partner entity description");
+            return StatusCode(500, new { error = "Failed to retrieve Partner entity description" });
+        }
+    }
 }

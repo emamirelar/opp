@@ -52,6 +52,7 @@ public class AppDbContext : AuditableDbContext<int, int>
 
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<SavedFilter> SavedFilters { get; set; }
+    public DbSet<Engagement> Engagements { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

@@ -46,6 +46,9 @@ public class APIDictionary
     // Partner Tree
     
     public const string PartnerTree = APIPrefix + "partner-tree";
+    
+    // Engagement
+    public const string Engagement = APIPrefix + "engagement";
     public const string ExternalPartnerTree = ExternalAPIPrefix + "partner-tree";
 
     // Partner

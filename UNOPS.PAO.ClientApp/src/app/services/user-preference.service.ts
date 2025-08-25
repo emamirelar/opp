@@ -12,6 +12,7 @@ export interface DefaultOrgUnitResponse {
 
 export interface GlobalFilters {
   orgUnitId?: number | null;
+  orgUnitName?: string | null;
   relatedToMe?: boolean;
   dateOn?: string | null;
   dateFrom?: string | null;

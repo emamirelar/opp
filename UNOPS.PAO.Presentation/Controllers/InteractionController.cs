@@ -10,6 +10,8 @@ using Microsoft.Extensions.Logging;
 using UNOPS.PAO.Domain.Infrastructure;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Managers;
 
 namespace UNOPS.PAO.Presentation.Controllers
 {
@@ -19,22 +21,22 @@ namespace UNOPS.PAO.Presentation.Controllers
     {
         private readonly IInteractionManager _manager;
         private readonly ISecureSpecificationFactory _secureSpecificationFactory;
-        private readonly IOrgUnitFilterService _orgUnitFilterService;
-        private readonly IGeminiManager _geminiManager;
 
-        public InteractionController(
+        private readonly IGeminiManager _geminiManager;
+        private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
+
+                public InteractionController(
             IManagerWrapper manager, 
-            UserResolverService<int> userResolverService, 
+            UserResolverService<int> userResolverService,
             IAuthorizationService authorizationService,
             ISecureSpecificationFactory secureSpecificationFactory,
-            IOrgUnitFilterService orgUnitFilterService,
             ILogger<InteractionController> logger)
             : base(logger, authorizationService, userResolverService)
         {
             _manager = manager.InteractionManager;
             _secureSpecificationFactory = secureSpecificationFactory;
-            _orgUnitFilterService = orgUnitFilterService;
             _geminiManager = manager.GeminiManager;
+            _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
         }
 
         /// <summary>
@@ -531,5 +533,25 @@ namespace UNOPS.PAO.Presentation.Controllers
         }
 
         #endregion
+
+        /// <summary>
+        /// Describes the Interaction entity structure including all field configurations
+        /// </summary>
+        /// <returns>Entity and field metadata for Interaction</returns>
+        [HttpGet(APIDictionary.Interaction + "/metadata-info")]
+        [AccessControlled(EntityTypes.Interaction, "read")]
+        public async Task<ActionResult> GetMetadataInfo()
+        {
+            try
+            {
+                var entityDetails = await _entityConfigurationManager.GetEntityConfigurationDetailsAsync(User, "Interaction");
+                return Ok(entityDetails);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving Interaction entity description");
+                return StatusCode(500, new { error = "Failed to retrieve Interaction entity description" });
+            }
+        }
     }
 } 
