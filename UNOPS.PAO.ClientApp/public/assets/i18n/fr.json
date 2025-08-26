@@ -1060,5 +1060,23 @@
         }
       }
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "Non lues",
+    "all": "Toutes",
+    "seeAll": "Voir toutes",
+    "items": "notifications",
+    "noUnread": "Aucune notification non lue",
+    "noNotifications": "Aucune notification pour le moment",
+    "allTitle": "Toutes les Notifications"
+  },
+  "chatHistory": {
+    "title": "Historique des Discussions",
+    "newChat": "Nouvelle Discussion",
+    "searchPlaceholder": "Rechercher dans les discussions...",
+    "loading": "Chargement des discussions...",
+    "noChats": "Aucun historique de discussion pour le moment",
+    "noResults": "Aucune discussion ne correspond à votre recherche"
   }
 }

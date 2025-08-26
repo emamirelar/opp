@@ -995,5 +995,23 @@
         }
       }
     }
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "unread": "No leídas",
+    "all": "Todas",
+    "seeAll": "Ver todas",
+    "items": "notificaciones",
+    "noUnread": "No hay notificaciones sin leer",
+    "noNotifications": "Aún no hay notificaciones",
+    "allTitle": "Todas las Notificaciones"
+  },
+  "chatHistory": {
+    "title": "Historial de Conversaciones",
+    "newChat": "Nueva Conversación",
+    "searchPlaceholder": "Buscar conversaciones...",
+    "loading": "Cargando conversaciones...",
+    "noChats": "Aún no hay historial de conversaciones",
+    "noResults": "Ninguna conversación coincide con tu búsqueda"
   }
 }
