@@ -35,7 +35,7 @@ public class PAOExecutionContext : IPAOExecutionContext
                         var user = userManager.FindByIdAsync(userId).Result;
                         logger.LogInformation("PAOExecutionContext - User lookup result: {UserFound}", user != null);
 
-                        if (user != null)
+                        if (user != null && !string.IsNullOrEmpty(user.Email))
                         {
                             var roles = userManager.GetRolesAsync(user).Result;
                             logger.LogInformation("PAOExecutionContext - Found roles for user: {Roles}", string.Join(", ", roles));

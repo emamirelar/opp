@@ -141,6 +141,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         _context = context;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
+        userInfoRepository = new BaseRepository<UserProfile>(context, configuration, serviceProvider);
         organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
         promptRepository = new DataRepository<AiPrompt>(context);
         commonRepository = new CommonEntityRepository(context);
