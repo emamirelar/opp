@@ -215,12 +215,6 @@
                 <div>{{recordData().levyTreatment}}</div>
               </div>
               }
-              @if(recordData().reasonForNoNewOpportunity){
-              <div class="flex flex-col gap-2">
-                <div class="text-sm">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</div>
-                <div>{{recordData().reasonForNoNewOpportunity}}</div>
-              </div>
-              }
 
               <!-- ========== CHECKBOX FIELDS ========== -->
               <div class="flex gap-2">
@@ -258,6 +252,13 @@
                             [ngModel]="recordData().canCreateNewOpportunities"
                             inputId="cno" />
               </div>
+              <!-- Reason for No New Opportunity -->
+              @if(recordData().reasonForNoNewOpportunity){
+                <div class="flex flex-col gap-2">
+                  <div class="text-sm">{{ 'label.partner.reasonForNoNewOpportunity' | translate }}</div>
+                  <div>{{recordData().reasonForNoNewOpportunity}}</div>
+                </div>
+                }
 
             }
 

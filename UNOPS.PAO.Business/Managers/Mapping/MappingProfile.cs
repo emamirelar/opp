@@ -20,10 +20,14 @@ public class MappingProfile : Profile
         CreateMap<UpdatePartnerRequest, Partner>()
             .ForMember(dest => dest.OrganizationUnitRelationships, opt => opt.Ignore()); // Handle manually in manager
         CreateMap<Partner, PartnerModel>()
+            .PreserveReferences()
+            .MaxDepth(2)
             .ForMember(dest => dest.First5ContactsByDate, opt => opt.MapFrom(src => src.First5ContactsByDate));
         CreateMap<PartnerModel, Partner>();
         CreateMap<Contact, ContactValueModel>();
         CreateMap<Contact, ContactModel>()
+            .PreserveReferences()
+            .MaxDepth(2)
             .ForMember(dest => dest.Partner, opt => opt.MapFrom(src => src.Partner != null ? new PartnerSummaryModel { Id = src.Partner.Id, Name = src.Partner.Name } : null));
         CreateMap<ContactModel, Contact>()
             .ForMember(dest => dest.Partner, opt => opt.Ignore());

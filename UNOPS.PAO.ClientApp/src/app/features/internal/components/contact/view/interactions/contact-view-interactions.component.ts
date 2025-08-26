@@ -156,11 +156,11 @@ export class ContactViewInteractionsComponent implements OnInit {
       .subscribe({
         next: (columns: any) => {
           // Filter out redundant contact-related columns since we're already in contact context
-          const filteredColumns = columns.filter((col: any) => 
-            !['contact.name', 'contactName', 'contact.firstName', 'contact.lastName', 
+          const filteredColumns = columns.filter((col: any) =>
+            !['contact.name', 'contactName', 'contact.firstName', 'contact.lastName',
               'contactId', 'contact.id', 'contact.fullName'].includes(col.field)
           );
-          
+
           // Convert backend columns to frontend format and add template functions
           const processedColumns = filteredColumns.map((col: any) => this.processColumn(col));
           this.columns.set(processedColumns);
@@ -308,6 +308,7 @@ export class ContactViewInteractionsComponent implements OnInit {
       header: 'Edit Interaction',
       width: '90%',
       height: '90%',
+      closable: true,
       modal: true,
       data: {
         id: item.id,

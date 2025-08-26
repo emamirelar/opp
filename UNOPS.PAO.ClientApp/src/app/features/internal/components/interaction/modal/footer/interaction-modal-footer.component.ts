@@ -8,7 +8,7 @@ import { PermissionUtilityService } from '../../../../../../essentials/services/
 @Component({
   selector: 'app-interaction-modal-footer',
   template: `
-    <div class="flex justify-end flex-wrap w-full gap-4">
+    <div class="flex justify-end flex-wrap w-full gap-4 pt-2">
       <p-button
         *ngIf="config.data?.record?.id && canDelete()"
         type="button"
@@ -18,17 +18,17 @@ import { PermissionUtilityService } from '../../../../../../essentials/services/
         severity="danger"
         (click)="onDelete()"
       ></p-button>
-      <p-button 
-        class="ml-auto" 
-        [label]="'button.cancel' | translate" 
-        severity="secondary" 
+      <p-button
+        class="ml-auto"
+        [label]="'button.cancel' | translate"
+        severity="secondary"
         (click)="onCancel()"
       ></p-button>
-      <p-button 
+      <p-button
         *ngIf="canSave()"
-        [loading]="getSavingState()" 
-        icon="pi pi-check" 
-        [label]="isImportEdit ? 'Update Import Data' : ('button.save' | translate)" 
+        [loading]="getSavingState()"
+        icon="pi pi-check"
+        [label]="isImportEdit ? 'Update Import Data' : ('button.save' | translate)"
         (click)="onSave()"
       ></p-button>
     </div>
@@ -77,7 +77,7 @@ export class InteractionModalFooterComponent {
       this.config.data.handleSave();
     }
   }
-  
+
   /**
    * @uiButton delete_interaction_footer
    * @description Triggers the delete action for the interaction from the footer
@@ -97,12 +97,12 @@ export class InteractionModalFooterComponent {
     if (this.isImportEdit) {
       return true;
     }
-    
+
     const recordPermissions = this.config.data?.recordPermissions;
     if (!recordPermissions) return true; // Default to allow if no permissions data
-    
+
     const isEdit = !!this.config.data?.record?.id;
-    return isEdit 
+    return isEdit
       ? this.permissionUtilityService.canUpdate(recordPermissions())
       : this.permissionUtilityService.canCreate(recordPermissions());
   }
@@ -110,7 +110,7 @@ export class InteractionModalFooterComponent {
   canDelete(): boolean {
     const recordPermissions = this.config.data?.recordPermissions;
     if (!recordPermissions) return true; // Default to allow if no permissions data
-    
+
     return this.permissionUtilityService.canDelete(recordPermissions());
   }
 
@@ -119,9 +119,9 @@ export class InteractionModalFooterComponent {
     if (this.isImportEdit) {
       return false;
     }
-    
+
     // Check if isSaving exists and is a function in config.data
     const isSaving = this.config.data?.isSaving;
     return isSaving && typeof isSaving === 'function' ? isSaving() : false;
   }
-} 
+}

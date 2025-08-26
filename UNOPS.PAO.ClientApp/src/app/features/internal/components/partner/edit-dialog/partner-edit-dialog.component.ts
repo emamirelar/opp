@@ -162,7 +162,7 @@ export class PartnerEditDialogComponent implements OnInit {
   });
 
   showApprovalFields = computed(() => {
-    return this.recordData()?.partnerApprovalStatus === 1; // 1 = Approved enum value
+    return this.recordData()?.partnerApprovalStatus === 'Approved';
   });
 
   approvalFieldsEnabled = computed(() => {

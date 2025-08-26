@@ -1,7 +1,9 @@
 <div class="flex flex-col h-full gap-4">
   <div class="flex flex-col gap-2 mb-4">
     <p class="text-gray-600">{{ 'label.partner.approvePartnerDescription' | translate }}</p>
-    <div class="text-lg font-semibold text-blue-700">{{ partner.name }}</div>
+    <div class="text-xl">
+      {{ partner.name }}
+    </div>
   </div>
 
   @if( showValidationFailedError() === true ){
@@ -84,42 +86,16 @@
       @if (shouldShowReasonForLevy()) {
       <div class="flex flex-col gap-2">
         <label for="reasonForLevy">{{ 'label.partner.reasonForLevy' | translate }}</label>
-        <p-select formControlName="reasonForLevy" [options]="allPartnerReasonForLevyNotData()"
-                  optionLabel="name"
-                  optionValue="id"
-                  [placeholder]="'label.partner.selectReasonForLevyNotApplying' | translate"
-                  [appendTo]="'body'"
-                  fluid="true" 
-                  [showClear]="true"
-                  id="reasonForLevy"
-                  [ariaLabel]="'aria.selectReasonForLevy' | translate" />
+        <input pInputText formControlName="reasonForLevy" fluid="true" id="reasonForLevy" />
       </div>
       }
 
       <!-- Levy Treatment -->
       <div class="flex flex-col gap-2">
         <label for="levyTreatment">{{ 'label.partner.levyTreatment' | translate }}</label>
-        <p-select formControlName="levyTreatment" [options]="allPartnerLevyTreatmentData()"
-                  optionLabel="name"
-                  optionValue="id"
-                  [placeholder]="'label.partner.selectLevyTreatment' | translate"
-                  [appendTo]="'body'"
-                  fluid="true" 
-                  [showClear]="true"
-                  id="levyTreatment"
-                  [ariaLabel]="'aria.selectLevyTreatment' | translate" />
+        <input pInputText formControlName="levyTreatment" fluid="true" id="levyTreatment" />
       </div>
 
-    </div>
-
-    <!-- Reason (full width) -->
-    <div class="flex flex-col gap-2">
-      <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }} *</label>
-      <textarea pTextarea formControlName="reasonForNoNewOpportunity" 
-                fluid="true" id="reasonForNoNewOpportunity" rows="3"></textarea>
-      @if( formGroup.get("reasonForNoNewOpportunity")?.invalid && showValidationFailedError() ) {
-      <p-message severity="error" variant="simple">{{ 'validation.reasonRequired' | translate }}</p-message>
-      }
     </div>
 
     <!-- Checkbox fields moved to the end -->
@@ -168,6 +144,16 @@
           id="canCreateNewOpportunities" />
         <label for="canCreateNewOpportunities">{{ "label.partner.canCreateNewOpportunities" | translate }}</label>
       </div>
+    </div>
+
+    <!-- Reason (full width) -->
+    <div class="flex flex-col gap-2">
+      <label for="reasonForNoNewOpportunity">{{ 'label.partner.reasonForNoNewOpportunity' | translate }} *</label>
+      <textarea pTextarea formControlName="reasonForNoNewOpportunity" 
+                fluid="true" id="reasonForNoNewOpportunity" rows="2"></textarea>
+      @if( formGroup.get("reasonForNoNewOpportunity")?.invalid && showValidationFailedError() ) {
+      <p-message severity="error" variant="simple">{{ 'validation.reasonRequired' | translate }}</p-message>
+      }
     </div>
   </form>
 

@@ -16,6 +16,9 @@ import { SearchField } from '../../../../../common/services/search-parser.servic
 import { EntityConfigurationService } from '../../../services/entity-configuration.service';
 import { ImportDialogService } from '../../../../../common/reusables/components/import/dialog/import-dialog.service';
 import { InteractionIconService } from '../../../../../common/services/interaction-icon.service';
+import { InteractionPreviewComponent } from '../preview/interaction-preview.component';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { OverlayPanel } from 'primeng/overlaypanel';
 
 /**
  * @uiEntity InteractionList
@@ -41,6 +44,8 @@ import { InteractionIconService } from '../../../../../common/services/interacti
     Button,
     TranslateModule,
     ListviewComponent,
+    InteractionPreviewComponent,
+    OverlayPanelModule,
   ],
   providers: [
     DialogService
@@ -53,6 +58,11 @@ export class InteractionListComponent implements OnInit, OnDestroy {
 
   @ViewChild("listviewComponent")
   listviewComponent?: ListviewComponent;
+
+  @ViewChild("previewPanel")
+  previewPanel?: OverlayPanel;
+
+  previewInteraction = signal<Interaction | null>(null);
 
   // Inject services
   router = inject(Router);
@@ -438,5 +448,15 @@ export class InteractionListComponent implements OnInit, OnDestroy {
     
     // Use the Google Sheet picker directly which will show loading indicators
     this.importDialogService.openGoogleSheetPicker('interaction');
+  }
+
+  showInteractionPreview(event: MouseEvent, interaction: Interaction) {
+    this.previewInteraction.set(interaction);
+    this.previewPanel?.show(event, event.target as HTMLElement);
+  }
+
+  hideInteractionPreview() {
+    this.previewPanel?.hide();
+    this.previewInteraction.set(null);
   }
 }

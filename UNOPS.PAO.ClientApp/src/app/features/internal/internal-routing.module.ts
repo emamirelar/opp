@@ -4,6 +4,7 @@ import { LayoutComponent } from '../../common/layouts/components/layout/layout.c
 import { HomeComponent } from '../../common/pages/components/home/home.component';
 import { authGuard, adminGuard, routePermissionGuard } from '../../essentials/guards';
 import { InteractionListComponent } from './components/interaction/list/interaction-list.component';
+import { InteractionDetailComponent } from './components/interaction/detail/interaction-detail.component';
 import { PartnerTreeComponent } from './components/partner-tree/partner-tree.component';
 import { PartnerComponent } from './components/partner/partner.component';
 import { PartnerViewComponent } from './components/partner/view/partner-view.component';
@@ -87,7 +88,7 @@ const internalRoutes: Routes = [
             data: { breadcrumb: 'Interactions' },
             children: [
               { path: '', component: InteractionListComponent },
-              { path: ':id', component: InteractionListComponent, data: { breadcrumb: 'Edit' } }
+              { path: ':id', component: InteractionDetailComponent, data: { breadcrumb: 'Interaction Details' } }
             ]
           },
           {

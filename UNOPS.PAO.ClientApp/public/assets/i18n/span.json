@@ -36,6 +36,14 @@
             "addresses": "Direcciones",
             "systemInformation": "Información del Sistema"
         },
+        "interactionTitles": {
+            "primaryInformation": "Información Principal",
+            "participants": "Participantes",
+            "details": "Detalles",
+            "organization": "Organización",
+            "aiAssistant": "Asistente IA",
+            "information": "Información"
+        },
         "partnerDetails": "Detalles del Socio",
         "partnerDashboard": "Panel del Socio",
         "admin": "Administración",
@@ -154,7 +162,9 @@
           },
           "selectType": "Seleccione un tipo",
           "selectContact": "Seleccione un contacto",
-          "contact": "Contacto"
+          "contact": "Contacto",
+          "noPartnersSelected": "No hay socios seleccionados",
+          "aiGeneratedSummary": "Resumen Generado por IA"
         },
         "link": {
           "url": "URL",
