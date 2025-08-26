@@ -1322,6 +1322,24 @@
       }
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "Unread",
+    "all": "All",
+    "seeAll": "See all",
+    "items": "notifications",
+    "noUnread": "No unread notifications",
+    "noNotifications": "No notifications yet",
+    "allTitle": "All Notifications"
+  },
+  "chatHistory": {
+    "title": "Chat History",
+    "newChat": "New Chat",
+    "searchPlaceholder": "Search chats...",
+    "loading": "Loading chats...",
+    "noChats": "No chat history yet",
+    "noResults": "No chats match your search"
+  },
   "dashboard": {
     "welcome": "Welcome to Opportunity+",
     "subtitle": "Your personalized dashboard for managing partnerships and opportunities",

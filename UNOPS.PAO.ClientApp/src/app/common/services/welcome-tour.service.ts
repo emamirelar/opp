@@ -71,37 +71,46 @@ export class WelcomeTourService {
     // Create welcome messages
     const welcomeMessages = this.getWelcomeMessages(currentLang);
 
-    // Show fancy welcome overlay first
-    const welcomeDriver = driver({
-      showProgress: false,
-      allowClose: false,
-      popoverOffset: 20,
-      stagePadding: 5,
-      steps: [
-        {
-          popover: {
-            title: welcomeMessages.title,
-            description: welcomeMessages.description,
-            side: 'over',
-            align: 'center',
-            showButtons: ['next'],
-            nextBtnText: welcomeMessages.startTourButton,
-            showProgress: false
-          }
-        }
-      ],
-      onDestroyed: () => {
-        // Mark welcome as seen
-        this.markWelcomeAsSeen();
-
-        // Start homepage tour after a brief pause
-        setTimeout(() => {
-          this.startHomepageTour();
-        }, 500);
-      }
+    // Scroll to top before showing welcome tour
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
     });
 
-    welcomeDriver.drive();
+    // Show fancy welcome overlay first after scroll completes
+    setTimeout(() => {
+      const welcomeDriver = driver({
+        showProgress: false,
+        allowClose: false,
+        popoverOffset: 20,
+        stagePadding: 5,
+        smoothScroll: false,
+        steps: [
+          {
+            popover: {
+              title: welcomeMessages.title,
+              description: welcomeMessages.description,
+              side: 'over',
+              align: 'center',
+              showButtons: ['next'],
+              nextBtnText: welcomeMessages.startTourButton,
+              showProgress: false
+            }
+          }
+        ],
+        onDestroyed: () => {
+          // Mark welcome as seen
+          this.markWelcomeAsSeen();
+
+          // Start homepage tour after a brief pause
+          setTimeout(() => {
+            this.startHomepageTour();
+          }, 500);
+        }
+      });
+
+      welcomeDriver.drive();
+    }, 500);
   }
 
   private async startHomepageTour(): Promise<void> {
@@ -123,21 +132,30 @@ export class WelcomeTourService {
         return;
       }
 
-      // Create tour instance with custom completion handler
-      const homepageTour = driver({
-        stagePadding: 5,
-        showProgress: true,
-        allowClose: true,
-        popoverOffset: 10,
-        steps: driverSteps,
-        onDestroyed: () => {
-          // Mark homepage tour as completed
-          this.markHomepageTourCompleted();
-          console.log('✅ Welcome sequence completed - homepage tour finished');
-        }
+      // Ensure we're at the top of the page before starting homepage tour
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
       });
 
-      homepageTour.drive();
+      // Create tour instance with custom completion handler after scroll completes
+      setTimeout(() => {
+        const homepageTour = driver({
+          stagePadding: 5,
+          showProgress: true,
+          allowClose: true,
+          popoverOffset: 10,
+          steps: driverSteps,
+          smoothScroll: false,
+          onDestroyed: () => {
+            // Mark homepage tour as completed
+            this.markHomepageTourCompleted();
+            console.log('✅ Welcome sequence completed - homepage tour finished');
+          }
+        });
+
+        homepageTour.drive();
+      }, 500);
 
     } catch (error) {
       console.error('❌ Failed to start homepage tour in welcome sequence:', error);

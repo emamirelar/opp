@@ -10,6 +10,9 @@ export interface Notification {
   category: string;
   responseType: string;
   status?: 'Pending' | 'Progress' | 'Done';
+  isRead?: boolean;
+  createdAt?: string;
+  readAt?: string;
 }
 
 export interface UpdateNotificationRequest {
@@ -25,8 +28,9 @@ export class NotificationService {
 
   constructor(private http: HttpClient) { }
 
-  getNotifications(userId: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`${this.apiUrl}?userId=${userId}`).pipe(
+  getNotifications(userId: string, unreadOnly?: boolean): Observable<Notification[]> {
+    const params = unreadOnly !== undefined ? `?userId=${userId}&unreadOnly=${unreadOnly}` : `?userId=${userId}`;
+    return this.http.get<Notification[]>(`${this.apiUrl}${params}`).pipe(
       tap(notifications => {
       })
     );

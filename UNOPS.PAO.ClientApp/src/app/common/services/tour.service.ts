@@ -107,17 +107,27 @@ export class TourService {
       return false;
     }
 
-    this.currentDriver = driver({
-      stagePadding: 5,
-      showProgress: true,
-      allowClose: tourConfig.allowClose,
-      popoverOffset: tourConfig.popoverOffset,
-      steps: driverSteps,
-      overlayColor: 'rgba(0, 0, 0, 0.4)',
+    // Scroll to top before starting the tour
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
     });
 
-    this.trackTourProgress(tourId, 0, 'start');
-    this.currentDriver.drive();
+    // Small delay to ensure scroll animation completes
+    setTimeout(() => {
+      this.currentDriver = driver({
+        stagePadding: 5,
+        showProgress: true,
+        allowClose: tourConfig.allowClose,
+        popoverOffset: tourConfig.popoverOffset,
+        steps: driverSteps,
+        overlayColor: 'rgba(0, 0, 0, 0.4)',
+        smoothScroll: false,
+      });
+
+      this.trackTourProgress(tourId, 0, 'start');
+      this.currentDriver.drive();
+    }, 500);
     return true;
   }
 
