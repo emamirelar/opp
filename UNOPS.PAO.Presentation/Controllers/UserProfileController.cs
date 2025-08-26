@@ -146,9 +146,9 @@ public class UserProfileController : BaseController
     /// Use this when the user asks to update, modify, edit, or change their personal profile information, contact details, or account settings.
     /// </remarks>
     [HttpPut(APIDictionary.UserInfoUpdate)]
-    public async Task<ActionResult<UserInfo>> UpdateUserInfo([FromBody] UserInfo userInfo)
+    public async Task<ActionResult<UserProfile>> UpdateUserInfo([FromBody] UserProfile userProfile)
     {
-        var result = await _userInfoService.UpdateUserInfoAsync(userInfo);
+        var result = await _userInfoService.UpdateUserInfoAsync(userProfile);
         return Ok(result);
     }
 
@@ -173,7 +173,7 @@ public class UserProfileController : BaseController
     /// Use this when the user asks for their profile information, account details, roles, permissions, organizational context, or when the system needs to load user-specific settings and preferences.
     /// </remarks>
     [HttpGet(APIDictionary.CurrentUserInfo)]
-    public async Task<ActionResult<UserInfo>> GetUserProfileDetails([FromQuery] string? email = null)
+    public async Task<ActionResult<UserProfile>> GetUserProfileDetails([FromQuery] string? email = null)
     {
         string currentEmail;
         

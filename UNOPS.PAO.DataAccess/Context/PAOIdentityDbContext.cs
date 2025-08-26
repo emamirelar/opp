@@ -19,6 +19,19 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
     
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        // Ensure SecurityStamp is set for all users (new and modified)
+        var userEntries = ChangeTracker.Entries<PAOIdentityUser>()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified)
+            .ToList();
+
+        foreach (var entry in userEntries)
+        {
+            if (string.IsNullOrEmpty(entry.Entity.SecurityStamp))
+            {
+                entry.Entity.SecurityStamp = Guid.NewGuid().ToString();
+            }
+        }
+
         // Capture new users before saving
         var addedPaoUsers = ChangeTracker.Entries<PAOIdentityUser>()
             .Where(e => e.State == EntityState.Added)
@@ -39,6 +52,19 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
 
     public override int SaveChanges()
     {
+        // Ensure SecurityStamp is set for all users (new and modified)
+        var userEntries = ChangeTracker.Entries<PAOIdentityUser>()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified)
+            .ToList();
+
+        foreach (var entry in userEntries)
+        {
+            if (string.IsNullOrEmpty(entry.Entity.SecurityStamp))
+            {
+                entry.Entity.SecurityStamp = Guid.NewGuid().ToString();
+            }
+        }
+
         // Capture new users before saving
         var addedPaoUsers = ChangeTracker.Entries<PAOIdentityUser>()
             .Where(e => e.State == EntityState.Added)
@@ -77,17 +103,8 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                 {
                     UserId = paoUser.Id,
                     FirstName = firstName,
-                    LastName = "",
-                    Status = EntityStatus.Active,
-                    CreatedBy = paoUser.Id,
-                    CreatedDate = DateTime.UtcNow,
-                    LastModifiedBy = paoUser.Id,
-                    IsDeleted = false,
-                    DeletedBy = 0
+                    LastName = ""
                 };
-                
-                // Set the inherited Name property explicitly for database storage
-                ((ModifiableDeletableEntity)userProfile).Name = string.IsNullOrEmpty(firstName) ? "Unknown User" : firstName;
 
                 appDbContext.Set<UserProfile>().Add(userProfile);
                 
@@ -101,9 +118,9 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
 
             if (existingPreference == null)
             {
-                // Get user's default org unit ID from UserInfo using email (proper way)
+                // Get user's default org unit ID from UserProfile using email (proper way)
                 int? defaultOrgUnitId = null;
-                var userInfoForOrgUnit = appDbContext.Set<UserInfo>()
+                var userInfoForOrgUnit = appDbContext.Set<UserProfile>()
                     .FirstOrDefault(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
                 
                 if (userInfoForOrgUnit?.OrgUnit != null)
@@ -126,7 +143,7 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                     DeletedBy = 0,
                     GlobalFilters = new GlobalFilters 
                     { 
-                        OrgUnitId = defaultOrgUnitId  // Set to user's default org unit from UserInfo
+                        OrgUnitId = defaultOrgUnitId  // Set to user's default org unit from UserProfile
                     }
                 };
 
@@ -160,16 +177,7 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                     UserId = paoUser.Id,
                     FirstName = firstName,
                     LastName = "",
-                    Status = EntityStatus.Active,
-                    CreatedBy = paoUser.Id,
-                    CreatedDate = DateTime.UtcNow,
-                    LastModifiedBy = paoUser.Id,
-                    IsDeleted = false,
-                    DeletedBy = 0
                 };
-                
-                // Set the inherited Name property explicitly for database storage
-                ((ModifiableDeletableEntity)userProfile).Name = string.IsNullOrEmpty(firstName) ? "Unknown User" : firstName;
 
                 appDbContext.Set<UserProfile>().Add(userProfile);
                 
@@ -183,9 +191,9 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
 
             if (existingPreference == null)
             {
-                // Get user's default org unit ID from UserInfo using email (proper way)
+                // Get user's default org unit ID from UserProfile using email (proper way)
                 int? defaultOrgUnitId = null;
-                var userInfoForOrgUnit = await appDbContext.Set<UserInfo>()
+                var userInfoForOrgUnit = await appDbContext.Set<UserProfile>()
                     .FirstOrDefaultAsync(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
                 
                 if (userInfoForOrgUnit?.OrgUnit != null)
@@ -208,7 +216,7 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
                     DeletedBy = 0,
                     GlobalFilters = new GlobalFilters 
                     { 
-                        OrgUnitId = defaultOrgUnitId  // Set to user's default org unit from UserInfo
+                        OrgUnitId = defaultOrgUnitId  // Set to user's default org unit from UserProfile
                     }
                 };
 

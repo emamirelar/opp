@@ -1689,4 +1689,124 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     #endregion
 
+    #region Partner Related Data Methods
+
+    /// <summary>
+    /// Gets all engagements for a specific partner with pagination
+    /// </summary>
+    public async Task<PaginationResponse<Engagement>> GetPartnerEngagementsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending)
+    {
+        // Validate pagination parameters
+        if (pageIndex < 1) pageIndex = 1;
+        if (pageSize < 1 || pageSize > 100) pageSize = 20;
+
+        var baseQuery = _context.Engagements
+            .Where(e => e.PartnerId == partnerId && !e.IsDeleted)
+            .Include(e => e.Partner);
+
+        IQueryable<Engagement> query;
+        
+        // Apply ordering
+        if (!string.IsNullOrEmpty(orderBy))
+        {
+            query = ascending 
+                ? baseQuery.OrderBy(e => EF.Property<object>(e, orderBy))
+                : baseQuery.OrderByDescending(e => EF.Property<object>(e, orderBy));
+        }
+        else
+        {
+            // Default ordering by creation date (newest first)
+            query = baseQuery.OrderByDescending(e => e.CreatedDate);
+        }
+
+        // Get total count
+        var totalCount = await query.CountAsync();
+
+        // Apply pagination
+        var engagements = await query
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginationResponse<Engagement>
+        {
+            Records = engagements,
+            TotalCount = totalCount,
+            PageIndex = pageIndex,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+        };
+    }
+
+    /// <summary>
+    /// Gets all projects for a specific partner with pagination
+    /// </summary>
+    public async Task<PaginationResponse<object>> GetPartnerProjectsAsync(ClaimsPrincipal user, int partnerId, int pageIndex, int pageSize, string? orderBy, bool ascending)
+    {
+        // Validate pagination parameters
+        if (pageIndex < 1) pageIndex = 1;
+        if (pageSize < 1 || pageSize > 100) pageSize = 20;
+
+        // Get the partner first to access the projects through the many-to-many relationship
+        var partner = await _context.Partners
+            .Include(p => p.Projects)
+            .ThenInclude(proj => proj.Partners) // Include partners for each project
+            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
+
+        if (partner == null)
+        {
+            throw new ArgumentException("Partner not found or access denied.");
+        }
+
+        // Get the projects associated with this partner
+        var projectsQuery = partner.Projects.AsQueryable()
+            .Where(p => p.Status == EntityStatus.Active);
+
+        // Apply ordering
+        if (!string.IsNullOrEmpty(orderBy))
+        {
+            projectsQuery = ascending 
+                ? projectsQuery.OrderBy(p => EF.Property<object>(p, orderBy))
+                : projectsQuery.OrderByDescending(p => EF.Property<object>(p, orderBy));
+        }
+        else
+        {
+            // Default ordering by start date (newest first)
+            projectsQuery = projectsQuery.OrderByDescending(p => p.StartDate);
+        }
+
+        var totalCount = projectsQuery.Count();
+
+        // Apply pagination
+        var projects = projectsQuery
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        // Map to anonymous objects to avoid ProjectModel dependency
+        var projectModels = projects.Select(p => (object)new {
+            p.Id,
+            p.ProjectNumber,
+            p.Name,
+            p.StartDate,
+            p.EndDate,
+            p.Stage,
+            p.BudgetCheckingLevel,
+            p.BudgetDuration,
+            p.BudgetAmount,
+            p.ExpenditureAmount
+        }).ToList();
+
+        return new PaginationResponse<object>
+        {
+            Records = projectModels,
+            TotalCount = totalCount,
+            PageIndex = pageIndex,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+        };
+    }
+
+    #endregion
+
 }

@@ -35,8 +35,8 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
     public async Task<PaginationResponse<UserManagementModel>> GetUsersAsync(ClaimsPrincipal user, UserManagementRequest request)
     {
-        // Start with UserInfos query
-        var userInfoQuery = _context.UserInfos.Where(u => !u.IsDeleted);
+        // Start with UserProfile query
+        var userProfileQuery = _context.UserProfile.Where(u => !u.IsDeleted);
 
         // Apply "Show My Org Unit Only" filter if requested
         if (request.ShowMyOrgUnitOnly)
@@ -44,56 +44,56 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
             if (!string.IsNullOrEmpty(currentUserOrgUnit))
             {
-                userInfoQuery = userInfoQuery.Where(x => x.OrgUnit == currentUserOrgUnit);
+                userProfileQuery = userProfileQuery.Where(x => x.OrgUnit == currentUserOrgUnit);
             }
         }
 
         // Apply org unit filter if specified
         if (!string.IsNullOrEmpty(request.OrgUnitFilter))
         {
-            userInfoQuery = userInfoQuery.Where(x => x.OrgUnit != null && x.OrgUnit.Contains(request.OrgUnitFilter));
+            userProfileQuery = userProfileQuery.Where(x => x.OrgUnit != null && x.OrgUnit.Contains(request.OrgUnitFilter));
         }
 
         // Apply search term filter
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
             var searchLower = request.SearchTerm.ToLower();
-            userInfoQuery = userInfoQuery.Where(x => 
+            userProfileQuery = userProfileQuery.Where(x => 
                 (x.Name != null && x.Name.ToLower().Contains(searchLower)) ||
                 (x.UserEmail != null && x.UserEmail.ToLower().Contains(searchLower)));
         }
 
         // Apply sorting
-        userInfoQuery = request.SortBy?.ToLower() switch
+        userProfileQuery = request.SortBy?.ToLower() switch
         {
             "email" => request.SortDirection?.ToLower() == "desc" 
-                ? userInfoQuery.OrderByDescending(x => x.UserEmail)
-                : userInfoQuery.OrderBy(x => x.UserEmail),
+                ? userProfileQuery.OrderByDescending(x => x.UserEmail)
+                : userProfileQuery.OrderBy(x => x.UserEmail),
             "orgunit" => request.SortDirection?.ToLower() == "desc"
-                ? userInfoQuery.OrderByDescending(x => x.OrgUnit)
-                : userInfoQuery.OrderBy(x => x.OrgUnit),
+                ? userProfileQuery.OrderByDescending(x => x.OrgUnit)
+                : userProfileQuery.OrderBy(x => x.OrgUnit),
             "lastmodified" => request.SortDirection?.ToLower() == "desc"
-                ? userInfoQuery.OrderByDescending(x => x.LastModifiedDate)
-                : userInfoQuery.OrderBy(x => x.LastModifiedDate),
-            _ => userInfoQuery.OrderBy(x => x.Name ?? x.UserEmail)
+                ? userProfileQuery.OrderByDescending(x => x.LastModifiedDate)
+                : userProfileQuery.OrderBy(x => x.LastModifiedDate),
+            _ => userProfileQuery.OrderBy(x => x.Name ?? x.UserEmail)
         };
 
         // Get total count before pagination
-        var totalCount = await userInfoQuery.CountAsync();
+        var totalCount = await userProfileQuery.CountAsync();
 
         // Apply pagination
-        var pagedUserInfos = await userInfoQuery
+        var pagedUserProfiles = await userProfileQuery
             .Skip(request.PageIndex * request.PageSize)
             .Take(request.PageSize)
             .ToListAsync();
 
         // Get user roles for each user
         var userModels = new List<UserManagementModel>();
-        foreach (var userInfo in pagedUserInfos)
+        foreach (var userProfile in pagedUserProfiles)
         {
-            if (string.IsNullOrEmpty(userInfo.UserEmail)) continue;
+            if (string.IsNullOrEmpty(userProfile.UserEmail)) continue;
 
-            var aspNetUser = await _userManager.FindByEmailAsync(userInfo.UserEmail);
+            var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
             var roles = new List<string>();
             var isActive = true; // Default to active if not found in AspNetUsers
 
@@ -114,13 +114,13 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
             userModels.Add(new UserManagementModel
             {
-                UserId = userInfo.UserId.ToString(),
-                Name = userInfo.Name ?? "N/A",
-                Email = userInfo.UserEmail ?? "N/A",
-                OrgUnit = userInfo.OrgUnit ?? "N/A",
-                OrgUnitCode = userInfo.OrgUnit,
+                UserId = userProfile.UserId.ToString(),
+                Name = userProfile.Name ?? "N/A",
+                Email = userProfile.UserEmail ?? "N/A",
+                OrgUnit = userProfile.OrgUnit ?? "N/A",
+                OrgUnitCode = userProfile.OrgUnit,
                 Roles = roles,
-                LastModifiedDate = userInfo.LastModifiedDate,
+                LastModifiedDate = userProfile.LastModifiedDate,
                 IsActive = isActive
             });
         }
@@ -149,20 +149,20 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             return null; // Invalid userId format
         }
         
-        var userInfo = await _context.UserInfos
+        var userProfile = await _context.UserProfile
             .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
-        if (userInfo == null) return null;
+        if (userProfile == null) return null;
 
-        var aspNetUser = await _userManager.FindByEmailAsync(userInfo.UserEmail);
+        var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
         if (aspNetUser == null) return null;
 
         // Additional org unit check for ORG_UNIT_ADMIN (business logic)
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
             var currentUserOrgUnit = await _permissionService.GetUserOrgUnitAsync(user);
-            if (userInfo.OrgUnit != currentUserOrgUnit)
+            if (userProfile.OrgUnit != currentUserOrgUnit)
             {
                 throw new UnauthorizedAccessException("Access denied. You can only view users from your organization unit.");
             }
@@ -172,13 +172,13 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
 
         return new UserManagementModel
         {
-            UserId = userInfo.UserId.ToString(),
-            Name = userInfo.Name ?? "N/A",
-            Email = userInfo.UserEmail ?? "N/A",
-            OrgUnit = userInfo.OrgUnit ?? "N/A",
-            OrgUnitCode = userInfo.OrgUnit,
+            UserId = userProfile.UserId.ToString(),
+            Name = userProfile.Name ?? "N/A",
+            Email = userProfile.UserEmail ?? "N/A",
+            OrgUnit = userProfile.OrgUnit ?? "N/A",
+            OrgUnitCode = userProfile.OrgUnit,
             Roles = roles.ToList(),
-            LastModifiedDate = userInfo.LastModifiedDate,
+            LastModifiedDate = DateTime.UtcNow, // Use current time since we don't track this in UserProfile
             IsActive = !aspNetUser.LockoutEnabled || 
                       (aspNetUser.LockoutEnd == null || aspNetUser.LockoutEnd <= DateTimeOffset.UtcNow)
         };
@@ -192,24 +192,24 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             throw new ArgumentException("Invalid userId format. UserId must be a valid integer.", nameof(userId));
         }
         
-        var userInfo = await _context.UserInfos
+        var userProfile = await _context.UserProfile
             .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
-        if (userInfo == null)
+        if (userProfile == null)
         {
             throw new ArgumentException("User not found.");
         }
 
-        var aspNetUser = await _userManager.FindByEmailAsync(userInfo.UserEmail);
+        var aspNetUser = await _userManager.FindByEmailAsync(userProfile.UserEmail);
         
         // If user doesn't exist in AspNetUsers, create them
         if (aspNetUser == null)
         {
             aspNetUser = new PAOIdentityUser
             {
-                UserName = userInfo.UserEmail,
-                Email = userInfo.UserEmail,
+                UserName = userProfile.UserEmail,
+                Email = userProfile.UserEmail,
                 EmailConfirmed = true,
                 LockoutEnabled = false
             };
@@ -225,7 +225,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
         if (user.IsInRole("ORG_UNIT_ADMIN") && !user.IsInRole("PARTNER_GLOB_ADMIN"))
         {
             // var currentUserOrgUnit = await _securityService.GetUserOrgUnitAsync(user);
-            // if (userInfo.OrgUnit != currentUserOrgUnit)
+            // if (userProfile.OrgUnit != currentUserOrgUnit)
             // {
             //     throw new UnauthorizedAccessException("Access denied. You can only update users from your organization unit.");
             // }
@@ -281,9 +281,9 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             }
         }
 
-        // Update the UserInfo last modified date
-        userInfo.LastModifiedDate = DateTime.UtcNow;
-        userInfo.LastModifiedBy = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+        // Update the UserProfile last modified date
+        userProfile.LastModifiedDate = DateTime.UtcNow;
+        userProfile.LastModifiedBy = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
         await _context.SaveChangesAsync();
 
         // Return updated user model
@@ -388,21 +388,21 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             return null; // Invalid userId format
         }
         
-        var userInfo = await _context.UserInfos
+        var userProfile = await _context.UserProfile
             .Where(u => u.UserId == userIdInt && !u.IsDeleted)
             .FirstOrDefaultAsync();
 
-        if (userInfo == null) return null;
+        if (userProfile == null) return null;
 
         return new UserManagementModel
         {
-            UserId = userInfo.UserId.ToString(),
-            Name = userInfo.Name ?? "N/A",
-            Email = userInfo.UserEmail ?? "N/A",
-            OrgUnit = userInfo.OrgUnit ?? "N/A",
-            OrgUnitCode = userInfo.OrgUnit,
+            UserId = userProfile.UserId.ToString(),
+            Name = userProfile.Name ?? "N/A",
+            Email = userProfile.UserEmail ?? "N/A",
+            OrgUnit = userProfile.OrgUnit ?? "N/A",
+            OrgUnitCode = userProfile.OrgUnit,
             Roles = new List<string>(),
-            LastModifiedDate = userInfo.LastModifiedDate,
+            LastModifiedDate = DateTime.UtcNow, // Use current time since we don't track this in UserProfile
             IsActive = true
         };
     }

@@ -185,14 +185,14 @@ public class PAOWebApplicationFactory<TStartup> : WebApplicationFactory<TStartup
     private void SeedTestData(UNOPSAppDbContext unopsDb, AppDbContext coreDb)
     {
         // Ensure test user exists
-        var userInfos = unopsDb.UserInfos.FirstOrDefault(u => u.UserEmail == "testuser@unops.org");
+        var userInfos = unopsDb.UserProfile.FirstOrDefault(u => u.UserEmail == "testuser@unops.org");
         if (userInfos == null)
         {
-            unopsDb.UserInfos.Add(new UserInfo
+            unopsDb.UserProfile.Add(new UserProfile
             {
                 UserId = 123,
                 UserEmail = "testuser@unops.org",
-                Name = "Test User",
+                FirstName = "Test User",
                 OrgUnit = "HQ"
             });
             unopsDb.SaveChanges();

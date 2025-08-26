@@ -318,6 +318,97 @@ public class PartnerController : BaseController
     }
 
     /// <summary>
+    /// Retrieves all engagements for a specific partner with complete details and pagination.
+    /// </summary>
+    /// <param name="partnerId">Partner ID to get engagements for</param>
+    /// <param name="pageIndex">Page number (1-based, default: 1)</param>
+    /// <param name="pageSize">Number of items per page (default: 20)</param>
+    /// <param name="orderBy">Field to order results by (optional)</param>
+    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
+    /// <example_uses>
+    /// Show all engagements for partner 123
+    /// List partner's project engagements
+    /// Get engagement history for this partner
+    /// Display partner collaboration records
+    /// Show partner's active engagements
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to see all engagements associated with a specific partner from the partner's perspective.</when_to_use>
+    /// <returns>Paginated list of engagements for the specified partner</returns>
+    [HttpGet(APIDictionary.Partner + "/{partnerId}/engagements")]
+    [AccessControlled(EntityTypes.Partner, "read")]
+    public async Task<ActionResult<PaginationResponse<Engagement>>> GetPartnerEngagements(
+        int partnerId,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] bool ascending = true)
+    {
+        try
+        {
+            var result = await _manager.GetPartnerEngagementsAsync(User, partnerId, pageIndex, pageSize, orderBy, ascending);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting partner engagements for partner {PartnerId}", partnerId);
+            return StatusCode(500, new { error = "An error occurred while retrieving partner engagements" });
+        }
+    }
+
+    /// <summary>
+    /// Retrieves all projects associated with a specific partner with complete details and pagination.
+    /// </summary>
+    /// <param name="partnerId">Partner ID to get projects for</param>
+    /// <param name="pageIndex">Page number (1-based, default: 1)</param>
+    /// <param name="pageSize">Number of items per page (default: 20)</param>
+    /// <param name="orderBy">Field to order results by (optional)</param>
+    /// <param name="ascending">Sort direction - true for ascending, false for descending (default: true)</param>
+    /// <example_uses>
+    /// Show all projects for partner 123
+    /// List partner's project portfolio
+    /// Get project history for this partner
+    /// Display partner's active projects
+    /// Show partner collaboration projects
+    /// </example_uses>
+    /// <when_to_use>Use this when the user wants to see all projects associated with a specific partner.</when_to_use>
+    /// <returns>Paginated list of projects for the specified partner</returns>
+    [HttpGet(APIDictionary.Partner + "/{partnerId}/projects")]
+    public async Task<ActionResult<PaginationResponse<object>>> GetPartnerProjects(
+        int partnerId,
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] string? orderBy = null,
+        [FromQuery] bool ascending = true)
+    {
+        try
+        {
+            var result = await _manager.GetPartnerProjectsAsync(User, partnerId, pageIndex, pageSize, orderBy, ascending);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting partner projects for partner {PartnerId}", partnerId);
+            return StatusCode(500, new { error = "An error occurred while retrieving partner projects" });
+        }
+    }
+
+    /// <summary>
     /// Soft deletes a partner from the system (marks as deleted rather than permanent removal).
     /// </summary>
     /// <param name="id">Partner ID to delete</param>

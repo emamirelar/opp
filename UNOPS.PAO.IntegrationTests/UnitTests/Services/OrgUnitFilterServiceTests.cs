@@ -87,13 +87,13 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Services
             await _dbContext.OrganizationHierarchies.AddRangeAsync(orgUnits);
 
             // Setup users in org units
-            var userInfos = new List<UserInfo>
+            var userInfos = new List<UserProfile>
             {
-                new UserInfo { UserId = 100, OrgUnit = "ORG10" },
-                new UserInfo { UserId = 101, OrgUnit = "ORG11" },
-                new UserInfo { UserId = 102, OrgUnit = "ORG12" }
+                new UserProfile { UserId = 100, OrgUnit = "ORG10" },
+                new UserProfile { UserId = 101, OrgUnit = "ORG11" },
+                new UserProfile { UserId = 102, OrgUnit = "ORG12" }
             };
-            await _dbContext.UserInfos.AddRangeAsync(userInfos);
+            await _dbContext.UserProfile.AddRangeAsync(userInfos);
             await _dbContext.SaveChangesAsync();
 
             var filter = new PartnerFilterRequest { OrgUnitId = orgUnitId };
@@ -267,14 +267,14 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Services
             await _dbContext.OrganizationHierarchies.AddRangeAsync(orgUnits);
 
             // Setup users in these departments
-            var userInfos = new List<UserInfo>
+            var userInfos = new List<UserProfile>
             {
-                new UserInfo { UserId = 200, OrgUnit = "DEPT40" },
-                new UserInfo { UserId = 201, OrgUnit = "DEPT40" },
-                new UserInfo { UserId = 202, OrgUnit = "DEPT41" },
-                new UserInfo { UserId = 203, OrgUnit = "DEPT99" } // Different department
+                new UserProfile { UserId = 200, OrgUnit = "DEPT40" },
+                new UserProfile { UserId = 201, OrgUnit = "DEPT40" },
+                new UserProfile { UserId = 202, OrgUnit = "DEPT41" },
+                new UserProfile { UserId = 203, OrgUnit = "DEPT99" } // Different department
             };
-            await _dbContext.UserInfos.AddRangeAsync(userInfos);
+            await _dbContext.UserProfile.AddRangeAsync(userInfos);
             await _dbContext.SaveChangesAsync();
 
             var filter = new PartnerFilterRequest { OrgUnitId = orgUnitId };

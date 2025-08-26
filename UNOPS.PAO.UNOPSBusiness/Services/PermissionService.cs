@@ -257,8 +257,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             try
             {   
                 // Look up user's assigned org unit from database
-                var userInfo = await _context.UserInfos
-                    .Where(u => u.UserEmail.ToLower() == userEmail.ToLower() && !u.IsDeleted)
+                var userInfo = await _context.UserProfile
+                    .Where(u => u.UserEmail.ToLower() == userEmail.ToLower())
                     .Select(u => u.OrgUnit)
                     .FirstOrDefaultAsync();
                     
