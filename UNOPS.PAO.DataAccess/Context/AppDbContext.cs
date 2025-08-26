@@ -93,6 +93,9 @@ public class AppDbContext : AuditableDbContext<int, int>
             entity.HasIndex(up => up.UserId)
                 .IsUnique();
                 
+            // Ignore the computed Name property since it's calculated from FirstName and LastName
+            entity.Ignore(e => e.Name);
+                
             entity.Property(e => e.FirstName)
                 .HasMaxLength(100);
             
