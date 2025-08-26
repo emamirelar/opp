@@ -173,6 +173,9 @@ public class UNOPSAppDbContext : AppDbContext
     public DbSet<EntityManager> EntityManagers { get; set; }
     public DbSet<EntityFieldManager> EntityFieldManagers { get; set; }
     
+    // Email notification tracking (generalized for all email notifications)
+    public DbSet<EmailNotificationLog> EmailNotificationLogs { get; set; }
+    
     // AI-related DbSets
     public DbSet<AiPrompt> AiPrompts { get; set; }
 }

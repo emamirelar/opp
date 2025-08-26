@@ -370,5 +370,10 @@ public class Partner : ModifiableDeletableEntity
     
     // ========== NAVIGATION PROPERTIES ==========
     public virtual LiaisonOffice LiaisonOffice { get; set; }
+    
+    /// <summary>
+    /// Navigation property to the Partner Focal Point User
+    /// </summary>
+    [ForeignKey("PartnerFocalPointUserId")]
+    public virtual PAOUser? PartnerFocalPointUser { get; set; }
 }
-

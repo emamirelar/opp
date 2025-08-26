@@ -26,6 +26,8 @@ using UNOPS.PAO.Presentation.ContextPermissionHandlers;
 using UNOPS.PAO.Identity.Context;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.Business;
+using UNOPS.PAO.MailSender;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -425,7 +427,17 @@ public class Startup
         if (!CurrentEnvironment.IsEnvironment("Testing"))
         {
             services.AddHostedService<PubSubPullService>(); // Register your background service
+            services.AddHostedService<DueDiligenceNotificationService>(); // Register due diligence notification service
         }
+        
+        // Register URL service for building entity URLs
+        services.AddScoped<IUrlService, UrlService>();
+        
+        // Register PAO email services (MailKit-based)
+        services.AddEmailServices(Configuration);
+        
+        // Register PAO email sender
+        services.AddScoped<PAOEmailSender>();
     }
 
     private void AddServices(ServiceRegistry services)
