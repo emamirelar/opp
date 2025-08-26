@@ -212,7 +212,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             // Clear existing data
             context.Partners.RemoveRange(context.Partners);
             context.OrganizationHierarchies.RemoveRange(context.OrganizationHierarchies);
-            context.UserInfos.RemoveRange(context.UserInfos);
+            context.UserProfile.RemoveRange(context.UserProfile);
             context.Contacts.RemoveRange(context.Contacts);
             context.Interactions.RemoveRange(context.Interactions);
             await context.SaveChangesAsync();
@@ -314,11 +314,11 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             await context.Partners.AddRangeAsync(partner1, partner2, partner3);
 
             // Create user info
-            var existingUser = await context.UserInfos.FindAsync(123);
+            var existingUser = await context.UserProfile.FindAsync(123);
             if (existingUser == null)
             {
-                var userInfo = new UserInfo { UserId = 123, OrgUnit = $"ORG{orgUnitId}", UserEmail = "testuser@unops.org", Name = "Test User" };
-                await context.UserInfos.AddAsync(userInfo);
+                var userInfo = new UserProfile { UserId = 123, OrgUnit = $"ORG{orgUnitId}", UserEmail = "testuser@unops.org", FirstName = "Test User" };
+                await context.UserProfile.AddAsync(userInfo);
             }
 
             // Create contact and interaction for indirect relation
@@ -466,7 +466,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             // Clear existing data
             context.Partners.RemoveRange(context.Partners);
             context.OrganizationHierarchies.RemoveRange(context.OrganizationHierarchies);
-            context.UserInfos.RemoveRange(context.UserInfos);
+            context.UserProfile.RemoveRange(context.UserProfile);
             context.Contacts.RemoveRange(context.Contacts);
             context.Interactions.RemoveRange(context.Interactions);
             await context.SaveChangesAsync();
@@ -489,11 +489,11 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
             }
 
             // Create user info
-            var existingUser = await context.UserInfos.FindAsync(userId);
+            var existingUser = await context.UserProfile.FindAsync(userId);
             if (existingUser == null)
             {
-                var userInfo = new UserInfo { UserId = userId, OrgUnit = $"ORG{orgUnitId}", UserEmail = "testuser@unops.org", Name = "Test User" };
-                await context.UserInfos.AddAsync(userInfo);
+                var userInfo = new UserProfile { UserId = userId, OrgUnit = $"ORG{orgUnitId}", UserEmail = "testuser@unops.org", FirstName = "Test User" };
+                await context.UserProfile.AddAsync(userInfo);
             }
 
             // Create partner with indirect relation

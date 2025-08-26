@@ -27,6 +27,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     private readonly BaseRepository<UNOPSContact> contactRepository;
     private readonly BaseRepository<OrganizationHierarchy> OrganizationHierarchyRepository;
     private readonly UNOPSAppDbContext context;
+    private GoogleCloudStorageService googleCloudStorageService;
 
     private static InteractionModel MapEntityToModel(UNOPSInteraction entity, IMapper mapper)
     {
@@ -37,6 +38,30 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     {
         // Use AutoMapper with the updated configuration
         var result = mapper.Map<UNOPSInteraction, InteractionModel>(entity);
+
+        // Convert ProfilePictureUrl to signed URL for nested Contact objects
+        if (result.Contacts != null && googleCloudStorageService != null)
+        {
+            foreach (var contact in result.Contacts)
+            {
+                if (!string.IsNullOrEmpty(contact.ProfilePictureUrl))
+                {
+                    contact.ProfilePictureUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(contact.ProfilePictureUrl);
+                }
+            }
+        }
+
+        // Convert LogoUrl to signed URL for nested Partner objects
+        if (result.Partners != null && googleCloudStorageService != null)
+        {
+            foreach (var partner in result.Partners)
+            {
+                if (!string.IsNullOrEmpty(partner.LogoUrl))
+                {
+                    partner.LogoUrl = await googleCloudStorageService.GenerateSignedUrlFromStorageUrl(partner.LogoUrl);
+                }
+            }
+        }
 
         return await MapEntityToModelWithPermissionsAsync(result, user); ;
     }
@@ -132,6 +157,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         interactionRepository = new BaseRepository<UNOPSInteraction>(context, configuration, serviceProvider);
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         OrganizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
+        googleCloudStorageService = new GoogleCloudStorageService(configuration);
     }
 
     public async Task<InteractionModel> CreateInteractionAsync(InteractionRequest model)
@@ -556,7 +582,15 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     public async Task<InteractionModel?> GetInteractionAsync(ClaimsPrincipal user, int id)
     {
         // RBAC interceptor handles security enforcement
-        var item = await interactionRepository.GetByIdAsync(id, ["InteractionContacts", "InteractionContacts.Contact", "InteractionContacts.Contact.Partner"]);
+        var item = await interactionRepository.GetByIdAsync(id, [
+            "InteractionContacts", 
+            "InteractionContacts.Contact", 
+            "InteractionContacts.Contact.Partner",
+            "InteractionPartners",
+            "InteractionPartners.Partner", 
+            "InteractionUsers",
+            "InteractionUsers.User"
+        ]);
         if (item == null) return null;
 
         // Load organization unit relationships for single interaction
@@ -663,7 +697,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// <summary>
     /// Gets comprehensive interaction details for AI prompts including all related entities (legacy method without security)
     /// </summary>
-    public async Task<InteractionModel?> GetInteractionDetailsAsync(int id)
+    public async Task<InteractionModel?> GetInteractionDetailsLegacyAsync(int id)
     {
         var item = await interactionRepository.GetByIdAsync(id,
             includes: new[]
@@ -718,7 +752,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         }
         else
         {
-            return await GetInteractionDetailsAsync(entityId);
+            return await GetInteractionDetailsLegacyAsync(entityId);
         }
     }
 

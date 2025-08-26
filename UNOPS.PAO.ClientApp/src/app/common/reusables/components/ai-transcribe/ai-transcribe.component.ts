@@ -22,16 +22,16 @@ import { TooltipModule } from 'primeng/tooltip';
     TooltipModule
   ],
   template: `
-    <div class="flex flex-col p-3 border border-gray-200 rounded-lg bg-gray-50">
-      <div *ngIf="!uploadedFile()" class="flex">
+    <div class="flex flex-col">
+      <div *ngIf="!uploadedFile()" class="flex justify-end">
         <!-- Hidden file inputs -->
         <input #fileInput type="file" class="hidden" accept="image/*" (change)="onFileSelect($event)">
         <input #audioInput type="file" class="hidden" accept="audio/*" (change)="onFileSelect($event)">
-        
+
         <!-- Dropdown menu button -->
         <div class="inline-flex">
-          <p-button 
-            icon="pi pi-bolt" 
+          <p-button
+            icon="pi pi-bolt"
             [label]="'button.preFillOptions' | translate"
             (onClick)="toggleMenu($event)"
             [outlined]="true"
@@ -40,33 +40,33 @@ import { TooltipModule } from 'primeng/tooltip';
           <p-menu #menu [model]="transcribeMenuItems" [popup]="true" [appendTo]="'body'"></p-menu>
         </div>
       </div>
-      
+
       <!-- Preview area if file selected -->
       <div *ngIf="uploadedFile()" class="mt-3 flex flex-col items-center">
         <!-- Image preview -->
         <div *ngIf="uploadedFile()?.preview" class="mb-2 max-w-full max-h-32 overflow-hidden">
           <img [src]="uploadedFile()?.preview" alt="Preview" class="max-w-full max-h-32 object-contain">
         </div>
-        
+
         <!-- Audio preview -->
         <div *ngIf="!uploadedFile()?.preview && uploadedFile()?.file && uploadedFile()?.file?.type?.startsWith('audio/')" class="w-full mb-2">
           <audio controls class="w-full h-8">
             <source [src]="getAudioUrl(uploadedFile()?.file)" type="audio/mpeg">
           </audio>
         </div>
-        
+
         <div class="flex gap-2 mt-2">
-          <p-button 
-            icon="pi pi-times" 
+          <p-button
+            icon="pi pi-times"
             [label]="'button.remove' | translate"
             (onClick)="uploadedFile.set(null)"
             [outlined]="true"
             severity="danger"
             size="small">
           </p-button>
-          
-          <p-button 
-            icon="pi pi-check" 
+
+          <p-button
+            icon="pi pi-check"
             [label]="'button.preFillFrom' | translate"
             (onClick)="transcribeFile()"
             [loading]="isUploading()"
@@ -118,7 +118,7 @@ import { TooltipModule } from 'primeng/tooltip';
 export class AiTranscribeComponent {
   @Input() transcribeType: string = 'default';
   @Output() transcriptionCompleted = new EventEmitter<any>();
-  
+
   @ViewChild('menu') private menu: any;
   @ViewChild('fileInput') private fileInput!: ElementRef;
   @ViewChild('audioInput') private audioInput!: ElementRef;
@@ -129,7 +129,7 @@ export class AiTranscribeComponent {
   uploadedFile = signal<{ file: File, preview: SafeUrl | null } | null>(null);
   stream: MediaStream | null = null;
   showCamera = signal(false);
-  
+
   transcribeMenuItems: MenuItem[] = [];
 
   constructor(
@@ -166,7 +166,7 @@ export class AiTranscribeComponent {
       }
     ];
   }
-  
+
   toggleMenu(event: Event): void {
     if (this.menu) {
       this.menu.toggle(event);
@@ -178,7 +178,7 @@ export class AiTranscribeComponent {
     if (!files?.length) return;
 
     const file = files[0];
-    
+
     // Preview for image files
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -205,7 +205,7 @@ export class AiTranscribeComponent {
 
   getAudioUrl(file: File | undefined | null): SafeUrl | string {
     if (!file) return '';
-    
+
     const url = URL.createObjectURL(file);
     return this.sanitizer.bypassSecurityTrustUrl(url);
   }
@@ -270,9 +270,9 @@ export class AiTranscribeComponent {
 
   transcribeFile(): void {
     if (!this.uploadedFile()) return;
-    
+
     this.isUploading.set(true);
-    
+
     // Use GeminiService to scan the file with the specified type
     this.geminiService.scanFile(this.uploadedFile()!.file, this.transcribeType)
       .subscribe({
@@ -314,4 +314,4 @@ export class AiTranscribeComponent {
       console.error(error);
     }
   }
-} 
+}

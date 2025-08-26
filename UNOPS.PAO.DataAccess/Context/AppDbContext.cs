@@ -47,11 +47,12 @@ public class AppDbContext : AuditableDbContext<int, int>
     public DbSet<InteractionContact> InteractionContacts { get; set; }
     public DbSet<InteractionUser> InteractionUsers { get; set; }
     public DbSet<InteractionPartner> InteractionPartners { get; set; }
-    public DbSet<UserInfo> UserInfos { get; set; }
+    public DbSet<UserProfile> UserProfile { get; set; }
     public DbSet<UserPreference> UserPreferences { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<SavedFilter> SavedFilters { get; set; }
+    public DbSet<Engagement> Engagements { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -81,21 +82,38 @@ public class AppDbContext : AuditableDbContext<int, int>
             .HasForeignKey<UserProfile>(x => x.UserId)
             .IsRequired(false); // Make it optional to avoid constraint issues during creation
 
-        modelBuilder
-            .Entity<UserProfile>()
-            .Property(up => up.UserId)
-            .IsRequired();
-
-        modelBuilder
-            .Entity<UserProfile>()
-            .HasIndex(up => up.UserId)
-            .IsUnique();
+        modelBuilder.Entity<UserProfile>(entity =>
+        {
+            entity.ToTable("UserProfile", "public");
+            entity.HasKey(e => e.UserId);
             
-        // Configure UserProfile Name property to use a default value if not provided
-        modelBuilder
-            .Entity<UserProfile>()
-            .Property(up => up.Name)
-            .HasDefaultValue("Unknown User");
+            entity.Property(up => up.UserId)
+                .IsRequired();
+
+            entity.HasIndex(up => up.UserId)
+                .IsUnique();
+                
+            // Ignore the computed Name property since it's calculated from FirstName and LastName
+            entity.Ignore(e => e.Name);
+                
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.LastName)
+                .HasMaxLength(100);
+            
+            entity.Property(e => e.UserEmail)
+                .HasMaxLength(256);
+            
+            entity.Property(e => e.OrgUnit)
+                .HasMaxLength(200);
+                
+            entity.Property(e => e.DutyStation)
+                .HasMaxLength(200);
+                
+            entity.Property(e => e.Position)
+                .HasMaxLength(200);
+        });
 
         modelBuilder
             .Entity<Partner>(p =>
@@ -276,21 +294,6 @@ public class AppDbContext : AuditableDbContext<int, int>
 
             entity.Property(e => e.Description)
                 .HasMaxLength(500);
-        });
-
-        modelBuilder.Entity<UserInfo>(entity =>
-        {
-            entity.ToTable("UserInfos", "public");
-            entity.HasKey(e => e.UserId);
-            
-            entity.Property(e => e.Name)
-                .HasMaxLength(200);
-            
-            entity.Property(e => e.UserEmail)
-                .HasMaxLength(256);
-            
-            entity.Property(e => e.OrgUnit)
-                .HasMaxLength(200);
         });
 
         modelBuilder.Entity<UserPreference>(entity =>

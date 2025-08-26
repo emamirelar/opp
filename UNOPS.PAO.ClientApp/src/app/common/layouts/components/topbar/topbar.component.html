@@ -95,16 +95,48 @@
 			<!-- Notification badge positioned outside the button -->
 			<span *ngIf="unreadCount > 0" class="notification-badge" [attr.data-count]="unreadCount">{{getDisplayCount()}}</span>
 		</div>
-      <p-overlayPanel #notificationPanel [style]="{width: '400px'}">
+      <p-overlayPanel #notificationPanel [style]="{width: '450px', maxHeight: '600px'}">
         <div class="notification-panel">
           <div class="notification-header">
-            <h3>Notifications</h3>
+            <h3>{{ 'notifications.title' | translate }}</h3>
           </div>
+          
+          <!-- Tab Navigation -->
+          <div class="notification-tabs">
+            <button 
+              class="tab-button" 
+              [class.active]="activeNotificationTab === 'unread'"
+              (click)="switchNotificationTab('unread')">
+              {{ 'notifications.unread' | translate }}
+              <span *ngIf="unreadCount > 0" class="tab-badge">{{unreadCount}}</span>
+            </button>
+            <button 
+              class="tab-button" 
+              [class.active]="activeNotificationTab === 'all'"
+              (click)="switchNotificationTab('all')">
+              {{ 'notifications.all' | translate }}
+              <span class="tab-badge">{{allNotifications.length}}</span>
+            </button>
+          </div>
+          
+          <!-- Notification Content -->
           <div class="notification-list">
-            <div *ngFor="let notification of notifications" 
+            <div *ngFor="let notification of getLimitedNotifications()" 
                  class="notification-item" 
-                 [ngClass]="{'notification-progress': notification.status === 'Progress'}"
+                 [ngClass]="{
+                   'notification-progress': notification.status === 'Progress',
+                   'notification-read': isNotificationRead(notification),
+                   'notification-unread': !isNotificationRead(notification)
+                 }"
                  (click)="notification.category !== 'file_analysis' ? handleNotificationClick(notification) : null">
+              
+              <!-- Category icon -->
+              <div class="notification-category-icon" 
+                   [style.background-color]="getCategoryIconColor(notification) + '20'">
+                <i [class]="getCategoryIcon(notification)" 
+                   [style.color]="getCategoryIconColor(notification)"></i>
+              </div>
+              
               <div class="notification-content">
                 <!-- Progress status indicator -->
                 <div *ngIf="notification.status === 'Progress'" class="notification-progress-indicator">
@@ -121,19 +153,45 @@
                   {{notification.message}}
                 </p>
                 
+                <!-- Timestamp -->
+                <div class="notification-timestamp" *ngIf="notification.createdAt">
+                  <small>{{formatTimestamp(notification.createdAt)}}</small>
+                </div>
+                
                 <!-- Cancel button for file analysis operations in progress -->
                 <div *ngIf="notification.category === 'file_analysis' && notification.status === 'Progress'" 
                      class="notification-actions">
                   <p-button icon="pi pi-times" 
-                            label="Cancel" 
+                            [label]="'common.cancel' | translate" 
                             severity="secondary" 
                             size="small"
                             (onClick)="cancelFileAnalysis(notification, $event)"></p-button>
                 </div>
               </div>
             </div>
-            <div *ngIf="notifications.length === 0" class="no-notifications">
-              No notifications
+            
+            <!-- See more button -->
+            <div *ngIf="hasMoreNotifications()" class="see-more-container">
+              <p-button 
+                [label]="('notifications.seeAll' | translate) + ' ' + getCurrentNotifications().length + ' ' + ('notifications.items' | translate)" 
+                icon="pi pi-external-link" 
+                severity="secondary" 
+                [text]="true"
+                styleClass="w-full"
+                (onClick)="openNotificationDialog()">
+              </p-button>
+            </div>
+            
+            <!-- Empty states -->
+            <div *ngIf="getCurrentNotifications().length === 0" class="no-notifications">
+              <div *ngIf="activeNotificationTab === 'unread'">
+                <i class="pi pi-bell-slash text-4xl text-gray-300 mb-3"></i>
+                <p>{{ 'notifications.noUnread' | translate }}</p>
+              </div>
+              <div *ngIf="activeNotificationTab === 'all'">
+                <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
+                <p>{{ 'notifications.noNotifications' | translate }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -143,10 +201,10 @@
       <p-overlayPanel #chatHistoryPanel [style]="{width: '400px', maxHeight: '500px'}">
         <div class="chat-history-panel">
           <div class="chat-history-header">
-            <h3>Chat History</h3>
+            <h3>{{ 'chatHistory.title' | translate }}</h3>
             <p-button 
               icon="pi pi-plus" 
-              label="New Chat" 
+              [label]="'chatHistory.newChat' | translate" 
               size="small"
               (onClick)="startNewChat(); chatHistoryPanel.hide()"
               [disabled]="isNewChatDisabled"
@@ -161,7 +219,7 @@
                 type="text" 
                 [(ngModel)]="chatSearchQuery"
                 (input)="onChatSearchInput($event)"
-                placeholder="Search chats..."
+                [placeholder]="'chatHistory.searchPlaceholder' | translate"
                 class="search-input"
               />
               <i class="pi pi-search search-icon"></i>
@@ -178,11 +236,11 @@
           <div class="chat-history-list">
             <div *ngIf="isLoadingChatSessions" class="loading-message">
               <div class="loading-spinner"></div>
-              <span>Loading chats...</span>
+              <span>{{ 'chatHistory.loading' | translate }}</span>
             </div>
             
             <div *ngIf="!isLoadingChatSessions && chatSessions.length === 0" class="no-chats-message">
-              <span class="text-sm text-gray-500">No chat history yet</span>
+              <span class="text-sm text-gray-500">{{ 'chatHistory.noChats' | translate }}</span>
             </div>
             
             <div *ngFor="let session of filteredChatSessions; trackBy: trackByChatId" 
@@ -205,7 +263,7 @@
             </div>
             
             <div *ngIf="!isLoadingChatSessions && filteredChatSessions.length === 0 && chatSessions.length > 0" class="no-results-message">
-              <span class="text-sm text-gray-500">No chats match your search</span>
+              <span class="text-sm text-gray-500">{{ 'chatHistory.noResults' | translate }}</span>
             </div>
           </div>
         </div>
@@ -235,5 +293,101 @@
 
 <!-- Global Filters Dialog -->
 <app-global-filters-dialog></app-global-filters-dialog>
+
+<!-- Notification Dialog -->
+<p-dialog 
+  [(visible)]="showNotificationDialog" 
+  [modal]="true" 
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="notification-dialog"
+  [header]="'notifications.allTitle' | translate"
+  [style]="{width: '800px', maxWidth: '90vw', maxHeight: '80vh'}">
+  
+  <div class="notification-dialog-wrapper">
+    <!-- Tab Navigation -->
+    <div class="notification-dialog-tabs">
+    <button 
+      class="tab-button" 
+      [class.active]="activeNotificationTab === 'unread'"
+      (click)="switchNotificationTab('unread')">
+      {{ 'notifications.unread' | translate }}
+      <span *ngIf="unreadCount > 0" class="tab-badge">{{unreadCount}}</span>
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeNotificationTab === 'all'"
+      (click)="switchNotificationTab('all')">
+      {{ 'notifications.all' | translate }}
+      <span class="tab-badge">{{allNotifications.length}}</span>
+    </button>
+  </div>
+  
+  <!-- Notification Content -->
+  <div class="notification-dialog-content">
+    <div *ngFor="let notification of getCurrentNotifications()" 
+         class="notification-item" 
+         [ngClass]="{
+           'notification-progress': notification.status === 'Progress',
+           'notification-read': isNotificationRead(notification),
+           'notification-unread': !isNotificationRead(notification)
+         }"
+         (click)="notification.category !== 'file_analysis' ? handleNotificationClickFromDialog(notification) : null">
+      
+      <!-- Category icon -->
+      <div class="notification-category-icon" 
+           [style.background-color]="getCategoryIconColor(notification) + '20'">
+        <i [class]="getCategoryIcon(notification)" 
+           [style.color]="getCategoryIconColor(notification)"></i>
+      </div>
+      
+      <div class="notification-content">
+        <!-- Progress status indicator -->
+        <div *ngIf="notification.status === 'Progress'" class="notification-progress-indicator">
+          <p-progressBar mode="indeterminate" [style]="{'height': '6px'}"></p-progressBar>
+        </div>
+        
+        <!-- For messages with progress bars embedded in the text -->
+        <p *ngIf="notification.message && notification.message.includes('[')">
+          <span [innerHTML]="formatProgressMessage(notification.message)"></span>
+        </p>
+        
+        <!-- Regular message -->
+        <p *ngIf="!notification.message || !notification.message.includes('[')">
+          {{notification.message}}
+        </p>
+        
+        <!-- Timestamp -->
+        <div class="notification-timestamp" *ngIf="notification.createdAt">
+          <small>{{formatTimestamp(notification.createdAt)}}</small>
+        </div>
+        
+        <!-- Cancel button for file analysis operations in progress -->
+        <div *ngIf="notification.category === 'file_analysis' && notification.status === 'Progress'" 
+             class="notification-actions">
+          <p-button icon="pi pi-times" 
+                    [label]="'common.cancel' | translate" 
+                    severity="secondary" 
+                    size="small"
+                    (onClick)="cancelFileAnalysis(notification, $event)"></p-button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Empty states -->
+    <div *ngIf="getCurrentNotifications().length === 0" class="no-notifications">
+      <div *ngIf="activeNotificationTab === 'unread'">
+        <i class="pi pi-bell-slash text-4xl text-gray-300 mb-3"></i>
+        <p>{{ 'notifications.noUnread' | translate }}</p>
+      </div>
+      <div *ngIf="activeNotificationTab === 'all'">
+        <i class="pi pi-inbox text-4xl text-gray-300 mb-3"></i>
+        <p>{{ 'notifications.noNotifications' | translate }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+</p-dialog>
 
 

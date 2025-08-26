@@ -22,6 +22,7 @@ public class MappingProfile : Profile
         CreateMap<InteractionPartnerModel, InteractionPartner>();
         CreateMap<InteractionUser, InteractionUserModel>();
         CreateMap<InteractionUserModel, InteractionUser>();
+
         CreateMap<Partner, PartnerValueModel>();
 
         // Value entity mappings

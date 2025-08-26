@@ -16,6 +16,8 @@ using UNOPS.PAO.UNOPSBusiness.Authorization;
 using UNOPS.PAO.UNOPSBusiness.Attributes;
 using System;
 using System.Linq;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Managers;
 
 [Route("/")]
 [Authorize(AuthenticationSchemes = "IAP")]
@@ -23,6 +25,7 @@ public class PartnerTreeController : BaseController
 {
     private readonly IPartnerTreeManager _manager;
     private readonly IManagerWrapper _managerWrapper;
+    private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
 
     public PartnerTreeController(
         IManagerWrapper managerWrapper, 
@@ -33,6 +36,7 @@ public class PartnerTreeController : BaseController
     {
         _managerWrapper = managerWrapper;
         _manager = managerWrapper.PartnerTreeManager;
+        _entityConfigurationManager = ((UNOPSManagerWrapper)managerWrapper).EntityConfigurationManager;
     }
 
     /// <summary>
@@ -501,6 +505,26 @@ public class PartnerTreeController : BaseController
         catch (Exception ex)
         {
             return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Describes the PartnerTree entity structure including all field configurations
+    /// </summary>
+    /// <returns>Entity and field metadata for PartnerTree</returns>
+    [HttpGet(APIDictionary.PartnerTree + "/describe")]
+    [AccessControlled(EntityTypes.PartnerTree, "read")]
+    public async Task<ActionResult> Describe()
+    {
+        try
+        {
+            var entityDetails = await _entityConfigurationManager.GetEntityConfigurationDetailsAsync(User, "PartnerTree");
+            return Ok(entityDetails);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving PartnerTree entity description");
+            return StatusCode(500, new { error = "Failed to retrieve PartnerTree entity description" });
         }
     }
 }

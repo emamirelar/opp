@@ -156,8 +156,7 @@ public class GlobalController : BaseController
     {
         return await HandleOperationAsync(async () =>
         {
-            var userPreferences = await _userPreferenceService.GetUserPreferencesAsync(id);
-            return userPreferences?.GlobalFilters ?? new GlobalFilters();
+            return await _userPreferenceService.GetGlobalFiltersAsync(id);
         });
     }
 

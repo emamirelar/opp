@@ -38,6 +38,14 @@
             "addresses": "Endereços",
             "systemInformation": "Informações do Sistema"
         },
+        "interactionTitles": {
+            "primaryInformation": "Informações Principais",
+            "participants": "Participantes",
+            "details": "Detalhes",
+            "organization": "Organização",
+            "aiAssistant": "Assistente IA",
+            "information": "Informação"
+        },
         "partnerDetails": "Detalhes do Parceiro",
         "partnerDashboard": "Painel do Parceiro",
         "admin": "Administração",
@@ -150,7 +158,9 @@
           },
           "selectType": "Selecione um tipo",
           "selectContact": "Selecione um contato",
-          "contact": "Contato"
+          "contact": "Contato",
+          "noPartnersSelected": "Nenhum parceiro selecionado",
+          "aiGeneratedSummary": "Resumo Gerado por IA"
         },
         "link": {
           "url": "URL",
@@ -1000,5 +1010,61 @@
         }
       }
     }
+  },
+  "notifications": {
+    "title": "Notificações",
+    "unread": "Não lidas",
+    "all": "Todas",
+    "seeAll": "Ver todas",
+    "items": "notificações",
+    "noUnread": "Nenhuma notificação não lida",
+    "noNotifications": "Nenhuma notificação ainda",
+    "allTitle": "Todas as Notificações"
+  },
+  "chatHistory": {
+    "title": "Histórico de Conversas",
+    "newChat": "Nova Conversa",
+    "searchPlaceholder": "Pesquisar conversas...",
+    "loading": "Carregando conversas...",
+    "noChats": "Nenhum histórico de conversa ainda",
+    "noResults": "Nenhuma conversa corresponde à sua pesquisa"
+  },
+  "profile": {
+    "title": "Perfil do Usuário",
+    "personal_information": "Informações Pessoais",
+    "work_information": "Informações de Trabalho",
+    "preferences": "Preferências",
+    "system_information": "Informações do Sistema",
+    "full_name": "Nome Completo",
+    "first_name": "Primeiro Nome",
+    "last_name": "Sobrenome",
+    "email": "E-mail",
+    "organization_unit": "Unidade Organizacional",
+    "position": "Posição",
+    "duty_station": "Estação de Trabalho",
+    "supervisor": "Supervisor",
+    "language": "Idioma",
+    "text_to_speech": "Texto para Fala",
+    "created_date": "Data de Criação",
+    "last_modified": "Última Modificação"
+  },
+  "languages": {
+    "english": "Inglês",
+    "french": "Francês",
+    "spanish": "Espanhol",
+    "arabic": "Árabe",
+    "chinese": "Chinês",
+    "hindi": "Hindi",
+    "russian": "Russo",
+    "portuguese": "Português",
+    "german": "Alemão",
+    "japanese": "Japonês",
+    "not_specified": "Não especificado"
+  },
+  "common": {
+    "not_available": "N/A",
+    "enabled": "Habilitado",
+    "disabled": "Desabilitado",
+    "close": "Fechar"
   }
 }

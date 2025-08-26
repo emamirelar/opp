@@ -28,26 +28,26 @@ public class UserPreferenceService : IUserPreferenceService
             return preference.GlobalFilters.OrgUnitId;
         }
 
-        // Fallback: get from UserInfo using email (proper way)
-        return await GetDefaultOrgUnitIdFromUserInfoAsync();
+        // Fallback: get from UserProfile using email (proper way)
+        return await GetDefaultOrgUnitIdFromUserProfileAsync();
     }
 
     /// <summary>
-    /// Gets the default org unit ID from UserInfo table using the current user's email
+    /// Gets the default org unit ID from UserProfile table using the current user's email
     /// </summary>
-    private async Task<int?> GetDefaultOrgUnitIdFromUserInfoAsync()
+    private async Task<int?> GetDefaultOrgUnitIdFromUserProfileAsync()
     {
         var userEmail = _userResolver.GetUserEmail();
         if (string.IsNullOrEmpty(userEmail))
             return null;
             
-        var userInfo = await _context.UserInfos
-            .FirstOrDefaultAsync(ui => ui.UserEmail.ToLower() == userEmail.ToLower());
+        var userProfile = await _context.UserProfile
+            .FirstOrDefaultAsync(up => up.UserEmail.ToLower() == userEmail.ToLower());
         
-        if (userInfo?.OrgUnit != null)
+        if (userProfile?.OrgUnit != null)
         {
             var orgUnit = await _context.OrganizationHierarchies
-                .FirstOrDefaultAsync(oh => oh.Code == userInfo.OrgUnit && oh.Type == OrganizationUnitType.OrgUnit);
+                .FirstOrDefaultAsync(oh => oh.Code == userProfile.OrgUnit && oh.Type == OrganizationUnitType.OrgUnit);
             return orgUnit?.Id;
         }
 
@@ -56,10 +56,10 @@ public class UserPreferenceService : IUserPreferenceService
 
     public async Task UpdateDefaultOrgUnitAsync(int userId, int? orgUnitId)
     {
-        // If orgUnitId is not provided, get default from UserInfo using email
+        // If orgUnitId is not provided, get default from UserProfile using email
         if (orgUnitId == null)
         {
-            orgUnitId = await GetDefaultOrgUnitIdFromUserInfoAsync();
+            orgUnitId = await GetDefaultOrgUnitIdFromUserProfileAsync();
         }
         
         // Now handle UserPreference
@@ -116,7 +116,7 @@ public class UserPreferenceService : IUserPreferenceService
         // Ensure OrgUnitId always has a value in GlobalFilters - fall back to user's default if null
         if (userPreferences.GlobalFilters?.OrgUnitId == null)
         {
-            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserInfoAsync();
+            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserProfileAsync();
             
             if (defaultOrgUnitId != null)
             {
@@ -166,7 +166,17 @@ public class UserPreferenceService : IUserPreferenceService
         var userPreferences = await _context.UserPreferences
             .FirstOrDefaultAsync(up => up.UserId == userIdInt);
         
-        return userPreferences?.GlobalFilters ?? new GlobalFilters();
+        var globalFilters = userPreferences?.GlobalFilters ?? new GlobalFilters();
+        
+        // Populate org unit name if orgUnitId exists
+        if (globalFilters.OrgUnitId.HasValue)
+        {
+            var orgUnit = await _context.OrganizationHierarchies
+                .FirstOrDefaultAsync(oh => oh.Id == globalFilters.OrgUnitId.Value);
+            globalFilters.OrgUnitName = orgUnit?.Name;
+        }
+        
+        return globalFilters;
     }
 
     public async Task UpdateGlobalFiltersAsync(string userId, GlobalFilters globalFilters)
@@ -177,7 +187,7 @@ public class UserPreferenceService : IUserPreferenceService
         // Ensure OrgUnitId always has a value - fall back to user's default if null
         if (globalFilters.OrgUnitId == null)
         {
-            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserInfoAsync();
+            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserProfileAsync();
             globalFilters.OrgUnitId = defaultOrgUnitId;
         }
         
@@ -220,8 +230,8 @@ public class UserPreferenceService : IUserPreferenceService
         
         if (existingPreference != null)
         {
-            // Get user's default org unit from UserInfo using email
-            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserInfoAsync();
+            // Get user's default org unit from UserProfile using email
+            var defaultOrgUnitId = await GetDefaultOrgUnitIdFromUserProfileAsync();
             
             // Reset to defaults but set user's default org unit
             existingPreference.GlobalFilters = new GlobalFilters

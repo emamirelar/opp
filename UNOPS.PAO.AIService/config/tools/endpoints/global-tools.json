@@ -1,18 +1,21 @@
 {
   "entity": "Global",
-  "description": "Manages global user settings, preferences, filters, and provides a system-wide intelligent search functionality across all entities.",
+  "description": "Manages user-specific preferences, global filter settings, and provides a system-wide intelligent search capability.",
   "synonyms": [
     "System Settings",
-    "User Preferences",
-    "Application Settings",
-    "Global Configuration",
-    "User Defaults"
+    "User Settings",
+    "Preferences",
+    "Defaults",
+    "Global Configuration"
   ],
-  "mandatoryFields": [],
+  "mandatoryFields": [
+    "UserId",
+    "RelatedToMe"
+  ],
   "endpoints": [
     {
       "name": "GetUserPreferences",
-      "url": "api/global/api/global/user-preferences",
+      "url": "api/global/user-preferences",
       "method": "GET",
       "description": "Retrieves user-specific preferences and settings for interface customization and default behaviors.",
       "parameters": {
@@ -31,7 +34,7 @@
     },
     {
       "name": "UpdateUserPreferences",
-      "url": "api/global/api/global/user-preferences",
+      "url": "api/global/user-preferences",
       "method": "PUT",
       "description": "Updates user-specific preferences and settings for interface customization and default behaviors.",
       "parameters": {
@@ -55,7 +58,7 @@
     },
     {
       "name": "GetGlobalFilters",
-      "url": "api/global/api/global/filters",
+      "url": "api/global/filters",
       "method": "GET",
       "description": "Retrieves user's global filter settings and preferences for consistent filtering across all views.",
       "parameters": {
@@ -74,7 +77,7 @@
     },
     {
       "name": "UpdateGlobalFilters",
-      "url": "api/global/api/global/filters",
+      "url": "api/global/filters",
       "method": "PUT",
       "description": "Updates user's global filter settings and preferences for consistent filtering across all views.",
       "parameters": {
@@ -98,7 +101,7 @@
     },
     {
       "name": "ResetGlobalFilters",
-      "url": "api/global/api/global/filters/reset",
+      "url": "api/global/filters/reset",
       "method": "POST",
       "description": "Resets user's global filter settings to system defaults, clearing all custom filter preferences.",
       "parameters": {
@@ -117,7 +120,7 @@
     },
     {
       "name": "GetPreferredLanguage",
-      "url": "api/global/api/global/preferred-language",
+      "url": "api/global/preferred-language",
       "method": "GET",
       "description": "Retrieves the current user's preferred language setting for interface localization.",
       "parameters": {},
@@ -130,7 +133,7 @@
     },
     {
       "name": "UpdatePreferredLanguage",
-      "url": "api/global/api/global/preferred-language",
+      "url": "api/global/preferred-language",
       "method": "PUT",
       "description": "Updates the current user's preferred language setting for interface localization.",
       "parameters": {
@@ -149,7 +152,7 @@
     },
     {
       "name": "IntelligentGlobalSearch",
-      "url": "api/global/api/global/search",
+      "url": "api/global/search",
       "method": "GET",
       "description": "Performs intelligent global search across all entities using hybrid text and semantic search capabilities. Automatically determines optimal search strategy based on query characteristics and complexity.",
       "parameters": {

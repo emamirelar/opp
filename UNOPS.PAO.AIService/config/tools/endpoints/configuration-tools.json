@@ -1,27 +1,27 @@
 {
   "entity": "Configuration",
-  "description": "Manages and retrieves application-wide configuration settings, providing access to various parameters and values that govern the system's behavior.",
+  "description": "Manages global system settings and application parameters that define the behavior and environment of the application.",
   "synonyms": [
     "settings",
-    "app settings",
-    "system configuration",
-    "preferences",
-    "config"
+    "parameters",
+    "app config",
+    "system config",
+    "global settings"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "Get",
-      "url": "api/configuration",
+      "url": "/api/configuration",
       "method": "GET",
-      "description": "Retrieves the current application-wide configuration settings. This endpoint provides access to various parameters and values that govern the behavior and appearance of the system.",
+      "description": "Retrieves the current global system configuration and application settings. This endpoint provides read-only access to various parameters that govern the application's behavior.",
       "parameters": {},
       "example_uses": [
-        "How do I get the current application configuration?",
-        "Show me all the system settings.",
-        "Can you retrieve the configuration details for the application?"
+        "How do I get the current application settings?",
+        "Show me all the system configuration details.",
+        "I need to see the global parameters for the application."
       ],
-      "when_to_use": "Use this endpoint when you need to fetch the global configuration settings for the application, such as API keys, feature flags, or environmental variables."
+      "when_to_use": "Use this endpoint when you need to retrieve the current state of the application's global configuration settings, such as API keys, feature flags, or environment-specific parameters. It's suitable for displaying system information or for internal application processes that require configuration values."
     }
   ]
 }

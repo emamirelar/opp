@@ -428,4 +428,4 @@ def user_detail_after_model_callback(callback_context: CallbackContext, llm_resp
         
     except Exception as e:
         print(f"❌ [USER] Error caching user profile: {e}")
-        return None  # Use original response</thinking>               
+        return None  # Use original response            

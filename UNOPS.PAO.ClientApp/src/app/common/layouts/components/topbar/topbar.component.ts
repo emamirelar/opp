@@ -9,6 +9,8 @@ import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { ToastModule } from 'primeng/toast';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
+import { TabViewModule } from 'primeng/tabview';
+import { DialogModule } from 'primeng/dialog';
 import { NotificationService, Notification } from '../../../services/notification.service';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HttpClient } from '@angular/common/http';
@@ -41,12 +43,20 @@ import { FormsModule } from '@angular/forms';
 interface UserInfo {
   userId: number;
   name: string;
+  firstName?: string;
+  lastName?: string;
   userEmail: string;
   orgUnit: string;
   orgUnitDescription?: string;
-  supervisorId: number;
+  supervisorId?: number;
   supervisorName?: string;
   supervisorEmail?: string;
+  dutyStation?: string;
+  position?: string;
+  textToSpeech?: boolean;
+  language?: string;
+  createdDate?: string;
+  lastModifiedDate?: string;
 }
 
 @Component({
@@ -68,6 +78,8 @@ interface UserInfo {
     RippleModule,
     InputTextModule,
     AvatarModule,
+    TabViewModule,
+    DialogModule,
     GlobalSearchBarComponent,
     RoleDialogComponent,
     ProfileDialogComponent,
@@ -90,7 +102,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
 
   items!: MenuItem[];
   notifications: Notification[] = [];
+  allNotifications: Notification[] = [];
   unreadCount: number = 0;
+  activeNotificationTab: 'unread' | 'all' = 'unread';
+  showNotificationDialog: boolean = false;
   isDevelopment: boolean = false;
   isSearchExpanded: boolean = false;
   private notificationSubscription?: Subscription;
@@ -285,12 +300,20 @@ export class TopbarComponent implements OnInit, OnDestroy {
               this.userInfo = {
                 userId: userInfoData.userId || 0,
                 name: userInfoData.name || email || 'Unknown User',
+                firstName: userInfoData.firstName,
+                lastName: userInfoData.lastName,
                 userEmail: userInfoData.userEmail || email || '',
                 orgUnit: userInfoData.orgUnit || 'N/A',
                 orgUnitDescription: userInfoData.orgUnitDescription || '',
-                supervisorId: userInfoData.supervisorId || 0,
+                supervisorId: userInfoData.supervisorId,
                 supervisorName: userInfoData.supervisorName || '',
-                supervisorEmail: userInfoData.supervisorEmail || ''
+                supervisorEmail: userInfoData.supervisorEmail || '',
+                dutyStation: userInfoData.dutyStation,
+                position: userInfoData.position,
+                textToSpeech: userInfoData.textToSpeech,
+                language: userInfoData.language,
+                createdDate: userInfoData.createdDate,
+                lastModifiedDate: userInfoData.lastModifiedDate
               };
               this.cdr.markForCheck(); // Trigger change detection
               this.loadNotifications();
@@ -348,23 +371,39 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   private startNotificationPolling() {
-   // this.loadNotifications();
+    // Load notifications initially
+    this.loadNotifications();
 
-    /*this.notificationSubscription = interval(15000)
+    // Set up polling every 15 seconds for unread notifications
+    this.notificationSubscription = interval(15000)
       .pipe(
-        switchMap(() => this.notificationService.getNotifications(this.userId))
+        switchMap(() => this.notificationService.getNotifications(this.userId, true)) // Get unread notifications
       )
       .subscribe({
         next: (notifications: Notification[]) => {
           this.handleNewNotifications(notifications);
           this.notifications = notifications;
           this.unreadCount = notifications.length;
+          this.previousNotifications = [...notifications];
           this.cdr.markForCheck();
         },
         error: (error: any) => {
-          // Error loading notifications
+          console.error('Error polling notifications:', error);
         }
-      });*/
+      });
+
+    // Also refresh all notifications periodically (every 60 seconds to be less aggressive)
+    this.notificationInterval = setInterval(() => {
+      this.notificationService.getNotifications(this.userId, false).subscribe({
+        next: (allNotifications: Notification[]) => {
+          this.allNotifications = allNotifications;
+          this.cdr.markForCheck();
+        },
+        error: (error: any) => {
+          console.error('Error refreshing all notifications:', error);
+        }
+      });
+    }, 60000); // Every minute for all notifications
   }
 
   private handleNewNotifications(newNotifications: Notification[]) {
@@ -450,10 +489,14 @@ export class TopbarComponent implements OnInit, OnDestroy {
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
     }
+    if (this.notificationInterval) {
+      clearInterval(this.notificationInterval);
+    }
   }
 
   loadNotifications() {
-    this.notificationService.getNotifications(this.userId).subscribe({
+    // Load unread notifications
+    this.notificationService.getNotifications(this.userId, true).subscribe({
       next: (notifications: Notification[]) => {
         this.notifications = notifications;
         this.unreadCount = notifications.length;
@@ -464,6 +507,17 @@ export class TopbarComponent implements OnInit, OnDestroy {
         // Error loading notifications
       }
     });
+
+    // Load all notifications
+    this.notificationService.getNotifications(this.userId, false).subscribe({
+      next: (allNotifications: Notification[]) => {
+        this.allNotifications = allNotifications;
+        this.cdr.markForCheck();
+      },
+      error: (error: any) => {
+        // Error loading all notifications
+      }
+    });
   }
 
   getDisplayCount(): string {
@@ -471,6 +525,95 @@ export class TopbarComponent implements OnInit, OnDestroy {
       return '99+';
     }
     return this.unreadCount.toString();
+  }
+
+  getCurrentNotifications(): Notification[] {
+    return this.activeNotificationTab === 'unread' ? this.notifications : this.allNotifications;
+  }
+
+  getLimitedNotifications(): Notification[] {
+    const current = this.getCurrentNotifications();
+    return current.slice(0, 5); // Show only top 5 notifications
+  }
+
+  hasMoreNotifications(): boolean {
+    return this.getCurrentNotifications().length > 5;
+  }
+
+  openNotificationDialog(): void {
+    this.showNotificationDialog = true;
+  }
+
+  closeNotificationDialog(): void {
+    this.showNotificationDialog = false;
+  }
+
+  switchNotificationTab(tab: 'unread' | 'all') {
+    this.activeNotificationTab = tab;
+    this.cdr.markForCheck();
+  }
+
+  isNotificationRead(notification: Notification): boolean {
+    return notification.isRead === true;
+  }
+
+  formatTimestamp(timestamp: string): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
+  }
+
+  getCategoryIcon(notification: Notification): string {
+    const category = notification.category?.toLowerCase() || '';
+    
+    // Check for specific entity types
+    if (category.includes('contact') || category.includes('_contact_')) {
+      return 'pi pi-user';
+    } else if (category.includes('partner') || category.includes('_partner_')) {
+      return 'pi pi-building';
+    } else if (category.includes('interaction') || category.includes('_interaction_')) {
+      return 'pi pi-comments';
+    } else if (category.includes('file') || category.includes('import') || category.includes('export')) {
+      return 'pi pi-file';
+    } else if (category.includes('analysis') || category.includes('ai')) {
+      return 'pi pi-chart-line';
+    } else if (category.includes('bulk') || category.includes('batch')) {
+      return 'pi pi-clone';
+    } else if (notification.status === 'Progress') {
+      return 'pi pi-spin pi-spinner';
+    } else {
+      return 'pi pi-bell';
+    }
+  }
+
+  getCategoryIconColor(notification: Notification): string {
+    const category = notification.category?.toLowerCase() || '';
+    
+    if (category.includes('contact')) {
+      return '#10b981'; // Green for contacts
+    } else if (category.includes('partner')) {
+      return '#3b82f6'; // Blue for partners
+    } else if (category.includes('interaction')) {
+      return '#f59e0b'; // Orange for interactions
+    } else if (category.includes('file') || category.includes('import') || category.includes('export')) {
+      return '#8b5cf6'; // Purple for files
+    } else if (category.includes('analysis') || category.includes('ai')) {
+      return '#ef4444'; // Red for AI/analysis
+    } else if (notification.status === 'Progress') {
+      return '#3b82f6'; // Blue for progress
+    } else {
+      return '#6b7280'; // Gray for default
+    }
   }
 
   handleNotificationClick(notification: Notification) {
@@ -574,14 +717,37 @@ export class TopbarComponent implements OnInit, OnDestroy {
   markNotificationAsRead(notificationId: number): void {
     this.notificationService.markAsRead(notificationId, this.userId).subscribe({
       next: () => {
+        // Remove from unread notifications
         this.notifications = this.notifications.filter(n => n.id !== notificationId);
         this.unreadCount = this.notifications.length;
+        
+        // Update read status in all notifications
+        const notificationIndex = this.allNotifications.findIndex(n => n.id === notificationId);
+        if (notificationIndex >= 0) {
+          this.allNotifications[notificationIndex] = {
+            ...this.allNotifications[notificationIndex],
+            isRead: true,
+            readAt: new Date().toISOString()
+          };
+        }
+        
+        // Update previous notifications to avoid duplicate toast notifications
+        this.previousNotifications = this.previousNotifications.filter(n => n.id !== notificationId);
+        
         this.cdr.markForCheck();
       },
       error: (error) => {
-        // Error marking notification as read
+        console.error('Error marking notification as read:', error);
       }
     });
+  }
+
+  handleNotificationClickFromDialog(notification: Notification): void {
+    // Handle the notification click
+    this.handleNotificationClick(notification);
+    
+    // Close the dialog after handling the click
+    this.closeNotificationDialog();
   }
 
   formatProgressMessage(message: string): string {

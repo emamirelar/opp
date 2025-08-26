@@ -1,35 +1,36 @@
 {
   "entity": "Notification",
-  "description": "Manages user notifications, including retrieving, marking as read, and updating notification details.",
+  "description": "Manages user notifications, including fetching, marking as read, and updating notification details.",
   "synonyms": [
-    "alert",
-    "message",
-    "inbox item",
-    "system notification",
-    "announcement"
+    "Alert",
+    "Message",
+    "Notice",
+    "Update",
+    "Reminder"
   ],
   "mandatoryFields": [
-    "notificationId"
+    "notificationId",
+    "Status"
   ],
   "endpoints": [
     {
       "name": "GetNotifications",
       "url": "api/notifications",
       "method": "GET",
-      "description": "Retrieves a list of notifications for the current user. Can filter to show only unread notifications.",
+      "description": "Retrieves a list of notifications for the current user, with an option to filter for unread notifications.",
       "parameters": {
         "unreadOnly": {
           "type": "boolean",
           "required": false,
-          "description": "If true, only unread notifications will be returned."
+          "description": "Filter to retrieve only unread notifications."
         }
       },
       "example_uses": [
         "Get all my notifications.",
-        "Show me only my unread notifications.",
-        "Retrieve the list of recent alerts."
+        "Show me only unread notifications.",
+        "List my recent alerts."
       ],
-      "when_to_use": "Use this endpoint to fetch a user's notifications, optionally filtering for unread ones, to display in an inbox or notification center."
+      "when_to_use": "Use this to fetch a list of notifications for display to the user, optionally filtering for unread ones."
     },
     {
       "name": "MarkAsRead",
@@ -40,15 +41,13 @@
         "notificationId": {
           "type": "integer",
           "required": true,
-          "description": "The unique identifier of the notification to mark as read."
+          "description": "Notification ID to mark as read"
         }
       },
       "example_uses": [
         "Mark notification 123 as read",
         "Read notification about system update",
-        "Clear unread status for alert 456",
-        "Mark message as seen",
-        "Update notification read status"
+        "Clear unread status for alert 456"
       ],
       "when_to_use": "Use this when the user opens, reads, or acknowledges a notification to update its status."
     },
@@ -61,20 +60,30 @@
         "notificationId": {
           "type": "integer",
           "required": true,
-          "description": "The unique identifier of the notification to update."
+          "description": "Notification ID to update"
         },
         "request": {
           "type": "object",
           "required": false,
-          "description": "Update request containing new message and status"
+          "description": "Update request containing new message and status",
+          "properties": {
+            "Message": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Status": {
+              "type": "string",
+              "required": true,
+              "description": "Property of type NotificationStatus"
+            }
+          }
         }
       },
       "example_uses": [
         "Update notification 123's message content",
         "Change notification status to resolved",
-        "Modify system alert text",
-        "Update notification priority level",
-        "Change notification message and status"
+        "Modify system alert text"
       ],
       "when_to_use": "Use this when administrators need to update notification content or status for system management."
     }

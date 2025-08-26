@@ -108,7 +108,7 @@ async def get_session_title(
                         for j in range(i + 1, len(conversation_history)):
                             next_message = conversation_history[j]
                             if (hasattr(next_message, 'author') and
-                                next_message.author in ["user_request_agent", "response_formatter_agent", "entity_detection_agent", "api_caller_agent"]):
+                                next_message.author in ["user_request_agent", "response_formatter_agent", "task_planner_agent", "api_caller_agent"]):
                                 if hasattr(next_message, 'content') and next_message.content and hasattr(next_message.content, 'parts'):
                                     assistant_parts = []
                                     for part in next_message.content.parts:
@@ -599,7 +599,7 @@ async def get_session_with_chats(
                             "_sort_timestamp": timestamp_dt if timestamp_dt else datetime.min
                         }
                         chat_items.append(chat_item)
-                    # Skip other agent messages (entity_detection_agent, api_caller_agent, etc.)
+                    # Skip other agent messages (task_planner_agent, api_caller_agent, etc.)
             
             # Add filtered response_formatter_agent messages to chat_items
             logger.info(f"🔍 Found {len(response_formatter_messages)} unique response_formatter_agent responses across invocations")

@@ -30,9 +30,22 @@
     [columns]="columns()"
     [entityType]="'Interaction'"
     [config]="listviewConfig()"
-    (rowClick)="openEditInteractionModal($event)"
+    (rowClick)="handleOnOpenRecordDetails($event)"
     (searchChange)="onSearchChange($event)"
     class="interaction-listview"
   >
   </app-listview>
+
+  <!-- Hover Preview Panel -->
+  <p-overlayPanel 
+    #previewPanel 
+    styleClass="interaction-preview-panel"
+    [showCloseIcon]="false"
+    [dismissable]="true"
+    [autoZIndex]="true"
+    appendTo="body">
+    @if (previewInteraction()) {
+      <app-interaction-preview [interaction]="previewInteraction()!"></app-interaction-preview>
+    }
+  </p-overlayPanel>
 </div>

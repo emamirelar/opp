@@ -37,7 +37,7 @@ public class Partner : ModifiableDeletableEntity
     [MaxLength(100)]  
     public string? PartnerShortDescription { get; set; } // Short name/acronym (optional)
     
-    [MaxLength(1000)]
+    [MaxLength(4000)]
     public string? PartnerLongDescription { get; set; } // Optional long description
     
     // Category (Organization Units are managed through OrganizationUnitRelationships)

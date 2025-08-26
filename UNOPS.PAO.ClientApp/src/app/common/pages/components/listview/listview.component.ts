@@ -29,7 +29,6 @@ import { InputIconModule } from 'primeng/inputicon';
 import { SavedFilter } from '../../../interfaces/saved-filter.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserPreferenceService, GlobalFilters } from '../../../../services/user-preference.service';
-import { OrganizationHierarchyService } from '../../../../services/organization-hierarchy.service';
 import { AuthService } from '../../../../essentials/services/auth.service';
 
 interface ListViewState<T> {
@@ -84,7 +83,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
   private readonly route = inject(ActivatedRoute);
   private readonly globalFilterService = inject(GlobalFilterService);
   private readonly userPreferenceService = inject(UserPreferenceService);
-  private readonly organizationHierarchyService = inject(OrganizationHierarchyService);
   private readonly authService = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -149,7 +147,6 @@ export class ListviewComponent<T = any> implements AfterViewInit {
 
   // Global filter information
   isGlobalFilterActive = signal(false);
-  activeOrgUnitName = signal<string>('');
   globalFilters = signal<GlobalFilters | null>(null);
   currentUserId = signal<string>('');
   activeFilterLabels = signal<string[]>([]);
@@ -265,21 +262,8 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     this.setupLoadDataStream();
     this.loadGlobalFilterInfo();
 
-    // Subscribe to global filter changes for UI display only (not API params)
-    this.globalFilterService.activeOrgUnitId$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((activeOrgUnitId) => {
-        this.isGlobalFilterActive.set(activeOrgUnitId !== null || this.hasOtherActiveFilters());
-        if (activeOrgUnitId) {
-          this.loadOrgUnitName(activeOrgUnitId);
-        } else {
-          this.activeOrgUnitName.set('');
-        }
-        this.updateActiveFilterLabels();
-        
-        // Note: We don't reload data here since orgUnitId is not sent to API
-        // The filter is for UI display only
-      });
+    // Note: Global filter display is now handled via loadGlobalFilterInfo()
+    // which gets the org unit name directly from the backend
 
     // Subscribe to global filter changes (when filters are saved)
     this.globalFilterService.filtersChanged$
@@ -994,6 +978,11 @@ export class ListviewComponent<T = any> implements AfterViewInit {
             .subscribe({
               next: (filters) => {
                 this.globalFilters.set(filters);
+                
+                // Update global filter active status
+                this.isGlobalFilterActive.set(this.hasOtherActiveFilters());
+                
+                // Update filter labels now that we have org unit name from backend
                 this.updateActiveFilterLabels();
               },
               error: (error) => {
@@ -1008,46 +997,15 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     });
   }
 
-  // Load organization unit name
-  private loadOrgUnitName(orgUnitId: number): void {
-    this.organizationHierarchyService.getOrganizationHierarchy()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (hierarchy) => {
-          const orgUnit = this.findOrgUnitInHierarchy(hierarchy, orgUnitId);
-          if (orgUnit) {
-            this.activeOrgUnitName.set(orgUnit.data.name);
-          } else {
-            this.activeOrgUnitName.set(`Org Unit ${orgUnitId}`);
-          }
-        },
-        error: (error) => {
-          console.error('Error loading organization hierarchy:', error);
-          this.activeOrgUnitName.set(`Org Unit ${orgUnitId}`);
-        }
-      });
-  }
 
-  // Helper method to find org unit in hierarchy
-  private findOrgUnitInHierarchy(nodes: any[], orgUnitId: number): any {
-    for (const node of nodes) {
-      if (node.data && node.data.id === orgUnitId) {
-        return node;
-      }
-      if (node.children && node.children.length > 0) {
-        const found = this.findOrgUnitInHierarchy(node.children, orgUnitId);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
 
-  // Check if any global filters (other than org unit) are active
+  // Check if any global filters are active
   private hasOtherActiveFilters(): boolean {
     const filters = this.globalFilters();
     if (!filters) return false;
     
     return !!(
+      filters.orgUnitId ||
       filters.relatedToMe ||
       filters.dateOn ||
       filters.dateFrom ||
@@ -1060,12 +1018,15 @@ export class ListviewComponent<T = any> implements AfterViewInit {
     const labels: string[] = [];
     const filters = this.globalFilters();
     
-    // Add org unit filter
-    if (this.globalFilterService.getActiveOrgUnitId() && this.activeOrgUnitName()) {
-      labels.push(this.activeOrgUnitName());
-    }
-    
     if (filters) {
+      // Add org unit filter - use orgUnitName from global filters
+      if (filters.orgUnitId && filters.orgUnitName) {
+        labels.push(filters.orgUnitName);
+      } else if (filters.orgUnitId) {
+        // Fallback to org unit ID if name is not available
+        labels.push(`Org Unit ${filters.orgUnitId}`);
+      }
+      
       // Add related to me filter
       if (filters.relatedToMe) {
         labels.push('Related to Me');

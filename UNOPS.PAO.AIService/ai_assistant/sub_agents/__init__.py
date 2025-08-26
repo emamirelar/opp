@@ -15,10 +15,10 @@ except ImportError as e:
     screen_context_agent = None
 
 try:
-    from .entity_detection_agent import entity_detection_agent
+    from .task_planner_agent import task_planner_agent
 except ImportError as e:
-    print(f"Warning: Could not import entity_detection_agent: {e}")
-    entity_detection_agent = None
+    print(f"Warning: Could not import task_planner_agent: {e}")
+    task_planner_agent = None
 
 try:
     from .geo_time_agent import geo_time_agent
@@ -60,7 +60,7 @@ except ImportError as e:
 __all__ = [
     "user_detail_agent",
     "screen_context_agent", 
-    "entity_detection_agent",
+    "task_planner_agent",
     "geo_time_agent",
     "contextual_agent",
     "task_executor_agent",

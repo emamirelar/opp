@@ -15,6 +15,11 @@ public class GlobalFilters
     public int? OrgUnitId { get; set; }
 
     /// <summary>
+    /// Organization Unit Name (read-only, populated from OrganizationHierarchy)
+    /// </summary>
+    public string? OrgUnitName { get; set; }
+
+    /// <summary>
     /// Filter to show only records where the current user is involved (created by OR last updated by)
     /// </summary>
     public bool RelatedToMe { get; set; }

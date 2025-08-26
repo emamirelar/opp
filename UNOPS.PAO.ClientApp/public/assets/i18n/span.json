@@ -36,6 +36,14 @@
             "addresses": "Direcciones",
             "systemInformation": "Información del Sistema"
         },
+        "interactionTitles": {
+            "primaryInformation": "Información Principal",
+            "participants": "Participantes",
+            "details": "Detalles",
+            "organization": "Organización",
+            "aiAssistant": "Asistente IA",
+            "information": "Información"
+        },
         "partnerDetails": "Detalles del Socio",
         "partnerDashboard": "Panel del Socio",
         "admin": "Administración",
@@ -154,7 +162,9 @@
           },
           "selectType": "Seleccione un tipo",
           "selectContact": "Seleccione un contacto",
-          "contact": "Contacto"
+          "contact": "Contacto",
+          "noPartnersSelected": "No hay socios seleccionados",
+          "aiGeneratedSummary": "Resumen Generado por IA"
         },
         "link": {
           "url": "URL",
@@ -995,5 +1005,61 @@
         }
       }
     }
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "unread": "No leídas",
+    "all": "Todas",
+    "seeAll": "Ver todas",
+    "items": "notificaciones",
+    "noUnread": "No hay notificaciones sin leer",
+    "noNotifications": "Aún no hay notificaciones",
+    "allTitle": "Todas las Notificaciones"
+  },
+  "chatHistory": {
+    "title": "Historial de Conversaciones",
+    "newChat": "Nueva Conversación",
+    "searchPlaceholder": "Buscar conversaciones...",
+    "loading": "Cargando conversaciones...",
+    "noChats": "Aún no hay historial de conversaciones",
+    "noResults": "Ninguna conversación coincide con tu búsqueda"
+  },
+  "profile": {
+    "title": "Perfil de Usuario",
+    "personal_information": "Información Personal",
+    "work_information": "Información Laboral",
+    "preferences": "Preferencias",
+    "system_information": "Información del Sistema",
+    "full_name": "Nombre Completo",
+    "first_name": "Primer Nombre",
+    "last_name": "Apellido",
+    "email": "Correo Electrónico",
+    "organization_unit": "Unidad Organizacional",
+    "position": "Posición",
+    "duty_station": "Estación de Trabajo",
+    "supervisor": "Supervisor",
+    "language": "Idioma",
+    "text_to_speech": "Texto a Voz",
+    "created_date": "Fecha de Creación",
+    "last_modified": "Última Modificación"
+  },
+  "languages": {
+    "english": "Inglés",
+    "french": "Francés",
+    "spanish": "Español",
+    "arabic": "Árabe",
+    "chinese": "Chino",
+    "hindi": "Hindi",
+    "russian": "Ruso",
+    "portuguese": "Portugués",
+    "german": "Alemán",
+    "japanese": "Japonés",
+    "not_specified": "No especificado"
+  },
+  "common": {
+    "not_available": "N/A",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "close": "Cerrar"
   }
 }

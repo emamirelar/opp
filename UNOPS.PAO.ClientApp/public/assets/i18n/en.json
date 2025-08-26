@@ -37,6 +37,14 @@
       "addresses": "Addresses",
       "systemInformation": "System Information"
     },
+    "interactionTitles": {
+      "primaryInformation": "Primary Information",
+      "participants": "Participants",
+      "details": "Details",
+      "organization": "Organization",
+      "aiAssistant": "AI Assistant",
+      "information": "Information"
+    },
     "confirmation": "Confirmation",
     "partners": "Partners",
     "partnerships": "Partnerships",
@@ -61,6 +69,14 @@
       "address1": "Address 1",
       "additionalInformation": "Additional Information",
       "approvalFields": "Approval Fields"
+    },
+    "interactionTitles": {
+      "primaryInformation": "Primary Information",
+      "participants": "Participants",
+      "details": "Details",
+      "organization": "Organization",
+      "aiAssistant": "AI Assistant",
+      "information": "Information"
     },
     "partnerDetails": "Partner Details",
     "partnerDashboard": "Partner Dashboard",
@@ -355,7 +371,9 @@
       "oneOrganizationUnitSelected": "1 Organization Unit Selected",
       "organizationUnitsSelected": "{{count}} Organization Units Selected",
       "createdBy": "Created By",
-      "selectCreatedBy": "Select Created By"
+      "selectCreatedBy": "Select Created By",
+      "noPartnersSelected": "No partners selected",
+      "aiGeneratedSummary": "AI Generated Summary"
     },
     "link": {
       "url": "URL",
@@ -1304,6 +1322,24 @@
       }
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "unread": "Unread",
+    "all": "All",
+  "seeAll": "See all",
+    "items": "notifications",
+    "noUnread": "No unread notifications",
+    "noNotifications": "No notifications yet",
+    "allTitle": "All Notifications"
+  },
+  "chatHistory": {
+    "title": "Chat History",
+    "newChat": "New Chat",
+    "searchPlaceholder": "Search chats...",
+    "loading": "Loading chats...",
+    "noChats": "No chat history yet",
+    "noResults": "No chats match your search"
+  },
   "dashboard": {
     "welcome": "Welcome to Opportunity+",
     "subtitle": "Your personalized dashboard for managing partnerships and opportunities",
@@ -1353,5 +1389,43 @@
     "error": {
       "title": "Unable to Load Dashboard"
     }
+  },
+  "profile": {
+    "title": "User Profile",
+    "personal_information": "Personal Information",
+    "work_information": "Work Information",
+    "preferences": "Preferences",
+    "system_information": "System Information",
+    "full_name": "Full Name",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email",
+    "organization_unit": "Organization Unit",
+    "position": "Position",
+    "duty_station": "Duty Station",
+    "supervisor": "Supervisor",
+    "language": "Language",
+    "text_to_speech": "Text-to-Speech",
+    "created_date": "Created Date",
+    "last_modified": "Last Modified"
+  },
+  "languages": {
+    "english": "English",
+    "french": "French",
+    "spanish": "Spanish",
+    "arabic": "Arabic",
+    "chinese": "Chinese",
+    "hindi": "Hindi",
+    "russian": "Russian",
+    "portuguese": "Portuguese",
+    "german": "German",
+    "japanese": "Japanese",
+    "not_specified": "Not specified"
+  },
+  "common": {
+    "not_available": "N/A",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "close": "Close"
   }
 }

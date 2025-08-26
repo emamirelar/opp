@@ -908,7 +908,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             // If not found in Contacts, try UserInfos table
             if (string.IsNullOrEmpty(emailId))
             {
-                emailId = await _context.UserInfos
+                emailId = await _context.UserProfile
                     .Where(u => u.UserId == idToSearch)
                     .Select(u => u.UserEmail)
                     .FirstOrDefaultAsync();

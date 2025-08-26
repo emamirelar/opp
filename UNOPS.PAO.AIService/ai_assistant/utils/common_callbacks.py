@@ -196,31 +196,96 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                 request_headers.update(headers)
             
             # Add IDP token to request headers if not already present
-            if tool_context and not request_headers.get('Authorization'):
+            if not request_headers.get('Authorization'):
                 # Get OAuth configuration from config manager
                 oauth_config = config_manager.get_oauth_config()
                 target_principal = oauth_config.get('target_principal')
                 target_audience = oauth_config.get('client_id')
                 if (target_principal and target_audience):
-                    idp_token = get_service_account_oidc_token(
-                        target_audience,
-                        target_principal,
-                        use_idp=True,
-                        subject=tool_context.state.get('user_email')
-                    ) 
+                    # Get user email from tool_context if available, otherwise use dev_email for development
+                    user_email = None
+                    if tool_context and hasattr(tool_context, 'state') and tool_context.state:
+                        user_email = tool_context.state.get('user_email')
+                    elif is_development and dev_email:
+                        user_email = dev_email
+                        print(f"🧪 Using dev_email for IDP token: {dev_email}")
+                    
+                    # Check if this is a Google-related external API call
+                    is_google_api = any(google_path in url for google_path in [
+                        '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
+                    ])
+                    
+                    if is_google_api:
+                        # For Google APIs, use service account token without impersonation
+                        print(f"🔍 Detected Google API call - using service account token without impersonation")
+                        print(f"🔍 [AUTH-PARAMS] target_audience: {target_audience}")
+                        print(f"🔍 [AUTH-PARAMS] target_principal: {target_principal}")
+                        print(f"🔍 [AUTH-PARAMS] use_idp: False")
+                        print(f"🔍 [AUTH-PARAMS] subject: None")
+                        print(f"🔍 [AUTH-PARAMS] user_email for impersonation header: {user_email}")
+                        idp_token = get_service_account_oidc_token(
+                            target_audience,
+                            target_principal,
+                            use_idp=False,
+                            subject=None
+                        )
+                    else:
+                        # For regular APIs, use impersonated token
+                        idp_token = get_service_account_oidc_token(
+                            target_audience,
+                            target_principal,
+                            use_idp=True,
+                            subject=user_email
+                        ) 
                     if idp_token:
                         request_headers['Authorization'] = f"Bearer {idp_token}"
                         print(f"🔐 Added IDP token to Authorization header")
+                        
+                        # Log token details for debugging
+                        try:
+                            import base64
+                            import json
+                            parts = idp_token.split('.')
+                            if len(parts) >= 2:
+                                payload = parts[1]
+                                # Add padding if needed
+                                payload += '=' * (4 - len(payload) % 4)
+                                decoded = base64.b64decode(payload)
+                                token_data = json.loads(decoded)
+                                print(f"🔍 [TOKEN-DEBUG] Token details:")
+                                print(f"   sub: {token_data.get('sub', 'Not Present')}")
+                                print(f"   email: {token_data.get('email', 'Not Present')}")
+                                print(f"   aud: {token_data.get('aud', 'Not Present')}")
+                                print(f"   iss: {token_data.get('iss', 'Not Present')}")
+                        except Exception as e:
+                            print(f"❌ [TOKEN-DEBUG] Could not decode token: {e}")
                     else:
                         print(f"❌ Failed to get IDP token - will proceed without Authorization header")
                         # This might cause authentication failures, but better than "Bearer None"
+                else:
+                    print(f"⚠️ Missing OAuth config - target_principal: {target_principal}, client_id: {target_audience}")
             
-            # Add impersonated user header if user_email is available in state
+            # Add impersonated user header for ALL Google APIs
+            impersonated_user_email = None
+            is_google_api = any(google_path in url for google_path in [
+                '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
+            ])
+            
             if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                user_email = tool_context.state.get('user_email')
-                if user_email:
-                    request_headers['x-unops-impersonated-user'] = user_email
-                    print(f"🔐 Added impersonated user header: {user_email}")
+                impersonated_user_email = tool_context.state.get('user_email')
+            elif is_development and dev_email:
+                if is_google_api:
+                    impersonated_user_email = dev_email
+                    print(f"🧪 Using dev_email for Google API impersonation: {dev_email}")
+            
+            # Add impersonation header for ALL Google APIs
+            if impersonated_user_email and is_google_api:
+                request_headers['x-unops-impersonated-user'] = impersonated_user_email
+                print(f"🔐 Added impersonated user header for Google API: {impersonated_user_email}")
+            elif impersonated_user_email and not is_google_api:
+                # For regular APIs, always add impersonation header if user email is available
+                request_headers['x-unops-impersonated-user'] = impersonated_user_email
+                print(f"🔐 Added impersonated user header: {impersonated_user_email}")
             
             print("🔐 Final request headers being sent to backend:")
             print(f"📋 Total headers: {len(request_headers)}")
