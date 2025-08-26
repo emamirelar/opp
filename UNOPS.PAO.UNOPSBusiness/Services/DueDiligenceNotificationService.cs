@@ -101,11 +101,11 @@ public class DueDiligenceNotificationService : BackgroundService
             {
                 try
                 {
-                    // Get user email from UserInfo table
-                    var userInfo = await context.UserInfos
+                    // Get user email from userprofile table
+                    var userprofile = await context.UserProfile
                         .FirstOrDefaultAsync(ui => ui.UserId == partner.PartnerFocalPointUserId.Value);
 
-                    if (userInfo?.UserEmail == null)
+                    if (userprofile?.UserEmail == null)
                     {
                         _logger.LogWarning("No email found for user ID {UserId} (Partner: {PartnerName})", 
                             partner.PartnerFocalPointUserId.Value, partner.Name);
@@ -114,7 +114,7 @@ public class DueDiligenceNotificationService : BackgroundService
                     }
 
                     // Check if we already sent a notification for this specific expiry date
-                    if (!_testMode && await HasNotificationForSameExpiryDate(context, partner.Id, userInfo.UserId, partner.DueDiligenceExpiryDate.Value))
+                    if (!_testMode && await HasNotificationForSameExpiryDate(context, partner.Id, userprofile.UserId, partner.DueDiligenceExpiryDate.Value))
                     {
                         _logger.LogDebug("Skipping notification for partner {PartnerName} - notification already sent for expiry date {ExpiryDate}", 
                             partner.Name, partner.DueDiligenceExpiryDate.Value.ToString("yyyy-MM-dd"));
@@ -126,8 +126,8 @@ public class DueDiligenceNotificationService : BackgroundService
                     var partnerUrl = urlService.BuildEntityUrl("partner", partner.Id);
 
                     await paoEmailSender.SendDueDiligenceExpiryNotificationAsync(
-                        userInfo.UserEmail,
-                        userInfo.Name ?? "User",
+                        userprofile.UserEmail,
+                        userprofile.Name ?? "User",
                         partner.Name ?? "Unknown Partner",
                         partner.DueDiligenceExpiryDate.Value,
                         partnerUrl,
@@ -141,24 +141,24 @@ public class DueDiligenceNotificationService : BackgroundService
                     {
                         // Create in-app notification as well
                         await notificationManager.CreateNotification(
-                            userInfo.UserId,
+                            userprofile.UserId,
                             $"Due diligence for partner '{partner.Name}' expires on {partner.DueDiligenceExpiryDate.Value:MMM dd, yyyy}",
                             "DueDiligenceExpiry",
                             "Partner",
                             new { PartnerId = partner.Id, PartnerName = partner.Name, ExpiryDate = partner.DueDiligenceExpiryDate.Value });
 
                         // Record that we sent the notification
-                        await RecordNotificationSent(context, partner.Id, userInfo.UserId, partner.DueDiligenceExpiryDate.Value);
+                        await RecordNotificationSent(context, partner.Id, userprofile.UserId, partner.DueDiligenceExpiryDate.Value);
 
                         successCount++;
                         _logger.LogInformation("Notification sent for partner {PartnerName} to {UserEmail}", 
-                            partner.Name, userInfo.UserEmail);
+                            partner.Name, userprofile.UserEmail);
                     }
                     else
                     {
                         failureCount++;
                         _logger.LogError("Failed to send email notification for partner {PartnerName} to {UserEmail}", 
-                            partner.Name, userInfo.UserEmail);
+                            partner.Name, userprofile.UserEmail);
                     }
                 }
                 catch (Exception ex)
@@ -194,7 +194,7 @@ public class DueDiligenceNotificationService : BackgroundService
     private async Task RecordNotificationSent(UNOPSAppDbContext context, int partnerId, int userId, DateTime dueDiligenceExpiryDate)
     {
         // Get user info for the log
-        var userInfo = await context.UserInfos.FirstOrDefaultAsync(ui => ui.UserId == userId);
+        var userprofile = await context.UserProfile.FirstOrDefaultAsync(ui => ui.UserId == userId);
         var partner = await context.Partners.FirstOrDefaultAsync(p => p.Id == partnerId);
 
         var notificationData = System.Text.Json.JsonSerializer.Serialize(new
@@ -209,8 +209,8 @@ public class DueDiligenceNotificationService : BackgroundService
         var log = new Domain.Entities.EmailNotificationLog
         {
             RecipientUserId = userId,
-            RecipientEmail = userInfo?.UserEmail,
-            RecipientName = userInfo?.Name,
+            RecipientEmail = userprofile?.UserEmail,
+            RecipientName = userprofile?.Name,
             EmailSubject = $"Due Diligence Expiry Warning - {partner?.Name}",
             NotificationType = "DueDiligenceExpiry",
             SentAt = DateTime.UtcNow,
