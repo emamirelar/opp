@@ -105,11 +105,10 @@ public class SmtpEmailSender : IEmailSender
                 SecureSocketOptions.StartTlsWhenAvailable
             );
 
-            // Authenticate using Google Secret Manager credentials
-            var credentials = await GetEmailCredentialsAsync();
-            if (credentials != null && !string.IsNullOrEmpty(credentials.Username) && !string.IsNullOrEmpty(credentials.Password))
+            if (!string.IsNullOrEmpty(_emailConfig.Username) && !string.IsNullOrEmpty(_emailConfig.Password))
             {
-                await client.AuthenticateAsync(credentials.Username, credentials.Password);
+                // Notice: UNOPS SMTP does not support auth
+                await client.AuthenticateAsync(_emailConfig.Username, _emailConfig.Password);
             }
             
             await client.SendAsync(message);
@@ -126,40 +125,8 @@ public class SmtpEmailSender : IEmailSender
         }
     }
 
-    private async Task<EmailCredentials?> GetEmailCredentialsAsync()
-    {
-        try
-        {
-            var projectId = _configuration.GetSection("AppConfig")["ProjectId"];
-            if (string.IsNullOrEmpty(projectId))
-            {
-                _logger.LogError("ProjectId not configured for Google Secret Manager");
-                return null;
-            }
-
-            var client = SecretManagerServiceClient.Create();
-            var secretName = $"projects/{projectId}/secrets/EmailCredentials/versions/latest";
-            
-            var response = await client.AccessSecretVersionAsync(secretName);
-            var secretValue = response.Payload.Data.ToStringUtf8();
-            
-            var credentials = JsonSerializer.Deserialize<EmailCredentials>(secretValue);
-            return credentials;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve email credentials from secret manager");
-            return null;
-        }
-    }
-
     private static string AddPlatformFooter(string emailBody, string platformUrl) =>
         $"{emailBody}<br><br><hr><small>You are receiving this email because you are registered on: " +
         $"<a href='{platformUrl}'>{platformUrl}</a>.</small>";
 
-    private record EmailCredentials
-    {
-        public string? Username { get; init; }
-        public string? Password { get; init; }
-    }
 }
