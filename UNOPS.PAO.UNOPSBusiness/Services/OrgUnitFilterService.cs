@@ -130,7 +130,7 @@ public class OrgUnitFilterService : IOrgUnitFilterService
             .ToListAsync();
         
         // Get users belonging to these org units
-        return await _context.UserInfos
+        return await _context.UserProfile
             .Where(u => u.OrgUnit != null && orgCodes.Contains(u.OrgUnit))
             .Select(u => u.UserId.ToString())
             .ToListAsync();

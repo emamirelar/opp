@@ -17,66 +17,63 @@ public class UserInfoService : IUserInfoService
         _context = context;
     }
 
-    public async Task<UserInfo?> GetUserInfoByEmailAsync(string email)
+    public async Task<UserProfile?> GetUserInfoByEmailAsync(string email)
     {
         // Convert both the input email and database email to lowercase for case-insensitive comparison
-        return await _context.UserInfos
+        return await _context.UserProfile
             .FirstOrDefaultAsync(u => u.UserEmail.ToLower() == email.ToLower());
     }
 
     public async Task<object?> GetUserInfoWithOrgSettingsAsync(string email)
     {
         // Convert both the input email and database email to lowercase for case-insensitive comparison
-        var result = await _context.UserInfos
+        var result = await _context.UserProfile
             .Where(u => u.UserEmail.ToLower() == email.ToLower())
             .GroupJoin(_context.OrganizationHierarchies.Where(oh => oh.Type == OrganizationUnitType.OrgUnit),
-                userInfo => userInfo.OrgUnit,
+                userProfile => userProfile.OrgUnit,
                 orgHierarchy => orgHierarchy.Code,
-                (userInfo, orgHierarchies) => new { userInfo, orgHierarchies })
+                (userProfile, orgHierarchies) => new { userProfile, orgHierarchies })
             .SelectMany(
                 temp => temp.orgHierarchies.DefaultIfEmpty(),
-                (temp, orgHierarchy) => new { temp.userInfo, orgHierarchy })
-            .GroupJoin(_context.UserInfos,
-                combined => combined.userInfo.SupervisorId,
+                (temp, orgHierarchy) => new { temp.userProfile, orgHierarchy })
+            .GroupJoin(_context.UserProfile,
+                combined => combined.userProfile.SupervisorId,
                 supervisor => supervisor.UserId,
-                (combined, supervisors) => new { combined.userInfo, combined.orgHierarchy, supervisors })
+                (combined, supervisors) => new { combined.userProfile, combined.orgHierarchy, supervisors })
             .SelectMany(
                 temp => temp.supervisors.DefaultIfEmpty(),
                 (temp, supervisor) => new
                 {
-                    UserId = temp.userInfo.UserId,
-                    Name = temp.userInfo.Name,
-                    UserEmail = temp.userInfo.UserEmail,
-                    OrgUnit = temp.userInfo.OrgUnit,
+                    UserId = temp.userProfile.UserId,
+                    Name = temp.userProfile.Name,
+                    FirstName = temp.userProfile.FirstName,
+                    LastName = temp.userProfile.LastName,
+                    UserEmail = temp.userProfile.UserEmail,
+                    OrgUnit = temp.userProfile.OrgUnit,
                     OrgUnitDescription = temp.orgHierarchy != null ? temp.orgHierarchy.Description : null,
-                    SupervisorId = temp.userInfo.SupervisorId,
+                    SupervisorId = temp.userProfile.SupervisorId,
                     SupervisorName = supervisor != null ? supervisor.Name : null,
                     SupervisorEmail = supervisor != null ? supervisor.UserEmail : null,
                     IsSelfManagementEnabled = temp.orgHierarchy != null ? temp.orgHierarchy.IsSelfManagementEnabled : false,
-                    CreatedDate = temp.userInfo.CreatedDate,
-                    LastModifiedDate = temp.userInfo.LastModifiedDate,
-                    CreatedBy = temp.userInfo.CreatedBy,
-                    LastModifiedBy = temp.userInfo.LastModifiedBy,
-                    IsDeleted = temp.userInfo.IsDeleted,
-                    TextToSpeech = temp.userInfo.TextToSpeech,
-                    Language = temp.userInfo.Language
+                    DutyStation = temp.userProfile.DutyStation,
+                    Position = temp.userProfile.Position
                 })
             .FirstOrDefaultAsync();
 
         return result;
     }
 
-    public async Task<UserInfo?> UpdateUserInfoAsync(UserInfo userInfo)
+    public async Task<UserProfile?> UpdateUserInfoAsync(UserProfile userProfile)
     {
-        var existingUserInfo = await _context.UserInfos.FindAsync(userInfo.UserId);
-        if (existingUserInfo == null)
+        var existingUserProfile = await _context.UserProfile.FindAsync(userProfile.UserId);
+        if (existingUserProfile == null)
         {
-            throw new BusinessException("UserInfo not found");
+            throw new BusinessException("UserProfile not found");
         }
-        PatchNonNullProperties(userInfo, existingUserInfo);
-        _context.UserInfos.Update(existingUserInfo);
+        PatchNonNullProperties(userProfile, existingUserProfile);
+        _context.UserProfile.Update(existingUserProfile);
         await _context.SaveChangesAsync();
-        return existingUserInfo;
+        return existingUserProfile;
     }
 
     public void PatchNonNullProperties<TSource, TTarget>(TSource source, TTarget target)
@@ -114,15 +111,15 @@ public class UserInfoService : IUserInfoService
         }
     }
 
-    public async Task<List<UserInfo>> GetUserInfosByEmailsAsync(IEnumerable<string> emails)
+    public async Task<List<UserProfile>> GetUserInfosByEmailsAsync(IEnumerable<string> emails)
     {
         if (emails == null || !emails.Any())
         {
-            return new List<UserInfo>();
+            return new List<UserProfile>();
         }
 
         var emailList = emails.Select(e => e.ToLower()).ToList();
-        return await _context.UserInfos
+        return await _context.UserProfile
             .Where(u => emailList.Contains(u.UserEmail.ToLower()))
             .ToListAsync();
     }

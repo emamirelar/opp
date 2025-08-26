@@ -43,12 +43,20 @@ import { FormsModule } from '@angular/forms';
 interface UserInfo {
   userId: number;
   name: string;
+  firstName?: string;
+  lastName?: string;
   userEmail: string;
   orgUnit: string;
   orgUnitDescription?: string;
-  supervisorId: number;
+  supervisorId?: number;
   supervisorName?: string;
   supervisorEmail?: string;
+  dutyStation?: string;
+  position?: string;
+  textToSpeech?: boolean;
+  language?: string;
+  createdDate?: string;
+  lastModifiedDate?: string;
 }
 
 @Component({
@@ -292,12 +300,20 @@ export class TopbarComponent implements OnInit, OnDestroy {
               this.userInfo = {
                 userId: userInfoData.userId || 0,
                 name: userInfoData.name || email || 'Unknown User',
+                firstName: userInfoData.firstName,
+                lastName: userInfoData.lastName,
                 userEmail: userInfoData.userEmail || email || '',
                 orgUnit: userInfoData.orgUnit || 'N/A',
                 orgUnitDescription: userInfoData.orgUnitDescription || '',
-                supervisorId: userInfoData.supervisorId || 0,
+                supervisorId: userInfoData.supervisorId,
                 supervisorName: userInfoData.supervisorName || '',
-                supervisorEmail: userInfoData.supervisorEmail || ''
+                supervisorEmail: userInfoData.supervisorEmail || '',
+                dutyStation: userInfoData.dutyStation,
+                position: userInfoData.position,
+                textToSpeech: userInfoData.textToSpeech,
+                language: userInfoData.language,
+                createdDate: userInfoData.createdDate,
+                lastModifiedDate: userInfoData.lastModifiedDate
               };
               this.cdr.markForCheck(); // Trigger change detection
               this.loadNotifications();

@@ -4,8 +4,8 @@ namespace UNOPS.PAO.DataAccess.Interfaces;
 
 public interface IUserInfoService
 {
-    Task<UserInfo?> GetUserInfoByEmailAsync(string email);
+    Task<UserProfile?> GetUserInfoByEmailAsync(string email);
     Task<object?> GetUserInfoWithOrgSettingsAsync(string email);
-    Task<UserInfo?> UpdateUserInfoAsync(UserInfo userInfo);
-    Task<List<UserInfo>> GetUserInfosByEmailsAsync(IEnumerable<string> emails);
+    Task<UserProfile?> UpdateUserInfoAsync(UserProfile userProfile);
+    Task<List<UserProfile>> GetUserInfosByEmailsAsync(IEnumerable<string> emails);
 } 

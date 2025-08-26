@@ -1326,7 +1326,7 @@
     "title": "Notifications",
     "unread": "Unread",
     "all": "All",
-    "seeAll": "See all",
+  "seeAll": "See all",
     "items": "notifications",
     "noUnread": "No unread notifications",
     "noNotifications": "No notifications yet",
@@ -1389,5 +1389,43 @@
     "error": {
       "title": "Unable to Load Dashboard"
     }
+  },
+  "profile": {
+    "title": "User Profile",
+    "personal_information": "Personal Information",
+    "work_information": "Work Information",
+    "preferences": "Preferences",
+    "system_information": "System Information",
+    "full_name": "Full Name",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email",
+    "organization_unit": "Organization Unit",
+    "position": "Position",
+    "duty_station": "Duty Station",
+    "supervisor": "Supervisor",
+    "language": "Language",
+    "text_to_speech": "Text-to-Speech",
+    "created_date": "Created Date",
+    "last_modified": "Last Modified"
+  },
+  "languages": {
+    "english": "English",
+    "french": "French",
+    "spanish": "Spanish",
+    "arabic": "Arabic",
+    "chinese": "Chinese",
+    "hindi": "Hindi",
+    "russian": "Russian",
+    "portuguese": "Portuguese",
+    "german": "German",
+    "japanese": "Japanese",
+    "not_specified": "Not specified"
+  },
+  "common": {
+    "not_available": "N/A",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "close": "Close"
   }
 }

@@ -1088,5 +1088,43 @@
     "loading": "Chargement des discussions...",
     "noChats": "Aucun historique de discussion pour le moment",
     "noResults": "Aucune discussion ne correspond à votre recherche"
+  },
+  "profile": {
+    "title": "Profil Utilisateur",
+    "personal_information": "Informations Personnelles",
+    "work_information": "Informations Professionnelles",
+    "preferences": "Préférences",
+    "system_information": "Informations Système",
+    "full_name": "Nom Complet",
+    "first_name": "Prénom",
+    "last_name": "Nom de Famille",
+    "email": "E-mail",
+    "organization_unit": "Unité d'Organisation",
+    "position": "Poste",
+    "duty_station": "Lieu d'Affectation",
+    "supervisor": "Superviseur",
+    "language": "Langue",
+    "text_to_speech": "Synthèse Vocale",
+    "created_date": "Date de Création",
+    "last_modified": "Dernière Modification"
+  },
+  "languages": {
+    "english": "Anglais",
+    "french": "Français",
+    "spanish": "Espagnol",
+    "arabic": "Arabe",
+    "chinese": "Chinois",
+    "hindi": "Hindi",
+    "russian": "Russe",
+    "portuguese": "Portugais",
+    "german": "Allemand",
+    "japanese": "Japonais",
+    "not_specified": "Non spécifié"
+  },
+  "common": {
+    "not_available": "N/D",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "close": "Fermer"
   }
 }

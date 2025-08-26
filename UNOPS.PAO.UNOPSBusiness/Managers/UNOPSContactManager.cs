@@ -42,7 +42,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     private IMapper mapper;
     private BaseRepository<UNOPSContact> contactRepository;
     private BaseRepository<UNOPSPartner> partnerRepository;
-    private BaseRepository<UserInfo> userInfoRepository;
+    private BaseRepository<UserProfile> userInfoRepository;
     private BaseRepository<OrganizationHierarchy> organizationHierarchyRepository;
     private GoogleCloudStorageService googleCloudStorageService;
     private CommonEntityRepository commonRepository;
@@ -88,7 +88,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         return await MapEntityToModelWithPermissionsAsync(result, user); ;
     }
     
-    private ContactModel MapEntityToModelWithUserInfo(UNOPSContact entity, IMapper mapper, Dictionary<int, UserInfo> userInfoLookup, Dictionary<string, OrganizationHierarchy> orgHierarchyLookup)
+    private ContactModel MapEntityToModelWithUserInfo(UNOPSContact entity, IMapper mapper, Dictionary<int, UserProfile> userInfoLookup, Dictionary<string, OrganizationHierarchy> orgHierarchyLookup)
     {
         var result = mapper.Map<UNOPSContact, ContactModel>(entity);
         result.Partner = entity.Partner != null ? new UNOPS.PAO.Models.PartnerSummaryModel { Id = entity.Partner.Id, Name = entity.Partner.Name } : null;
@@ -138,10 +138,9 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
         : base(mapper, context, configuration, null, "Contact", permissionService, httpContextAccessor)
     {
         this.mapper = mapper;
-        _context = context; 
+        _context = context;
         contactRepository = new BaseRepository<UNOPSContact>(context, configuration, serviceProvider);
         partnerRepository = new BaseRepository<UNOPSPartner>(context, configuration, serviceProvider);
-        userInfoRepository = new BaseRepository<UserInfo>(context, configuration, serviceProvider);
         organizationHierarchyRepository = new BaseRepository<OrganizationHierarchy>(context, configuration, serviceProvider);
         promptRepository = new DataRepository<AiPrompt>(context);
         commonRepository = new CommonEntityRepository(context);

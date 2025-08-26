@@ -13,7 +13,6 @@ public class Engagement : ModifiableDeletableEntity
     [MaxLength(1000)]
     public string? EngagementDescription { get; set; }
     
-    [MaxLength(2000)]
     public string? EngagementLongDescription { get; set; }
     
     [MaxLength(500)]

@@ -149,11 +149,11 @@ public class GmailAddonHelper
         return currentPartner;
     }
 
-    public GmailRelatedUser MapUserToGmailUser(PAOUserModel user, UserInfo? userInfo = null)
+    public GmailRelatedUser MapUserToGmailUser(PAOUserModel user, UserProfile? userProfile = null)
     {
-        // Use enhanced data from UserInfo if available, otherwise fallback to PAOUser data
-        var name = userInfo?.Name ?? user.Email ?? user.Id.ToString();
-        var orgUnit = userInfo?.OrgUnit ?? "Unknown";
+        // Use enhanced data from UserProfile if available, otherwise fallback to PAOUser data
+        var name = userProfile?.Name ?? user.Email ?? user.Id.ToString();
+        var orgUnit = userProfile?.OrgUnit ?? "Unknown";
 
         return new GmailRelatedUser
         {
@@ -243,20 +243,20 @@ public class GmailAddonHelper
             
             if (users.Any())
             {
-                // Get the email addresses of found users for additional UserInfo lookup
+                // Get the email addresses of found users for additional UserProfile lookup
                 var foundUserEmails = users.Where(u => !string.IsNullOrEmpty(u.Email))
                                           .Select(u => u.Email)
                                           .ToList();
 
-                // Get additional details from UserInfoService for the found users
-                Dictionary<string, UserInfo> userInfoLookup = new Dictionary<string, UserInfo>(StringComparer.OrdinalIgnoreCase);
+                // Get additional details from UserProfileService for the found users
+                Dictionary<string, UserProfile> userProfileLookup = new Dictionary<string, UserProfile>(StringComparer.OrdinalIgnoreCase);
 
-                var userInfos = await _userInfoService.GetUserInfosByEmailsAsync(foundUserEmails);
+                var userProfiles = await _userInfoService.GetUserInfosByEmailsAsync(foundUserEmails);
 
-                if(userInfos != null && userInfos.Any()) { 
+                if(userProfiles != null && userProfiles.Any()) { 
                     // Handle potential duplicate emails by taking the first occurrence of each email
-                    userInfoLookup = userInfos
-                        .GroupBy(ui => ui.UserEmail, StringComparer.OrdinalIgnoreCase)
+                    userProfileLookup = userProfiles
+                        .GroupBy(up => up.UserEmail, StringComparer.OrdinalIgnoreCase)
                         .ToDictionary(
                             group => group.Key, 
                             group => group.First(), 
@@ -270,13 +270,13 @@ public class GmailAddonHelper
                 // Process each user with enhanced data
                 foreach (var user in users)
                 {
-                    UserInfo? userInfo = null;
-                    if (!string.IsNullOrEmpty(user.Email) && userInfoLookup.ContainsKey(user.Email))
+                    UserProfile? userProfile = null;
+                    if (!string.IsNullOrEmpty(user.Email) && userProfileLookup.ContainsKey(user.Email))
                     {
-                        userInfo = userInfoLookup[user.Email];
+                        userProfile = userProfileLookup[user.Email];
                     }
 
-                    var gmailUser = MapUserToGmailUser(user, userInfo);
+                    var gmailUser = MapUserToGmailUser(user, userProfile);
                     response.Users.Add(gmailUser);
                     
                     // Remove the user's email from unmatched emails
