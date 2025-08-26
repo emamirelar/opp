@@ -4,6 +4,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface UserInfo {
   userId: number;
@@ -32,35 +33,36 @@ interface UserInfo {
     DialogModule,
     ButtonModule,
     InputTextModule,
-    FormsModule
+    FormsModule,
+    TranslateModule
   ],
   template: `
     <p-dialog 
       [(visible)]="visible" 
       [style]="{width: '600px'}" 
-      header="User Profile" 
+      [header]="'profile.title' | translate" 
       [modal]="true"
       [draggable]="false"
       [resizable]="false">
       <div class="flex flex-col gap-4 p-4">
         <!-- Personal Information Section -->
         <div class="section">
-          <h3 class="section-header">Personal Information</h3>
+          <h3 class="section-header">{{'profile.personal_information' | translate}}</h3>
           <div class="grid grid-cols-2 gap-4">
             <div class="field">
-              <label class="font-semibold">Full Name</label>
-              <div class="mt-2">{{userInfo?.name || 'N/A'}}</div>
+              <label class="font-semibold">{{'profile.full_name' | translate}}</label>
+              <div class="mt-2">{{userInfo?.name || ('common.not_available' | translate)}}</div>
             </div>
             <div class="field">
-              <label class="font-semibold">Email</label>
-              <div class="mt-2">{{userInfo?.userEmail || 'N/A'}}</div>
+              <label class="font-semibold">{{'profile.email' | translate}}</label>
+              <div class="mt-2">{{userInfo?.userEmail || ('common.not_available' | translate)}}</div>
             </div>
             <div class="field" *ngIf="userInfo?.firstName">
-              <label class="font-semibold">First Name</label>
+              <label class="font-semibold">{{'profile.first_name' | translate}}</label>
               <div class="mt-2">{{userInfo?.firstName}}</div>
             </div>
             <div class="field" *ngIf="userInfo?.lastName">
-              <label class="font-semibold">Last Name</label>
+              <label class="font-semibold">{{'profile.last_name' | translate}}</label>
               <div class="mt-2">{{userInfo?.lastName}}</div>
             </div>
           </div>
@@ -68,29 +70,29 @@ interface UserInfo {
 
         <!-- Work Information Section -->
         <div class="section">
-          <h3 class="section-header">Work Information</h3>
+          <h3 class="section-header">{{'profile.work_information' | translate}}</h3>
           <div class="grid grid-cols-2 gap-4">
             <div class="field">
-              <label class="font-semibold">Organization Unit</label>
+              <label class="font-semibold">{{'profile.organization_unit' | translate}}</label>
               <div class="mt-2">
-                <div>{{userInfo?.orgUnit || 'N/A'}}</div>
+                <div>{{userInfo?.orgUnit || ('common.not_available' | translate)}}</div>
                 <div *ngIf="userInfo?.orgUnitDescription" class="text-sm text-gray-600 mt-1">{{userInfo?.orgUnitDescription}}</div>
               </div>
             </div>
             <div class="field" *ngIf="userInfo?.position">
-              <label class="font-semibold">Position</label>
+              <label class="font-semibold">{{'profile.position' | translate}}</label>
               <div class="mt-2">{{userInfo?.position}}</div>
             </div>
             <div class="field" *ngIf="userInfo?.dutyStation">
-              <label class="font-semibold">Duty Station</label>
+              <label class="font-semibold">{{'profile.duty_station' | translate}}</label>
               <div class="mt-2">{{userInfo?.dutyStation}}</div>
             </div>
             <div class="field" *ngIf="userInfo?.supervisorName || userInfo?.supervisorEmail">
-              <label class="font-semibold">Supervisor</label>
+              <label class="font-semibold">{{'profile.supervisor' | translate}}</label>
               <div class="mt-2">
                 <div *ngIf="userInfo?.supervisorName">{{userInfo?.supervisorName}}</div>
                 <div *ngIf="userInfo?.supervisorEmail" class="text-sm text-gray-600">{{userInfo?.supervisorEmail}}</div>
-                <div *ngIf="!userInfo?.supervisorName && !userInfo?.supervisorEmail">N/A</div>
+                <div *ngIf="!userInfo?.supervisorName && !userInfo?.supervisorEmail">{{'common.not_available' | translate}}</div>
               </div>
             </div>
           </div>
@@ -98,18 +100,18 @@ interface UserInfo {
 
         <!-- Preferences Section -->
         <div class="section" *ngIf="userInfo?.language || userInfo?.textToSpeech !== undefined">
-          <h3 class="section-header">Preferences</h3>
+          <h3 class="section-header">{{'profile.preferences' | translate}}</h3>
           <div class="grid grid-cols-2 gap-4">
             <div class="field" *ngIf="userInfo?.language">
-              <label class="font-semibold">Language</label>
-              <div class="mt-2">{{getLanguageName(userInfo?.language)}}</div>
+              <label class="font-semibold">{{'profile.language' | translate}}</label>
+              <div class="mt-2">{{getLanguageName(userInfo?.language) | translate}}</div>
             </div>
             <div class="field" *ngIf="userInfo?.textToSpeech !== undefined">
-              <label class="font-semibold">Text-to-Speech</label>
+              <label class="font-semibold">{{'profile.text_to_speech' | translate}}</label>
               <div class="mt-2">
                 <span class="px-2 py-1 rounded text-sm" 
                       [ngClass]="userInfo?.textToSpeech ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
-                  {{userInfo?.textToSpeech ? 'Enabled' : 'Disabled'}}
+                  {{userInfo?.textToSpeech ? ('common.enabled' | translate) : ('common.disabled' | translate)}}
                 </span>
               </div>
             </div>
@@ -118,14 +120,14 @@ interface UserInfo {
 
         <!-- System Information Section -->
         <div class="section" *ngIf="userInfo?.createdDate || userInfo?.lastModifiedDate">
-          <h3 class="section-header">System Information</h3>
+          <h3 class="section-header">{{'profile.system_information' | translate}}</h3>
           <div class="grid grid-cols-2 gap-4">
             <div class="field" *ngIf="userInfo?.createdDate">
-              <label class="font-semibold">Created Date</label>
+              <label class="font-semibold">{{'profile.created_date' | translate}}</label>
               <div class="mt-2 text-sm text-gray-600">{{formatDate(userInfo?.createdDate)}}</div>
             </div>
             <div class="field" *ngIf="userInfo?.lastModifiedDate">
-              <label class="font-semibold">Last Modified</label>
+              <label class="font-semibold">{{'profile.last_modified' | translate}}</label>
               <div class="mt-2 text-sm text-gray-600">{{formatDate(userInfo?.lastModifiedDate)}}</div>
             </div>
           </div>
@@ -133,7 +135,7 @@ interface UserInfo {
       </div>
       <ng-template pTemplate="footer">
         <div class="flex justify-end">
-          <p-button label="Close" (click)="visible = false"></p-button>
+          <p-button [label]="'common.close' | translate" (click)="visible = false"></p-button>
         </div>
       </ng-template>
     </p-dialog>
@@ -196,19 +198,21 @@ export class ProfileDialogComponent {
   }
 
   getLanguageName(languageCode?: string): string {
-    const languages: { [key: string]: string } = {
-      'en': 'English',
-      'fr': 'French',
-      'es': 'Spanish',
-      'ar': 'Arabic',
-      'zh': 'Chinese',
-      'hi': 'Hindi',
-      'ru': 'Russian',
-      'pt': 'Portuguese',
-      'de': 'German',
-      'ja': 'Japanese'
+    // Use translation keys for language names
+    const languageKeys: { [key: string]: string } = {
+      'en': 'languages.english',
+      'fr': 'languages.french',
+      'es': 'languages.spanish',
+      'ar': 'languages.arabic',
+      'zh': 'languages.chinese',
+      'hi': 'languages.hindi',
+      'ru': 'languages.russian',
+      'pt': 'languages.portuguese',
+      'de': 'languages.german',
+      'ja': 'languages.japanese'
     };
     
-    return languages[languageCode?.toLowerCase() || ''] || languageCode || 'Not specified';
+    const key = languageKeys[languageCode?.toLowerCase() || ''];
+    return key ? key : (languageCode || 'languages.not_specified');
   }
 } 

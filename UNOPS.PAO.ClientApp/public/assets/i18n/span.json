@@ -1023,5 +1023,43 @@
     "loading": "Cargando conversaciones...",
     "noChats": "Aún no hay historial de conversaciones",
     "noResults": "Ninguna conversación coincide con tu búsqueda"
+  },
+  "profile": {
+    "title": "Perfil de Usuario",
+    "personal_information": "Información Personal",
+    "work_information": "Información Laboral",
+    "preferences": "Preferencias",
+    "system_information": "Información del Sistema",
+    "full_name": "Nombre Completo",
+    "first_name": "Primer Nombre",
+    "last_name": "Apellido",
+    "email": "Correo Electrónico",
+    "organization_unit": "Unidad Organizacional",
+    "position": "Posición",
+    "duty_station": "Estación de Trabajo",
+    "supervisor": "Supervisor",
+    "language": "Idioma",
+    "text_to_speech": "Texto a Voz",
+    "created_date": "Fecha de Creación",
+    "last_modified": "Última Modificación"
+  },
+  "languages": {
+    "english": "Inglés",
+    "french": "Francés",
+    "spanish": "Español",
+    "arabic": "Árabe",
+    "chinese": "Chino",
+    "hindi": "Hindi",
+    "russian": "Ruso",
+    "portuguese": "Portugués",
+    "german": "Alemán",
+    "japanese": "Japonés",
+    "not_specified": "No especificado"
+  },
+  "common": {
+    "not_available": "N/A",
+    "enabled": "Habilitado",
+    "disabled": "Deshabilitado",
+    "close": "Cerrar"
   }
 }
