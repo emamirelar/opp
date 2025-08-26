@@ -98,7 +98,7 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
             if (existingProfile == null)
             {
                 // Create UserProfile automatically with default values
-                var firstName = paoUser.Email.Split('@')[0];
+                var firstName = !string.IsNullOrEmpty(paoUser.Email) ? paoUser.Email.Split('@')[0] : $"User{paoUser.Id}";
                 var userProfile = new UserProfile
                 {
                     UserId = paoUser.Id,
@@ -120,14 +120,17 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
             {
                 // Get user's default org unit ID from UserProfile using email (proper way)
                 int? defaultOrgUnitId = null;
-                var userInfoForOrgUnit = appDbContext.Set<UserProfile>()
-                    .FirstOrDefault(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
+                if (!string.IsNullOrEmpty(paoUser.Email))
+                {
+                    var userInfoForOrgUnit = appDbContext.Set<UserProfile>()
+                        .FirstOrDefault(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
                 
                 if (userInfoForOrgUnit?.OrgUnit != null)
                 {
                     var orgUnit = appDbContext.Set<OrganizationHierarchy>()
                         .FirstOrDefault(oh => oh.Code == userInfoForOrgUnit.OrgUnit && oh.Type == UNOPS.PAO.Domain.Enums.OrganizationUnitType.OrgUnit);
                     defaultOrgUnitId = orgUnit?.Id;
+                }
                 }
 
                 // Create UserPreference automatically with default values
@@ -171,7 +174,7 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
             if (existingProfile == null)
             {
                 // Create UserProfile automatically with default values
-                var firstName = paoUser.Email.Split('@')[0];
+                var firstName = !string.IsNullOrEmpty(paoUser.Email) ? paoUser.Email.Split('@')[0] : $"User{paoUser.Id}";
                 var userProfile = new UserProfile
                 {
                     UserId = paoUser.Id,
@@ -193,14 +196,17 @@ public class PAOIdentityDbContext : IdentityDbContext<PAOIdentityUser, PAOIdenti
             {
                 // Get user's default org unit ID from UserProfile using email (proper way)
                 int? defaultOrgUnitId = null;
-                var userInfoForOrgUnit = await appDbContext.Set<UserProfile>()
-                    .FirstOrDefaultAsync(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
+                if (!string.IsNullOrEmpty(paoUser.Email))
+                {
+                    var userInfoForOrgUnit = await appDbContext.Set<UserProfile>()
+                        .FirstOrDefaultAsync(ui => ui.UserEmail.ToLower() == paoUser.Email.ToLower());
                 
                 if (userInfoForOrgUnit?.OrgUnit != null)
                 {
                     var orgUnit = await appDbContext.Set<OrganizationHierarchy>()
                         .FirstOrDefaultAsync(oh => oh.Code == userInfoForOrgUnit.OrgUnit && oh.Type == UNOPS.PAO.Domain.Enums.OrganizationUnitType.OrgUnit);
                     defaultOrgUnitId = orgUnit?.Id;
+                }
                 }
 
                 // Create UserPreference automatically with default values
