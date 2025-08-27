@@ -12,6 +12,7 @@ import os
 from typing import Dict, List, Any, Optional
 
 from google.adk.tools import FunctionTool, agent_tool as AgentTool
+from google.adk.tools.tool_context import ToolContext
 
 # Import shared utilities from common callbacks
 from ai_assistant.utils.common_callbacks import (
@@ -190,108 +191,20 @@ class GoogleSheetToolWrapper:
         except Exception as e:
             return json.dumps({"error": f"Failed to create spreadsheet with headers: {str(e)}"})
 
-class GoogleDocToolWrapper:
-    """Lightweight wrapper for Google Docs functionality"""
-    def __init__(self):
-        self.available = True
-        self._doc_tool = None
-        self._last_activity = None
-    
-    async def _get_doc_tool(self):
-        """Get or create the Google Doc tool with connection management"""
-        import time
-        
-        try:
-            # Check if we need to recreate the tool (avoid stale connections)
-            current_time = time.time()
-            if (self._doc_tool is None or 
-                (self._last_activity and current_time - self._last_activity > 300)):  # 5 minute timeout
-                
-                logger.info("🔄 Creating fresh Google Doc tool instance")
-                
-                # Cleanup old tool if exists
-                if self._doc_tool:
-                    try:
-                        await self._doc_tool.cleanup()
-                    except Exception:
-                        pass
-                
-                # Create new tool with detailed logging
-                try:
-                    from ai_assistant.tools import create_google_doc_tool
-                    logger.info("🔧 Attempting to create Google Doc tool...")
-                    self._doc_tool = await create_google_doc_tool()
-                    
-                    if self._doc_tool:
-                        logger.info("✅ Google Doc tool created successfully")
-                    else:
-                        logger.error("❌ create_google_doc_tool returned None - check configuration")
-                        
-                except ImportError as e:
-                    logger.error(f"❌ Import error creating Google Doc tool: {e}")
-                    return None
-                except Exception as e:
-                    logger.error(f"❌ Unexpected error creating Google Doc tool: {e}")
-                    return None
-                
-            self._last_activity = current_time
-            return self._doc_tool
-            
-        except Exception as e:
-            logger.error(f"❌ Error getting Google Doc tool: {e}")
-            return None
-    
-    async def create_document_from_text(self, tool_context, title: str, content: str, folder_id: str = ""):
-        """Create Google Doc from text with proper connection management"""
-        try:
-            logger.info(f"🔄 Creating document: {title}")
-            
-            # Get the tool instance
-            doc_tool = await self._get_doc_tool()
-            if not doc_tool:
-                return json.dumps({"error": "Google Doc tool not available"})
-            
-            # Create the document
-            result = await doc_tool.create_document(
-                title=title,
-                content=content,
-                folder_id=folder_id if folder_id else None
-            )
-            
-            # Check for errors in result
-            if isinstance(result, dict) and "error" in result:
-                logger.error(f"❌ Document creation failed: {result['error']}")
-                return json.dumps(result)
-            
-            logger.info(f"✅ Document created successfully: {result.get('name', title)}")
-            return json.dumps(result)
-            
-        except Exception as e:
-            error_msg = f"Failed to create document: {str(e)}"
-            logger.error(f"❌ {error_msg}")
-            
-            # Handle specific error types
-            if "WinError 10055" in str(e) or "socket" in str(e).lower():
-                # Reset the tool to clear any bad connections
-                self._doc_tool = None
-                error_msg = "Network connection issue detected. Connection has been reset for next attempt."
-            
-            return json.dumps({"error": error_msg})
+
 
 
 # Initialize tool wrappers (always available)
 google_sheet_wrapper = GoogleSheetToolWrapper()
-google_doc_wrapper = GoogleDocToolWrapper()
 logging.info(f"✅ Google Sheet wrapper initialized in task executor (available: {google_sheet_wrapper.available})")
-logging.info(f"✅ Google Doc wrapper initialized in task executor (available: {google_doc_wrapper.available})")
 
 # External API tools - provide stub implementations
 
-def search_external_drive_service(query: str, external_endpoint_url: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
+def search_external_drive_service(tool_context: ToolContext, query: str, external_endpoint_url: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
     """Search using external service for file IDs, then read content from Google Drive"""
     try:
         from ai_assistant.tools import search_external_drive_service as real_search
-        return real_search(query, external_endpoint_url, auth_headers)
+        return real_search(tool_context, query, external_endpoint_url, auth_headers)
     except ImportError:
         return json.dumps({
             "error": "External drive search service not available in current environment",
@@ -299,11 +212,11 @@ def search_external_drive_service(query: str, external_endpoint_url: str, auth_h
             "endpoint": external_endpoint_url
         })
 
-def search_unops_google_drive(query: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
+def search_unops_google_drive(tool_context: ToolContext, query: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
     """Convenience function for UNOPS external Google Drive search service"""
     try:
         from ai_assistant.tools import search_unops_google_drive as real_search
-        return real_search(query, auth_headers)
+        return real_search(tool_context, query, auth_headers)
     except ImportError:
         return json.dumps({
             "error": "UNOPS external drive search service not available in current environment",
@@ -311,11 +224,11 @@ def search_unops_google_drive(query: str, auth_headers: Optional[Dict[str, str]]
             "endpoint": "https://api.ai.dev.unops.org/v1/tools/google-drive/search"
         })
 
-def read_content_from_url(url: str, include_json: bool = True, output_format: str = "markdown", title: str = "", description: str = "") -> str:
+def read_content_from_url(tool_context: ToolContext, url: str, include_json: bool = True, output_format: str = "markdown", title: str = "", description: str = "") -> str:
     """Read content from any URL using the external convert/url API"""
     try:
         from ai_assistant.tools import read_content_from_url as real_reader
-        return real_reader(url, include_json, output_format, title, description)
+        return real_reader(tool_context, url, include_json, output_format, title, description)
     except ImportError:
         return json.dumps({
             "error": "URL content reader service not available in current environment",
@@ -323,11 +236,11 @@ def read_content_from_url(url: str, include_json: bool = True, output_format: st
             "endpoint": "https://api.ai.dev.unops.org/v1/convert/url"
         })
 
-def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+def convert_markdown_to_google_doc(tool_context: ToolContext, markdown_content: str, filename: str, metadata: Optional[Dict[str, Any]] = None) -> str:
     """Convert markdown content to Google Doc using external API"""
     try:
         from ai_assistant.tools import convert_markdown_to_google_doc as real_converter
-        return real_converter(markdown_content, filename, metadata)
+        return real_converter(tool_context, markdown_content, filename, metadata)
     except ImportError:
         return json.dumps({
             "error": "Markdown to Google Doc converter service not available in current environment",
@@ -984,7 +897,7 @@ def build_task_executor_tools():
     logging.info(f"✅ Added Google Sheets tools to task executor (available: {google_sheet_wrapper.available})")
 
     # Note: Google Doc creation uses convert_markdown_to_google_doc (already added above)
-    logging.info(f"✅ Google Doc creation available via convert_markdown_to_google_doc (available: {google_doc_wrapper.available})")
+    logging.info("✅ Google Doc creation available via convert_markdown_to_google_doc")
 
     # Add Speech-to-Text tools (always available with stubs)
     tools.extend([
