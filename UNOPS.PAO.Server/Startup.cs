@@ -223,7 +223,7 @@ public class Startup
         // Get JWT secret from Secret Manager
         var projectId = Configuration["AppConfig:ProjectId"];
         var secretManager = SecretManagerServiceClient.Create();
-        var secretName = $"projects/{projectId}/secrets/QA_Gmail_Plugin_Secret/versions/latest";
+        var secretName = $"projects/{projectId}/secrets/Bearer_Auth_Secret/versions/latest";
         var secret = secretManager.AccessSecretVersion(secretName);
         var jwtSecret = secret.Payload.Data.ToStringUtf8();
 
