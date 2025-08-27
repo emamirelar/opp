@@ -1,6 +1,6 @@
 {
   "entity": "AiPrompt",
-  "description": "Administrative interface for managing AI prompts and configurations. Allows creating, editing, and testing AI prompts with Gemini models, including advanced configuration options like temperature, top-p, and model selection.",
+  "description": "Administrative interface for managing AI prompts and configurations. This system allows users to create, edit, and test AI prompts, specifically designed for integration with Gemini models. It includes advanced configuration options such as temperature, top-p, and model selection to fine-tune AI behavior.",
   "synonyms": [
     "ai_configuration",
     "prompt_management",
@@ -18,7 +18,7 @@
     {
       "route": "/admin/ai-prompt-management",
       "name": "AiPromptComponent",
-      "description": "This page serves as the central administrative interface for managing all AI prompts and their configurations. Users can create new prompts, edit existing ones, delete obsolete prompts, and test their behavior with various inputs. It supports advanced configuration for Gemini models, including parameters like temperature and top-p, and allows for managing system-level prompts that guide the AI's overall behavior.",
+      "description": "This page serves as the central hub for managing all AI prompts within the system. Users can create new prompts, modify existing ones, delete obsolete prompts, and thoroughly test their configurations with Gemini models. It provides tools for fine-tuning AI responses through various parameters and managing system-level prompts.",
       "capabilities": [
         "create_prompt",
         "edit_prompt",
@@ -34,7 +34,7 @@
           "label": "Clear Search",
           "icon": "pi pi-times",
           "action": "clear_search",
-          "description": "Clears any active search text and resets the prompt list to display all available prompts.",
+          "description": "Resets the search filter and displays all available AI prompts in the list.",
           "when_to_use": [
             "When you want to remove the current search filter and view the complete list of prompts."
           ]
@@ -44,10 +44,10 @@
           "label": "New Prompt | Edit Prompt",
           "icon": "pi pi-plus | pi pi-pencil",
           "action": "create_prompt",
-          "description": "Opens a dialog window for creating a new AI prompt or editing the details of an existing one. This dialog contains form fields for configuring the prompt's content, model, and other parameters.",
+          "description": "Opens a dialog window to either create a brand new AI prompt or modify the details of an existing selected prompt. This includes setting the prompt's name, type, content, and model parameters.",
           "when_to_use": [
-            "When you need to define a brand new AI prompt for a specific purpose.",
-            "When you need to modify the content, model, or configuration of an existing AI prompt."
+            "When you need to define a new AI prompt for a specific purpose.",
+            "When you need to update the content, model, or parameters of an existing AI prompt."
           ]
         },
         {
@@ -55,10 +55,10 @@
           "label": "Cancel",
           "icon": "pi pi-times",
           "action": "cancel_prompt_dialog",
-          "description": "Closes the prompt creation or editing dialog without saving any changes made. All unsaved modifications will be discarded.",
+          "description": "Closes the prompt creation or editing dialog without saving any changes made. All unsaved modifications will be lost.",
           "when_to_use": [
             "When you decide not to save the changes you've made in the prompt dialog.",
-            "When you want to exit the prompt dialog without creating a new prompt or updating an existing one."
+            "When you want to exit the dialog without creating a new prompt."
           ]
         },
         {
@@ -66,10 +66,10 @@
           "label": "Test Prompt",
           "icon": "pi pi-play",
           "action": "test_prompt",
-          "description": "Executes a test run of the currently configured prompt. This allows you to input sample text and see how the AI model responds, helping to validate the prompt's output and performance before saving.",
+          "description": "Executes the currently configured prompt with a test input to validate its behavior and review the AI's response. This helps in debugging and refining prompt effectiveness.",
           "when_to_use": [
-            "When you want to validate a prompt's behavior and output before making it live.",
-            "When you need to see how the prompt responds to specific input scenarios."
+            "When you want to verify how a prompt responds to specific inputs before saving it.",
+            "When you are debugging a prompt and need to see its output in real-time."
           ]
         },
         {
@@ -77,10 +77,9 @@
           "label": "Delete",
           "icon": "pi pi-trash",
           "action": "delete_prompt",
-          "description": "Initiates a confirmation dialog to permanently delete the selected AI prompt. A warning will be displayed regarding potential dependencies on this prompt by other features.",
+          "description": "Initiates the process to permanently remove a selected AI prompt. A confirmation dialog will appear to warn about potential dependencies before deletion.",
           "when_to_use": [
-            "When you need to remove an AI prompt that is no longer needed or was created in error.",
-            "Use with caution, as deleting a prompt may affect features that rely on it."
+            "When an AI prompt is no longer needed or is incorrect and must be removed from the system. Use with caution as this action cannot be undone and may affect features relying on this prompt."
           ]
         },
         {
@@ -88,9 +87,10 @@
           "label": "Upgrade Gemini Model",
           "icon": "pi pi-refresh",
           "action": "upgrade_gemini_model",
-          "description": "Upgrades all existing AI prompts to utilize the latest available version of the Gemini AI model. This ensures all prompts benefit from the most recent model improvements and capabilities.",
+          "description": "Updates all existing AI prompts to utilize the latest available version of the Gemini model. This ensures all prompts benefit from the most recent AI advancements.",
           "when_to_use": [
-            "When you want to ensure all your AI prompts are running on the newest and most capable Gemini model version."
+            "When a new, improved version of the Gemini model is released and you want all prompts to leverage it.",
+            "When you need to standardize all prompts to a specific, newer Gemini model version."
           ]
         },
         {
@@ -98,10 +98,10 @@
           "label": "Preview | Raw",
           "icon": "pi pi-eye | pi pi-code",
           "action": "toggle_preview_raw",
-          "description": "Toggles the display of test results between a user-friendly formatted preview and the raw JSON response from the AI model.",
+          "description": "Switches the display of test results between a user-friendly, formatted preview and the raw JSON response from the AI model. This is useful for both content review and technical debugging.",
           "when_to_use": [
-            "Switch to 'Preview' to see a readable, formatted version of the AI's output.",
-            "Switch to 'Raw' to inspect the technical details of the AI's JSON response, useful for debugging or advanced analysis."
+            "Switch to 'Preview' to see the AI's response rendered clearly and readably.",
+            "Switch to 'Raw' to inspect the full technical JSON output, including metadata and detailed response structure."
           ]
         },
         {
@@ -109,11 +109,10 @@
           "label": "Help",
           "icon": "pi pi-question-circle",
           "action": "toggle_help",
-          "description": "Toggles the visibility of a side panel containing helpful guidance on writing effective prompts, using markdown formatting, and understanding AI configuration parameters.",
+          "description": "Opens or closes a side panel containing comprehensive guidance on writing effective AI prompts, understanding markdown formatting, and configuring AI parameters.",
           "when_to_use": [
-            "When you need assistance or tips on how to craft better AI prompts.",
-            "When you want to understand the various configuration options for AI models.",
-            "When you need a quick reference for markdown syntax within prompts."
+            "When you need assistance or best practices for crafting prompts.",
+            "When you are unsure about the meaning or impact of certain AI configuration settings."
           ]
         }
       ],
@@ -122,14 +121,17 @@
       "search": {},
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're having trouble creating a prompt, start by selecting a 'Prompt Type' and then a 'Gemini Model'. Fill in the main 'Prompt Content' area with your instructions or questions for the AI. Remember to configure advanced parameters like 'Temperature' (for creativity) and 'Top-P' (for response diversity) as needed. Always use the 'Test Prompt' feature to validate your prompt's output before saving. The 'Preview' tab in the test results shows a readable output, while the 'Raw' tab displays the technical JSON response.",
+        "when_stuck": "If you're having trouble, start by selecting a 'Prompt Type' and a 'Gemini Model'. Then, fill in the 'Prompt Content' field with your desired instructions. Remember to configure parameters like 'Temperature' (for creativity) and 'Top-P' (for diversity) as needed. Always use the 'Test Prompt' feature to validate your prompt's output before saving. The 'Preview' tab shows a formatted response, while the 'Raw' tab displays the technical JSON output.",
         "common_tasks": [
-          "Creating new prompt: Click the 'New Prompt' button, select the desired prompt type and Gemini model, enter your prompt content, configure any advanced parameters, and then save.",
-          "Testing prompt: Select an existing prompt from the list, click the 'Test Prompt' button, provide any necessary test input, and review the AI's response in the results area.",
-          "Configuring model parameters: When editing or creating a prompt, adjust the 'Temperature' slider to control the AI's creativity (higher for more creative, lower for more factual), and 'Top-P' (nucleus sampling) or 'Top-K' (token filtering) to refine the diversity and focus of the AI's generated text.",
-          "Managing system prompts: Edit prompts that are designated as 'system' prompts to control the foundational behavior and conversational style of the AI assistant.",
-          "Previewing output: After testing a prompt, use the 'Preview' tab to see a clean, formatted version of the AI's response, or switch to the 'Raw' tab to view the complete technical JSON output from the model."
-        ]
+          "Creating new prompt: Click 'New Prompt', choose the prompt type and Gemini model, enter your prompt content, and then save it.",
+          "Testing prompt: Select an existing prompt from the list, click 'Test Prompt', provide any necessary test input, and review the AI's response in the output panel.",
+          "Configuring model parameters: When editing a prompt, adjust 'Temperature' to control the AI's creativity (higher for more creative, lower for more factual), 'Top-P' for nucleus sampling (controls diversity of output), and 'Top-K' for token filtering (limits the number of possible next tokens).",
+          "Managing system prompts: Edit prompts that define the core behavior and responses of the AI assistant, ensuring consistent interactions.",
+          "Previewing output: After testing a prompt, use the 'Preview' tab to see a clean, formatted version of the AI's response, or switch to the 'Raw' tab to view the complete technical JSON response."
+        ],
+        "troubleshooting": [],
+        "getting_started": "",
+        "keyboard_shortcuts": []
       }
     }
   ]

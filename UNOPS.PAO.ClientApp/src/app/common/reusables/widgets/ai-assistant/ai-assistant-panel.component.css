@@ -87,6 +87,47 @@
   position: relative;
 }
 
+/* ===== INLINE IMAGE STYLING ===== */
+.inline-image {
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.inline-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+/* Image container styling */
+.inline-block {
+  position: relative;
+  display: inline-block;
+}
+
+/* Add a subtle border and background for better visual separation */
+.inline-block img {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+/* Responsive image sizing for different screen sizes */
+@media (max-width: 640px) {
+  .inline-image {
+    max-width: 250px !important;
+    max-height: 150px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .inline-image {
+    max-width: 200px !important;
+    max-height: 120px !important;
+  }
+}
+
 .header-row {
   display: flex;
   align-items: center;

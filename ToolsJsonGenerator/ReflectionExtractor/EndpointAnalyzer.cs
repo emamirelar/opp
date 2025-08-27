@@ -288,10 +288,241 @@ public class EndpointAnalyzer
                 Description = documentation?.Parameters.GetValueOrDefault(param.Name ?? string.Empty) ?? string.Empty
             };
 
+            // Extract detailed schema for complex types
+            if (IsComplexType(param.ParameterType))
+            {
+                paramInfo.Schema = AnalyzeModelSchema(param.ParameterType);
+                paramInfo.Properties = AnalyzeTypeProperties(param.ParameterType);
+            }
+
             parameters.Add(paramInfo);
         }
 
         return parameters;
+    }
+
+    private bool IsComplexType(Type type)
+    {
+        // Remove nullable wrapper
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        
+        // Check if it's a primitive, string, DateTime, or common simple types
+        if (underlyingType.IsPrimitive || underlyingType == typeof(string) || 
+            underlyingType == typeof(DateTime) || underlyingType == typeof(DateTimeOffset) ||
+            underlyingType == typeof(TimeSpan) || underlyingType == typeof(Guid) ||
+            underlyingType == typeof(decimal) || underlyingType.IsEnum)
+        {
+            return false;
+        }
+
+        // Check if it's a collection of simple types
+        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(underlyingType) && underlyingType != typeof(string))
+        {
+            if (underlyingType.IsGenericType)
+            {
+                var elementType = underlyingType.GetGenericArguments()[0];
+                return IsComplexType(elementType);
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    private Models.ModelSchema AnalyzeModelSchema(Type type)
+    {
+        var schema = new Models.ModelSchema
+        {
+            TypeName = type.Name,
+            FullTypeName = type.FullName ?? type.Name,
+            Description = $"Schema for {type.Name}"
+        };
+
+        var properties = AnalyzeTypeProperties(type, null, 0);
+        schema.Properties = properties;
+        schema.RequiredFields = properties.Where(p => p.IsRequired).Select(p => p.Name).ToList();
+
+        return schema;
+    }
+
+    private List<Models.PropertyInfo> AnalyzeTypeProperties(Type type, HashSet<Type>? visitedTypes = null, int depth = 0)
+    {
+        // Prevent infinite recursion with depth limit and visited types tracking
+        if (depth > 3 || visitedTypes?.Contains(type) == true)
+        {
+            return new List<Models.PropertyInfo>();
+        }
+
+        visitedTypes ??= new HashSet<Type>();
+        visitedTypes.Add(type);
+
+        var properties = new List<Models.PropertyInfo>();
+
+        foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            var propInfo = new Models.PropertyInfo
+            {
+                Name = prop.Name,
+                Type = GetTypeDisplayName(prop.PropertyType),
+                IsRequired = IsPropertyRequired(prop),
+                IsNullable = IsPropertyNullable(prop),
+                Description = GetPropertyDescription(prop),
+                Format = GetPropertyFormat(prop),
+                Relationship = AnalyzeFieldRelationship(prop)
+            };
+
+            // Recursively analyze nested complex types (with depth and cycle protection)
+            if (IsComplexType(prop.PropertyType) && !visitedTypes.Contains(prop.PropertyType) && depth < 2)
+            {
+                propInfo.NestedProperties = AnalyzeTypeProperties(prop.PropertyType, new HashSet<Type>(visitedTypes), depth + 1);
+            }
+
+            properties.Add(propInfo);
+        }
+
+        return properties;
+    }
+
+    private bool IsPropertyRequired(System.Reflection.PropertyInfo prop)
+    {
+        // Check for Required attribute
+        if (prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.RequiredAttribute>() != null)
+        {
+            return true;
+        }
+
+        // Check if it's a non-nullable reference type or value type
+        var propertyType = prop.PropertyType;
+        if (propertyType.IsValueType && Nullable.GetUnderlyingType(propertyType) == null)
+        {
+            return true; // Non-nullable value type
+        }
+
+        return false;
+    }
+
+    private bool IsPropertyNullable(System.Reflection.PropertyInfo prop)
+    {
+        var propertyType = prop.PropertyType;
+        
+        // Check if it's a nullable value type
+        if (Nullable.GetUnderlyingType(propertyType) != null)
+        {
+            return true;
+        }
+
+        // Check if it's a reference type (could be null)
+        if (!propertyType.IsValueType)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private string GetPropertyDescription(System.Reflection.PropertyInfo prop)
+    {
+        // Try to get XML documentation for properties (would need enhancement to XmlDocumentationParser)
+        return $"Property of type {GetTypeDisplayName(prop.PropertyType)}";
+    }
+
+    private string? GetPropertyFormat(System.Reflection.PropertyInfo prop)
+    {
+        var propertyType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+
+        if (propertyType == typeof(DateTime) || propertyType == typeof(DateTimeOffset))
+            return "date-time";
+        
+        if (propertyType == typeof(DateOnly))
+            return "date";
+        
+        if (propertyType == typeof(TimeOnly) || propertyType == typeof(TimeSpan))
+            return "time";
+
+        if (propertyType == typeof(Guid))
+            return "uuid";
+
+        // Check for email validation attribute
+        if (prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.EmailAddressAttribute>() != null)
+            return "email";
+
+        // Check for URL validation attribute  
+        if (prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.UrlAttribute>() != null)
+            return "uri";
+
+        return null;
+    }
+
+    private Models.FieldRelationship? AnalyzeFieldRelationship(System.Reflection.PropertyInfo prop)
+    {
+        // Check for ForeignKey attribute
+        var foreignKeyAttr = prop.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.ForeignKeyAttribute>();
+        if (foreignKeyAttr != null)
+        {
+            return new Models.FieldRelationship
+            {
+                RelationType = "ForeignKey",
+                ReferencedProperty = foreignKeyAttr.Name,
+                RequiresIdResolution = true
+            };
+        }
+
+        // Analyze property name patterns for common ID fields
+        var propName = prop.Name.ToLower();
+        if (propName.EndsWith("id") && (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(int?)))
+        {
+            var relationship = new Models.FieldRelationship
+            {
+                RelationType = "Reference",
+                RequiresIdResolution = true
+            };
+
+            // Infer referenced entity from property name
+            if (propName.Contains("organizationunit") || propName.Contains("orghierarchy"))
+            {
+                relationship.ReferencedEntity = "OrganizationHierarchy";
+                relationship.LookupEndpoint = "api/values/organization-units";
+                relationship.DisplayProperty = "Name";
+            }
+            else if (propName.Contains("partnercategory"))
+            {
+                relationship.ReferencedEntity = "PartnerCategory";
+                relationship.LookupEndpoint = "api/values/partner-categories";
+                relationship.DisplayProperty = "Name";
+            }
+            else if (propName.Contains("liaisonoffice"))
+            {
+                relationship.ReferencedEntity = "LiaisonOffice";
+                relationship.LookupEndpoint = "api/values/liaison-offices";
+                relationship.DisplayProperty = "Name";
+            }
+            else if (propName.Contains("user"))
+            {
+                relationship.ReferencedEntity = "User";
+                relationship.LookupEndpoint = "api/values/users";
+                relationship.DisplayProperty = "Name";
+            }
+
+            return relationship;
+        }
+
+        // Check for string fields that might need lookup (like codes)
+        if (prop.PropertyType == typeof(string) && propName.Contains("code"))
+        {
+            return new Models.FieldRelationship
+            {
+                RelationType = "Lookup",
+                RequiresIdResolution = false
+            };
+        }
+
+        return null;
+    }
+
+    private bool IsCircularReference(Type parentType, Type childType)
+    {
+        // Simple check to avoid infinite recursion
+        return parentType == childType || parentType.FullName == childType.FullName;
     }
 
     private string GetTypeDisplayName(Type type)

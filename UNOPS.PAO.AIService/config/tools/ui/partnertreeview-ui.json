@@ -14,7 +14,7 @@
     {
       "route": "/admin/partner-tree/:recordId",
       "name": "PartnerTreeViewComponent",
-      "description": "This page serves as the central hub for viewing and managing the details of a specific node within the organizational partner tree. It provides a comprehensive overview, allowing users to navigate through different aspects of the node, such as its core details, relationships, and associated analytics, to effectively manage the organizational hierarchy.",
+      "description": "This page provides a detailed view of a specific partner tree node within the organizational hierarchy. Users can navigate through different aspects of the node using tabs, view its details, and access related analytics. It's the central point for managing and understanding individual components of the partner tree structure.",
       "capabilities": [
         "navigate_tree_sections",
         "view_tree_details",
@@ -28,11 +28,9 @@
           "label": "Edit",
           "icon": "pi pi-pencil",
           "action": "edit_partner_tree_node",
-          "description": "Opens the partner tree node editing dialog to modify organizational hierarchy structure and details.",
+          "description": "Opens a dialog to modify the details of the current organizational hierarchy node, including its structure, relationships, and other relevant information.",
           "when_to_use": [
-            "When you need to modify organizational node details",
-            "relationships",
-            "or hierarchical positioning"
+            "When you need to modify organizational node details, relationships, or hierarchical positioning"
           ]
         }
       ],
@@ -41,16 +39,16 @@
       "search": {},
       "filters": [],
       "help_guidance": {
-        "when_stuck": "Use the tabs to navigate between different aspects of this organizational node. The Edit button allows you to modify the tree structure. Use the Details tab for organizational information and Dashboard tab for analytics.",
+        "when_stuck": "If you're unsure how to proceed, remember that this page is designed to show details for a specific organizational node. Use the available tabs (if any appear) to switch between different views like 'Details' for basic information or 'Dashboard' for analytics. The 'Edit' button is your primary tool for making changes to this node's properties or its position in the tree. Always check the breadcrumbs for your current location within the hierarchy.",
         "common_tasks": [
-          "Viewing tree node details: Click on the Details tab to see organizational information",
-          "Editing tree structure: Click the Edit button to modify organizational hierarchy",
-          "Accessing analytics: Switch to Dashboard tab to view performance and data metrics",
-          "Managing relationships: Use the details view to understand parent-child relationships",
-          "Navigating hierarchy: Use the navigation breadcrumb to move between tree levels"
+          "Viewing tree node details: Click on the Details tab (if available) to see organizational information.",
+          "Editing tree structure: Click the 'Edit' button to open the modification dialog for this organizational node.",
+          "Accessing analytics: Switch to the Dashboard tab (if available) to view performance and data metrics related to this node.",
+          "Managing relationships: Use the details view to understand parent-child relationships and dependencies of this node.",
+          "Navigating hierarchy: Use the navigation breadcrumb at the top of the page to move between different levels of the partner tree."
         ],
         "troubleshooting": [],
-        "getting_started": "",
+        "getting_started": "To get started, navigate to a specific partner tree node. This page will then display its core information. Look for the 'Details' tab to understand its basic properties. If you need to make changes, click the 'Edit' button. Explore the 'Dashboard' tab for any associated analytics.",
         "keyboard_shortcuts": []
       }
     }

@@ -8,15 +8,12 @@ import json
 import os
 import re
 import traceback
+import time
 from typing import Any, Dict, Optional
 import requests
 from google.adk.tools.tool_context import ToolContext
 from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
-import json
-import os
-import time
-from typing import Optional, Dict, Any
 from .api_config_manager import config_manager
 
 # Define LlmResponse for type annotations
@@ -25,6 +22,10 @@ LlmResponse = types.GenerateContentResponse
 from .auth_helpers import get_service_account_oidc_token
 from .api_config_manager import config_manager
 
+# Global timing storage for agents and models
+_agent_timings = {}
+_model_timings = {}
+
 # Optional cache import with graceful fallback
 try:
     from ai_assistant.utils.cache import entity_cache
@@ -32,6 +33,196 @@ try:
 except ImportError:
     CACHE_AVAILABLE = False
     print("ℹ️ Cache system not available - cache operations will be skipped")
+
+
+def before_agent_callback(ctx: CallbackContext) -> None:
+    """Callback to log agent start time"""
+    agent_name = ctx.agent_name if hasattr(ctx, 'agent_name') else 'unknown_agent'
+    session_id = ctx.session_id if hasattr(ctx, 'session_id') else 'unknown_session'
+    
+    start_time = time.time()
+    _agent_timings[f"{session_id}_{agent_name}"] = start_time
+    
+    print(f"⏱️ [AGENT-TIMING] Starting agent: {agent_name} (session: {session_id})")
+
+def after_agent_callback(ctx: CallbackContext) -> None:
+    """Callback to log agent completion time"""
+    agent_name = ctx.agent_name if hasattr(ctx, 'agent_name') else 'unknown_agent'
+    session_id = ctx.session_id if hasattr(ctx, 'session_id') else 'unknown_session'
+    
+    timing_key = f"{session_id}_{agent_name}"
+    if timing_key in _agent_timings:
+        start_time = _agent_timings[timing_key]
+        elapsed_time = time.time() - start_time
+        del _agent_timings[timing_key]  # Clean up
+        
+        print(f"⏱️ [AGENT-TIMING] Agent completed: {agent_name} in {elapsed_time:.2f}s (session: {session_id})")
+    else:
+        print(f"⚠️ [AGENT-TIMING] No start time found for agent: {agent_name}")
+
+def before_model_callback(ctx: CallbackContext) -> None:
+    """Callback to log model start time"""
+    model_name = getattr(ctx, 'model_name', 'unknown_model')
+    session_id = getattr(ctx, 'session_id', 'unknown_session')
+    
+    start_time = time.time()
+    _model_timings[f"{session_id}_{model_name}"] = start_time
+    
+    print(f"⏱️ [MODEL-TIMING] Starting model: {model_name} (session: {session_id})")
+
+def after_model_callback(ctx: CallbackContext) -> None:
+    """Callback to log model completion time"""
+    model_name = getattr(ctx, 'model_name', 'unknown_model')
+    session_id = getattr(ctx, 'session_id', 'unknown_session')
+    
+    timing_key = f"{session_id}_{model_name}"
+    if timing_key in _model_timings:
+        start_time = _model_timings[timing_key]
+        elapsed_time = time.time() - start_time
+        del _model_timings[timing_key]  # Clean up
+        
+        print(f"⏱️ [MODEL-TIMING] Model completed: {model_name} in {elapsed_time:.2f}s (session: {session_id})")
+    else:
+        print(f"⚠️ [MODEL-TIMING] No start time found for model: {model_name}")
+
+def before_tool_callback(ctx: CallbackContext) -> None:
+    """Callback to log tool start time"""
+    tool_name = getattr(ctx, 'tool_name', 'unknown_tool')
+    session_id = getattr(ctx, 'session_id', 'unknown_session')
+    
+    start_time = time.time()
+    _agent_timings[f"{session_id}_tool_{tool_name}"] = start_time
+    
+    print(f"⏱️ [TOOL-TIMING] Starting tool: {tool_name} (session: {session_id})")
+
+def after_tool_callback(ctx: CallbackContext) -> None:
+    """Callback to log tool completion time"""
+    tool_name = getattr(ctx, 'tool_name', 'unknown_tool')
+    session_id = getattr(ctx, 'session_id', 'unknown_session')
+    
+    timing_key = f"{session_id}_tool_{tool_name}"
+    if timing_key in _agent_timings:
+        start_time = _agent_timings[timing_key]
+        elapsed_time = time.time() - start_time
+        del _agent_timings[timing_key]  # Clean up
+        
+        print(f"⏱️ [TOOL-TIMING] Tool completed: {tool_name} in {elapsed_time:.2f}s (session: {session_id})")
+    else:
+        print(f"⚠️ [TOOL-TIMING] No start time found for tool: {tool_name}")
+
+
+def generate_image_with_gemini(prompt: str, style: str = "realistic", size: str = "1024x1024") -> Dict[str, Any]:
+    """
+    Generate an image using Google's Gemini Pro Vision model.
+    
+    Args:
+        prompt: Text description of the image to generate
+        style: Image style (realistic, artistic, cartoon, sketch, etc.)
+        size: Image dimensions (1024x1024, 1792x1024, 1024x1792)
+        
+    Returns:
+        Dict containing the generated image data or error information
+    """
+    try:
+        print(f"🎨 [IMAGE-GEN] Generating image with prompt: '{prompt}' (style: {style}, size: {size})")
+        
+        # For now, we'll return a placeholder since Gemini Pro doesn't support image generation yet
+        # This is a placeholder for future implementation when Gemini supports image generation
+        # or when we integrate with other image generation services like DALL-E or Stable Diffusion
+        
+        # Placeholder response structure
+        placeholder_response = {
+            "success": False,
+            "message": "Image generation is not yet available with the current Gemini model. This feature will be enabled when Gemini supports image generation or when we integrate with other image generation services.",
+            "suggestion": "For now, I can create visual representations using charts, diagrams, and other visualization tools. Would you like me to create a diagram or chart instead?",
+            "available_alternatives": [
+                "Mermaid diagrams for process flows and relationships",
+                "Chart.js charts for data visualization", 
+                "Text-based visual representations",
+                "Structured data displays"
+            ]
+        }
+        
+        print(f"⚠️ [IMAGE-GEN] Image generation not yet available: {placeholder_response['message']}")
+        return placeholder_response
+        
+    except Exception as e:
+        error_msg = f"Failed to generate image: {str(e)}"
+        print(f"❌ [IMAGE-GEN] {error_msg}")
+        return {
+            "success": False,
+            "message": error_msg,
+            "error": str(e)
+        }
+
+
+def create_visual_representation(content_type: str, data: Any, style: str = "professional") -> Dict[str, Any]:
+    """
+    Create alternative visual representations when image generation is not available.
+    
+    Args:
+        content_type: Type of content to visualize (data, process, relationship, etc.)
+        data: The data or content to visualize
+        style: Visual style preference
+        
+    Returns:
+        Dict containing alternative visualization options
+    """
+    try:
+        print(f"🎨 [VISUAL-REP] Creating visual representation for {content_type} with style: {style}")
+        
+        # Generate alternative visualization suggestions
+        alternatives = {
+            "data_visualization": {
+                "type": "chartjs",
+                "chartType": "bar",
+                "message": "I can create a chart to visualize this data. Would you like me to generate a bar chart, pie chart, or line chart?",
+                "entity": "Data Visualization"
+            },
+            "process_flow": {
+                "type": "mermaid", 
+                "message": "I can create a flowchart to show this process. Would you like me to generate a visual diagram?",
+                "entity": "Process Flow"
+            },
+            "relationships": {
+                "type": "mermaid",
+                "message": "I can create a relationship diagram to show connections between entities. Would you like me to generate a visual map?",
+                "entity": "Entity Relationships"
+            },
+            "organizational": {
+                "type": "mermaid",
+                "message": "I can create an organizational chart to show the structure. Would you like me to generate a visual hierarchy?",
+                "entity": "Organizational Structure"
+            }
+        }
+        
+        # Select appropriate alternative based on content type
+        if "data" in content_type.lower() or "statistics" in content_type.lower():
+            selected = alternatives["data_visualization"]
+        elif "process" in content_type.lower() or "flow" in content_type.lower():
+            selected = alternatives["process_flow"]
+        elif "relationship" in content_type.lower() or "connection" in content_type.lower():
+            selected = alternatives["relationships"]
+        elif "organization" in content_type.lower() or "structure" in content_type.lower():
+            selected = alternatives["organizational"]
+        else:
+            selected = alternatives["data_visualization"]
+        
+        print(f"✅ [VISUAL-REP] Generated alternative visualization: {selected['type']}")
+        return {
+            "success": True,
+            "alternative": selected,
+            "message": f"Since image generation isn't available yet, I can create a {selected['type']} visualization instead. Would you like me to proceed with that?"
+        }
+        
+    except Exception as e:
+        error_msg = f"Failed to create visual representation: {str(e)}"
+        print(f"❌ [VISUAL-REP] {error_msg}")
+        return {
+            "success": False,
+            "message": error_msg,
+            "error": str(e)
+        }
 
 
 def detect_entity_from_url(url: str) -> Optional[str]:
@@ -225,7 +416,7 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                         print(f"🔍 [AUTH-PARAMS] user_email for impersonation header: {user_email}")
                         idp_token = get_service_account_oidc_token(
                             target_audience,
-                            target_principal,
+                            target_principal,  # Use original service account email from config
                             use_idp=False,
                             subject=None
                         )
@@ -244,7 +435,6 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                         # Log token details for debugging
                         try:
                             import base64
-                            import json
                             parts = idp_token.split('.')
                             if len(parts) >= 2:
                                 payload = parts[1]
@@ -271,21 +461,24 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                 '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
             ])
             
+            print(f"🔍 [IMPERSONATION] Checking for impersonation user email:")
+            print(f"   is_google_api: {is_google_api}")
+            print(f"   tool_context exists: {tool_context is not None}")
+            
             if tool_context and hasattr(tool_context, 'state') and tool_context.state:
                 impersonated_user_email = tool_context.state.get('user_email')
+                print(f"   Found user_email in tool_context.state: {impersonated_user_email}")
             elif is_development and dev_email:
-                if is_google_api:
-                    impersonated_user_email = dev_email
-                    print(f"🧪 Using dev_email for Google API impersonation: {dev_email}")
+                impersonated_user_email = dev_email
+            else:
+                print(f"   No user email found in tool_context or dev_email")
             
-            # Add impersonation header for ALL Google APIs
-            if impersonated_user_email and is_google_api:
-                request_headers['x-unops-impersonated-user'] = impersonated_user_email
-                print(f"🔐 Added impersonated user header for Google API: {impersonated_user_email}")
-            elif impersonated_user_email and not is_google_api:
-                # For regular APIs, always add impersonation header if user email is available
+            # Add impersonation header for ALL APIs when user email is available
+            if impersonated_user_email:
                 request_headers['x-unops-impersonated-user'] = impersonated_user_email
                 print(f"🔐 Added impersonated user header: {impersonated_user_email}")
+            else:
+                print(f"⚠️ No impersonation header added - no user email available")
             
             print("🔐 Final request headers being sent to backend:")
             print(f"📋 Total headers: {len(request_headers)}")

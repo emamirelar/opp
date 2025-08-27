@@ -1,0 +1,287 @@
+{
+  "entity": "ContactAnalytics",
+  "description": "Contact analytics, insights, and activity metrics for analyzing contact engagement, geographic distribution, and interaction patterns",
+  "synonyms": ["contact analytics", "contact insights", "contact metrics", "contact activity", "contact engagement", "contact reports", "contact statistics"],
+  "endpoints": [
+    {
+      "name": "getMostActiveContacts",
+      "description": "Get contacts with highest interaction activity over a specified timeframe",
+      "url": "/api/contact-analytics/getMostActiveContacts",
+      "method": "GET",
+      "parameters": {
+        "limit": {
+          "type": "integer",
+          "description": "Number of contacts to return (default: 10)",
+          "required": false,
+          "default": 10
+        },
+        "timeframe": {
+          "type": "string",
+          "description": "Time period for analysis: 7d, 30d, 90d, 6m, 1y (default: 30d)",
+          "required": false,
+          "default": "30d"
+        },
+        "metric": {
+          "type": "string",
+          "description": "Metric to analyze: interactions (default: interactions)",
+          "required": false,
+          "default": "interactions"
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Get me the most active contacts",
+        "Show contacts with highest engagement",
+        "Find contacts with most interactions",
+        "List top 20 most active contacts in the last 90 days"
+      ]
+    },
+    {
+      "name": "getContactsByGeographicRegion",
+      "description": "Get contact distribution by geographic regions (country, state, city)",
+      "url": "/api/contact-analytics/getContactsByGeographicRegion",
+      "method": "GET",
+      "parameters": {
+        "period": {
+          "type": "string",
+          "description": "Time period: 7d, 30d, 90d, 6m, 1y, all (default: all)",
+          "required": false,
+          "default": "all"
+        },
+        "minCount": {
+          "type": "integer",
+          "description": "Minimum number of contacts required (default: 1)",
+          "required": false,
+          "default": 1
+        },
+        "groupBy": {
+          "type": "string",
+          "description": "Grouping level: country, state, city (default: country)",
+          "required": false,
+          "default": "country"
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Show contact distribution by country",
+        "Get contacts grouped by geographic region",
+        "Find contact distribution across regions",
+        "List contacts by country with at least 5 contacts"
+      ]
+    },
+    {
+      "name": "getContactEngagementTrends",
+      "description": "Get contact engagement trends over time with interaction patterns",
+      "url": "/api/contact-analytics/getContactEngagementTrends",
+      "method": "GET",
+      "parameters": {
+        "period": {
+          "type": "string",
+          "description": "Time grouping: daily, monthly (default: monthly)",
+          "required": false,
+          "default": "monthly"
+        },
+        "months": {
+          "type": "integer",
+          "description": "Number of months to analyze (default: 12)",
+          "required": false,
+          "default": 12
+        },
+        "metric": {
+          "type": "string",
+          "description": "Metric to analyze: interactions (default: interactions)",
+          "required": false,
+          "default": "interactions"
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Show contact engagement trends",
+        "Get contact activity over time",
+        "Find engagement patterns for contacts",
+        "Analyze contact interaction trends over the last 6 months"
+      ]
+    },
+    {
+      "name": "getContactsByInteractionType",
+      "description": "Get contacts grouped by interaction types (Email, Call, Meeting, etc.)",
+      "url": "/api/contact-analytics/getContactsByInteractionType",
+      "method": "GET",
+      "parameters": {
+        "type": {
+          "type": "string",
+          "description": "Interaction type filter: Email, Chat, Call, VirtualMeeting, InPersonMeeting, Other",
+          "required": false
+        },
+        "startDate": {
+          "type": "datetime",
+          "description": "Start date for filtering interactions",
+          "required": false
+        },
+        "endDate": {
+          "type": "datetime",
+          "description": "End date for filtering interactions",
+          "required": false
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Number of contacts to return (default: 20)",
+          "required": false,
+          "default": 20
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Show contacts by interaction type",
+        "Get contacts who prefer email communication",
+        "Find contacts with most meeting interactions",
+        "List contacts grouped by communication preferences"
+      ]
+    },
+    {
+      "name": "getContactsByPartner",
+      "description": "Get contact distribution across partners with engagement metrics",
+      "url": "/api/contact-analytics/getContactsByPartner",
+      "method": "GET",
+      "parameters": {
+        "minContacts": {
+          "type": "integer",
+          "description": "Minimum number of contacts per partner (default: 1)",
+          "required": false,
+          "default": 1
+        },
+        "includeInactive": {
+          "type": "boolean",
+          "description": "Include inactive contacts (default: false)",
+          "required": false,
+          "default": false
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Show contact distribution by partner",
+        "Get contacts grouped by partner organization",
+        "Find which partners have most contacts",
+        "List partner contact ratios"
+      ]
+    },
+    {
+      "name": "getRecentlyActiveContacts",
+      "description": "Get recently active contacts with interaction history",
+      "url": "/api/contact-analytics/getRecentlyActiveContacts",
+      "method": "GET",
+      "parameters": {
+        "days": {
+          "type": "integer",
+          "description": "Number of days to look back (default: 30)",
+          "required": false,
+          "default": 30
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Number of contacts to return (default: 20)",
+          "required": false,
+          "default": 20
+        },
+        "sortBy": {
+          "type": "string",
+          "description": "Sort by: lastInteraction, interactionCount (default: lastInteraction)",
+          "required": false,
+          "default": "lastInteraction"
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Show recently active contacts",
+        "Get contacts active in the last week",
+        "Find contacts with recent interactions",
+        "List recently engaged contacts"
+      ]
+    },
+    {
+      "name": "getContactsByJobTitle",
+      "description": "Get contact distribution by job titles with optional interaction data",
+      "url": "/api/contact-analytics/getContactsByJobTitle",
+      "method": "GET",
+      "parameters": {
+        "minContacts": {
+          "type": "integer",
+          "description": "Minimum number of contacts per title (default: 1)",
+          "required": false,
+          "default": 1
+        },
+        "includeInteractions": {
+          "type": "boolean",
+          "description": "Include interaction counts (default: false)",
+          "required": false,
+          "default": false
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Show contacts by job title",
+        "Get contact distribution by roles",
+        "Find most common job titles among contacts",
+        "List contacts grouped by professional roles"
+      ]
+    },
+    {
+      "name": "getContactGrowthTrends",
+      "description": "Get contact growth trends over time with cumulative totals",
+      "url": "/api/contact-analytics/getContactGrowthTrends",
+      "method": "GET",
+      "parameters": {
+        "period": {
+          "type": "string",
+          "description": "Time grouping: daily, monthly (default: monthly)",
+          "required": false,
+          "default": "monthly"
+        },
+        "months": {
+          "type": "integer",
+          "description": "Number of months to analyze (default: 12)",
+          "required": false,
+          "default": 12
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Show contact growth trends",
+        "Get contact creation patterns over time",
+        "Find contact growth rate",
+        "Analyze new contact acquisition trends"
+      ]
+    },
+    {
+      "name": "getContactsWithMostDocuments",
+      "description": "Get contacts with most associated documents and file details",
+      "url": "/api/contact-analytics/getContactsWithMostDocuments",
+      "method": "GET",
+      "parameters": {
+        "limit": {
+          "type": "integer",
+          "description": "Number of contacts to return (default: 10)",
+          "required": false,
+          "default": 10
+        },
+        "startDate": {
+          "type": "datetime",
+          "description": "Start date for filtering documents",
+          "required": false
+        },
+        "endDate": {
+          "type": "datetime",
+          "description": "End date for filtering documents",
+          "required": false
+        }
+      },
+      "intents": ["search", "analyze", "get", "find"],
+      "examples": [
+        "Show contacts with most documents",
+        "Get contacts with highest document activity",
+        "Find contacts with most file associations",
+        "List contacts by document count"
+      ]
+    }
+  ]
+}

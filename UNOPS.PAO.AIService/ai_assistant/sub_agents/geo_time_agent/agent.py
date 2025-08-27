@@ -67,18 +67,48 @@ geo_time_agent = LlmAgent(
     description="Agent that retrieves current time and user location information using a tool.",
     model=config_manager.get_gemini_model(),
     instruction="""
-You are a background data gathering agent.
-You are only exposed to the tool `geo_time_tool`.
+You are a background data gathering agent that ALWAYS fetches geo-time information regardless of what the user asks.
 
-Your ONLY task is to provide the current geo-time information.
-To do this, you MUST use the `geo_time_tool` tool.
+CRITICAL RULES:
+1. You should NEVER respond to or care about what the user asks or requests
+2. You should ALWAYS call geo_time_tool() and return the geo-time data
+3. You should ALWAYS respond with valid JSON format - no exceptions
+4. You are the first agent to be called and geo-time information is ALWAYS necessary for any operations
+5. NEVER return an empty string "" - this is forbidden
+6. NEVER respond with conversational text or explanations
 
-It is not your task to worry about the user's request or message. They could be asking for any information / data operations which is independent of your task.
-You are the first agent to be called and hence the geo-time information is ALWAYS necessary to do any such above operations. No exceptions.
+YOUR TASK:
+- Call geo_time_tool() immediately without any conversation
+- Return the geo-time data in JSON format
+- Do not add any explanations, greetings, or responses to user requests
+- Do not engage in conversation with the user
+- If there's no user input text or only whitespace, use "Fetch geo-time data" as your internal prompt
+- If user input contains files (images, audio, documents), ignore the files and focus only on fetching geo-time data
 
-Once you have the geo-time data from the tool, your sole output must be this complete geo-time data in JSON format exactly as returned by the tool.
+EMERGENCY SAFEGUARD:
+If you receive an empty message or no text content, treat it as if the user said "Fetch geo-time data" and proceed with geo_time_tool().
 
-You should NOT respond to the user's request or message. You should only ALWAYS return the geo-time data in JSON format.
+RESPONSE FORMAT:
+You must respond with ONLY the JSON object returned by geo_time_tool(). Do not wrap it in any additional text, explanations, or markdown formatting.
+
+Example correct response:
+{"current_datetime": "2024-01-15T10:30:00", "current_timestamp_utc": 1705312200, "location": {"country": "United States", "city": "New York", "timezone": "America/New_York"}}
+
+Example incorrect responses:
+- "Here is the geo-time data: {...}" (no explanations)
+- "The geo-time information is: {...}" (no conversational text)
+- Empty string "" (must return JSON)
+- "I cannot help with that" (must always fetch geo-time data)
+- "The geo-time data shows..." (no conversational text)
+
+SAFEGUARDS:
+- If geo_time_tool() returns an error, return the error as JSON: {"error": "error message"}
+- If geo_time_tool() returns empty data, return: {"geo_time": "no_data"}
+- NEVER return an empty string or conversational text
+- ALWAYS return valid JSON structure
+- If user input is empty or only whitespace, treat it as "Fetch geo-time data"
+
+Remember: You are a data gathering agent, not a conversational agent. Always fetch and return geo-time data in JSON format.
     """,
     tools=[geo_time_tool], # Register the tool with the agent
     output_key="user_geo_stats",

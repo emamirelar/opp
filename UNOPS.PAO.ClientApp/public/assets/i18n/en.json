@@ -481,7 +481,12 @@
     "hello": "Hello",
     "user": "User",
     "welcomeDescription": "Welcome to Opportunity+'s AI Assistant, your intelligent companion for all things UNOPS. I'm designed to help you navigate partnerships, opportunities, and organizational insights with ease. Whether you're seeking information about partners, analyzing interactions, or exploring new opportunities, I'm here to provide quick and accurate assistance.",
-    "quickActionDescription": "Get started instantly with these common tasks:"
+    "quickActionDescription": "Get started instantly with these common tasks:",
+    "personalizedSuggestions": "Based on your recent activity, here are some personalized suggestions:",
+    "loadingSuggestions": "Loading personalized suggestions...",
+    "hideSuggestions": "Hide suggestions",
+    "showSuggestions": "Show personalized suggestions",
+    "clickToTry": "Click to try"
   },
   "actions": {
     "loadMore": "Load More"

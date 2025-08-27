@@ -218,48 +218,13 @@ Transform the provided controller metadata into an entity-specific JSON configur
 {search_metadata_section}
 
 ## OUTPUT FORMAT
-Generate a valid JSON object with this EXACT structure:
+Generate a valid JSON object with this EXACT structure. Use COMPACT JSON formatting (minimal whitespace) to reduce token count:
+
 ```json
-{{
-  "entity": "<EntityName>",
-  "description": "<Description of what this entity manages>",
-  "synonyms": ["<synonym1>", "<synonym2>", "<synonym3>", "<synonym4>", "<synonym5>"],
-  "mandatoryFields": ["<field1>", "<field2>", "<field3>"],
-  "searchMetadata": {{
-    "directFields": ["<direct_field1>", "<direct_field2>"],
-    "nestedFields": {{
-      "<related_entity>": ["<nested_field1>", "<nested_field2>"]
-    }},
-    "operators": ["like", "is", "not", "contains", "startsWith", "between"],
-    "dateFields": ["<date_field1>", "<date_field2>"],
-    "exampleCriteria": [
-      {{
-        "field": "<field_name>",
-        "operator": "<operator>",
-        "value": "<example_value>",
-        "description": "<usage_description>"
-      }}
-    ]
-  }},
-  "endpoints": [
-    {{
-      "name": "<MethodName>",
-      "url": "<FullRouteURL>",
-      "method": "<HTTPMethod>",
-      "description": "<Detailed description>",
-      "parameters": {{
-        "<paramName>": {{ "type": "<type>", "required": <boolean>, "description": "<description>" }}
-      }},
-      "example_uses": [
-        "<Natural language example 1>",
-        "<Natural language example 2>",
-        "<Natural language example 3>"
-      ],
-      "when_to_use": "<Clear guidance on when to use this endpoint>"
-    }}
-  ]
-}}
+{{"entity":"<EntityName>","description":"<Description of what this entity manages>","synonyms":["<synonym1>","<synonym2>","<synonym3>","<synonym4>","<synonym5>"],"mandatoryFields":["<field1>","<field2>","<field3>"],"searchMetadata":{{"directFields":["<direct_field1>","<direct_field2>"],"nestedFields":{{"<related_entity>":["<nested_field1>","<nested_field2>"]}},"operators":["like","is","not","contains","startsWith","between"],"dateFields":["<date_field1>","<date_field2>"],"exampleCriteria":[{{"field":"<field_name>","operator":"<operator>","value":"<example_value>","description":"<usage_description>"}}]}},"endpoints":[{{"name":"<MethodName>","url":"<FullRouteURL>","method":"<HTTPMethod>","description":"<Detailed description>","parameters":{{"<paramName>":{{"type":"<type>","required":<boolean>,"description":"<description>"}}}},"example_uses":["<Natural language example 1>","<Natural language example 2>","<Natural language example 3>"],"when_to_use":"<Clear guidance on when to use this endpoint>"}}]}}
 ```
+
+**CRITICAL: Use compact JSON format with minimal whitespace to reduce token count and avoid generation issues.**
 
 ## CRITICAL REQUIREMENTS
 
@@ -316,6 +281,8 @@ Generate a valid JSON object with this EXACT structure:
 ```
 
 Generate the entity configuration JSON now (JSON only, no explanations):
+
+**FINAL INSTRUCTION: Output ONLY valid, compact JSON with minimal whitespace. Do not include any explanations, markdown formatting, or code blocks. Start directly with {{ and end with }}.**
 """
         return prompt
 
@@ -333,8 +300,13 @@ Generate the entity configuration JSON now (JSON only, no explanations):
         estimated_tokens = len(prompt.split()) * 1.3  # Rough estimate
         print(f"[STATS] Estimated token count: {estimated_tokens:.0f}")
         
-        if estimated_tokens > 900000:  # Conservative limit for Gemini Pro 1.5
-            print("[WARNING] Large payload detected, consider chunking for production use")
+        if estimated_tokens > 300000:  # More conservative limit
+            print("[WARNING] Large payload detected, attempting to reduce complexity")
+            # Try to simplify the metadata by removing detailed parameter information
+            simplified_metadata = self.simplify_metadata(metadata)
+            prompt = self.create_generation_prompt(simplified_metadata)
+            estimated_tokens = len(prompt.split()) * 1.3
+            print(f"[STATS] Simplified token count: {estimated_tokens:.0f}")
         
         try:
             # Generate with Vertex AI Gemini
@@ -342,7 +314,7 @@ Generate the entity configuration JSON now (JSON only, no explanations):
                 temperature=0.1,  # Low temperature for consistent output
                 top_p=0.8,
                 top_k=40,
-                max_output_tokens=8192,
+                max_output_tokens=16384,  # Increased for larger responses
             )
             
             response = self.model.generate_content(
@@ -368,10 +340,108 @@ Generate the entity configuration JSON now (JSON only, no explanations):
                 json.loads(response_text)
                 return response_text
             except json.JSONDecodeError as e:
-                raise Exception(f"Generated content is not valid JSON: {str(e)}")
+                # Try to fix common JSON issues
+                fixed_response = self.fix_json_issues(response_text)
+                try:
+                    json.loads(fixed_response)
+                    return fixed_response
+                except json.JSONDecodeError:
+                    raise Exception(f"Generated content is not valid JSON: {str(e)}")
                 
         except Exception as e:
             raise Exception(f"Failed to generate with Vertex AI Gemini: {str(e)}")
+    
+    def simplify_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """Simplify metadata to reduce token count"""
+        simplified = metadata.copy()
+        
+        for controller in simplified.get('Controllers', []):
+            for method in controller.get('Methods', []):
+                # Remove detailed parameter properties to reduce complexity
+                for param in method.get('Parameters', []):
+                    if 'Properties' in param:
+                        param['Properties'] = []  # Remove detailed property info
+                
+                # Limit example uses to 2-3 items
+                if 'ExampleUses' in method and len(method['ExampleUses']) > 3:
+                    method['ExampleUses'] = method['ExampleUses'][:3]
+        
+        return simplified
+    
+    def fix_json_issues(self, json_text: str) -> str:
+        """Attempt to fix common JSON formatting issues"""
+        # Remove trailing commas
+        json_text = json_text.replace(',}', '}').replace(',]', ']')
+        
+        # Fix unescaped quotes in strings
+        # This is a simple fix - for more complex issues, manual review may be needed
+        lines = json_text.split('\n')
+        fixed_lines = []
+        
+        for line in lines:
+            # Fix common quote issues
+            if line.count('"') % 2 != 0:
+                # Odd number of quotes - try to fix
+                if line.strip().endswith('"'):
+                    line = line.rstrip() + '",'
+                elif line.strip().endswith(','):
+                    line = line.rstrip(',') + '",'
+            
+            fixed_lines.append(line)
+        
+        return '\n'.join(fixed_lines)
+    
+    def process_large_controller(self, controller: Dict[str, Any], metadata: Dict[str, Any]) -> str:
+        """Process large controllers by chunking their methods"""
+        methods = controller.get('Methods', [])
+        chunk_size = 10  # Process 10 methods at a time
+        
+        # Split methods into chunks
+        method_chunks = [methods[i:i + chunk_size] for i in range(0, len(methods), chunk_size)]
+        
+        all_endpoints = []
+        entity_name = controller.get('Name', 'Unknown').replace('Controller', '')
+        
+        for i, chunk in enumerate(method_chunks):
+            print(f"      [CHUNK] Processing chunk {i+1}/{len(method_chunks)} ({len(chunk)} methods)")
+            
+            # Create chunked controller
+            chunked_controller = controller.copy()
+            chunked_controller['Methods'] = chunk
+            
+            # Create metadata for this chunk
+            chunk_metadata = {
+                "AssemblyName": metadata.get('AssemblyName', 'Unknown'),
+                "AssemblyVersion": metadata.get('AssemblyVersion', 'Unknown'), 
+                "ExtractedAt": metadata.get('ExtractedAt', 'Unknown'),
+                "Controllers": [chunked_controller]
+            }
+            
+            try:
+                # Generate tools for this chunk
+                chunk_tools_json = self.generate_tools_json(chunk_metadata)
+                chunk_data = json.loads(chunk_tools_json)
+                
+                # Extract endpoints from this chunk
+                chunk_endpoints = chunk_data.get('endpoints', [])
+                all_endpoints.extend(chunk_endpoints)
+                
+                print(f"      [OK] Generated {len(chunk_endpoints)} endpoints from chunk {i+1}")
+                
+            except Exception as e:
+                print(f"      [ERROR] Failed to process chunk {i+1}: {e}")
+                # Continue with other chunks
+        
+        # Combine all endpoints into final result
+        final_result = {
+            "entity": entity_name,
+            "description": f"Manages {entity_name.lower()} data and operations",
+            "synonyms": [entity_name.lower(), f"{entity_name.lower()}s", f"{entity_name.lower()}Data"],
+            "mandatoryFields": ["id"],
+            "endpoints": all_endpoints
+        }
+        
+        return json.dumps(final_result, separators=(',', ':'))
     
     def save_tools_json(self, tools_json: str, output_path: str):
         """Save the generated tools.json to file"""
@@ -433,16 +503,21 @@ Generate the entity configuration JSON now (JSON only, no explanations):
             print(f"   [STATS] {method_count} endpoints")
             
             try:
-                # Create single-controller metadata for LLM processing
-                single_controller_metadata = {
-                    "AssemblyName": metadata.get('AssemblyName', 'Unknown'),
-                    "AssemblyVersion": metadata.get('AssemblyVersion', 'Unknown'), 
-                    "ExtractedAt": metadata.get('ExtractedAt', 'Unknown'),
-                    "Controllers": [controller]
-                }
-                
-                # Generate tools for this controller
-                controller_tools_json = self.generate_tools_json(single_controller_metadata)
+                # Check if controller is too large and needs chunking
+                if method_count > 15:  # If more than 15 methods, process in chunks
+                    print(f"   [INFO] Large controller detected, processing in chunks...")
+                    controller_tools_json = self.process_large_controller(controller, metadata)
+                else:
+                    # Create single-controller metadata for LLM processing
+                    single_controller_metadata = {
+                        "AssemblyName": metadata.get('AssemblyName', 'Unknown'),
+                        "AssemblyVersion": metadata.get('AssemblyVersion', 'Unknown'), 
+                        "ExtractedAt": metadata.get('ExtractedAt', 'Unknown'),
+                        "Controllers": [controller]
+                    }
+                    
+                    # Generate tools for this controller
+                    controller_tools_json = self.generate_tools_json(single_controller_metadata)
                 
                 # Save individual controller tools file in tools subdirectory
                 controller_tools_file = os.path.join(tools_dir, f"{clean_name}-tools.json")

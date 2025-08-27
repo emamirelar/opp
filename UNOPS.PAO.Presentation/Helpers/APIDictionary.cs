@@ -54,6 +54,24 @@ public class APIDictionary
     // Partner
     public const string Partner = APIPrefix + "partner";
     public const string PartnerContacts = Partner + "/{partnerId}/contacts";
+    
+    // Partner Analytics
+    public const string PartnerAnalyticsMostActive = Partner + "/analytics/mostActive";
+    public const string PartnerAnalyticsByUser = Partner + "/analytics/byUser";
+    public const string PartnerAnalyticsEngagementTrends = Partner + "/analytics/engagementTrends";
+    public const string PartnerAnalyticsByCountry = Partner + "/analytics/byCountry";
+
+    // Contact Analytics
+    public const string ContactAnalytics = APIPrefix + "contact-analytics";
+    public const string ContactAnalyticsMostActive = ContactAnalytics + "/getMostActiveContacts";
+    public const string ContactAnalyticsByGeographicRegion = ContactAnalytics + "/getContactsByGeographicRegion";
+    public const string ContactAnalyticsEngagementTrends = ContactAnalytics + "/getContactEngagementTrends";
+    public const string ContactAnalyticsByInteractionType = ContactAnalytics + "/getContactsByInteractionType";
+    public const string ContactAnalyticsByPartner = ContactAnalytics + "/getContactsByPartner";
+    public const string ContactAnalyticsRecentlyActive = ContactAnalytics + "/getRecentlyActiveContacts";
+    public const string ContactAnalyticsByJobTitle = ContactAnalytics + "/getContactsByJobTitle";
+    public const string ContactAnalyticsGrowthTrends = ContactAnalytics + "/getContactGrowthTrends";
+    public const string ContactAnalyticsWithMostDocuments = ContactAnalytics + "/getContactsWithMostDocuments";
 
     public const string OrganizationHierarchy = APIPrefix + "organization-hierarchy";
 
@@ -125,6 +143,7 @@ public class APIDictionary
     public const string PreferredLanguage = Global + "/preferred-language";
 
     public const string AiAssistantGenerateTitle = APIPrefix + "ai-assistant/generate-title";
+    public const string AiAssistantGenerateSuggestions = APIPrefix + "ai-assistant/generate-suggestions";
 
     // Dashboard
     public const string Dashboard = APIPrefix + "dashboard";

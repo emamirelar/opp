@@ -140,7 +140,7 @@ class TourGenerator:
         }
     
     def generate_tour_from_ui_metadata(self, entity_name: str, ui_metadata: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate a complete DriverJS tour from UI metadata"""
+        """Generate a complete DriverJS tour from UI metadata matching existing format"""
         pages = ui_metadata.get('pages', [])
         if not pages:
             return None
@@ -148,9 +148,6 @@ class TourGenerator:
         # For now, focus on the main page (usually the first one)
         main_page = pages[0]
         buttons = main_page.get('buttons', [])
-        
-        if not buttons:
-            return None
         
         # Sort buttons by priority
         def get_button_priority(button):
@@ -165,29 +162,53 @@ class TourGenerator:
         # Create tour steps
         steps = []
         
-        # Add overview step
-        steps.append(self.create_page_overview_step(main_page))
-        
-        # Add button steps
-        for i, button in enumerate(sorted_buttons[:6], 1):  # Limit to 6 buttons for good UX
-            step = self.create_tour_step(button, i)
-            steps.append(step)
-        
-        # Add completion step
+        # Add welcome step (matches existing format)
         steps.append({
             "popover": {
-                "title": "Tour Complete!",
-                "description": f"You've learned the key features of {entity_name}. You can always restart this tour from the help menu.",
+                "titleKey": f"tour.{entity_name.lower()}.steps.welcome.title",
+                "descriptionKey": f"tour.{entity_name.lower()}.steps.welcome.description",
                 "side": "over",
                 "align": "center"
             }
         })
         
-        # Create tour configuration
+        # Add section header step if mentioned in buttons
+        header_buttons = [b for b in sorted_buttons if 'header' in b.get('id', '').lower() or 'section' in b.get('id', '').lower()]
+        if header_buttons:
+            steps.append({
+                "element": f".{entity_name.lower()}-section-header",
+                "fallbackType": "section-header",
+                "popover": {
+                    "titleKey": f"tour.{entity_name.lower()}.steps.header.title",
+                    "descriptionKey": f"tour.{entity_name.lower()}.steps.header.description",
+                    "side": "bottom",
+                    "align": "start"
+                }
+            })
+        
+        # Add button steps (limit to 6 for good UX)
+        for button in sorted_buttons[:6]:
+            step = self.create_tour_step_with_i18n(button, entity_name)
+            if step:
+                steps.append(step)
+        
+        # Add tour control step (standard across all tours)
+        steps.append({
+            "element": "app-tour-control",
+            "fallbackType": "tour-control",
+            "popover": {
+                "titleKey": f"tour.{entity_name.lower()}.steps.tourControl.title",
+                "descriptionKey": f"tour.{entity_name.lower()}.steps.tourControl.description",
+                "side": "bottom",
+                "align": "center"
+            }
+        })
+        
+        # Create tour configuration matching existing format
         tour_config = {
-            "tourId": f"{entity_name.lower()}-overview",
-            "title": f"{entity_name} Overview Tour",
-            "description": ui_metadata.get('description', f'Learn how to use {entity_name} features'),
+            "tourId": f"{entity_name.lower()}-tour",
+            "titleKey": f"tour.{entity_name.lower()}.title",
+            "descriptionKey": f"tour.{entity_name.lower()}.description",
             "entity": entity_name,
             "route": main_page.get('route', ''),
             "showButtons": [
@@ -204,6 +225,58 @@ class TourGenerator:
         }
         
         return tour_config
+    
+    def create_tour_step_with_i18n(self, button_metadata: Dict[str, Any], entity_name: str) -> Optional[Dict[str, Any]]:
+        """Create a tour step with i18n keys matching existing format"""
+        button_id = button_metadata.get('id', '')
+        label = button_metadata.get('label', '')
+        
+        if not button_id and not label:
+            return None
+        
+        # Generate CSS selector
+        selectors = self.generate_primeng_selectors(button_metadata)
+        primary_selector = selectors[0] if selectors else 'button'
+        
+        # Convert button ID to step key
+        if button_id:
+            step_key = button_id.replace('_', '').replace('-', '').lower()
+        else:
+            step_key = label.lower().replace(' ', '').replace('-', '')
+        
+        # Generate fallback type
+        fallback_type = self.generate_fallback_type(button_metadata)
+        
+        step = {
+            "element": primary_selector,
+            "fallbackType": fallback_type,
+            "popover": {
+                "titleKey": f"tour.{entity_name.lower()}.steps.{step_key}.title",
+                "descriptionKey": f"tour.{entity_name.lower()}.steps.{step_key}.description",
+                "side": "bottom",
+                "align": "start"
+            }
+        }
+        
+        return step
+    
+    def generate_fallback_type(self, button_metadata: Dict[str, Any]) -> str:
+        """Generate fallback type for button"""
+        button_id = button_metadata.get('id', '')
+        label = button_metadata.get('label', '')
+        
+        if 'new' in button_id.lower() or 'create' in button_id.lower() or 'add' in label.lower():
+            return "new-button"
+        elif 'import' in button_id.lower() or 'import' in label.lower():
+            return "import-button"
+        elif 'search' in button_id.lower() or 'search' in label.lower():
+            return "search-input"
+        elif 'filter' in button_id.lower() or 'advanced' in label.lower():
+            return "advanced-search"
+        elif 'export' in button_id.lower() or 'export' in label.lower():
+            return "export-button"
+        else:
+            return button_id.replace('_', '-') if button_id else "button"
     
     def process_ui_metadata_directory(self, ui_tools_dir: str, output_dir: str):
         """Process all UI metadata files and generate tours"""
@@ -231,6 +304,7 @@ class TourGenerator:
         print()
         
         generated_tours = []
+        tour_registry_entries = []
         
         for ui_file in ui_files:
             try:
@@ -256,6 +330,16 @@ class TourGenerator:
                     
                     generated_tours.append(tour_path)
                     
+                    # Add to registry entries
+                    route = tour_config.get('route', '')
+                    if route:
+                        tour_registry_entries.append({
+                            "pattern": route,
+                            "tourFile": tour_filename.replace('.json', ''),
+                            "description": ui_metadata.get('description', f'{entity_name} page'),
+                            "entity": entity_name
+                        })
+                    
                     step_count = len(tour_config['steps'])
                     print(f"   [OK] Generated tour with {step_count} steps -> {tour_filename}")
                 else:
@@ -263,6 +347,10 @@ class TourGenerator:
                 
             except Exception as e:
                 print(f"   [ERROR] Failed to process {ui_file.name}: {e}")
+        
+        # Update tour registry
+        if tour_registry_entries:
+            self.update_tour_registry(output_path, tour_registry_entries)
         
         print()
         print("=" * 80)
@@ -274,6 +362,91 @@ class TourGenerator:
             for tour_file in generated_tours:
                 file_size = tour_file.stat().st_size
                 print(f"   - {tour_file.name} ({file_size:,} bytes)")
+        
+        if tour_registry_entries:
+            print()
+            print("[REGISTRY] Updated tour registry with new entries:")
+            for entry in tour_registry_entries:
+                print(f"   - {entry['pattern']} -> {entry['tourFile']}")
+    
+    def update_tour_registry(self, tours_dir: Path, new_entries: List[Dict[str, Any]]):
+        """Update the tour registry with new entries"""
+        registry_path = tours_dir / "tour-registry.json"
+        
+        try:
+            # Load existing registry
+            if registry_path.exists():
+                with open(registry_path, 'r', encoding='utf-8') as f:
+                    registry = json.load(f)
+            else:
+                registry = {"routes": [], "fallbackSelectors": {}}
+            
+            # Get existing routes to avoid duplicates
+            existing_patterns = {route.get('pattern', '') for route in registry.get('routes', [])}
+            
+            # Add new entries that don't already exist
+            routes = registry.get('routes', [])
+            added_count = 0
+            
+            for entry in new_entries:
+                pattern = entry.get('pattern', '')
+                if pattern and pattern not in existing_patterns:
+                    routes.append({
+                        "pattern": pattern,
+                        "tourFile": entry['tourFile'],
+                        "description": entry['description']
+                    })
+                    existing_patterns.add(pattern)
+                    added_count += 1
+            
+            registry['routes'] = routes
+            
+            # Ensure fallbackSelectors exist with some defaults
+            if not registry.get('fallbackSelectors'):
+                registry['fallbackSelectors'] = {
+                    "new-button": [
+                        "p-button[label*=\"New\"]",
+                        "p-button[icon=\"pi pi-plus\"]", 
+                        "button[title*=\"New\"]",
+                        ".pi-plus",
+                        "p-button"
+                    ],
+                    "import-button": [
+                        "p-button[label*=\"Import\"]",
+                        "p-button[icon=\"pi pi-file-import\"]",
+                        "button[title*=\"Import\"]"
+                    ],
+                    "search-input": [
+                        ".quick-search input",
+                        ".search-input",
+                        "p-inputtext[placeholder*=\"Search\"]",
+                        "input[type=\"search\"]"
+                    ],
+                    "advanced-search": [
+                        ".advanced-search",
+                        "p-button[label*=\"Advanced\"]",
+                        ".filter-button"
+                    ],
+                    "section-header": [
+                        ".section-header",
+                        ".page-header", 
+                        "h1, h2, h3"
+                    ],
+                    "tour-control": [
+                        "app-tour-control",
+                        ".tour-control-button",
+                        "p-button[label*=\"Tour\"]"
+                    ]
+                }
+            
+            # Save updated registry
+            with open(registry_path, 'w', encoding='utf-8') as f:
+                json.dump(registry, f, indent=2, ensure_ascii=False)
+            
+            print(f"[REGISTRY] Added {added_count} new route(s) to tour registry")
+            
+        except Exception as e:
+            print(f"[ERROR] Failed to update tour registry: {e}")
 
 def main():
     import argparse

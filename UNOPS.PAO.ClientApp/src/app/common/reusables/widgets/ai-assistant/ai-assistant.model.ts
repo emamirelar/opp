@@ -53,6 +53,18 @@ export interface AiResponse {
   url?: string;
 }
 
+export interface SuggestionsResponse {
+  suggestions: string[];
+  user_id: number;
+  total_actions_found: number;
+}
+
+export interface SuggestionItem {
+  text: string;
+  icon: string;
+  action: () => void;
+}
+
 export enum ScreenToOpenByAiActionCategory {
   "Contact" = "contacts",
   "Partner" = "partners",

@@ -1,14 +1,12 @@
 {
   "entity": "Interaction",
-  "description": "Manages communication and engagement records with partners and contacts, including meetings, calls, and emails. It tracks details like type, date, participants, and related entities.",
+  "description": "Manages communication records, meetings, and other engagements with partners, contacts, and internal users.",
   "synonyms": [
-    "communication",
-    "engagement",
-    "meeting",
-    "call",
-    "activity",
-    "log",
-    "record"
+    "Communication",
+    "Meeting",
+    "Call",
+    "Activity",
+    "Engagement"
   ],
   "mandatoryFields": [
     "Type",
@@ -107,88 +105,16 @@
       "method": "POST",
       "description": "Creates a new interaction record with complete details including participants, type, and associated entities.",
       "parameters": {
-        "Type": {
-          "type": "string",
-          "required": true,
-          "description": "Type of interaction (e.g., 'Meeting', 'Email', 'Call')"
-        },
-        "Date": {
-          "type": "string",
-          "required": true,
-          "description": "Date and time of the interaction"
-        },
-        "Description": {
-          "type": "string",
-          "required": false,
-          "description": "Detailed description of the interaction"
-        },
-        "ContactId": {
-          "type": "integer",
-          "required": true,
-          "description": "ID of the primary contact involved in the interaction"
-        },
-        "EmailAddresses": {
-          "type": "array",
-          "required": false,
-          "description": "List of email addresses involved"
-        },
-        "PhoneNumbers": {
-          "type": "array",
-          "required": false,
-          "description": "List of phone numbers involved"
-        },
-        "ContactIds": {
-          "type": "array",
-          "required": false,
-          "description": "List of IDs of additional contacts involved"
-        },
-        "PartnerIds": {
-          "type": "array",
-          "required": false,
-          "description": "List of IDs of partners involved"
-        },
-        "UserIds": {
-          "type": "array",
-          "required": false,
-          "description": "List of IDs of users involved"
-        },
-        "Location": {
-          "type": "string",
-          "required": false,
-          "description": "Location of the interaction"
-        },
-        "Subject": {
-          "type": "string",
-          "required": false,
-          "description": "Subject or title of the interaction"
-        },
-        "OrganizationHierarchyIds": {
-          "type": "array",
-          "required": false,
-          "description": "List of IDs for organizational hierarchy"
-        },
-        "GmailThreadId": {
-          "type": "string",
-          "required": false,
-          "description": "Gmail thread ID if applicable"
-        },
-        "GmailMessageId": {
-          "type": "string",
-          "required": false,
-          "description": "Gmail message ID if applicable"
-        },
-        "Extensions": {
+        "req": {
           "type": "object",
-          "required": false,
-          "description": "Additional custom properties"
+          "required": true,
+          "description": "Interaction creation request with all required details"
         }
       },
       "example_uses": [
         "Create a new meeting with UNICEF on project planning",
         "Record email interaction with partner contacts",
-        "Add conference call with multiple stakeholders",
-        "Log face-to-face meeting at headquarters",
-        "Create virtual meeting interaction record"
+        "Add conference call with multiple stakeholders"
       ],
       "when_to_use": "Use this when the user asks to create, add, record, or log a new interaction, meeting, call, or communication."
     },
@@ -196,7 +122,7 @@
       "name": "ListAllInteractions",
       "url": "/api/interactions",
       "method": "GET",
-      "description": "Retrieves all interactions with basic pagination and ordering (no search criteria).",
+      "description": "Retrieves all interactions with basic pagination and ordering (no search criteria). This endpoint provides a general list of interactions. For specific searches, use the `/api/interactions/search` or `/api/interactions/advanced-search` endpoints.",
       "parameters": {
         "pageIndex": {
           "type": "integer",
@@ -222,9 +148,7 @@
       "example_uses": [
         "Show me all interactions",
         "List all interactions in the system",
-        "Display the interaction history",
-        "Get all interaction records",
-        "Browse interactions"
+        "Display the interaction history"
       ],
       "when_to_use": "Use this when the user wants to see ALL interactions without any search criteria or when asking for a general interaction list."
     },
@@ -232,32 +156,12 @@
       "name": "SearchInteractions",
       "url": "/api/interactions/search",
       "method": "GET",
-      "description": "Performs simple text search across multiple interaction fields (subject, description, etc.). This endpoint supports basic keyword search. For more complex, structured searches involving specific fields, relationships, or date ranges, use the `AdvancedSearchInteractions` endpoint.",
+      "description": "Performs simple text search across multiple interaction fields (subject, description, etc.). This endpoint is for basic keyword searches. For more complex, structured, or relationship-based searches, use the `/api/interactions/advanced-search` endpoint. The `searchText` parameter allows for a general keyword search.",
       "parameters": {
-        "OrderBy": {
-          "type": "string",
+        "request": {
+          "type": "object",
           "required": false,
-          "description": "Field to order results by (optional)"
-        },
-        "Ascending": {
-          "type": "boolean",
-          "required": false,
-          "description": "Sort direction - true for ascending, false for descending"
-        },
-        "Direction": {
-          "type": "boolean",
-          "required": false,
-          "description": "Sort direction - true for ascending, false for descending"
-        },
-        "PageIndex": {
-          "type": "integer",
-          "required": true,
-          "description": "Page number (1-based)"
-        },
-        "PageSize": {
-          "type": "integer",
-          "required": true,
-          "description": "Number of items per page"
+          "description": "Pagination request containing only pagination and sorting parameters"
         },
         "searchText": {
           "type": "string",
@@ -268,9 +172,7 @@
       "example_uses": [
         "Search for interactions about project",
         "Find interactions containing 'meeting notes'",
-        "Search for interactions with 'UNICEF' mentioned",
-        "Look for interactions about specific topics",
-        "Find interactions by keywords"
+        "Search for interactions with 'UNICEF' mentioned"
       ],
       "when_to_use": "Use this for simple keyword searches across interaction content. NOT for relationship-based searches."
     },
@@ -278,32 +180,12 @@
       "name": "AdvancedSearchInteractions",
       "url": "/api/interactions/advanced-search",
       "method": "GET",
-      "description": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters. This endpoint allows for highly specific queries using a `searchCriteria` parameter. The `searchCriteria` parameter expects a JSON array of objects, where each object defines a search condition with `field`, `operator`, and `value`. Multiple conditions can be combined using `logicalOperator` (AND/OR). Available fields for search include: `id`, `contactId`, `type`, `date`, `fromDate`, `toDate`, `description`, `subject`, `contactName`, `contactFirstName`, `contactLastName`, `contactEmail`, `partnerName`, `partnerStatus`. Nested fields like `contact.firstName`, `contact.lastName`, `partner.name`, `partner.status` are also supported. Operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are `date`, `fromDate`, `toDate`, `createdDate`, `modifiedDate`. Example criteria: `[{\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}, {\"field\": \"date\", \"operator\": \"between\", \"value\": \"2024-01-01,2024-12-31\"}]`.",
+      "description": "Performs advanced search with structured criteria including relationships with partners, contacts, dates, and complex filters. Use the `searchCriteria` parameter to specify a JSON array of search objects. Each object should have `field`, `operator`, and `value` properties. For example: `[{\"field\":\"type\",\"operator\":\"is\",\"value\":\"Meeting\"},{\"field\":\"date\",\"operator\":\"between\",\"value\":\"2024-01-01,2024-12-31\"}]`. Available fields for search include: `id`, `contactId`, `type`, `date`, `fromDate`, `toDate`, `description`, `subject`, `contactName`, `contactFirstName`, `contactLastName`, `contactEmail`, `partnerName`, `partnerStatus`. Nested fields like `contact.firstName`, `contact.lastName`, `partner.name` are also available. Operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are `date`, `fromDate`, `toDate`, `createdDate`, `modifiedDate`. The `searchText` parameter can be used for an additional general keyword search alongside structured criteria.",
       "parameters": {
-        "OrderBy": {
-          "type": "string",
+        "request": {
+          "type": "object",
           "required": false,
-          "description": "Field to order results by (optional)"
-        },
-        "Ascending": {
-          "type": "boolean",
-          "required": false,
-          "description": "Sort direction - true for ascending, false for descending"
-        },
-        "Direction": {
-          "type": "boolean",
-          "required": false,
-          "description": "Sort direction - true for ascending, false for descending"
-        },
-        "PageIndex": {
-          "type": "integer",
-          "required": true,
-          "description": "Page number (1-based)"
-        },
-        "PageSize": {
-          "type": "integer",
-          "required": true,
-          "description": "Number of items per page"
+          "description": "Pagination request containing only pagination and sorting parameters"
         },
         "searchCriteria": {
           "type": "string",
@@ -319,10 +201,7 @@
       "example_uses": [
         "Find interactions with UNICEF partners",
         "Show meetings with John Smith contact",
-        "Get email interactions this week",
-        "Find conference calls from Finance department contacts",
-        "List interactions by type and date range",
-        "Search for interactions by complex criteria combinations"
+        "Get email interactions this week"
       ],
       "when_to_use": "Use this for searches involving partner relationships, contact details, dates, interaction types, or multiple field combinations."
     },
@@ -341,9 +220,7 @@
       "example_uses": [
         "Show me details for interaction ID 123",
         "Get full information about meeting 456",
-        "Display interaction record 789",
-        "Get complete interaction details",
-        "Show meeting with all participants and documents"
+        "Display interaction record 789"
       ],
       "when_to_use": "Use this when the user asks for specific interaction details by ID or when you need complete interaction information."
     },
@@ -353,93 +230,16 @@
       "method": "PUT",
       "description": "Updates an existing interaction's information including details, participants, scheduling, and metadata.",
       "parameters": {
-        "Id": {
-          "type": "integer",
-          "required": true,
-          "description": "ID of the interaction to update"
-        },
-        "Type": {
-          "type": "string",
-          "required": true,
-          "description": "Type of interaction (e.g., 'Meeting', 'Email', 'Call')"
-        },
-        "Date": {
-          "type": "string",
-          "required": true,
-          "description": "Date and time of the interaction"
-        },
-        "Description": {
-          "type": "string",
-          "required": false,
-          "description": "Detailed description of the interaction"
-        },
-        "ContactId": {
-          "type": "integer",
-          "required": true,
-          "description": "ID of the primary contact involved in the interaction"
-        },
-        "EmailAddresses": {
-          "type": "array",
-          "required": false,
-          "description": "List of email addresses involved"
-        },
-        "PhoneNumbers": {
-          "type": "array",
-          "required": false,
-          "description": "List of phone numbers involved"
-        },
-        "ContactIds": {
-          "type": "array",
-          "required": false,
-          "description": "List of IDs of additional contacts involved"
-        },
-        "PartnerIds": {
-          "type": "array",
-          "required": false,
-          "description": "List of IDs of partners involved"
-        },
-        "UserIds": {
-          "type": "array",
-          "required": false,
-          "description": "List of IDs of users involved"
-        },
-        "Location": {
-          "type": "string",
-          "required": false,
-          "description": "Location of the interaction"
-        },
-        "Subject": {
-          "type": "string",
-          "required": false,
-          "description": "Subject or title of the interaction"
-        },
-        "OrganizationHierarchyIds": {
-          "type": "array",
-          "required": false,
-          "description": "List of IDs for organizational hierarchy"
-        },
-        "GmailThreadId": {
-          "type": "string",
-          "required": false,
-          "description": "Gmail thread ID if applicable"
-        },
-        "GmailMessageId": {
-          "type": "string",
-          "required": false,
-          "description": "Gmail message ID if applicable"
-        },
-        "Extensions": {
+        "req": {
           "type": "object",
-          "required": false,
-          "description": "Additional custom properties"
+          "required": true,
+          "description": "Interaction update request containing modified fields"
         }
       },
       "example_uses": [
         "Update meeting 123's time to 2 PM",
         "Change interaction 456's location to virtual",
-        "Modify meeting description and agenda",
-        "Update participant list for conference call",
-        "Change meeting status to completed"
+        "Modify meeting description and agenda"
       ],
       "when_to_use": "Use this when the user asks to update, modify, edit, or change interaction information."
     },
@@ -458,9 +258,7 @@
       "example_uses": [
         "Delete interaction ID 123",
         "Remove meeting 456 from the system",
-        "Cancel and delete upcoming meeting",
-        "Remove completed interaction record",
-        "Soft delete interaction entry"
+        "Cancel and delete upcoming meeting"
       ],
       "when_to_use": "Use this when the user asks to delete, remove, cancel, or eliminate an interaction."
     },
@@ -479,9 +277,7 @@
       "example_uses": [
         "Check my permissions for interaction 123",
         "What can I do with meeting 456?",
-        "Get access rights for this interaction",
-        "Verify interaction permissions before editing",
-        "Can I update this meeting?"
+        "Get access rights for this interaction"
       ],
       "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for interaction management."
     },
@@ -491,23 +287,16 @@
       "method": "POST",
       "description": "Scans and processes uploaded files for interaction data extraction using AI-powered analysis.",
       "parameters": {
-        "File": {
+        "req": {
           "type": "object",
           "required": false,
-          "description": "The file to be processed for interaction data extraction. Contains properties like ContentType, Length, and FileName."
-        },
-        "Type": {
-          "type": "string",
-          "required": false,
-          "description": "Type of file being scanned (e.g., 'document', 'email')"
+          "description": "File scan request containing the file to be processed"
         }
       },
       "example_uses": [
         "Scan meeting notes for interaction details",
         "Upload email threads for processing",
-        "Analyze call transcripts with AI",
-        "Extract data from communication logs",
-        "Process interaction records from uploaded files"
+        "Analyze call transcripts with AI"
       ],
       "when_to_use": "Use this when the user wants to upload and scan documents for interaction data extraction using AI."
     },
@@ -517,33 +306,16 @@
       "method": "POST",
       "description": "Analyzes uploaded files and extracts structured interaction data using AI-powered data analysis.",
       "parameters": {
-        "Type": {
-          "type": "string",
-          "required": false,
-          "description": "Type of analysis to perform"
-        },
-        "FileId": {
-          "type": "string",
-          "required": false,
-          "description": "ID of the file to be analyzed"
-        },
-        "CurrentUserId": {
-          "type": "integer",
+        "request": {
+          "type": "object",
           "required": true,
-          "description": "ID of the current user performing the analysis"
-        },
-        "IsUpdate": {
-          "type": "boolean",
-          "required": true,
-          "description": "Indicates if this is an update operation"
+          "description": "Analysis request containing file and analysis parameters"
         }
       },
       "example_uses": [
         "Analyze meeting transcripts for structured data extraction",
         "Extract interaction information from uploaded logs",
-        "Process communication documents with AI",
-        "Convert interaction files into structured database entries",
-        "Analyze call records for key information"
+        "Process communication documents with AI"
       ],
       "when_to_use": "Use this when the user wants to analyze files and extract structured interaction data for database import."
     },
@@ -553,28 +325,16 @@
       "method": "POST",
       "description": "Bulk uploads multiple interaction records using AI-assisted data processing and validation.",
       "parameters": {
-        "Type": {
-          "type": "string",
-          "required": false,
-          "description": "Type of bulk upload"
-        },
-        "Records": {
-          "type": "array",
-          "required": false,
-          "description": "List of interaction records to upload. Each record is an object with interaction details."
-        },
-        "IsUpdate": {
-          "type": "boolean",
+        "req": {
+          "type": "object",
           "required": true,
-          "description": "Indicates if the bulk upload is for updating existing records"
+          "description": "Bulk upload request containing interaction data"
         }
       },
       "example_uses": [
         "Bulk upload 200 interactions from Excel",
         "Import multiple interactions from CSV file",
-        "Mass upload interaction data with AI validation",
-        "Bulk import interaction records with duplicate detection",
-        "Upload large interaction dataset with automated processing"
+        "Mass upload interaction data with AI validation"
       ],
       "when_to_use": "Use this when the user wants to upload multiple interaction records at once with AI-assisted processing."
     },
@@ -584,12 +344,8 @@
       "method": "GET",
       "description": "Describes the Interaction entity structure including all field configurations",
       "parameters": {},
-      "example_uses": [
-        "What fields are available for an interaction?",
-        "Tell me about the interaction data structure.",
-        "Get metadata for the Interaction entity."
-      ],
-      "when_to_use": "Use this when the user asks for information about the Interaction entity's data structure or available fields."
+      "example_uses": [],
+      "when_to_use": ""
     }
   ]
 }

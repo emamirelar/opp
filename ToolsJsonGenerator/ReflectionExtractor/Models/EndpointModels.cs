@@ -45,6 +45,7 @@ public class ParameterInfo
     public bool IsFromRoute { get; set; }
     public object? DefaultValue { get; set; }
     public List<PropertyInfo> Properties { get; set; } = new(); // For complex types
+    public ModelSchema? Schema { get; set; } // Complete model schema for complex types
 }
 
 public class PropertyInfo
@@ -53,6 +54,31 @@ public class PropertyInfo
     public string Type { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public bool IsRequired { get; set; }
+    public bool IsNullable { get; set; }
+    public object? DefaultValue { get; set; }
+    public string? Format { get; set; } // e.g., "date-time", "email", etc.
+    public FieldRelationship? Relationship { get; set; } // For ID fields that reference other entities
+    public List<PropertyInfo> NestedProperties { get; set; } = new(); // For nested objects
+}
+
+public class ModelSchema
+{
+    public string TypeName { get; set; } = string.Empty;
+    public string FullTypeName { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public List<PropertyInfo> Properties { get; set; } = new();
+    public List<string> RequiredFields { get; set; } = new();
+    public Dictionary<string, object> Examples { get; set; } = new();
+}
+
+public class FieldRelationship
+{
+    public string RelationType { get; set; } = string.Empty; // "ForeignKey", "Reference", "Lookup"
+    public string? ReferencedEntity { get; set; } // e.g., "OrganizationHierarchy"
+    public string? ReferencedProperty { get; set; } // e.g., "Id"  
+    public string? LookupEndpoint { get; set; } // e.g., "api/values/organization-units"
+    public string? DisplayProperty { get; set; } // e.g., "Name" or "Code"
+    public bool RequiresIdResolution { get; set; } // True if user might provide name/code instead of ID
 }
 
 // New Search Metadata Models

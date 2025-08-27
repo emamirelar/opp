@@ -8,6 +8,7 @@ for better organization.
 import logging
 import os
 import json
+import base64
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request, Query
 from google.adk.sessions import DatabaseSessionService
@@ -19,6 +20,94 @@ import vertexai
 from vertexai.generative_models import GenerativeModel, GenerationConfig, HarmBlockThreshold, HarmCategory
 
 logger = logging.getLogger(__name__)
+
+def safe_convert_to_string(data):
+    """
+    Safely convert any data type to a string that can be serialized to JSON.
+    Handles bytes, binary data, and other non-serializable types.
+    """
+    if data is None:
+        return ""
+    
+    if isinstance(data, str):
+        return data
+    
+    if isinstance(data, bytes):
+        try:
+            # Try to decode as UTF-8 first
+            return data.decode('utf-8')
+        except UnicodeDecodeError:
+            # If UTF-8 fails, encode as base64
+            return base64.b64encode(data).decode('ascii')
+    
+    # For any other type, convert to string
+    try:
+        return str(data)
+    except Exception:
+        return ""
+
+def detect_mime_type_from_data(data, filename=""):
+    """
+    Detect MIME type from data content or filename.
+    Provides sensible defaults for common file types.
+    """
+    if not data:
+        return "application/octet-stream"
+    
+    # Try to detect from filename first
+    if filename:
+        filename_lower = filename.lower()
+        if filename_lower.endswith(('.jpg', '.jpeg')):
+            return "image/jpeg"
+        elif filename_lower.endswith('.png'):
+            return "image/png"
+        elif filename_lower.endswith('.gif'):
+            return "image/gif"
+        elif filename_lower.endswith('.webp'):
+            return "image/webp"
+        elif filename_lower.endswith(('.mp3', '.wav', '.ogg')):
+            return "audio/mpeg"
+        elif filename_lower.endswith('.pdf'):
+            return "application/pdf"
+        elif filename_lower.endswith(('.txt', '.text')):
+            return "text/plain"
+        elif filename_lower.endswith(('.doc', '.docx')):
+            return "application/msword"
+        elif filename_lower.endswith(('.xls', '.xlsx')):
+            return "application/vnd.ms-excel"
+    
+    # Try to detect from data content
+    if isinstance(data, str):
+        # Check if it's base64 encoded
+        if data.startswith('data:'):
+            # Data URL format: data:mime/type;base64,data
+            mime_part = data.split(',')[0]
+            if ';' in mime_part:
+                return mime_part.split(';')[0].replace('data:', '')
+        elif len(data) > 100:  # Likely base64 encoded binary data
+            return "application/octet-stream"
+        else:
+            return "text/plain"
+    
+    elif isinstance(data, bytes):
+        # Check for common file signatures
+        if len(data) >= 4:
+            if data[:4] == b'\x89PNG':
+                return "image/png"
+            elif data[:2] == b'\xff\xd8':
+                return "image/jpeg"
+            elif data[:4] == b'GIF8':
+                return "image/gif"
+            elif data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+                return "image/webp"
+            elif data[:4] == b'%PDF':
+                return "application/pdf"
+            elif data[:3] == b'ID3':
+                return "audio/mpeg"
+        
+        return "application/octet-stream"
+    
+    return "application/octet-stream"
 
 # Create router
 router = APIRouter()
@@ -515,6 +604,7 @@ async def get_session_with_chats(
             for conv_item in conversation_history:
                 # Handle different ADK message formats
                 message_content = ""
+                inline_data = []
                 role = "user"
                 timestamp = None
                 author = getattr(conv_item, 'author', 'user')
@@ -525,19 +615,133 @@ async def get_session_with_chats(
                 if hasattr(conv_item, 'content'):
                     # ADK Content object
                     if hasattr(conv_item.content, 'parts') and conv_item.content.parts:
-                        # Extract text from parts
-                        text_parts = [part.text for part in conv_item.content.parts if hasattr(part, 'text') and part.text]
-                        message_content = " ".join(text_parts)
+                        # Extract text and inlineData from parts
+                        text_parts = []
+                        logger.debug(f"🔍 Processing {len(conv_item.content.parts)} parts for {author}")
+                        for i, part in enumerate(conv_item.content.parts):
+                            logger.debug(f"   Part {i}: has text={hasattr(part, 'text')}, has inlineData={hasattr(part, 'inlineData')}")
+                            if hasattr(part, 'text') and part.text:
+                                text_parts.append(part.text)
+                                logger.debug(f"   Part {i} text: {part.text[:50]}...")
+                            # Check for inlineData with different possible attribute names
+                            inline_data_obj = None
+                            if hasattr(part, 'inlineData') and part.inlineData:
+                                inline_data_obj = part.inlineData
+                            elif hasattr(part, 'inline_data') and part.inline_data:
+                                inline_data_obj = part.inline_data
+                            elif hasattr(part, 'data') and part.data:
+                                inline_data_obj = part.data
+                            
+                            if inline_data_obj:
+                                # Debug: Log the actual structure of the inlineData object
+                                logger.debug(f"🔍 inlineData_obj type: {type(inline_data_obj)}")
+                                logger.debug(f"🔍 inlineData_obj attributes: {dir(inline_data_obj)}")
+                                
+                                # Log all available attributes and their values
+                                for attr in dir(inline_data_obj):
+                                    if not attr.startswith('_'):
+                                        try:
+                                            value = getattr(inline_data_obj, attr)
+                                            if value is not None:
+                                                logger.debug(f"🔍 {attr}: {type(value)} = {str(value)[:100]}")
+                                        except Exception as e:
+                                            logger.debug(f"⚠️ Could not read {attr}: {e}")
+                                
+                                # Extract the actual data from the ADK object and safely convert to string
+                                raw_data = getattr(inline_data_obj, 'data', '')
+                                data_str = safe_convert_to_string(raw_data)
+                                
+                                # Get MIME type with fallback detection
+                                mime_type = getattr(inline_data_obj, 'mimeType', None)
+                                if not mime_type:
+                                    # Try alternative attribute names
+                                    mime_type = getattr(inline_data_obj, 'mime_type', None) or getattr(inline_data_obj, 'type', None)
+                                
+                                # If still no MIME type, detect from data or filename
+                                if not mime_type:
+                                    display_name = getattr(inline_data_obj, 'displayName', '') or getattr(inline_data_obj, 'display_name', '') or getattr(inline_data_obj, 'filename', '')
+                                    mime_type = detect_mime_type_from_data(raw_data, display_name)
+                                    logger.debug(f"🔧 Auto-detected MIME type: {mime_type} for {display_name}")
+                                
+                                # Ensure we have a valid MIME type
+                                final_mime_type = safe_convert_to_string(mime_type) if mime_type else "application/octet-stream"
+                                
+                                inline_data_dict = {
+                                    "mimeType": final_mime_type,
+                                    "displayName": safe_convert_to_string(getattr(inline_data_obj, 'displayName', '') or getattr(inline_data_obj, 'display_name', '') or getattr(inline_data_obj, 'filename', '')),
+                                    "data": data_str
+                                }
+                                inline_data.append(inline_data_dict)
+                                logger.debug(f"📎 Found inlineData: mimeType={inline_data_dict['mimeType']}, displayName={inline_data_dict['displayName']}, dataLength={len(inline_data_dict['data']) if inline_data_dict['data'] else 0}")
+                                logger.debug(f"🔧 Final MIME type assignment: {final_mime_type} (original: {mime_type})")
+                                
+                                # Debug: Check if data looks like valid base64
+                                if inline_data_dict['data']:
+                                    data_sample = inline_data_dict['data'][:20] if len(inline_data_dict['data']) > 20 else inline_data_dict['data']
+                                    logger.debug(f"🔍 Data sample: {data_sample}")
+                        message_content = safe_convert_to_string(" ".join(text_parts))
                     role = getattr(conv_item.content, 'role', author)
                 elif hasattr(conv_item, 'parts'):
                     # Direct parts access
-                    text_parts = [part.text for part in conv_item.parts if hasattr(part, 'text') and part.text]
-                    message_content = " ".join(text_parts)
+                    text_parts = []
+                    for part in conv_item.parts:
+                        if hasattr(part, 'text') and part.text:
+                            text_parts.append(part.text)
+                        # Check for inlineData with different possible attribute names
+                        inline_data_obj = None
+                        if hasattr(part, 'inlineData') and part.inlineData:
+                            inline_data_obj = part.inlineData
+                        elif hasattr(part, 'inline_data') and part.inline_data:
+                            inline_data_obj = part.inline_data
+                        elif hasattr(part, 'data') and part.data:
+                            inline_data_obj = part.data
+                        
+                        if inline_data_obj:
+                            # Debug: Log the actual structure of the inlineData object
+                            logger.debug(f"🔍 inlineData_obj type: {type(inline_data_obj)}")
+                            logger.debug(f"🔍 inlineData_obj attributes: {dir(inline_data_obj)}")
+                            
+                            # Extract the actual data from the ADK object and safely convert to string
+                            raw_data = getattr(inline_data_obj, 'data', '')
+                            data_str = safe_convert_to_string(raw_data)
+                            
+                            # Get MIME type with fallback detection
+                            mime_type = getattr(inline_data_obj, 'mimeType', None)
+                            if not mime_type:
+                                # Try alternative attribute names
+                                mime_type = getattr(inline_data_obj, 'mime_type', None) or getattr(inline_data_obj, 'type', None)
+                            
+                            # If still no MIME type, detect from data or filename
+                            if not mime_type:
+                                display_name = getattr(inline_data_obj, 'displayName', '') or getattr(inline_data_obj, 'display_name', '') or getattr(inline_data_obj, 'filename', '')
+                                mime_type = detect_mime_type_from_data(raw_data, display_name)
+                                logger.debug(f"🔧 Auto-detected MIME type: {mime_type} for {display_name}")
+                            
+                            # Ensure we have a valid MIME type
+                            final_mime_type = safe_convert_to_string(mime_type) if mime_type else "application/octet-stream"
+                            
+                            inline_data_dict = {
+                                "mimeType": final_mime_type,
+                                "displayName": safe_convert_to_string(getattr(inline_data_obj, 'displayName', '') or getattr(inline_data_obj, 'display_name', '') or getattr(inline_data_obj, 'filename', '')),
+                                "data": data_str
+                            }
+                            inline_data.append(inline_data_dict)
+                            logger.debug(f"📎 Found inlineData: mimeType={inline_data_dict['mimeType']}, displayName={inline_data_dict['displayName']}, dataLength={len(inline_data_dict['data']) if inline_data_dict['data'] else 0}")
+                            
+                            # Debug: Check if data looks like valid base64
+                            if inline_data_dict['data']:
+                                data_sample = inline_data_dict['data'][:20] if len(inline_data_dict['data']) > 20 else inline_data_dict['data']
+                                logger.debug(f"🔍 Data sample: {data_sample}")
+                    message_content = safe_convert_to_string(" ".join(text_parts))
                     role = getattr(conv_item, 'role', author)
                 else:
                     # Fallback to direct attributes
-                    message_content = str(getattr(conv_item, 'text', getattr(conv_item, 'message', '')))
+                    message_content = safe_convert_to_string(getattr(conv_item, 'text', getattr(conv_item, 'message', '')))
                     role = getattr(conv_item, 'role', author)
+                
+                # Debug logging for inlineData after extraction
+                if inline_data:
+                    logger.debug(f"📎 Total inlineData items for {author}: {len(inline_data)}")
                 
                 # Get timestamp and handle different formats
                 timestamp = None
@@ -563,7 +767,8 @@ async def get_session_with_chats(
                         logger.warning(f"⚠️ Failed to convert timestamp {timestamp}: {ts_error}")
                         timestamp_iso = None
                 
-                if message_content:  # Only add non-empty messages
+                # Include messages that have either text content or inlineData
+                if message_content or inline_data:
                     # Convert timestamp string to datetime if needed
                     timestamp_dt = None
                     if timestamp_iso:
@@ -572,9 +777,9 @@ async def get_session_with_chats(
                         except:
                             timestamp_dt = None
                     
-                    # Handle response_formatter_agent messages specially
-                    if author == "response_formatter_agent" and invocation_id:
-                        # Store only the latest response_formatter_agent message per invocation_id
+                    # Handle assistant response messages (response_formatter_agent and user_request_agent)
+                    if author in ["response_formatter_agent"] and invocation_id:
+                        # Store only the latest assistant message per invocation_id
                         if invocation_id not in response_formatter_messages or (
                             timestamp_dt and (
                                 not response_formatter_messages[invocation_id].get('_timestamp') or 
@@ -582,10 +787,10 @@ async def get_session_with_chats(
                             )
                         ):
                             response_formatter_messages[invocation_id] = {
-                                "role": "assistant",  # Map response_formatter_agent to assistant
+                                "role": "assistant",  # Map assistant agents to assistant role
                                 "text": message_content,
                                 "timestamp": timestamp_dt.isoformat() if timestamp_dt else None,
-                                "inlineData": [],
+                                "inlineData": inline_data,
                                 "_timestamp": timestamp_dt,  # Keep for comparison
                                 "_sort_timestamp": timestamp_dt if timestamp_dt else datetime.min
                             }
@@ -595,14 +800,14 @@ async def get_session_with_chats(
                             "role": "user",
                             "text": message_content,
                             "timestamp": timestamp_dt.isoformat() if timestamp_dt else None,
-                            "inlineData": [],
+                            "inlineData": inline_data,
                             "_sort_timestamp": timestamp_dt if timestamp_dt else datetime.min
                         }
                         chat_items.append(chat_item)
                     # Skip other agent messages (task_planner_agent, api_caller_agent, etc.)
             
-            # Add filtered response_formatter_agent messages to chat_items
-            logger.info(f"🔍 Found {len(response_formatter_messages)} unique response_formatter_agent responses across invocations")
+            # Add filtered assistant response messages to chat_items
+            logger.info(f"🔍 Found {len(response_formatter_messages)} unique assistant responses across invocations")
             for invocation_id, response_msg in response_formatter_messages.items():
                 logger.info(f"   - Invocation {invocation_id}: {response_msg['text'][:50]}...")
                 # Remove the temporary timestamp field

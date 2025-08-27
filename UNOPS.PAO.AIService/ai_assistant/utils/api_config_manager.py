@@ -201,8 +201,15 @@ class ApiConfigManager:
                         else:
                             entity_name = filename.replace('_tools.json', '')
                         
-                        # Capitalize the entity name
-                        entity_name = entity_name.capitalize()
+                        # Handle camelCase entity names properly
+                        # Convert snake_case or kebab-case to camelCase
+                        if '-' in entity_name or '_' in entity_name:
+                            # Split by - or _ and capitalize each part
+                            parts = entity_name.replace('-', '_').split('_')
+                            entity_name = ''.join(part.capitalize() for part in parts)
+                        else:
+                            # For simple names, just capitalize
+                            entity_name = entity_name.capitalize()
                         entities.add(entity_name)
                         
                 print(f"🔍 Discovered {len(entities)} entities from tool files: {', '.join(sorted(entities))}")
@@ -231,8 +238,9 @@ class ApiConfigManager:
         try:
             default_config = self.load_tools_config()
             for entity in default_config.get('entities', []):
-                entity_name = entity.get('entity', '').capitalize()
+                entity_name = entity.get('entity', '')
                 if entity_name:
+                    # Use the exact entity name from config (preserve camelCase)
                     default_entities.add(entity_name)
         except Exception as e:
             print(f"⚠️ Could not load default config entities: {e}")

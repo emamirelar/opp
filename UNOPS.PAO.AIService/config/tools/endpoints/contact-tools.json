@@ -1,15 +1,15 @@
 {
   "entity": "Contact",
-  "description": "A contact represents an individual associated with a partner organization, holding personal, professional, and contact details. This entity manages the creation, retrieval, update, and deletion of contact records, including advanced search capabilities and AI-assisted data processing.",
+  "description": "Manages contact information, including personal, professional, and organizational details, and supports advanced search and AI-assisted data processing.",
   "synonyms": [
     "person",
     "individual",
     "associate",
     "staff",
-    "personnel",
-    "point of contact"
+    "employee"
   ],
   "mandatoryFields": [
+    "Id",
     "PartnerId"
   ],
   "searchMetadata": {
@@ -105,28 +105,143 @@
   "endpoints": [
     {
       "name": "Create",
-      "url": "api/contact",
+      "url": "/api/contact",
       "method": "POST",
       "description": "Creates a new contact with comprehensive personal and professional details.",
       "parameters": {
         "req": {
           "type": "object",
           "required": false,
-          "description": "Contact creation request with required fields. Requires 'PartnerId'."
+          "description": "Contact creation request with required fields",
+          "properties": {
+            "Salutation": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "FirstName": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MiddleName": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "LastName": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Suffix": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Title": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Department": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Description": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Email": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Phone": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Mobile": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Assistant": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "AssistantPhone": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "AssistantEmail": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Status": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingStreet": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingStreet2": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingCity": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingStateProvince": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingPostalCode": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingCountry": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "PartnerId": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type int"
+            },
+            "Extensions": {
+              "type": "object",
+              "required": false,
+              "description": "Property of type IDictionary<string, Object>"
+            }
+          }
         }
       },
       "example_uses": [
         "Create a contact named John Doe with email john@unicef.org",
         "Add a new program manager contact for partner 123",
-        "Register Dr. Jane Smith as the technical lead",
-        "Create contact with full address information",
-        "Add executive contact to organization"
+        "Register Dr. Jane Smith as the technical lead"
       ],
       "when_to_use": "Use this when the user asks to add, create, register, or set up a new contact."
     },
     {
       "name": "ListAllContacts",
-      "url": "api/contact",
+      "url": "/api/contact",
       "method": "GET",
       "description": "Retrieves all contacts with basic pagination and ordering (no search criteria).",
       "parameters": {
@@ -154,22 +269,47 @@
       "example_uses": [
         "Show me all contacts",
         "List all contacts in the system",
-        "Display the contact directory",
-        "Get all contact records",
-        "Browse contacts"
+        "Display the contact directory"
       ],
       "when_to_use": "Use this when the user wants to see ALL contacts without any search criteria or when asking for a general contact list."
     },
     {
       "name": "SearchContacts",
-      "url": "api/contact/search",
+      "url": "/api/contact/search",
       "method": "GET",
-      "description": "Performs simple text search across multiple contact fields (name, email, title, etc.). This endpoint supports pagination and ordering. The 'searchText' parameter performs a broad search across relevant contact fields. For more specific or complex searches, use the 'AdvancedSearchContacts' endpoint.",
+      "description": "Performs simple text search across multiple contact fields (name, email, title, etc.). This endpoint supports advanced search capabilities using the `searchCriteria` parameter. The `searchCriteria` parameter expects a JSON array of objects, where each object defines a search condition with `field`, `operator`, and `value`. For example: `[{\"field\":\"firstName\",\"operator\":\"like\",\"value\":\"John\"}]`. Available fields for search include: id, salutation, firstName, middleName, lastName, suffix, title, department, description, email, phone, mobile, assistant, assistantPhone, assistantEmail, status, mailingStreet, mailingStreet2, mailingCity, mailingStateProvince, mailingPostalCode, mailingCountry, profilePictureUrl, partnerId, partnerName, partnerStatus, partnerShortName, partner.name, partner.status, partner.shortName, partner.phone, partner.website, partner.address1City, partner.address1Country. Available operators are: like, is, not, contains, startsWith, endsWith, between, greaterThan, lessThan, greaterThanOrEqual, lessThanOrEqual, on, not on, this week, this month, this year. Date fields like createdDate, modifiedDate support date-specific operators. You can combine multiple criteria using logical operators (e.g., 'and', 'or') within the JSON structure.",
       "parameters": {
         "request": {
           "type": "object",
           "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters. Requires 'PageIndex' and 'PageSize'."
+          "description": "Pagination request containing only pagination and sorting parameters",
+          "properties": {
+            "OrderBy": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Ascending": {
+              "type": "boolean",
+              "required": false,
+              "description": "Property of type Nullable<bool>"
+            },
+            "Direction": {
+              "type": "boolean",
+              "required": false,
+              "description": "Property of type Nullable<bool>"
+            },
+            "PageIndex": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type int"
+            },
+            "PageSize": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type int"
+            }
+          }
         },
         "searchText": {
           "type": "string",
@@ -180,22 +320,47 @@
       "example_uses": [
         "Search for contacts named John",
         "Find contacts with @unicef.org email",
-        "Search for contacts containing 'Smith'",
-        "Find contact with phone number 555-1234",
-        "Look for contacts with title 'Manager'"
+        "Search for contacts containing 'Smith'"
       ],
       "when_to_use": "Use this for simple name, email, title, or basic field searches. NOT for partner relationship searches."
     },
     {
       "name": "AdvancedSearchContacts",
-      "url": "api/contact/advanced-search",
+      "url": "/api/contact/advanced-search",
       "method": "GET",
-      "description": "Performs advanced search with structured criteria including relationships with partners, departments, and complex filters. This endpoint supports advanced search using the `searchCriteria` parameter. This parameter expects a JSON array of objects, where each object defines a search condition with `field`, `operator`, and `value`. For example, to search for contacts named 'John' from 'UNICEF' partner: `[{\"field\": \"firstName\", \"operator\": \"like\", \"value\": \"John\"}, {\"field\": \"partner.name\", \"operator\": \"like\", \"value\": \"UNICEF\"}]`. Available fields for direct search include: `id`, `salutation`, `firstName`, `middleName`, `lastName`, `suffix`, `title`, `department`, `description`, `email`, `phone`, `mobile`, `assistant`, `assistantPhone`, `assistantEmail`, `status`, `mailingStreet`, `mailingStreet2`, `mailingCity`, `mailingStateProvince`, `mailingPostalCode`, `mailingCountry`, `profilePictureUrl`, `partnerId`, `partnerName`, `partnerStatus`, `partnerShortName`. Nested fields for `partner` include: `name`, `status`, `shortName`, `phone`, `website`, `address1City`, `address1Country`. Operators include: `like`, `is`, `not`, `contains`, `startsWith`, `endsWith`, `between`, `greaterThan`, `lessThan`, `greaterThanOrEqual`, `lessThanOrEqual`, `on`, `not on`, `this week`, `this month`, `this year`. Date fields are `createdDate` and `modifiedDate`.",
+      "description": "Performs advanced search with structured criteria including relationships with partners, departments, and complex filters. This endpoint supports advanced search capabilities using the `searchCriteria` parameter. The `searchCriteria` parameter expects a JSON array of objects, where each object defines a search condition with `field`, `operator`, and `value`. For example: `[{\"field\":\"firstName\",\"operator\":\"like\",\"value\":\"John\"}]`. Available fields for search include: id, salutation, firstName, middleName, lastName, suffix, title, department, description, email, phone, mobile, assistant, assistantPhone, assistantEmail, status, mailingStreet, mailingStreet2, mailingCity, mailingStateProvince, mailingPostalCode, mailingCountry, profilePictureUrl, partnerId, partnerName, partnerStatus, partnerShortName, partner.name, partner.status, partner.shortName, partner.phone, partner.website, partner.address1City, partner.address1Country. Available operators are: like, is, not, contains, startsWith, endsWith, between, greaterThan, lessThan, greaterThanOrEqual, lessThanOrEqual, on, not on, this week, this month, this year. Date fields like createdDate, modifiedDate support date-specific operators. You can combine multiple criteria using logical operators (e.g., 'and', 'or') within the JSON structure.",
       "parameters": {
         "request": {
           "type": "object",
           "required": false,
-          "description": "Pagination request containing only pagination and sorting parameters. Requires 'PageIndex' and 'PageSize'."
+          "description": "Pagination request containing only pagination and sorting parameters",
+          "properties": {
+            "OrderBy": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Ascending": {
+              "type": "boolean",
+              "required": false,
+              "description": "Property of type Nullable<bool>"
+            },
+            "Direction": {
+              "type": "boolean",
+              "required": false,
+              "description": "Property of type Nullable<bool>"
+            },
+            "PageIndex": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type int"
+            },
+            "PageSize": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type int"
+            }
+          }
         },
         "searchCriteria": {
           "type": "string",
@@ -211,16 +376,13 @@
       "example_uses": [
         "Find contacts from UNICEF partner organization",
         "Show contacts in Finance department created this month",
-        "Get contacts working at Asian Infrastructure partners",
-        "Find contacts where partner status is Active",
-        "List contacts from climate-related interactions",
-        "Search for contacts by department and creation date"
+        "Get contacts working at Asian Infrastructure partners"
       ],
       "when_to_use": "Use this for searches involving partner relationships, departments, dates, status, or any complex multi-field criteria."
     },
     {
       "name": "Get",
-      "url": "api/contact/{id}",
+      "url": "/api/contact/{id}",
       "method": "GET",
       "description": "Retrieves a specific contact by ID with complete details including partner information and all contact methods.",
       "parameters": {
@@ -233,36 +395,154 @@
       "example_uses": [
         "Show me details for contact ID 123",
         "Get full information about contact 456",
-        "Display contact record 789",
-        "Get complete contact profile",
-        "Show contact with partner information"
+        "Display contact record 789"
       ],
       "when_to_use": "Use this when the user asks for specific contact details by ID or when you need complete contact information."
     },
     {
       "name": "Update",
-      "url": "api/contact",
+      "url": "/api/contact",
       "method": "PUT",
       "description": "Updates an existing contact's information including personal details, contact methods, and professional information.",
       "parameters": {
         "req": {
           "type": "object",
           "required": false,
-          "description": "Contact update request containing modified fields. Requires 'Id' and 'PartnerId'."
+          "description": "Contact update request containing modified fields",
+          "properties": {
+            "Id": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type int"
+            },
+            "Salutation": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "FirstName": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MiddleName": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "LastName": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Suffix": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Title": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Department": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Description": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Email": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Phone": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Mobile": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Assistant": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "AssistantPhone": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "AssistantEmail": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Status": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingStreet": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingStreet2": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingCity": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingStateProvince": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingPostalCode": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "MailingCountry": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "PartnerId": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type int"
+            },
+            "Extensions": {
+              "type": "object",
+              "required": false,
+              "description": "Property of type IDictionary<string, Object>"
+            }
+          }
         }
       },
       "example_uses": [
         "Update contact 123's email to newemail@unicef.org",
         "Change contact 456's title to Senior Manager",
-        "Update phone number for contact 789",
-        "Modify contact's department information",
-        "Change contact status to Inactive"
+        "Update phone number for contact 789"
       ],
       "when_to_use": "Use this when the user asks to update, modify, edit, or change contact information."
     },
     {
       "name": "Delete",
-      "url": "api/contact/{id}",
+      "url": "/api/contact/{id}",
       "method": "DELETE",
       "description": "Soft deletes a contact from the system (marks as deleted rather than permanent removal).",
       "parameters": {
@@ -275,14 +555,13 @@
       "example_uses": [
         "Delete contact ID 123",
         "Remove contact 456 from the system",
-        "Deactivate contact record",
-        "Soft delete contact John Doe"
+        "Deactivate contact record"
       ],
       "when_to_use": "Use this when the user asks to delete, remove, or eliminate a contact."
     },
     {
       "name": "PartnerContacts",
-      "url": "api/partner/{partnerId}/contacts",
+      "url": "/api/partner/{partnerId}/contacts",
       "method": "GET",
       "description": "Retrieves all contacts associated with a specific partner organization with access control.",
       "parameters": {
@@ -295,15 +574,13 @@
       "example_uses": [
         "Show all contacts for partner organization 123",
         "Get contact list for UNICEF partner",
-        "Find all people working at partner ID 456",
-        "List contacts belonging to a specific organization",
-        "Get partner's contact directory"
+        "Find all people working at partner ID 456"
       ],
       "when_to_use": "Use this when the user asks to see contacts for a specific partner, organization, or wants to view who works at a particular partner."
     },
     {
       "name": "PermissionsGet",
-      "url": "api/contact/{id}/permissions",
+      "url": "/api/contact/{id}/permissions",
       "method": "GET",
       "description": "Retrieves the current user's permissions for a specific contact (read, update, delete).",
       "parameters": {
@@ -316,15 +593,13 @@
       "example_uses": [
         "Check my permissions for contact 123",
         "What can I do with contact 456?",
-        "Get access rights for this contact",
-        "Verify contact permissions before editing",
-        "Can I update this contact's information?"
+        "Get access rights for this contact"
       ],
       "when_to_use": "Use this when you need to check user permissions before performing operations or showing UI elements for contact management."
     },
     {
       "name": "UploadProfilePicture",
-      "url": "api/contact/{id}/profile-picture",
+      "url": "/api/contact/{id}/profile-picture",
       "method": "POST",
       "description": "Uploads and associates a profile picture with a contact (max 1MB, JPEG/PNG/WEBP only).",
       "parameters": {
@@ -336,94 +611,213 @@
         "file": {
           "type": "object",
           "required": false,
-          "description": "Image file (max 1MB, JPEG/PNG/WEBP formats only). Requires 'Length'."
+          "description": "Image file (max 1MB, JPEG/PNG/WEBP formats only)",
+          "properties": {
+            "ContentType": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "ContentDisposition": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Headers": {
+              "type": "object",
+              "required": false,
+              "description": "Property of type IHeaderDictionary"
+            },
+            "Length": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type long"
+            },
+            "Name": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "FileName": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            }
+          }
         }
       },
       "example_uses": [
         "Upload a profile picture for contact 123",
         "Add photo to contact John Doe",
-        "Set contact profile image",
-        "Update contact's profile picture",
-        "Add headshot to contact record"
+        "Set contact profile image"
       ],
       "when_to_use": "Use this when the user wants to add or update a contact's profile picture or photo."
     },
     {
       "name": "ScanContactData",
-      "url": "api/contact/scan-data",
+      "url": "/api/contact/scan-data",
       "method": "POST",
       "description": "Scans and processes uploaded files for contact data extraction using AI-powered analysis.",
       "parameters": {
         "req": {
           "type": "object",
           "required": false,
-          "description": "File scan request containing the file to be processed. The 'File' property within this object requires 'Length'."
+          "description": "File scan request containing the file to be processed",
+          "properties": {
+            "File": {
+              "type": "object",
+              "required": false,
+              "description": "Property of type IFormFile",
+              "properties": {
+                "ContentType": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Property of type string"
+                },
+                "ContentDisposition": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Property of type string"
+                },
+                "Headers": {
+                  "type": "object",
+                  "required": false,
+                  "description": "Property of type IHeaderDictionary"
+                },
+                "Length": {
+                  "type": "integer",
+                  "required": true,
+                  "description": "Property of type long"
+                },
+                "Name": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Property of type string"
+                },
+                "FileName": {
+                  "type": "string",
+                  "required": false,
+                  "description": "Property of type string"
+                }
+              }
+            },
+            "Type": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            }
+          }
         }
       },
       "example_uses": [
         "Scan business cards for contact information",
         "Upload contact forms for processing",
-        "Analyze contact documents with AI",
-        "Extract data from contact lists",
-        "Process contact information from uploaded files"
+        "Analyze contact documents with AI"
       ],
       "when_to_use": "Use this when the user wants to upload and scan documents for contact data extraction using AI."
     },
     {
       "name": "AnalyseContactData",
-      "url": "api/contact/analyse-file",
+      "url": "/api/contact/analyse-file",
       "method": "POST",
       "description": "Analyzes uploaded files and extracts structured contact data using AI-powered data analysis.",
       "parameters": {
         "request": {
           "type": "object",
           "required": false,
-          "description": "Analysis request containing file and analysis parameters. Requires 'CurrentUserId' and 'IsUpdate'."
+          "description": "Analysis request containing file and analysis parameters",
+          "properties": {
+            "Type": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "FileId": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "CurrentUserId": {
+              "type": "integer",
+              "required": true,
+              "description": "Property of type int"
+            },
+            "IsUpdate": {
+              "type": "boolean",
+              "required": true,
+              "description": "Property of type bool"
+            }
+          }
         }
       },
       "example_uses": [
         "Analyze contact directories for structured data extraction",
         "Extract contact information from uploaded forms",
-        "Process contact documents with AI",
-        "Convert contact files into structured database entries",
-        "Analyze business card data for key information"
+        "Process contact documents with AI"
       ],
       "when_to_use": "Use this when the user wants to analyze files and extract structured contact data for database import."
     },
     {
       "name": "BulkUploadContacts",
-      "url": "api/contact/bulk-upload",
+      "url": "/api/contact/bulk-upload",
       "method": "POST",
       "description": "Bulk uploads multiple contact records using AI-assisted data processing and validation.",
       "parameters": {
         "req": {
           "type": "object",
           "required": false,
-          "description": "Bulk upload request containing contact data. Requires 'IsUpdate'. The 'Records' property within this object requires 'Capacity' and 'Count'."
+          "description": "Bulk upload request containing contact data",
+          "properties": {
+            "Type": {
+              "type": "string",
+              "required": false,
+              "description": "Property of type string"
+            },
+            "Records": {
+              "type": "array",
+              "required": false,
+              "description": "Property of type List<Object>",
+              "properties": {
+                "Capacity": {
+                  "type": "integer",
+                  "required": true,
+                  "description": "Property of type int"
+                },
+                "Count": {
+                  "type": "integer",
+                  "required": true,
+                  "description": "Property of type int"
+                },
+                "Item": {
+                  "type": "object",
+                  "required": false,
+                  "description": "Property of type Object"
+                }
+              }
+            },
+            "IsUpdate": {
+              "type": "boolean",
+              "required": true,
+              "description": "Property of type bool"
+            }
+          }
         }
       },
       "example_uses": [
         "Bulk upload 500 contacts from Excel",
         "Import multiple contacts from CSV file",
-        "Mass upload contact data with AI validation",
-        "Bulk import contact records with duplicate detection",
-        "Upload large contact dataset with automated processing"
+        "Mass upload contact data with AI validation"
       ],
       "when_to_use": "Use this when the user wants to upload multiple contact records at once with AI-assisted processing."
     },
     {
       "name": "GetMetadataInfo",
-      "url": "api/contact/metadata-info",
+      "url": "/api/contact/metadata-info",
       "method": "GET",
       "description": "Describes the Contact entity structure including all field configurations",
       "parameters": {},
-      "example_uses": [
-        "What is a contact?",
-        "What fields are available for contacts?",
-        "Tell me about the structure of the contact entity.",
-        "Get metadata for contact entity."
-      ],
-      "when_to_use": "Use this to retrieve metadata about the Contact entity, such as its fields and their configurations."
+      "example_uses": [],
+      "when_to_use": ""
     }
   ]
 }

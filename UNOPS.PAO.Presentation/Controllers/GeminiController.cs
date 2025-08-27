@@ -525,6 +525,16 @@ public class GeminiController : BaseController
         });
     }
 
+    [HttpGet(APIDictionary.AiAssistantGenerateSuggestions)]
+    public async Task<ActionResult> GenerateSuggestions()
+    {
+        return await HandleOperationAsync(async () =>
+        {
+            var suggestions = await _manager.GenerateSuggestions(CurrentUserId);
+            return suggestions;
+        });
+    }
+
     public class GenerateTitleResponse
     {
         public string session_id { get; set; }

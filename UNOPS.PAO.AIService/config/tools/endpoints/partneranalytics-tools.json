@@ -1,0 +1,143 @@
+{
+  "entity": "PartnerAnalytics",
+  "description": "Provides analytical insights and aggregated data related to partners, including activity trends, user-specific partner associations, and geographic distribution.",
+  "synonyms": [
+    "partner insights",
+    "partner metrics",
+    "partner reports",
+    "partner statistics",
+    "partner performance"
+  ],
+  "mandatoryFields": [
+    "userId"
+  ],
+  "endpoints": [
+    {
+      "name": "GetMostActivePartners",
+      "url": "api/partner/analytics/mostActive",
+      "method": "GET",
+      "description": "Retrieves the most active partners based on engagement count, interaction count, or recent activity.",
+      "parameters": {
+        "limit": {
+          "type": "integer",
+          "required": false,
+          "description": "Maximum number of partners to return (default: 10)"
+        },
+        "timeframe": {
+          "type": "string",
+          "required": false,
+          "description": "Time period to analyze (daily, weekly, monthly, quarterly, yearly)"
+        },
+        "metric": {
+          "type": "string",
+          "required": false,
+          "description": "Activity metric to measure (engagements, interactions, lastActivity)"
+        }
+      },
+      "example_uses": [
+        "Show most active partners this month",
+        "Get top 5 partners by engagement count",
+        "List partners with most interactions",
+        "Find most recently active partners",
+        "Show partners with highest engagement in the last quarter"
+      ],
+      "when_to_use": "Use this when you need to identify the most active or engaged partners based on various metrics."
+    },
+    {
+      "name": "GetPartnersByUser",
+      "url": "api/partner/analytics/byUser/{userId}",
+      "method": "GET",
+      "description": "Retrieves partners created or managed by a specific user with activity metrics.",
+      "parameters": {
+        "userId": {
+          "type": "integer",
+          "required": true,
+          "description": "User ID to get partners for"
+        },
+        "timeframe": {
+          "type": "string",
+          "required": false,
+          "description": "Time period to analyze (daily, weekly, monthly, quarterly, yearly)"
+        },
+        "includeCreated": {
+          "type": "boolean",
+          "required": false,
+          "description": "Include partners created by the user (default: true)"
+        },
+        "includeModified": {
+          "type": "boolean",
+          "required": false,
+          "description": "Include partners modified by the user (default: true)"
+        },
+        "includeFocalPoint": {
+          "type": "boolean",
+          "required": false,
+          "description": "Include partners where user is focal point (default: true)"
+        }
+      },
+      "example_uses": [
+        "Show all partners created by user 123",
+        "Get partners managed by specific user",
+        "List partners modified by user 456 this month",
+        "Find partners where user 789 is the focal point",
+        "Show all partner activity for a specific user"
+      ],
+      "when_to_use": "Use this when you need to see all partners associated with a specific user's activities."
+    },
+    {
+      "name": "GetEngagementTrends",
+      "url": "api/partner/analytics/engagementTrends",
+      "method": "GET",
+      "description": "Retrieves historical engagement trends for partners over a specified period.",
+      "parameters": {
+        "period": {
+          "type": "string",
+          "required": false,
+          "description": "Time period for trend analysis (e.g., monthly, quarterly)"
+        },
+        "months": {
+          "type": "integer",
+          "required": false,
+          "description": "Number of months to include in the trend analysis"
+        },
+        "partnerId": {
+          "type": "integer",
+          "required": false,
+          "description": "Optional Partner ID to filter engagement trends for a specific partner"
+        }
+      },
+      "example_uses": [
+        "Show engagement trends for the last 12 months.",
+        "Get quarterly engagement trends for partner 123.",
+        "Analyze overall partner engagement growth."
+      ],
+      "when_to_use": "Use this to understand how partner engagement has evolved over time, either overall or for a specific partner."
+    },
+    {
+      "name": "GetPartnersByCountry",
+      "url": "api/partner/analytics/byCountry",
+      "method": "GET",
+      "description": "Retrieves partners grouped by country with counts and metrics.",
+      "parameters": {
+        "limit": {
+          "type": "integer",
+          "required": false,
+          "description": "Maximum number of countries to return (default: 20)"
+        },
+        "minCount": {
+          "type": "integer",
+          "required": false,
+          "description": "Minimum number of partners per country to include (default: 1)"
+        }
+      },
+      "example_uses": [
+        "Show partners by country",
+        "Get geographic distribution of partners",
+        "List top countries by partner count",
+        "Analyze partner distribution across regions",
+        "View countries with most partners"
+      ],
+      "when_to_use": "Use this when you need to analyze the geographic distribution of partners."
+    }
+  ]
+}

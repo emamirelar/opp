@@ -82,6 +82,16 @@ export class AiAssistantService {
     });
   }
 
+  // Get personalized suggestions for the user
+  getSuggestions(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/ai-assistant/generate-suggestions`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('Error fetching suggestions:', error);
+        return throwError(() => new Error('Failed to fetch suggestions'));
+      })
+    );
+  }
+
   // Helper method to create FormData for chat requests
   private createChatFormData(requestData: ChatRequestData): FormData {
     const formData = new FormData();

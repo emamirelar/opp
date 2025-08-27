@@ -237,6 +237,12 @@ User: "Search for partners"
 User: "List interactions"
 → {{"action_plan": [{{"entity": "Interaction", "intent": "list", "confidence": 0.9, "extracted_params": {{}}}}]}}
 
+User: "Get me the partners with most engagement"
+→ {{"action_plan": [{{"entity": "PartnerAnalytics", "intent": "search", "confidence": 0.95, "extracted_params": {{"metric": "engagements"}}}}]}}
+
+User: "Show me partner analytics"
+→ {{"action_plan": [{{"entity": "PartnerAnalytics", "intent": "search", "confidence": 0.95, "extracted_params": {{}}}}]}}
+
 **Comprehensive Requests (All Sources):**
 User: "Tell me everything about partners"
 → {{"action_plan": [{{"entity": "Partner", "intent": "search", "confidence": 0.95, "extracted_params": {{"comprehensive_search": true}}}}]}}
@@ -342,27 +348,33 @@ def dynamic_instruction_callback(ctx: CallbackContext) -> str:
         # Build dynamic entity list (with fallback if empty)
         entity_descriptions = []
         
-        # Always include built-in Google Workspace entities
-        builtin_entities = [
-            "**Partner**: Partner organizations and business relationships",
-            "**Contact**: Individual contact information and details", 
-            "**Document**: File and document management",
-            "**Interaction**: Communication and interaction tracking",
+        # Always include Google Workspace entities (external services)
+        google_workspace_entities = [
             "**GoogleDrive**: Search Google Drive for documents and files",
             "**GoogleDoc**: Create Google Documents with content",
             "**GoogleSheet**: Create Google Spreadsheets with data"
         ]
-        entity_descriptions.extend(builtin_entities)
+        entity_descriptions.extend(google_workspace_entities)
         
-        # Add entities from config if available
+        # Add entity mapping clarifications
+        entity_mappings = [
+            "**Note**: engagement = opportunity (when users mention 'engagement', they refer to 'opportunity' entities)"
+        ]
+        entity_descriptions.extend(entity_mappings)
+        
+        # Add all entities from config dynamically
         for entity in entities:
             if isinstance(entity, dict):
                 # Handle both "name" and "entity" field names
                 name = entity.get("name") or entity.get("entity")
-                if name and name not in ["Partner", "Contact", "Document", "Interaction"]:  # Avoid duplicates
+                if name:
                     description = entity.get("description", f"{name} entity")
                     entity_desc = f"**{name}**: {description}"
                     entity_descriptions.append(entity_desc)
+                    print(f"✅ Added entity to task planner: {name} - {description}")
+        
+        # Debug: Print all entities being added
+        print(f"🔍 Task planner entities: {[desc.split('**:')[0].replace('**', '') for desc in entity_descriptions]}")
         
         entities_text = "\n".join([f"• {desc}" for desc in entity_descriptions])
         
@@ -434,7 +446,7 @@ Return ONLY a JSON array with this EXACT structure - NO other properties:
   {{
     "step": 1,
     "action": "What needs to be accomplished (in plain English)",
-    "entity": "Partner|Contact|Document|GoogleDrive|GoogleDoc|GoogleSheet|etc",
+    "entity": "EntityNameFromAvailableEntitiesList",
     "intent": "Search|Create|Update|Delete",
     "params": {{
       "key": "value if user specified criteria"
@@ -510,6 +522,34 @@ Return ONLY a JSON array with this EXACT structure - NO other properties:
 ]
 ```
 
+**User: "Get me the partners with most engagement"**
+```json
+[
+  {{
+    "step": 1,
+    "action": "Get most active partners by engagement",
+    "entity": "PartnerAnalytics",
+    "intent": "Search",
+    "params": {{
+      "metric": "engagements"
+    }}
+  }}
+]
+```
+
+**User: "Show me partner analytics"**
+```json
+[
+  {{
+    "step": 1,
+    "action": "Get partner analytics and insights",
+    "entity": "PartnerAnalytics",
+    "intent": "Search",
+    "params": {{}}
+  }}
+]
+```
+
 **User: "Search for Opportunity+ related documents"**
 ```json
 [
@@ -562,10 +602,11 @@ Return ONLY a JSON array with this EXACT structure - NO other properties:
 For greetings, thank you, simple conversations: `[]`
 
 **🎯 ENTITY DETECTION RULES:**
-- Partner/Contact/Document requests → Use corresponding entity
+- Use the exact entity names from the available entities list above
 - "Google doc", "document creation" → GoogleDoc entity
 - "Google drive", "search files" → GoogleDrive entity  
 - "Spreadsheet", "Google sheets" → GoogleSheet entity
+- "analytics", "insights", "metrics", "reports" → Look for analytics-related entities
 - Multi-step requests → Multiple action steps
 
 **🔍 COMPREHENSIVE DOCUMENT SEARCH RULES:**
@@ -583,7 +624,51 @@ When users search for documents, information, or files, create MULTIPLE search s
 
 def get_fallback_instruction() -> str:
     """Fallback instruction when entity loading fails"""
-    return """🎯 **TASK PLANNER AGENT - FALLBACK MODE**
+    try:
+        # Try to get entities dynamically even in fallback mode
+        tools_config = config_manager.load_tools_config()
+        entities = tools_config.get("entities", [])
+        
+        entity_list = []
+        for entity in entities:
+            if isinstance(entity, dict):
+                name = entity.get("name") or entity.get("entity")
+                if name:
+                    entity_list.append(name)
+        
+        # Add Google Workspace entities
+        entity_list.extend(["GoogleDrive", "GoogleDoc", "GoogleSheet"])
+        
+        entities_text = "|".join(entity_list) if entity_list else "Partner|Contact|Document"
+        
+        return f"""🎯 **TASK PLANNER AGENT - FALLBACK MODE**
+
+You are a task planner that creates action plans from user requests.
+
+**OUTPUT FORMAT**: Return ONLY a JSON array:
+
+```json
+[
+  {{
+    "step": 1,
+    "action": "Description of what to do",
+    "entity": "{entities_text}",
+    "intent": "Search|Create|Update|Delete", 
+    "params": {{}}
+  }}
+]
+```
+
+**For greetings or unclear requests**: Return empty array `[]`
+
+**Available entities**: {entities_text}
+
+**Entity Mappings**: engagement = opportunity (when users mention 'engagement', they refer to 'opportunity' entities)
+
+Output ONLY the JSON array. No other text."""
+    except Exception:
+        # Ultimate fallback if even the config loading fails
+        return """🎯 **TASK PLANNER AGENT - ULTIMATE FALLBACK MODE**
 
 You are a task planner that creates action plans from user requests.
 
@@ -594,7 +679,7 @@ You are a task planner that creates action plans from user requests.
   {
     "step": 1,
     "action": "Description of what to do",
-    "entity": "Partner|Contact|Document",
+    "entity": "<entitylist>|GoogleDoc|GoogleSheet",
     "intent": "Search|Create|Update|Delete", 
     "params": {}
   }
@@ -603,7 +688,7 @@ You are a task planner that creates action plans from user requests.
 
 **For greetings or unclear requests**: Return empty array `[]`
 
-**Available entities**: Partner, Contact, Document, GoogleDrive, GoogleDoc, GoogleSheet
+**Entity Mappings**: engagement = opportunity (when users mention 'engagement', they refer to 'opportunity' entities)
 
 Output ONLY the JSON array. No other text."""
 
