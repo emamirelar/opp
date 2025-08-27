@@ -15,7 +15,7 @@
     {
       "route": "/admin/entity-manager",
       "name": "EntityManagerComponent",
-      "description": "This administrative page provides a powerful interface for customizing how data fields are presented across various entities like Partners, Contacts, and Interactions. Users can control field visibility, reorder columns, and manage permissions to ensure data is displayed optimally and securely.",
+      "description": "This administrative interface provides powerful tools to customize how data fields are displayed and managed for various entities like Partners, Contacts, and Interactions. Users can control field visibility, reorder columns, and set permissions, ensuring data presentation aligns with specific business needs across the application's lists and forms.",
       "capabilities": [
         "configure_entity_fields",
         "reorder_columns",
@@ -29,22 +29,31 @@
       "tabs": [],
       "search": {
         "placeholder": "",
-        "description": "",
-        "help_text": ""
+        "description": "This page does not currently support a direct search function for specific fields or configurations. You will need to select an entity and then browse its fields.",
+        "help_text": "To find a specific field, first select the relevant entity from the dropdown, then manually review the fields listed under the 'Field Configuration' or 'Field Ordering' tabs."
       },
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're unsure how to proceed, first select an entity (e.g., 'Partners' or 'Contacts') from the dropdown menu. Once an entity is selected, you can use the available tabs (e.g., Field Configuration, Field Ordering, Permissions) to customize its fields. Remember that changes are typically auto-saved as you make them, so you can see the effects immediately by navigating to the respective entity's list view.",
+        "when_stuck": "If you're unsure how to proceed, first ensure you have selected an entity from the dropdown menu at the top of the page. Once an entity is selected, you can navigate between the 'Field Configuration', 'Field Ordering', and 'Permissions' tabs to manage different aspects of the entity's fields. Remember that changes are automatically saved as you make them, so you can see their effect immediately by navigating to the respective entity's list or detail view.",
         "common_tasks": [
-          "Configuring field visibility: Select the desired entity, navigate to the 'Field Configuration' tab, and then use the checkboxes to show or hide specific columns.",
-          "Reordering columns: After selecting an entity, go to the 'Field Ordering' tab. You can then drag and drop fields to arrange them in your preferred display order.",
-          "Managing permissions: To control who can view or edit specific fields, select the entity, go to the 'Permissions' tab, and adjust the access settings for each field.",
-          "Customizing display: Use the 'Display Settings' section (if available) to configure labels, icons, or other visual aspects of the fields.",
-          "Testing changes: After making modifications, navigate to the list view or detail page of the entity you configured to verify that your changes have been applied correctly."
+          "Configuring field visibility: Select the desired entity from the dropdown, then go to the 'Field Configuration' tab. Use the checkboxes next to each field to toggle its visibility (show/hide) in lists and forms.",
+          "Reordering columns: After selecting an entity, navigate to the 'Field Ordering' tab. You can then drag and drop fields to arrange them in your preferred display order for lists and forms.",
+          "Managing permissions: Use the 'Permissions' tab (if available) to control which user roles or groups have access to view or edit specific fields for the selected entity.",
+          "Customizing display: Use the 'Display Settings' tab (if available) to configure labels, icons, and other appearance settings for fields.",
+          "Testing changes: After making any configuration changes, navigate to the actual entity's list view (e.g., 'Partners' list) or a specific record's detail view to verify that your changes have been applied correctly."
         ],
-        "troubleshooting": [],
-        "getting_started": "To begin, select an entity from the dropdown at the top of the page. This will load the configuration options for that specific entity. You can then use the tabs to manage field visibility, order, and permissions. Start with 'Field Configuration' to decide which columns are visible in lists and forms.",
-        "keyboard_shortcuts": []
+        "troubleshooting": [
+          "Problem: Changes are not appearing on the entity list → Solution: Ensure you have selected the correct entity for configuration. Changes are auto-saved, but sometimes a browser refresh or navigating away and back can help. Verify that the field is marked as visible in the 'Field Configuration' tab.",
+          "Problem: Cannot reorder fields → Solution: Make sure you are on the 'Field Ordering' tab. Use the drag-and-drop handles next to each field name. If still stuck, check for any active filters or selections that might prevent reordering.",
+          "Problem: Permissions are not taking effect → Solution: Double-check that the correct roles/groups are assigned to the field permissions. Ensure the user testing the permissions belongs to the specified role/group. Clear browser cache if necessary."
+        ],
+        "getting_started": "To begin customizing your entity fields, first select an entity (e.g., 'Partners', 'Contacts', 'Interactions') from the dropdown menu located at the top of the page. This action will load all the configuration options specific to that entity. You can then use the available tabs – 'Field Configuration', 'Field Ordering', and 'Permissions' – to tailor how fields appear and behave. A good starting point is the 'Field Configuration' tab to understand which fields are currently visible and to toggle their display.",
+        "keyboard_shortcuts": [
+          "Tab: Navigate between interactive elements (dropdowns, checkboxes, tabs)",
+          "Shift + Tab: Navigate backward between interactive elements",
+          "Enter: Activate selected element (e.g., toggle a checkbox, open a dropdown, confirm a selection)",
+          "Arrow Keys: Navigate within lists, dropdowns, or between tab headers"
+        ]
       }
     }
   ]

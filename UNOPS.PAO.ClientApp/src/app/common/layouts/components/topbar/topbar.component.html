@@ -43,23 +43,6 @@
 		</p-button>
 		
       <app-language-selector class="language-selector"></app-language-selector>
-	  		
-		<!-- Chat History Button (only visible on AI page) -->
-		<p-button
-			*ngIf="isOnAiPage()"
-			(onClick)="chatHistoryPanel.toggle($event)"
-			type="button"
-			[rounded]="true"
-			[text]="true"
-			ariaLabel="Chat History"
-			styleClass="!w-10 !h-10 !p-0 flex items-center justify-center chat-history-btn"
-			pTooltip="Chat History"
-			tooltipPosition="bottom"
-			class="chat-history-toggle">
-			<ng-template pTemplate="content">
-				<i class="pi pi-history text-xl"></i>
-			</ng-template>
-		</p-button>
 		
 		<p-button
 			(onClick)="onAIAssistantToggle()"

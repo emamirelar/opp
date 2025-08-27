@@ -12,7 +12,7 @@ from .utils import extract_entity_intent_before_model, dynamic_instruction_callb
 
 task_planner_agent = LlmAgent(
     name="task_planner_agent", 
-    description="Smart action planning agent that analyzes user requests and creates step-by-step action plans with entities, intents, and parameters",
+    description="Smart action planning agent that analyzes user requests and creates step-by-step action plans with entities, intents, and parameters. Note: engagement = opportunity",
     model=config_manager.get_gemini_model(),
     instruction=dynamic_instruction_callback,  # Use dynamic instruction
     tools=[],  # Explicitly no tools to prevent inheritance

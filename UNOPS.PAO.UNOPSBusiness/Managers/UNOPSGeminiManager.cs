@@ -1110,6 +1110,33 @@ public class UNOPSGeminiManager : IGeminiManager
         return session != null && session.AiGenerateTitle;
     }
 
+    public async Task<object> GenerateSuggestions(int userId)
+    {
+        try
+        {
+            var serviceUrl = _configuration.GetValue<string>("AgenticAi:ServiceURL");
+            var apiUrl = $"/generate-suggestions?user_id={userId}";
+            
+            using var httpClient = await _cloudRunHelper.CreateAuthenticatedHttpClientForUrl(serviceUrl);
+            var response = await httpClient.GetAsync(apiUrl);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError($"Failed to generate suggestions. Status: {response.StatusCode}");
+                throw new InvalidOperationException($"Failed to generate suggestions. Status: {response.StatusCode}");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            var result = Newtonsoft.Json.Linq.JObject.Parse(content);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error generating suggestions: {ex.Message}");
+            throw;
+        }
+    }
+
     /// <summary>
     /// Process AI response for data_modifications and create notifications
     /// </summary>

@@ -179,6 +179,42 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
     }
     ```
     
+    **🖼️ IMAGE GENERATION RESPONSE EXAMPLES:**
+    When user requests an image:
+    ```json
+    {
+      "result": [
+        {
+          "type": "markdown",
+          "message": "I'll create a visual representation of a professional business meeting environment for you!"
+        },
+        {
+          "type": "image",
+          "message": {
+            "prompt": "A professional business meeting room with modern furniture, natural lighting, and a large presentation screen showing business charts",
+            "style": "realistic",
+            "size": "1024x1024",
+            "description": "Professional business meeting environment for corporate presentations"
+          },
+          "imagePrompt": "A professional business meeting room with modern furniture, natural lighting, and a large presentation screen showing business charts",
+          "imageStyle": "realistic",
+          "imageSize": "1024x1024",
+          "entity": "Business Environment"
+        },
+        {
+          "type": "markdown",
+          "message": "Here's your professional business meeting room! This environment is perfect for corporate presentations and team meetings. Would you like me to generate any other business-related visuals?"
+        }
+      ],
+      "suggestedUserResponses": [
+        "Generate a different style",
+        "Create an office workspace",
+        "Show me a conference room",
+        "Make it more modern"
+      ]
+    }
+    ```
+    
     **📊 CHART & DIAGRAM GENERATION:**
     - **ALWAYS consider if data can be visualized** - When showing lists, statistics, or relationships
     - **Proactively suggest diagrams** when appropriate in your message text
@@ -218,11 +254,22 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
       - ["Save as Google Doc", "Create detailed report", "Show partner relationships"]
       - ["Compile into document", "Generate comprehensive report", "Create visual breakdown"]
     
-    **🎨 MERMAID DIAGRAM CREATION:**
+    **🎨 IMAGE GENERATION & VISUAL REPRESENTATIONS:**
+    
+    **🖼️ IMAGE GENERATION REQUESTS:**
+    When users request images using terms like "generate an image", "create a picture", "show me a visual", "draw me", "make an illustration", "create a photo", or similar:
+    - **Use "image" type** for image generation requests
+    - **Always include imagePrompt** with detailed description
+    - **Specify imageStyle** (realistic, artistic, cartoon, sketch, professional, etc.)
+    - **Set imageSize** (1024x1024, 1792x1024, 1024x1792)
+    
+    **📊 CHART & DIAGRAM GENERATION:**
     When users request visual representations using terms like "draw", "create a diagram", "visualize", "flowchart", "sequence diagram", "depiction", "illustrate", "map out", or similar:
-    - **All visualization requests mean Mermaid diagrams** - These are automatically rendered by compatible frontend components
+    - **Use "mermaid" type** for structural/process visualizations
+    - **Use "chartjs" type** for statistical/numerical visualizations
     - **DO NOT mention "Mermaid" or "diagram code"** to users - They see the rendered visual directly
-    - **INTELLIGENT RESPONSE SEQUENCING** - Break content into logical blocks for proper rendering flow:
+    
+    **🔄 INTELLIGENT RESPONSE SEQUENCING** - Break content into logical blocks for proper rendering flow:
       ```json
       [
         {
@@ -239,10 +286,91 @@ def dynamic_response_instruction(callback_context: CallbackContext, llm_request=
         }
       ]
       ```
-    - **SEQUENCE EXAMPLES:**
-      - **Introduction → Diagram → Follow-up**: Most common pattern
-      - **Context → Diagram → Explanation → Next Steps**: For complex diagrams
-      - **Multiple Text-Diagram pairs**: For comparing different visualizations
+    
+    **🖼️ IMAGE GENERATION FORMAT:**
+    ```json
+    {
+      "type": "image",
+      "message": {
+        "prompt": "A professional business meeting room with modern furniture, natural lighting, and a large presentation screen showing business charts",
+        "style": "realistic",
+        "size": "1024x1024",
+        "description": "Professional business meeting environment for corporate presentations"
+      },
+      "imagePrompt": "A professional business meeting room with modern furniture, natural lighting, and a large presentation screen showing business charts",
+      "imageStyle": "realistic",
+      "imageSize": "1024x1024",
+      "entity": "Business Environment"
+    }
+    ```
+    
+    **🎯 WHEN TO USE IMAGE GENERATION:**
+    - **Conceptual illustrations**: Business processes, workflows, organizational structures
+    - **Visual explanations**: Complex concepts that benefit from visual representation
+    - **Professional presentations**: Meeting rooms, office environments, business scenarios
+    - **Creative requests**: Artistic representations, mood boards, design concepts
+    - **Educational content**: Visual learning aids, step-by-step illustrations
+    - **Environmental scenes**: Office spaces, meeting rooms, business settings
+    - **Process visualizations**: When users want to "see" a concept rather than understand data
+    
+    **🎯 WHEN TO USE CHARTS/DIAGRAMS INSTEAD:**
+    - **Data visualization**: Statistics, numbers, percentages, comparisons
+    - **Process flows**: Step-by-step procedures, decision trees, workflows
+    - **Relationships**: Entity connections, organizational hierarchies, network maps
+    - **Timelines**: Project schedules, historical events, progress tracking
+    - **Structured information**: When the content has clear logical organization
+    
+    **🔄 FALLBACK STRATEGY:**
+    - **If image generation fails**: Automatically suggest alternative visualizations (charts, diagrams)
+    - **Always provide value**: Never leave users without a visual representation when requested
+    - **Smart alternatives**: Suggest the most appropriate chart/diagram type based on content
+    
+    **💡 COMMON IMAGE GENERATION SCENARIOS:**
+    - **"Show me a business meeting"** → Generate professional meeting room image
+    - **"Create an office workspace"** → Generate modern office environment image
+    - **"Draw a partnership collaboration"** → Generate people working together image
+    - **"Visualize a project timeline"** → Generate project planning workspace image
+    - **"Show me a data center"** → Generate modern server room image
+    - **"Create a customer service scene"** → Generate customer support interaction image
+    - **"Visualize a supply chain"** → Generate logistics and transportation image
+    - **"Show me a team collaboration"** → Generate diverse team working together image
+    
+    **🔑 TRIGGER PHRASES FOR IMAGE GENERATION:**
+    - **"Generate an image of..."** → Always create image
+    - **"Show me a picture of..."** → Always create image
+    - **"Create a visual of..."** → Always create image
+    - **"Draw me..."** → Always create image
+    - **"Make an illustration of..."** → Always create image
+    - **"Visualize..."** → Choose between image or diagram based on context
+    - **"Show me..."** → Choose between image or diagram based on context
+    - **"Create a..."** → Choose between image or diagram based on context
+    
+    **🎨 IMAGE STYLE RECOMMENDATIONS:**
+    - **Business/Professional**: Use "realistic" or "professional" style
+    - **Creative/Conceptual**: Use "artistic" or "modern" style
+    - **Educational/Explanatory**: Use "clean" or "professional" style
+    - **Technical/Architectural**: Use "realistic" or "technical" style
+    - **Collaborative/Team**: Use "warm" or "inclusive" style
+    
+    **SEQUENCE EXAMPLES:**
+    - **Introduction → Image → Follow-up**: For image generation
+    - **Context → Diagram → Explanation → Next Steps**: For complex diagrams
+    - **Multiple Text-Diagram pairs**: For comparing different visualizations
+    
+    **🧠 INTELLIGENT IMAGE GENERATION HANDLING:**
+    - **Always ask for clarification** if the image request is vague
+    - **Suggest specific styles** when users don't specify (realistic, artistic, professional, modern)
+    - **Provide context** about what the image will show before generating
+    - **Offer alternatives** if the requested image type isn't suitable
+    - **Follow up with questions** about style preferences, size, or modifications
+    - **Combine with other content** - don't just generate an image, explain what it represents
+    
+    **🤔 HANDLING AMBIGUOUS REQUESTS:**
+    - **"Show me something"** → Ask: "What specific thing would you like me to show you?"
+    - **"Create a visual"** → Ask: "What type of visual would you prefer - an image, chart, or diagram?"
+    - **"Draw something"** → Ask: "What would you like me to draw for you?"
+    - **"Make a picture"** → Ask: "What should the picture show or represent?"
+    - **Always provide examples** of what you can create to help users choose
     **🎨 CHART TYPE SELECTION INTELLIGENCE:**
     Choose the appropriate chart type based on data characteristics and user intent:
     

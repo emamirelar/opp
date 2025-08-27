@@ -8203,6 +8203,23 @@
             "HttpGetAttribute"
           ],
           "AccessControl": ""
+        },
+        {
+          "Name": "GenerateSuggestions",
+          "HttpMethod": "GET",
+          "Route": "/api/ai-assistant/generate-suggestions",
+          "FullRoute": "api/ai-assistant/generate-suggestions",
+          "Summary": "",
+          "Returns": "",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute"
+          ],
+          "AccessControl": ""
         }
       ],
       "Attributes": [
@@ -8382,6 +8399,68 @@
                       "NestedProperties": []
                     },
                     {
+                      "Name": "UserEmail",
+                      "Type": "string",
+                      "Description": "Property of type string",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "OrgUnit",
+                      "Type": "string",
+                      "Description": "Property of type string",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "SupervisorId",
+                      "Type": "Nullable<int>",
+                      "Description": "Property of type Nullable<int>",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": {
+                        "RelationType": "Reference",
+                        "ReferencedEntity": null,
+                        "ReferencedProperty": null,
+                        "LookupEndpoint": null,
+                        "DisplayProperty": null,
+                        "RequiresIdResolution": true
+                      },
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "DutyStation",
+                      "Type": "string",
+                      "Description": "Property of type string",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "Position",
+                      "Type": "string",
+                      "Description": "Property of type string",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
                       "Name": "Name",
                       "Type": "string",
                       "Description": "Property of type string",
@@ -8548,6 +8627,17 @@
                         "DisplayProperty": null,
                         "RequiresIdResolution": true
                       },
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "OrgUnitName",
+                      "Type": "string",
+                      "Description": "Property of type string",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
                       "NestedProperties": []
                     },
                     {
@@ -8839,6 +8929,68 @@
                         "NestedProperties": []
                       },
                       {
+                        "Name": "UserEmail",
+                        "Type": "string",
+                        "Description": "Property of type string",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "OrgUnit",
+                        "Type": "string",
+                        "Description": "Property of type string",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "SupervisorId",
+                        "Type": "Nullable<int>",
+                        "Description": "Property of type Nullable<int>",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": {
+                          "RelationType": "Reference",
+                          "ReferencedEntity": null,
+                          "ReferencedProperty": null,
+                          "LookupEndpoint": null,
+                          "DisplayProperty": null,
+                          "RequiresIdResolution": true
+                        },
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "DutyStation",
+                        "Type": "string",
+                        "Description": "Property of type string",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "Position",
+                        "Type": "string",
+                        "Description": "Property of type string",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
                         "Name": "Name",
                         "Type": "string",
                         "Description": "Property of type string",
@@ -9005,6 +9157,17 @@
                           "DisplayProperty": null,
                           "RequiresIdResolution": true
                         },
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "OrgUnitName",
+                        "Type": "string",
+                        "Description": "Property of type string",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
                         "NestedProperties": []
                       },
                       {
@@ -9319,6 +9482,17 @@
                   "NestedProperties": []
                 },
                 {
+                  "Name": "OrgUnitName",
+                  "Type": "string",
+                  "Description": "Property of type string",
+                  "IsRequired": false,
+                  "IsNullable": true,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": null,
+                  "NestedProperties": []
+                },
+                {
                   "Name": "RelatedToMe",
                   "Type": "bool",
                   "Description": "Property of type bool",
@@ -9406,6 +9580,17 @@
                       "DisplayProperty": null,
                       "RequiresIdResolution": true
                     },
+                    "NestedProperties": []
+                  },
+                  {
+                    "Name": "OrgUnitName",
+                    "Type": "string",
+                    "Description": "Property of type string",
+                    "IsRequired": false,
+                    "IsNullable": true,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": null,
                     "NestedProperties": []
                   },
                   {
@@ -13748,6 +13933,273 @@
       "SearchMetadata": null
     },
     {
+      "Name": "PartnerAnalyticsController",
+      "FullName": "UNOPS.PAO.Presentation.Controllers.PartnerAnalyticsController",
+      "BaseRoute": "/",
+      "Methods": [
+        {
+          "Name": "GetMostActivePartners",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/analytics/mostActive",
+          "FullRoute": "api/partner/analytics/mostActive",
+          "Summary": "Retrieves the most active partners based on engagement count, interaction count, or recent activity.",
+          "Returns": "List of most active partners with activity metrics",
+          "ExampleUses": [
+            "Show most active partners this month",
+            "Get top 5 partners by engagement count",
+            "List partners with most interactions",
+            "Find most recently active partners",
+            "Show partners with highest engagement in the last quarter"
+          ],
+          "WhenToUse": "Use this when you need to identify the most active or engaged partners based on various metrics.",
+          "Parameters": [
+            {
+              "Name": "limit",
+              "Type": "int",
+              "Description": "Maximum number of partners to return (default: 10)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 10,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "timeframe",
+              "Type": "string",
+              "Description": "Time period to analyze (daily, weekly, monthly, quarterly, yearly)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": "monthly",
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "metric",
+              "Type": "string",
+              "Description": "Activity metric to measure (engagements, interactions, lastActivity)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": "engagements",
+              "Properties": [],
+              "Schema": null
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPartnersByUser",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/analytics/byUser/{userId}",
+          "FullRoute": "api/partner/analytics/byUser/{userId}",
+          "Summary": "Retrieves partners created or managed by a specific user with activity metrics.",
+          "Returns": "List of partners associated with the specified user with activity metrics",
+          "ExampleUses": [
+            "Show all partners created by user 123",
+            "Get partners managed by specific user",
+            "List partners modified by user 456 this month",
+            "Find partners where user 789 is the focal point",
+            "Show all partner activity for a specific user"
+          ],
+          "WhenToUse": "Use this when you need to see all partners associated with a specific user's activities.",
+          "Parameters": [
+            {
+              "Name": "userId",
+              "Type": "int",
+              "Description": "User ID to get partners for",
+              "IsRequired": true,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "timeframe",
+              "Type": "string",
+              "Description": "Time period to analyze (daily, weekly, monthly, quarterly, yearly)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": "monthly",
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "includeCreated",
+              "Type": "bool",
+              "Description": "Include partners created by the user (default: true)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": true,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "includeModified",
+              "Type": "bool",
+              "Description": "Include partners modified by the user (default: true)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": true,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "includeFocalPoint",
+              "Type": "bool",
+              "Description": "Include partners where user is focal point (default: true)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": true,
+              "Properties": [],
+              "Schema": null
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetEngagementTrends",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/analytics/engagementTrends",
+          "FullRoute": "api/partner/analytics/engagementTrends",
+          "Summary": "",
+          "Returns": "",
+          "ExampleUses": [],
+          "WhenToUse": "",
+          "Parameters": [
+            {
+              "Name": "period",
+              "Type": "string",
+              "Description": "",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": "monthly",
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "months",
+              "Type": "int",
+              "Description": "",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 12,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "partnerId",
+              "Type": "Nullable<int>",
+              "Description": "",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": [],
+              "Schema": null
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPartnersByCountry",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/analytics/byCountry",
+          "FullRoute": "api/partner/analytics/byCountry",
+          "Summary": "Retrieves partners grouped by country with counts and metrics.",
+          "Returns": "List of countries with partner counts and metrics",
+          "ExampleUses": [
+            "Show partners by country",
+            "Get geographic distribution of partners",
+            "List top countries by partner count",
+            "Analyze partner distribution across regions",
+            "View countries with most partners"
+          ],
+          "WhenToUse": "Use this when you need to analyze the geographic distribution of partners.",
+          "Parameters": [
+            {
+              "Name": "limit",
+              "Type": "int",
+              "Description": "Maximum number of countries to return (default: 20)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 20,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "minCount",
+              "Type": "int",
+              "Description": "Minimum number of partners per country to include (default: 1)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 1,
+              "Properties": [],
+              "Schema": null
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        }
+      ],
+      "Attributes": [
+        "NullableContextAttribute",
+        "NullableAttribute",
+        "RouteAttribute",
+        "AuthorizeAttribute",
+        "ApiControllerAttribute",
+        "AuthorizeAttribute",
+        "ControllerAttribute"
+      ],
+      "SearchMetadata": null
+    },
+    {
       "Name": "PartnerController",
       "FullName": "UNOPS.PAO.Presentation.Controllers.PartnerController",
       "BaseRoute": "/",
@@ -14706,14 +15158,14 @@
           "Summary": "Performs advanced search with structured criteria including status, dates, relationships, and complex filters.",
           "Returns": "Paginated list of partners matching the advanced search criteria",
           "ExampleUses": [
-            "Find active government partners",
+            "Find active partners",
             "Show partners with global key account status",
             "Get partners created this month",
-            "Find partners by status and office location",
-            "List partners involved in climate projects",
+            "Find partners by approval status",
+            "List partners with due diligence requirements",
             "Search for partners by complex criteria combinations"
           ],
-          "WhenToUse": "Use this for searches involving partner status, dates, types, complex criteria, or multiple field combinations.",
+          "WhenToUse": "Use this for searches involving partner status, dates, approval status, or multiple field combinations.",
           "Parameters": [
             {
               "Name": "request",
@@ -15657,6 +16109,175 @@
             "AccessControlledAttribute"
           ],
           "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPartnerEngagements",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/{partnerId}/engagements",
+          "FullRoute": "api/partner/{partnerId}/engagements",
+          "Summary": "Retrieves all engagements for a specific partner with complete details and pagination.",
+          "Returns": "Paginated list of engagements for the specified partner",
+          "ExampleUses": [
+            "Show all engagements for partner 123",
+            "List partner's project engagements",
+            "Get engagement history for this partner",
+            "Display partner collaboration records",
+            "Show partner's active engagements"
+          ],
+          "WhenToUse": "Use this when the user wants to see all engagements associated with a specific partner from the partner's perspective.",
+          "Parameters": [
+            {
+              "Name": "partnerId",
+              "Type": "int",
+              "Description": "Partner ID to get engagements for",
+              "IsRequired": true,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "pageIndex",
+              "Type": "int",
+              "Description": "Page number (1-based, default: 1)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 1,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "pageSize",
+              "Type": "int",
+              "Description": "Number of items per page (default: 20)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 20,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "orderBy",
+              "Type": "string",
+              "Description": "Field to order results by (optional)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "ascending",
+              "Type": "bool",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": true,
+              "Properties": [],
+              "Schema": null
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute",
+            "AccessControlledAttribute"
+          ],
+          "AccessControl": "AccessControlledAttribute"
+        },
+        {
+          "Name": "GetPartnerProjects",
+          "HttpMethod": "GET",
+          "Route": "/api/partner/{partnerId}/projects",
+          "FullRoute": "api/partner/{partnerId}/projects",
+          "Summary": "Retrieves all projects associated with a specific partner with complete details and pagination.",
+          "Returns": "Paginated list of projects for the specified partner",
+          "ExampleUses": [
+            "Show all projects for partner 123",
+            "List partner's project portfolio",
+            "Get project history for this partner",
+            "Display partner's active projects",
+            "Show partner collaboration projects"
+          ],
+          "WhenToUse": "Use this when the user wants to see all projects associated with a specific partner.",
+          "Parameters": [
+            {
+              "Name": "partnerId",
+              "Type": "int",
+              "Description": "Partner ID to get projects for",
+              "IsRequired": true,
+              "IsFromBody": false,
+              "IsFromQuery": false,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "pageIndex",
+              "Type": "int",
+              "Description": "Page number (1-based, default: 1)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 1,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "pageSize",
+              "Type": "int",
+              "Description": "Number of items per page (default: 20)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": 20,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "orderBy",
+              "Type": "string",
+              "Description": "Field to order results by (optional)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": null,
+              "Properties": [],
+              "Schema": null
+            },
+            {
+              "Name": "ascending",
+              "Type": "bool",
+              "Description": "Sort direction - true for ascending, false for descending (default: true)",
+              "IsRequired": false,
+              "IsFromBody": false,
+              "IsFromQuery": true,
+              "IsFromRoute": false,
+              "DefaultValue": true,
+              "Properties": [],
+              "Schema": null
+            }
+          ],
+          "Attributes": [
+            "AsyncStateMachineAttribute",
+            "DebuggerStepThroughAttribute",
+            "HttpGetAttribute"
+          ],
+          "AccessControl": ""
         },
         {
           "Name": "Delete",
@@ -17939,21 +18560,38 @@
           "id",
           "name",
           "status",
-          "newEngagement",
+          "partnerShortDescription",
+          "partnerLongDescription",
+          "partnerCategoryId",
+          "liaisonOfficeId",
+          "partnerFocalPointUserId",
+          "unAndStateEntity",
+          "keyGlobalPartner",
+          "unSecretariatPartner",
+          "dueDiligenceRequired",
+          "dueDiligenceApproval",
+          "dueDiligenceApprovalDate",
+          "dueDiligenceExpiryDate",
+          "partnerApprovalStatus",
+          "partnerApprovalDate",
+          "partnerApprovalReference",
+          "partnerApprovedBy",
+          "partnerLevyStatus",
+          "reasonForLevy",
+          "levyTreatment",
+          "pooledFund",
+          "canCreateNewOpportunities",
+          "reasonForNoNewOpportunity",
+          "createdDate",
+          "lastModifiedDate",
+          "createdBy",
+          "lastModifiedBy",
+          "isDeleted",
+          "shortName",
+          "description",
           "phone",
           "website",
-          "shortName",
-          "organizationHierarchyId",
-          "organizationHierarchyName",
-          "partnerCategoryId",
-          "partnerCategoryName",
-          "addressCity",
-          "addressStateProvince",
-          "addressPostalCode",
-          "addressCountry",
-          "description",
           "email",
-          "createdDate",
           "modifiedDate"
         ],
         "NestedFields": {},
@@ -20940,9 +21578,9 @@
           "WhenToUse": "",
           "Parameters": [
             {
-              "Name": "userInfo",
-              "Type": "UserInfo",
-              "Description": "Updated user information object containing profile changes",
+              "Name": "userProfile",
+              "Type": "UserProfile",
+              "Description": "",
               "IsRequired": false,
               "IsFromBody": true,
               "IsFromQuery": false,
@@ -20968,7 +21606,18 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "Name",
+                  "Name": "FirstName",
+                  "Type": "string",
+                  "Description": "Property of type string",
+                  "IsRequired": false,
+                  "IsNullable": true,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": null,
+                  "NestedProperties": []
+                },
+                {
+                  "Name": "LastName",
                   "Type": "string",
                   "Description": "Property of type string",
                   "IsRequired": false,
@@ -21019,18 +21668,7 @@
                   "NestedProperties": []
                 },
                 {
-                  "Name": "TextToSpeech",
-                  "Type": "bool",
-                  "Description": "Property of type bool",
-                  "IsRequired": true,
-                  "IsNullable": false,
-                  "DefaultValue": null,
-                  "Format": null,
-                  "Relationship": null,
-                  "NestedProperties": []
-                },
-                {
-                  "Name": "Language",
+                  "Name": "DutyStation",
                   "Type": "string",
                   "Description": "Property of type string",
                   "IsRequired": false,
@@ -21039,6 +21677,333 @@
                   "Format": null,
                   "Relationship": null,
                   "NestedProperties": []
+                },
+                {
+                  "Name": "Position",
+                  "Type": "string",
+                  "Description": "Property of type string",
+                  "IsRequired": false,
+                  "IsNullable": true,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": null,
+                  "NestedProperties": []
+                },
+                {
+                  "Name": "Name",
+                  "Type": "string",
+                  "Description": "Property of type string",
+                  "IsRequired": false,
+                  "IsNullable": true,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": null,
+                  "NestedProperties": []
+                },
+                {
+                  "Name": "UserPreference",
+                  "Type": "UserPreference",
+                  "Description": "Property of type UserPreference",
+                  "IsRequired": false,
+                  "IsNullable": true,
+                  "DefaultValue": null,
+                  "Format": null,
+                  "Relationship": null,
+                  "NestedProperties": [
+                    {
+                      "Name": "Id",
+                      "Type": "int",
+                      "Description": "Property of type int",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": {
+                        "RelationType": "Reference",
+                        "ReferencedEntity": null,
+                        "ReferencedProperty": null,
+                        "LookupEndpoint": null,
+                        "DisplayProperty": null,
+                        "RequiresIdResolution": true
+                      },
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "UserId",
+                      "Type": "int",
+                      "Description": "Property of type int",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": {
+                        "RelationType": "Reference",
+                        "ReferencedEntity": "User",
+                        "ReferencedProperty": null,
+                        "LookupEndpoint": "api/values/users",
+                        "DisplayProperty": "Name",
+                        "RequiresIdResolution": true
+                      },
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "UserProfile",
+                      "Type": "UserProfile",
+                      "Description": "Property of type UserProfile",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "GlobalFilterJson",
+                      "Type": "string",
+                      "Description": "Property of type string",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "GlobalFilters",
+                      "Type": "GlobalFilters",
+                      "Description": "Property of type GlobalFilters",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": [
+                        {
+                          "Name": "OrgUnitId",
+                          "Type": "Nullable<int>",
+                          "Description": "Property of type Nullable<int>",
+                          "IsRequired": false,
+                          "IsNullable": true,
+                          "DefaultValue": null,
+                          "Format": null,
+                          "Relationship": {
+                            "RelationType": "Reference",
+                            "ReferencedEntity": null,
+                            "ReferencedProperty": null,
+                            "LookupEndpoint": null,
+                            "DisplayProperty": null,
+                            "RequiresIdResolution": true
+                          },
+                          "NestedProperties": []
+                        },
+                        {
+                          "Name": "OrgUnitName",
+                          "Type": "string",
+                          "Description": "Property of type string",
+                          "IsRequired": false,
+                          "IsNullable": true,
+                          "DefaultValue": null,
+                          "Format": null,
+                          "Relationship": null,
+                          "NestedProperties": []
+                        },
+                        {
+                          "Name": "RelatedToMe",
+                          "Type": "bool",
+                          "Description": "Property of type bool",
+                          "IsRequired": true,
+                          "IsNullable": false,
+                          "DefaultValue": null,
+                          "Format": null,
+                          "Relationship": null,
+                          "NestedProperties": []
+                        },
+                        {
+                          "Name": "DateOn",
+                          "Type": "Nullable<DateTime>",
+                          "Description": "Property of type Nullable<DateTime>",
+                          "IsRequired": false,
+                          "IsNullable": true,
+                          "DefaultValue": null,
+                          "Format": "date-time",
+                          "Relationship": null,
+                          "NestedProperties": []
+                        },
+                        {
+                          "Name": "DateFrom",
+                          "Type": "Nullable<DateTime>",
+                          "Description": "Property of type Nullable<DateTime>",
+                          "IsRequired": false,
+                          "IsNullable": true,
+                          "DefaultValue": null,
+                          "Format": "date-time",
+                          "Relationship": null,
+                          "NestedProperties": []
+                        },
+                        {
+                          "Name": "DateTo",
+                          "Type": "Nullable<DateTime>",
+                          "Description": "Property of type Nullable<DateTime>",
+                          "IsRequired": false,
+                          "IsNullable": true,
+                          "DefaultValue": null,
+                          "Format": "date-time",
+                          "Relationship": null,
+                          "NestedProperties": []
+                        },
+                        {
+                          "Name": "PreferredLanguage",
+                          "Type": "string",
+                          "Description": "Property of type string",
+                          "IsRequired": false,
+                          "IsNullable": true,
+                          "DefaultValue": null,
+                          "Format": null,
+                          "Relationship": null,
+                          "NestedProperties": []
+                        },
+                        {
+                          "Name": "Theme",
+                          "Type": "string",
+                          "Description": "Property of type string",
+                          "IsRequired": false,
+                          "IsNullable": true,
+                          "DefaultValue": null,
+                          "Format": null,
+                          "Relationship": null,
+                          "NestedProperties": []
+                        }
+                      ]
+                    },
+                    {
+                      "Name": "AdditionalSettingsJson",
+                      "Type": "string",
+                      "Description": "Property of type string",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "Id",
+                      "Type": "int",
+                      "Description": "Property of type int",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": {
+                        "RelationType": "Reference",
+                        "ReferencedEntity": null,
+                        "ReferencedProperty": null,
+                        "LookupEndpoint": null,
+                        "DisplayProperty": null,
+                        "RequiresIdResolution": true
+                      },
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "Name",
+                      "Type": "string",
+                      "Description": "Property of type string",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "Status",
+                      "Type": "EntityStatus",
+                      "Description": "Property of type EntityStatus",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "CreatedBy",
+                      "Type": "int",
+                      "Description": "Property of type int",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "CreatedDate",
+                      "Type": "DateTime",
+                      "Description": "Property of type DateTime",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": "date-time",
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "LastModifiedBy",
+                      "Type": "int",
+                      "Description": "Property of type int",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "LastModifiedDate",
+                      "Type": "Nullable<DateTime>",
+                      "Description": "Property of type Nullable<DateTime>",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": "date-time",
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "IsDeleted",
+                      "Type": "bool",
+                      "Description": "Property of type bool",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "DeletedBy",
+                      "Type": "int",
+                      "Description": "Property of type int",
+                      "IsRequired": true,
+                      "IsNullable": false,
+                      "DefaultValue": null,
+                      "Format": null,
+                      "Relationship": null,
+                      "NestedProperties": []
+                    },
+                    {
+                      "Name": "DeletedDate",
+                      "Type": "Nullable<DateTime>",
+                      "Description": "Property of type Nullable<DateTime>",
+                      "IsRequired": false,
+                      "IsNullable": true,
+                      "DefaultValue": null,
+                      "Format": "date-time",
+                      "Relationship": null,
+                      "NestedProperties": []
+                    }
+                  ]
                 },
                 {
                   "Name": "Id",
@@ -21148,9 +22113,9 @@
                 }
               ],
               "Schema": {
-                "TypeName": "UserInfo",
-                "FullTypeName": "UNOPS.PAO.Domain.Entities.UserInfo",
-                "Description": "Schema for UserInfo",
+                "TypeName": "UserProfile",
+                "FullTypeName": "UNOPS.PAO.Domain.Entities.UserProfile",
+                "Description": "Schema for UserProfile",
                 "Properties": [
                   {
                     "Name": "UserId",
@@ -21171,7 +22136,18 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "Name",
+                    "Name": "FirstName",
+                    "Type": "string",
+                    "Description": "Property of type string",
+                    "IsRequired": false,
+                    "IsNullable": true,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": null,
+                    "NestedProperties": []
+                  },
+                  {
+                    "Name": "LastName",
                     "Type": "string",
                     "Description": "Property of type string",
                     "IsRequired": false,
@@ -21222,18 +22198,7 @@
                     "NestedProperties": []
                   },
                   {
-                    "Name": "TextToSpeech",
-                    "Type": "bool",
-                    "Description": "Property of type bool",
-                    "IsRequired": true,
-                    "IsNullable": false,
-                    "DefaultValue": null,
-                    "Format": null,
-                    "Relationship": null,
-                    "NestedProperties": []
-                  },
-                  {
-                    "Name": "Language",
+                    "Name": "DutyStation",
                     "Type": "string",
                     "Description": "Property of type string",
                     "IsRequired": false,
@@ -21242,6 +22207,333 @@
                     "Format": null,
                     "Relationship": null,
                     "NestedProperties": []
+                  },
+                  {
+                    "Name": "Position",
+                    "Type": "string",
+                    "Description": "Property of type string",
+                    "IsRequired": false,
+                    "IsNullable": true,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": null,
+                    "NestedProperties": []
+                  },
+                  {
+                    "Name": "Name",
+                    "Type": "string",
+                    "Description": "Property of type string",
+                    "IsRequired": false,
+                    "IsNullable": true,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": null,
+                    "NestedProperties": []
+                  },
+                  {
+                    "Name": "UserPreference",
+                    "Type": "UserPreference",
+                    "Description": "Property of type UserPreference",
+                    "IsRequired": false,
+                    "IsNullable": true,
+                    "DefaultValue": null,
+                    "Format": null,
+                    "Relationship": null,
+                    "NestedProperties": [
+                      {
+                        "Name": "Id",
+                        "Type": "int",
+                        "Description": "Property of type int",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": {
+                          "RelationType": "Reference",
+                          "ReferencedEntity": null,
+                          "ReferencedProperty": null,
+                          "LookupEndpoint": null,
+                          "DisplayProperty": null,
+                          "RequiresIdResolution": true
+                        },
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "UserId",
+                        "Type": "int",
+                        "Description": "Property of type int",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": {
+                          "RelationType": "Reference",
+                          "ReferencedEntity": "User",
+                          "ReferencedProperty": null,
+                          "LookupEndpoint": "api/values/users",
+                          "DisplayProperty": "Name",
+                          "RequiresIdResolution": true
+                        },
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "UserProfile",
+                        "Type": "UserProfile",
+                        "Description": "Property of type UserProfile",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "GlobalFilterJson",
+                        "Type": "string",
+                        "Description": "Property of type string",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "GlobalFilters",
+                        "Type": "GlobalFilters",
+                        "Description": "Property of type GlobalFilters",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": [
+                          {
+                            "Name": "OrgUnitId",
+                            "Type": "Nullable<int>",
+                            "Description": "Property of type Nullable<int>",
+                            "IsRequired": false,
+                            "IsNullable": true,
+                            "DefaultValue": null,
+                            "Format": null,
+                            "Relationship": {
+                              "RelationType": "Reference",
+                              "ReferencedEntity": null,
+                              "ReferencedProperty": null,
+                              "LookupEndpoint": null,
+                              "DisplayProperty": null,
+                              "RequiresIdResolution": true
+                            },
+                            "NestedProperties": []
+                          },
+                          {
+                            "Name": "OrgUnitName",
+                            "Type": "string",
+                            "Description": "Property of type string",
+                            "IsRequired": false,
+                            "IsNullable": true,
+                            "DefaultValue": null,
+                            "Format": null,
+                            "Relationship": null,
+                            "NestedProperties": []
+                          },
+                          {
+                            "Name": "RelatedToMe",
+                            "Type": "bool",
+                            "Description": "Property of type bool",
+                            "IsRequired": true,
+                            "IsNullable": false,
+                            "DefaultValue": null,
+                            "Format": null,
+                            "Relationship": null,
+                            "NestedProperties": []
+                          },
+                          {
+                            "Name": "DateOn",
+                            "Type": "Nullable<DateTime>",
+                            "Description": "Property of type Nullable<DateTime>",
+                            "IsRequired": false,
+                            "IsNullable": true,
+                            "DefaultValue": null,
+                            "Format": "date-time",
+                            "Relationship": null,
+                            "NestedProperties": []
+                          },
+                          {
+                            "Name": "DateFrom",
+                            "Type": "Nullable<DateTime>",
+                            "Description": "Property of type Nullable<DateTime>",
+                            "IsRequired": false,
+                            "IsNullable": true,
+                            "DefaultValue": null,
+                            "Format": "date-time",
+                            "Relationship": null,
+                            "NestedProperties": []
+                          },
+                          {
+                            "Name": "DateTo",
+                            "Type": "Nullable<DateTime>",
+                            "Description": "Property of type Nullable<DateTime>",
+                            "IsRequired": false,
+                            "IsNullable": true,
+                            "DefaultValue": null,
+                            "Format": "date-time",
+                            "Relationship": null,
+                            "NestedProperties": []
+                          },
+                          {
+                            "Name": "PreferredLanguage",
+                            "Type": "string",
+                            "Description": "Property of type string",
+                            "IsRequired": false,
+                            "IsNullable": true,
+                            "DefaultValue": null,
+                            "Format": null,
+                            "Relationship": null,
+                            "NestedProperties": []
+                          },
+                          {
+                            "Name": "Theme",
+                            "Type": "string",
+                            "Description": "Property of type string",
+                            "IsRequired": false,
+                            "IsNullable": true,
+                            "DefaultValue": null,
+                            "Format": null,
+                            "Relationship": null,
+                            "NestedProperties": []
+                          }
+                        ]
+                      },
+                      {
+                        "Name": "AdditionalSettingsJson",
+                        "Type": "string",
+                        "Description": "Property of type string",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "Id",
+                        "Type": "int",
+                        "Description": "Property of type int",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": {
+                          "RelationType": "Reference",
+                          "ReferencedEntity": null,
+                          "ReferencedProperty": null,
+                          "LookupEndpoint": null,
+                          "DisplayProperty": null,
+                          "RequiresIdResolution": true
+                        },
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "Name",
+                        "Type": "string",
+                        "Description": "Property of type string",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "Status",
+                        "Type": "EntityStatus",
+                        "Description": "Property of type EntityStatus",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "CreatedBy",
+                        "Type": "int",
+                        "Description": "Property of type int",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "CreatedDate",
+                        "Type": "DateTime",
+                        "Description": "Property of type DateTime",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": "date-time",
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "LastModifiedBy",
+                        "Type": "int",
+                        "Description": "Property of type int",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "LastModifiedDate",
+                        "Type": "Nullable<DateTime>",
+                        "Description": "Property of type Nullable<DateTime>",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": "date-time",
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "IsDeleted",
+                        "Type": "bool",
+                        "Description": "Property of type bool",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "DeletedBy",
+                        "Type": "int",
+                        "Description": "Property of type int",
+                        "IsRequired": true,
+                        "IsNullable": false,
+                        "DefaultValue": null,
+                        "Format": null,
+                        "Relationship": null,
+                        "NestedProperties": []
+                      },
+                      {
+                        "Name": "DeletedDate",
+                        "Type": "Nullable<DateTime>",
+                        "Description": "Property of type Nullable<DateTime>",
+                        "IsRequired": false,
+                        "IsNullable": true,
+                        "DefaultValue": null,
+                        "Format": "date-time",
+                        "Relationship": null,
+                        "NestedProperties": []
+                      }
+                    ]
                   },
                   {
                     "Name": "Id",
@@ -21352,7 +22644,6 @@
                 ],
                 "RequiredFields": [
                   "UserId",
-                  "TextToSpeech",
                   "Id",
                   "Status",
                   "CreatedBy",
@@ -21704,21 +22995,38 @@
         "id",
         "name",
         "status",
-        "newEngagement",
+        "partnerShortDescription",
+        "partnerLongDescription",
+        "partnerCategoryId",
+        "liaisonOfficeId",
+        "partnerFocalPointUserId",
+        "unAndStateEntity",
+        "keyGlobalPartner",
+        "unSecretariatPartner",
+        "dueDiligenceRequired",
+        "dueDiligenceApproval",
+        "dueDiligenceApprovalDate",
+        "dueDiligenceExpiryDate",
+        "partnerApprovalStatus",
+        "partnerApprovalDate",
+        "partnerApprovalReference",
+        "partnerApprovedBy",
+        "partnerLevyStatus",
+        "reasonForLevy",
+        "levyTreatment",
+        "pooledFund",
+        "canCreateNewOpportunities",
+        "reasonForNoNewOpportunity",
+        "createdDate",
+        "lastModifiedDate",
+        "createdBy",
+        "lastModifiedBy",
+        "isDeleted",
+        "shortName",
+        "description",
         "phone",
         "website",
-        "shortName",
-        "organizationHierarchyId",
-        "organizationHierarchyName",
-        "partnerCategoryId",
-        "partnerCategoryName",
-        "addressCity",
-        "addressStateProvince",
-        "addressPostalCode",
-        "addressCountry",
-        "description",
         "email",
-        "createdDate",
         "modifiedDate"
       ],
       "NestedFields": {},
@@ -21866,7 +23174,7 @@
       ]
     }
   ],
-  "ExtractedAt": "2025-08-25T10:39:59.8046845Z",
+  "ExtractedAt": "2025-08-26T18:41:54.8926276Z",
   "AssemblyName": "UNOPS.PAO.Presentation",
   "AssemblyVersion": "1.0.0.0"
 }

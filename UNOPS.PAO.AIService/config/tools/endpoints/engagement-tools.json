@@ -1,20 +1,20 @@
 {
   "entity": "Engagement",
-  "description": "An engagement represents a formal agreement, project, or interaction between UNOPS and a partner, outlining specific activities, objectives, and collaborations.",
+  "description": "Manages and retrieves information about engagements, which are specific projects or activities associated with partners.",
   "synonyms": [
-    "project",
-    "collaboration",
-    "agreement",
-    "activity",
-    "initiative"
+    "Project",
+    "Activity",
+    "Initiative",
+    "Undertaking",
+    "Assignment"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "GetEngagementsByPartner",
-      "url": "api/engagement/partner/{partnerId}",
+      "url": "/api/engagement/partner/{partnerId}",
       "method": "GET",
-      "description": "Retrieves all engagements for a specific partner with complete details. This endpoint supports pagination and sorting of results.",
+      "description": "Retrieves all engagements for a specific partner with complete details.",
       "parameters": {
         "partnerId": {
           "type": "integer",

@@ -288,6 +288,12 @@ def get_user_profile(tool_context: ToolContext) -> dict:
                 if result.get('status') == 'success':
                     # Success! Return response data
                     response_data = result.get('response', {})
+                    
+                    # Ensure we never return empty data
+                    if not response_data or response_data == {}:
+                        print(f"⚠️ [DEBUG] Empty response data from endpoint: {endpoint.get('name')}")
+                        response_data = {"user_profile": "no_data", "endpoint": endpoint.get('name')}
+                    
                     # Store in tool context state and cache
                     if hasattr(tool_context, 'state') and tool_context.state is not None:
                         tool_context.state['user_profile'] = response_data
@@ -357,29 +363,23 @@ def user_detail_agent_callback(callback_context: CallbackContext, llm_request) -
             # Set the result in state for other agents
             callback_context.state['user_profile'] = cached_profile
             
-            # Return LlmResponse with JSON content to skip model execution
-            import json
-            json_response = json.dumps(cached_profile, indent=2)
-            
-            return LlmResponse(
-                content=types.Content(
-                    role="model",
-                    parts=[types.Part(text=json_response)],
-                )
-            )
+            # For now, let's continue with normal LLM execution to avoid LlmResponse issues
+            print("🔄 [USER] Cache HIT but continuing with LLM execution to avoid response issues")
+            return None
         
         print("🔄 [USER] Cache MISS: Proceeding with LLM execution to fetch fresh user profile")
         return None  # Continue with normal LLM execution
         
     except Exception as e:
         print(f"❌ [USER] Error in user_detail_agent callback: {e}")
-        return None  # Continue with LLM execution on error 
+        return None  # Continue with LLM execution on error
 
 def user_detail_after_model_callback(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:
     """
     After model callback for user_detail_agent.
     
     This callback runs AFTER the model responds and caches the result with timestamp.
+    It also validates the response to ensure it's never empty.
     
     Args:
         callback_context: The callback context from Google ADK
@@ -389,9 +389,27 @@ def user_detail_after_model_callback(callback_context: CallbackContext, llm_resp
         Optional[LlmResponse]: Modified response or None to use original
     """
     
-    print("💾 [USER] Caching user profile result with timestamp...")
+    print("💾 [USER] Processing and caching user profile result...")
     
     try:
+        # Validate the response content
+        response_text = ""
+        if llm_response and llm_response.content and llm_response.content.parts:
+            response_text = llm_response.content.parts[0].text.strip()
+        
+        print(f"🔍 [USER-RESPONSE] Response text: '{response_text}'")
+        print(f"🔍 [USER-RESPONSE] Response length: {len(response_text)}")
+        
+        # Check if response is empty or invalid
+        if not response_text or response_text == "":
+            print("❌ [USER-RESPONSE] Empty response detected!")
+            print("⚠️ [USER-RESPONSE] This should not happen with the updated agent instructions")
+        
+        # Check if response looks like JSON
+        if not (response_text.startswith('{') and response_text.endswith('}')):
+            print("⚠️ [USER-RESPONSE] Response doesn't look like JSON")
+            print("⚠️ [USER-RESPONSE] This should not happen with the updated agent instructions")
+        
         # Check if we have user profile data in state to cache
         user_profile = callback_context.state.get('user_profile')
         
@@ -427,5 +445,5 @@ def user_detail_after_model_callback(callback_context: CallbackContext, llm_resp
         return None  # Use original response
         
     except Exception as e:
-        print(f"❌ [USER] Error caching user profile: {e}")
+        print(f"❌ [USER] Error in after_model_callback: {e}")
         return None  # Use original response            

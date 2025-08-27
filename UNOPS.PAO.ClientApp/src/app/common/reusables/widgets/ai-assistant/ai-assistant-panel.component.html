@@ -254,15 +254,17 @@
         <div *ngIf="message.inlineData && message.inlineData.length > 0" class="mt-2 pt-2 border-t border-white border-opacity-20">
           <div *ngFor="let inline of message.inlineData; let i = index" class="mt-1.5">
             <div [ngSwitch]="getFileTypeCategory(inline.mimeType)">
-              <!-- Images -->
-              <div *ngSwitchCase="'image'" class="inline-block">
-                <img [src]="'data:' + inline.mimeType + ';base64,' + inline.data" 
-                     alt="Inline Image" 
-                     class="max-w-[90%] max-h-[50vh] w-auto h-auto rounded-lg object-contain border border-white border-opacity-30 cursor-pointer"
-                     (click)="openImageModal(inline)"
-                     (error)="onImageError($event, inline)"
-                     loading="lazy"/>
-              </div>
+                              <!-- Images -->
+                <div *ngSwitchCase="'image'" class="inline-block">
+                  <img [src]="'data:' + inline.mimeType + ';base64,' + inline.data" 
+                       alt="Inline Image" 
+                       class="inline-image max-w-[300px] max-h-[200px] w-auto h-auto border border-white border-opacity-30 cursor-pointer"
+                       (click)="openImageModal(inline)"
+                       (error)="onImageError($event, inline)"
+                       loading="lazy"
+                       pTooltip="Click to view larger"
+                       tooltipPosition="top"/>
+                </div>
               
               <!-- Audio files -->
               <div *ngSwitchCase="'audio'" class="flex items-center gap-2 bg-white bg-opacity-10 rounded-lg p-2">
@@ -381,10 +383,12 @@
                 <div *ngSwitchCase="'image'" class="inline-block">
                   <img [src]="'data:' + inline.mimeType + ';base64,' + inline.data" 
                        alt="Inline Image" 
-                       class="max-w-[90%] max-h-[50vh] w-auto h-auto rounded-lg object-contain border border-gray-200 dark:border-gray-300 cursor-pointer"
+                       class="inline-image max-w-[300px] max-h-[200px] w-auto h-auto border border-gray-200 dark:border-gray-300 cursor-pointer"
                        (click)="openImageModal(inline)"
                        (error)="onImageError($event, inline)"
-                       loading="lazy"/>
+                       loading="lazy"
+                       pTooltip="Click to view larger"
+                       tooltipPosition="top"/>
                 </div>
                 
                 <!-- Audio files -->

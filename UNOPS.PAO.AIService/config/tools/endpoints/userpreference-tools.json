@@ -1,12 +1,12 @@
 {
   "entity": "UserPreference",
-  "description": "Manages user-specific settings and preferences within the system, such such as default organizational unit for filtering and access control.",
+  "description": "Manages user-specific settings and preferences, such as default organizational unit for filtering and access control.",
   "synonyms": [
-    "user settings",
-    "personal preferences",
-    "account settings",
-    "my preferences",
-    "user config"
+    "User Setting",
+    "Personal Preference",
+    "Account Setting",
+    "My Preferences",
+    "User Config"
   ],
   "mandatoryFields": [],
   "endpoints": [
@@ -14,7 +14,7 @@
       "name": "GetDefaultOrgUnit",
       "url": "api/user-preferences/default-org-unit",
       "method": "GET",
-      "description": "Retrieves the current user's default organizational unit preference for filtering and access control.",
+      "description": "Retrieves the current user's default organizational unit preference for filtering and access control. This endpoint provides the ID of the organizational unit that the user has set as their default for various system operations.",
       "parameters": {},
       "example_uses": [
         "Get my default organizational unit setting",
@@ -27,12 +27,12 @@
       "name": "SetDefaultOrgUnit",
       "url": "api/user-preferences/default-org-unit",
       "method": "PUT",
-      "description": "Updates the current user's default organizational unit preference for filtering and access control.",
+      "description": "Updates the current user's default organizational unit preference for filtering and access control. This allows users to change their primary organizational context for system interactions.",
       "parameters": {
         "OrgUnitId": {
           "type": "integer",
           "required": false,
-          "description": "The ID of the organizational unit to set as the user's default. Set to null to clear the default."
+          "description": "The ID of the organizational unit to set as default. Can be null to clear the setting."
         }
       },
       "example_uses": [

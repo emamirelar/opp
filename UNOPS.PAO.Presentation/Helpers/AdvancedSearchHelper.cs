@@ -200,13 +200,21 @@ public static class AdvancedSearchHelper
     {
         return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            // Partner direct fields
-            "id", "name", "status", "newEngagement", "phone", "website", "shortName",
-            "organizationHierarchyId", "organizationHierarchyName", "partnerCategoryId", "partnerCategoryName",
-            "addressCity", "addressStateProvince", "addressPostalCode", "addressCountry",
+            // Partner direct fields (based on actual Partner entity)
+            "id", "name", "status", 
+            "partnerShortDescription", "partnerLongDescription",
+            "partnerCategoryId", "liaisonOfficeId", "partnerFocalPointUserId",
+            "unAndStateEntity", "keyGlobalPartner", "unSecretariatPartner",
+            "dueDiligenceRequired", "dueDiligenceApproval", "dueDiligenceApprovalDate", "dueDiligenceExpiryDate",
+            "partnerApprovalStatus", "partnerApprovalDate", "partnerApprovalReference", "partnerApprovedBy",
+            "partnerLevyStatus", "reasonForLevy", "levyTreatment",
+            "pooledFund", "canCreateNewOpportunities", "reasonForNoNewOpportunity",
             
-            // Add other partner-specific fields as needed
-            "description", "email", "createdDate", "modifiedDate"
+            // Audit fields (inherited from ModifiableDeletableEntity)
+            "createdDate", "lastModifiedDate", "createdBy", "lastModifiedBy", "isDeleted",
+            
+            // Legacy field mappings for backward compatibility
+            "shortName", "description", "phone", "website", "email", "modifiedDate"
         };
     }
 
@@ -264,12 +272,20 @@ public static class AdvancedSearchHelper
             return fieldName;
         }
 
-        // Handle legacy partner field mappings for interactions
+        // Handle legacy field mappings for all entities
         var legacyMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Interaction legacy mappings
             { "contact.partner.name", "partner.name" },
             { "contact.partner.status", "partner.status" },
-            { "contact.partner.shortName", "partner.shortName" }
+            { "contact.partner.shortName", "partner.shortName" },
+            
+            // Partner legacy mappings
+            { "shortName", "partnerShortDescription" },
+            { "description", "partnerLongDescription" },
+            { "globalKeyAccount", "keyGlobalPartner" },
+            { "modifiedDate", "lastModifiedDate" },
+            { "partnerType", "partnerCategoryId" }
         };
 
         return legacyMappings.TryGetValue(fieldName, out var mappedName) ? mappedName : fieldName;

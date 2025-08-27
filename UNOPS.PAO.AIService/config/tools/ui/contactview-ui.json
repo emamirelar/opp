@@ -18,7 +18,7 @@
     {
       "route": "/partnerships/contacts/:recordId/details",
       "name": "ContactViewComponent",
-      "description": "This page provides a comprehensive view of a specific contact's profile. Users can review and update personal, professional, and communication details, manage associated documents, and view related links. It serves as the central hub for all information pertaining to an individual contact.",
+      "description": "This page serves as the central hub for viewing and managing all aspects of a specific contact. It allows users to access and modify personal details, professional information, communication preferences, and associated documents. From here, you can get a complete overview of an individual contact.",
       "capabilities": [
         "view_contact_details",
         "edit_contact_info",
@@ -35,17 +35,17 @@
       "search": {},
       "filters": [],
       "help_guidance": {
-        "when_stuck": "This page displays all information for a selected contact. To make changes, look for an 'Edit' button or click directly on editable fields. You can upload a contact photo by clicking the current photo or avatar area. Scroll down to find sections for documents and external links. All contact details are organized into logical categories for easy navigation.",
+        "when_stuck": "This page displays comprehensive contact information. To make changes, click the 'Edit' button. You can upload a new contact photo by clicking on the current photo or avatar area. Scroll down to find sections for associated documents and links. All contact fields are logically grouped by category for easy navigation and access.",
         "common_tasks": [
-          "Editing contact info: Locate the 'Edit' button (if available) or click directly on the field you wish to change, then modify the information and save your changes.",
-          "Uploading photo: Click on the existing photo or the placeholder avatar to open a file selection dialog, then choose the image you want to upload for the contact.",
-          "Viewing interactions: Navigate to the 'Interactions' tab (if available) to review the history of communications and activities with this contact.",
-          "Managing documents: Scroll to the 'Documents' section to upload new files related to the contact or view/download existing ones.",
-          "Updating contact details: Modify personal information (like name, email), professional details (like title, company), or address information directly on the page.",
-          "Managing links: In the 'Links' section, you can add new external references or edit/remove existing ones associated with the contact."
+          "Editing contact info: Click the 'Edit' button, then modify the desired fields in the form that appears. Remember to save your changes.",
+          "Uploading photo: Click on the contact's current photo or the placeholder avatar. A dialog will appear, allowing you to select and upload a new image for the contact.",
+          "Viewing interactions: Navigate to the 'Interactions' tab (if available) to review the communication history and past engagements with this contact.",
+          "Managing documents: Scroll down to the 'Documents' section. Here you can upload new files related to the contact or view and download existing ones.",
+          "Updating contact details: Locate the specific section (e.g., Personal, Professional, Address) and use the 'Edit' function to update information such as name, title, company, or physical address.",
+          "Managing links: Find the 'Links' section to add new external references or modify existing ones that are relevant to the contact."
         ],
         "troubleshooting": [],
-        "getting_started": "To begin, select a contact from the main list. This page will then load, displaying their complete profile. Review the different sections for personal, professional, and contact details. To update any information, look for an 'Edit' option or click on the specific field. You can also add a profile picture or manage associated documents.",
+        "getting_started": "",
         "keyboard_shortcuts": []
       }
     }

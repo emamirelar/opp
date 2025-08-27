@@ -179,4 +179,9 @@ public class GeminiManager : IGeminiManager
     {
         throw new NotImplementedException();
     }
+
+    public Task<object> GenerateSuggestions(int userId)
+    {
+        throw new NotImplementedException();
+    }
 }

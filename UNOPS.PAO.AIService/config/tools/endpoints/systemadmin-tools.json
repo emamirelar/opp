@@ -1,27 +1,27 @@
 {
   "entity": "SystemAdmin",
-  "description": "Manages system-level administrative tasks, primarily focused on database maintenance and schema updates.",
+  "description": "Manages system-level administrative tasks, including database migrations and other core system operations.",
   "synonyms": [
-    "System Administrator",
+    "System Administration",
     "Admin",
     "System Management",
-    "Database Admin",
-    "Migration Tool"
+    "Backend Operations",
+    "System Ops"
   ],
   "mandatoryFields": [],
   "endpoints": [
     {
       "name": "RunMigrations",
-      "url": "api/system-admin/migrations/run",
+      "url": "/api/system-admin/migrations/run",
       "method": "GET",
-      "description": "Initiates the execution of pending database migrations to update the system's data schema. This operation ensures the database structure is up-to-date with the latest application version.",
+      "description": "Initiates the process to run pending database migrations. This operation updates the database schema to the latest version. It is typically used during deployment or maintenance.",
       "parameters": {},
       "example_uses": [
-        "Run the latest database migrations for the system.",
-        "Update the system's database schema to the newest version.",
-        "Execute any pending database changes required by the application."
+        "Run the system database migrations.",
+        "Update the application's database schema.",
+        "Execute pending database changes for the system."
       ],
-      "when_to_use": "Use this endpoint to manually trigger database schema updates, typically after a new application deployment or when database changes are required to be applied to align with the current application code."
+      "when_to_use": "Use this endpoint when the system's database schema needs to be updated to the latest version, typically after a new deployment or during a maintenance window. This operation should be performed with caution as it modifies the database structure."
     }
   ]
 }

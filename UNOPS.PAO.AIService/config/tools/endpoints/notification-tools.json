@@ -1,12 +1,12 @@
 {
   "entity": "Notification",
-  "description": "Manages user notifications, including fetching, marking as read, and updating notification details.",
+  "description": "Manages user notifications, including retrieving, marking as read, and updating their content or status.",
   "synonyms": [
     "Alert",
     "Message",
-    "Notice",
     "Update",
-    "Reminder"
+    "Reminder",
+    "Announcement"
   ],
   "mandatoryFields": [
     "notificationId",
@@ -17,7 +17,7 @@
       "name": "GetNotifications",
       "url": "api/notifications",
       "method": "GET",
-      "description": "Retrieves a list of notifications for the current user, with an option to filter for unread notifications.",
+      "description": "Retrieves a list of notifications for the current user. Can filter to show only unread notifications.",
       "parameters": {
         "unreadOnly": {
           "type": "boolean",
@@ -26,9 +26,11 @@
         }
       },
       "example_uses": [
-        "Get all my notifications.",
-        "Show me only unread notifications.",
-        "List my recent alerts."
+        "Get all my notifications",
+        "Show me only unread alerts",
+        "List my recent messages",
+        "Retrieve notifications, including read ones",
+        "Fetch notifications for my account"
       ],
       "when_to_use": "Use this to fetch a list of notifications for display to the user, optionally filtering for unread ones."
     },
@@ -47,7 +49,9 @@
       "example_uses": [
         "Mark notification 123 as read",
         "Read notification about system update",
-        "Clear unread status for alert 456"
+        "Clear unread status for alert 456",
+        "Mark message as seen",
+        "Update notification read status"
       ],
       "when_to_use": "Use this when the user opens, reads, or acknowledges a notification to update its status."
     },
@@ -65,17 +69,17 @@
         "request": {
           "type": "object",
           "required": false,
-          "description": "Update request containing new message and status",
+          "description": "Update request containing new message and status. Requires 'Status' field.",
           "properties": {
             "Message": {
               "type": "string",
               "required": false,
-              "description": "Property of type string"
+              "description": "New message content for the notification (optional)."
             },
             "Status": {
               "type": "string",
               "required": true,
-              "description": "Property of type NotificationStatus"
+              "description": "New status for the notification (e.g., 'Read', 'Archived', 'Resolved')."
             }
           }
         }
@@ -83,7 +87,9 @@
       "example_uses": [
         "Update notification 123's message content",
         "Change notification status to resolved",
-        "Modify system alert text"
+        "Modify system alert text",
+        "Update notification priority level",
+        "Change notification message and status"
       ],
       "when_to_use": "Use this when administrators need to update notification content or status for system management."
     }

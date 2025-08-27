@@ -34,11 +34,20 @@ class ResponseItem(BaseModel):
     For 'mermaid' type:
     - message should be str with mermaid diagram code
     - entity should specify what the diagram represents
+    
+    For 'image' type:
+    - message should be Dict[str, Any] with image generation details
+    - imagePrompt should specify the text description for image generation
+    - imageStyle should specify the visual style (realistic, artistic, cartoon, etc.)
+    - imageSize should specify dimensions (1024x1024, 1792x1024, 1024x1792)
     """
-    type: str  # markdown | card | grid | json | mermaid | chartjs
+    type: str  # markdown | card | grid | json | mermaid | chartjs | image
     message: Union[str, Dict[str, Any], List[Dict[str, Any]]]
     entity: Optional[str] = None
     chartType: Optional[str] = None  # For chartjs type: pie, bar, line, doughnut, radar, etc.
+    imagePrompt: Optional[str] = None  # For image type: text description for image generation
+    imageStyle: Optional[str] = None  # For image type: visual style preference
+    imageSize: Optional[str] = None  # For image type: image dimensions
 
 
 class SourceItem(BaseModel):

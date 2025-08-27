@@ -44,10 +44,10 @@ def search_external_drive_service(query: str, external_endpoint_url: str, auth_h
         )
         
         if response.get("status") == "error":
-        return json.dumps({
-                "content": f"Error calling external search service: {response.get('error')}",
-            "sources": []
-        })
+            return json.dumps({
+                    "content": f"Error calling external search service: {response.get('error')}",
+                    "sources": []
+            })
 
         # Extract documents from API response structure
         response_data = response.get("response", response)
@@ -56,7 +56,7 @@ def search_external_drive_service(query: str, external_endpoint_url: str, auth_h
         
         if not documents:
                 return json.dumps({
-                    "content": "No files found for your search query in the external service.",
+                        "content": "No files found for your search query in the external service.",
                     "sources": []
                 })
         
@@ -69,10 +69,10 @@ def search_external_drive_service(query: str, external_endpoint_url: str, auth_h
             
     except Exception as e:
         logging.error(f"Error in external search integration: {e}")
-                return json.dumps({
+        return json.dumps({
             "content": f"Error processing external search results: {str(e)}",
-                    "sources": []
-                })
+            "sources": []
+        })
         
 def search_unops_google_drive(query: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
     """
@@ -227,7 +227,7 @@ def read_content_from_url(url: str, include_json: bool = True, output_format: st
         )
         
         if response.get("status") == "error":
-        return json.dumps({
+            return json.dumps({
                 "error": f"Error calling URL convert service: {response.get('error')}",
                 "url": url
             })
@@ -354,19 +354,22 @@ def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadat
                 user_email = None
                 if tool_context and hasattr(tool_context, 'state') and tool_context.state:
                     user_email = tool_context.state.get('user_email')
-                elif is_development and dev_email:
+                
+                # Always fall back to dev_email in development if user_email is not available
+                if not user_email and is_development and dev_email:
                     user_email = dev_email
                     print(f"🧪 [MARKDOWN-TO-GDOC] Using dev_email for IDP token: {dev_email}")
                 
-                # For Google Doc creation, use user email as target_principal
-                print(f"🔍 [MARKDOWN-TO-GDOC] Using user email as target_principal: {user_email}")
+                # For Google Doc creation, use service account token without impersonation
+                print(f"🔍 [MARKDOWN-TO-GDOC] Using service account as target_principal: {target_principal}")
                 print(f"🔍 [MARKDOWN-TO-GDOC-AUTH-PARAMS] target_audience: {target_audience}")
-                print(f"🔍 [MARKDOWN-TO-GDOC-AUTH-PARAMS] target_principal: {user_email}")
+                print(f"🔍 [MARKDOWN-TO-GDOC-AUTH-PARAMS] target_principal: {target_principal}")
                 print(f"🔍 [MARKDOWN-TO-GDOC-AUTH-PARAMS] use_idp: False")
                 print(f"🔍 [MARKDOWN-TO-GDOC-AUTH-PARAMS] subject: None")
+                print(f"🔍 [MARKDOWN-TO-GDOC-AUTH-PARAMS] user_email for impersonation header: {user_email}")
                 idp_token = get_service_account_oidc_token(
                     target_audience,
-                    user_email,  # Use user email as target_principal instead of service account
+                    target_principal,  # Use original service account email from config
                     use_idp=False,
                     subject=None
                 )
@@ -377,7 +380,6 @@ def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadat
                     # Log token details for debugging
                     try:
                         import base64
-                        import json
                         parts = idp_token.split('.')
                         if len(parts) >= 2:
                             payload = parts[1]
@@ -400,10 +402,17 @@ def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadat
         # Add impersonated user header for Google Doc creation
         # Use user_email from tool_context or dev_email for development
         impersonated_user_email = None
+        print(f"🔍 [MARKDOWN-TO-GDOC] Checking for impersonation user email:")
+        print(f"   tool_context exists: {tool_context is not None}")
+        
         if tool_context and hasattr(tool_context, 'state') and tool_context.state:
             impersonated_user_email = tool_context.state.get('user_email')
+            print(f"   Found user_email in tool_context.state: {impersonated_user_email}")
         elif is_development and dev_email:
             impersonated_user_email = dev_email
+            print(f"   Using dev_email for impersonation: {dev_email}")
+        else:
+            print(f"   No user email found in tool_context or dev_email")
             
         if impersonated_user_email:
             request_headers['x-unops-impersonated-user'] = impersonated_user_email
@@ -460,13 +469,13 @@ def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadat
                 response_data = response.json()
                 print(f"✅ [MARKDOWN-TO-GDOC] Successfully converted markdown to Google Doc")
                 
-        return json.dumps({
+                return json.dumps({
                     "status": "success",
                     "response": response_data,
                     "filename": filename
                 })
             except json.JSONDecodeError:
-        return json.dumps({
+                return json.dumps({
                     "status": "success",
                     "response": {"text": response.text},
                     "filename": filename,

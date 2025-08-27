@@ -352,8 +352,32 @@ Generate the comprehensive UI guidance JSON now (JSON only, no explanations):
         print("🎪 Generating DriverJS tours...")
         
         try:
-            # Create tours directory in Angular app
-            tours_dir = Path("../UNOPS.PAO.ClientApp/src/app/common/tours")
+            # Determine the correct path to Angular tours directory
+            # Try to find the ClientApp directory relative to current location
+            script_dir = Path(__file__).parent
+            
+            # Look for ClientApp relative to the script directory
+            possible_paths = [
+                script_dir.parent / "UNOPS.PAO.ClientApp" / "src" / "app" / "common" / "tours",
+                Path("../UNOPS.PAO.ClientApp/src/app/common/tours"),
+                Path("UNOPS.PAO.ClientApp/src/app/common/tours")
+            ]
+            
+            tours_dir = None
+            for path in possible_paths:
+                if path.exists() or path.parent.exists():
+                    tours_dir = path
+                    break
+            
+            if not tours_dir:
+                print("[ERROR] Could not find UNOPS.PAO.ClientApp/src/app/common/tours directory")
+                print(f"[DEBUG] Tried paths: {[str(p) for p in possible_paths]}")
+                return
+            
+            # Ensure tours directory exists
+            tours_dir.mkdir(parents=True, exist_ok=True)
+            
+            print(f"[TOURS] Target directory: {tours_dir}")
             
             # Initialize tour generator and process
             tour_generator = TourGenerator()

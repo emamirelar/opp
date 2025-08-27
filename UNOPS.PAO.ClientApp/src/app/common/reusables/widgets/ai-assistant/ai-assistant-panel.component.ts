@@ -21,6 +21,9 @@ import { Router } from '@angular/router';
 import { GlobalFilterService } from '../../../../services/global-filter.service';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../../essentials/services/auth.service';
+import { AiAssistantService } from '../../../../features/internal/services/ai-assistant.service';
+import { SuggestionsResponse, SuggestionItem } from './ai-assistant.model';
+import { Observable, map, catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-ai-assistant-panel',
@@ -62,6 +65,7 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   layoutService = inject(LayoutService);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
+  private aiAssistantService = inject(AiAssistantService);
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   isRecording = signal(false);
@@ -79,6 +83,12 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   
   // User info for personalized greeting
   userName = signal<string>('');
+  
+  // Smart suggestions from AI
+  smartSuggestions = signal<SuggestionItem[]>([]);
+  suggestionsLoading = signal(false);
+  showSuggestions = signal(true);
+  suggestionsError = signal(false);
   
   // Check if AI is currently in fullscreen mode (on AI route)
   isInFullscreenMode = computed(() => {
@@ -175,6 +185,9 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
       this.aiAssistantData.setViewContainerRef(this.viewContainerRef);
     }
     
+    // Load smart suggestions
+    this.loadSmartSuggestions();
+    
     // Listen for chat history changes to scroll to bottom for new messages
     this.aiAssistantData.chatHistoryChanged$.subscribe(() => {
       // Use a small delay to ensure the DOM has updated
@@ -211,6 +224,10 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
   updateMessage(value: string): void {
     this.ngZone.run(() => {
       this.message.set(value);
+      // Hide suggestions when user starts typing
+      if (value.trim() && this.showSuggestions()) {
+        this.showSuggestions.set(false);
+      }
       this.cdr.detectChanges();
     });
   }
@@ -288,6 +305,67 @@ export class AiAssistantPanelComponent implements OnInit, OnDestroy {
 
   removeFile(index: number): void {
     this.selectedFiles.update(files => files.filter((_, i) => i !== index));
+  }
+
+  // Load smart suggestions from the API
+  private loadSmartSuggestions(): void {
+    this.suggestionsLoading.set(true);
+    this.suggestionsError.set(false);
+
+    this.aiAssistantService.getSuggestions().subscribe({
+      next: (response: SuggestionsResponse) => {
+        if (response.suggestions && response.suggestions.length > 0) {
+          const suggestions: SuggestionItem[] = response.suggestions.map((suggestion, index) => ({
+            text: suggestion,
+            icon: this.getSuggestionIcon(suggestion),
+            action: () => this.onSuggestionClick(suggestion)
+          }));
+          this.smartSuggestions.set(suggestions);
+          this.suggestionsError.set(false);
+        }
+        this.suggestionsLoading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading suggestions:', error);
+        this.suggestionsLoading.set(false);
+        this.suggestionsError.set(true);
+      }
+    });
+  }
+
+
+
+  // Get appropriate icon for suggestion based on content
+  private getSuggestionIcon(suggestion: string): string {
+    const lowerSuggestion = suggestion.toLowerCase();
+    
+    if (lowerSuggestion.includes('search') || lowerSuggestion.includes('find')) {
+      return 'pi pi-search';
+    } else if (lowerSuggestion.includes('create') || lowerSuggestion.includes('generate')) {
+      return 'pi pi-file-edit';
+    } else if (lowerSuggestion.includes('chart') || lowerSuggestion.includes('visualize')) {
+      return 'pi pi-chart-line';
+    } else if (lowerSuggestion.includes('export') || lowerSuggestion.includes('download')) {
+      return 'pi pi-download';
+    } else if (lowerSuggestion.includes('update') || lowerSuggestion.includes('edit')) {
+      return 'pi pi-pencil';
+    } else if (lowerSuggestion.includes('partner') || lowerSuggestion.includes('contact')) {
+      return 'pi pi-users';
+    } else {
+      return 'pi pi-lightbulb';
+    }
+  }
+
+  // Handle suggestion click
+  private onSuggestionClick(suggestion: string): void {
+    this.message.set(suggestion);
+    this.sendMessage();
+    this.showSuggestions.set(false); // Hide suggestions after selection
+  }
+
+  // Toggle suggestions visibility
+  toggleSuggestions(): void {
+    this.showSuggestions.set(!this.showSuggestions());
   }
 
   // Drag and drop handlers

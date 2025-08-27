@@ -15,7 +15,7 @@
     {
       "route": "/admin/user-management",
       "name": "UserManagementComponent",
-      "description": "This page provides a centralized administrative interface for managing user accounts, their permissions, and roles within the organization. Administrators can view, edit, and assign user roles, controlling access levels to various system features. It supports filtering users by organizational unit and offers capabilities for bulk operations.",
+      "description": "This page provides an administrative interface for managing user permissions, roles, and organizational access within the system. You can view, edit, and assign user roles across the entire organization, ensuring proper access control and security.",
       "capabilities": [
         "view_users",
         "edit_user_roles",
@@ -30,20 +30,16 @@
       "search": {},
       "filters": [],
       "help_guidance": {
-        "when_stuck": "If you're having trouble finding a user or understanding their access, use the search bar to look up users by name or email. You can also apply filters by role or organizational unit to narrow down the list. To modify a user's permissions, click the 'Edit' button next to their entry. Remember that different roles grant different levels of access to the system. If you only want to see users within your specific department, toggle the 'My Org Unit Only' option.",
+        "when_stuck": "If you're having trouble finding a user or understanding their access, use the available filters to narrow down the list (you can search by name/email, or filter by role or organizational unit). To change a user's access, click the 'Edit' button next to their name. Remember that different roles grant different levels of access to system features. If you only want to see users in your department, use the 'My Org Unit Only' toggle.",
         "common_tasks": [
-          "Finding a user: Use the search box at the top of the list to search by name or email, or apply role/organizational unit filters.",
-          "Changing user roles: Locate the user, click the 'Edit' button next to their name, select or deselect the desired role checkboxes, and then save your changes.",
-          "Filtering by organization: Toggle the 'My Org Unit Only' switch to view users only from your assigned organizational unit, or use the organizational unit dropdown filter.",
-          "Managing access levels: Assign appropriate roles (e.g., Admin, Standard User, or custom roles) to users based on their required access to system features.",
-          "Bulk management: Utilize the table's filtering and pagination options to efficiently manage large sets of users, though specific bulk actions may require individual user edits."
+          "Finding a user: Use the search box to type a user's name or email, or apply role/organizational unit filters.",
+          "Changing user roles: Click the 'Edit' button next to the user's entry, select or deselect the appropriate role checkboxes, and then save your changes.",
+          "Filtering by organization: Toggle the 'My Org Unit Only' switch to view users only within your assigned organizational unit, or use the organizational unit dropdown if available.",
+          "Managing access levels: Assign roles such as 'Admin' for full control, 'Standard User' for general access, or specific custom roles as needed to define user capabilities.",
+          "Bulk management: Utilize the table's filtering, sorting, and pagination features to efficiently manage a large number of users."
         ],
-        "troubleshooting": [
-          "Problem: Cannot find a specific user → Solution: Double-check the spelling in the search bar. Ensure no filters are active that might be hiding the user. Verify the user exists in the system.",
-          "Problem: Unable to change a user's role → Solution: Confirm you have the necessary administrative permissions to modify user roles. If not, contact a system administrator for assistance.",
-          "Problem: User's access is incorrect after role change → Solution: Ensure you saved the changes after modifying the user's roles. The user might need to log out and log back in for changes to take full effect."
-        ],
-        "getting_started": "Welcome to User Management! To begin, review the list of existing users. You can use the search bar or filters to quickly locate specific individuals. To modify a user's roles or permissions, click the 'Edit' button next to their name. This will open a form where you can adjust their assigned roles. Always remember to save your changes after making any modifications.",
+        "troubleshooting": [],
+        "getting_started": "",
         "keyboard_shortcuts": []
       }
     }

@@ -32,4 +32,5 @@ public interface IGeminiManager
     Task UpdateSessionTitleAndFlag(string sessionId, string title);
     Task<string> ChatWithGemini(GeminiAssistantRequest req, ClaimsPrincipal user, IHeaderDictionary headers = null);
     Task<string> GenerateTitle(string sessionId, int userId);
+    Task<object> GenerateSuggestions(int userId);
 }
