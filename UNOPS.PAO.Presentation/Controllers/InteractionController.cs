@@ -21,22 +21,24 @@ namespace UNOPS.PAO.Presentation.Controllers
     {
         private readonly IInteractionManager _manager;
         private readonly ISecureSpecificationFactory _secureSpecificationFactory;
-
         private readonly IGeminiManager _geminiManager;
         private readonly IUNOPSEntityConfigurationManager _entityConfigurationManager;
+        private readonly AiContextualService _aiContextualService;
 
-                public InteractionController(
+        public InteractionController(
             IManagerWrapper manager, 
             UserResolverService<int> userResolverService,
             IAuthorizationService authorizationService,
             ISecureSpecificationFactory secureSpecificationFactory,
-            ILogger<InteractionController> logger)
+            ILogger<InteractionController> logger,
+            AiContextualService aiContextualService)
             : base(logger, authorizationService, userResolverService)
         {
             _manager = manager.InteractionManager;
             _secureSpecificationFactory = secureSpecificationFactory;
             _geminiManager = manager.GeminiManager;
             _entityConfigurationManager = ((UNOPSManagerWrapper)manager).EntityConfigurationManager;
+            _aiContextualService = aiContextualService;
         }
 
         /// <summary>
@@ -551,6 +553,94 @@ namespace UNOPS.PAO.Presentation.Controllers
             {
                 _logger.LogError(ex, "Error retrieving Interaction entity description");
                 return StatusCode(500, new { error = "Failed to retrieve Interaction entity description" });
+            }
+        }
+
+        /// <summary>
+        /// Performs semantic search on interactions using AI embeddings to find similar interactions based on natural language queries.
+        /// </summary>
+        /// <param name="query">Natural language search query</param>
+        /// <param name="threshold">Similarity threshold (0.0 to 1.0, default: 0.7)</param>
+        /// <param name="limit">Maximum number of results to return (default: 10)</param>
+        /// <example_uses>
+        /// Find interactions similar to project planning meetings
+        /// Search for email communications about healthcare
+        /// Find conference calls about technical issues
+        /// Search for meetings in the education sector
+        /// Find interactions similar to contract negotiations
+        /// </example_uses>
+        /// <when_to_use>Use this when the user wants to find interactions using natural language queries or semantic similarity.</when_to_use>
+        /// <returns>List of similar interactions with similarity scores</returns>
+        [HttpGet(APIDictionary.Interaction + "/deepSearch")]
+        [AccessControlled(EntityTypes.Interaction, "read")]
+        public async Task<ActionResult> DeepSearch(
+            [FromQuery] string query,
+            [FromQuery] float threshold = 0.7f,
+            [FromQuery] int limit = 10)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    return BadRequest(new { error = "Search query is required" });
+                }
+
+                if (threshold < 0.0f || threshold > 1.0f)
+                {
+                    return BadRequest(new { error = "Threshold must be between 0.0 and 1.0" });
+                }
+
+                if (limit <= 0 || limit > 100)
+                {
+                    return BadRequest(new { error = "Limit must be between 1 and 100" });
+                }
+
+                // Generate embedding for the search query
+                var embedding = await _aiContextualService.CreateEmbeddingForText(query);
+                
+                // Perform semantic search
+                var searchResults = await _aiContextualService.ExecuteEmbeddingSearchMultiple(
+                    "Interaction", 
+                    embedding, 
+                    threshold, 
+                    limit
+                );
+
+                // Get the actual interaction data for the found IDs
+                var interactions = new List<object>();
+                foreach (var result in searchResults)
+                {
+                    try
+                    {
+                        var interaction = await _manager.GetInteractionAsync(User, result.EntityId);
+                        if (interaction != null)
+                        {
+                            interactions.Add(new
+                            {
+                                interaction = interaction,
+                                similarityScore = result.Score,
+                                searchType = result.SearchType
+                            });
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to retrieve interaction {InteractionId} from search results", result.EntityId);
+                    }
+                }
+
+                return Ok(new
+                {
+                    query = query,
+                    threshold = threshold,
+                    totalResults = searchResults.Count,
+                    results = interactions
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error performing deep search for interactions with query: {Query}", query);
+                return StatusCode(500, new { error = "An error occurred while performing the semantic search" });
             }
         }
     }

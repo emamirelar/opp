@@ -397,9 +397,14 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                     user_email = None
                     if tool_context and hasattr(tool_context, 'state') and tool_context.state:
                         user_email = tool_context.state.get('user_email')
+                        print(f"🔍 [AUTH] Retrieved user_email from tool_context.state: {user_email}")
+                        print(f"🔍 [AUTH] tool_context.state type: {type(tool_context.state)}")
+                        print(f"🔍 [AUTH] tool_context.state has user_email: {hasattr(tool_context.state, 'user_email')}")
                     elif is_development and dev_email:
                         user_email = dev_email
                         print(f"🧪 Using dev_email for IDP token: {dev_email}")
+                    else:
+                        print(f"🔍 [AUTH] No tool_context or state available")
                     
                     # Check if this is a Google-related external API call
                     is_google_api = any(google_path in url for google_path in [
@@ -455,28 +460,19 @@ def invoke_api_tool(url: str, method: str, body: dict, headers: Optional[dict] =
                 else:
                     print(f"⚠️ Missing OAuth config - target_principal: {target_principal}, client_id: {target_audience}")
             
-            # Add impersonated user header for ALL Google APIs
-            impersonated_user_email = None
+            # Add impersonated user header for ALL APIs
+            # Reuse the user_email that was already successfully retrieved above
             is_google_api = any(google_path in url for google_path in [
                 '/google-drive/', '/convert/url', '/convert/markdown-to-google-doc'
             ])
             
-            print(f"🔍 [IMPERSONATION] Checking for impersonation user email:")
+            print(f"🔍 [IMPERSONATION] Using user_email for impersonation header: {user_email}")
             print(f"   is_google_api: {is_google_api}")
-            print(f"   tool_context exists: {tool_context is not None}")
-            
-            if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                impersonated_user_email = tool_context.state.get('user_email')
-                print(f"   Found user_email in tool_context.state: {impersonated_user_email}")
-            elif is_development and dev_email:
-                impersonated_user_email = dev_email
-            else:
-                print(f"   No user email found in tool_context or dev_email")
             
             # Add impersonation header for ALL APIs when user email is available
-            if impersonated_user_email:
-                request_headers['x-unops-impersonated-user'] = impersonated_user_email
-                print(f"🔐 Added impersonated user header: {impersonated_user_email}")
+            if user_email:
+                request_headers['x-unops-impersonated-user'] = user_email
+                print(f"🔐 Added impersonated user header: {user_email}")
             else:
                 print(f"⚠️ No impersonation header added - no user email available")
             

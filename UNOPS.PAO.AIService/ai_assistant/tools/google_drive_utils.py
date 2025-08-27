@@ -8,11 +8,14 @@ All functions use invoke_api_tool from common_callbacks for consistency.
 
 import json
 import logging
+import asyncio
+import concurrent.futures
 from typing import List, Optional, Dict, Any
+from google.adk.tools.tool_context import ToolContext
 
 # All Google Drive operations now use the external APIs below
 
-def search_external_drive_service(query: str, external_endpoint_url: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
+def search_external_drive_service(tool_context: ToolContext, query: str, external_endpoint_url: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
     """
     Search using external service for file IDs, then read content from URLs
     
@@ -40,8 +43,18 @@ def search_external_drive_service(query: str, external_endpoint_url: str, auth_h
             url=external_endpoint_url,
             method="POST",
             body={"query": query, "maxResults": 20},
-            headers=headers
+            headers=headers,
+            tool_context=tool_context
         )
+        
+        print(f"🔍 [EXTERNAL-SEARCH] Response from invoke_api_tool: {response}")
+        print(f"🔍 [EXTERNAL-SEARCH] Response type: {type(response)}")
+        
+        if response is None:
+            return json.dumps({
+                "content": "Error calling external search service: invoke_api_tool returned None",
+                "sources": []
+            })
         
         if response.get("status") == "error":
             return json.dumps({
@@ -65,7 +78,7 @@ def search_external_drive_service(query: str, external_endpoint_url: str, auth_h
         print(f"🔍 [EXTERNAL-SEARCH] Extracted {len(web_view_links)} webViewLinks: {web_view_links[:3]}...")
         
         # Step 2: Use URL content reader to read content from webViewLinks
-        return _read_external_files_from_urls(web_view_links, documents, query)
+        return _read_external_files_from_urls(tool_context, web_view_links, documents, query)
             
     except Exception as e:
         logging.error(f"Error in external search integration: {e}")
@@ -74,7 +87,7 @@ def search_external_drive_service(query: str, external_endpoint_url: str, auth_h
             "sources": []
         })
         
-def search_unops_google_drive(query: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
+def search_unops_google_drive(tool_context: ToolContext, query: str, auth_headers: Optional[Dict[str, str]] = None) -> str:
     """
     Convenience function for UNOPS external Google Drive search service
     
@@ -86,35 +99,17 @@ def search_unops_google_drive(query: str, auth_headers: Optional[Dict[str, str]]
         JSON string with formatted results
     """
     unops_endpoint = "https://api.ai.dev.unops.org/v1/tools/google-drive/search"
-    return search_external_drive_service(query, unops_endpoint, auth_headers)
+    return search_external_drive_service(tool_context, query, unops_endpoint, auth_headers)
 
-def _read_external_files_from_urls(web_view_links: List[str], external_docs: List[Dict], original_query: str) -> str:
-    """Read content from URLs using the URL content reader"""
-    try:
-        if not web_view_links:
-            return json.dumps({
-                "content": "No webViewLinks found in the external search results",
-                "sources": []
-            })
-        
-        print(f"🌐 [URL-CONTENT-READ] Reading content from {len(web_view_links)} URLs...")
-        
-        # Create a mapping of webViewLink to external metadata for enrichment
-        external_metadata = {doc.get("webViewLink"): doc for doc in external_docs if doc.get("webViewLink")}
-        
-        # Format results similar to knowledge search
-        formatted_content = f"📁 **External Search Results for '{original_query}':**\n\n"
-        sources = []
-        successful_reads = 0
-        
-        for i, url in enumerate(web_view_links, 1):
-            external_doc = external_metadata.get(url, {})
-            doc_name = external_doc.get('name', f'Document {i}')
-            
-            print(f"🌐 [URL-CONTENT-READ] Processing document {i}/{len(web_view_links)}: {doc_name}")
+async def _read_single_url_content(semaphore: asyncio.Semaphore, tool_context: ToolContext, url: str, doc_name: str, original_query: str, external_doc: Dict) -> Dict:
+    """Read content from a single URL asynchronously with semaphore control"""
+    async with semaphore:  # Limit concurrent workers
+        try:
+            print(f"🌐 [URL-CONTENT-READ] Processing: {doc_name}")
             
             # Read content using the URL content reader
             content_result = read_content_from_url(
+                tool_context=tool_context,
                 url=url, 
                 title=doc_name,
                 description=f"Document from external search: {original_query}"
@@ -125,10 +120,222 @@ def _read_external_files_from_urls(web_view_links: List[str], external_docs: Lis
             except json.JSONDecodeError:
                 content_data = {"error": "Failed to parse content result", "content": content_result}
             
+            # Prepare result
+            result = {
+                "doc_name": doc_name,
+                "url": url,
+                "external_doc": external_doc,
+                "content_data": content_data,
+                "success": not content_data.get("error")
+            }
+            
+            if result["success"]:
+                print(f"✅ [URL-CONTENT-READ] Successfully read: {doc_name}")
+            else:
+                print(f"❌ [URL-CONTENT-READ] Failed to read: {doc_name} - {content_data.get('error')}")
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ [URL-CONTENT-READ] Error processing {doc_name}: {str(e)}")
+            return {
+                "doc_name": doc_name,
+                "url": url,
+                "external_doc": external_doc,
+                "content_data": {"error": str(e)},
+                "success": False
+            }
+
+def _filter_video_files(web_view_links: List[str], external_docs: List[Dict]) -> tuple[List[str], List[Dict]]:
+    """Filter out video files from the list of URLs and documents"""
+    video_mime_types = [
+        'video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 
+        'video/webm', 'video/mkv', 'video/m4v', 'video/3gp', 'video/ogv',
+        'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv'
+    ]
+    
+    filtered_links = []
+    filtered_docs = []
+    skipped_videos = []
+    
+    # Create a mapping of webViewLink to external metadata
+    external_metadata = {doc.get("webViewLink"): doc for doc in external_docs if doc.get("webViewLink")}
+    
+    for url in web_view_links:
+        external_doc = external_metadata.get(url, {})
+        mime_type = external_doc.get('mimeType', '').lower()
+        
+        # Check if this is a video file
+        if any(video_type in mime_type for video_type in video_mime_types):
+            doc_name = external_doc.get('name', 'Unknown Video')
+            skipped_videos.append(doc_name)
+            print(f"🎬 [VIDEO-FILTER] Skipping video file: {doc_name} ({mime_type})")
+            continue
+        
+        # Not a video file, include it
+        filtered_links.append(url)
+        filtered_docs.append(external_doc)
+    
+    if skipped_videos:
+        print(f"🎬 [VIDEO-FILTER] Skipped {len(skipped_videos)} video files: {', '.join(skipped_videos)}")
+    
+    return filtered_links, filtered_docs
+
+def _read_external_files_from_urls(tool_context: ToolContext, web_view_links: List[str], external_docs: List[Dict], original_query: str) -> str:
+    """Read content from URLs using the URL content reader with parallel processing"""
+    try:
+        if not web_view_links:
+            return json.dumps({
+                "content": "No webViewLinks found in the external search results",
+                "sources": []
+            })
+        
+        print(f"🌐 [URL-CONTENT-READ] Reading content from {len(web_view_links)} URLs in parallel...")
+        
+        # Filter out video files
+        filtered_links, filtered_docs = _filter_video_files(web_view_links, external_docs)
+        
+        if not filtered_links:
+            return json.dumps({
+                "content": f"No readable files found after filtering out videos. Original search found {len(web_view_links)} files.",
+                "sources": []
+            })
+        
+        print(f"📄 [URL-CONTENT-READ] After filtering videos: {len(filtered_links)} readable files remaining")
+        
+        # Create a mapping of webViewLink to external metadata for enrichment
+        external_metadata = {doc.get("webViewLink"): doc for doc in filtered_docs if doc.get("webViewLink")}
+        
+        # Create semaphore to limit concurrent workers to 10
+        MAX_CONCURRENT_WORKERS = 10
+        semaphore = asyncio.Semaphore(MAX_CONCURRENT_WORKERS)
+        
+        # Create tasks for parallel processing
+        tasks = []
+        for i, url in enumerate(filtered_links, 1):
+            external_doc = external_metadata.get(url, {})
+            doc_name = external_doc.get('name', f'Document {i}')
+            
+            task = _read_single_url_content(semaphore, tool_context, url, doc_name, original_query, external_doc)
+            tasks.append(task)
+        
+        # Run all tasks in parallel with limited concurrency
+        print(f"🚀 [URL-CONTENT-READ] Starting parallel processing of {len(tasks)} documents with max {MAX_CONCURRENT_WORKERS} concurrent workers...")
+        
+        # Use existing event loop if available, otherwise create new one
+        try:
+            loop = asyncio.get_running_loop()
+            # If we're already in an event loop, we need to use asyncio.create_task and await
+            # But since this is a sync function, we'll use a different approach
+            print(f"⚠️ [URL-CONTENT-READ] Event loop already running, using ThreadPoolExecutor for parallel processing")
+            
+            # Use ThreadPoolExecutor for parallel processing in sync context
+            import concurrent.futures
+            import threading
+            
+            def read_single_url_sync(url, doc_name, original_query, external_doc):
+                """Synchronous version of URL reading for ThreadPoolExecutor"""
+                try:
+                    print(f"🌐 [URL-CONTENT-READ] Processing: {doc_name}")
+                    
+                    # Read content using the URL content reader
+                    content_result = read_content_from_url(
+                        tool_context=tool_context,
+                        url=url, 
+                        title=doc_name,
+                        description=f"Document from external search: {original_query}"
+                    )
+                    
+                    try:
+                        content_data = json.loads(content_result)
+                    except json.JSONDecodeError:
+                        content_data = {"error": "Failed to parse content result", "content": content_result}
+                    
+                    # Prepare result
+                    result = {
+                        "doc_name": doc_name,
+                        "url": url,
+                        "external_doc": external_doc,
+                        "content_data": content_data,
+                        "success": not content_data.get("error")
+                    }
+                    
+                    if result["success"]:
+                        print(f"✅ [URL-CONTENT-READ] Successfully read: {doc_name}")
+                    else:
+                        print(f"❌ [URL-CONTENT-READ] Failed to read: {doc_name} - {content_data.get('error')}")
+                    
+                    return result
+                    
+                except Exception as e:
+                    print(f"❌ [URL-CONTENT-READ] Error processing {doc_name}: {str(e)}")
+                    return {
+                        "doc_name": doc_name,
+                        "url": url,
+                        "external_doc": external_doc,
+                        "content_data": {"error": str(e)},
+                        "success": False
+                    }
+            
+            # Use ThreadPoolExecutor for parallel processing
+            with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_CONCURRENT_WORKERS) as executor:
+                # Submit all tasks
+                future_to_url = {}
+                for i, url in enumerate(filtered_links, 1):
+                    external_doc = external_metadata.get(url, {})
+                    doc_name = external_doc.get('name', f'Document {i}')
+                    
+                    future = executor.submit(read_single_url_sync, url, doc_name, original_query, external_doc)
+                    future_to_url[future] = url
+                
+                # Collect results
+                results = []
+                for future in concurrent.futures.as_completed(future_to_url):
+                    try:
+                        result = future.result()
+                        results.append(result)
+                    except Exception as e:
+                        print(f"❌ [URL-CONTENT-READ] Task failed with exception: {e}")
+                        results.append({
+                            "doc_name": f"Document {len(results) + 1}",
+                            "url": future_to_url[future],
+                            "external_doc": {},
+                            "content_data": {"error": str(e)},
+                            "success": False
+                        })
+                
+                # Sort results to maintain order
+                results.sort(key=lambda x: filtered_links.index(x["url"]))
+                
+        except RuntimeError:
+            # No event loop running, create new one
+            print(f"🔄 [URL-CONTENT-READ] No event loop running, creating new one for async processing")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                results = loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
+            finally:
+                loop.close()
+        
+        # Process results
+        formatted_content = f"📁 **External Search Results for '{original_query}':**\n\n"
+        sources = []
+        successful_reads = 0
+        
+        for i, result in enumerate(results, 1):
+            if isinstance(result, Exception):
+                print(f"❌ [URL-CONTENT-READ] Task {i} failed with exception: {result}")
+                continue
+                
+            doc_name = result["doc_name"]
+            url = result["url"]
+            external_doc = result["external_doc"]
+            content_data = result["content_data"]
+            
             formatted_content += f"**Document {i}: {doc_name}**\n"
             
-            if content_data.get("error"):
-                formatted_content += f"*Error reading content:* {content_data['error']}\n"
+            if not result["success"]:
+                formatted_content += f"*Error reading content:* {content_data.get('error', 'Unknown error')}\n"
                 formatted_content += f"*Type:* {external_doc.get('mimeType', 'Unknown')}\n"
                 formatted_content += f"*Last Updated:* {external_doc.get('updatedAt', 'Unknown')}\n\n"
                 continue
@@ -162,11 +369,20 @@ def _read_external_files_from_urls(web_view_links: List[str], external_docs: Lis
                 "file_type": external_doc.get('mimeType', 'Unknown')
             })
         
-        print(f"🌐 [URL-CONTENT-READ] Successfully read {successful_reads}/{len(web_view_links)} documents")
+        print(f"🌐 [URL-CONTENT-READ] Successfully read {successful_reads}/{len(filtered_links)} documents in parallel")
         
         # Add summary at the end
         if successful_reads > 0:
-            formatted_content += f"\n---\n**Summary:** Found {len(external_docs)} matching documents, successfully read content from {successful_reads} files using URL content reader."
+            original_count = len(web_view_links)
+            filtered_count = len(filtered_links)
+            video_count = original_count - filtered_count
+            
+            summary = f"**Summary:** Found {len(external_docs)} matching documents"
+            if video_count > 0:
+                summary += f", filtered out {video_count} video files"
+            summary += f", successfully read content from {successful_reads} files using parallel URL content reader."
+            
+            formatted_content += f"\n---\n{summary}"
         
         return json.dumps({
             "content": formatted_content,
@@ -185,7 +401,7 @@ def _read_external_files_from_urls(web_view_links: List[str], external_docs: Lis
             "sources": []
         })
 
-def read_content_from_url(url: str, include_json: bool = True, output_format: str = "markdown", title: str = "", description: str = "") -> str:
+def read_content_from_url(tool_context: ToolContext, url: str, include_json: bool = True, output_format: str = "markdown", title: str = "", description: str = "") -> str:
     """
     Read content from any URL using the external convert/url API
     
@@ -223,7 +439,8 @@ def read_content_from_url(url: str, include_json: bool = True, output_format: st
             url=convert_endpoint,
             method="POST",
             body=body,
-            headers=headers
+            headers=headers,
+            tool_context=tool_context
         )
         
         if response.get("status") == "error":
@@ -267,7 +484,7 @@ def read_content_from_url(url: str, include_json: bool = True, output_format: st
             "suggestion": "Check if the URL is accessible and the convert service is available"
         })
 
-def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadata: Optional[Dict[str, Any]] = None) -> str:
+def convert_markdown_to_google_doc(tool_context: ToolContext, markdown_content: str, filename: str, metadata: Optional[Dict[str, Any]] = None) -> str:
     """
     Convert markdown content to Google Doc using external API
     
@@ -305,17 +522,7 @@ def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadat
         
         # Use invoke_api_tool but with a special handling for multipart
         # We'll make the request directly but follow the same auth pattern
-        try:
-            import inspect
-            frame = inspect.currentframe()
-            tool_context = None
-            while frame:
-                if 'tool_context' in frame.f_locals:
-                    tool_context = frame.f_locals['tool_context']
-                    break
-                frame = frame.f_back
-        except Exception:
-            tool_context = None
+        # tool_context is now passed as a parameter
         
         # Build headers following the same pattern as invoke_api_tool
         request_headers = {}
@@ -352,8 +559,24 @@ def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadat
             if target_principal and target_audience:
                 # Get user email from tool_context if available, otherwise use dev_email for development
                 user_email = None
-                if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-                    user_email = tool_context.state.get('user_email')
+                print(f"🔍 [MARKDOWN-TO-GDOC] Debugging tool_context:")
+                print(f"   tool_context exists: {tool_context is not None}")
+                if tool_context:
+                    print(f"   tool_context type: {type(tool_context)}")
+                    print(f"   tool_context has state: {hasattr(tool_context, 'state')}")
+                    if hasattr(tool_context, 'state'):
+                        print(f"   tool_context.state exists: {tool_context.state is not None}")
+                        if tool_context.state:
+                            print(f"   tool_context.state type: {type(tool_context.state)}")
+                            user_email = tool_context.state.get('user_email')
+                            print(f"   Retrieved user_email from tool_context.state: {user_email}")
+                            print(f"   tool_context.state has user_email: {hasattr(tool_context.state, 'user_email')}")
+                        else:
+                            print(f"   tool_context.state is None")
+                    else:
+                        print(f"   tool_context has no state attribute")
+                else:
+                    print(f"   tool_context is None")
                 
                 # Always fall back to dev_email in development if user_email is not available
                 if not user_email and is_development and dev_email:
@@ -400,23 +623,12 @@ def convert_markdown_to_google_doc(markdown_content: str, filename: str, metadat
                 print(f"⚠️ [MARKDOWN-TO-GDOC] Missing OAuth config - target_principal: {target_principal}, client_id: {target_audience}")
         
         # Add impersonated user header for Google Doc creation
-        # Use user_email from tool_context or dev_email for development
-        impersonated_user_email = None
-        print(f"🔍 [MARKDOWN-TO-GDOC] Checking for impersonation user email:")
-        print(f"   tool_context exists: {tool_context is not None}")
+        # Reuse the user_email that was already successfully retrieved above
+        print(f"🔍 [MARKDOWN-TO-GDOC] Using user_email for impersonation header: {user_email}")
         
-        if tool_context and hasattr(tool_context, 'state') and tool_context.state:
-            impersonated_user_email = tool_context.state.get('user_email')
-            print(f"   Found user_email in tool_context.state: {impersonated_user_email}")
-        elif is_development and dev_email:
-            impersonated_user_email = dev_email
-            print(f"   Using dev_email for impersonation: {dev_email}")
-        else:
-            print(f"   No user email found in tool_context or dev_email")
-            
-        if impersonated_user_email:
-            request_headers['x-unops-impersonated-user'] = impersonated_user_email
-            print(f"🔐 [MARKDOWN-TO-GDOC] Added impersonated user header: {impersonated_user_email}")
+        if user_email:
+            request_headers['x-unops-impersonated-user'] = user_email
+            print(f"🔐 [MARKDOWN-TO-GDOC] Added impersonated user header: {user_email}")
         else:
             print(f"⚠️ [MARKDOWN-TO-GDOC] No user email available for impersonation header")
         

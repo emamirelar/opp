@@ -867,6 +867,37 @@
       "parameters": {},
       "example_uses": [],
       "when_to_use": ""
+    },
+    {
+      "name": "DeepSearch",
+      "url": "api/partner/deepSearch",
+      "method": "GET",
+      "description": "Performs semantic search on partners using AI embeddings to find relevant matches based on natural language queries. Returns multiple partners with similarity scores.",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "required": true,
+          "description": "Natural language search query (e.g., 'partners working on climate change', 'organizations in Africa')"
+        },
+        "threshold": {
+          "type": "float",
+          "required": false,
+          "description": "Similarity threshold for results (0.0 to 1.0, default: 0.7)"
+        },
+        "limit": {
+          "type": "integer",
+          "required": false,
+          "description": "Maximum number of results to return (default: 10)"
+        }
+      },
+      "example_uses": [
+        "Find partners working on climate change projects",
+        "Search for organizations in developing countries",
+        "Find partners with expertise in healthcare",
+        "Look for partners in the education sector",
+        "Search for international development organizations"
+      ],
+      "when_to_use": "Use this when the user wants to find partners using natural language descriptions, semantic concepts, or contextual search rather than exact text matching."
     }
   ]
 }

@@ -1,29 +1,98 @@
 .content-item {
-  margin: 0.5rem 0;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  margin: 0.75rem 0;
+  padding-bottom: 1.25rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
   position: relative;
+  transition: border-color 0.3s ease;
 }
 
 .content-item:last-child {
   border-bottom: none;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.75rem;
 }
 
 .content-item::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
-  opacity: 0.6;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(102, 126, 234, 0.3) 25%, 
+    rgba(118, 75, 162, 0.4) 50%, 
+    rgba(102, 126, 234, 0.3) 75%, 
+    transparent 100%);
+  opacity: 0.8;
+  border-radius: 1px;
 }
 
 .content-item:last-child::after {
   display: none;
+}
+
+/* Enhanced border colors for different content types */
+.content-item .content-markdown::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(59, 130, 246, 0.4) 25%, 
+    rgba(147, 51, 234, 0.5) 50%, 
+    rgba(59, 130, 246, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-card::after,
+.content-item .content-grid::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(251, 113, 133, 0.4) 25%, 
+    rgba(254, 225, 64, 0.5) 50%, 
+    rgba(251, 113, 133, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-mermaid::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(79, 172, 254, 0.4) 25%, 
+    rgba(0, 242, 254, 0.5) 50%, 
+    rgba(79, 172, 254, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-chartjs::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 107, 107, 0.4) 25%, 
+    rgba(78, 205, 196, 0.5) 50%, 
+    rgba(255, 107, 107, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-code::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(67, 233, 123, 0.4) 25%, 
+    rgba(56, 249, 215, 0.5) 50%, 
+    rgba(67, 233, 123, 0.4) 75%, 
+    transparent 100%);
+}
+
+.content-item .content-text::after {
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(156, 163, 175, 0.4) 25%, 
+    rgba(107, 114, 128, 0.5) 50%, 
+    rgba(156, 163, 175, 0.4) 75%, 
+    transparent 100%);
+}
+
+/* Hover effect for better interactivity */
+.content-item:hover::after {
+  opacity: 1;
+  transform: scaleY(1.2);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 /* Content Type Headers */
