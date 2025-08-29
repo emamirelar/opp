@@ -128,52 +128,70 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
         {
             if (entityData == null) return string.Empty;
 
-            var properties = entityData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            var readableLines = new List<string>();
-
-            foreach (var property in properties)
+            try
             {
-                try
-                {
-                    var value = property.GetValue(entityData);
-                    
-                    // Skip null values, empty collections, and complex navigation properties
-                    if (value == null) continue;
-                    
-                    // Handle different value types
-                    string formattedValue = value switch
-                    {
-                        string str when string.IsNullOrWhiteSpace(str) => null, // Skip empty strings
-                        string str => str,
-                        DateTime dateTime when dateTime == DateTime.MinValue => null, // Skip default dates
-                        DateTime dateTime => dateTime.ToString("yyyy-MM-dd"),
-                        bool boolean => boolean.ToString(),
-                        int number when number == 0 => null, // Skip zero values
-                        int number => number.ToString(),
-                        decimal dec when dec == 0 => null, // Skip zero values  
-                        decimal dec => dec.ToString("0.##"),
-                        Enum enumValue => enumValue.ToString(),
-                        // Skip complex objects and collections
-                        System.Collections.IEnumerable => null,
-                        _ when value.GetType().IsClass && value.GetType() != typeof(string) => null,
-                        _ => value.ToString()
-                    };
+                var properties = entityData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                var readableLines = new List<string>();
 
-                    // Add to readable format if we have a meaningful value
-                    if (!string.IsNullOrWhiteSpace(formattedValue))
+                foreach (var property in properties)
+                {
+                    try
                     {
-                        // Convert property name from PascalCase to readable format
-                        var readablePropertyName = Regex.Replace(property.Name, "([a-z])([A-Z])", "$1 $2");
-                        readableLines.Add($"{readablePropertyName}: {formattedValue}");
+                        // Skip properties that might cause circular references or complex navigation
+                        if (property.PropertyType.IsClass && 
+                            property.PropertyType != typeof(string) && 
+                            !property.PropertyType.IsValueType &&
+                            !property.PropertyType.IsEnum)
+                        {
+                            continue; // Skip complex objects to avoid circular references
+                        }
+
+                        var value = property.GetValue(entityData);
+                        
+                        // Skip null values, empty collections, and complex navigation properties
+                        if (value == null) continue;
+                        
+                        // Handle different value types
+                        string formattedValue = value switch
+                        {
+                            string str when string.IsNullOrWhiteSpace(str) => null, // Skip empty strings
+                            string str => str,
+                            DateTime dateTime when dateTime == DateTime.MinValue => null, // Skip default dates
+                            DateTime dateTime => dateTime.ToString("yyyy-MM-dd"),
+                            bool boolean => boolean.ToString(),
+                            int number when number == 0 => null, // Skip zero values
+                            int number => number.ToString(),
+                            decimal dec when dec == 0 => null, // Skip zero values  
+                            decimal dec => dec.ToString("0.##"),
+                            Enum enumValue => enumValue.ToString(),
+                            // Skip complex objects and collections
+                            System.Collections.IEnumerable => null,
+                            _ when value.GetType().IsClass && value.GetType() != typeof(string) => null,
+                            _ => value.ToString()
+                        };
+
+                        // Add to readable format if we have a meaningful value
+                        if (!string.IsNullOrWhiteSpace(formattedValue))
+                        {
+                            // Convert property name from PascalCase to readable format
+                            var readablePropertyName = Regex.Replace(property.Name, "([a-z])([A-Z])", "$1 $2");
+                            readableLines.Add($"{readablePropertyName}: {formattedValue}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning($"Error processing property {property.Name}: {ex.Message}");
+                        // Continue processing other properties
                     }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning($"Error processing property {property.Name}: {ex.Message}");
-                }
-            }
 
-            return string.Join("\n", readableLines);
+                return string.Join("\n", readableLines);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in ConvertEntityDataToReadableString: {ex.Message}");
+                return string.Empty;
+            }
         }
 
         private async Task ProcessEntityMessage(MyPubSubMessage msg, UNOPSAppDbContext dbContext, AiContextualService contextService)
@@ -189,11 +207,15 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                 // Get the appropriate UNOPS manager for this entity type
                 var manager = GetUNOPSManagerByEntityName(msg.EntityName);
                 
+                _logger.LogDebug($"Processing entity {msg.EntityName} with ID {msg.EntityId.Value} using manager {manager.GetType().Name}");
+                
                 // Call GetBasicEntityDataAsync to get the entity data
                 var entityData = await manager.GetBasicEntityDataAsync(msg.EntityId.Value);
                 
                 if (entityData != null)
                 {
+                    _logger.LogDebug($"Successfully retrieved entity data for {msg.EntityName} with ID {msg.EntityId.Value}");
+                    
                     // Convert entity data to human-readable format for better embeddings
                     var readableContent = ConvertEntityDataToReadableString(entityData);
                     
@@ -222,9 +244,16 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
             {
                 _logger.LogWarning($"No manager available for entity {msg.EntityName}: {ex.Message}");
             }
+            catch (NullReferenceException ex)
+            {
+                _logger.LogError($"Null reference exception processing entity {msg.EntityName} with ID {msg.EntityId.Value}: {ex.Message}");
+                _logger.LogError($"Stack trace: {ex.StackTrace}");
+            }
             catch (Exception ex)
             {
                 _logger.LogError($"Error processing entity {msg.EntityName} with ID {msg.EntityId.Value}: {ex.Message}");
+                _logger.LogError($"Exception type: {ex.GetType().Name}");
+                _logger.LogError($"Stack trace: {ex.StackTrace}");
             }
         }
 

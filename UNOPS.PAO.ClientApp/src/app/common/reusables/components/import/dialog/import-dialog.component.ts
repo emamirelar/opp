@@ -72,6 +72,12 @@ export class ImportDialogComponent implements OnInit {
   validationErrors = signal<Map<number, string[]>>(new Map());
   rowsWithMissingRequired = signal<number[]>([]);
   showMissingRequiredBanner = signal<boolean>(false);
+  
+  // Duplicate detection properties
+  duplicateRows = signal<any[]>([]);
+  nonDuplicateRows = signal<any[]>([]);
+  showDuplicateWarning = signal<boolean>(false);
+  duplicateWarningMessage = signal<string>('');
 
   // Pagination properties
   first = signal(0);
@@ -85,6 +91,7 @@ export class ImportDialogComponent implements OnInit {
 
   // Contact-specific columns
   contactColumns: ImportColumn[] = [
+    { field: 'duplicateInfo', header: 'Duplicate', required: false, label: 'Duplicate', type: 'text', sortable: false },
     { field: 'salutation', header: 'Salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
     { field: 'firstName', header: 'First Name', required: false, label: 'First Name', type: 'text', sortable: false },
     { field: 'middleName', header: 'Middle Name', required: false, label: 'Middle Name', type: 'text', sortable: false },
@@ -116,31 +123,27 @@ export class ImportDialogComponent implements OnInit {
 
   // Partner-specific columns
   partnerColumns: ImportColumn[] = [
+    { field: 'duplicateInfo', header: 'Duplicate', required: false, label: 'Duplicate', type: 'text', sortable: false },
     { field: 'name', header: 'Name', required: true, label: 'Name', type: 'text', sortable: false },
-    { field: 'shortName', header: 'Short Name', required: true, label: 'Short Name', type: 'text', sortable: false },
+    { field: 'partnerShortDescription', header: 'Short Name', required: true, label: 'Short Name', type: 'text', sortable: false },
+    { field: 'partnerLongDescription', header: 'Long Description', required: false, label: 'Long Description', type: 'text', sortable: false },
     { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'newEngagement', header: 'New Engagement', required: true, label: 'New Engagement', type: 'text', sortable: false },
-    { field: 'phone', header: 'Phone', required: false, label: 'Phone', type: 'text', sortable: false },
-    { field: 'website', header: 'Website', required: false, label: 'Website', type: 'text', sortable: false },
+    { field: 'canCreateNewOpportunities', header: 'New Engagement', required: true, label: 'New Engagement', type: 'text', sortable: false },
     { field: 'pooledFund', header: 'Pooled Fund', required: true, label: 'Pooled Fund', type: 'text', sortable: false },
-    { field: 'ddRequired', header: 'DD Required', required: true, label: 'DD Required', type: 'text', sortable: false },
-    { field: 'ddeacDone', header: 'DDEAC Done', required: true, label: 'DDEAC Done', type: 'text', sortable: false },
-    { field: 'eacReference', header: 'EAC Reference', required: false, label: 'EAC Reference', type: 'text', sortable: false },
-    { field: 'globalKeyAccount', header: 'Global Key Account', required: false, label: 'Global Key Account', type: 'text', sortable: false },
-    { field: 'unSecretariatEntity', header: 'UN Secretariat Entity', required: false, label: 'UN Secretariat Entity', type: 'text', sortable: false },
-    { field: 'levyPotentiallyApplies', header: 'Levy Potentially Applies', required: true, label: 'Levy Potentially Applies', type: 'text', sortable: false },
-    { field: 'reasonForLevyNotApplying', header: 'Reason For Levy Not Applying', required: false, label: 'Reason For Levy Not Applying', type: 'text', sortable: false },
+    { field: 'dueDiligenceRequired', header: 'DD Required', required: true, label: 'DD Required', type: 'text', sortable: false },
+    { field: 'dueDiligenceApproval', header: 'DD Approval', required: true, label: 'DD Approval', type: 'text', sortable: false },
+    { field: 'partnerLevyStatus', header: 'Levy Status', required: true, label: 'Levy Status', type: 'text', sortable: false },
+    { field: 'keyGlobalPartner', header: 'Key Global', required: false, label: 'Key Global', type: 'text', sortable: false },
+    { field: 'unSecretariatPartner', header: 'UN Secretariat', required: false, label: 'UN Secretariat', type: 'text', sortable: false },
+    { field: 'unAndStateEntity', header: 'UN State Entity', required: false, label: 'UN State Entity', type: 'text', sortable: false },
+    { field: 'reasonForNoNewOpportunity', header: 'Reason No New Opportunity', required: false, label: 'Reason No New Opportunity', type: 'text', sortable: false },
     { field: 'levyTreatment', header: 'Levy Treatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
-    { field: 'address1Street', header: 'Street', required: false, label: 'Street', type: 'text', sortable: false },
-    { field: 'address1Street2', header: 'Street 2', required: false, label: 'Street 2', type: 'text', sortable: false },
-    { field: 'address1City', header: 'City', required: false, label: 'City', type: 'text', sortable: false },
-    { field: 'address1StateProvince', header: 'State/Province', required: false, label: 'State/Province', type: 'text', sortable: false },
-    { field: 'address1PostalCode', header: 'Postal Code', required: false, label: 'Postal Code', type: 'text', sortable: false },
-    { field: 'address1Country', header: 'Country', required: false, label: 'Country', type: 'text', sortable: false },
+    { field: 'partnerGroupCode', header: 'Partner Group', required: false, label: 'Partner Group', type: 'text', sortable: false },
   ];
 
   // Interaction-specific columns
   interactionColumns: ImportColumn[] = [
+    { field: 'duplicateInfo', header: 'Duplicate', required: false, label: 'Duplicate', type: 'text', sortable: false },
     { field: 'type', header: 'Type', required: true, label: 'Type', type: 'text', sortable: false },
     { field: 'date', header: 'Date', required: true, label: 'Date', type: 'text', sortable: false },
     { field: 'subject', header: 'Subject', required: true, label: 'Subject', type: 'text', sortable: false },
@@ -264,25 +267,28 @@ export class ImportDialogComponent implements OnInit {
       return;
     }
 
+    // Process duplicate detection and add duplicateInfo to each record
+    const processedData = this.processDuplicateDetection(allData);
+
     // Update total records if it doesn't match the data length
-    if (this.totalRecords() !== allData.length) {
-      this.totalRecords.set(allData.length);
+    if (this.totalRecords() !== processedData.length) {
+      this.totalRecords.set(processedData.length);
     }
     
     // Ensure firstIndex doesn't exceed the bounds of the data
-    if (firstIndex >= allData.length) {
+    if (firstIndex >= processedData.length) {
       const newFirstIndex = 0;
-      console.warn(`First index ${firstIndex} exceeds data length ${allData.length}, resetting to ${newFirstIndex}`);
+      console.warn(`First index ${firstIndex} exceeds data length ${processedData.length}, resetting to ${newFirstIndex}`);
       this.first.set(newFirstIndex);
       
-      const newPaginatedResult = allData.slice(newFirstIndex, newFirstIndex + rowsPerPage);
+      const newPaginatedResult = processedData.slice(newFirstIndex, newFirstIndex + rowsPerPage);
       this.paginatedData.set(newPaginatedResult);
       return;
     }
     
     // Normal pagination
-    const endIndex = Math.min(firstIndex + rowsPerPage, allData.length);
-    const paginatedResult = allData.slice(firstIndex, endIndex);
+    const endIndex = Math.min(firstIndex + rowsPerPage, processedData.length);
+    const paginatedResult = processedData.slice(firstIndex, endIndex);
     
     this.paginatedData.set(paginatedResult);
   }
@@ -340,7 +346,97 @@ export class ImportDialogComponent implements OnInit {
     return this.rowsWithMissingRequired().length > 0;
   }
 
-  // Select all rows in the current dataset (including rows with missing required fields)
+  /**
+   * Process duplicate detection and add duplicateInfo to each record
+   */
+  private processDuplicateDetection(data: any[]): any[] {
+    const processedData = [...data];
+    const duplicateRows: any[] = [];
+    const nonDuplicateRows: any[] = [];
+
+    processedData.forEach((record, index) => {
+      
+      // Check if record has similarityEntityId (duplicate detected)
+      // Also check for similarityEntityId in different case variations
+      const hasDuplicate = record.similarityEntityId;
+      
+      if (hasDuplicate) {
+        const entityId = record.similarityEntityId;
+        
+        const similarityScore = record.similarityScore || 0;
+        
+        const similarityPercentage = Math.round(similarityScore * 100);
+        
+        // Create duplicate info with link
+        const entityType = this.getEntityTypeFromImportType();
+        const entityUrl = this.getEntityUrl(entityType, entityId);
+        
+        record.duplicateInfo = {
+          isDuplicate: true,
+          entityId: entityId,
+          similarityScore: similarityScore,
+          similarityPercentage: similarityPercentage,
+          entityUrl: entityUrl,
+          tooltip: `Duplicate found (${similarityPercentage}% similarity)`
+        };
+        
+        duplicateRows.push(record);
+      } else {
+        // No duplicate found
+        record.duplicateInfo = {
+          isDuplicate: false,
+          tooltip: 'Unique record'
+        };
+        nonDuplicateRows.push(record);
+      }
+    });
+
+    // Update signals
+    this.duplicateRows.set(duplicateRows);
+    this.nonDuplicateRows.set(nonDuplicateRows);
+    
+    console.log(`Duplicate detection complete: ${duplicateRows.length} duplicates, ${nonDuplicateRows.length} unique records`);
+    console.log('Duplicate rows:', duplicateRows);
+    console.log('Non-duplicate rows:', nonDuplicateRows);
+    
+    // Show warning if duplicates found
+    if (duplicateRows.length > 0) {
+      this.showDuplicateWarning.set(true);
+      this.duplicateWarningMessage.set(
+        `${duplicateRows.length} duplicate(s) found and auto-deselected. Review and manually select if needed.`
+      );
+    } else {
+      this.showDuplicateWarning.set(false);
+    }
+
+    return processedData;
+  }
+
+  /**
+   * Get entity type from current import type
+   */
+  private getEntityTypeFromImportType(): string {
+    const importType = this.currentImportType();
+    switch (importType) {
+      case 'contact':
+        return 'contacts';
+      case 'partner':
+        return 'partners';
+      case 'interaction':
+        return 'interactions';
+      default:
+        return 'contacts';
+    }
+  }
+
+  /**
+   * Generate entity URL for opening in new tab
+   */
+  private getEntityUrl(entityType: string, entityId: string): string {
+    return `/#/partnerships/${entityType}/${entityId}`;
+  }
+
+  // Select all rows in the current dataset (including rows with missing required fields and duplicates)
   selectAllRows(): void {
     const allData = this.importDialogService.data();
     
@@ -349,7 +445,7 @@ export class ImportDialogComponent implements OnInit {
       return;
     }
     
-    // Select ALL rows, including those with missing required fields
+    // Select ALL rows, including those with missing required fields and duplicates
     const newSelection = [...allData];
     
     // Update the local selection state
@@ -363,6 +459,15 @@ export class ImportDialogComponent implements OnInit {
     if (missingRequiredRows.length > 0) {
       this.feedbackDialogService.showWarningToast({
         detail: `You've selected ${missingRequiredRows.length} rows with missing required fields`,
+        life: 3000
+      });
+    }
+
+    // Check if any duplicate rows are being selected and show a warning
+    const duplicateRows = this.duplicateRows();
+    if (duplicateRows.length > 0) {
+      this.feedbackDialogService.showWarningToast({
+        detail: `You've selected ${duplicateRows.length} duplicate rows. These will be processed as new records.`,
         life: 3000
       });
     }
@@ -426,12 +531,15 @@ export class ImportDialogComponent implements OnInit {
       !currentPageRowIds.has(row._importRowId)
     );
     
+    // Filter out duplicate rows from the current page selection
+    const nonDuplicateEventRows = event.filter(row => !row.duplicateInfo?.isDuplicate);
+    
     // Create a new selection by combining:
     // 1. Rows selected from other pages (not visible on current page)
-    // 2. Rows selected on the current page from the event
+    // 2. Non-duplicate rows selected on the current page from the event
     const newSelection = [
       ...selectionsFromOtherPages,
-      ...event
+      ...nonDuplicateEventRows
     ];
     
     // Avoid duplicates by creating a unique set based on _importRowId
@@ -505,8 +613,7 @@ export class ImportDialogComponent implements OnInit {
         // For partner, explicitly set certain fields that the form expects
         // organizationHierarchyIds is used directly, no conversion needed
         dialogRecord.partnerCategoryId = dialogRecord.partnerCategoryId || null;
-        dialogRecord.website = dialogRecord.website || '';
-        dialogRecord.eacReference = dialogRecord.eacReference || '';
+        dialogRecord.partnerApprovalReference = dialogRecord.partnerApprovalReference || '';
         
         // Make sure id is present and formatted appropriately
         if (dialogRecord.id !== undefined && dialogRecord.id !== null) {
@@ -696,7 +803,7 @@ export class ImportDialogComponent implements OnInit {
     }
   }
 
-  // Select only valid rows (exclude rows with errors or missing required fields)
+  // Select only valid rows (exclude rows with errors, missing required fields, or duplicates)
   selectValidRows(): void {
     const allData = this.importDialogService.data();
     
@@ -711,9 +818,13 @@ export class ImportDialogComponent implements OnInit {
     // Get rows with validation errors
     const validationErrorRows = Array.from(this.validationErrors().keys());
     
-    // Filter out rows with either missing required fields or validation errors
-    const validRows = allData.filter((_, index) => {
-      return !missingRequiredRows.includes(index) && !validationErrorRows.includes(index);
+    // Filter out rows with either missing required fields, validation errors, or duplicates
+    const validRows = allData.filter((row, index) => {
+      const hasMissingRequired = missingRequiredRows.includes(index);
+      const hasValidationError = validationErrorRows.includes(index);
+      const isDuplicate = row.duplicateInfo?.isDuplicate;
+      
+      return !hasMissingRequired && !hasValidationError && !isDuplicate;
     });
     
     // Update the local selection state

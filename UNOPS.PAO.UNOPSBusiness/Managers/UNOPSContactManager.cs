@@ -747,7 +747,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
 
     public override async Task<object> GetBasicEntityAsync(int entityId, ClaimsPrincipal user = null)
     {
-        var contact = await contactRepository.GetByIdAsync(entityId);
+        var contact = await _context.Contacts.FirstOrDefaultAsync(e => e.Id == entityId);
         if (contact != null)
         {
             return mapper.Map<UNOPSContact, ContactModel>(contact);
@@ -760,7 +760,7 @@ public class UNOPSContactManager : BaseUNOPSManager, IContactManager
     /// </summary>
     public override async Task<object> GetBasicEntityDataAsync(int id)
     {
-        var contact = await contactRepository.GetByIdAsync(id);
+        var contact = await _context.Contacts.FirstOrDefaultAsync(e => e.Id == id);
         if (contact != null)
         {
             return mapper.Map<UNOPSContact, ContactModel>(contact);

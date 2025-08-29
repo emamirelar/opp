@@ -37,25 +37,22 @@
 
         <!-- Advanced Search Button -->
         @if (config.searchConfig?.useAdvancedSearch) {
-          <div class="flex justify-start">
-            <!-- Mobile: Icon only -->
-            <p-button
-              icon="pi pi-filter"
-              class="lg:hidden"
-              text rounded
-              class="advanced-search"
-              [pTooltip]="'search.advanced' | translate"
-              (onClick)="switchToAdvancedSearch()"
-            ></p-button>
-            <!-- Desktop: Icon + Label -->
-            <p-button
-              [label]="'search.advanced' | translate"
-              icon="pi pi-filter"
-              class="hidden lg:inline-flex advanced-search"
-              text rounded
-              (onClick)="switchToAdvancedSearch()"
-            ></p-button>
-          </div>
+          <!-- Mobile: Icon only -->
+          <p-button
+            icon="pi pi-filter"
+            class="lg:hidden advanced-search"
+            text rounded
+            [pTooltip]="'search.advanced' | translate"
+            (onClick)="switchToAdvancedSearch()"
+          ></p-button>
+          <!-- Desktop: Icon + Label -->
+          <p-button
+            [label]="'search.advanced' | translate"
+            icon="pi pi-filter"
+            class="hidden lg:inline-flex advanced-search"
+            text rounded
+            (onClick)="switchToAdvancedSearch()"
+          ></p-button>
         }
 
         <!-- Sort Dropdown -->

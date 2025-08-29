@@ -1182,6 +1182,68 @@
         }
       }
     },
+    "interactiondetail": {
+      "title": "Interaction Details Tour",
+      "description": "Learn how to view and manage individual interaction details, information, and related records.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Interaction Details",
+          "description": "This page shows comprehensive information about a specific interaction. You can view, edit, and manage all aspects of the interaction record from here."
+        },
+        "backButton": {
+          "title": "Back to Interactions",
+          "description": "Click this button to return to the interactions list view. This will take you back to browse all interactions."
+        },
+        "editButton": {
+          "title": "Edit Interaction",
+          "description": "Click this button to edit this interaction's information. You can update details, participants, notes, and other attributes."
+        },
+        "deleteButton": {
+          "title": "Delete Interaction",
+          "description": "Use this button to permanently delete this interaction record. This action cannot be undone, so use with caution."
+        },
+        "aiSummary": {
+          "title": "AI-Generated Summary",
+          "description": "This AI-powered panel provides an intelligent summary of the interaction based on the description and related data. It highlights key points and insights."
+        },
+        "descriptionPanel": {
+          "title": "Interaction Description",
+          "description": "This section contains the detailed description of the interaction. You can expand or collapse long descriptions using the 'See More' and 'See Less' buttons."
+        },
+        "documentsPanel": {
+          "title": "Related Documents",
+          "description": "This section displays documents related to this interaction. You can view, download, or manage attached files and documents."
+        },
+        "interactionDetailsPanel": {
+          "title": "Interaction Details",
+          "description": "This sidebar panel shows key information about the interaction including date, time, location, and status."
+        },
+        "contactsPanel": {
+          "title": "Related Contacts",
+          "description": "This section displays all contacts associated with this interaction. Click on any contact to view their detailed profile."
+        },
+        "partnersPanel": {
+          "title": "Related Partners",
+          "description": "This section shows all partner organizations involved in this interaction. Click on any partner to view their detailed profile."
+        },
+        "personnelPanel": {
+          "title": "UNOPS Personnel",
+          "description": "This section lists all UNOPS staff members who participated in or are responsible for this interaction."
+        },
+        "orgUnitPanel": {
+          "title": "Organization Unit",
+          "description": "This section shows which organizational unit is responsible for or associated with this interaction."
+        },
+        "auditPanel": {
+          "title": "Audit Information",
+          "description": "This section displays audit trail information including who created and last modified the interaction, along with timestamps."
+        },
+        "tourControl": {
+          "title": "Interaction Detail Tours",
+          "description": "Access specific tours for different aspects of interaction management and detailed views."
+        }
+      }
+    },
     "partnerview": {
       "title": "Partner Details Tour",
       "description": "Learn how to view and manage individual partner details, information, and related records.",

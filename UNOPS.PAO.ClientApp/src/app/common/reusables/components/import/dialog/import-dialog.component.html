@@ -19,6 +19,21 @@
     </div>
   }
 
+  <!-- Duplicate Warning Banner -->
+  @if (showDuplicateWarning()) {
+    <div class="mb-3 p-3 border-1 border-yellow-200 rounded bg-yellow-50 text-yellow-700">
+      <div class="flex items-start">
+        <i class="pi pi-exclamation-triangle mr-2 mt-1"></i>
+        <div>
+          <p class="m-0 font-medium">Duplicate records detected</p>
+          <p class="mt-1 mb-0 text-sm">
+            {{ duplicateWarningMessage() }}
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- File Analysis In Progress -->
   @if (importService.isProcessingFile()) {
     <div class="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center bg-white z-10">
@@ -33,6 +48,15 @@
           Job ID: {{ importService.getActiveJobId() }}
         }
       </p>
+      <div class="mt-6">
+        <p-button 
+          label="Cancel" 
+          icon="pi pi-times" 
+          severity="secondary" 
+          (onClick)="importDialogService.cancelImport()"
+          [outlined]="true">
+        </p-button>
+      </div>
     </div>
   }
 
@@ -57,6 +81,11 @@
             <span class="ml-3">
               Selected: <span class="font-semibold">{{ selectedRows().length }}</span>
             </span>
+            @if (duplicateRows().length > 0) {
+              <span class="ml-3">
+                Duplicates: <span class="font-semibold text-orange-600">{{ duplicateRows().length }}</span>
+              </span>
+            }
             @if (paginatedData().length === 0 && totalRecords() > 0) {
               <span class="ml-3 text-sm">
                 (Warning: Pagination not working properly)
@@ -84,6 +113,8 @@
         scrollHeight="calc(100% - 50px)"
         styleClass="h-full"
         dataKey="_importRowId"
+        [frozenColumns]="[0, 1, 2]"
+        [frozenWidth]="'200px'"
       >
         <ng-template pTemplate="header" let-columns>
           <tr>
@@ -99,8 +130,8 @@
                 ></p-checkbox>
               </div>
             </th>
-            <th style="width: 4rem">
-              Edit
+            <th style="width: 8rem">
+              Duplicate & Edit
             </th>
             @for (col of columns; track col) {
               <th class="min-w-32">
@@ -116,14 +147,37 @@
               <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
             </td>
             <td>
-              <p-button icon="pi pi-pencil" 
-                        styleClass="p-button-rounded p-button-text" 
-                        (click)="editRow(rowData, $event)">
-              </p-button>
+              <!-- Combined Duplicate Info and Edit Button -->
+              <div class="flex items-center gap-2">
+                @if (rowData.duplicateInfo?.isDuplicate) {
+                  <div class="flex items-center">
+                    <i class="pi pi-question-circle text-orange-500 mr-1" 
+                       [pTooltip]="rowData.duplicateInfo.tooltip"
+                       tooltipPosition="top"></i>
+                    <a [href]="rowData.duplicateInfo.entityUrl" 
+                       target="_blank"
+                       class="text-blue-600 hover:text-blue-800 underline cursor-pointer text-xs">
+                      #{{ rowData.duplicateInfo.entityId }} ({{ rowData.duplicateInfo.similarityPercentage }}%)
+                    </a>
+                  </div>
+                } @else {
+                  <div class="flex items-center">
+                    <i class="pi pi-check-circle text-green-500 mr-1" 
+                       [pTooltip]="rowData.duplicateInfo?.tooltip || 'Unique record'"
+                       tooltipPosition="top"></i>
+                  </div>
+                }
+                <p-button icon="pi pi-pencil" 
+                          styleClass="p-button-rounded p-button-text p-button-sm" 
+                          (click)="editRow(rowData, $event)">
+                </p-button>
+              </div>
             </td>
             @for (col of columns; track col) {
               <td [ngClass]="{'bg-red-50': !rowData[col.field] && col.required}" class="">
-                @if (rowData[col.field]) {
+                @if (col.field === 'duplicateInfo') {
+                  <!-- Skip duplicateInfo column as it's now combined with edit button -->
+                } @else if (rowData[col.field]) {
                   {{ rowData[col.field] }}
                 } @else {
                   <i class="text-red-100 pi pi-warning"></i>

@@ -32,6 +32,8 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Models;
 using System.Reflection;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 public class SearchResult
 {
@@ -70,35 +72,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         public async Task<string> CreateEmbeddingForText(string text)
         {
-            // Create the request instance
-            // Create structured instance in JSON format
-            var instance = new Value
-            {
-                StructValue = new Struct
-                {
-                    Fields = { { "content", Value.ForString(text) } }
-                }
-            };
-            var request = new PredictRequest
-            {
-                Endpoint = _endpoint,
-                Instances = { instance }
-            };
-
-            // Call Vertex AI using gRPC
-            PredictResponse response = await _predictionClient.PredictAsync(request);
-
-            var structValue = response.Predictions[0].StructValue;
-
-            // Navigate to the "values" inside "embeddings"
-            var embeddingValues = structValue.Fields["embeddings"].StructValue.Fields["values"].ListValue.Values;
-
-            // Convert to float array
-            float[] embedding = embeddingValues.Select(v => (float)v.NumberValue).ToArray();
-
-            string vectorString = "[" + string.Join(",", embedding.Select(f => f.ToString(CultureInfo.InvariantCulture))) + "]";
-
-            return vectorString;
+            // Reuse the batch embedding function for single text
+            var embeddings = await CreateBatchEmbeddingsAsync(new List<string> { text });
+            return embeddings.FirstOrDefault() ?? string.Empty;
         }
 
         public async Task PersistEmbedding(string entityName, int entityId, string text, string vectorString)
@@ -302,24 +278,34 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         public async Task<string> ReadFileData(string fileId)
         {
-            var service = new SheetsService(new BaseClientService.Initializer
+            try
             {
-                HttpClientInitializer = _credentials,
-                ApplicationName = "GoogleSheetsReader",
-            });
+                var service = new SheetsService(new BaseClientService.Initializer
+                {
+                    HttpClientInitializer = _credentials,
+                    ApplicationName = "GoogleSheetsReader",
+                });
+                var spreadsheet = service.Spreadsheets.Get(fileId).Execute();
+                var firstSheetName = spreadsheet.Sheets[0].Properties.Title;
 
-            // Read values
-            var request = service.Spreadsheets.Values.Get(fileId, "Sheet1");
-            ValueRange response = await request.ExecuteAsync();
-            var data = string.Empty;
+                // Read values
+                var request = service.Spreadsheets.Values.Get(fileId, firstSheetName);
+                ValueRange response = await request.ExecuteAsync();
+                var data = string.Empty;
 
-            if (response.Values != null && response.Values.Count > 0)
-            {
-                // Convert response.Values to a stringified array
-                data = JsonConvert.SerializeObject(response.Values);
+                if (response.Values != null && response.Values.Count > 0)
+                {
+                    // Convert response.Values to a stringified array
+                    data = JsonConvert.SerializeObject(response.Values);
+                }
+
+                return data;
             }
-
-            return data;
+            catch (Exception ex)
+            {   
+                // Throw a more descriptive error
+                throw new Exception($"Failed to read Google Sheet data. FileId: {fileId}. Error: {ex.Message}", ex);
+            }
         }
 
         private static AiPromptModel MapEntityToAiPromptModel(AiPrompt entity, IMapper mapper)
@@ -517,8 +503,16 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 throw new InvalidOperationException("Failed to deserialize batch records. Ensure the input is a valid JSON array.", ex);
             }
 
-            // Define batch size
-            int batchSize = 25;
+            // Define batch size based on entity type
+            // Increased token limit allows larger batches for Partner
+            int batchSize = 25; // Increased from 5 to 25 for Partner
+            
+            // Log the batch size for debugging
+            if (entityName.Equals("Partner", StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"Using batch size (25) for Partner entity with increased token limit");
+            }
+            
             var headerRow = batchData[0];
 
             for (int i = 1; i < batchData.Count; i += batchSize)
@@ -599,8 +593,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 throw new InvalidOperationException("Failed to deserialize batch records. Ensure the input is a valid JSON array.", ex);
             }
 
-            // Define batch size
-            int batchSize = 25;
+            // Define batch size based on entity type
+            // Increased token limit allows larger batches for Partner
+            int batchSize = 25; // Increased from 5 to 25 for Partner
             var headerRow = batchData[0];
             int totalRecords = batchData.Count - 1; // Excluding header
             int processedRecords = 0;
@@ -695,7 +690,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                     {
                         interactionType = true;
                     }
-                    //var detailedRawMessage = JsonConvert.DeserializeObject(detailedResponse.RawMessage);
+                    
                     foreach (var dependent in dependentsList)
                     {
                         var text = responseObject[dependent];
@@ -724,6 +719,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                         if (int.TryParse(textValue, out id))
                                         {
                                             idsArray.Add(id);
+                                            
+                                            // For interactions, handle special logic for existing IDs
+                                            if (interactionType && dependent == "contactIds")
+                                            {
+                                                await HandleInteractionContactLogic(responseObject, id);
+                                            }
                                         }
                                         else
                                         {
@@ -733,10 +734,21 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                             {
                                                 idsArray.Add(entityId);
                                                 
-                                                // Handle email lookup for interaction types
-                                                if (interactionType && (dependent == "contactIds" || dependent == "userIds"))
+                                                // Special handling for interactions
+                                                if (interactionType)
                                                 {
-                                                    await AddEmailToResponse(responseObject, entityId);
+                                                    if (dependent == "contactIds")
+                                                    {
+                                                        await HandleInteractionContactLogic(responseObject, entityId);
+                                                    }
+                                                    else if (dependent == "userIds")
+                                                    {
+                                                        await AddEmailToResponse(responseObject, entityId);
+                                                    }
+                                                    else if (dependent == "organizationHierarchyIds")
+                                                    {
+                                                        // Handle org unit logic if needed
+                                                    }
                                                 }
                                             }
                                         }
@@ -756,13 +768,29 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                 }
                                 
                                 // Check if 'text' is already a numeric value (long/int)
-                                if (text is long longValue || text is int intValue)
+                                if (text is long longValue)
                                 {
                                     // It is already an ID, just continue
+                                    if (interactionType && dependent == "contactIds")
+                                    {
+                                        await HandleInteractionContactLogic(responseObject, longValue);
+                                    }
+                                    continue;
+                                } else if (text is int intValue)
+                                {
+                                    // It is already an ID, just continue
+                                    if (interactionType && dependent == "contactIds")
+                                    {
+                                        await HandleInteractionContactLogic(responseObject, intValue);
+                                    }
                                     continue;
                                 }
                                 else if (int.TryParse(text?.ToString(), out id))
                                 {
+                                    if (interactionType && dependent == "contactIds")
+                                    {
+                                        await HandleInteractionContactLogic(responseObject, id);
+                                    }
                                     continue;
                                 }
                                 
@@ -790,10 +818,17 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                                     }
                                 }
                                 
-                                // Handle email lookup for interaction types
-                                if (interactionType && (dependent == "contactId" || dependent == "userId"))
+                                // Special handling for interactions
+                                if (interactionType)
                                 {
-                                    await AddEmailToResponse(responseObject, entityId);
+                                    if (dependent == "contactIds")
+                                    {
+                                        await HandleInteractionContactLogic(responseObject, entityId);
+                                    }
+                                    else if (dependent == "userIds")
+                                    {
+                                        await AddEmailToResponse(responseObject, entityId);
+                                    }
                                 }
                             }
                         }
@@ -884,6 +919,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = "OrganizationHierarchies";
                 whereCondition = "\"Type\" = 'OrgUnit'"; // OrgUnit enum value stored as string
             }
+            // Special case for organizationHierarchyIds - should look at OrganizationHierarchies table
+            else if (dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "OrganizationHierarchies";
+                whereCondition = "\"Type\" = 'OrgUnit'"; // OrgUnit enum value stored as string
+            }
             // Special case for Orgunit - should look at OrganizationHierarchies table
             else if (entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
             {
@@ -896,6 +937,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 entityName = "UserProfile";
                 // UserProfile can be searched by Name field directly
                 whereCondition = "1=1"; // Allow all UserProfiles to be searched
+            }
+            // Special case for Contact/ContactIds - should look at Contacts table
+            else if (entityName.Equals("Contact", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "Contacts";
+                whereCondition = "1=1"; // Allow all Contacts to be searched
             }
             else
             {
@@ -942,7 +989,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 .Select(c => c.Email)
                 .FirstOrDefaultAsync();
             
-            // If not found in Contacts, try UserInfos table
+            // If not found in Contacts, try UserProfile table
             if (string.IsNullOrEmpty(emailId))
             {
                 emailId = await _context.UserProfile
@@ -966,5 +1013,398 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 }
             }
         }
+
+        /// <summary>
+        /// Special handling for interaction contacts - adds email and partner information
+        /// </summary>
+        private async Task HandleInteractionContactLogic(dynamic responseObject, dynamic contactId)
+        {
+            int idToSearch = Convert.ToInt32(contactId);
+            
+            // Get contact details including email and partner
+            var contact = await _context.Contacts
+                .Where(c => c.Id == idToSearch)
+                .Select(c => new { c.Email, c.PartnerId })
+                .FirstOrDefaultAsync();
+            
+            if (contact != null)
+            {
+                // Add email to emailAddresses array
+                if (!string.IsNullOrEmpty(contact.Email))
+                {
+                    if (responseObject["emailAddresses"] == null)
+                    {
+                        responseObject["emailAddresses"] = new JArray();
+                    }
+                    
+                    var emailArray = (JArray)responseObject["emailAddresses"];
+                    if (!emailArray.Any(e => e.ToString() == contact.Email))
+                    {
+                        emailArray.Add(contact.Email);
+                    }
+                }
+                
+                // Add partner ID to partnerIds array
+                if (contact.PartnerId != null)
+                {
+                    if (responseObject["partnerIds"] == null)
+                    {
+                        responseObject["partnerIds"] = new JArray();
+                    }
+                    
+                    var partnerArray = (JArray)responseObject["partnerIds"];
+                    if (!partnerArray.Any(p => p.ToString() == contact.PartnerId.ToString()))
+                    {
+                        partnerArray.Add(contact.PartnerId);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Creates batch embeddings using Gemini Embedding API
+        /// </summary>
+        /// <param name="texts">List of texts to create embeddings for</param>
+        /// <returns>List of embedding vectors as strings</returns>
+        public async Task<List<string>> CreateBatchEmbeddingsAsync(List<string> texts)
+        {
+            if (texts == null || !texts.Any())
+                return new List<string>();
+
+            var embeddings = new List<string>();
+            var batchSize = 30; // Process in batches of 30
+
+            for (int i = 0; i < texts.Count; i += batchSize)
+            {
+                var batch = texts.Skip(i).Take(batchSize).ToList();
+                var batchEmbeddings = await CreateEmbeddingsBatchAsync(batch);
+                embeddings.AddRange(batchEmbeddings);
+            }
+
+            return embeddings;
+        }
+
+        /// <summary>
+        /// Creates embeddings for a batch of texts using Vertex AI Embedding API
+        /// </summary>
+        /// <param name="texts">Batch of texts to create embeddings for</param>
+        /// <returns>List of embedding vectors as strings</returns>
+        private async Task<List<string>> CreateEmbeddingsBatchAsync(List<string> texts)
+        {
+            try
+            {
+                var projectId = _configuration.GetValue<string>("AISettings:ProjectId");
+                var location = _configuration.GetValue<string>("AISettings:Location");
+                
+                if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(location))
+                {
+                    throw new InvalidOperationException("Project ID or Location not configured in AISettings");
+                }
+
+                // Get access token using Google Cloud credentials
+                var accessToken = await GetAccessTokenAsync();
+
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+                var embeddings = new List<string>();
+
+                // Create batch request with all texts
+                 var instances = new List<object>();
+                 foreach (var text in texts)
+                 {
+                     instances.Add(new
+                     {
+                         task_type = "SEMANTIC_SIMILARITY",
+                         content = text
+                     });
+                 }
+
+                var requestBody = new
+                  {
+                      instances = instances,
+                      parameters = new
+                      {
+                          outputDimensionality = 768
+                      }
+                  };
+
+                 var jsonContent = JsonConvert.SerializeObject(requestBody);
+                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                 var url = $"https://{location}-aiplatform.googleapis.com/v1/projects/{projectId}/locations/{location}/publishers/google/models/gemini-embedding-001:predict";
+                 
+                 var response = await httpClient.PostAsync(url, content);
+
+                 if (!response.IsSuccessStatusCode)
+                 {
+                     var errorContent = await response.Content.ReadAsStringAsync();
+                     throw new HttpRequestException($"Vertex AI API error: {response.StatusCode} - {errorContent}");
+                 }
+
+                 var responseContent = await response.Content.ReadAsStringAsync();
+                 var responseObject = JsonConvert.DeserializeObject<dynamic>(responseContent);
+
+                 // Process each prediction in the response
+                 if (responseObject?.predictions != null)
+                 {
+                     foreach (var prediction in responseObject.predictions)
+                     {
+                         if (prediction?.embeddings?.values != null)
+                         {
+                             var values = prediction.embeddings.values.ToObject<float[]>();
+                             var valueStrings = new List<string>();
+                             foreach (var v in values)
+                             {
+                                 valueStrings.Add(v.ToString(CultureInfo.InvariantCulture));
+                             }
+                             var vectorString = "[" + string.Join(",", valueStrings) + "]";
+                             embeddings.Add(vectorString);
+                         }
+                     }
+                 }
+
+                return embeddings;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error creating batch embeddings: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Converts entity data to readable string format for embedding generation
+        /// </summary>
+        /// <param name="entityData">The entity data object</param>
+        /// <returns>Readable string representation</returns>
+        private string ConvertEntityDataToReadableString(object entityData)
+        {
+            if (entityData == null) return string.Empty;
+
+            var readableLines = new List<string>();
+
+            // Handle dynamic objects (JObject, ExpandoObject, etc.)
+            if (entityData is IDictionary<string, object> dynamicDict)
+            {
+                foreach (var kvp in dynamicDict)
+                {
+                    try
+                    {
+                        var value = kvp.Value;
+                        
+                        // Skip null values and complex objects
+                        if (value == null) continue;
+                        
+                        string formattedValue = FormatValueForReadableString(value);
+                        
+                        // Add to readable format if we have a meaningful value
+                        if (!string.IsNullOrWhiteSpace(formattedValue))
+                        {
+                            // Convert property name from PascalCase to readable format
+                            var readablePropertyName = System.Text.RegularExpressions.Regex.Replace(kvp.Key, "([a-z])([A-Z])", "$1 $2");
+                            readableLines.Add($"{readablePropertyName}: {formattedValue}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log warning but continue processing other properties
+                        System.Diagnostics.Debug.WriteLine($"Error processing property {kvp.Key}: {ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                // Handle regular objects using reflection
+                var properties = entityData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                
+                foreach (var property in properties)
+                {
+                    try
+                    {
+                        var value = property.GetValue(entityData);
+                        
+                        // Skip null values, empty collections, and complex navigation properties
+                        if (value == null) continue;
+                        
+                        string formattedValue = FormatValueForReadableString(value);
+
+                        // Add to readable format if we have a meaningful value
+                        if (!string.IsNullOrWhiteSpace(formattedValue))
+                        {
+                            // Convert property name from PascalCase to readable format
+                            var readablePropertyName = System.Text.RegularExpressions.Regex.Replace(property.Name, "([a-z])([A-Z])", "$1 $2");
+                            readableLines.Add($"{readablePropertyName}: {formattedValue}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log warning but continue processing other properties
+                        System.Diagnostics.Debug.WriteLine($"Error processing property {property.Name}: {ex.Message}");
+                    }
+                }
+            }
+
+            return string.Join("\n", readableLines);
+        }
+
+        /// <summary>
+        /// Formats a value for readable string representation
+        /// </summary>
+        /// <param name="value">The value to format</param>
+        /// <returns>Formatted string or null if should be skipped</returns>
+        private string FormatValueForReadableString(object value)
+        {
+            if (value is string str)
+            {
+                return string.IsNullOrWhiteSpace(str) ? null : str;
+            }
+            else if (value is DateTime dateTime)
+            {
+                return dateTime == DateTime.MinValue ? null : dateTime.ToString("yyyy-MM-dd");
+            }
+            else if (value is bool boolean)
+            {
+                return boolean.ToString();
+            }
+            else if (value is int number)
+            {
+                return number == 0 ? null : number.ToString();
+            }
+            else if (value is decimal dec)
+            {
+                return dec == 0 ? null : dec.ToString("0.##");
+            }
+            else if (value is System.Enum enumValue)
+            {
+                return enumValue.ToString();
+            }
+            else if (value is System.Collections.IEnumerable)
+            {
+                return null; // Skip complex objects and collections
+            }
+            else if (value.GetType().IsClass && value.GetType() != typeof(string))
+            {
+                return null; // Skip complex objects
+            }
+            else
+            {
+                return value.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Detects duplicates for a list of records using semantic similarity
+        /// </summary>
+        /// <param name="entityName">Name of the entity type (e.g., "Contacts")</param>
+        /// <param name="records">List of records to check for duplicates</param>
+        /// <param name="similarityThreshold">Similarity threshold for duplicate detection (default: 0.85)</param>
+        /// <returns>List of records with duplicate information added</returns>
+        public async Task<List<dynamic>> DetectDuplicatesAsync(string entityName, List<dynamic> records, double similarityThreshold = 0.85)
+        {
+            if (records == null || !records.Any())
+                return records;
+
+            try
+            {
+                // Convert records to readable strings for embedding generation
+                var readableTexts = new List<string>();
+                foreach (var record in records)
+                {
+                    var readableText = ConvertEntityDataToReadableString(record);
+                    readableTexts.Add(readableText);
+                }
+
+                // Create embeddings for all records
+                var embeddings = await CreateBatchEmbeddingsAsync(readableTexts);
+
+                // Check for duplicates using the embeddings
+                for (int i = 0; i < records.Count; i++)
+                {
+                    var record = records[i];
+                    var embedding = embeddings[i];
+
+                    // Check for duplicates using the SQL function
+                    var duplicate = await DetectDuplicateForEmbeddingAsync(entityName, embedding, similarityThreshold);
+                    
+                    // Add duplicate information to the record
+                    if (duplicate != null)
+                    {
+                        record.similarityEntityId = duplicate.EntityId;
+                        record.similarityScore = duplicate.Score;
+                    }
+                    else
+                    {
+                        record.similarityEntityId = null;
+                        record.similarityScore = null;
+                    }
+                }
+
+                return records;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error detecting duplicates: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Detects duplicate for a single embedding using the existing SQL function
+        /// </summary>
+        /// <param name="entityName">Name of the entity type</param>
+        /// <param name="embeddingVector">Embedding vector as string</param>
+        /// <param name="similarityThreshold">Similarity threshold</param>
+        /// <returns>Duplicate detection result or null if no duplicate found</returns>
+        private async Task<DuplicateDetectionResult> DetectDuplicateForEmbeddingAsync(string entityName, string embeddingVector, double similarityThreshold)
+         {
+             try
+             {
+                 // Use the existing database context connection instead of creating a new one
+                 var connection = _context.Database.GetDbConnection();
+                 if (connection.State != ConnectionState.Open)
+                     await connection.OpenAsync();
+
+                 using var command = connection.CreateCommand();
+                 command.CommandText = "SELECT entityid, score, search_type FROM public.retrieve_embedding_search(@entityName, @embeddingVector, @similarityThreshold, NULL)";
+
+                 // Add parameters using the same pattern as other methods in this class
+                 var parameters = new[] 
+                 {
+                     new NpgsqlParameter("@entityName", NpgsqlTypes.NpgsqlDbType.Text) { Value = entityName },
+                     new NpgsqlParameter("@embeddingVector", NpgsqlTypes.NpgsqlDbType.Text) { Value = embeddingVector },
+                     new NpgsqlParameter("@similarityThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = (float)similarityThreshold }
+                 };
+
+                 command.Parameters.AddRange(parameters);
+
+                 using var reader = await command.ExecuteReaderAsync();
+                 if (await reader.ReadAsync())
+                 {
+                     return new DuplicateDetectionResult
+                     {
+                         EntityId = reader.GetInt32("entityid"),
+                         Score = reader.GetDouble("score"),
+                         EntityData = null, // Not needed for duplicate detection
+                         MatchType = reader.GetString("search_type")
+                     };
+                 }
+
+                 return null;
+             }
+             catch (Exception ex)
+             {
+                 throw new Exception($"Error detecting duplicate for embedding: {ex.Message}", ex);
+             }
+         }
+    }
+
+    /// <summary>
+    /// Result of duplicate detection
+    /// </summary>
+    public class DuplicateDetectionResult
+    {
+        public int EntityId { get; set; }
+        public double Score { get; set; }
+        public string EntityData { get; set; }
+        public string MatchType { get; set; }
     }
 }
