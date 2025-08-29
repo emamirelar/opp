@@ -5,6 +5,7 @@ using UNOPS.PAO.GoogleServices;
 using UNOPS.PAO.Models;
 using UNOPS.PAO.Business.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -286,6 +287,25 @@ public class UNOPSGeminiManager : IGeminiManager
         return extractedText;
     }
 
+    /// <summary>
+    /// Maps prompt types to entity names for duplicate detection
+    /// </summary>
+    /// <param name="promptType">The prompt type (e.g., "bulk_contact_action")</param>
+    /// <returns>The entity name for duplicate detection (e.g., "Contacts")</returns>
+    private string GetEntityNameFromPromptType(string promptType)
+    {
+        if (string.IsNullOrEmpty(promptType))
+            return "Contacts"; // Default fallback
+
+        return promptType.ToLower() switch
+        {
+            "bulk_contact_action" or "contact_action" => "Contacts",
+            "bulk_partner_action" or "partner_action" => "Partners", 
+            "bulk_interaction_action" or "interaction_action" => "Interactions",
+            _ => "Contacts" // Default fallback
+        };
+    }
+
     public async Task<SessionWithChats> GetSessionDataWithChats(string sessionId, int userId) 
     {
         try
@@ -554,17 +574,34 @@ public class UNOPSGeminiManager : IGeminiManager
 
     public async Task<dynamic> ExtractDataAfterAnalysis(AnalyseFileRequest req, int currentUserId)
     {
-        var promptData = (await GetPromptData(req.Type)).FirstOrDefault();
-        if (promptData == null)
+        try
         {
-            return null;
-        }
+            var promptData = (await GetPromptData(req.Type)).FirstOrDefault();
+            if (promptData == null)
+            {
+                throw new Exception($"No prompt configuration found for type: {req.Type}");
+            }
 
-        var fileData = await _aiService.ReadFileData(req.FileId);
-        var fileDataArray = JArray.Parse(fileData);
+            var fileData = await _aiService.ReadFileData(req.FileId);
+            if (string.IsNullOrEmpty(fileData))
+            {
+                throw new Exception("No data found in the Google Sheet. Please ensure the sheet contains data.");
+            }
 
+            var fileDataArray = JArray.Parse(fileData);
+
+        // Determine entity name for batch size optimization
+        string entityName = GetEntityNameFromPromptType(req.Type);
+        
+        // For Partners: Always use batch size 5, but check total rows for async vs sync
+        // For other entities: Use existing logic (batch size 25, async if > 100 rows)
+        bool isPartnerEntity = entityName.Equals("Partners", StringComparison.OrdinalIgnoreCase);
+        int totalRows = fileDataArray.Count - 1; // Excluding header row
+        
         // Check if we should process asynchronously
-        if (fileDataArray.Count > 100)
+        bool shouldProcessAsync = isPartnerEntity ? (totalRows > 100) : (fileDataArray.Count > 100);
+        
+        if (shouldProcessAsync)
         {
             var message = new MyPubSubMessage
             {
@@ -599,14 +636,27 @@ public class UNOPSGeminiManager : IGeminiManager
             {
                 batch.Add(fileDataArray[i]);
             }
-
+            
             finalResponse = await _aiService.ProcessBulkImport(
                 JsonConvert.SerializeObject(batch),
                 promptData,
                 currentUserId,
-                req.Type,
+                entityName,
                 false
             );
+
+            // Detect duplicates for the processed records
+            if (finalResponse != null && finalResponse.Count > 0)
+            {
+                // Convert records to dynamic list for duplicate detection
+                var recordsList = finalResponse.Select(r => (dynamic)r).ToList();
+                
+                // Perform duplicate detection using the same entity name
+                var recordsWithDuplicates = await _aiService.DetectDuplicatesAsync(entityName, recordsList, 0.65);
+                
+                // Update finalResponse with duplicate information
+                finalResponse = recordsWithDuplicates.Select(r => (object)r).ToList();
+            }
 
             return new
             {
@@ -614,6 +664,22 @@ public class UNOPSGeminiManager : IGeminiManager
                 Entity = req.Type,
                 Intent = "Success",
                 Records = JsonConvert.SerializeObject(finalResponse)
+            };
+        }
+        }
+        catch (Exception ex)
+        {
+            // Log the error for debugging
+            _logger.LogError(ex, "Error in ExtractDataAfterAnalysis for type: {Type}, fileId: {FileId}. Error: {ErrorMessage}", 
+                req.Type, req.FileId, ex.Message);
+            
+            // Return a structured error response
+            return new
+            {
+                Message = $"Error processing file: {ex.Message}",
+                Entity = req.Type,
+                Intent = "Error",
+                Error = ex.Message
             };
         }
     }
@@ -770,7 +836,16 @@ public class UNOPSGeminiManager : IGeminiManager
             if (idProperty != null)
             {
                 var idValue = idProperty.GetValue(record);
-                if (idValue != null && idValue is int id && id > 0)
+                
+                // Fix: Set ID to null if it's 0 to prevent primary key constraint violations
+                if (idValue != null && idValue is int id && id == 0)
+                {
+                    _logger.LogInformation("Setting ID from 0 to null for record to prevent primary key constraint violation");
+                    idProperty.SetValue(record, null);
+                    idValue = null;
+                }
+                
+                if (idValue != null && idValue is int validId && validId > 0)
                 {
                     // This is an existing record, so it should be updated
                     recordsToUpdate.Add(record);
@@ -787,6 +862,9 @@ public class UNOPSGeminiManager : IGeminiManager
                 recordsToAdd.Add(record);
             }
         }
+        
+        _logger.LogInformation("Processing bulk insert for {EntityType}. Total records: {TotalCount}, To insert: {InsertCount}, To update: {UpdateCount}", 
+            tableName, convertedRecords.Count, recordsToAdd.Count, recordsToUpdate.Count);
 
         // Process updates
         foreach (var record in recordsToUpdate)
@@ -838,6 +916,10 @@ public class UNOPSGeminiManager : IGeminiManager
             var typedArray = Array.CreateInstance(modelType, recordsToAdd.Count);
             for (int i = 0; i < recordsToAdd.Count; i++)
             {
+                var idProperty = recordsToAdd[i].GetType()
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+                idProperty.SetValue(recordsToAdd[i], null);
                 typedArray.SetValue(recordsToAdd[i], i);
             }
 
@@ -855,6 +937,9 @@ public class UNOPSGeminiManager : IGeminiManager
         try
         {
             await _context.SaveChangesAsync();
+            
+            _logger.LogInformation("Bulk insert completed successfully. Inserted: {InsertedCount}, Updated: {UpdatedCount}", 
+                recordsToAdd.Count, recordsToUpdate.Count);
 
             // Collect all updated and added records for the response
             var processedRecords = new List<object>();

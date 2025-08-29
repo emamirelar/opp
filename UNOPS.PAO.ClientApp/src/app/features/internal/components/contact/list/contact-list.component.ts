@@ -11,7 +11,7 @@ import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 
 import { Router, ActivatedRoute } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {DialogModule} from 'primeng/dialog';
 import {ContactEditDialogComponent} from '../edit-dialog/contact-edit-dialog.component';
 import {BusinessCardScannerComponent} from './business-card-scanner/business-card-scanner.component';
@@ -70,6 +70,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
   importDialogService = inject(ImportDialogService);
   permissionUtilityService = inject(PermissionUtilityService);
   entityConfigurationService = inject(EntityConfigurationService);
+  translateService = inject(TranslateService);
   cdr = inject(ChangeDetectorRef);
 
   // Permission management using utility service
@@ -367,7 +368,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
     }
 
     const ref = this.dialogService.open(ContactEditDialogComponent, {
-      header: contactData.id ? 'title.editContact' : 'title.newContact',
+      header: contactData.id ? this.translateService.instant('title.editContact') : this.translateService.instant('title.newContact'),
       width: '40vw',
       breakpoints: { '960px': '95vw' },
       closable: true,
@@ -408,7 +409,7 @@ export class ContactListComponent implements OnInit, OnDestroy {
     }
 
     const ref = this.dialogService.open(BusinessCardScannerComponent, {
-      header: 'title.scanBusinessCard',
+      header: this.translateService.instant('title.scanBusinessCard'),
       width: '95vw',
       style: { maxWidth: '800px' },
       closable: true

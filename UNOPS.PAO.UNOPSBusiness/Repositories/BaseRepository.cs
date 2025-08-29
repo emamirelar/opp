@@ -221,6 +221,16 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     /// </summary>
     private async Task<IQueryable<TEntity>> ApplySmartOrgUnitFilterAsync(IQueryable<TEntity> queryable, int orgUnitId, Type entityType)
     {
+        // Check if the organization unit has code "OPS" - if so, return original queryable (no filtering)
+        var orgUnit = await _dataDbContext.OrganizationHierarchies
+            .FirstOrDefaultAsync(x => x.Id == orgUnitId && !x.IsDeleted && x.Status == EntityStatus.Active);
+        
+        if (orgUnit != null && orgUnit.Code == "OPS")
+        {
+            System.Diagnostics.Debug.WriteLine($"BaseRepository ASYNC: Organization unit {orgUnitId} has code 'OPS' - skipping org unit filter for {entityType.Name}");
+            return queryable; // Return original queryable without filtering
+        }
+
         var orgUnitIds = await GetDescendantOrgUnitIdsAsync(orgUnitId);
         System.Diagnostics.Debug.WriteLine($"BaseRepository ASYNC: Smart org unit filter for {entityType.Name} with {orgUnitIds.Count} org units");
 
@@ -527,6 +537,16 @@ public class BaseRepository<TEntity>  where TEntity : class, IBaseBusinessEntity
     /// </summary>
     private IQueryable<TEntity> ApplySmartOrgUnitFilterSync(IQueryable<TEntity> queryable, int orgUnitId, Type entityType)
     {
+        // Check if the organization unit has code "OPS" - if so, return original queryable (no filtering)
+        var orgUnit = _dataDbContext.OrganizationHierarchies
+            .FirstOrDefault(x => x.Id == orgUnitId && !x.IsDeleted && x.Status == EntityStatus.Active);
+        
+        if (orgUnit != null && orgUnit.Code == "OPS")
+        {
+            System.Diagnostics.Debug.WriteLine($"BaseRepository SYNC: Organization unit {orgUnitId} has code 'OPS' - skipping org unit filter for {entityType.Name}");
+            return queryable; // Return original queryable without filtering
+        }
+
         var orgUnitIds = GetDescendantOrgUnitIds(orgUnitId);
         System.Diagnostics.Debug.WriteLine($"BaseRepository SYNC: Smart org unit filter for {entityType.Name} with {orgUnitIds.Count} org units");
 
