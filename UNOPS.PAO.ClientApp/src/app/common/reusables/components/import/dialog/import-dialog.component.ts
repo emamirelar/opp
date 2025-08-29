@@ -394,11 +394,6 @@ export class ImportDialogComponent implements OnInit {
     // Update signals
     this.duplicateRows.set(duplicateRows);
     this.nonDuplicateRows.set(nonDuplicateRows);
-    
-    console.log(`Duplicate detection complete: ${duplicateRows.length} duplicates, ${nonDuplicateRows.length} unique records`);
-    console.log('Duplicate rows:', duplicateRows);
-    console.log('Non-duplicate rows:', nonDuplicateRows);
-    
     // Show warning if duplicates found
     if (duplicateRows.length > 0) {
       this.showDuplicateWarning.set(true);

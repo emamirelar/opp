@@ -423,7 +423,6 @@ export class ImportDialogService {
 
   openGoogleSheetPicker(type: string) {
     try {
-      console.log('🔍 openGoogleSheetPicker called with type:', type);
       
       // Set the import type before doing anything else
       this.setImportType(type);
@@ -432,9 +431,6 @@ export class ImportDialogService {
       this.isLoading.set(true);
       this.loadingOverlayService.show('Opening Google Drive, please wait...');
       
-      // Open the picker with comprehensive error handling
-      console.log('🔍 Starting Google Sheet picker...');
-      
       // Test if the service is available
       if (!this.importGoogleSheetService) {
         throw new Error('Google Sheet service is not available');
@@ -442,10 +438,8 @@ export class ImportDialogService {
       
       this.importGoogleSheetService.openPicker().subscribe({
               next: (sheetId) => {
-          console.log('🔍 Google Sheet picker result:', sheetId);
           // Check if the picker was canceled
           if (sheetId === 'CANCELED') {
-            console.log('🔍 Picker was canceled by user');
             this.isLoading.set(false);
             this.loadingOverlayService.hide();
             return;
@@ -459,9 +453,7 @@ export class ImportDialogService {
           detail: `Pre-processing ${type} spreadsheet, please wait...`,
           life: 3000
         });
-        
-        // Process the selected file with timeout protection
-        console.log('🔍 Starting file analysis for sheetId:', sheetId, 'type:', `bulk_${type}_action`);
+
         const timeoutDuration = 300000; // 5 minutes timeout
         const timeout$ = timer(timeoutDuration).pipe(
           map(() => {
@@ -477,7 +469,6 @@ export class ImportDialogService {
           })
         ).subscribe({
           next: (response: any) => {
-            console.log('🔍 File analysis response received:', response);
             
             // Check for error response
             if (response.intent === 'Error') {
