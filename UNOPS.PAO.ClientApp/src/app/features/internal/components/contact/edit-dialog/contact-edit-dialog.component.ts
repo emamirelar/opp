@@ -271,7 +271,7 @@ export class ContactEditDialogComponent implements OnInit {
     this.contactService.createContact(payload).subscribe({
       next: (response: any) => {
         // Check if response indicates duplicate detection
-        if (response.isDuplicate && response.requiresConfirmation) {
+        if (response.confirmationRequired && response.action === "duplicateConfirmation") {
           // Show duplicate confirmation dialog
           this.showDuplicateConfirmationDialog(response, payload);
         } else if (response.action === 'created' || response.success) {
@@ -304,10 +304,10 @@ export class ContactEditDialogComponent implements OnInit {
     const dialogRef = this.dialogService.open(DuplicateConfirmationDialogComponent, {
       data: duplicateResponse,
       header: 'Duplicate Contact Detected',
-      width: '90vw',
+      width: '500px',
       modal: true,
       breakpoints: {
-        '960px': '75vw',
+        '960px': '450px',
         '640px': '90vw'
       }
     });

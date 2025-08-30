@@ -15,11 +15,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ContactService } from '../../../services/contact.service';
 import { PartnerService } from '../../../services/partner.service';
 import { CommonModule } from '@angular/common';
-import { ConfirmationService } from 'primeng/api';
 import { MessageService } from 'primeng/api';
 import { MessageModule } from 'primeng/message';
-import { ConfirmDialog } from 'primeng/confirmdialog';
-import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
+import { DynamicDialogRef, DynamicDialogConfig, DialogService } from 'primeng/dynamicdialog';
+import { DuplicateConfirmationDialogComponent } from '../../../components/contact/duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
 import { CalendarModule } from 'primeng/calendar';
 import { InteractionModalFooterComponent } from './footer/interaction-modal-footer.component';
 import { NgIf } from '@angular/common';
@@ -32,6 +31,28 @@ import { PanelModule } from 'primeng/panel';
 import { PermissionUtilityService } from '../../../../../essentials/services/permission-utility.service';
 import { FeedbackDialogService } from '../../../../../common/reusables/services/feedback-dialog.service';
 import {Divider} from 'primeng/divider';
+
+// Interface for duplicate detection response
+interface DuplicateDetectionResponse {
+  success: boolean;
+  action: 'duplicateConfirmation' | 'created';
+  message: string;
+  entityType?: string;
+  duplicateInfo?: {
+    totalDuplicates: number;
+    highConfidence: number;
+    mediumConfidence: number;
+    lowConfidence: number;
+    topDuplicate?: {
+      entityId: number;
+      score: number;
+      matchReason: string;
+      matchedData: any;
+    };
+  };
+  confirmationRequired?: boolean;
+  originalData?: any;
+}
 
 /**
  * @uiEntity Interaction
@@ -66,16 +87,16 @@ import {Divider} from 'primeng/divider';
     TranslateModule,
     CommonModule,
     MessageModule,
-    ConfirmDialog,
     ChipModule,
     AutoCompleteModule,
     HttpClientModule,
     AiTranscribeComponent,
     PanelModule,
-    Divider
+    Divider,
+    DuplicateConfirmationDialogComponent
   ],
   providers: [
-    ConfirmationService,
+    DialogService,
     MessageService
   ],
   standalone: true,
@@ -148,7 +169,7 @@ export class InteractionModalComponent {
     private interactionService: InteractionService,
     protected contactService: ContactService,
     protected partnerService: PartnerService,
-    private confirmationService: ConfirmationService,
+    private dialogService: DialogService,
     private messageService: MessageService,
     private translateService: TranslateService,
     private permissionUtilityService: PermissionUtilityService,
@@ -455,42 +476,7 @@ export class InteractionModalComponent {
         });
       } else {
         // Create new interaction
-        this.interactionService.create(formValue).subscribe({
-          next: (response) => {
-            // Check if response indicates duplicate detection
-            if (response.body?.isDuplicate && response.body?.requiresConfirmation) {
-              // Show duplicate confirmation dialog
-              this.confirmationService.confirm({
-                message: response.body.message,
-                header: 'Duplicate Interaction Detected',
-                acceptLabel: 'Create Anyway',
-                rejectLabel: 'Cancel',
-                accept: () => {
-                  // User confirmed, create with duplicate confirmation
-                  const confirmFormValue = { ...formValue, confirmDuplicateCreation: true };
-                  this.interactionService.create(confirmFormValue).subscribe({
-                    next: (data) => {
-                      this.showSuccessMessage('message.interactionCreated');
-                      this.dialogRef.close(data.body?.data || data.body || data);
-                    },
-                    error: (error) => {
-                      this.showErrorMessage('message.errorCreatingInteraction', error);
-                      this.isSaving.set(false);
-                    }
-                  });
-                }
-              });
-            } else {
-              // Normal creation success
-              this.showSuccessMessage('message.interactionCreated');
-              this.dialogRef.close(response.body?.data || response.body || response);
-            }
-          },
-          error: (error) => {
-            this.showErrorMessage('message.errorCreatingInteraction', error);
-            this.isSaving.set(false);
-          }
-        });
+        this.createInteractionWithDuplicateDetection(formValue);
       }
     }
     else {
@@ -517,21 +503,19 @@ export class InteractionModalComponent {
       return;
     }
 
-    this.confirmationService.confirm({
-      message: this.translateService.instant('message.deleteInteractionConfirmation'),
-      header: this.translateService.instant('title.confirmation'),
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        const interactionId = this.formGroup.get('id')?.value;
-        if (interactionId) {
-          this.interactionService.delete(interactionId).subscribe({
-            next: () => {
-              this.showSuccessMessage('message.interactionDeleted');
-              this.dialogRef.close('deleted');
-            },
-            error: (error) => this.showErrorMessage('message.errorDeletingInteraction', error)
-          });
-        }
+    this.feedbackDialogService.showConfirmDialog({
+      detail: this.translateService.instant('message.deleteInteractionConfirmation'),
+      summary: this.translateService.instant('title.confirmation')
+    }, () => {
+      const interactionId = this.formGroup.get('id')?.value;
+      if (interactionId) {
+        this.interactionService.delete(interactionId).subscribe({
+          next: () => {
+            this.showSuccessMessage('message.interactionDeleted');
+            this.dialogRef.close('deleted');
+          },
+          error: (error) => this.showErrorMessage('message.errorDeletingInteraction', error)
+        });
       }
     });
   }
@@ -813,5 +797,79 @@ export class InteractionModalComponent {
 
   get showPhoneNumbers() {
     return this.formGroup.get('type')?.value != 'Email';
+  }
+
+  /**
+   * Creates an interaction with duplicate detection workflow
+   */
+  private createInteractionWithDuplicateDetection(formValue: any): void {
+    this.interactionService.create(formValue).subscribe({
+      next: (response) => {
+        // Check if response indicates duplicate detection
+        if (response.body?.isDuplicate && response.body?.requiresConfirmation) {
+          // Show duplicate confirmation dialog
+          this.showDuplicateConfirmationDialog(response.body, formValue);
+        } else {
+          // Normal creation success
+          this.showSuccessMessage('message.interactionCreated');
+          this.dialogRef.close(response.body?.data || response.body || response);
+        }
+      },
+      error: (error) => {
+        this.showErrorMessage('message.errorCreatingInteraction', error);
+        this.isSaving.set(false);
+      }
+    });
+  }
+
+  /**
+   * Shows the duplicate confirmation dialog
+   */
+  private showDuplicateConfirmationDialog(duplicateResponse: DuplicateDetectionResponse, originalFormValue: any): void {
+    // Add entityType to the response
+    const responseWithEntityType = {
+      ...duplicateResponse,
+      entityType: 'interaction'
+    };
+
+    const dialogRef = this.dialogService.open(DuplicateConfirmationDialogComponent, {
+      data: responseWithEntityType,
+      header: 'Duplicate Interaction Detected',
+      width: '500px',
+      modal: true,
+      breakpoints: {
+        '960px': '450px',
+        '640px': '90vw'
+      }
+    });
+
+    dialogRef.onClose.subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        // User confirmed - create interaction anyway
+        const confirmedFormValue = {
+          ...originalFormValue,
+          confirmDuplicateCreation: true
+        };
+        
+        this.interactionService.create(confirmedFormValue).subscribe({
+          next: (response) => {
+            this.showSuccessMessage('message.interactionCreated');
+            this.dialogRef.close(response.body?.data || response.body || response);
+          },
+          error: (error) => {
+            this.showErrorMessage('message.errorCreatingInteraction', error);
+            this.isSaving.set(false);
+          }
+        });
+      } else {
+        // User cancelled - do nothing, stay on the form
+        this.showInfoMessage('Interaction creation cancelled.');
+        this.isSaving.set(false);
+      }
+    });
+  }
+
+  private showInfoMessage(message: string): void {
+    this.feedbackDialogService.showInfoToast({ detail: message });
   }
 }

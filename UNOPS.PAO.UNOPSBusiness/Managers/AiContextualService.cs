@@ -1484,6 +1484,42 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }
 
         /// <summary>
+        /// Converts a request object to the format expected by duplicate detection (camelCase, simplified)
+        /// </summary>
+        /// <param name="requestObject">The request object to convert</param>
+        /// <returns>Simplified object with camelCase properties</returns>
+        private object ConvertRequestObjectForDuplicateDetection(object requestObject)
+        {
+            if (requestObject == null) return null;
+
+            try
+            {
+                // First serialize with camelCase naming policy to convert PascalCase to camelCase
+                var camelCaseJson = JsonConvert.SerializeObject(requestObject, new JsonSerializerSettings
+                {
+                    ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver(),
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    DefaultValueHandling = DefaultValueHandling.Ignore
+                });
+
+                // Deserialize to JObject for manipulation
+                var jObject = JObject.Parse(camelCaseJson);
+
+                // Remove complex nested objects that aren't needed for duplicate detection
+                jObject.Remove("extensions");
+                jObject.Remove("confirmDuplicateCreation");
+                
+                // Convert back to a simple object
+                return jObject.ToObject<Dictionary<string, object>>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to convert request object for duplicate detection: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
         /// Detects duplicates for a single record using field-based similarity matching
         /// </summary>
         /// <param name="entityName">Name of the entity type (e.g., "Contact", "Partner", "Interaction")</param>
@@ -1500,9 +1536,12 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 // Ensure entity name is pluralized for consistency
                 var pluralizedEntityName = entityName.Pluralize();
                 
+                // Convert the request object to the format expected by duplicate detection
+                var convertedData = ConvertRequestObjectForDuplicateDetection(recordData);
+                
                 return await DetectDuplicateForRecordAsync(
                     pluralizedEntityName, 
-                    recordData, 
+                    convertedData, 
                     (float)fieldMatchThreshold
                 );
             }

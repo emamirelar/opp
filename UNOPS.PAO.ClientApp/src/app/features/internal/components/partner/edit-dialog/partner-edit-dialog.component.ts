@@ -7,8 +7,8 @@ import { DropdownModule } from "primeng/dropdown";
 import { DatePickerModule } from 'primeng/datepicker';
 
 import { FeedbackDialogService } from '../../../../../common/pages/services/feedback-dialog.service';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialog } from 'primeng/confirmdialog';
+import { DialogService } from 'primeng/dynamicdialog';
+import { DuplicateConfirmationDialogComponent } from '../../../components/contact/duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
 
 //Language translation import
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -42,6 +42,28 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthService } from '../../../../../essentials/services/auth.service';
 import { ENTITY_STATUS_OPTIONS } from '../../../models/entity-status.enum';
 
+// Interface for duplicate detection response
+interface DuplicateDetectionResponse {
+  success: boolean;
+  action: 'duplicateConfirmation' | 'created';
+  message: string;
+  entityType?: string;
+  duplicateInfo?: {
+    totalDuplicates: number;
+    highConfidence: number;
+    mediumConfidence: number;
+    lowConfidence: number;
+    topDuplicate?: {
+      entityId: number;
+      score: number;
+      matchReason: string;
+      matchedData: any;
+    };
+  };
+  confirmationRequired?: boolean;
+  originalData?: any;
+}
+
 @Component({
   selector: 'app-partner-edit-dialog',
   imports: [
@@ -64,9 +86,9 @@ import { ENTITY_STATUS_OPTIONS } from '../../../models/entity-status.enum';
     ReactiveFormsModule,
     AiTranscribeComponent,
     ProgressSpinnerModule,
-    ConfirmDialog
+    DuplicateConfirmationDialogComponent
   ],
-  providers: [ConfirmationService],
+  providers: [DialogService],
   templateUrl: './partner-edit-dialog.component.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -126,7 +148,7 @@ export class PartnerEditDialogComponent implements OnInit {
 
   cachedDataService = inject(CachedDataService);
   feedbackDialogService = inject(FeedbackDialogService);
-  confirmationService = inject(ConfirmationService);
+  dialogService = inject(DialogService);
   partnerService = inject(PartnerService);
   translateService = inject(TranslateService);
   languageService = inject(LanguageService);
@@ -409,40 +431,7 @@ export class PartnerEditDialogComponent implements OnInit {
         });
       } else {
         // Create new partner
-        this.partnerService.createPartner(payload).subscribe({
-          next: (response: any) => {
-            // Check if response indicates duplicate detection
-            if (response.isDuplicate && response.requiresConfirmation) {
-              // Show duplicate confirmation dialog
-              this.confirmationService.confirm({
-                message: response.message,
-                header: 'Duplicate Partner Detected',
-                acceptLabel: 'Create Anyway',
-                rejectLabel: 'Cancel',
-                accept: () => {
-                  // User confirmed, create with duplicate confirmation
-                  const confirmPayload = { ...payload, confirmDuplicateCreation: true };
-                  this.partnerService.createPartner(confirmPayload).subscribe({
-                    next: (data: any) => {
-                      this.feedbackDialogService.showSuccessToast({ detail: 'Partner created successfully!' });
-                      setTimeout(() => this.dialogRef.close(data.data || data));
-                    },
-                    error: (error: any) => {
-                      this.feedbackDialogService.showErrorToast({ detail: 'Failed to create partner' });
-                    }
-                  });
-                }
-              });
-            } else {
-              // Normal creation success
-              this.feedbackDialogService.showSuccessToast({ detail: 'Partner created successfully!' });
-              setTimeout(() => this.dialogRef.close(response.data || response));
-            }
-          },
-          error: (error: any) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to create partner' });
-          }
-        });
+        this.createPartnerWithDuplicateDetection(payload);
       }
     } else {
       this.dialogConfig.data.requestingSaveSignal.set(false);
@@ -613,5 +602,98 @@ export class PartnerEditDialogComponent implements OnInit {
 
       this.feedbackDialogService.showSuccessToast({ detail: this.translateService.instant('message.preFillSuccess') });
     }
+  }
+
+  /**
+   * Creates a partner with duplicate detection workflow
+   */
+  private createPartnerWithDuplicateDetection(payload: any): void {
+    this.partnerService.createPartner(payload).subscribe({
+      next: (response: any) => {
+        // Check if response indicates duplicate detection
+        if (response.confirmationRequired && response.action === "duplicateConfirmation") {
+          // Show duplicate confirmation dialog
+          this.showDuplicateConfirmationDialog(response, payload);
+        } else if (response.action === 'created' || response.success) {
+          // Partner created successfully
+          this.feedbackDialogService.showSuccessToast({ 
+            detail: response.message || 'Partner created successfully!' 
+          });
+          setTimeout(() => this.dialogRef.close(response.data || response));
+        } else {
+          // Fallback for successful creation (old format)
+          this.feedbackDialogService.showSuccessToast({ 
+            detail: 'Partner created successfully!' 
+          });
+          setTimeout(() => this.dialogRef.close(response));
+        }
+      },
+      error: (error: any) => {
+        this.feedbackDialogService.showErrorToast({ 
+          detail: 'Failed to create partner. Please try again.' 
+        });
+        console.error('Partner creation error:', error);
+      }
+    });
+  }
+
+  /**
+   * Shows the duplicate confirmation dialog
+   */
+  private showDuplicateConfirmationDialog(duplicateResponse: DuplicateDetectionResponse, originalPayload: any): void {
+    // Add entityType to the response
+    const responseWithEntityType = {
+      ...duplicateResponse,
+      entityType: 'partner'
+    };
+
+    const dialogRef = this.dialogService.open(DuplicateConfirmationDialogComponent, {
+      data: responseWithEntityType,
+      header: 'Duplicate Partner Detected',
+      width: '500px',
+      modal: true,
+      breakpoints: {
+        '960px': '450px',
+        '640px': '90vw'
+      }
+    });
+
+    dialogRef.onClose.subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        // User confirmed - create partner anyway
+        const confirmedPayload = {
+          ...originalPayload,
+          confirmDuplicateCreation: true
+        };
+        
+        this.partnerService.createPartner(confirmedPayload).subscribe({
+          next: (response: any) => {
+            if (response.action === 'created') {
+              this.feedbackDialogService.showSuccessToast({ 
+                detail: 'Partner created successfully (duplicate confirmation acknowledged)!' 
+              });
+              setTimeout(() => this.dialogRef.close(response.data));
+            } else {
+              // Fallback for successful creation
+              this.feedbackDialogService.showSuccessToast({ 
+                detail: 'Partner created successfully!' 
+              });
+              setTimeout(() => this.dialogRef.close(response));
+            }
+          },
+          error: (error: any) => {
+            this.feedbackDialogService.showErrorToast({ 
+              detail: 'Failed to create partner. Please try again.' 
+            });
+            console.error('Confirmed partner creation error:', error);
+          }
+        });
+      } else {
+        // User cancelled - do nothing, stay on the form
+        this.feedbackDialogService.showInfoToast({ 
+          detail: 'Partner creation cancelled.' 
+        });
+      }
+    });
   }
 }

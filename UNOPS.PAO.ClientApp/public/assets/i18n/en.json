@@ -1555,5 +1555,22 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "close": "Close"
+  },
+  "DUPLICATE_DETECTION": {
+    "contactDuplicateDetected": "Duplicate Contact Detected",
+    "partnerDuplicateDetected": "Duplicate Partner Detected", 
+    "interactionDuplicateDetected": "Duplicate Interaction Detected",
+    "contactDuplicateSummary": "Contact Duplicate Summary",
+    "partnerDuplicateSummary": "Partner Duplicate Summary",
+    "interactionDuplicateSummary": "Interaction Duplicate Summary",
+    "topMatch": "Top Match",
+    "matchScore": "Match Score",
+    "matchReason": "Match Reason",
+    "viewRecord": "View Record",
+    "createContactAnyway": "Create Contact Anyway",
+    "createPartnerAnyway": "Create Partner Anyway", 
+    "createInteractionAnyway": "Create Interaction Anyway",
+    "warningTitle": "Warning",
+    "warningMessage": "Creating this record may result in duplicate data. Please review the match details above before proceeding."
   }
 }

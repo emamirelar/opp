@@ -3,6 +3,21 @@
     <p-message severity="error" [text]="errorMessage()"></p-message>
   }
 
+  <!-- Mandatory Fields Information Banner -->
+  @if (shouldShowMandatoryFieldsInfo()) {
+    <div class="mb-3 p-3 border-1 border-blue-200 rounded bg-blue-50 text-blue-700">
+      <div class="flex items-start">
+        <i class="pi pi-info-circle mr-2 mt-1"></i>
+        <div>
+          <p class="m-0 font-medium">{{ getMandatoryFieldsInfo() }}</p>
+          <p class="mt-1 mb-0 text-sm">
+            These fields are required for successful import. Rows missing these fields will be highlighted in red.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Error Banner for Missing Required Fields -->
   @if (showMissingRequiredBanner()) {
     <div class="mb-3 p-3 border-1 border-orange-200 rounded bg-orange-50 text-orange-700">

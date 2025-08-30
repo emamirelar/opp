@@ -101,7 +101,7 @@ export class ImportDialogComponent implements OnInit {
     { field: 'middleName', header: 'contact.middleName', required: false, label: 'Middle Name', type: 'text', sortable: false },
     { field: 'lastName', header: 'contact.lastName', required: true, label: 'Last Name', type: 'text', sortable: false },
     { field: 'suffix', header: 'contact.suffix', required: false, label: 'Suffix', type: 'text', sortable: false },
-    { field: 'title', header: 'contact.title', required: false, label: 'Title', type: 'text', sortable: false },
+    { field: 'title', header: 'contact.title', required: true, label: 'Title', type: 'text', sortable: false },
     { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
     { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
     { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner ID', type: 'text', sortable: false },
@@ -882,6 +882,31 @@ export class ImportDialogComponent implements OnInit {
     
     // Update banner visibility based on whether any rows have missing fields
     this.showMissingRequiredBanner.set(rowsWithMissing.length > 0);
+  }
+
+  // Get mandatory fields information for the current entity type
+  getMandatoryFieldsInfo(): string {
+    const importType = this.currentImportType();
+    const requiredFields = this.columns
+      .filter(col => col.required)
+      .map(col => this.getTranslatedHeader(col.header))
+      .join(', ');
+
+    switch (importType) {
+      case 'Contact':
+        return `Mandatory fields for contacts: ${requiredFields}`;
+      case 'Partner':
+        return `Mandatory fields for partners: ${requiredFields}`;
+      case 'Interaction':
+        return `Mandatory fields for interactions: ${requiredFields}`;
+      default:
+        return `Mandatory fields: ${requiredFields}`;
+    }
+  }
+
+  // Check if we should show the mandatory fields info banner
+  shouldShowMandatoryFieldsInfo(): boolean {
+    return this.columns.some(col => col.required) && this.importDialogService.data().length > 0;
   }
 
   // Force refresh of the data view

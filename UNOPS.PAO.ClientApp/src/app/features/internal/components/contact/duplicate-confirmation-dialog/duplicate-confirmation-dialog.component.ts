@@ -7,11 +7,13 @@ import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { BadgeModule } from 'primeng/badge';
 import { DividerModule } from 'primeng/divider';
+import { Router } from '@angular/router';
 
 export interface DuplicateDetectionResponse {
   success: boolean;
   action: 'duplicateConfirmation' | 'created';
   message: string;
+  entityType?: string; // Added to support different entity types
   duplicateInfo?: {
     totalDuplicates: number;
     highConfidence: number;
@@ -41,78 +43,25 @@ export interface DuplicateDetectionResponse {
     DividerModule
   ],
   template: `
-    <div class="flex flex-col gap-4 p-4">
-      <div class="flex items-center gap-3 mb-4">
-        <i class="pi pi-exclamation-triangle text-orange-500 text-2xl"></i>
-        <h2 class="text-xl font-semibold">{{ 'contact.duplicateDetected' | translate }}</h2>
-      </div>
-
+    <div class="p-4">
       <p class="text-gray-700 mb-4">{{ data.message }}</p>
 
-      <div *ngIf="data.duplicateInfo" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-        <h4 class="font-semibold mb-3 text-yellow-800">{{ 'contact.duplicateSummary' | translate }}</h4>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-          <div *ngIf="(data.duplicateInfo?.highConfidence || 0) > 0" 
-               class="bg-red-100 border border-red-200 rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-red-600">{{ data.duplicateInfo.highConfidence }}</div>
-            <div class="text-sm text-red-700">{{ 'contact.highConfidence' | translate }}</div>
-          </div>
-          
-          <div *ngIf="(data.duplicateInfo?.mediumConfidence || 0) > 0" 
-               class="bg-orange-100 border border-orange-200 rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-orange-600">{{ data.duplicateInfo.mediumConfidence }}</div>
-            <div class="text-sm text-orange-700">{{ 'contact.mediumConfidence' | translate }}</div>
-          </div>
-          
-          <div *ngIf="(data.duplicateInfo?.lowConfidence || 0) > 0" 
-               class="bg-yellow-100 border border-yellow-200 rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-yellow-600">{{ data.duplicateInfo.lowConfidence }}</div>
-            <div class="text-sm text-yellow-700">{{ 'contact.lowConfidence' | translate }}</div>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="data.duplicateInfo?.topDuplicate" class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-        <h4 class="font-semibold mb-3 text-gray-800">{{ 'contact.topMatch' | translate }}</h4>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div *ngIf="data.duplicateInfo?.topDuplicate" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-600">{{ 'contact.contactId' | translate }}</div>
-            <div class="font-medium">#{{ data.duplicateInfo!.topDuplicate!.entityId }}</div>
-          </div>
-          
-          <div>
-            <div class="text-sm text-gray-600">{{ 'contact.matchScore' | translate }}</div>
-            <div class="font-medium">{{ (data.duplicateInfo!.topDuplicate!.score * 100) | number:'1.1-1' }}%</div>
-          </div>
-          
-          <div class="md:col-span-2">
-            <div class="text-sm text-gray-600">{{ 'contact.matchReason' | translate }}</div>
-            <div class="font-medium">{{ data.duplicateInfo!.topDuplicate!.matchReason }}</div>
-          </div>
-        </div>
-
-        <div *ngIf="data.duplicateInfo!.topDuplicate!.matchedData" class="mt-4">
-          <p-divider></p-divider>
-          <h5 class="font-medium mb-2 text-gray-700">{{ 'contact.matchedData' | translate }}</h5>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div *ngFor="let item of getMatchedDataArray(data.duplicateInfo!.topDuplicate!.matchedData)" 
-                 class="bg-white p-2 rounded border text-sm">
-              <span class="font-medium text-gray-600">{{ item.key }}:</span>
-              <span class="ml-2">{{ item.value || 'N/A' }}</span>
+            <div class="font-medium text-gray-800 mb-1">{{ data.duplicateInfo!.topDuplicate!.matchReason }}</div>
+            <div class="text-sm text-gray-600">
+              {{ 'DUPLICATE_DETECTION.matchScore' | translate }}: {{ (data.duplicateInfo!.topDuplicate!.score * 100) | number:'1.1-1' }}%
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-        <div class="flex items-start gap-3">
-          <i class="pi pi-info-circle text-orange-500 mt-1"></i>
-          <div>
-            <p class="text-orange-800 font-medium">{{ 'contact.warningTitle' | translate }}</p>
-            <p class="text-orange-700 text-sm mt-1">{{ 'contact.warningMessage' | translate }}</p>
-          </div>
+          
+          <button 
+            type="button"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+            (click)="viewRecord(data.duplicateInfo!.topDuplicate!.entityId)">
+            <i class="pi pi-external-link mr-2"></i>
+            {{ 'DUPLICATE_DETECTION.viewRecord' | translate }}
+          </button>
         </div>
       </div>
 
@@ -128,7 +77,7 @@ export interface DuplicateDetectionResponse {
           type="button" 
           class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
           (click)="confirm()">
-          {{ 'contact.createAnyway' | translate }}
+          {{ getCreateAnywayTranslation() | translate }}
         </button>
       </div>
     </div>
@@ -136,8 +85,8 @@ export interface DuplicateDetectionResponse {
   styles: [`
     :host {
       display: block;
-      min-width: 500px;
-      max-width: 700px;
+      min-width: 400px;
+      max-width: 500px;
     }
     
     @media (max-width: 768px) {
@@ -151,9 +100,14 @@ export interface DuplicateDetectionResponse {
 export class DuplicateConfirmationDialogComponent {
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
+  private router = inject(Router);
 
   get data(): DuplicateDetectionResponse {
     return this.dialogConfig.data;
+  }
+
+  get entityType(): string {
+    return this.data.entityType || this.detectEntityTypeFromMessage() || 'contact';
   }
 
   confirm(): void {
@@ -164,19 +118,44 @@ export class DuplicateConfirmationDialogComponent {
     this.dialogRef.close(false);
   }
 
-  getMatchedDataArray(matchedData: any): {key: string, value: any}[] {
-    if (!matchedData) return [];
+  viewRecord(entityId: number): void {
+    const entityType = this.entityType.toLowerCase();
+    let route = '';
     
-    return Object.keys(matchedData).map(key => ({
-      key: this.formatFieldName(key),
-      value: matchedData[key]
-    })).filter(item => item.value); // Only show fields with values
+    switch (entityType) {
+      case 'contact':
+        route = `/partnerships/contacts/${entityId}`;
+        break;
+      case 'partner':
+        route = `/partnerships/partners/${entityId}`;
+        break;
+      case 'interaction':
+        route = `/partnerships/interactions/${entityId}`;
+        break;
+      default:
+        route = `/partnerships/contacts/${entityId}`;
+    }
+    
+    // Open in new tab
+    window.open(route, '_blank');
   }
 
-  private formatFieldName(key: string): string {
-    // Convert camelCase to readable format
-    return key
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      .replace(/^./, str => str.toUpperCase());
+
+
+  getCreateAnywayTranslation(): string {
+    const entityType = this.entityType.toLowerCase();
+    return `DUPLICATE_DETECTION.create${this.capitalizeFirst(entityType)}Anyway`;
+  }
+
+  private detectEntityTypeFromMessage(): string {
+    const message = this.data.message?.toLowerCase() || '';
+    if (message.includes('contact')) return 'contact';
+    if (message.includes('partner')) return 'partner';
+    if (message.includes('interaction')) return 'interaction';
+    return 'contact'; // default fallback
+  }
+
+  private capitalizeFirst(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 }

@@ -91,7 +91,7 @@ public class PartnerController : BaseController
                 var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
                     "Partner", 
                     req, 
-                    0.7 // Field match threshold
+                    0.5 // Lower threshold for more sensitive detection
                 );
                 
                 if (duplicateResult != null && duplicateResult.HasDuplicates)
