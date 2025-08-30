@@ -96,8 +96,11 @@
         </div>
 
         <div class="col-span-9 sm:col-span-6 flex flex-col gap-2">
-          <label>{{ "label.contact.title" | translate }}</label>
+          <label>{{ "label.contact.title" | translate }} *</label>
           <input pInputText fluid="true" formControlName="title" />
+          @if( formGroup.get("title")?.invalid && showValidationFailedError() ) {
+            <p-message severity="error" variant="simple">{{ 'validation.titleRequired' | translate }}</p-message>
+          }
         </div>
 
         <div class="col-span-9 sm:col-span-3 flex flex-col gap-2">

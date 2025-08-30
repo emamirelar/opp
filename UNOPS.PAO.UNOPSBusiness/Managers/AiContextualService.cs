@@ -34,6 +34,7 @@ using UNOPS.PAO.UNOPSBusiness.Models;
 using System.Reflection;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 public class SearchResult
 {
@@ -123,7 +124,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             // Step 2: If similarity fails or we only have embedding, use embedding search
             if (!string.IsNullOrEmpty(vectorEmbedding))
             {
-                var embeddingResult = await ExecuteEmbeddingSearch(entityName, vectorEmbedding, embeddingThreshold, where);
+                var embeddingResult = await ExecuteEmbeddingSearch(entityName, vectorEmbedding, embeddingThreshold, "1=1");
                 return embeddingResult;
             }
             
@@ -133,7 +134,7 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 var generatedEmbedding = await CreateEmbeddingForText(searchText);
                 if (!string.IsNullOrEmpty(generatedEmbedding))
                 {
-                    var embeddingResult = await ExecuteEmbeddingSearch(entityName, generatedEmbedding, embeddingThreshold, where);
+                    var embeddingResult = await ExecuteEmbeddingSearch(entityName, generatedEmbedding, embeddingThreshold, "1=1");
                     
                     // If embedding search also fails but we have a vector, log for future searches
                     if ((embeddingResult == null || embeddingResult is DBNull))
@@ -914,22 +915,13 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             string whereCondition = "1=1"; // Default WHERE condition
             
             // Special case for OrganizationUnitRelationships - should look at OrganizationHierarchies table
-            if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase))
+            if (dependent.Equals("organizationUnitRelationships", StringComparison.OrdinalIgnoreCase)
+                    // Special case for organizationHierarchyIds - should look at OrganizationHierarchies table
+                    || dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase)
+                    || entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
             {
                 entityName = "OrganizationHierarchies";
-                whereCondition = "\"Type\" = 'OrgUnit'"; // OrgUnit enum value stored as string
-            }
-            // Special case for organizationHierarchyIds - should look at OrganizationHierarchies table
-            else if (dependent.Equals("organizationHierarchyIds", StringComparison.OrdinalIgnoreCase))
-            {
-                entityName = "OrganizationHierarchies";
-                whereCondition = "\"Type\" = 'OrgUnit'"; // OrgUnit enum value stored as string
-            }
-            // Special case for Orgunit - should look at OrganizationHierarchies table
-            else if (entityName.Equals("Orgunit", StringComparison.OrdinalIgnoreCase))
-            {
-                entityName = "OrganizationHierarchies";
-                whereCondition = "\"Type\" = 'OrgUnit'"; // OrgUnit enum value stored as string
+                whereCondition = "\"Type\" = 'OrgUnit'";
             }
             // Special case for User/UserIds - should look at UserProfile table (which has searchable Name field)
             else if (entityName.Equals("User", StringComparison.OrdinalIgnoreCase))
@@ -943,6 +935,18 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             {
                 entityName = "Contacts";
                 whereCondition = "1=1"; // Allow all Contacts to be searched
+            }
+            // Special case for partnerGroupId - should look at PartnerTrees table
+            else if (dependent.Equals("partnerGroupId", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "PartnerTrees";
+                whereCondition = "1=1";
+            }
+            // Special case for partnerCategoryId - should look at PartnerTrees table  
+            else if (dependent.Equals("partnerCategoryId", StringComparison.OrdinalIgnoreCase))
+            {
+                entityName = "PartnerTrees";
+                whereCondition = "1=1";
             }
             else
             {
@@ -1293,49 +1297,93 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }
 
         /// <summary>
-        /// Detects duplicates for a list of records using semantic similarity
+        /// Detects duplicates for a list of records using field-specific matching only
         /// </summary>
-        /// <param name="entityName">Name of the entity type (e.g., "Contacts")</param>
+        /// <param name="entityName">Name of the entity type (e.g., "Contact", "Partner", "Interaction")</param>
         /// <param name="records">List of records to check for duplicates</param>
-        /// <param name="similarityThreshold">Similarity threshold for duplicate detection (default: 0.85)</param>
+        /// <param name="fieldMatchThreshold">Field matching threshold for duplicate detection (default: 0.5)</param>
         /// <returns>List of records with duplicate information added</returns>
-        public async Task<List<dynamic>> DetectDuplicatesAsync(string entityName, List<dynamic> records, double similarityThreshold = 0.85)
+        public async Task<List<dynamic>> DetectDuplicatesAsync(string entityName, List<dynamic> records, 
+            double fieldMatchThreshold = 0.5)
         {
             if (records == null || !records.Any())
                 return records;
 
             try
             {
-                // Convert records to readable strings for embedding generation
-                var readableTexts = new List<string>();
-                foreach (var record in records)
-                {
-                    var readableText = ConvertEntityDataToReadableString(record);
-                    readableTexts.Add(readableText);
-                }
+                // Ensure entity name is pluralized for consistency with the database
+                var pluralizedEntityName = entityName.Pluralize();
 
-                // Create embeddings for all records
-                var embeddings = await CreateBatchEmbeddingsAsync(readableTexts);
-
-                // Check for duplicates using the embeddings
+                // Check for duplicates using the simplified field-based detection function
                 for (int i = 0; i < records.Count; i++)
                 {
                     var record = records[i];
-                    var embedding = embeddings[i];
 
-                    // Check for duplicates using the SQL function
-                    var duplicate = await DetectDuplicateForEmbeddingAsync(entityName, embedding, similarityThreshold);
+                    // Use the simplified detect_duplicate_records function (field-based only)
+                    var duplicateResult = await DetectDuplicateForRecordAsync(
+                        pluralizedEntityName, 
+                        record, 
+                        (float)fieldMatchThreshold
+                    );
                     
-                    // Add duplicate information to the record
-                    if (duplicate != null)
+                    // Convert record to JObject for safe property assignment
+                    JObject recordObj;
+                    if (record is JObject jObj)
                     {
-                        record.similarityEntityId = duplicate.EntityId;
-                        record.similarityScore = duplicate.Score;
+                        recordObj = jObj;
                     }
                     else
                     {
-                        record.similarityEntityId = null;
-                        record.similarityScore = null;
+                        // Convert dynamic record to JObject
+                        var recordJson = JsonConvert.SerializeObject(record, new JsonSerializerSettings
+                        {
+                            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                            NullValueHandling = NullValueHandling.Ignore
+                        });
+                        recordObj = JObject.Parse(recordJson);
+                        records[i] = recordObj; // Replace the original record with JObject
+                    }
+
+                    // Add duplicate information to the record
+                    if (duplicateResult != null && duplicateResult.HasDuplicates)
+                    {
+                        // Create TopDuplicate object
+                        JObject topDuplicateObj = null;
+                        if (duplicateResult.TopDuplicate != null)
+                        {
+                            topDuplicateObj = new JObject
+                            {
+                                ["entityId"] = duplicateResult.TopDuplicate.EntityId,
+                                ["entityType"] = duplicateResult.TopDuplicate.EntityType,
+                                ["score"] = duplicateResult.TopDuplicate.Score,
+                                ["matchReason"] = duplicateResult.TopDuplicate.MatchReason,
+                                ["searchType"] = duplicateResult.TopDuplicate.SearchType,
+                                ["matchedData"] = duplicateResult.TopDuplicate.MatchedData != null ? 
+                                    JToken.FromObject(duplicateResult.TopDuplicate.MatchedData) : null
+                            };
+                        }
+
+                        recordObj["duplicateDetection"] = new JObject
+                        {
+                            ["hasDuplicates"] = true,
+                            ["totalDuplicates"] = duplicateResult.TotalDuplicates,
+                            ["highConfidence"] = duplicateResult.HighConfidence,
+                            ["mediumConfidence"] = duplicateResult.MediumConfidence,
+                            ["lowConfidence"] = duplicateResult.LowConfidence,
+                            ["topDuplicate"] = topDuplicateObj
+                        };
+                    }
+                    else
+                    {
+                        recordObj["duplicateDetection"] = new JObject
+                        {
+                            ["hasDuplicates"] = false,
+                            ["totalDuplicates"] = 0,
+                            ["highConfidence"] = 0,
+                            ["mediumConfidence"] = 0,
+                            ["lowConfidence"] = 0,
+                            ["topDuplicate"] = null
+                        };
                     }
                 }
 
@@ -1348,63 +1396,149 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         }
 
         /// <summary>
-        /// Detects duplicate for a single embedding using the existing SQL function
+        /// Detects duplicates for a single record using the simplified field-based detection function
         /// </summary>
-        /// <param name="entityName">Name of the entity type</param>
-        /// <param name="embeddingVector">Embedding vector as string</param>
-        /// <param name="similarityThreshold">Similarity threshold</param>
-        /// <returns>Duplicate detection result or null if no duplicate found</returns>
-        private async Task<DuplicateDetectionResult> DetectDuplicateForEmbeddingAsync(string entityName, string embeddingVector, double similarityThreshold)
+        /// <param name="entityName">Name of the entity type (pluralized)</param>
+        /// <param name="recordData">The record data to check for duplicates</param>
+        /// <param name="fieldMatchThreshold">Field matching threshold</param>
+        /// <returns>Comprehensive duplicate detection result</returns>
+        private async Task<ComprehensiveDuplicateResult> DetectDuplicateForRecordAsync(
+            string entityName, 
+            dynamic recordData, 
+            float fieldMatchThreshold = 0.5f)
          {
              try
              {
-                 // Use the existing database context connection instead of creating a new one
+                // Ensure entity name is singular for the SQL function
+                var singularEntityName = entityName.Singularize();
+                
+                // Serialize the record data directly to JSON text
+                string jsonData;
+                try
+                {
+                    jsonData = JsonConvert.SerializeObject(recordData, new JsonSerializerSettings
+                    {
+                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                        NullValueHandling = NullValueHandling.Ignore,
+                        DefaultValueHandling = DefaultValueHandling.Ignore
+                    });
+                }
+                catch (JsonSerializationException ex)
+                {
+                    throw new Exception($"Failed to serialize record data to JSON: {ex.Message}. Record type: {recordData?.GetType()?.Name ?? "null"}", ex);
+                }
+                
                  var connection = _context.Database.GetDbConnection();
                  if (connection.State != ConnectionState.Open)
                      await connection.OpenAsync();
 
                  using var command = connection.CreateCommand();
-                 command.CommandText = "SELECT entityid, score, search_type FROM public.retrieve_embedding_search(@entityName, @embeddingVector, @similarityThreshold, NULL)";
+                command.CommandText = "SELECT public.detect_duplicate_records(@entityType, @entityData, @fieldMatchThreshold, @debugMode)";
 
-                 // Add parameters using the same pattern as other methods in this class
+                // Create parameters for the simplified function call (entity_data as TEXT)
                  var parameters = new[] 
                  {
-                     new NpgsqlParameter("@entityName", NpgsqlTypes.NpgsqlDbType.Text) { Value = entityName },
-                     new NpgsqlParameter("@embeddingVector", NpgsqlTypes.NpgsqlDbType.Text) { Value = embeddingVector },
-                     new NpgsqlParameter("@similarityThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = (float)similarityThreshold }
+                    new NpgsqlParameter("@entityType", NpgsqlTypes.NpgsqlDbType.Text) { Value = singularEntityName },
+                    new NpgsqlParameter("@entityData", NpgsqlTypes.NpgsqlDbType.Text) { Value = jsonData },
+                    new NpgsqlParameter("@fieldMatchThreshold", NpgsqlTypes.NpgsqlDbType.Real) { Value = fieldMatchThreshold },
+                    new NpgsqlParameter("@debugMode", NpgsqlTypes.NpgsqlDbType.Boolean) { Value = false }
                  };
 
                  command.Parameters.AddRange(parameters);
 
-                 using var reader = await command.ExecuteReaderAsync();
-                 if (await reader.ReadAsync())
-                 {
-                     return new DuplicateDetectionResult
-                     {
-                         EntityId = reader.GetInt32("entityid"),
-                         Score = reader.GetDouble("score"),
-                         EntityData = null, // Not needed for duplicate detection
-                         MatchType = reader.GetString("search_type")
-                     };
-                 }
+                var result = await command.ExecuteScalarAsync();
+                
+                if (result != null && result != DBNull.Value)
+                {
+                    var jsonResult = result.ToString();
+                    var parsedResult = JsonConvert.DeserializeObject<dynamic>(jsonResult);
+                    
+                    return new ComprehensiveDuplicateResult
+                    {
+                        HasDuplicates = parsedResult.duplicates != null && ((JArray)parsedResult.duplicates).Count > 0,
+                        TotalDuplicates = parsedResult.summary?.totalDuplicates ?? 0,
+                        HighConfidence = parsedResult.summary?.highConfidence ?? 0,
+                        MediumConfidence = parsedResult.summary?.mediumConfidence ?? 0,
+                        LowConfidence = parsedResult.summary?.lowConfidence ?? 0,
+                        TopDuplicate = ((JArray)parsedResult.duplicates)?.Count > 0 ? 
+                            JsonConvert.DeserializeObject<DuplicateMatch>(((JArray)parsedResult.duplicates)[0].ToString()) : null,
+                        AllDuplicates = parsedResult.duplicates
+                    };
+                }
 
-                 return null;
+                return new ComprehensiveDuplicateResult
+                {
+                    HasDuplicates = false,
+                    TotalDuplicates = 0,
+                    HighConfidence = 0,
+                    MediumConfidence = 0,
+                    LowConfidence = 0,
+                    TopDuplicate = null,
+                    AllDuplicates = null
+                };
              }
              catch (Exception ex)
              {
-                 throw new Exception($"Error detecting duplicate for embedding: {ex.Message}", ex);
-             }
+                throw new Exception($"Error detecting duplicates for record: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Detects duplicates for a single record using field-based similarity matching
+        /// </summary>
+        /// <param name="entityName">Name of the entity type (e.g., "Contact", "Partner", "Interaction")</param>
+        /// <param name="recordData">The record data to check for duplicates</param>
+        /// <param name="fieldMatchThreshold">Field matching threshold (default: 0.5)</param>
+        /// <returns>Comprehensive duplicate detection result</returns>
+        public async Task<ComprehensiveDuplicateResult> DetectDuplicateForSingleRecordAsync(
+            string entityName, 
+            dynamic recordData, 
+            double fieldMatchThreshold = 0.5)
+        {
+            try
+            {
+                // Ensure entity name is pluralized for consistency
+                var pluralizedEntityName = entityName.Pluralize();
+                
+                return await DetectDuplicateForRecordAsync(
+                    pluralizedEntityName, 
+                    recordData, 
+                    (float)fieldMatchThreshold
+                );
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error detecting duplicate for single record: {ex.Message}", ex);
          }
     }
 
+    
+    }
+
     /// <summary>
-    /// Result of duplicate detection
+    /// Comprehensive result of duplicate detection
     /// </summary>
-    public class DuplicateDetectionResult
+    public class ComprehensiveDuplicateResult
+    {
+        public bool HasDuplicates { get; set; }
+        public int TotalDuplicates { get; set; }
+        public int HighConfidence { get; set; }
+        public int MediumConfidence { get; set; }
+        public int LowConfidence { get; set; }
+        public DuplicateMatch TopDuplicate { get; set; }
+        public dynamic AllDuplicates { get; set; }
+    }
+
+    /// <summary>
+    /// Individual duplicate match details
+    /// </summary>
+    public class DuplicateMatch
     {
         public int EntityId { get; set; }
+        public string EntityType { get; set; }
         public double Score { get; set; }
-        public string EntityData { get; set; }
-        public string MatchType { get; set; }
+        public string MatchReason { get; set; }
+        public dynamic MatchedData { get; set; }
+        public string SearchType { get; set; }
     }
 }

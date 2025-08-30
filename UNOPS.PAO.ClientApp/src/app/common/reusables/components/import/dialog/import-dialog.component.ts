@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, computed, Type } from '@angular/core';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -22,6 +22,8 @@ import { CheckboxModule, CheckboxChangeEvent } from 'primeng/checkbox';
 import { ComponentResolverService } from '../../../../../features/internal/services/component-resolver.service';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 import { ImportService } from '../import.service';
+import { DuplicateIndicatorComponent } from '../duplicate-indicator/duplicate-indicator.component';
+import { DuplicateSummaryComponent } from '../duplicate-summary/duplicate-summary.component';
 
 // Custom interface for import columns that extends ListViewColumn
 interface ImportColumn extends ListViewColumn {
@@ -51,7 +53,9 @@ interface ImportColumn extends ListViewColumn {
     DropdownModule,
     TooltipModule,
     CheckboxModule,
-    TitleCasePipe
+    TitleCasePipe,
+    DuplicateIndicatorComponent,
+    DuplicateSummaryComponent
   ],
   templateUrl: './import-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -61,6 +65,7 @@ export class ImportDialogComponent implements OnInit {
   importDialogService = inject(ImportDialogService);
   componentResolverService = inject(ComponentResolverService);
   importService = inject(ImportService);
+  translateService = inject(TranslateService);
   // Make Math available to the template
   Math = Math;
 
@@ -91,71 +96,89 @@ export class ImportDialogComponent implements OnInit {
 
   // Contact-specific columns
   contactColumns: ImportColumn[] = [
-    { field: 'duplicateInfo', header: 'Duplicate', required: false, label: 'Duplicate', type: 'text', sortable: false },
-    { field: 'salutation', header: 'Salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
-    { field: 'firstName', header: 'First Name', required: false, label: 'First Name', type: 'text', sortable: false },
-    { field: 'middleName', header: 'Middle Name', required: false, label: 'Middle Name', type: 'text', sortable: false },
-    { field: 'lastName', header: 'Last Name', required: true, label: 'Last Name', type: 'text', sortable: false },
-    { field: 'suffix', header: 'Suffix', required: false, label: 'Suffix', type: 'text', sortable: false },
-    { field: 'title', header: 'Title', required: false, label: 'Title', type: 'text', sortable: false },
-    { field: 'pronouns', header: 'Pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
-    { field: 'birthDate', header: 'Birth Date', required: false, label: 'Birth Date', type: 'text', sortable: false },
-    { field: 'partnerId', header: 'Partner ID', required: true, label: 'Partner ID', type: 'text', sortable: false },
-    { field: 'email', header: 'Email', required: true, label: 'Email', type: 'text', sortable: false },
-    { field: 'phone', header: 'Phone', required: false, label: 'Phone', type: 'text', sortable: false },
-    { field: 'mobile', header: 'Mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
-    { field: 'otherPhone', header: 'Other Phone', required: false, label: 'Other Phone', type: 'text', sortable: false },
-    { field: 'fax', header: 'Fax', required: false, label: 'Fax', type: 'text', sortable: false },
-    { field: 'department', header: 'Department', required: false, label: 'Department', type: 'text', sortable: false },
-    { field: 'description', header: 'Description', required: false, label: 'Description', type: 'text', sortable: false },
-    { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'contactNumber', header: 'Contact Number', required: false, label: 'Contact Number', type: 'text', sortable: false },
-    { field: 'assistant', header: 'Assistant', required: false, label: 'Assistant', type: 'text', sortable: false },
-    { field: 'assistantPhone', header: 'Assistant Phone', required: false, label: 'Assistant Phone', type: 'text', sortable: false },
-    { field: 'assistantEmail', header: 'Assistant Email', required: false, label: 'Assistant Email', type: 'text', sortable: false },
-    { field: 'mailingStreet', header: 'Mailing Street', required: false, label: 'Mailing Street', type: 'text', sortable: false },
-    { field: 'mailingStreet2', header: 'Mailing Street 2', required: false, label: 'Mailing Street 2', type: 'text', sortable: false },
-    { field: 'mailingCity', header: 'Mailing City', required: false, label: 'Mailing City', type: 'text', sortable: false },
-    { field: 'mailingStateProvince', header: 'Mailing State/Province', required: false, label: 'Mailing State/Province', type: 'text', sortable: false },
-    { field: 'mailingPostalCode', header: 'Mailing Postal Code', required: false, label: 'Mailing Postal Code', type: 'text', sortable: false },
-    { field: 'mailingCountry', header: 'Mailing Country', required: false, label: 'Mailing Country', type: 'text', sortable: false },
+    { field: 'salutation', header: 'contact.salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
+    { field: 'firstName', header: 'contact.firstName', required: false, label: 'First Name', type: 'text', sortable: false },
+    { field: 'middleName', header: 'contact.middleName', required: false, label: 'Middle Name', type: 'text', sortable: false },
+    { field: 'lastName', header: 'contact.lastName', required: true, label: 'Last Name', type: 'text', sortable: false },
+    { field: 'suffix', header: 'contact.suffix', required: false, label: 'Suffix', type: 'text', sortable: false },
+    { field: 'title', header: 'contact.title', required: false, label: 'Title', type: 'text', sortable: false },
+    { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
+    { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
+    { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner ID', type: 'text', sortable: false },
+    { field: 'email', header: 'contact.email', required: true, label: 'Email', type: 'text', sortable: false },
+    { field: 'phone', header: 'contact.phone', required: false, label: 'Phone', type: 'text', sortable: false },
+    { field: 'mobile', header: 'contact.mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
+    { field: 'otherPhone', header: 'contact.otherPhone', required: false, label: 'Other Phone', type: 'text', sortable: false },
+    { field: 'fax', header: 'contact.fax', required: false, label: 'Fax', type: 'text', sortable: false },
+    { field: 'department', header: 'contact.department', required: false, label: 'Department', type: 'text', sortable: false },
+    { field: 'description', header: 'contact.description', required: false, label: 'Description', type: 'text', sortable: false },
+    { field: 'status', header: 'contact.status', required: false, label: 'Status', type: 'text', sortable: false },
+    { field: 'contactNumber', header: 'contact.contactNumber', required: false, label: 'Contact Number', type: 'text', sortable: false },
+    { field: 'assistant', header: 'contact.assistant', required: false, label: 'Assistant', type: 'text', sortable: false },
+    { field: 'assistantPhone', header: 'contact.assistantPhone', required: false, label: 'Assistant Phone', type: 'text', sortable: false },
+    { field: 'assistantEmail', header: 'contact.assistantEmail', required: false, label: 'Assistant Email', type: 'text', sortable: false },
+    { field: 'mailingStreet', header: 'contact.mailingStreet', required: false, label: 'Mailing Street', type: 'text', sortable: false },
+    { field: 'mailingStreet2', header: 'contact.mailingStreet2', required: false, label: 'Mailing Street 2', type: 'text', sortable: false },
+    { field: 'mailingCity', header: 'contact.mailingCity', required: false, label: 'Mailing City', type: 'text', sortable: false },
+    { field: 'mailingStateProvince', header: 'contact.mailingStateProvince', required: false, label: 'Mailing State/Province', type: 'text', sortable: false },
+    { field: 'mailingPostalCode', header: 'contact.mailingPostalCode', required: false, label: 'Mailing Postal Code', type: 'text', sortable: false },
+    { field: 'mailingCountry', header: 'contact.mailingCountry', required: false, label: 'Mailing Country', type: 'text', sortable: false },
   ];
 
-  // Partner-specific columns
-  partnerColumns: ImportColumn[] = [
-    { field: 'duplicateInfo', header: 'Duplicate', required: false, label: 'Duplicate', type: 'text', sortable: false },
-    { field: 'name', header: 'Name', required: true, label: 'Name', type: 'text', sortable: false },
-    { field: 'partnerShortDescription', header: 'Short Name', required: true, label: 'Short Name', type: 'text', sortable: false },
-    { field: 'partnerLongDescription', header: 'Long Description', required: false, label: 'Long Description', type: 'text', sortable: false },
-    { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'canCreateNewOpportunities', header: 'New Engagement', required: true, label: 'New Engagement', type: 'text', sortable: false },
-    { field: 'pooledFund', header: 'Pooled Fund', required: true, label: 'Pooled Fund', type: 'text', sortable: false },
-    { field: 'dueDiligenceRequired', header: 'DD Required', required: true, label: 'DD Required', type: 'text', sortable: false },
-    { field: 'dueDiligenceApproval', header: 'DD Approval', required: true, label: 'DD Approval', type: 'text', sortable: false },
-    { field: 'partnerLevyStatus', header: 'Levy Status', required: true, label: 'Levy Status', type: 'text', sortable: false },
-    { field: 'keyGlobalPartner', header: 'Key Global', required: false, label: 'Key Global', type: 'text', sortable: false },
-    { field: 'unSecretariatPartner', header: 'UN Secretariat', required: false, label: 'UN Secretariat', type: 'text', sortable: false },
-    { field: 'unAndStateEntity', header: 'UN State Entity', required: false, label: 'UN State Entity', type: 'text', sortable: false },
-    { field: 'reasonForNoNewOpportunity', header: 'Reason No New Opportunity', required: false, label: 'Reason No New Opportunity', type: 'text', sortable: false },
-    { field: 'levyTreatment', header: 'Levy Treatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
-    { field: 'partnerGroupCode', header: 'Partner Group', required: false, label: 'Partner Group', type: 'text', sortable: false },
+  // Partner-specific columns (all fields from Partner.cs, filtered by permissions)
+  allPartnerColumns: ImportColumn[] = [
+    // Essential Fields
+    { field: 'name', header: 'partner.name', required: true, label: 'Name', type: 'text', sortable: false },
+    { field: 'partnerShortDescription', header: 'partner.shortName', required: false, label: 'Short Name', type: 'text', sortable: false },
+    { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Long Description', type: 'text', sortable: false },
+    
+    // Classification & Organization
+    { field: 'partnerCategoryId', header: 'partner.partnerCategory', required: false, label: 'Partner Category', type: 'text', sortable: false },
+    { field: 'partnerGroupCode', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'text', sortable: false },
+    { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
+    { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
+    
+    // ERP Integration (readonly but needed for import)
+    { field: 'erpDimValue', header: 'partner.erpDimValue', required: false, label: 'ERP Dimension Value', type: 'number', sortable: false },
+    
+    // Status & Operational
+    { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
+    { field: 'pooledFund', header: 'partner.pooledFund', required: false, label: 'Pooled Fund', type: 'text', sortable: false },
+    { field: 'canCreateNewOpportunities', header: 'partner.canCreateNewOpportunities', required: false, label: 'Can Create New Opportunities', type: 'text', sortable: false },
+    { field: 'reasonForNoNewOpportunity', header: 'partner.reasonForNoNewOpportunity', required: false, label: 'Reason For No New Opportunity', type: 'text', sortable: false },
+    
+    // UN & State Entity Fields
+    { field: 'unAndStateEntity', header: 'partner.unStateEntity', required: false, label: 'UN & State Entity', type: 'text', sortable: false },
+    { field: 'keyGlobalPartner', header: 'partner.keyGlobalPartner', required: false, label: 'Key Global Partner', type: 'text', sortable: false },
+    { field: 'unSecretariatPartner', header: 'partner.unSecretariatPartner', required: false, label: 'UN Secretariat Partner', type: 'text', sortable: false },
+    
+    // Due Diligence & Compliance
+    { field: 'dueDiligenceRequired', header: 'partner.dueDiligenceRequired', required: false, label: 'Due Diligence Required', type: 'text', sortable: false },
+    { field: 'dueDiligenceApproval', header: 'partner.dueDiligenceApproval', required: false, label: 'Due Diligence Approval', type: 'text', sortable: false },
+    
+    // Levy Fields
+    { field: 'partnerLevyStatus', header: 'partner.partnerLevyStatus', required: false, label: 'Partner Levy Status', type: 'text', sortable: false },
+    { field: 'reasonForLevy', header: 'partner.reasonForLevy', required: false, label: 'Reason For Levy', type: 'text', sortable: false },
+    { field: 'levyTreatment', header: 'partner.levyTreatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
   ];
+
+  // Filtered partner columns based on user permissions
+  partnerColumns: ImportColumn[] = [];
 
   // Interaction-specific columns
   interactionColumns: ImportColumn[] = [
-    { field: 'duplicateInfo', header: 'Duplicate', required: false, label: 'Duplicate', type: 'text', sortable: false },
-    { field: 'type', header: 'Type', required: true, label: 'Type', type: 'text', sortable: false },
-    { field: 'date', header: 'Date', required: true, label: 'Date', type: 'text', sortable: false },
-    { field: 'subject', header: 'Subject', required: true, label: 'Subject', type: 'text', sortable: false },
-    { field: 'description', header: 'Description', required: false, label: 'Description', type: 'text', sortable: false },
-    { field: 'contactId', header: 'Contact', required: false, label: 'Contact', type: 'text', sortable: false },
-    { field: 'location', header: 'Location', required: false, label: 'Location', type: 'text', sortable: false },
-    { field: 'contactIds', header: 'Contact IDs', required: false, label: 'Contact IDs', type: 'text', sortable: false },
-    { field: 'partnerIds', header: 'Partner IDs', required: false, label: 'Partner IDs', type: 'text', sortable: false },
-    { field: 'userIds', header: 'User IDs', required: false, label: 'User IDs', type: 'text', sortable: false },
-    { field: 'emailAddresses', header: 'Email Addresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
-    { field: 'phoneNumbers', header: 'Phone Numbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
-    { field: 'organizationHierarchyIds', header: 'Organization Unit IDs', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
+    { field: 'type', header: 'interaction.type', required: true, label: 'Type', type: 'text', sortable: false },
+    { field: 'date', header: 'interaction.date', required: true, label: 'Date', type: 'text', sortable: false },
+    { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
+    { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
+    { field: 'contactId', header: 'interaction.contact', required: false, label: 'Contact', type: 'text', sortable: false },
+    { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
+    { field: 'contactIds', header: 'interaction.contactIds', required: false, label: 'Contact IDs', type: 'text', sortable: false },
+    { field: 'partnerIds', header: 'interaction.partnerIds', required: false, label: 'Partner IDs', type: 'text', sortable: false },
+    { field: 'userIds', header: 'interaction.userIds', required: false, label: 'User IDs', type: 'text', sortable: false },
+    { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
+    { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
+    { field: 'organizationHierarchyIds', header: 'interaction.organizationUnitIds', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
   ];
 
   // Create data effect in the constructor to ensure injection context
@@ -190,25 +213,66 @@ export class ImportDialogComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    // Set the table columns based on the current import type
-    this.updateColumnsForEntityType();
+  async ngOnInit(): Promise<void> {
+    // Set the table columns based on the current import type (with permissions)
+    await this.updateColumnsForEntityType();
     
     // Immediately check data on init
     this.checkAndProcessData();
   }
 
-  // Update the table columns based on the current import type
-  private updateColumnsForEntityType(): void {
+  // Update the table columns based on the current import type and user permissions
+  private async updateColumnsForEntityType(): Promise<void> {
     const entityType = this.importDialogService.getImportType().toLowerCase();
     
     if (entityType === 'partner') {
+      // Filter partner columns based on user permissions
+      this.partnerColumns = await this.filterColumnsByPermissions(this.allPartnerColumns, 'Partner');
       this.columns = this.partnerColumns;
     } else if (entityType === 'interaction') {
       this.columns = this.interactionColumns;
     } else {
       // Default to contact columns
       this.columns = this.contactColumns;
+    }
+  }
+
+  // Filter columns based on user permissions for canUpdate
+  private async filterColumnsByPermissions(allColumns: ImportColumn[], entityName: string): Promise<ImportColumn[]> {
+    try {
+      // Get entity permissions from the backend
+      const response = await fetch(`/api/${entityName.toLowerCase()}/permissions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to get permissions for ${entityName}, showing all columns`);
+        return allColumns;
+      }
+
+      const permissions = await response.json();
+      
+      // If user has no update restrictions (canEditFields is null), show all columns
+      if (!permissions.canEditFields || permissions.canEditFields.length === 0) {
+        return allColumns;
+      }
+
+      // Filter columns based on canEditFields permissions
+      const allowedFields = new Set(permissions.canEditFields);
+      
+      // Always include required fields (like 'name')
+      const filteredColumns = allColumns.filter(column => 
+        column.required || allowedFields.has(column.field)
+      );
+
+      return filteredColumns;
+    } catch (error) {
+      console.error(`Error checking permissions for ${entityName}:`, error);
+      // On error, return all columns to avoid breaking functionality
+      return allColumns;
     }
   }
   
@@ -356,27 +420,42 @@ export class ImportDialogComponent implements OnInit {
 
     processedData.forEach((record, index) => {
       
-      // Check if record has similarityEntityId (duplicate detected)
-      // Also check for similarityEntityId in different case variations
-      const hasDuplicate = record.similarityEntityId;
+      // Check if record has duplicateDetection from the new AI service
+      const duplicateDetection = record.duplicateDetection;
       
-      if (hasDuplicate) {
+      if (duplicateDetection?.hasDuplicates) {
+        // Use the new duplicateDetection structure
+        record.duplicateInfo = {
+          isDuplicate: true,
+          hasDuplicates: duplicateDetection.hasDuplicates,
+          totalDuplicates: duplicateDetection.totalDuplicates,
+          highConfidence: duplicateDetection.highConfidence,
+          mediumConfidence: duplicateDetection.mediumConfidence,
+          lowConfidence: duplicateDetection.lowConfidence,
+          topDuplicate: duplicateDetection.topDuplicate,
+          tooltip: `${duplicateDetection.totalDuplicates} duplicate(s) found`
+        };
+        
+        duplicateRows.push(record);
+      } else if (record.similarityEntityId) {
+        // Fallback to old similarity detection for backward compatibility
         const entityId = record.similarityEntityId;
-        
         const similarityScore = record.similarityScore || 0;
-        
         const similarityPercentage = Math.round(similarityScore * 100);
-        
-        // Create duplicate info with link
-        const entityType = this.getEntityTypeFromImportType();
-        const entityUrl = this.getEntityUrl(entityType, entityId);
         
         record.duplicateInfo = {
           isDuplicate: true,
-          entityId: entityId,
-          similarityScore: similarityScore,
-          similarityPercentage: similarityPercentage,
-          entityUrl: entityUrl,
+          hasDuplicates: true,
+          totalDuplicates: 1,
+          highConfidence: similarityScore > 0.8 ? 1 : 0,
+          mediumConfidence: similarityScore > 0.5 && similarityScore <= 0.8 ? 1 : 0,
+          lowConfidence: similarityScore <= 0.5 ? 1 : 0,
+          topDuplicate: {
+            entityId: entityId,
+            score: similarityScore,
+            matchReason: 'Legacy similarity match',
+            entityType: this.getEntityTypeFromImportType()
+          },
           tooltip: `Duplicate found (${similarityPercentage}% similarity)`
         };
         
@@ -385,6 +464,12 @@ export class ImportDialogComponent implements OnInit {
         // No duplicate found
         record.duplicateInfo = {
           isDuplicate: false,
+          hasDuplicates: false,
+          totalDuplicates: 0,
+          highConfidence: 0,
+          mediumConfidence: 0,
+          lowConfidence: 0,
+          topDuplicate: null,
           tooltip: 'Unique record'
         };
         nonDuplicateRows.push(record);
@@ -394,6 +479,7 @@ export class ImportDialogComponent implements OnInit {
     // Update signals
     this.duplicateRows.set(duplicateRows);
     this.nonDuplicateRows.set(nonDuplicateRows);
+    
     // Show warning if duplicates found
     if (duplicateRows.length > 0) {
       this.showDuplicateWarning.set(true);
@@ -410,7 +496,7 @@ export class ImportDialogComponent implements OnInit {
   /**
    * Get entity type from current import type
    */
-  private getEntityTypeFromImportType(): string {
+  getEntityTypeFromImportType(): string {
     const importType = this.currentImportType();
     switch (importType) {
       case 'contact':
@@ -421,6 +507,35 @@ export class ImportDialogComponent implements OnInit {
         return 'interactions';
       default:
         return 'contacts';
+    }
+  }
+
+  /**
+   * Get translated header text
+   */
+  public getTranslatedHeader(key: string): string {
+    try {
+      const translated = this.translateService.instant(key);
+      
+      // Debug: log first few translations
+      if (key === 'DUPLICATE_DETECTION.duplicate' || key === 'contact.firstName') {
+        console.log(`Key: '${key}' -> Translation: '${translated}' -> Same? ${translated === key}`);
+      }
+      
+      // If translation returns the key itself, it means translation failed
+      if (translated !== key) {
+        return translated;
+      }
+      
+      // Fallback: try to find a better translation or return a formatted version
+      const keyParts = key.split('.');
+      const fieldName = keyParts[keyParts.length - 1];
+      
+      // Convert camelCase to Title Case
+      return fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    } catch (error) {
+      console.error('Translation error:', error);
+      return key.split('.').pop() || key;
     }
   }
 

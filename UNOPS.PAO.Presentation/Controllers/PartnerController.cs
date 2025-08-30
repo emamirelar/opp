@@ -80,18 +80,56 @@ public class PartnerController : BaseController
         // Validate minimum required fields for creation
         if (string.IsNullOrWhiteSpace(req.Name))
         {
-            return BadRequest(new { error = "Partner Description is required for creation" });
+            return BadRequest(new { error = "Partner Name is required for creation" });
+        }
+        
+        // Check for duplicates ONLY if user hasn't confirmed duplicate creation
+        if (!req.ConfirmDuplicateCreation)
+        {
+            try
+            {
+                var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
+                    "Partner", 
+                    req, 
+                    0.7 // Field match threshold
+                );
+                
+                if (duplicateResult != null && duplicateResult.HasDuplicates)
+                {
+                    return Ok(new {
+                        isDuplicate = true,
+                        message = "Potential duplicate partner detected. Do you want to create anyway?",
+                        duplicateInfo = duplicateResult,
+                        requiresConfirmation = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't block creation due to duplicate detection failure
+                _logger.LogWarning($"Duplicate detection failed for partner creation: {ex.Message}");
+                // Continue with creation since duplicate detection is not critical
+            }
         }
         
         // Ensure partner is created in Draft status
         req.Status = "Draft";
         
+        // Create the partner (either no duplicates found, or user confirmed creation)
         var result = await _manager.CreatePartnerAsync(User, req);
         if (result == null)
         {
             throw new BusinessException("Failed to create partner");
         }
-        return CreatedAtAction(nameof(Create), result.Id, result);
+        
+        return StatusCode(201, new {
+            success = true,
+            action = "created",
+            message = req.ConfirmDuplicateCreation ? 
+                "Partner created successfully (duplicate confirmation acknowledged)" : 
+                "Partner created successfully",
+            data = result
+        });
     }
 
     /// <summary>

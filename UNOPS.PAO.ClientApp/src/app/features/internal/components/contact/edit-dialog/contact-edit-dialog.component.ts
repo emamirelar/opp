@@ -27,6 +27,8 @@ import { FormsModule } from '@angular/forms';
 import { ContactEditDialogFooterComponent } from './footer/contact-edit-dialog-footer.component';
 import { AiTranscribeComponent } from '../../../../../common/reusables/components/ai-transcribe/ai-transcribe.component';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { DialogService } from 'primeng/dynamicdialog';
+import { DuplicateConfirmationDialogComponent, DuplicateDetectionResponse } from '../duplicate-confirmation-dialog/duplicate-confirmation-dialog.component';
 
 @Component({
   selector: 'app-contact-edit-dialog',
@@ -69,7 +71,7 @@ export class ContactEditDialogComponent implements OnInit {
     middleName: [''],
     lastName: ['', [Validators.required]],
     suffix: [''],
-    title: [''],
+    title: ['', [Validators.required]],
 
     // Contact details
     email: ['', [Validators.required, Validators.email]],
@@ -103,7 +105,10 @@ export class ContactEditDialogComponent implements OnInit {
     lastModifiedDate: [new Date()],
     isDeleted: [false],
     deletedBy: [''],
-    deletedDate: [null]
+    deletedDate: [null],
+    
+    // Duplicate detection field
+    confirmDuplicateCreation: [false]
   });
 
   cachedDataService = inject(CachedDataService);
@@ -112,6 +117,7 @@ export class ContactEditDialogComponent implements OnInit {
   languageService = inject(LanguageService);
   private dialogRef = inject(DynamicDialogRef);
   private dialogConfig = inject(DynamicDialogConfig);
+  private dialogService = inject(DialogService);
 
   @Input() public record: Contact = {};
   @Output() onRecordCreationSuccess = new EventEmitter<any>();
@@ -194,22 +200,13 @@ export class ContactEditDialogComponent implements OnInit {
             // Ensure we're not closing the dialog until the operation completes
             setTimeout(() => this.dialogRef.close("saved"));
           },
-          error: (error) => {
+          error: (error: any) => {
             this.feedbackDialogService.showErrorToast({ detail: 'Failed to update record' });
           }
         });
       } else {
-        // Create new contact
-        this.contactService.createContact(payload).subscribe({
-          next: (data: any) => {
-            this.feedbackDialogService.showSuccessToast({ detail: 'Record created successfully!' });
-            // Ensure we're not closing the dialog until the operation completes
-            setTimeout(() => this.dialogRef.close(data));
-          },
-          error: (error) => {
-            this.feedbackDialogService.showErrorToast({ detail: 'Failed to create record' });
-          }
-        });
+        // Create new contact with duplicate detection
+        this.createContactWithDuplicateDetection(payload);
       }
     } else {
       this.requestingSaveSignal.set(false);
@@ -265,5 +262,92 @@ export class ContactEditDialogComponent implements OnInit {
       
       this.feedbackDialogService.showSuccessToast({ detail: 'Contact data transcribed successfully!' });
     }
+  }
+
+  /**
+   * Creates a contact with duplicate detection workflow
+   */
+  private createContactWithDuplicateDetection(payload: any): void {
+    this.contactService.createContact(payload).subscribe({
+      next: (response: any) => {
+        // Check if response indicates duplicate detection
+        if (response.isDuplicate && response.requiresConfirmation) {
+          // Show duplicate confirmation dialog
+          this.showDuplicateConfirmationDialog(response, payload);
+        } else if (response.action === 'created' || response.success) {
+          // Contact created successfully
+          this.feedbackDialogService.showSuccessToast({ 
+            detail: response.message || 'Contact created successfully!' 
+          });
+          setTimeout(() => this.dialogRef.close(response.data || response));
+        } else {
+          // Fallback for successful creation (old format)
+          this.feedbackDialogService.showSuccessToast({ 
+            detail: 'Contact created successfully!' 
+          });
+          setTimeout(() => this.dialogRef.close(response));
+        }
+      },
+      error: (error: any) => {
+        this.feedbackDialogService.showErrorToast({ 
+          detail: 'Failed to create contact. Please try again.' 
+        });
+        console.error('Contact creation error:', error);
+      }
+    });
+  }
+
+  /**
+   * Shows the duplicate confirmation dialog
+   */
+  private showDuplicateConfirmationDialog(duplicateResponse: DuplicateDetectionResponse, originalPayload: any): void {
+    const dialogRef = this.dialogService.open(DuplicateConfirmationDialogComponent, {
+      data: duplicateResponse,
+      header: 'Duplicate Contact Detected',
+      width: '90vw',
+      modal: true,
+      breakpoints: {
+        '960px': '75vw',
+        '640px': '90vw'
+      }
+    });
+
+    dialogRef.onClose.subscribe((confirmed: boolean) => {
+      if (confirmed) {
+        // User confirmed - create contact anyway
+        const confirmedPayload = {
+          ...originalPayload,
+          confirmDuplicateCreation: true
+        };
+        
+        this.contactService.createContact(confirmedPayload).subscribe({
+          next: (response: any) => {
+            if (response.action === 'created') {
+              this.feedbackDialogService.showSuccessToast({ 
+                detail: 'Contact created successfully (duplicate confirmation acknowledged)!' 
+              });
+              setTimeout(() => this.dialogRef.close(response.data));
+            } else {
+              // Fallback for successful creation
+              this.feedbackDialogService.showSuccessToast({ 
+                detail: 'Contact created successfully!' 
+              });
+              setTimeout(() => this.dialogRef.close(response));
+            }
+          },
+          error: (error: any) => {
+            this.feedbackDialogService.showErrorToast({ 
+              detail: 'Failed to create contact. Please try again.' 
+            });
+            console.error('Confirmed contact creation error:', error);
+          }
+        });
+      } else {
+        // User cancelled - do nothing, stay on the form
+        this.feedbackDialogService.showInfoToast({ 
+          detail: 'Contact creation cancelled.' 
+        });
+      }
+    });
   }
 }

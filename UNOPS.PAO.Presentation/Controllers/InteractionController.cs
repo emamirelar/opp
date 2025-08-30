@@ -74,6 +74,35 @@ namespace UNOPS.PAO.Presentation.Controllers
                 return validationResult;
             }
 
+            // Check for duplicates ONLY if user hasn't confirmed duplicate creation
+            if (!req.ConfirmDuplicateCreation)
+            {
+                try
+                {
+                    var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
+                        "Interaction", 
+                        req, 
+                        0.7 // Field match threshold
+                    );
+                    
+                    if (duplicateResult != null && duplicateResult.HasDuplicates)
+                    {
+                        return Ok(new {
+                            isDuplicate = true,
+                            message = "Potential duplicate interaction detected. Do you want to create anyway?",
+                            duplicateInfo = duplicateResult,
+                            requiresConfirmation = true
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but don't block creation due to duplicate detection failure
+                    _logger.LogWarning($"Duplicate detection failed for interaction creation: {ex.Message}");
+                    // Continue with creation since duplicate detection is not critical
+                }
+            }
+
             return await HandleOperationAsync(async () =>
             {
                 var result = await _manager.CreateInteractionAsync(req);
@@ -81,7 +110,15 @@ namespace UNOPS.PAO.Presentation.Controllers
                 {
                     throw new BusinessException("Failed to create interaction");
                 }
-                return result;
+                
+                return new {
+                    success = true,
+                    action = "created",
+                    message = req.ConfirmDuplicateCreation ? 
+                        "Interaction created successfully (duplicate confirmation acknowledged)" : 
+                        "Interaction created successfully",
+                    data = result
+                };
             }, 201);
         }
 

@@ -1,5 +1,5 @@
 import { Component, inject, input, OnInit, signal, effect } from '@angular/core';
-import { DatePipe } from '@angular/common';
+
 import { FormsModule } from '@angular/forms';
 
 //NGPrime
@@ -30,7 +30,6 @@ import { DocumentLinkModel } from '../../../interfaces/document.interface';
     UploadDocumentComponent,
     TranslateModule,
     Menu,
-    DatePipe,
     SelectModule,
     FormsModule,
     TooltipModule,

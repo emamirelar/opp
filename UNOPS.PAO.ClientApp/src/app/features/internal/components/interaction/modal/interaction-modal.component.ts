@@ -456,9 +456,35 @@ export class InteractionModalComponent {
       } else {
         // Create new interaction
         this.interactionService.create(formValue).subscribe({
-          next: (data) => {
-            this.showSuccessMessage('message.interactionCreated');
-            this.dialogRef.close(data);
+          next: (response) => {
+            // Check if response indicates duplicate detection
+            if (response.body?.isDuplicate && response.body?.requiresConfirmation) {
+              // Show duplicate confirmation dialog
+              this.confirmationService.confirm({
+                message: response.body.message,
+                header: 'Duplicate Interaction Detected',
+                acceptLabel: 'Create Anyway',
+                rejectLabel: 'Cancel',
+                accept: () => {
+                  // User confirmed, create with duplicate confirmation
+                  const confirmFormValue = { ...formValue, confirmDuplicateCreation: true };
+                  this.interactionService.create(confirmFormValue).subscribe({
+                    next: (data) => {
+                      this.showSuccessMessage('message.interactionCreated');
+                      this.dialogRef.close(data.body?.data || data.body || data);
+                    },
+                    error: (error) => {
+                      this.showErrorMessage('message.errorCreatingInteraction', error);
+                      this.isSaving.set(false);
+                    }
+                  });
+                }
+              });
+            } else {
+              // Normal creation success
+              this.showSuccessMessage('message.interactionCreated');
+              this.dialogRef.close(response.body?.data || response.body || response);
+            }
           },
           error: (error) => {
             this.showErrorMessage('message.errorCreatingInteraction', error);

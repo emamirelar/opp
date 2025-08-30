@@ -100,6 +100,14 @@
       </div>
     </div>
 
+    <!-- Duplicate Summary -->
+    @if (showDuplicateWarning()) {
+      <app-duplicate-summary 
+        [duplicateRows]="duplicateRows()"
+        [totalRecords]="totalRecords()">
+      </app-duplicate-summary>
+    }
+
     <div class="flex-1 overflow-hidden">
       <p-table
         #dt
@@ -114,7 +122,7 @@
         styleClass="h-full"
         dataKey="_importRowId"
         [frozenColumns]="[0, 1, 2]"
-        [frozenWidth]="'200px'"
+        [frozenWidth]="'250px'"
       >
         <ng-template pTemplate="header" let-columns>
           <tr>
@@ -125,17 +133,19 @@
                   [ngModel]="areAllRowsSelected()"
                   (onChange)="toggleSelectAll($event)"
                   styleClass="custom-checkbox"
-                  [ariaLabel]="'Select All Records'"
                   [indeterminate]="hasMixedSelection()"
                 ></p-checkbox>
               </div>
             </th>
-            <th style="width: 8rem">
-              Duplicate & Edit
+            <th style="width: 4rem">
+              {{ getTranslatedHeader('DUPLICATE_DETECTION.duplicate') }}
+            </th>
+            <th style="width: 4rem">
+              {{ getTranslatedHeader('common.edit') }}
             </th>
             @for (col of columns; track col) {
               <th class="min-w-32">
-                {{ col.header }}
+                {{ getTranslatedHeader(col.header) }}
               </th>
             }
           </tr>
@@ -147,26 +157,17 @@
               <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
             </td>
             <td>
-              <!-- Combined Duplicate Info and Edit Button -->
-              <div class="flex items-center gap-2">
-                @if (rowData.duplicateInfo?.isDuplicate) {
-                  <div class="flex items-center">
-                    <i class="pi pi-question-circle text-orange-500 mr-1" 
-                       [pTooltip]="rowData.duplicateInfo.tooltip"
-                       tooltipPosition="top"></i>
-                    <a [href]="rowData.duplicateInfo.entityUrl" 
-                       target="_blank"
-                       class="text-blue-600 hover:text-blue-800 underline cursor-pointer text-xs">
-                      #{{ rowData.duplicateInfo.entityId }} ({{ rowData.duplicateInfo.similarityPercentage }}%)
-                    </a>
-                  </div>
-                } @else {
-                  <div class="flex items-center">
-                    <i class="pi pi-check-circle text-green-500 mr-1" 
-                       [pTooltip]="rowData.duplicateInfo?.tooltip || 'Unique record'"
-                       tooltipPosition="top"></i>
-                  </div>
-                }
+              <!-- Duplicate Indicator Column -->
+              <div class="flex items-center justify-center">
+                <app-duplicate-indicator 
+                  [duplicateInfo]="rowData.duplicateInfo"
+                  [entityType]="getEntityTypeFromImportType()">
+                </app-duplicate-indicator>
+              </div>
+            </td>
+            <td>
+              <!-- Edit Button Column -->
+              <div class="flex items-center justify-center">
                 <p-button icon="pi pi-pencil" 
                           styleClass="p-button-rounded p-button-text p-button-sm" 
                           (click)="editRow(rowData, $event)">

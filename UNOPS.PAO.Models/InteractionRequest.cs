@@ -27,4 +27,9 @@ public class InteractionRequest : ExtensibleModel
     
     public string? GmailThreadId { get; set; }
     public string? GmailMessageId { get; set; }
+    
+    /// <summary>
+    /// Flag to bypass duplicate detection when user confirms creation despite duplicates
+    /// </summary>
+    public bool ConfirmDuplicateCreation { get; set; } = false;
 }
