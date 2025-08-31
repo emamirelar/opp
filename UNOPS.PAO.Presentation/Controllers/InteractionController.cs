@@ -88,10 +88,23 @@ namespace UNOPS.PAO.Presentation.Controllers
                     if (duplicateResult != null && duplicateResult.HasDuplicates)
                     {
                         return Ok(new {
-                            isDuplicate = true,
+                            success = false,
+                            action = "duplicateConfirmation",
                             message = "Potential duplicate interaction detected. Do you want to create anyway?",
-                            duplicateInfo = duplicateResult,
-                            requiresConfirmation = true
+                            duplicateInfo = new {
+                                totalDuplicates = duplicateResult.TotalDuplicates,
+                                highConfidence = duplicateResult.HighConfidence,
+                                mediumConfidence = duplicateResult.MediumConfidence,
+                                lowConfidence = duplicateResult.LowConfidence,
+                                topDuplicate = duplicateResult.TopDuplicate != null ? new {
+                                    entityId = duplicateResult.TopDuplicate.EntityId,
+                                    score = duplicateResult.TopDuplicate.Score,
+                                    matchReason = duplicateResult.TopDuplicate.MatchReason,
+                                    matchedData = duplicateResult.TopDuplicate.MatchedData
+                                } : null
+                            },
+                            confirmationRequired = true,
+                            originalData = req
                         });
                     }
                 }

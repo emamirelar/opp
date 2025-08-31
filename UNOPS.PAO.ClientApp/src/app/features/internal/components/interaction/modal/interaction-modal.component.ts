@@ -806,7 +806,7 @@ export class InteractionModalComponent {
     this.interactionService.create(formValue).subscribe({
       next: (response) => {
         // Check if response indicates duplicate detection
-        if (response.body?.isDuplicate && response.body?.requiresConfirmation) {
+        if (response.body?.confirmationRequired && response.body?.action === "duplicateConfirmation") {
           // Show duplicate confirmation dialog
           this.showDuplicateConfirmationDialog(response.body, formValue);
         } else {
