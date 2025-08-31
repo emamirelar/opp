@@ -26,6 +26,11 @@
       "description": "Contact list page"
     },
     {
+      "pattern": "/partnerships/interactions/:recordId",
+      "tourFile": "interactiondetail-tour",
+      "description": "Interaction detail page"
+    },
+    {
       "pattern": "/partnerships/interactions",
       "tourFile": "interactionlist-tour",
       "description": "Interaction list page"

@@ -200,7 +200,20 @@
             "contactViaAssistant": "Contatar através do assistente",
             "createdByOffice": "Criado por Escritório",
             "summaryOfInteractions": "Resumo IA de Interações",
-            "contactNews": "Notícias do Contato"
+            "contactNews": "Notícias do Contato",
+            "duplicateDetected": "Contato Duplicado Detectado",
+            "duplicateSummary": "Resumo de Duplicatas",
+            "highConfidence": "Alta Confiança",
+            "mediumConfidence": "Confiança Média",
+            "lowConfidence": "Baixa Confiança",
+            "topMatch": "Melhor Correspondência",
+            "contactId": "ID do Contato",
+            "matchScore": "Pontuação de Correspondência",
+            "matchReason": "Motivo da Correspondência",
+            "matchedData": "Dados Correspondentes",
+            "warningTitle": "Aviso",
+            "warningMessage": "Criar este contato pode resultar em registros duplicados. Tem certeza de que deseja prosseguir?",
+            "createAnyway": "Criar Mesmo Assim"
         },
         "partner": {
             "partner": "Parceiro",
@@ -367,6 +380,7 @@
         "pleaseFullAllRequired": "Por favor, preencha todos os detalhes obrigatórios.",
         "partnerRequired": "O parceiro deve ser inserido.",
         "lastNameRequired": "O sobrenome deve ser inserido.",
+        "titleRequired": "O título deve ser inserido.",
         "emailRequired": "O email deve ser inserido."
     },
     "loading": {

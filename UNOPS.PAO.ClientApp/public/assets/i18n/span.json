@@ -204,7 +204,20 @@
             "contactViaAssistant": "Contactar a través del asistente",
             "createdByOffice": "Creado por Oficina",
             "summaryOfInteractions": "Resumen IA de Interacciones",
-            "contactNews": "Noticias del Contacto"
+            "contactNews": "Noticias del Contacto",
+            "duplicateDetected": "Contacto Duplicado Detectado",
+            "duplicateSummary": "Resumen de Duplicados",
+            "highConfidence": "Alta Confianza",
+            "mediumConfidence": "Confianza Media",
+            "lowConfidence": "Baja Confianza",
+            "topMatch": "Mejor Coincidencia",
+            "contactId": "ID de Contacto",
+            "matchScore": "Puntuación de Coincidencia",
+            "matchReason": "Razón de Coincidencia",
+            "matchedData": "Datos Coincidentes",
+            "warningTitle": "Advertencia",
+            "warningMessage": "Crear este contacto puede resultar en registros duplicados. ¿Está seguro de que desea continuar?",
+            "createAnyway": "Crear de Todos Modos"
         },
         "partner": {
             "partner": "Socio",
@@ -362,6 +375,7 @@
         "pleaseFullAllRequired": "Por favor, complete todos los detalles requeridos.",
         "partnerRequired": "El socio debe ser ingresado.",
         "lastNameRequired": "El apellido debe ser ingresado.",
+        "titleRequired": "El título debe ser ingresado.",
         "emailRequired": "El email debe ser ingresado."
     },
     "loading": {

@@ -248,7 +248,20 @@
             "contactViaAssistant": "Contacter via l'assistant",
             "createdByOffice": "Créé par Bureau",
             "summaryOfInteractions": "Résumé IA des Interactions",
-            "contactNews": "Actualités du Contact"
+            "contactNews": "Actualités du Contact",
+            "duplicateDetected": "Contact Dupliqué Détecté",
+            "duplicateSummary": "Résumé des Doublons",
+            "highConfidence": "Confiance Élevée",
+            "mediumConfidence": "Confiance Moyenne",
+            "lowConfidence": "Confiance Faible",
+            "topMatch": "Meilleure Correspondance",
+            "contactId": "ID du Contact",
+            "matchScore": "Score de Correspondance",
+            "matchReason": "Raison de la Correspondance",
+            "matchedData": "Données Correspondantes",
+            "warningTitle": "Avertissement",
+            "warningMessage": "Créer ce contact peut entraîner des enregistrements dupliqués. Êtes-vous sûr de vouloir continuer ?",
+            "createAnyway": "Créer Quand Même"
         },
         "pictureEditor": {
             "dropImageHere": "Déposez une image ici ou utilisez le bouton ci-dessous",
@@ -427,6 +440,7 @@
         "pleaseFullAllRequired": "Veuillez remplir tous les détails requis.",
         "partnerRequired": "Le partenaire doit être saisi.",
         "lastNameRequired": "Le nom de famille doit être saisi.",
+        "titleRequired": "Le titre doit être saisi.",
         "emailRequired": "L'email doit être saisi."
     },
     "loading": {

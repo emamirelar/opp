@@ -30,8 +30,12 @@ export class InteractionService {
     return this.http.get<Interaction>(`${this.apiUrl}/${id}`, { observe: 'response' });
   }
 
-  create(interaction: Interaction): Observable<HttpResponse<Interaction>> {
-    return this.http.post<Interaction>(this.apiUrl, interaction, { observe: 'response' });
+  /**
+   * Creates an interaction with duplicate detection handling
+   * Returns either the created interaction or duplicate detection response
+   */
+  create(interaction: Interaction): Observable<HttpResponse<any>> {
+    return this.http.post<any>(this.apiUrl, interaction, { observe: 'response' });
   }
 
   update(interaction: Interaction): Observable<HttpResponse<Interaction>> {
