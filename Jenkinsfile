@@ -97,116 +97,143 @@ node("app-build") {
             }
         }
 
-        stage('Build and Deploy Main Application') {
-            withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                sh """
-                UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-main-\${BUILD_NUMBER}.json"
-                cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
-                gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
-                gcloud config set project ${PROJECT_ID}
-                
-                # Copy the appropriate Dockerfile
-                cp ${DOCKERFILE_MAIN} Dockerfile
-                
-                # Build and push main application image
-                gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} .
+        stage('Build and Deploy Services') {
+            parallel(
+                "Main Application": {
+                    withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        sh """
+                        # Create isolated build directory for Main application
+                        MAIN_BUILD_DIR="\${WORKSPACE}/main-build-\${BUILD_NUMBER}"
+                        mkdir -p "\${MAIN_BUILD_DIR}"
+                        
+                        # Copy all source files to isolated directory
+                        rsync -av --exclude="main-build-*" --exclude="ai-build-*" . "\${MAIN_BUILD_DIR}/"
+                        
+                        cd "\${MAIN_BUILD_DIR}"
+                        
+                        # Setup unique credentials
+                        UNIQUE_CREDS_FILE="\${MAIN_BUILD_DIR}/gcp-creds-main-\${BUILD_NUMBER}.json"
+                        cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
+                        gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
+                        gcloud config set project ${PROJECT_ID}
+                        
+                        # Copy the appropriate Dockerfile
+                        cp ${DOCKERFILE_MAIN} Dockerfile
+                        
+                        # Build and push main application image
+                        gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} .
 
-                # Deploy main application to Cloud Run with retry logic
-                echo "Deploying main application to Cloud Run..."
-                DEPLOY_SUCCESS=false
-                for attempt in 1 2 3; do
-                    echo "Deployment attempt \$attempt for main application..."
-                    if gcloud run deploy ${SERVICE_NAME_MAIN} \\
-                            --image europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} \\
-                            --project ${PROJECT_ID} \\
-                            --region ${REGION} \\
-                            --port ${PORT_MAIN} \\
-                            --platform managed \\
-                            --set-cloudsql-instances ${SQL_CONN_STRING} \\
-                            --vpc-connector ${VPC_CONNECTOR} \\
-                            --vpc-egress private-ranges-only \\
-                            --set-env-vars ASPNETCORE_ENVIRONMENT=${environment} \\
-                            --set-secrets ${SECRETS_MAIN} \\
-                            --timeout=900 \\
-                            --quiet; then
-                        echo "Main application deployment successful on attempt \$attempt"
-                        DEPLOY_SUCCESS=true
-                        break
-                    else
-                        echo "Main application deployment failed on attempt \$attempt"
-                        if [ \$attempt -lt 3 ]; then
-                            echo "Waiting 30 seconds before retry..."
-                            sleep 30
+                        # Deploy main application to Cloud Run with retry logic
+                        echo "Deploying main application to Cloud Run..."
+                        DEPLOY_SUCCESS=false
+                        for attempt in 1 2 3; do
+                            echo "Deployment attempt \$attempt for main application..."
+                            if gcloud run deploy ${SERVICE_NAME_MAIN} \\
+                                    --image europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} \\
+                                    --project ${PROJECT_ID} \\
+                                    --region ${REGION} \\
+                                    --port ${PORT_MAIN} \\
+                                    --platform managed \\
+                                    --set-cloudsql-instances ${SQL_CONN_STRING} \\
+                                    --vpc-connector ${VPC_CONNECTOR} \\
+                                    --vpc-egress private-ranges-only \\
+                                    --set-env-vars ASPNETCORE_ENVIRONMENT=${environment} \\
+                                    --set-secrets ${SECRETS_MAIN} \\
+                                    --timeout=900 \\
+                                    --quiet; then
+                                echo "Main application deployment successful on attempt \$attempt"
+                                DEPLOY_SUCCESS=true
+                                break
+                            else
+                                echo "Main application deployment failed on attempt \$attempt"
+                                if [ \$attempt -lt 3 ]; then
+                                    echo "Waiting 30 seconds before retry..."
+                                    sleep 30
+                                fi
+                            fi
+                        done
+                        
+                        if [ "\$DEPLOY_SUCCESS" = false ]; then
+                            echo "Main application deployment failed after 3 attempts"
+                            exit 1
                         fi
-                    fi
-                done
-                
-                if [ "\$DEPLOY_SUCCESS" = false ]; then
-                    echo "Main application deployment failed after 3 attempts"
-                    exit 1
-                fi
-                
-                # Cleanup unique credential file
-                rm -f "\${UNIQUE_CREDS_FILE}"
-                """
-            }
-        }
+                        
+                        # Cleanup
+                        rm -f "\${UNIQUE_CREDS_FILE}"
+                        cd "\${WORKSPACE}"
+                        rm -rf "\${MAIN_BUILD_DIR}"
+                        """
+                    }
+                },
+                "AI Service": {
+                    withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                        sh """
+                        # Create isolated build directory for AI service
+                        AI_BUILD_DIR="\${WORKSPACE}/ai-build-\${BUILD_NUMBER}"
+                        mkdir -p "\${AI_BUILD_DIR}"
+                        
+                        # Copy all source files to isolated directory
+                        rsync -av --exclude="main-build-*" --exclude="ai-build-*" . "\${AI_BUILD_DIR}/"
+                        
+                        cd "\${AI_BUILD_DIR}"
+                        
+                        # Setup unique credentials
+                        UNIQUE_CREDS_FILE="\${AI_BUILD_DIR}/gcp-creds-ai-\${BUILD_NUMBER}.json"
+                        cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
+                        gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
+                        gcloud config set project ${PROJECT_ID}
+                        
+                        # Navigate to AI service directory
+                        cd UNOPS.PAO.AIService
 
-        stage('Build and Deploy AI Service') {
-            withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                sh """
-                UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-ai-\${BUILD_NUMBER}.json"
-                cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
-                gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
-                gcloud config set project ${PROJECT_ID}
-                
-                # Navigate to AI service directory
-                cd UNOPS.PAO.AIService
+                        # Build and push AI service image
+                        gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} .
 
-                # Build and push AI service image
-                gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} .
-
-                # Deploy AI service to Cloud Run with retry logic
-                echo "Deploying AI service to Cloud Run..."
-                DEPLOY_SUCCESS=false
-                for attempt in 1 2 3; do
-                    echo "Deployment attempt \$attempt for AI service..."
-                    if gcloud run deploy ${SERVICE_NAME_AI} \\
-                            --image europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} \\
-                            --project ${PROJECT_ID} \\
-                            --region ${REGION} \\
-                            --port ${PORT_AI} \\
-                            --platform managed \\
-                            --set-cloudsql-instances ${SQL_CONN_STRING} \\
-                            --vpc-connector ${VPC_CONNECTOR} \\
-                            --vpc-egress private-ranges-only \\
-                            --set-env-vars ${ENV_VARS_AI} \\
-                            --min-instances ${AI_MIN_INSTANCES} \\
-                            --max-instances ${AI_MAX_INSTANCES} \\
-                            --memory ${AI_MEMORY} \\
-                            --timeout=900 \\
-                            --quiet; then
-                        echo "AI service deployment successful on attempt \$attempt"
-                        DEPLOY_SUCCESS=true
-                        break
-                    else
-                        echo "AI service deployment failed on attempt \$attempt"
-                        if [ \$attempt -lt 3 ]; then
-                            echo "Waiting 30 seconds before retry..."
-                            sleep 30
+                        # Deploy AI service to Cloud Run with retry logic
+                        echo "Deploying AI service to Cloud Run..."
+                        DEPLOY_SUCCESS=false
+                        for attempt in 1 2 3; do
+                            echo "Deployment attempt \$attempt for AI service..."
+                            if gcloud run deploy ${SERVICE_NAME_AI} \\
+                                    --image europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} \\
+                                    --project ${PROJECT_ID} \\
+                                    --region ${REGION} \\
+                                    --port ${PORT_AI} \\
+                                    --platform managed \\
+                                    --set-cloudsql-instances ${SQL_CONN_STRING} \\
+                                    --vpc-connector ${VPC_CONNECTOR} \\
+                                    --vpc-egress private-ranges-only \\
+                                    --set-env-vars ${ENV_VARS_AI} \\
+                                    --min-instances ${AI_MIN_INSTANCES} \\
+                                    --max-instances ${AI_MAX_INSTANCES} \\
+                                    --memory ${AI_MEMORY} \\
+                                    --timeout=900 \\
+                                    --quiet; then
+                                echo "AI service deployment successful on attempt \$attempt"
+                                DEPLOY_SUCCESS=true
+                                break
+                            else
+                                echo "AI service deployment failed on attempt \$attempt"
+                                if [ \$attempt -lt 3 ]; then
+                                    echo "Waiting 30 seconds before retry..."
+                                    sleep 30
+                                fi
+                            fi
+                        done
+                        
+                        if [ "\$DEPLOY_SUCCESS" = false ]; then
+                            echo "AI service deployment failed after 3 attempts"
+                            exit 1
                         fi
-                    fi
-                done
-                
-                if [ "\$DEPLOY_SUCCESS" = false ]; then
-                    echo "AI service deployment failed after 3 attempts"
-                    exit 1
-                fi
-                
-                # Cleanup unique credential file
-                rm -f "\${UNIQUE_CREDS_FILE}"
-                """
-            }
+                        
+                        # Cleanup
+                        rm -f "\${UNIQUE_CREDS_FILE}"
+                        cd "\${WORKSPACE}"
+                        rm -rf "\${AI_BUILD_DIR}"
+                        """
+                    }
+                }
+            )
         }
         
         stage('Post-Deploy Actions') {
