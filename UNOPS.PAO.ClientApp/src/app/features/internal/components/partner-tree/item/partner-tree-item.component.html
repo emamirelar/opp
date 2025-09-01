@@ -24,8 +24,8 @@
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.partnerCategory" | translate }}</label>
     <p-select
-    [disabled]="record?.partnerCategoryEditable !== true || !permissionUtilityService.canUpdate(recordPermissions())"
-    [options]="parentOptions" formControlName="partnerCategoryCode" optionLabel="name" valueField="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Category" class="w-full" [appendTo]="'body'">
+    [disabled]="!canEditPartnerCategory() || !permissionUtilityService.canUpdate(recordPermissions())"
+    [options]="partnerCategoryOptions" formControlName="partnerCategoryCode" optionLabel="name" optionValue="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Category" class="w-full" [appendTo]="'body'">
       <ng-template let-item pTemplate="item">
         <div>{{ item.name }}</div>
       </ng-template>
@@ -35,8 +35,8 @@
   <div class="flex flex-col gap-2">
     <label>{{ "label.partnerTree.partnerGroup" | translate }}</label>
     <p-select [options]="filteredPartnerGroupOptions"
-    [disabled]="record?.partnerGroupEditable !== true || !permissionUtilityService.canUpdate(recordPermissions())"
-    formControlName="partnerGroupCode" optionLabel="name" valueField="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Group" class="w-full" [appendTo]="'body'">
+    [disabled]="!canEditPartnerGroup() || !permissionUtilityService.canUpdate(recordPermissions())"
+    formControlName="partnerGroupCode" optionLabel="name" optionValue="code" [filter]="true" filterBy="name" [showClear]="true" placeholder="Select a Partner Group" class="w-full" [appendTo]="'body'">
       <ng-template let-item pTemplate="item">
         <div>{{ item.name }}</div>
       </ng-template>
