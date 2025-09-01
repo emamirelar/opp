@@ -1,0 +1,242 @@
+properties(
+    [
+        buildDiscarder(logRotator(numToKeepStr: "8"))
+    ]
+)
+
+timestamps {
+node("app-build") {
+    def CHECK_NAME = 'Jenkins CI'
+    def BUILD_URL = env.BUILD_URL ?: ''
+
+    def environment, PROJECT_ID, REPO_NAME, IMAGE_NAME_MAIN, IMAGE_NAME_AI, IMAGE_TAG
+    def SERVICE_NAME_MAIN, SERVICE_NAME_AI, REGION, SQL_CONN_STRING, VPC_CONNECTOR
+    def SECRETS_MAIN, ENV_VARS_AI, CREDENTIALS_ID, DOCKERFILE_MAIN, PORT_MAIN, PORT_AI
+    def AI_MIN_INSTANCES, AI_MAX_INSTANCES, AI_MEMORY
+    
+    try {
+        stage('Checkout Code') {
+            checkout scm
+
+            publishChecks name: CHECK_NAME,
+                          status: 'IN_PROGRESS',
+                          title: 'Build Started',
+                          summary: "Starting build for branch: ${env.BRANCH_NAME ?: 'development'}",
+                          detailsURL: BUILD_URL
+        }
+        
+        stage('Load Configuration') {
+            def configYaml = readFile('jenkins-config.yaml')
+            def yaml = new org.yaml.snakeyaml.Yaml()
+            def config = yaml.load(configYaml)
+
+            def currentBranch = env.BRANCH_NAME ?: 'development'
+            def envConfig = null
+ 
+            config.environments.each { envName, envSettings -> 
+                if (currentBranch.matches(envSettings.branch_pattern)) {
+                    envConfig = envSettings
+                    return true
+                }
+            }
+
+            if (!envConfig) {
+                envConfig = config.environments.development
+                echo "No matching environment found for branch ${currentBranch}, using development environment"
+            }
+            
+            environment = envConfig.environment
+            PROJECT_ID = envConfig.project_id
+            REPO_NAME = envConfig.repo_name
+            IMAGE_NAME_MAIN = envConfig.image_name_main
+            IMAGE_NAME_AI = envConfig.image_name_ai
+            IMAGE_TAG = 'latest'
+            SERVICE_NAME_MAIN = envConfig.service_name_main
+            SERVICE_NAME_AI = envConfig.service_name_ai
+            REGION = envConfig.region
+            SQL_CONN_STRING = envConfig.sql_conn_string
+            VPC_CONNECTOR = envConfig.vpc_connector
+            SECRETS_MAIN = envConfig.secrets_main
+            ENV_VARS_AI = envConfig.env_vars_ai
+            CREDENTIALS_ID = envConfig.credentials_id
+            DOCKERFILE_MAIN = envConfig.dockerfile_main
+            PORT_MAIN = envConfig.port_main
+            PORT_AI = envConfig.port_ai
+            AI_MIN_INSTANCES = envConfig.ai_min_instances
+            AI_MAX_INSTANCES = envConfig.ai_max_instances
+            AI_MEMORY = envConfig.ai_memory
+            
+            echo "Configuration loaded for environment: ${environment}"
+            echo "Project ID: ${PROJECT_ID}"
+            echo "Branch: ${currentBranch}"
+        }
+
+        stage('Ensure Artifact Registry Exists') {
+            withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                sh """
+                UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-registry-\${BUILD_NUMBER}.json"
+                cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
+                gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
+                gcloud config set project ${PROJECT_ID}
+                
+                REPO_TYPE="docker"
+
+                if ! gcloud artifacts repositories describe "${REPO_NAME}" --location="${REGION}" >/dev/null 2>&1; then
+                    echo "Artifact Registry '${REPO_NAME}' does not exist in '${REGION}'. Creating..."
+                    gcloud artifacts repositories create "${REPO_NAME}" \\
+                        --repository-format="\$REPO_TYPE" \\
+                        --location="${REGION}" \\
+                        --description="Docker repository for cloud run images"
+                else
+                    echo "Artifact Registry '${REPO_NAME}' already exists in '${REGION}'."
+                fi
+                
+                # Cleanup unique credential file
+                rm -f "\${UNIQUE_CREDS_FILE}"
+                """
+            }
+        }
+
+        stage('Build and Deploy Main Application') {
+            withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                sh """
+                UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-main-\${BUILD_NUMBER}.json"
+                cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
+                gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
+                gcloud config set project ${PROJECT_ID}
+                
+                # Copy the appropriate Dockerfile
+                cp ${DOCKERFILE_MAIN} Dockerfile
+                
+                # Build and push main application image
+                gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} .
+
+                # Deploy main application to Cloud Run with retry logic
+                echo "Deploying main application to Cloud Run..."
+                DEPLOY_SUCCESS=false
+                for attempt in 1 2 3; do
+                    echo "Deployment attempt \$attempt for main application..."
+                    if gcloud run deploy ${SERVICE_NAME_MAIN} \\
+                            --image europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_MAIN}:${IMAGE_TAG} \\
+                            --project ${PROJECT_ID} \\
+                            --region ${REGION} \\
+                            --port ${PORT_MAIN} \\
+                            --platform managed \\
+                            --set-cloudsql-instances ${SQL_CONN_STRING} \\
+                            --vpc-connector ${VPC_CONNECTOR} \\
+                            --vpc-egress private-ranges-only \\
+                            --set-env-vars ASPNETCORE_ENVIRONMENT=${environment} \\
+                            --set-secrets ${SECRETS_MAIN} \\
+                            --timeout=900 \\
+                            --quiet; then
+                        echo "Main application deployment successful on attempt \$attempt"
+                        DEPLOY_SUCCESS=true
+                        break
+                    else
+                        echo "Main application deployment failed on attempt \$attempt"
+                        if [ \$attempt -lt 3 ]; then
+                            echo "Waiting 30 seconds before retry..."
+                            sleep 30
+                        fi
+                    fi
+                done
+                
+                if [ "\$DEPLOY_SUCCESS" = false ]; then
+                    echo "Main application deployment failed after 3 attempts"
+                    exit 1
+                fi
+                
+                # Cleanup unique credential file
+                rm -f "\${UNIQUE_CREDS_FILE}"
+                """
+            }
+        }
+
+        stage('Build and Deploy AI Service') {
+            withCredentials([file(credentialsId: CREDENTIALS_ID, variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                sh """
+                UNIQUE_CREDS_FILE="\${WORKSPACE}/gcp-creds-ai-\${BUILD_NUMBER}.json"
+                cp "\${GOOGLE_APPLICATION_CREDENTIALS}" "\${UNIQUE_CREDS_FILE}"
+                gcloud auth activate-service-account --key-file="\${UNIQUE_CREDS_FILE}"
+                gcloud config set project ${PROJECT_ID}
+                
+                # Navigate to AI service directory
+                cd UNOPS.PAO.AIService
+
+                # Build and push AI service image
+                gcloud builds submit --tag europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} .
+
+                # Deploy AI service to Cloud Run with retry logic
+                echo "Deploying AI service to Cloud Run..."
+                DEPLOY_SUCCESS=false
+                for attempt in 1 2 3; do
+                    echo "Deployment attempt \$attempt for AI service..."
+                    if gcloud run deploy ${SERVICE_NAME_AI} \\
+                            --image europe-west4-docker.pkg.dev/${PROJECT_ID}/${IMAGE_NAME_AI}:${IMAGE_TAG} \\
+                            --project ${PROJECT_ID} \\
+                            --region ${REGION} \\
+                            --port ${PORT_AI} \\
+                            --platform managed \\
+                            --set-cloudsql-instances ${SQL_CONN_STRING} \\
+                            --vpc-connector ${VPC_CONNECTOR} \\
+                            --vpc-egress private-ranges-only \\
+                            --set-env-vars ${ENV_VARS_AI} \\
+                            --min-instances ${AI_MIN_INSTANCES} \\
+                            --max-instances ${AI_MAX_INSTANCES} \\
+                            --memory ${AI_MEMORY} \\
+                            --timeout=900 \\
+                            --quiet; then
+                        echo "AI service deployment successful on attempt \$attempt"
+                        DEPLOY_SUCCESS=true
+                        break
+                    else
+                        echo "AI service deployment failed on attempt \$attempt"
+                        if [ \$attempt -lt 3 ]; then
+                            echo "Waiting 30 seconds before retry..."
+                            sleep 30
+                        fi
+                    fi
+                done
+                
+                if [ "\$DEPLOY_SUCCESS" = false ]; then
+                    echo "AI service deployment failed after 3 attempts"
+                    exit 1
+                fi
+                
+                # Cleanup unique credential file
+                rm -f "\${UNIQUE_CREDS_FILE}"
+                """
+            }
+        }
+        
+        stage('Post-Deploy Actions') {
+            echo 'Build completed successfully!'
+            echo "Main App Service: https://console.cloud.google.com/run/detail/${REGION}/${SERVICE_NAME_MAIN}"
+            echo "AI Service: https://console.cloud.google.com/run/detail/${REGION}/${SERVICE_NAME_AI}"
+            
+            publishChecks name: CHECK_NAME,
+                          status: 'COMPLETED',
+                          conclusion: 'SUCCESS',
+                          title: 'Build Succeeded',
+                          summary: "Successfully deployed to ${environment} environment - Main app and AI service deployed",
+                          detailsURL: BUILD_URL
+        }
+    }
+    catch (Exception e) {
+        def errorMessage = e?.getMessage() ?: 'Unknown error occurred'
+        echo "Build failed: ${errorMessage}"
+        currentBuild.result = 'FAILURE'
+        
+        try {
+            publishChecks name: CHECK_NAME ?: 'Jenkins CI',
+                          status: 'COMPLETED',
+                          conclusion: 'FAILURE',
+                          title: 'Build Failed',
+                          summary: "Build failed: ${errorMessage}",
+                          detailsURL: BUILD_URL ?: env.BUILD_URL ?: ''
+        } catch (Exception statusError) {
+            echo "Could not publish status: ${statusError.getMessage()}"
+        }
+    }
+}
+}
