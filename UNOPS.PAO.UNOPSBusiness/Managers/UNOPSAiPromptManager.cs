@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using System.Text;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -267,6 +268,60 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
         entity.CreatedAt = DateTime.UtcNow;
         entity.Id = null; // Ensure new entity
 
+        // Validate that Type is unique
+        if (!string.IsNullOrEmpty(entity.Type))
+        {
+            var existingPrompt = await _promptRepository.GetAll()
+                .Where(p => p.Type == entity.Type)
+                .FirstOrDefaultAsync();
+                
+            if (existingPrompt != null)
+            {
+                throw new InvalidOperationException($"An AI prompt with type '{entity.Type}' already exists. Type must be unique.");
+            }
+        }
+
+        // Auto-deduce Name from Type if not provided
+        var typeLower = entity.Type.ToLower();
+        if (typeLower.Contains("partner"))
+        {
+            entity.Name = "Partner";
+        }
+        else if (typeLower.Contains("contact"))
+        {
+            entity.Name = "Contact";
+        }
+        else if (typeLower.Contains("interaction"))
+        {
+            entity.Name = "Interaction";
+        }
+
+        // Auto-set PromptFunction based on Name if not provided
+        if (string.IsNullOrEmpty(entity.PromptFunction) && !string.IsNullOrEmpty(entity.Name))
+        {
+            switch (entity.Name.ToLower())
+            {
+                case "partner":
+                    entity.PromptFunction = "GetBasicPartnerDetailsAsync";
+                    break;
+                case "contact":
+                    entity.PromptFunction = "GetContactWithInteractionsAsync";
+                    break;
+                case "interaction":
+                    entity.PromptFunction = "GetInteractionDetailsAsync";
+                    break;
+            }
+        }
+
+        // Since the prompt is created via the screen, Admins can edit
+        entity.AdminCanChange = true;
+
+        // Set Description to Type if not provided
+        if (string.IsNullOrEmpty(entity.Description) && !string.IsNullOrEmpty(entity.Type))
+        {
+            entity.Description = entity.Type;
+        }
+
         await _promptRepository.AddAsync(entity);
 
         return _mapper.Map<AiPromptModel>(entity);
@@ -490,5 +545,106 @@ public class UNOPSAiPromptManager : BaseUNOPSManager, IAiPromptManager
                 AlreadyLatest = false
             };
         }
+    }
+
+    /// <summary>
+    /// Exports all AI prompts as a developer-friendly C# code file for seeding
+    /// </summary>
+    public async Task<string> ExportAiPromptsAsync(ClaimsPrincipal user)
+    {
+        // RBAC interceptor handles security enforcement
+        var allPrompts = await _promptRepository.GetAll().ToListAsync();
+        
+        var codeBuilder = new StringBuilder();
+        codeBuilder.AppendLine("using Microsoft.EntityFrameworkCore;");
+        codeBuilder.AppendLine("using UNOPS.PAO.Domain.Entities;");
+        codeBuilder.AppendLine("using UNOPS.PAO.UNOPSDataAccess.Context;");
+        codeBuilder.AppendLine();
+        codeBuilder.AppendLine("namespace UNOPS.PAO.UNOPSDataAccess.Seed");
+        codeBuilder.AppendLine("{");
+        codeBuilder.AppendLine("    public static class AiPromptSeeder");
+        codeBuilder.AppendLine("    {");
+        codeBuilder.AppendLine("        public static async Task SeedAiPromptsAsync(UNOPSAppDbContext context)");
+        codeBuilder.AppendLine("        {");
+        codeBuilder.AppendLine("            if (await context.AiPrompts.AnyAsync())");
+        codeBuilder.AppendLine("            {");
+        codeBuilder.AppendLine("                return;");
+        codeBuilder.AppendLine("            }");
+        codeBuilder.AppendLine();
+        codeBuilder.AppendLine("            var aiPrompts = new List<AiPrompt>");
+        codeBuilder.AppendLine("            {");
+
+        for (int i = 0; i < allPrompts.Count; i++)
+        {
+            var prompt = allPrompts[i];
+            codeBuilder.AppendLine("                new AiPrompt");
+            codeBuilder.AppendLine("                {");
+            codeBuilder.AppendLine($"                    Type = \"{EscapeString(prompt.Type)}\",");
+            codeBuilder.AppendLine($"                    Prompt = \"{EscapeString(prompt.Prompt ?? "")}\",");
+            codeBuilder.AppendLine("                    CreatedAt = DateTime.UtcNow,");
+            codeBuilder.AppendLine($"                    Name = \"{EscapeString(prompt.Name)}\",");
+            codeBuilder.AppendLine($"                    Status = (EntityStatus){(int)prompt.Status},");
+            codeBuilder.AppendLine($"                    ContentConfig = \"{EscapeString(prompt.ContentConfig)}\",");
+            codeBuilder.AppendLine($"                    GenerationConfig = \"{EscapeString(prompt.GenerationConfig)}\",");
+            codeBuilder.AppendLine($"                    Location = \"{EscapeString(prompt.Location)}\",");
+            codeBuilder.AppendLine($"                    Model = \"{EscapeString(prompt.Model)}\",");
+            codeBuilder.AppendLine($"                    Project = \"{EscapeString(prompt.Project)}\",");
+            
+            if (prompt.SafetySettings != null)
+            {
+                codeBuilder.AppendLine($"                    SafetySettings = \"{EscapeString(prompt.SafetySettings)}\",");
+            }
+            else
+            {
+                codeBuilder.AppendLine("                    SafetySettings = null,");
+            }
+            
+            if (prompt.ToolsConfig != null)
+            {
+                codeBuilder.AppendLine($"                    ToolsConfig = \"{EscapeString(prompt.ToolsConfig)}\",");
+            }
+            else
+            {
+                codeBuilder.AppendLine("                    ToolsConfig = null,");
+            }
+            
+            codeBuilder.AppendLine($"                    PromptFunction = \"{EscapeString(prompt.PromptFunction)}\",");
+            codeBuilder.AppendLine($"                    Description = \"{EscapeString(prompt.Description ?? "")}\",");
+            codeBuilder.AppendLine($"                    AdminCanChange = {prompt.AdminCanChange.ToString().ToLower()}");
+            
+            if (i < allPrompts.Count - 1)
+            {
+                codeBuilder.AppendLine("                },");
+            }
+            else
+            {
+                codeBuilder.AppendLine("                }");
+            }
+        }
+
+        codeBuilder.AppendLine("            };");
+        codeBuilder.AppendLine();
+        codeBuilder.AppendLine("            await context.AiPrompts.AddRangeAsync(aiPrompts);");
+        codeBuilder.AppendLine("            await context.SaveChangesAsync();");
+        codeBuilder.AppendLine("        }");
+        codeBuilder.AppendLine("    }");
+        codeBuilder.AppendLine("}");
+
+        return codeBuilder.ToString();
+    }
+
+    /// <summary>
+    /// Escapes strings for C# code generation
+    /// </summary>
+    private string EscapeString(string input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return "";
+            
+        return input.Replace("\\", "\\\\")
+                   .Replace("\"", "\\\"")
+                   .Replace("\n", "\\n")
+                   .Replace("\r", "\\r")
+                   .Replace("\t", "\\t");
     }
 } 
