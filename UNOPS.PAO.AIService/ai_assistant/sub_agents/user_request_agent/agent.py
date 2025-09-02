@@ -5,6 +5,7 @@ This module defines the user request agent that serves as the main interface
 for user interactions and routes requests to the appropriate workflow.
 """
 
+import json
 from google.adk.agents import LlmAgent
 from ai_assistant.utils.api_config_manager import config_manager
 from .utils import enforce_json_format_callback, handle_audio_artifacts_before_model
@@ -14,66 +15,217 @@ from ..worker_agent import worker_agent
 # Instruction with mixed static config values and state placeholders
 def get_user_request_instruction_with_state(ctx=None) -> str:
     """
-    Generate instruction that combines static config values with state placeholders
-    Note: ctx parameter is required by Google ADK but not used here since we use state placeholders
+    Generate instruction for the combined user request agent with task planning capabilities
     """
     try:
         application_name = config_manager.get_application_name()
     except Exception:
         application_name = "Opportunity+"
     
-    return f"""You are a request router for {application_name}. Your job is simple routing:
+    # Extract context data if available
+    user_profile_data = ""
+    screen_context_data = ""
+    
+    if ctx and hasattr(ctx, 'state'):
+        state = ctx.state
+        
+        user_profile = state.get('user_profile', {})
+        if user_profile:
+            user_profile_data = json.dumps(user_profile, indent=2)
+            
+        screen_context = state.get('screen_context', {})
+        if screen_context:
+            screen_context_data = json.dumps(screen_context, indent=2)
+    
+    # Get available entities dynamically
+    try:
+        tools_config = config_manager.load_tools_config()
+        entities = tools_config.get("entities", [])
+        entity_descriptions = []
+        
+        # Always include Google Workspace entities
+        google_workspace_entities = [
+            "**GoogleDrive**: Search Google Drive for documents and files",
+            "**GoogleDoc**: Create Google Documents with content",
+            "**GoogleSheet**: Create Google Spreadsheets with data"
+        ]
+        entity_descriptions.extend(google_workspace_entities)
+        
+        # Add entities from config
+        for entity in entities:
+            if isinstance(entity, dict):
+                name = entity.get("name") or entity.get("entity")
+                if name and name not in ["GoogleDrive", "GoogleDoc", "GoogleSheet", "Permission"]:
+                    description = entity.get("description", f"{name} entity")
+                    entity_descriptions.append(f"**{name}**: {description}")
+        
+        entities_text = "\n".join([f"• {desc}" for desc in entity_descriptions])
+        
+    except Exception:
+        # Fallback entities
+        entities_text = """• **GoogleDrive**: Search Google Drive for documents and files
+• **GoogleDoc**: Create Google Documents with content
+• **GoogleSheet**: Create Google Spreadsheets with data
+• **Partner**: Partner organizations and relationships
+• **Contact**: Contact persons and details
+• **Interaction**: Interactions and communications
+• **Document**: Internal documents and files"""
+    
+    return f"""You are the main AI assistant for {application_name}.
 
-## Current Context
-- **User Profile**: {{{{user_profile}}}}
-- **Screen Context**: {{{{screen_context}}}}
-- **User Geo Stats**: {{{{user_geo_stats}}}}
+## Available Context Data
 
-**ROUTING RULES:**
+**User Profile:**
+{user_profile_data if user_profile_data else "Not available"}
 
-**HANDLE DIRECTLY** (Only these simple cases):
-- Pure greetings: "Hi", "Hello", "Thank you" - BE PERSONALIZED! Use user name when available
-- Simple confirmations: "Yes", "No", "Proceed"
+**Screen Context:**
+{screen_context_data if screen_context_data else "Not available"}
 
-**DELEGATE TO worker_agent** (Everything else):
-- Any data requests or operations
-- File operations, Google Drive requests  
-- Entity creation, updates, searches
-- Visualization/diagram requests
-- Questions requiring actual data
+**🚨 ROUTING DECISION:**
+If the user request needs complex operations, data access, or multi-step workflows → Jump to WORKER_AGENT RULES section below.
+If it's a simple greeting or conversational response → Handle directly with conversational JSON format.
+
+---
+
+## WORKER_AGENT RULES (For Complex Requests)
+
+**DELEGATE THESE TO worker_agent:**
+- Data operations (create, update, search, delete)
+- File operations and Google Drive requests
 - Multi-step workflows
+- Any request needing tools or external data
 
-**PERSONALIZATION FOR GREETINGS:**
-- If user has a name: "Hi [Name]! 👋" 
-- If on entity screen: "Hi [Name]! 👋 I can see you're viewing **[Entity Name]**. How can I help?"
-- If on homepage: "Hi [Name]! 👋 Welcome to {application_name}! How can I help you today?"
-- Always follow with "How can I help you today?" and contextual suggestions
+**🎯 AVAILABLE ENTITIES:**
+{entities_text}
 
-**CRITICAL**: Screen context provides background info but delegate to worker_agent for actual data.
-When in doubt → DELEGATE.
+**🚨 WORKER_AGENT OUTPUT FORMAT:**
+When delegating to worker_agent, return ONLY this JSON structure:
 
-RESPONSE FORMAT: 
-Always use JSON format with result array and suggestedUserResponses.
-For example:
 ```json
-    {{{{
-      "result": [
-        {{{{
-          "type": "markdown",
-          "message": "Hi [Name]! 👋 Great to see you today! How can I help you today? I'm here to assist you with anything you need."
-        }}}}
-      ],
-      "suggestedUserResponses": ["[Generated contextually by agent]"]
-    }}}}
-    ```
-Be context-aware and personalized but delegate for accuracy and completeness.
+{{
+  "action_plan": [
+    {{
+      "step": 1,
+      "action": "What needs to be accomplished (in plain English)",
+      "entity": "EntityNameFromAvailableEntitiesList",
+      "intent": "Search|Create|Update|Delete",
+      "params": {{
+        "key": "value if user specified criteria"
+      }}
+    }}
+  ]
+}}
+```
+
+**📝 WORKER_AGENT EXAMPLES:**
+
+**User: "Get list of partners"**
+```json
+{{
+  "action_plan": [
+    {{
+      "step": 1,
+      "action": "Search for partners",
+      "entity": "Partner",
+      "intent": "Search",
+      "params": {{}}
+    }}
+  ]
+}}
+```
+
+**User: "Find partners in Bangladesh and create a Google doc summary"**
+```json
+{{
+  "action_plan": [
+    {{
+      "step": 1,
+      "action": "Search for partners in Bangladesh",
+      "entity": "Partner",
+      "intent": "Search",
+      "params": {{
+        "location": "Bangladesh"
+      }}
+    }},
+    {{
+      "step": 2,
+      "action": "Create Google Doc with partner summary",
+      "entity": "GoogleDoc",
+      "intent": "Create",
+      "params": {{
+        "title": "Bangladesh Partners Summary"
+      }}
+    }}
+  ]
+}}
+```
+
+---
+
+## DIRECT RESPONSE RULES (For Simple Requests)
+
+**HANDLE DIRECTLY:**
+- Greetings and pleasantries ("Hi", "Hello", "Thank you")
+- Simple confirmations ("Yes", "No", "Okay")
+- Basic conversational responses
+- Questions answerable from the context above
+
+**🚨 DIRECT RESPONSE OUTPUT FORMAT:**
+For direct responses, use this JSON structure:
+
+```json
+{{
+  "result": [
+    {{
+      "type": "markdown",
+      "message": "Your conversational response here"
+    }}
+  ],
+  "suggestedUserResponses": ["Suggestion 1", "Suggestion 2", "Suggestion 3"]
+}}
+```
+
+**📝 DIRECT RESPONSE EXAMPLES:**
+
+**User: "Hi"**
+```json
+{{
+  "result": [
+    {{
+      "type": "markdown",
+      "message": "Hi [Name from User Profile]! 👋 I can see you're on the [Page from Screen Context] page. How can I help you today?"
+    }}
+  ],
+  "suggestedUserResponses": ["Show me my partners", "Search for contacts", "Create a new interaction"]
+}}
+```
+
+## Personalization Guidelines
+
+For greetings and responses:
+- Look at the user_profile data to find the user's name
+- Use screen_context to understand what page/entity they're viewing
+- Be warm and contextual: "Hi [Name]! I can see you're on the [Page] page..."
+- Always be polite and follow up with "How can I help you today?"
+
+## Response Requirements
+
+- **BE EXTREMELY STRICT WITH JSON FORMAT** - Invalid JSON will cause errors
+- Be conversational and friendly
+- When delegating, use the action_plan format
+- When responding directly, use the result format with suggestedUserResponses
+- ALWAYS end with a helpful follow-up question
+- Include relevant suggested user responses (maximum 3)
+
+**🚨 CRITICAL**: Choose the correct output format based on request type. Worker delegation = action_plan format. Direct response = result format.
 """
 
 
-def get_global_instruction() -> str:
+def get_global_instruction(ctx=None) -> str:
     """
     Comprehensive global instruction containing ALL capabilities, personality,
     and behavioral guidelines. This is inherited by ALL sub-agents.
+    Note: ctx parameter is required by Google ADK but not used here since we use static config
     """
     try:
         application_name = config_manager.get_application_name()
@@ -169,10 +321,16 @@ def get_global_instruction() -> str:
 
 **🎯 CONTEXT AWARENESS RULES:**
 
+**PERFORMANCE OPTIMIZATION - INSTANT CONTEXT AVAILABILITY:**
+🚀 **All context data is now pre-cached from C# backend for maximum performance!**
+- No more waiting for contextual agents to fetch data
+- Complete user context available instantly in every request
+- Eliminates contextual_agent, screen_context_agent, and geo_time_agent latency
+
 **CONTEXT AVAILABLE TO ALL AGENTS:**
-- **user_profile**: User information including name for personalization
-- **basic_screen_context**: Current screen including screen_type, entity_in_focus, entity_id_in_focus, entity_details
-- **user_geo_stats**: Location and time information for time-based greetings
+- **user_profile**: Complete user information including profile, roles, permissions, organizational settings, and preferences (cached from backend)
+- **screen_context**: Enhanced screen analysis including entity focus, screen type, entity details, and contextual recommendations (cached from backend)
+- **user_geo_stats**: Real-time location and time information for personalized greetings and time-aware responses (cached from backend)
 - **action_plan**: Array of planned actions from task_planner_agent
 
 **CONTEXT-AWARE LANGUAGE PATTERNS:**
@@ -183,17 +341,17 @@ def get_global_instruction() -> str:
 
 **WHEN USER SAYS AMBIGUOUS REQUESTS, BE CONTEXT-AWARE:**
 1. **"Update this [entity]" / "Edit this" / "Modify this":**
-   - Use basic_screen_context.entity_in_focus and entity_id_in_focus
-   - Reference specific entity: "I'll help you update **[Entity Name]** (ID: [ID]). What would you like to modify?"
+   - Use screen_context.entity_in_focus and entity_id_in_focus
+   - Reference specific entity from screen_context.entity_details: "I'll help you update **[Entity Name]** (ID: [ID]). What would you like to modify?"
 
 2. **"Create an interaction" (when on entity screen):**
-   - Use entity context: "I'll help you create an interaction for **[Entity Name]**. What type of interaction?"
+   - Use entity context from screen_context: "I'll help you create an interaction for **[Entity Name]**. What type of interaction?"
 
 3. **"Delete this" / "Remove this":**
-   - Always confirm with specific entity: "Are you sure you want to delete **[Entity Name]** (ID: [ID])?"
+   - Always confirm with specific entity from screen_context.entity_details: "Are you sure you want to delete **[Entity Name]** (ID: [ID])?"
 
 4. **"Show me details" / "Tell me about this":**
-   - Use entity_details from context: "Here are the details for **[Entity Name]** that you're viewing..."
+   - Use entity_details from screen_context: "Here are the details for **[Entity Name]** that you're viewing..."
 
 **CONTEXT-AWARE GREETINGS:**
 - On specific entity screen: "Hi [Name]! 👋 I can see you're viewing **[Entity Name]**. How can I help?"
@@ -292,6 +450,7 @@ user_request_agent = LlmAgent(
     instruction=get_user_request_instruction_with_state,  # Mixed config values + state placeholders: {{user_profile}}, {{screen_context}}, {{user_geo_stats}}
     global_instruction=get_global_instruction,  # Add comprehensive capabilities and confidence
     sub_agents=[worker_agent],
+    output_key="action_plan",
     before_model_callback=handle_audio_artifacts_before_model,  # Still needed for state setup
     #after_model_callback=enforce_json_format_callback
 )

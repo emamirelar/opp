@@ -43,6 +43,11 @@ using UNOPS.PAO.Utilities.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Caching.Memory; // Add this for IMemoryCache
 using System.Security.Claims;
+using UNOPS.PAO.DataAccess.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using UNOPS.PAO.Identity.Entities;
+using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
 
@@ -61,8 +66,14 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly ILogger<UNOPSGeminiManager> _logger;
     private readonly CloudRunHelper _cloudRunHelper;
     private readonly IUserManagementManager _userManagementManager;
+    private readonly IUserInfoService _userInfoService;
+    private readonly UserManager<PAOIdentityUser> _userManager;
+    private readonly IUserPreferenceService _userPreferenceService;
+    private readonly IUserProfileCacheService _userProfileCacheService;
+    private readonly IScreenContextCacheService _screenContextCacheService;
+    private readonly IGeoTimeCacheService _geoTimeCacheService;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService)
     {
         _mapper = mapper;
         _context = context;
@@ -70,6 +81,12 @@ public class UNOPSGeminiManager : IGeminiManager
         _configuration = configuration;
         _logger = logger;
         _userManagementManager = userManagementManager;
+        _userInfoService = userInfoService;
+        _userManager = userManager;
+        _userPreferenceService = userPreferenceService;
+        _userProfileCacheService = userProfileCacheService;
+        _screenContextCacheService = screenContextCacheService;
+        _geoTimeCacheService = geoTimeCacheService;
         
         // Initialize CloudRunHelper internally
         var cloudRunHelperLogger = new LoggerFactory().CreateLogger<CloudRunHelper>();
@@ -145,6 +162,207 @@ public class UNOPSGeminiManager : IGeminiManager
         var basicProvider = new GoogleSecretManagerConfigurationProvider(credentialParams.ProjectId);
         var secretValue = basicProvider.GetSecretVersion(secretName, "latest");
         return GoogleCredential.FromJson(secretValue);
+    }
+
+    // Get user profile details - first check cache, then fallback to database
+    private async Task<object?> GetUserProfileDetailsAsync(ClaimsPrincipal user)
+    {
+        try
+        {
+            // Try multiple ways to get the current user's email from claims
+            var currentEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? 
+                              user.FindFirst("email")?.Value ?? 
+                              user.Identity?.Name;
+            
+            if (string.IsNullOrEmpty(currentEmail))
+            {
+                return null;
+            }
+
+            // Extract email if it contains colon (for dev mode)
+            currentEmail = currentEmail.Contains(':') ? currentEmail.Split(':').Last() : currentEmail;
+
+            // Get user ID from claims for cache lookup
+            var currentUserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            
+            // Try to get from cache first using user ID, then fallback to email
+            var cacheKey = !string.IsNullOrEmpty(currentUserId) ? currentUserId : currentEmail;
+            var cachedProfile = await _userProfileCacheService.GetCachedUserProfileAsync(cacheKey);
+            
+            if (cachedProfile != null)
+            {
+                _logger.LogDebug("Using cached user profile for user: {UserId}/{Email}", currentUserId, currentEmail);
+                return cachedProfile;
+            }
+
+            _logger.LogDebug("User profile not in cache, fetching from database for user: {UserId}/{Email}", currentUserId, currentEmail);
+
+            // Cache miss - fetch from database (same logic as UserProfileController)
+            // Get user roles from claims
+            var userRoles = user.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
+
+            // If no roles in claims, try to get them from database using email
+            if (!userRoles.Any())
+            {
+                try
+                {
+                    var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+                    if (aspNetUser != null)
+                    {
+                        userRoles = (await _userManager.GetRolesAsync(aspNetUser)).ToList();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to get user roles from database for email: {Email}", currentEmail);
+                    userRoles = new List<string>();
+                }
+            }
+
+            // Check if user is PARTNER_GLOB_ADMIN
+            var isPartnerGlobalAdmin = userRoles.Contains("PARTNER_GLOB_ADMIN");
+
+            // Get user info with organization settings
+            var userInfoWithOrgSettings = await _userInfoService.GetUserInfoWithOrgSettingsAsync(currentEmail);
+            
+            if (userInfoWithOrgSettings == null)
+            {
+                return null;
+            }
+
+            // Get user preferences
+            UserPreference? userPreferences = null;
+            try
+            {
+                var aspNetUser = await _userManager.FindByEmailAsync(currentEmail);
+                if (aspNetUser != null)
+                {
+                    userPreferences = await _userPreferenceService.GetUserPreferencesAsync(aspNetUser.Id.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to get user preferences for email: {Email}", currentEmail);
+                userPreferences = null;
+            }
+
+            // Create response object with additional properties including user preferences
+            var response = new
+            {
+                userInfoWithOrgSettings,
+                Roles = userRoles,
+                IsPartnerGlobalAdmin = isPartnerGlobalAdmin,
+                // PARTNER_GLOB_ADMIN always has self-management enabled regardless of org setting
+                CanManageOffice = isPartnerGlobalAdmin || 
+                                 (userInfoWithOrgSettings.GetType().GetProperty("IsSelfManagementEnabled")?.GetValue(userInfoWithOrgSettings) as bool? ?? false),
+                UserPreferences = userPreferences
+            };
+
+            // Cache the response for future use
+            await _userProfileCacheService.SetCachedUserProfileAsync(cacheKey, response);
+
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user profile details");
+            return null;
+        }
+    }
+
+    // Enhance state with user profile information, screen context, and geo-time data
+    private async Task<string> EnhanceStateWithUserProfile(string? originalState, object? userProfileDetails)
+    {
+        try
+        {
+            var stateObject = new Dictionary<string, object>();
+            
+            // Parse existing state if it exists
+            if (!string.IsNullOrEmpty(originalState))
+            {
+                try
+                {
+                    var existingState = JsonConvert.DeserializeObject<Dictionary<string, object>>(originalState);
+                    if (existingState != null)
+                    {
+                        stateObject = existingState;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to parse existing state, starting with empty state");
+                }
+            }
+            
+            // Add user profile details to state
+            if (userProfileDetails != null)
+            {
+                stateObject["user_profile"] = userProfileDetails;
+            }
+            
+            // Add screen context if available in state
+            await AddScreenContextToState(stateObject);
+            
+            // Add geo-time data
+            await AddGeoTimeToState(stateObject);
+            
+            return JsonConvert.SerializeObject(stateObject);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error enhancing state with context data");
+            return originalState ?? "{}";
+        }
+    }
+
+    private async Task AddScreenContextToState(Dictionary<string, object> stateObject)
+    {
+        try
+        {
+            // Extract screen URL and user focus context from existing state
+            var screenUrl = stateObject.TryGetValue("screen_url", out var screenUrlObj) ? screenUrlObj?.ToString() : "";
+            var userFocusContext = stateObject.TryGetValue("user_focus_context", out var userFocusObj) ? userFocusObj?.ToString() : "";
+            
+            if (!string.IsNullOrEmpty(screenUrl) || !string.IsNullOrEmpty(userFocusContext))
+            {
+                // Get current user ID for context
+                var userId = stateObject.TryGetValue("user_id", out var userIdObj) ? userIdObj?.ToString() : "";
+                
+                var screenContext = await _screenContextCacheService.GetScreenContextAsync(screenUrl, userFocusContext, userId);
+                if (screenContext != null)
+                {
+                    stateObject["screen_context"] = screenContext;
+                    _logger.LogDebug("Added screen context to state for URL: {ScreenUrl}", screenUrl);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to add screen context to state");
+        }
+    }
+
+    private async Task AddGeoTimeToState(Dictionary<string, object> stateObject)
+    {
+        try
+        {
+            // Extract user IP if available from state
+            var userIp = stateObject.TryGetValue("user_ip", out var userIpObj) ? userIpObj?.ToString() : null;
+            
+            var geoTimeData = await _geoTimeCacheService.GetGeoTimeDataAsync(userIp);
+            if (geoTimeData != null)
+            {
+                stateObject["user_geo_stats"] = geoTimeData;
+                _logger.LogDebug("Added geo-time data to state");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to add geo-time data to state");
+        }
     }
 
     public async Task<string> ProcessDataRelatedSummaryDetails(GeminiProcessDataRequest req)
@@ -1093,6 +1311,12 @@ public class UNOPSGeminiManager : IGeminiManager
         }
         currentUserEmail = currentUserEmail.Contains(':') ? currentUserEmail.Split(':').Last() : currentUserEmail;
 
+        // Get user profile details to include in state
+        var userProfileDetails = await GetUserProfileDetailsAsync(user);
+        
+        // Enhance the state with user profile information
+        var enhancedState = await EnhanceStateWithUserProfile(req.State, userProfileDetails);
+
         var apiUrl = $"/chat";
         HttpContent httpContent;
 
@@ -1109,7 +1333,7 @@ public class UNOPSGeminiManager : IGeminiManager
             multipartContent.Add(new StringContent(req.sessionId?.ToString() ?? ""), "session_id");
             multipartContent.Add(new StringContent(req.Message ?? ""), "message");
             multipartContent.Add(new StringContent("false"), "streaming");
-            multipartContent.Add(new StringContent(req.State ?? ""), "state");
+            multipartContent.Add(new StringContent(enhancedState ?? ""), "state");
             
             // Add files
             foreach (var file in req.Files)
@@ -1136,7 +1360,7 @@ public class UNOPSGeminiManager : IGeminiManager
                 SessionId = req.sessionId?.ToString() ?? "",
                 Message = req.Message ?? "",
                 Streaming = false,
-                State = req.State
+                State = enhancedState
             };
 
             var jsonContent = System.Text.Json.JsonSerializer.Serialize(aiChatRequest);

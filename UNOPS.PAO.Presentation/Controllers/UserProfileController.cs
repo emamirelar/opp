@@ -14,6 +14,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using UNOPS.PAO.Identity.Entities;
 using UNOPS.PAO.UNOPSBusiness.Interfaces;
+using UNOPS.PAO.UNOPSBusiness.Services;
 
 namespace UNOPS.PAO.Presentation.Controllers;
 
@@ -37,6 +38,7 @@ public class UserProfileController : BaseController
     private readonly UserResolverService<int> _userResolverService;
     private readonly UserManager<PAOIdentityUser> _userManager;
     private readonly IUserPreferenceService _userPreferenceService;
+    private readonly IUserProfileCacheService _userProfileCacheService;
 
     public UserProfileController(
         // ProfileController dependencies
@@ -48,6 +50,7 @@ public class UserProfileController : BaseController
         UserResolverService<int> userResolverService,
         UserManager<PAOIdentityUser> userManager,
         IUserPreferenceService userPreferenceService,
+        IUserProfileCacheService userProfileCacheService,
         // BaseController dependencies
         IAuthorizationService authorizationService,
         ILogger<UserProfileController> logger)
@@ -59,6 +62,7 @@ public class UserProfileController : BaseController
         _userResolverService = userResolverService;
         _userManager = userManager;
         _userPreferenceService = userPreferenceService;
+        _userProfileCacheService = userProfileCacheService;
     }
 
     #region ProfileController Endpoints
@@ -258,6 +262,16 @@ public class UserProfileController : BaseController
                              (userInfoWithOrgSettings.GetType().GetProperty("IsSelfManagementEnabled")?.GetValue(userInfoWithOrgSettings) as bool? ?? false),
             UserPreferences = userPreferences
         };
+
+        // Cache the response for the ChatWithGemini to use
+        // Use the user ID from userInfoWithOrgSettings if available, otherwise use email
+        var userId = userInfoWithOrgSettings?.GetType().GetProperty("UserId")?.GetValue(userInfoWithOrgSettings)?.ToString() 
+                    ?? currentEmail;
+        
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await _userProfileCacheService.SetCachedUserProfileAsync(userId, response);
+        }
 
         return Ok(response);
     }
