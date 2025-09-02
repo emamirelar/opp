@@ -140,6 +140,7 @@ export class AiPromptComponent implements OnInit, OnDestroy {
   saving = signal(false);
   testing = signal(false);
   upgradingModel = signal(false);
+  exporting = signal(false);
   displayDialog = signal(false);
   totalRecords = signal(0);
   pageSize = signal(10);
@@ -936,6 +937,69 @@ Be extra cautious while deleting as there could be several dependencies within t
           summary: 'Error',
           detail: 'Failed to upgrade Gemini models'
         });
+      }
+    });
+
+    this.subscriptions.add(sub);
+  }
+
+  /**
+   * @uiButton export_ai_prompts
+   * @description Exports all AI prompts as a C# seeder file for developers
+   * @label Export AiPrompt (Developer Version)
+   * @icon pi pi-download
+   * @when_to_use When developers need to export AI prompts as C# code for seeding or backup purposes
+   * @permissions AI_PROMPT_READ
+   */
+  exportAiPrompts(): void {
+    // Check read permissions
+    const permissions = this.entityPermissions();
+    if (!permissions.permissions.canRead) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Permission Denied',
+        detail: 'You do not have permission to export AI prompts'
+      });
+      return;
+    }
+
+    this.exporting.set(true);
+    
+    const sub = this.aiPromptService.exportAiPrompts().subscribe({
+      next: (blob) => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        link.download = `AiPromptSeeder_${timestamp}.cs`;
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Export Complete',
+          detail: 'AI prompts exported successfully as C# seeder file'
+        });
+      },
+      error: (error) => {
+        console.error('Error exporting AI prompts:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Export Failed',
+          detail: 'Failed to export AI prompts'
+        });
+      },
+      complete: () => {
+        this.exporting.set(false);
       }
     });
 

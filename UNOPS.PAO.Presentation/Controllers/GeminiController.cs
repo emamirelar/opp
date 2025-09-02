@@ -205,6 +205,31 @@ public class GeminiController : BaseController
     }
 
     /// <summary>
+    /// Exports all AI prompts as a C# seeder file for developers
+    /// </summary>
+    /// <returns>C# code file content for seeding AI prompts</returns>
+    /// <example_uses>
+    /// Export AI prompts for development
+    /// Download seeder file for AI prompts
+    /// Generate developer version of prompts
+    /// Export prompts as C# code
+    /// </example_uses>
+    /// <when_to_use>Use this when developers need to export AI prompts as C# code for seeding or backup purposes.</when_to_use>
+    [HttpGet(APIDictionary.AiPrompts + "/export-developer")]
+    [AccessControlled(EntityTypes.AiPromptManagement, "read")]
+    public async Task<ActionResult> ExportAiPromptsAsync()
+    {
+        // RBAC interceptor handles permission checking
+        var csharpCode = await _managerWrapper.AiPromptManager.ExportAiPromptsAsync(User);
+        
+        var fileName = $"AiPromptSeeder_{DateTime.UtcNow:yyyyMMddHHmmss}.cs";
+        var contentType = "text/plain";
+        var fileBytes = System.Text.Encoding.UTF8.GetBytes(csharpCode);
+        
+        return File(fileBytes, contentType, fileName);
+    }
+
+    /// <summary>
     /// Soft deletes an AI prompt from the system (marks as deleted rather than permanent removal).
     /// </summary>
     /// <param name="id">AI prompt ID to delete</param>
