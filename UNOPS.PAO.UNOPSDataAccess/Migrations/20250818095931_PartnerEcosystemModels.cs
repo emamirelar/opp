@@ -429,7 +429,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
             MigrationSqlScriptExecutor.ExecuteSqlScripts(migrationBuilder, new[]
             {
-                "seed-liaison-offices.sql",
                 "seed-roles.sql"
             });
         }

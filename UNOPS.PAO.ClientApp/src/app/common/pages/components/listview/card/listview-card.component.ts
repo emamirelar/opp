@@ -34,6 +34,10 @@ import { InteractionIconService } from '../../../../services/interaction-icon.se
       width: 100%;
     }
 
+    :host ::ng-deep p-avatar img {
+      object-fit: cover;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }

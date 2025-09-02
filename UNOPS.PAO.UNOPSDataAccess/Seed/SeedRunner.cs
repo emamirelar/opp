@@ -61,6 +61,18 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
             await EntityPermissionSeeder.SeedEntityPermissionsAsync(context);
             Console.WriteLine("Entity permissions seeded successfully.");
 
+            Console.WriteLine("Seeding liaison offices...");
+            await LiaisonOfficeSeeder.SeedLiaisonOfficesAsync(context);
+            Console.WriteLine("Liaison offices seeded successfully.");
+
+            Console.WriteLine("Seeding partner tree...");
+            await PartnerTreeSeeder.SeedPartnerTreesAsync(context);
+            Console.WriteLine("Partner tree seeded successfully.");
+
+            Console.WriteLine("Seeding partners...");
+            await PartnerSeeder.SeedPartnersAsync(context);
+            Console.WriteLine("Partners seeded successfully.");
+
             Console.WriteLine("All configuration data seeding complete!");
         }
     }
