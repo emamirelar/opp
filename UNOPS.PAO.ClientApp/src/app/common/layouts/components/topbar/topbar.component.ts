@@ -617,8 +617,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   handleNotificationClick(notification: Notification) {
-
-    debugger;
     // Handle AI data modification notifications (category format: ENTITYTYPE_ID)
     if (notification.responseType.startsWith("data_")) {
       this.handleDataModificationNotification(notification);
