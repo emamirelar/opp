@@ -28,10 +28,6 @@ public class MappingProfile : Profile
         CreateMap<UNOPSInteraction, InteractionModel>()
             .PreserveReferences()
             .MaxDepth(2)
-            .ForMember(dest => dest.ContactId, opt => opt.MapFrom(src => 
-                src.InteractionContacts != null && src.InteractionContacts.Any() 
-                    ? src.InteractionContacts.First().ContactId 
-                    : 0))
             .ForMember(dest => dest.ContactName, opt => opt.MapFrom(src => 
                 src.InteractionContacts != null && src.InteractionContacts.Any() 
                     ? $"{src.InteractionContacts.First().Contact.FirstName} {src.InteractionContacts.First().Contact.LastName}".Trim()

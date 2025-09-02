@@ -23,7 +23,6 @@ function getAccessToken() {
 function getIAPToken() {
     const propertiesService = PropertiesService.getScriptProperties()
     const apiKey = propertiesService.getProperty('IDENTITY_TOOLKIT_API_KEY')
-    const hostName = propertiesService.getProperty('OPPORTUNITY_PLUS_HOSTNAME')
     const res = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key='+apiKey, {
         method: 'POST',
         payload: JSON.stringify({

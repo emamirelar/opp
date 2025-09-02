@@ -25,4 +25,5 @@ public interface IManagerWrapper
     IUserDataManager UserDataManager { get; }
     IUserManagementManager UserManagementManager { get; }
     IAiPromptManager AiPromptManager { get; }
+    IGmailAddonManager GmailAddonManager { get; }
 }

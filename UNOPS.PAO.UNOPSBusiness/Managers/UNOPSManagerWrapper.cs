@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using UNOPS.PAO.Business.Repositories.Generic;
 using UNOPS.PAO.Domain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
+using UNOPS.PAO.UNOPSBusiness.Helpers;
 using System.Net.Http;
 
 namespace UNOPS.PAO.UNOPSBusiness.Managers;
@@ -21,6 +23,7 @@ using UNOPS.PAO.UNOPSDomain.Entities;
 using UNOPS.PAO.UNOPSBusiness.Services;
 using UNOPS.PAO.UNOPSBusiness.Authorization;
 using UNOPS.PAO.DataAccess.Services;
+using UNOPS.PAO.DataAccess.Interfaces;
 
 public class UNOPSManagerWrapper : ManagerWrapper
 {
@@ -34,6 +37,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSUserManagementManager userManagementManager;
     private readonly UNOPSAiPromptManager aiPromptManager;
     private readonly UNOPSEntityConfigurationManager entityConfigurationManager;
+    private readonly UNOPSGmailAddonManager gmailAddonManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
                                UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider) : base(mapper, context, userManager, httpContextAccessor)
@@ -64,6 +68,11 @@ public class UNOPSManagerWrapper : ManagerWrapper
         geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, userManagementManager);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);
         entityConfigurationManager = new UNOPSEntityConfigurationManager(mapper, opsContext, configuration, permissionService);
+        
+        // Create GmailAddonManager with required dependencies (no longer needs GmailAddonHelper)
+        var userInfoService = serviceProvider.GetRequiredService<IUserInfoService>();
+        var gmailAddonManagerLogger = loggerFactory.CreateLogger<UNOPSGmailAddonManager>();
+        gmailAddonManager = new UNOPSGmailAddonManager(mapper, opsContext, contactManager, partnerManager, UserDataManager, interactionManager, permissionService, configuration, httpContextAccessor, userInfoService, gmailAddonManagerLogger);
     }
 
     public override ISystemAdminManager SystemAdminManager => systemAdminManager;
@@ -75,6 +84,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     public override ILinkManager LinkManager => linkManager;
     public override IUserManagementManager UserManagementManager => userManagementManager;
     public override IAiPromptManager AiPromptManager => aiPromptManager;
+    public override IGmailAddonManager GmailAddonManager => gmailAddonManager;
     
     // UNOPS-specific managers
     public IUNOPSEntityConfigurationManager EntityConfigurationManager => entityConfigurationManager;

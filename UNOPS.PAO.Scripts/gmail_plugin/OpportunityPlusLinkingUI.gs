@@ -325,23 +325,42 @@ function buildOpportunityPlusCard(relatedRecords, messageData, checkboxStates) {
 
     card.addSection(weKnowSection);
 
-    // Add fixed footer
-    card.setFixedFooter(
-      CardService.newFixedFooter()
-        .setPrimaryButton(
-          CardService.newTextButton()
-            .setText('Log this')
+    // Add fixed footer with conditional button based on existing interaction
+    if(messageData.existingInteraction) {
+      const viewUrl = `${getBaseUrl()}/#/partnerships/interactions/${messageData.existingInteraction.id}`;
+
+      const footerButton = CardService.newTextButton()
+            .setText('View')
+            .setMaterialIcon(CardService.newMaterialIcon().setName('open_in_new'))
+            .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
             .setBackgroundColor('#006699')
-            .setOnClickAction(
-              CardService.newAction()
-                .setFunctionName('createOrUpdateInteraction')
-                .setParameters({ 
-                  messageData: JSON.stringify(messageData),
-                  relatedRecords: JSON.stringify(relatedRecords)
-                })
-            )
-        )
-    );
+            .setOpenLink(CardService.newOpenLink()
+              .setUrl(viewUrl)
+              .setOpenAs(CardService.OpenAs.FULL_SIZE)
+            );      
+
+      card.setFixedFooter(
+        CardService.newFixedFooter()
+          .setPrimaryButton(footerButton)
+      );
+    }
+    else {
+      const footerButton = CardService.newTextButton()
+          .setText('Log this')
+          .setBackgroundColor('#006699')
+          .setOnClickAction(
+            CardService.newAction()
+              .setFunctionName('createOrUpdateInteraction')
+              .setParameters({ 
+                messageData: JSON.stringify(messageData),
+                relatedRecords: JSON.stringify(relatedRecords)
+              })
+          );
+      card.setFixedFooter(
+        CardService.newFixedFooter()
+          .setPrimaryButton(footerButton)
+      );
+    }
   }
   else {
     var errorSection = CardService.newCardSection()

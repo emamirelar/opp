@@ -204,6 +204,15 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
                 
                 // Assign UNOPS_GEN_USER role
                 await _userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+
+                // Ensure GMAIL_GEN_USER role exists
+                if (!await _roleManager.RoleExistsAsync("GMAIL_GEN_USER"))
+                {
+                    await _roleManager.CreateAsync(new PAOIdentityRole { Name = "GMAIL_GEN_USER" });
+                }
+                
+                // Assign GMAIL_GEN_USER role
+                await _userManager.AddToRoleAsync(user, "GMAIL_GEN_USER");
                 
                 // Assign default role if needed
                 if (!string.IsNullOrEmpty(Options.DefaultRole))
@@ -236,6 +245,17 @@ public class IAPAuthenticationHandler : AuthenticationHandler<IAPAuthenticationO
             if (!await _userManager.IsInRoleAsync(user, "UNOPS_GEN_USER"))
             {
                 await _userManager.AddToRoleAsync(user, "UNOPS_GEN_USER");
+            }
+
+            // For existing users, ensure they have GMAIL_GEN_USER role
+            if (!await _roleManager.RoleExistsAsync("GMAIL_GEN_USER"))
+            {
+                await _roleManager.CreateAsync(new PAOIdentityRole { Name = "GMAIL_GEN_USER" });
+            }
+            
+            if (!await _userManager.IsInRoleAsync(user, "GMAIL_GEN_USER"))
+            {
+                await _userManager.AddToRoleAsync(user, "GMAIL_GEN_USER");
             }
         }
 

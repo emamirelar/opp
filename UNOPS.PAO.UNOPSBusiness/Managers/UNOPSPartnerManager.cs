@@ -1318,12 +1318,10 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
     public async Task<List<PartnerModel?>> GetPartnersForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user = null)
     {
-        var partners = PartnerRepository
-            .GetAll(["PartnerGroup"])
-            .AsQueryable()
+        var partners = await _context.Partners
             .Where(p => input.partnerIds.Contains(p.Id))
-            .Cast<UNOPSPartner>()
-            .ToList();
+            .Include(p => p.PartnerGroup)
+            .ToListAsync();
 
         // Load organization unit relationships manually
         await partners.LoadOrganizationUnitRelationshipsAsync(_context);
@@ -1357,12 +1355,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
         var interactionsByPartner = interactionPartners
             .GroupBy(ip => ip.PartnerId)
             .ToDictionary(g => g.Key, g => g.Select(ip => ip.Interaction).ToList());
-
-        // Batch permission lookup once for all partners
-        var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
-        var userInteractionPermissions = await GetEntityPermissionsAsync(user, "Interaction");
-        // Batch permission lookup once for all contacts
-        //var userContactPermissions = await GetEntityPermissionsAsync(user, "Contact");
 
         var mappedPartners = new List<PartnerModel>();
         foreach (var partner in partners)
@@ -1420,8 +1412,6 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
 
             mappedPartners.Add(model);
         }
-
-
         return mappedPartners;
     }
 
@@ -1808,5 +1798,65 @@ public class UNOPSPartnerManager : BaseUNOPSManager, IPartnerManager
     }
 
     #endregion
+
+    /// <summary>
+    /// Gets a partner by name (case-insensitive search)
+    /// </summary>
+    /// <param name="user">The current user's claims principal</param>
+    /// <param name="name">The partner name to search for</param>
+    /// <returns>The partner model if found and user has access, null otherwise</returns>
+    public async Task<PartnerModel?> GetPartnerByNameAsync(ClaimsPrincipal user, string name)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
+            // Query for partner with the specified name (case-insensitive)
+            var partner = await _context.Partners
+                .Where(p => p.Name.ToLower() == name.ToLower() && !p.IsDeleted)
+                .Include(p => p.PartnerGroup)
+                .AsQueryable()
+                .FirstOrDefaultAsync();
+
+            if (partner == null)
+            {
+                return null;
+            }
+
+            // Load organization unit relationships
+            await partner.LoadOrganizationUnitRelationshipsAsync(_context);
+
+            // Apply access control filters to ensure user has permission to access this partner
+            var query = _context.Partners
+                .Where(p => p.Id == partner.Id)
+                .Include(p => p.PartnerGroup)
+                .AsQueryable();
+
+            var filteredData = await ApplyAccessControlFilters(query, user, "read");
+            
+            if (filteredData is IEnumerable<UNOPSPartner> partnerList)
+            {
+                var accessiblePartner = partnerList.FirstOrDefault();
+                if (accessiblePartner != null)
+                {
+                    // Load relationships again for the filtered partner
+                    await accessiblePartner.LoadOrganizationUnitRelationshipsAsync(_context);
+                    var model = await MapEntityToModelAsync(accessiblePartner, _mapper, user);
+                    return await MapEntityToModelWithPermissionsAsync(model, user, accessiblePartner);
+                }
+            }
+
+            // User doesn't have access to this partner
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error getting partner by name: {Name}", name);
+            return null;
+        }
+    }
 
 }

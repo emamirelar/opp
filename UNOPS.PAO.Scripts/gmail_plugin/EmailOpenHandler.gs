@@ -47,7 +47,7 @@ function getMessageData(eventObj) {
     const message = GmailApp.getMessageById(messageId);
     const thread = GmailApp.getThreadById(threadId);
     const threadMessages = thread.getMessages();
-    const currentMessageBody = cleanEmailBody(message.getPlainBody());
+    const currentMessageBody = cleanEmailBody(message.getBody());
 
     let fullConversationContent = "";
     let attachmentNames = [];
@@ -63,8 +63,6 @@ function getMessageData(eventObj) {
           includeAttachments: true
         });
 
-        Logger.log("Fallback attachments count: " + attachments.length);
-
         if (attachments.length > 0) {
           attachments.forEach((att, index) => {
             const name = att.getName();
@@ -74,16 +72,15 @@ function getMessageData(eventObj) {
             }
           });
         }
-        Logger.log(`Message #${i + 1} - Attachments found: ${attachments.length}`);
 
-        const rawBody = msg.getPlainBody();
+        const rawBody = msg.getBody();
         const cleanedBody = cleanEmailBody(rawBody);
 
         // Build conversation content
         const sender = msg.getFrom();
         const date = Utilities.formatDate(msg.getDate(), Session.getScriptTimeZone(), 'dd-MMM-yyyy HH:mm');
         const subject = msg.getSubject();
-        const body = msg.getPlainBody(); 
+        const body = msg.getBody(); 
         const to = msg.getTo();
         const cc = msg.getCc();
         const bcc = msg.getBcc();

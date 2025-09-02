@@ -42,4 +42,12 @@ public interface IContactManager
     Task<List<ContactModel?>> GetContactsForGmailAddon(GmailRelatedRecordsRequest input, ClaimsPrincipal user);
     Task<object> GetContactsWithSpecificationAsync(ClaimsPrincipal user, ISpecification<Contact> specification, PaginationRequest pagination);
     Task<List<UnmatchedEmailModel>> GetUnmatchedEmailsWithPartnerSuggestionsAsync(List<string> emailAddresses, ClaimsPrincipal user = null);
+    
+    /// <summary>
+    /// Gets a contact by email address
+    /// </summary>
+    /// <param name="user">The current user's claims principal</param>
+    /// <param name="email">The email address to search for</param>
+    /// <returns>The contact model if found, null otherwise</returns>
+    Task<ContactModel?> GetContactByEmailAsync(ClaimsPrincipal user, string email);
 }

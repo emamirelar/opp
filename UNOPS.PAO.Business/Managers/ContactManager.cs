@@ -257,4 +257,9 @@ public class ContactManager : IContactManager
     {
         throw new NotImplementedException("Use UNOPSContactManager for UNOPS-specific implementation");
     }
+
+    public virtual async Task<ContactModel?> GetContactByEmailAsync(ClaimsPrincipal user, string email)
+    {
+        throw new NotImplementedException("Use UNOPSContactManager for UNOPS-specific implementation");
+    }
 }
