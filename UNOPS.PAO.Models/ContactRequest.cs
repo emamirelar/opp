@@ -31,4 +31,9 @@ public class ContactRequest : ExtensibleModel
     public string? MailingPostalCode { get; set; }
     public string? MailingCountry { get; set; }
     public int PartnerId { get; set; }
+    
+    /// <summary>
+    /// Flag to bypass duplicate detection when user confirms creation despite duplicates
+    /// </summary>
+    public bool ConfirmDuplicateCreation { get; set; } = false;
 }

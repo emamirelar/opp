@@ -1,5 +1,3 @@
-<p-confirmDialog></p-confirmDialog>
-
 <form [formGroup]="formGroup" (ngSubmit)="onSubmit()" class="interaction-modal-form">
   @if( showValidationFailedError() === true ){
   <p-message severity="error" icon="pi pi-info-circle" styleClass="mb-4">Please fill all the required details.</p-message>
@@ -45,10 +43,13 @@
                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
                          optionLabel="name"
                          optionValue="id"
+                         [lazy]="true"
+                         [virtualScroll]="true"
+                         [virtualScrollItemSize]="32"
                          display="chip"
                          multiple
                          fluid
-                         [maxSelectedLabels]="100000"
+                         [maxSelectedLabels]="4000"
                          placeholder="{{ 'label.interaction.selectContacts' | translate }}"
                          ariaLabel="contacts">
             <ng-template let-contact #item>
@@ -81,11 +82,15 @@
                          formControlName="userIds"
                          [options]="allUsers()"
                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
+                         [lazy]="true"
+                         [virtualScroll]="true"
+                         [virtualScrollItemSize]="32"
                          optionLabel="name"
                          optionValue="id"
                          display="chip"
                          fluid="true"
-                         [maxSelectedLabels]="100000"
+                         [appendTo]="'body'"
+                         [maxSelectedLabels]="4000"
                          placeholder="{{ 'label.interaction.selectUsers' | translate }}"
                          ariaLabel="users">
             <ng-template let-user #item>
@@ -192,6 +197,10 @@
                          [disabled]="!recordPermissions()?.permissions?.canUpdate"
                          optionLabel="name"
                          optionValue="id"
+                         [lazy]="true"
+                         [virtualScroll]="true"
+                         [virtualScrollItemSize]="32"
+                         [maxSelectedLabels]="50"
                          [filter]="true"
                          filterBy="name"
                          [appendTo]="'body'"
@@ -211,6 +220,9 @@
                     [disabled]="!recordPermissions()?.permissions?.canUpdate"
                     optionLabel="name"
                     optionValue="id"
+                    [lazy]="true"
+                    [virtualScroll]="true"
+                    [virtualScrollItemSize]="32"
                     [filter]="true"
                     filterBy="name"
                     [appendTo]="'body'"

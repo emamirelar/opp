@@ -367,6 +367,15 @@ public class Startup
         services.AddScoped<IOrgUnitHierarchyService, OrgUnitHierarchyService>();
         services.AddScoped<IOrgUnitFilterService, OrgUnitFilterService>();
         
+        // Register User Profile Cache service for optimizing ChatWithGemini performance
+        services.AddScoped<IUserProfileCacheService, UserProfileCacheService>();
+        
+        // Register Screen Context Cache service for optimizing ChatWithGemini performance
+        services.AddScoped<IScreenContextCacheService, ScreenContextCacheService>();
+        
+        // Register Geo Time Cache service for optimizing ChatWithGemini performance
+        services.AddScoped<IGeoTimeCacheService, GeoTimeCacheService>();
+        
         // Register Dashboard service for user-specific filtering
         services.AddScoped<IDashboardService, DashboardService>();
 

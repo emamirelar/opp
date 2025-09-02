@@ -195,4 +195,13 @@ export class AiPromptService {
       observe: 'response'
     });
   }
+
+  /**
+   * Exports all AI prompts as a C# seeder file for developers
+   */
+  exportAiPrompts(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/export-developer`, {
+      responseType: 'blob'
+    });
+  }
 } 

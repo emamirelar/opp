@@ -3,7 +3,7 @@ DROP FUNCTION IF EXISTS public.retrieve_similarity_results(TEXT, TEXT, TEXT, REA
 -- Drop existing function if it exists
 DROP FUNCTION IF EXISTS public.retrieve_embedding_search(TEXT, TEXT, REAL, TEXT);
 
- re-- Create the embedding search function (vector based) - returns single result
+-- Create the embedding search function (vector based) - returns single result
 CREATE OR REPLACE FUNCTION public.retrieve_embedding_search(
     entity_name text,
     embedding_vector text,

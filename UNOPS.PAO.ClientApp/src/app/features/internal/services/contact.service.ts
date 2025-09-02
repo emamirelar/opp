@@ -108,10 +108,13 @@ export class ContactService {
       );
   }
 
-  createContact( contact: Contact ): Observable<Contact> {
-
+  /**
+   * Creates a contact with duplicate detection handling
+   * Returns either the created contact or duplicate detection response
+   */
+  createContact( contact: Contact ): Observable<any> {
     this.isLoading.set( true );
-    return this.http.post<Contact>(this.apiUrl, contact).pipe(tap(
+    return this.http.post<any>(this.apiUrl, contact).pipe(tap(
     {
       next: (event) => {
         this.isLoading.set( false );

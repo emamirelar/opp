@@ -40,7 +40,7 @@ public class UNOPSManagerWrapper : ManagerWrapper
     private readonly UNOPSGmailAddonManager gmailAddonManager;
 
     public UNOPSManagerWrapper(IMapper mapper, AppDbContext context, UNOPSAppDbContext opsContext, IConfiguration configuration,
-                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider) : base(mapper, context, userManager, httpContextAccessor)
+                               UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IHttpContextAccessor httpContextAccessor, IPermissionService permissionService, HttpClient httpClient, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IUserInfoService userInfoService, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService) : base(mapper, context, userManager, httpContextAccessor)
     {
         // Create a MemoryCache instance for services that need it
         var memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -65,12 +65,11 @@ public class UNOPSManagerWrapper : ManagerWrapper
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor, serviceProvider);
         linkManager = new LinkManager(mapper, opsContext);
         userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, userManagementManager);
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, userManagementManager, userInfoService, userManager, userPreferenceService, userProfileCacheService, screenContextCacheService, geoTimeCacheService);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);
         entityConfigurationManager = new UNOPSEntityConfigurationManager(mapper, opsContext, configuration, permissionService);
         
         // Create GmailAddonManager with required dependencies (no longer needs GmailAddonHelper)
-        var userInfoService = serviceProvider.GetRequiredService<IUserInfoService>();
         var gmailAddonManagerLogger = loggerFactory.CreateLogger<UNOPSGmailAddonManager>();
         gmailAddonManager = new UNOPSGmailAddonManager(mapper, opsContext, contactManager, partnerManager, UserDataManager, interactionManager, permissionService, configuration, httpContextAccessor, userInfoService, gmailAddonManagerLogger);
     }

@@ -67,6 +67,11 @@ public class PartnerRequest : ExtensibleModel
     /// Organization unit hierarchy IDs - managed automatically by the partner manager
     /// </summary>
     public List<int>? OrganizationHierarchyIds { get; set; }
+    
+    /// <summary>
+    /// Flag to bypass duplicate detection when user confirms creation despite duplicates
+    /// </summary>
+    public bool ConfirmDuplicateCreation { get; set; } = false;
 }
 
 

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal, computed, Type } from '@angular/core';
 import { DynamicDialogConfig } from 'primeng/dynamicdialog';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
@@ -22,6 +22,8 @@ import { CheckboxModule, CheckboxChangeEvent } from 'primeng/checkbox';
 import { ComponentResolverService } from '../../../../../features/internal/services/component-resolver.service';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 import { ImportService } from '../import.service';
+import { DuplicateIndicatorComponent } from '../duplicate-indicator/duplicate-indicator.component';
+import { DuplicateSummaryComponent } from '../duplicate-summary/duplicate-summary.component';
 
 // Custom interface for import columns that extends ListViewColumn
 interface ImportColumn extends ListViewColumn {
@@ -51,7 +53,9 @@ interface ImportColumn extends ListViewColumn {
     DropdownModule,
     TooltipModule,
     CheckboxModule,
-    TitleCasePipe
+    TitleCasePipe,
+    DuplicateIndicatorComponent,
+    DuplicateSummaryComponent
   ],
   templateUrl: './import-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -61,6 +65,7 @@ export class ImportDialogComponent implements OnInit {
   importDialogService = inject(ImportDialogService);
   componentResolverService = inject(ComponentResolverService);
   importService = inject(ImportService);
+  translateService = inject(TranslateService);
   // Make Math available to the template
   Math = Math;
 
@@ -72,6 +77,12 @@ export class ImportDialogComponent implements OnInit {
   validationErrors = signal<Map<number, string[]>>(new Map());
   rowsWithMissingRequired = signal<number[]>([]);
   showMissingRequiredBanner = signal<boolean>(false);
+  
+  // Duplicate detection properties
+  duplicateRows = signal<any[]>([]);
+  nonDuplicateRows = signal<any[]>([]);
+  showDuplicateWarning = signal<boolean>(false);
+  duplicateWarningMessage = signal<string>('');
 
   // Pagination properties
   first = signal(0);
@@ -85,74 +96,89 @@ export class ImportDialogComponent implements OnInit {
 
   // Contact-specific columns
   contactColumns: ImportColumn[] = [
-    { field: 'salutation', header: 'Salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
-    { field: 'firstName', header: 'First Name', required: false, label: 'First Name', type: 'text', sortable: false },
-    { field: 'middleName', header: 'Middle Name', required: false, label: 'Middle Name', type: 'text', sortable: false },
-    { field: 'lastName', header: 'Last Name', required: true, label: 'Last Name', type: 'text', sortable: false },
-    { field: 'suffix', header: 'Suffix', required: false, label: 'Suffix', type: 'text', sortable: false },
-    { field: 'title', header: 'Title', required: false, label: 'Title', type: 'text', sortable: false },
-    { field: 'pronouns', header: 'Pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
-    { field: 'birthDate', header: 'Birth Date', required: false, label: 'Birth Date', type: 'text', sortable: false },
-    { field: 'partnerId', header: 'Partner ID', required: true, label: 'Partner ID', type: 'text', sortable: false },
-    { field: 'email', header: 'Email', required: true, label: 'Email', type: 'text', sortable: false },
-    { field: 'phone', header: 'Phone', required: false, label: 'Phone', type: 'text', sortable: false },
-    { field: 'mobile', header: 'Mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
-    { field: 'otherPhone', header: 'Other Phone', required: false, label: 'Other Phone', type: 'text', sortable: false },
-    { field: 'fax', header: 'Fax', required: false, label: 'Fax', type: 'text', sortable: false },
-    { field: 'department', header: 'Department', required: false, label: 'Department', type: 'text', sortable: false },
-    { field: 'description', header: 'Description', required: false, label: 'Description', type: 'text', sortable: false },
-    { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'contactNumber', header: 'Contact Number', required: false, label: 'Contact Number', type: 'text', sortable: false },
-    { field: 'assistant', header: 'Assistant', required: false, label: 'Assistant', type: 'text', sortable: false },
-    { field: 'assistantPhone', header: 'Assistant Phone', required: false, label: 'Assistant Phone', type: 'text', sortable: false },
-    { field: 'assistantEmail', header: 'Assistant Email', required: false, label: 'Assistant Email', type: 'text', sortable: false },
-    { field: 'mailingStreet', header: 'Mailing Street', required: false, label: 'Mailing Street', type: 'text', sortable: false },
-    { field: 'mailingStreet2', header: 'Mailing Street 2', required: false, label: 'Mailing Street 2', type: 'text', sortable: false },
-    { field: 'mailingCity', header: 'Mailing City', required: false, label: 'Mailing City', type: 'text', sortable: false },
-    { field: 'mailingStateProvince', header: 'Mailing State/Province', required: false, label: 'Mailing State/Province', type: 'text', sortable: false },
-    { field: 'mailingPostalCode', header: 'Mailing Postal Code', required: false, label: 'Mailing Postal Code', type: 'text', sortable: false },
-    { field: 'mailingCountry', header: 'Mailing Country', required: false, label: 'Mailing Country', type: 'text', sortable: false },
+    { field: 'salutation', header: 'contact.salutation', required: false, label: 'Salutation', type: 'text', sortable: false },
+    { field: 'firstName', header: 'contact.firstName', required: false, label: 'First Name', type: 'text', sortable: false },
+    { field: 'middleName', header: 'contact.middleName', required: false, label: 'Middle Name', type: 'text', sortable: false },
+    { field: 'lastName', header: 'contact.lastName', required: true, label: 'Last Name', type: 'text', sortable: false },
+    { field: 'suffix', header: 'contact.suffix', required: false, label: 'Suffix', type: 'text', sortable: false },
+    { field: 'title', header: 'contact.title', required: true, label: 'Title', type: 'text', sortable: false },
+    { field: 'pronouns', header: 'contact.pronouns', required: false, label: 'Pronouns', type: 'text', sortable: false },
+    { field: 'birthDate', header: 'contact.birthDate', required: false, label: 'Birth Date', type: 'text', sortable: false },
+    { field: 'partnerId', header: 'contact.partnerId', required: true, label: 'Partner ID', type: 'text', sortable: false },
+    { field: 'email', header: 'contact.email', required: true, label: 'Email', type: 'text', sortable: false },
+    { field: 'phone', header: 'contact.phone', required: false, label: 'Phone', type: 'text', sortable: false },
+    { field: 'mobile', header: 'contact.mobile', required: false, label: 'Mobile', type: 'text', sortable: false },
+    { field: 'otherPhone', header: 'contact.otherPhone', required: false, label: 'Other Phone', type: 'text', sortable: false },
+    { field: 'fax', header: 'contact.fax', required: false, label: 'Fax', type: 'text', sortable: false },
+    { field: 'department', header: 'contact.department', required: false, label: 'Department', type: 'text', sortable: false },
+    { field: 'description', header: 'contact.description', required: false, label: 'Description', type: 'text', sortable: false },
+    { field: 'status', header: 'contact.status', required: false, label: 'Status', type: 'text', sortable: false },
+    { field: 'contactNumber', header: 'contact.contactNumber', required: false, label: 'Contact Number', type: 'text', sortable: false },
+    { field: 'assistant', header: 'contact.assistant', required: false, label: 'Assistant', type: 'text', sortable: false },
+    { field: 'assistantPhone', header: 'contact.assistantPhone', required: false, label: 'Assistant Phone', type: 'text', sortable: false },
+    { field: 'assistantEmail', header: 'contact.assistantEmail', required: false, label: 'Assistant Email', type: 'text', sortable: false },
+    { field: 'mailingStreet', header: 'contact.mailingStreet', required: false, label: 'Mailing Street', type: 'text', sortable: false },
+    { field: 'mailingStreet2', header: 'contact.mailingStreet2', required: false, label: 'Mailing Street 2', type: 'text', sortable: false },
+    { field: 'mailingCity', header: 'contact.mailingCity', required: false, label: 'Mailing City', type: 'text', sortable: false },
+    { field: 'mailingStateProvince', header: 'contact.mailingStateProvince', required: false, label: 'Mailing State/Province', type: 'text', sortable: false },
+    { field: 'mailingPostalCode', header: 'contact.mailingPostalCode', required: false, label: 'Mailing Postal Code', type: 'text', sortable: false },
+    { field: 'mailingCountry', header: 'contact.mailingCountry', required: false, label: 'Mailing Country', type: 'text', sortable: false },
   ];
 
-  // Partner-specific columns
-  partnerColumns: ImportColumn[] = [
-    { field: 'name', header: 'Name', required: true, label: 'Name', type: 'text', sortable: false },
-    { field: 'shortName', header: 'Short Name', required: true, label: 'Short Name', type: 'text', sortable: false },
-    { field: 'status', header: 'Status', required: false, label: 'Status', type: 'text', sortable: false },
-    { field: 'newEngagement', header: 'New Engagement', required: true, label: 'New Engagement', type: 'text', sortable: false },
-    { field: 'phone', header: 'Phone', required: false, label: 'Phone', type: 'text', sortable: false },
-    { field: 'website', header: 'Website', required: false, label: 'Website', type: 'text', sortable: false },
-    { field: 'pooledFund', header: 'Pooled Fund', required: true, label: 'Pooled Fund', type: 'text', sortable: false },
-    { field: 'ddRequired', header: 'DD Required', required: true, label: 'DD Required', type: 'text', sortable: false },
-    { field: 'ddeacDone', header: 'DDEAC Done', required: true, label: 'DDEAC Done', type: 'text', sortable: false },
-    { field: 'eacReference', header: 'EAC Reference', required: false, label: 'EAC Reference', type: 'text', sortable: false },
-    { field: 'globalKeyAccount', header: 'Global Key Account', required: false, label: 'Global Key Account', type: 'text', sortable: false },
-    { field: 'unSecretariatEntity', header: 'UN Secretariat Entity', required: false, label: 'UN Secretariat Entity', type: 'text', sortable: false },
-    { field: 'levyPotentiallyApplies', header: 'Levy Potentially Applies', required: true, label: 'Levy Potentially Applies', type: 'text', sortable: false },
-    { field: 'reasonForLevyNotApplying', header: 'Reason For Levy Not Applying', required: false, label: 'Reason For Levy Not Applying', type: 'text', sortable: false },
-    { field: 'levyTreatment', header: 'Levy Treatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
-    { field: 'address1Street', header: 'Street', required: false, label: 'Street', type: 'text', sortable: false },
-    { field: 'address1Street2', header: 'Street 2', required: false, label: 'Street 2', type: 'text', sortable: false },
-    { field: 'address1City', header: 'City', required: false, label: 'City', type: 'text', sortable: false },
-    { field: 'address1StateProvince', header: 'State/Province', required: false, label: 'State/Province', type: 'text', sortable: false },
-    { field: 'address1PostalCode', header: 'Postal Code', required: false, label: 'Postal Code', type: 'text', sortable: false },
-    { field: 'address1Country', header: 'Country', required: false, label: 'Country', type: 'text', sortable: false },
+  // Partner-specific columns (all fields from Partner.cs, filtered by permissions)
+  allPartnerColumns: ImportColumn[] = [
+    // Essential Fields
+    { field: 'name', header: 'partner.name', required: true, label: 'Name', type: 'text', sortable: false },
+    { field: 'partnerShortDescription', header: 'partner.shortName', required: false, label: 'Short Name', type: 'text', sortable: false },
+    { field: 'partnerLongDescription', header: 'partner.longDescription', required: false, label: 'Long Description', type: 'text', sortable: false },
+    
+    // Classification & Organization
+    { field: 'partnerCategoryId', header: 'partner.partnerCategory', required: false, label: 'Partner Category', type: 'text', sortable: false },
+    { field: 'partnerGroupCode', header: 'partner.partnerGroup', required: false, label: 'Partner Group', type: 'text', sortable: false },
+    { field: 'liaisonOfficeId', header: 'partner.liaisonOffice', required: false, label: 'Liaison Office', type: 'text', sortable: false },
+    { field: 'partnerFocalPointUserId', header: 'partner.partnerFocalPoint', required: false, label: 'Partner Focal Point', type: 'text', sortable: false },
+    
+    // ERP Integration (readonly but needed for import)
+    { field: 'erpDimValue', header: 'partner.erpDimValue', required: false, label: 'ERP Dimension Value', type: 'number', sortable: false },
+    
+    // Status & Operational
+    { field: 'status', header: 'partner.status', required: false, label: 'Status', type: 'text', sortable: false },
+    { field: 'pooledFund', header: 'partner.pooledFund', required: false, label: 'Pooled Fund', type: 'text', sortable: false },
+    { field: 'canCreateNewOpportunities', header: 'partner.canCreateNewOpportunities', required: false, label: 'Can Create New Opportunities', type: 'text', sortable: false },
+    { field: 'reasonForNoNewOpportunity', header: 'partner.reasonForNoNewOpportunity', required: false, label: 'Reason For No New Opportunity', type: 'text', sortable: false },
+    
+    // UN & State Entity Fields
+    { field: 'unAndStateEntity', header: 'partner.unStateEntity', required: false, label: 'UN & State Entity', type: 'text', sortable: false },
+    { field: 'keyGlobalPartner', header: 'partner.keyGlobalPartner', required: false, label: 'Key Global Partner', type: 'text', sortable: false },
+    { field: 'unSecretariatPartner', header: 'partner.unSecretariatPartner', required: false, label: 'UN Secretariat Partner', type: 'text', sortable: false },
+    
+    // Due Diligence & Compliance
+    { field: 'dueDiligenceRequired', header: 'partner.dueDiligenceRequired', required: false, label: 'Due Diligence Required', type: 'text', sortable: false },
+    { field: 'dueDiligenceApproval', header: 'partner.dueDiligenceApproval', required: false, label: 'Due Diligence Approval', type: 'text', sortable: false },
+    
+    // Levy Fields
+    { field: 'partnerLevyStatus', header: 'partner.partnerLevyStatus', required: false, label: 'Partner Levy Status', type: 'text', sortable: false },
+    { field: 'reasonForLevy', header: 'partner.reasonForLevy', required: false, label: 'Reason For Levy', type: 'text', sortable: false },
+    { field: 'levyTreatment', header: 'partner.levyTreatment', required: false, label: 'Levy Treatment', type: 'text', sortable: false },
   ];
+
+  // Filtered partner columns based on user permissions
+  partnerColumns: ImportColumn[] = [];
 
   // Interaction-specific columns
   interactionColumns: ImportColumn[] = [
-    { field: 'type', header: 'Type', required: true, label: 'Type', type: 'text', sortable: false },
-    { field: 'date', header: 'Date', required: true, label: 'Date', type: 'text', sortable: false },
-    { field: 'subject', header: 'Subject', required: true, label: 'Subject', type: 'text', sortable: false },
-    { field: 'description', header: 'Description', required: false, label: 'Description', type: 'text', sortable: false },
-    { field: 'contactId', header: 'Contact', required: false, label: 'Contact', type: 'text', sortable: false },
-    { field: 'location', header: 'Location', required: false, label: 'Location', type: 'text', sortable: false },
-    { field: 'contactIds', header: 'Contact IDs', required: false, label: 'Contact IDs', type: 'text', sortable: false },
-    { field: 'partnerIds', header: 'Partner IDs', required: false, label: 'Partner IDs', type: 'text', sortable: false },
-    { field: 'userIds', header: 'User IDs', required: false, label: 'User IDs', type: 'text', sortable: false },
-    { field: 'emailAddresses', header: 'Email Addresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
-    { field: 'phoneNumbers', header: 'Phone Numbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
-    { field: 'organizationHierarchyIds', header: 'Organization Unit IDs', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
+    { field: 'type', header: 'interaction.type', required: true, label: 'Type', type: 'text', sortable: false },
+    { field: 'date', header: 'interaction.date', required: true, label: 'Date', type: 'text', sortable: false },
+    { field: 'subject', header: 'interaction.subject', required: true, label: 'Subject', type: 'text', sortable: false },
+    { field: 'description', header: 'interaction.description', required: false, label: 'Description', type: 'text', sortable: false },
+    { field: 'contactId', header: 'interaction.contact', required: false, label: 'Contact', type: 'text', sortable: false },
+    { field: 'location', header: 'interaction.location', required: false, label: 'Location', type: 'text', sortable: false },
+    { field: 'contactIds', header: 'interaction.contactIds', required: false, label: 'Contact IDs', type: 'text', sortable: false },
+    { field: 'partnerIds', header: 'interaction.partnerIds', required: false, label: 'Partner IDs', type: 'text', sortable: false },
+    { field: 'userIds', header: 'interaction.userIds', required: false, label: 'User IDs', type: 'text', sortable: false },
+    { field: 'emailAddresses', header: 'interaction.emailAddresses', required: false, label: 'Email Addresses', type: 'text', sortable: false },
+    { field: 'phoneNumbers', header: 'interaction.phoneNumbers', required: false, label: 'Phone Numbers', type: 'text', sortable: false },
+    { field: 'organizationHierarchyIds', header: 'interaction.organizationUnitIds', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
   ];
 
   // Create data effect in the constructor to ensure injection context
@@ -187,25 +213,66 @@ export class ImportDialogComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    // Set the table columns based on the current import type
-    this.updateColumnsForEntityType();
+  async ngOnInit(): Promise<void> {
+    // Set the table columns based on the current import type (with permissions)
+    await this.updateColumnsForEntityType();
     
     // Immediately check data on init
     this.checkAndProcessData();
   }
 
-  // Update the table columns based on the current import type
-  private updateColumnsForEntityType(): void {
+  // Update the table columns based on the current import type and user permissions
+  private async updateColumnsForEntityType(): Promise<void> {
     const entityType = this.importDialogService.getImportType().toLowerCase();
     
     if (entityType === 'partner') {
+      // Filter partner columns based on user permissions
+      this.partnerColumns = await this.filterColumnsByPermissions(this.allPartnerColumns, 'Partner');
       this.columns = this.partnerColumns;
     } else if (entityType === 'interaction') {
       this.columns = this.interactionColumns;
     } else {
       // Default to contact columns
       this.columns = this.contactColumns;
+    }
+  }
+
+  // Filter columns based on user permissions for canUpdate
+  private async filterColumnsByPermissions(allColumns: ImportColumn[], entityName: string): Promise<ImportColumn[]> {
+    try {
+      // Get entity permissions from the backend
+      const response = await fetch(`/api/${entityName.toLowerCase()}/permissions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.warn(`Failed to get permissions for ${entityName}, showing all columns`);
+        return allColumns;
+      }
+
+      const permissions = await response.json();
+      
+      // If user has no update restrictions (canEditFields is null), show all columns
+      if (!permissions.canEditFields || permissions.canEditFields.length === 0) {
+        return allColumns;
+      }
+
+      // Filter columns based on canEditFields permissions
+      const allowedFields = new Set(permissions.canEditFields);
+      
+      // Always include required fields (like 'name')
+      const filteredColumns = allColumns.filter(column => 
+        column.required || allowedFields.has(column.field)
+      );
+
+      return filteredColumns;
+    } catch (error) {
+      console.error(`Error checking permissions for ${entityName}:`, error);
+      // On error, return all columns to avoid breaking functionality
+      return allColumns;
     }
   }
   
@@ -264,25 +331,28 @@ export class ImportDialogComponent implements OnInit {
       return;
     }
 
+    // Process duplicate detection and add duplicateInfo to each record
+    const processedData = this.processDuplicateDetection(allData);
+
     // Update total records if it doesn't match the data length
-    if (this.totalRecords() !== allData.length) {
-      this.totalRecords.set(allData.length);
+    if (this.totalRecords() !== processedData.length) {
+      this.totalRecords.set(processedData.length);
     }
     
     // Ensure firstIndex doesn't exceed the bounds of the data
-    if (firstIndex >= allData.length) {
+    if (firstIndex >= processedData.length) {
       const newFirstIndex = 0;
-      console.warn(`First index ${firstIndex} exceeds data length ${allData.length}, resetting to ${newFirstIndex}`);
+      console.warn(`First index ${firstIndex} exceeds data length ${processedData.length}, resetting to ${newFirstIndex}`);
       this.first.set(newFirstIndex);
       
-      const newPaginatedResult = allData.slice(newFirstIndex, newFirstIndex + rowsPerPage);
+      const newPaginatedResult = processedData.slice(newFirstIndex, newFirstIndex + rowsPerPage);
       this.paginatedData.set(newPaginatedResult);
       return;
     }
     
     // Normal pagination
-    const endIndex = Math.min(firstIndex + rowsPerPage, allData.length);
-    const paginatedResult = allData.slice(firstIndex, endIndex);
+    const endIndex = Math.min(firstIndex + rowsPerPage, processedData.length);
+    const paginatedResult = processedData.slice(firstIndex, endIndex);
     
     this.paginatedData.set(paginatedResult);
   }
@@ -340,7 +410,143 @@ export class ImportDialogComponent implements OnInit {
     return this.rowsWithMissingRequired().length > 0;
   }
 
-  // Select all rows in the current dataset (including rows with missing required fields)
+  /**
+   * Process duplicate detection and add duplicateInfo to each record
+   */
+  private processDuplicateDetection(data: any[]): any[] {
+    const processedData = [...data];
+    const duplicateRows: any[] = [];
+    const nonDuplicateRows: any[] = [];
+
+    processedData.forEach((record, index) => {
+      
+      // Check if record has duplicateDetection from the new AI service
+      const duplicateDetection = record.duplicateDetection;
+      
+      if (duplicateDetection?.hasDuplicates) {
+        // Use the new duplicateDetection structure
+        record.duplicateInfo = {
+          isDuplicate: true,
+          hasDuplicates: duplicateDetection.hasDuplicates,
+          totalDuplicates: duplicateDetection.totalDuplicates,
+          highConfidence: duplicateDetection.highConfidence,
+          mediumConfidence: duplicateDetection.mediumConfidence,
+          lowConfidence: duplicateDetection.lowConfidence,
+          topDuplicate: duplicateDetection.topDuplicate,
+          tooltip: `${duplicateDetection.totalDuplicates} duplicate(s) found`
+        };
+        
+        duplicateRows.push(record);
+      } else if (record.similarityEntityId) {
+        // Fallback to old similarity detection for backward compatibility
+        const entityId = record.similarityEntityId;
+        const similarityScore = record.similarityScore || 0;
+        const similarityPercentage = Math.round(similarityScore * 100);
+        
+        record.duplicateInfo = {
+          isDuplicate: true,
+          hasDuplicates: true,
+          totalDuplicates: 1,
+          highConfidence: similarityScore > 0.8 ? 1 : 0,
+          mediumConfidence: similarityScore > 0.5 && similarityScore <= 0.8 ? 1 : 0,
+          lowConfidence: similarityScore <= 0.5 ? 1 : 0,
+          topDuplicate: {
+            entityId: entityId,
+            score: similarityScore,
+            matchReason: 'Legacy similarity match',
+            entityType: this.getEntityTypeFromImportType()
+          },
+          tooltip: `Duplicate found (${similarityPercentage}% similarity)`
+        };
+        
+        duplicateRows.push(record);
+      } else {
+        // No duplicate found
+        record.duplicateInfo = {
+          isDuplicate: false,
+          hasDuplicates: false,
+          totalDuplicates: 0,
+          highConfidence: 0,
+          mediumConfidence: 0,
+          lowConfidence: 0,
+          topDuplicate: null,
+          tooltip: 'Unique record'
+        };
+        nonDuplicateRows.push(record);
+      }
+    });
+
+    // Update signals
+    this.duplicateRows.set(duplicateRows);
+    this.nonDuplicateRows.set(nonDuplicateRows);
+    
+    // Show warning if duplicates found
+    if (duplicateRows.length > 0) {
+      this.showDuplicateWarning.set(true);
+      this.duplicateWarningMessage.set(
+        `${duplicateRows.length} duplicate(s) found and auto-deselected. Review and manually select if needed.`
+      );
+    } else {
+      this.showDuplicateWarning.set(false);
+    }
+
+    return processedData;
+  }
+
+  /**
+   * Get entity type from current import type
+   */
+  getEntityTypeFromImportType(): string {
+    const importType = this.currentImportType();
+    switch (importType) {
+      case 'contact':
+        return 'contacts';
+      case 'partner':
+        return 'partners';
+      case 'interaction':
+        return 'interactions';
+      default:
+        return 'contacts';
+    }
+  }
+
+  /**
+   * Get translated header text
+   */
+  public getTranslatedHeader(key: string): string {
+    try {
+      const translated = this.translateService.instant(key);
+      
+      // Debug: log first few translations
+      if (key === 'DUPLICATE_DETECTION.duplicate' || key === 'contact.firstName') {
+        console.log(`Key: '${key}' -> Translation: '${translated}' -> Same? ${translated === key}`);
+      }
+      
+      // If translation returns the key itself, it means translation failed
+      if (translated !== key) {
+        return translated;
+      }
+      
+      // Fallback: try to find a better translation or return a formatted version
+      const keyParts = key.split('.');
+      const fieldName = keyParts[keyParts.length - 1];
+      
+      // Convert camelCase to Title Case
+      return fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+    } catch (error) {
+      console.error('Translation error:', error);
+      return key.split('.').pop() || key;
+    }
+  }
+
+  /**
+   * Generate entity URL for opening in new tab
+   */
+  private getEntityUrl(entityType: string, entityId: string): string {
+    return `/#/partnerships/${entityType}/${entityId}`;
+  }
+
+  // Select all rows in the current dataset (including rows with missing required fields and duplicates)
   selectAllRows(): void {
     const allData = this.importDialogService.data();
     
@@ -349,7 +555,7 @@ export class ImportDialogComponent implements OnInit {
       return;
     }
     
-    // Select ALL rows, including those with missing required fields
+    // Select ALL rows, including those with missing required fields and duplicates
     const newSelection = [...allData];
     
     // Update the local selection state
@@ -363,6 +569,15 @@ export class ImportDialogComponent implements OnInit {
     if (missingRequiredRows.length > 0) {
       this.feedbackDialogService.showWarningToast({
         detail: `You've selected ${missingRequiredRows.length} rows with missing required fields`,
+        life: 3000
+      });
+    }
+
+    // Check if any duplicate rows are being selected and show a warning
+    const duplicateRows = this.duplicateRows();
+    if (duplicateRows.length > 0) {
+      this.feedbackDialogService.showWarningToast({
+        detail: `You've selected ${duplicateRows.length} duplicate rows. These will be processed as new records.`,
         life: 3000
       });
     }
@@ -426,12 +641,15 @@ export class ImportDialogComponent implements OnInit {
       !currentPageRowIds.has(row._importRowId)
     );
     
+    // Filter out duplicate rows from the current page selection
+    const nonDuplicateEventRows = event.filter(row => !row.duplicateInfo?.isDuplicate);
+    
     // Create a new selection by combining:
     // 1. Rows selected from other pages (not visible on current page)
-    // 2. Rows selected on the current page from the event
+    // 2. Non-duplicate rows selected on the current page from the event
     const newSelection = [
       ...selectionsFromOtherPages,
-      ...event
+      ...nonDuplicateEventRows
     ];
     
     // Avoid duplicates by creating a unique set based on _importRowId
@@ -505,8 +723,7 @@ export class ImportDialogComponent implements OnInit {
         // For partner, explicitly set certain fields that the form expects
         // organizationHierarchyIds is used directly, no conversion needed
         dialogRecord.partnerCategoryId = dialogRecord.partnerCategoryId || null;
-        dialogRecord.website = dialogRecord.website || '';
-        dialogRecord.eacReference = dialogRecord.eacReference || '';
+        dialogRecord.partnerApprovalReference = dialogRecord.partnerApprovalReference || '';
         
         // Make sure id is present and formatted appropriately
         if (dialogRecord.id !== undefined && dialogRecord.id !== null) {
@@ -667,6 +884,31 @@ export class ImportDialogComponent implements OnInit {
     this.showMissingRequiredBanner.set(rowsWithMissing.length > 0);
   }
 
+  // Get mandatory fields information for the current entity type
+  getMandatoryFieldsInfo(): string {
+    const importType = this.currentImportType();
+    const requiredFields = this.columns
+      .filter(col => col.required)
+      .map(col => this.getTranslatedHeader(col.header))
+      .join(', ');
+
+    switch (importType) {
+      case 'Contact':
+        return `Mandatory fields for contacts: ${requiredFields}`;
+      case 'Partner':
+        return `Mandatory fields for partners: ${requiredFields}`;
+      case 'Interaction':
+        return `Mandatory fields for interactions: ${requiredFields}`;
+      default:
+        return `Mandatory fields: ${requiredFields}`;
+    }
+  }
+
+  // Check if we should show the mandatory fields info banner
+  shouldShowMandatoryFieldsInfo(): boolean {
+    return this.columns.some(col => col.required) && this.importDialogService.data().length > 0;
+  }
+
   // Force refresh of the data view
   refreshData(): void {
     const currentData = this.importDialogService.data();
@@ -696,7 +938,7 @@ export class ImportDialogComponent implements OnInit {
     }
   }
 
-  // Select only valid rows (exclude rows with errors or missing required fields)
+  // Select only valid rows (exclude rows with errors, missing required fields, or duplicates)
   selectValidRows(): void {
     const allData = this.importDialogService.data();
     
@@ -711,9 +953,13 @@ export class ImportDialogComponent implements OnInit {
     // Get rows with validation errors
     const validationErrorRows = Array.from(this.validationErrors().keys());
     
-    // Filter out rows with either missing required fields or validation errors
-    const validRows = allData.filter((_, index) => {
-      return !missingRequiredRows.includes(index) && !validationErrorRows.includes(index);
+    // Filter out rows with either missing required fields, validation errors, or duplicates
+    const validRows = allData.filter((row, index) => {
+      const hasMissingRequired = missingRequiredRows.includes(index);
+      const hasValidationError = validationErrorRows.includes(index);
+      const isDuplicate = row.duplicateInfo?.isDuplicate;
+      
+      return !hasMissingRequired && !hasValidationError && !isDuplicate;
     });
     
     // Update the local selection state

@@ -7,13 +7,8 @@ This is the entry point for the AI assistant agent hierarchy.
 from google.adk.agents import SequentialAgent
 
 # Import sub-agents
-from .sub_agents.contextual_agent import contextual_agent
 from .sub_agents.user_request_agent import user_request_agent
 
 # --- Root Agent Definition ---
 # This is the entry point for the entire agent hierarchy
-root_agent = SequentialAgent(
-    name="ai_assistant", 
-    description="Main AI assistant for UNOPS applications with comprehensive workflow capabilities",
-    sub_agents=[contextual_agent, user_request_agent],
-)
+root_agent = user_request_agent

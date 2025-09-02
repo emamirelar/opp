@@ -3,6 +3,21 @@
     <p-message severity="error" [text]="errorMessage()"></p-message>
   }
 
+  <!-- Mandatory Fields Information Banner -->
+  @if (shouldShowMandatoryFieldsInfo()) {
+    <div class="mb-3 p-3 border-1 border-blue-200 rounded bg-blue-50 text-blue-700">
+      <div class="flex items-start">
+        <i class="pi pi-info-circle mr-2 mt-1"></i>
+        <div>
+          <p class="m-0 font-medium">{{ getMandatoryFieldsInfo() }}</p>
+          <p class="mt-1 mb-0 text-sm">
+            These fields are required for successful import. Rows missing these fields will be highlighted in red.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
   <!-- Error Banner for Missing Required Fields -->
   @if (showMissingRequiredBanner()) {
     <div class="mb-3 p-3 border-1 border-orange-200 rounded bg-orange-50 text-orange-700">
@@ -13,6 +28,21 @@
           <p class="mt-1 mb-0 text-sm">
             Rows with missing required fields (highlighted in red) may cause import issues. 
             You can still select and import these rows, but some data might be rejected or cause validation errors during import.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Duplicate Warning Banner -->
+  @if (showDuplicateWarning()) {
+    <div class="mb-3 p-3 border-1 border-yellow-200 rounded bg-yellow-50 text-yellow-700">
+      <div class="flex items-start">
+        <i class="pi pi-exclamation-triangle mr-2 mt-1"></i>
+        <div>
+          <p class="m-0 font-medium">Duplicate records detected</p>
+          <p class="mt-1 mb-0 text-sm">
+            {{ duplicateWarningMessage() }}
           </p>
         </div>
       </div>
@@ -33,6 +63,15 @@
           Job ID: {{ importService.getActiveJobId() }}
         }
       </p>
+      <div class="mt-6">
+        <p-button 
+          label="Cancel" 
+          icon="pi pi-times" 
+          severity="secondary" 
+          (onClick)="importDialogService.cancelImport()"
+          [outlined]="true">
+        </p-button>
+      </div>
     </div>
   }
 
@@ -57,6 +96,11 @@
             <span class="ml-3">
               Selected: <span class="font-semibold">{{ selectedRows().length }}</span>
             </span>
+            @if (duplicateRows().length > 0) {
+              <span class="ml-3">
+                Duplicates: <span class="font-semibold text-orange-600">{{ duplicateRows().length }}</span>
+              </span>
+            }
             @if (paginatedData().length === 0 && totalRecords() > 0) {
               <span class="ml-3 text-sm">
                 (Warning: Pagination not working properly)
@@ -71,6 +115,14 @@
       </div>
     </div>
 
+    <!-- Duplicate Summary -->
+    @if (showDuplicateWarning()) {
+      <app-duplicate-summary 
+        [duplicateRows]="duplicateRows()"
+        [totalRecords]="totalRecords()">
+      </app-duplicate-summary>
+    }
+
     <div class="flex-1 overflow-hidden">
       <p-table
         #dt
@@ -84,6 +136,8 @@
         scrollHeight="calc(100% - 50px)"
         styleClass="h-full"
         dataKey="_importRowId"
+        [frozenColumns]="[0, 1, 2]"
+        [frozenWidth]="'250px'"
       >
         <ng-template pTemplate="header" let-columns>
           <tr>
@@ -94,17 +148,19 @@
                   [ngModel]="areAllRowsSelected()"
                   (onChange)="toggleSelectAll($event)"
                   styleClass="custom-checkbox"
-                  [ariaLabel]="'Select All Records'"
                   [indeterminate]="hasMixedSelection()"
                 ></p-checkbox>
               </div>
             </th>
             <th style="width: 4rem">
-              Edit
+              {{ getTranslatedHeader('DUPLICATE_DETECTION.duplicate') }}
+            </th>
+            <th style="width: 4rem">
+              {{ getTranslatedHeader('common.edit') }}
             </th>
             @for (col of columns; track col) {
               <th class="min-w-32">
-                {{ col.header }}
+                {{ getTranslatedHeader(col.header) }}
               </th>
             }
           </tr>
@@ -116,14 +172,28 @@
               <p-tableCheckbox [value]="rowData"></p-tableCheckbox>
             </td>
             <td>
-              <p-button icon="pi pi-pencil" 
-                        styleClass="p-button-rounded p-button-text" 
-                        (click)="editRow(rowData, $event)">
-              </p-button>
+              <!-- Duplicate Indicator Column -->
+              <div class="flex items-center justify-center">
+                <app-duplicate-indicator 
+                  [duplicateInfo]="rowData.duplicateInfo"
+                  [entityType]="getEntityTypeFromImportType()">
+                </app-duplicate-indicator>
+              </div>
+            </td>
+            <td>
+              <!-- Edit Button Column -->
+              <div class="flex items-center justify-center">
+                <p-button icon="pi pi-pencil" 
+                          styleClass="p-button-rounded p-button-text p-button-sm" 
+                          (click)="editRow(rowData, $event)">
+                </p-button>
+              </div>
             </td>
             @for (col of columns; track col) {
               <td [ngClass]="{'bg-red-50': !rowData[col.field] && col.required}" class="">
-                @if (rowData[col.field]) {
+                @if (col.field === 'duplicateInfo') {
+                  <!-- Skip duplicateInfo column as it's now combined with edit button -->
+                } @else if (rowData[col.field]) {
                   {{ rowData[col.field] }}
                 } @else {
                   <i class="text-red-100 pi pi-warning"></i>

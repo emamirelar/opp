@@ -120,12 +120,64 @@ public class ContactController : BaseController
             });
         }
         
+        // Check for duplicates ONLY if user hasn't confirmed duplicate creation
+        if (!req.ConfirmDuplicateCreation)
+        {
+            try
+            {
+                var duplicateResult = await _aiContextualService.DetectDuplicateForSingleRecordAsync(
+                    "Contact", 
+                    req,
+                    fieldMatchThreshold: 0.5      // Standard sensitivity for field-based detection
+                );
+                
+                if (duplicateResult.HasDuplicates)
+                {
+                    // Return duplicate confirmation response
+                    return Ok(new {
+                        success = false,
+                        action = "duplicateConfirmation",
+                        message = "Potential duplicate contact(s) found. Do you want to create anyway?",
+                        duplicateInfo = new {
+                            totalDuplicates = duplicateResult.TotalDuplicates,
+                            highConfidence = duplicateResult.HighConfidence,
+                            mediumConfidence = duplicateResult.MediumConfidence,
+                            lowConfidence = duplicateResult.LowConfidence,
+                            topDuplicate = duplicateResult.TopDuplicate != null ? new {
+                                entityId = duplicateResult.TopDuplicate.EntityId,
+                                score = duplicateResult.TopDuplicate.Score,
+                                matchReason = duplicateResult.TopDuplicate.MatchReason,
+                                matchedData = duplicateResult.TopDuplicate.MatchedData
+                            } : null
+                        },
+                        confirmationRequired = true,
+                        originalData = req  // Return original data for re-submission with confirmation
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't block creation due to duplicate detection failure
+                _logger.LogWarning($"Duplicate detection failed for contact creation: {ex.Message}");
+                // Continue with creation since duplicate detection is not critical
+            }
+        }
+        
+        // Create the contact (either no duplicates found, or user confirmed creation)
         var result = await _manager.CreateContactAsync(req);
         if (result == null)
         {
             throw new BusinessException("Failed to create contact");
         }
-        return StatusCode(201, result);
+        
+        return StatusCode(201, new {
+            success = true,
+            action = "created",
+            message = req.ConfirmDuplicateCreation ? 
+                "Contact created successfully (duplicate confirmation acknowledged)" : 
+                "Contact created successfully",
+            data = result
+        });
     }
 
     /// <summary>

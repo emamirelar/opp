@@ -761,7 +761,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
     /// </summary>
     public override async Task<object> GetBasicEntityDataAsync(int id)
     {
-        var interaction = await interactionRepository.GetByIdAsync(id);
+        var interaction = await _context.Interactions.FirstOrDefaultAsync(e => e.Id == id);
         if (interaction != null)
         {
             return mapper.Map<UNOPSInteraction, InteractionModel>(interaction);

@@ -879,56 +879,6 @@ Remember: You are making REAL HTTP requests to actual endpoints. The configurati
     return None
 
 
-def screen_context_after_model_callback(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:
-    """
-    After model callback for screen_context_agent.
-    
-    This callback runs AFTER the model responds and caches the screen context result.
-    
-    Args:
-        callback_context: The callback context from Google ADK
-        llm_response: The actual response from the LLM model
-        
-    Returns:
-        Optional[LlmResponse]: Modified response or None to use original
-    """
-    
-    print("💾 [SCREEN] Caching screen context result...")
-    
-    try:
-        # Check if we have screen context data in state to cache
-        screen_context = callback_context.state.get('screen_context')
-        
-        # Extract entity and ID from structured state data to build cache key
-        screen_url_obj = callback_context.state.get('screen_url', {})
-        user_viewing_panel = callback_context.state.get('user_viewing_panel', {})
-        
-        # First priority: screen_url object
-        entity = screen_url_obj.get('entity', '')
-        entity_id = screen_url_obj.get('id', None)
-            
-        # Second priority: user_viewing_panel if screen_url is empty
-        if not entity and user_viewing_panel:
-            entity = user_viewing_panel.get('entity', '')
-            entity_id = user_viewing_panel.get('entity_id', None)
-            # Convert string ID to int if needed
-            if entity_id and isinstance(entity_id, str) and entity_id.isdigit():
-                entity_id = int(entity_id)
-        
-        if screen_context and isinstance(screen_context, dict) and entity and CACHE_AVAILABLE:
-            # Cache screen context using entity+id key
-            cache_key = f"{entity}:{entity_id}" if entity_id else f"{entity}:list"
-            entity_cache.set_screen_context(cache_key, screen_context)
-                
-            print(f"✅ [SCREEN] Cached screen context successfully for {cache_key}")
-        
-        return None  # Use original response
-        
-    except Exception as e:
-        print(f"❌ [SCREEN] Error caching screen context: {e}")
-        return None  # Use original response
-
-
 def response_formatter_after_model_callback(callback_context: CallbackContext, llm_response: LlmResponse) -> Optional[LlmResponse]:
     """
     After model callback for response_formatter_agent.

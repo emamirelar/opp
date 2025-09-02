@@ -54,16 +54,17 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             userProfileQuery = userProfileQuery.Where(x => x.OrgUnit != null && x.OrgUnit.Contains(request.OrgUnitFilter));
         }
 
-        // Apply search term filter
+        // Apply search term filter - use actual database fields instead of computed Name property
         if (!string.IsNullOrEmpty(request.SearchTerm))
         {
             var searchLower = request.SearchTerm.ToLower();
             userProfileQuery = userProfileQuery.Where(x => 
-                (x.Name != null && x.Name.ToLower().Contains(searchLower)) ||
+                (x.FirstName != null && x.FirstName.ToLower().Contains(searchLower)) ||
+                (x.LastName != null && x.LastName.ToLower().Contains(searchLower)) ||
                 (x.UserEmail != null && x.UserEmail.ToLower().Contains(searchLower)));
         }
 
-        // Apply sorting
+        // Apply sorting - use actual database fields instead of computed Name property
         userProfileQuery = request.SortBy?.ToLower() switch
         {
             "email" => request.SortDirection?.ToLower() == "desc" 
@@ -75,7 +76,9 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             "lastmodified" => request.SortDirection?.ToLower() == "desc"
                 ? userProfileQuery.OrderByDescending(x => x.LastModifiedDate)
                 : userProfileQuery.OrderBy(x => x.LastModifiedDate),
-            _ => userProfileQuery.OrderBy(x => x.Name ?? x.UserEmail)
+            _ => request.SortDirection?.ToLower() == "desc"
+                ? userProfileQuery.OrderByDescending(x => x.FirstName ?? x.LastName ?? x.UserEmail)
+                : userProfileQuery.OrderBy(x => x.FirstName ?? x.LastName ?? x.UserEmail)
         };
 
         // Get total count before pagination
@@ -136,8 +139,7 @@ public class UNOPSUserManagementManager : BaseUNOPSManager, IUserManagementManag
             Records = userModels,
             TotalCount = totalCount,
             PageIndex = request.PageIndex,
-            PageSize = request.PageSize,
-            TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+            PageSize = request.PageSize
         };
     }
 

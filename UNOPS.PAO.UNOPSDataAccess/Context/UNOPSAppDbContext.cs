@@ -36,7 +36,9 @@ public class UNOPSAppDbContext : AppDbContext
 
         // Configure AiPrompt table mapping
         modelBuilder.Entity<AiPrompt>()
-            .ToTable("AiPrompt"); // Map to table "AiPrompt" without "s"
+            .ToTable("AiPrompt") // Map to table "AiPrompt" without "s"
+            .HasIndex(p => p.Type)
+            .IsUnique(); // Ensure Type is unique
 
         modelBuilder
             .Entity<UNOPSContact>();

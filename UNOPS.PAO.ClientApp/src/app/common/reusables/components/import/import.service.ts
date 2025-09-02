@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Observable, map, of, catchError} from 'rxjs';
+import {Observable, map, of, catchError, throwError} from 'rxjs';
 import { Contact } from '../../../../features/internal/models/contact.model';
 import { Partner } from '../../../../features/internal/models/partner.model';
 import { Interaction } from '../../../../features/internal/models/interaction.model';
@@ -24,6 +24,21 @@ export interface ImportAnalysisResponse {
     type: string;
     records: any[];
     jobId?: string; // PubSub job ID for async operations
+    intent?: string; // 'Success' | 'Processing' | 'InternalDuplicatesFound' | 'Error'
+    internalDuplicates?: {
+        totalGroups: number;
+        totalDuplicateRecords: number;
+        totalRecords: number;
+        cleanRecords: number;
+        duplicateGroups: Array<{
+            masterRowNumber: number;
+            duplicateRowNumbers: number[];
+            matchReasons: string[];
+            masterRecord: any;
+            duplicateRecords: any[];
+        }>;
+    };
+    message?: string;
 }
 
 @Injectable({
@@ -76,6 +91,7 @@ export class ImportService {
    * @param type The type of data being imported (e.g., 'bulk_contact_action')
    */
   analyzeFile(fileId: string, type: string): Observable<ImportAnalysisResponse> {
+    console.log('🔍 ImportService.analyzeFile called with:', { fileId, type });
     this.processingFile = true;
     const payload: AnalyzeFileRequest = {
       type,
@@ -84,10 +100,13 @@ export class ImportService {
 
     // Determine the entity-specific endpoint based on the type
     const entityEndpoint = this.getEntitySpecificEndpoint(type);
+    console.log('🔍 Using endpoint:', `${entityEndpoint}/analyse-file`);
+    console.log('🔍 Payload:', payload);
     
     return this.http.post<ImportAnalysisResponse>(`${entityEndpoint}/analyse-file`, payload)
       .pipe(
         map(response => {
+          console.log('🔍 ImportService.analyzeFile success response:', response);
           this.processingFile = false;
           
           // Store the job ID if this is an async operation
@@ -98,6 +117,7 @@ export class ImportService {
           return response;
         }),
         catchError(error => {
+          console.error('🔍 ImportService.analyzeFile error caught:', error);
           this.processingFile = false;
           this.activeJobId = null;
           throw error;
@@ -145,13 +165,13 @@ export class ImportService {
     // Process records to ensure proper handling - delete empty/falsy properties
     const processedRecords = records.map(record => {
       const processedRecord = { ...record };
-      
+    
       // Keep original logic for these specific properties - delete if falsy
       const specialProperties = ['createdBy', 'lastModifiedBy', 'deletedBy', 'id'];
       specialProperties.forEach(prop => {
         if (!processedRecord[prop]) {
           delete processedRecord[prop];
-        }
+      }
       });
       
       // For all other properties, delete if empty string to avoid serialization issues

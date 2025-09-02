@@ -179,10 +179,48 @@
       "mailingStateProvince": "Mailing State/Province",
       "mailingPostalCode": "Mailing Postal Code",
       "mailingCountry": "Mailing Country",
+      "contactNumber": "Contact Number",
+      "partnerId": "Partner ID",
       "contactViaAssistant": "Contact via Assistant",
       "createdByOffice": "Created By Office",
       "summaryOfInteractions": "AI Summary of Interactions",
-      "contactNews": "Contact News"
+      "contactNews": "Contact News",
+      "duplicateDetected": "Duplicate Contact Detected",
+      "duplicateSummary": "Duplicate Summary",
+      "highConfidence": "High Confidence",
+      "mediumConfidence": "Medium Confidence",
+      "lowConfidence": "Low Confidence",
+      "topMatch": "Top Match",
+      "contactId": "Contact ID",
+      "matchScore": "Match Score",
+      "matchReason": "Match Reason",
+      "matchedData": "Matched Data",
+      "warningTitle": "Warning",
+      "warningMessage": "Creating this contact may result in duplicate records. Are you sure you want to proceed?",
+      "createAnyway": "Create Anyway"
+    },
+    "DUPLICATE_DETECTION": {
+      "duplicatesFound": "Duplicates Found",
+      "duplicates": "duplicates",
+      "confidenceLevels": "Confidence Levels",
+      "highConfidence": "High Confidence",
+      "mediumConfidence": "Medium Confidence", 
+      "lowConfidence": "Low Confidence",
+      "topMatch": "Top Match",
+      "matchReason": "Match Reason",
+      "matchedFields": "Matched Fields",
+      "viewDetails": "View Details",
+      "noDuplicatesFound": "No duplicates found",
+      "duplicateTooltip": "duplicate(s) found",
+      "highConfidenceTooltip": "high confidence",
+      "mediumConfidenceTooltip": "medium confidence", 
+      "lowConfidenceTooltip": "low confidence",
+      "uniqueRecordTooltip": "Unique record - no duplicates found",
+      "viewRecord": "View Record",
+      "entityId": "ID",
+      "matchScore": "Match Score",
+      "searchType": "Search Type",
+      "duplicate": "Duplicate"
     },
     "partnerTree": {
       "id": "ID",
@@ -231,6 +269,23 @@
       "selectPartnerLiaisonOffice": "Select Partner Liaison Office",
       "selectPartnerFocalPoint": "Select Partner Focal Point",
       "selectPartnerGroup": "Select Partner Group",
+      "longDescription": "Long Description",
+      "ddApproval": "DD Approval",
+      "levyStatus": "Levy Status",
+      "unStateEntity": "UN State Entity",
+      "reasonForNoNewOpportunity": "Reason No New Opportunity",
+      "partnerGroup": "Partner Group",
+      "partnerCategory": "Partner Category",
+      "liaisonOffice": "Liaison Office",
+      "keyGlobalPartner": "Key Global Partner",
+      "unSecretariatPartner": "UN Secretariat Partner",
+      "dueDiligenceRequired": "Due Diligence Required",
+      "dueDiligenceApproval": "Due Diligence Approval",
+      "partnerLevyStatus": "Partner Levy Status",
+      "canCreateNewOpportunities": "Can Create New Opportunities",
+      "partnerFocalPoint": "Partner Focal Point",
+      "erpDimValue": "ERP Dimension Value",
+      "reasonForLevy": "Reason For Levy",
       "summaryOfInteractions": "AI Summary of Interactions",
       "riskProfile": "AI Risk Profile",
       "partnerNews": "Partner News",
@@ -362,6 +417,11 @@
       "emailAddresses": "Email Addresses",
       "phoneNumbers": "Phone Numbers",
       "location": "Location",
+      "description": "Description",
+      "contactIds": "Contact IDs",
+      "partnerIds": "Partner IDs",
+      "userIds": "User IDs",
+      "organizationUnitIds": "Organization Unit IDs",
       "relatedTo": "Related To",
       "description": "Description",
       "orgUnit": "Organization Unit",
@@ -545,6 +605,7 @@
     "pleaseFullAllRequired": "Please fill all the required details.",
     "partnerRequired": "Partner must be entered.",
     "lastNameRequired": "Last Name must be entered.",
+    "titleRequired": "Title must be entered.",
     "emailRequired": "Email must be entered.",
     "reasonRequired": "Reason is required."
   },
@@ -750,7 +811,11 @@
       "format": "Specify the desired output format",
       "constraints": "Add any limitations or requirements"
     },
-    "descriptionPlaceholder": "Enter a brief description of what this prompt does..."
+    "descriptionPlaceholder": "Enter a brief description of what this prompt does...",
+    "exportDeveloper": "Export AiPrompt (Developer Version)",
+    "exportSuccess": "AI prompts exported successfully as C# seeder file",
+    "exportError": "Failed to export AI prompts",
+    "exporting": "Exporting..."
   },
   "entityManager": {
     "templatePattern": "Template Pattern",
@@ -1182,6 +1247,68 @@
         }
       }
     },
+    "interactiondetail": {
+      "title": "Interaction Details Tour",
+      "description": "Learn how to view and manage individual interaction details, information, and related records.",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to Interaction Details",
+          "description": "This page shows comprehensive information about a specific interaction. You can view, edit, and manage all aspects of the interaction record from here."
+        },
+        "backButton": {
+          "title": "Back to Interactions",
+          "description": "Click this button to return to the interactions list view. This will take you back to browse all interactions."
+        },
+        "editButton": {
+          "title": "Edit Interaction",
+          "description": "Click this button to edit this interaction's information. You can update details, participants, notes, and other attributes."
+        },
+        "deleteButton": {
+          "title": "Delete Interaction",
+          "description": "Use this button to permanently delete this interaction record. This action cannot be undone, so use with caution."
+        },
+        "aiSummary": {
+          "title": "AI-Generated Summary",
+          "description": "This AI-powered panel provides an intelligent summary of the interaction based on the description and related data. It highlights key points and insights."
+        },
+        "descriptionPanel": {
+          "title": "Interaction Description",
+          "description": "This section contains the detailed description of the interaction. You can expand or collapse long descriptions using the 'See More' and 'See Less' buttons."
+        },
+        "documentsPanel": {
+          "title": "Related Documents",
+          "description": "This section displays documents related to this interaction. You can view, download, or manage attached files and documents."
+        },
+        "interactionDetailsPanel": {
+          "title": "Interaction Details",
+          "description": "This sidebar panel shows key information about the interaction including date, time, location, and status."
+        },
+        "contactsPanel": {
+          "title": "Related Contacts",
+          "description": "This section displays all contacts associated with this interaction. Click on any contact to view their detailed profile."
+        },
+        "partnersPanel": {
+          "title": "Related Partners",
+          "description": "This section shows all partner organizations involved in this interaction. Click on any partner to view their detailed profile."
+        },
+        "personnelPanel": {
+          "title": "UNOPS Personnel",
+          "description": "This section lists all UNOPS staff members who participated in or are responsible for this interaction."
+        },
+        "orgUnitPanel": {
+          "title": "Organization Unit",
+          "description": "This section shows which organizational unit is responsible for or associated with this interaction."
+        },
+        "auditPanel": {
+          "title": "Audit Information",
+          "description": "This section displays audit trail information including who created and last modified the interaction, along with timestamps."
+        },
+        "tourControl": {
+          "title": "Interaction Detail Tours",
+          "description": "Access specific tours for different aspects of interaction management and detailed views."
+        }
+      }
+    },
     "partnerview": {
       "title": "Partner Details Tour",
       "description": "Learn how to view and manage individual partner details, information, and related records.",
@@ -1432,5 +1559,22 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "close": "Close"
+  },
+  "DUPLICATE_DETECTION": {
+    "contactDuplicateDetected": "Duplicate Contact Detected",
+    "partnerDuplicateDetected": "Duplicate Partner Detected", 
+    "interactionDuplicateDetected": "Duplicate Interaction Detected",
+    "contactDuplicateSummary": "Contact Duplicate Summary",
+    "partnerDuplicateSummary": "Partner Duplicate Summary",
+    "interactionDuplicateSummary": "Interaction Duplicate Summary",
+    "topMatch": "Top Match",
+    "matchScore": "Match Score",
+    "matchReason": "Match Reason",
+    "viewRecord": "View Record",
+    "createContactAnyway": "Create Contact Anyway",
+    "createPartnerAnyway": "Create Partner Anyway", 
+    "createInteractionAnyway": "Create Interaction Anyway",
+    "warningTitle": "Warning",
+    "warningMessage": "Creating this record may result in duplicate data. Please review the match details above before proceeding."
   }
 }

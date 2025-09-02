@@ -3,6 +3,16 @@
   <div class="flex justify-between items-center mb-6 ai-prompt-header">
     <h1 class="text-3xl font-bold">{{ 'aiPrompt.title' | translate }}</h1>
     <div class="flex gap-3">
+      @if (!permissionsLoading() && entityPermissions().permissions.canRead) {
+        <p-button
+          [label]="'aiPrompt.exportDeveloper' | translate"
+          icon="pi pi-download"
+          severity="secondary"
+          [loading]="exporting()"
+          (onClick)="exportAiPrompts()"
+          class="px-4 py-2">
+        </p-button>
+      }
       @if (!permissionsLoading() && entityPermissions().permissions.canUpdate) {
         <p-button
           [label]="'aiPrompt.upgradeModel' | translate"

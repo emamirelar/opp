@@ -150,6 +150,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Type")
+                        .IsUnique();
+
                     b.ToTable("AiPrompt", "public");
                 });
 
@@ -628,6 +631,9 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("ErpDimValue")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ImplementationCountriesDescriptionConcatenated")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
@@ -653,7 +659,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PartnerId");
+                    b.HasIndex("ErpDimValue");
 
                     b.ToTable("Engagements", "public");
                 });
@@ -1574,10 +1580,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("OrgUnit")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -2269,7 +2271,7 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                 {
                     b.HasOne("UNOPS.PAO.Domain.Entities.Partner", "Partner")
                         .WithMany()
-                        .HasForeignKey("PartnerId");
+                        .HasForeignKey("ErpDimValue");
 
                     b.Navigation("Partner");
                 });

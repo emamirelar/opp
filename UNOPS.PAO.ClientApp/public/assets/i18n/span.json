@@ -204,7 +204,20 @@
             "contactViaAssistant": "Contactar a través del asistente",
             "createdByOffice": "Creado por Oficina",
             "summaryOfInteractions": "Resumen IA de Interacciones",
-            "contactNews": "Noticias del Contacto"
+            "contactNews": "Noticias del Contacto",
+            "duplicateDetected": "Contacto Duplicado Detectado",
+            "duplicateSummary": "Resumen de Duplicados",
+            "highConfidence": "Alta Confianza",
+            "mediumConfidence": "Confianza Media",
+            "lowConfidence": "Baja Confianza",
+            "topMatch": "Mejor Coincidencia",
+            "contactId": "ID de Contacto",
+            "matchScore": "Puntuación de Coincidencia",
+            "matchReason": "Razón de Coincidencia",
+            "matchedData": "Datos Coincidentes",
+            "warningTitle": "Advertencia",
+            "warningMessage": "Crear este contacto puede resultar en registros duplicados. ¿Está seguro de que desea continuar?",
+            "createAnyway": "Crear de Todos Modos"
         },
         "partner": {
             "partner": "Socio",
@@ -362,6 +375,7 @@
         "pleaseFullAllRequired": "Por favor, complete todos los detalles requeridos.",
         "partnerRequired": "El socio debe ser ingresado.",
         "lastNameRequired": "El apellido debe ser ingresado.",
+        "titleRequired": "El título debe ser ingresado.",
         "emailRequired": "El email debe ser ingresado."
     },
     "loading": {
@@ -858,6 +872,68 @@
         "tourControl": {
           "title": "Tours de Interacciones",
           "description": "Accede a tours guiados específicos para gestión de interacciones. Aprende sobre registrar interacciones, rastrear comunicaciones y características avanzadas."
+        }
+      }
+    },
+    "interactiondetail": {
+      "title": "Tour de Detalles de Interacción",
+      "description": "Aprende a ver y gestionar detalles individuales de interacción, información y registros relacionados.",
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a Detalles de Interacción",
+          "description": "Esta página muestra información completa sobre una interacción específica. Puedes ver, editar y gestionar todos los aspectos del registro de interacción desde aquí."
+        },
+        "backButton": {
+          "title": "Volver a Interacciones",
+          "description": "Haz clic en este botón para volver a la vista de lista de interacciones. Esto te llevará de vuelta para navegar todas las interacciones."
+        },
+        "editButton": {
+          "title": "Editar Interacción",
+          "description": "Haz clic en este botón para editar la información de esta interacción. Puedes actualizar detalles, participantes, notas y otros atributos."
+        },
+        "deleteButton": {
+          "title": "Eliminar Interacción",
+          "description": "Usa este botón para eliminar permanentemente este registro de interacción. Esta acción no se puede deshacer, así que úsala con precaución."
+        },
+        "aiSummary": {
+          "title": "Resumen Generado por IA",
+          "description": "Este panel alimentado por IA proporciona un resumen inteligente de la interacción basado en la descripción y datos relacionados. Destaca puntos clave e insights."
+        },
+        "descriptionPanel": {
+          "title": "Descripción de Interacción",
+          "description": "Esta sección contiene la descripción detallada de la interacción. Puedes expandir o contraer descripciones largas usando los botones 'Ver Más' y 'Ver Menos'."
+        },
+        "documentsPanel": {
+          "title": "Documentos Relacionados",
+          "description": "Esta sección muestra documentos relacionados con esta interacción. Puedes ver, descargar o gestionar archivos y documentos adjuntos."
+        },
+        "interactionDetailsPanel": {
+          "title": "Detalles de Interacción",
+          "description": "Este panel lateral muestra información clave sobre la interacción incluyendo fecha, hora, ubicación y estado."
+        },
+        "contactsPanel": {
+          "title": "Contactos Relacionados",
+          "description": "Esta sección muestra todos los contactos asociados con esta interacción. Haz clic en cualquier contacto para ver su perfil detallado."
+        },
+        "partnersPanel": {
+          "title": "Socios Relacionados",
+          "description": "Esta sección muestra todas las organizaciones socias involucradas en esta interacción. Haz clic en cualquier socio para ver su perfil detallado."
+        },
+        "personnelPanel": {
+          "title": "Personal de UNOPS",
+          "description": "Esta sección lista todos los miembros del personal de UNOPS que participaron o son responsables de esta interacción."
+        },
+        "orgUnitPanel": {
+          "title": "Unidad Organizacional",
+          "description": "Esta sección muestra qué unidad organizacional es responsable o está asociada con esta interacción."
+        },
+        "auditPanel": {
+          "title": "Información de Auditoría",
+          "description": "Esta sección muestra información de rastro de auditoría incluyendo quién creó y modificó por última vez la interacción, junto con marcas de tiempo."
+        },
+        "tourControl": {
+          "title": "Tours de Detalle de Interacción",
+          "description": "Accede a tours específicos para diferentes aspectos de gestión de interacciones y vistas detalladas."
         }
       }
     },
