@@ -598,8 +598,8 @@ public class UNOPSGeminiManager : IGeminiManager
         bool isPartnerEntity = entityName.Equals("Partners", StringComparison.OrdinalIgnoreCase);
         int totalRows = fileDataArray.Count - 1; // Excluding header row
         
-        // Check if we should process asynchronously
-        bool shouldProcessAsync = isPartnerEntity ? (totalRows > 100) : (fileDataArray.Count > 100);
+        // Check if we should process asynchronously (changed threshold to 50)
+        bool shouldProcessAsync = isPartnerEntity ? (totalRows > 50) : (fileDataArray.Count > 50);
         
         if (shouldProcessAsync)
         {
@@ -609,7 +609,8 @@ public class UNOPSGeminiManager : IGeminiManager
                 EntityName = req.Type,
                 PromptType = promptData.Type,
                 BatchData = JsonConvert.SerializeObject(fileDataArray.ToObject<List<object>>()), // Convert to JSON string
-                UserId = currentUserId
+                UserId = currentUserId,
+                FileId = req.FileId // Include Google Sheet ID for identification
             };
 
             var pubSubPublisher = new PubSubPublisher(_configuration);
@@ -645,13 +646,45 @@ public class UNOPSGeminiManager : IGeminiManager
                 false
             );
 
-            // Detect duplicates for the processed records
+            // Check for internal duplicates within the uploaded file first
             if (finalResponse != null && finalResponse.Count > 0)
             {
-                // Convert records to dynamic list for duplicate detection
+                // Convert records to dynamic list for internal duplicate detection
                 var recordsList = finalResponse.Select(r => (dynamic)r).ToList();
                 
-                // Perform duplicate detection using the same entity name
+                // Check for duplicates within the file itself
+                var internalDuplicateResult = await _aiService.DetectInternalDuplicatesAsync(entityName, recordsList, 0.8);
+                
+                // If internal duplicates are found, stop and ask user to fix the file
+                if (internalDuplicateResult.HasInternalDuplicates)
+                {
+                    return new
+                    {
+                        message = !string.IsNullOrEmpty(req.FileId) 
+                            ? $"Internal duplicates found in the uploaded file (Sheet ID: {req.FileId}). Please fix the duplicates before proceeding."
+                            : "Internal duplicates found in the uploaded file. Please fix the duplicates before proceeding.",
+                        entity = req.Type,
+                        intent = "InternalDuplicatesFound",
+                        fileId = req.FileId, // Include sheet ID for identification
+                        internalDuplicates = new
+                        {
+                            totalGroups = internalDuplicateResult.TotalDuplicateGroups,
+                            totalDuplicateRecords = internalDuplicateResult.TotalDuplicateRecords,
+                            totalRecords = internalDuplicateResult.TotalRecords,
+                            cleanRecords = internalDuplicateResult.CleanRecords,
+                            duplicateGroups = internalDuplicateResult.DuplicateGroups.Select(group => new
+                            {
+                                masterRowNumber = group.MasterIndex + 2, // +2 because: +1 for 0-based index, +1 for header row
+                                duplicateRowNumbers = group.DuplicateIndices.Select(idx => idx + 2).ToList(),
+                                matchReasons = group.MatchReasons,
+                                masterRecord = ExtractDisplayFields(group.MasterRecord, entityName),
+                                duplicateRecords = group.DuplicateRecords.Select(rec => ExtractDisplayFields(rec, entityName)).ToList()
+                            }).ToList()
+                        }
+                    };
+                }
+                
+                // If no internal duplicates, proceed with database duplicate detection
                 var recordsWithDuplicates = await _aiService.DetectDuplicatesAsync(entityName, recordsList, 0.65);
                 
                 // Update finalResponse with duplicate information
@@ -1412,4 +1445,51 @@ public class UNOPSGeminiManager : IGeminiManager
             throw;
         }
     }
-}
+
+        /// <summary>
+        /// Extracts display fields for showing duplicate information to the user
+        /// </summary>
+        private object ExtractDisplayFields(dynamic record, string entityName)
+        {
+            try
+            {
+                var obj = JObject.FromObject(record);
+                
+                return entityName.ToLower() switch
+                {
+                    "contact" or "contacts" => new
+                    {
+                        firstName = obj["firstName"]?.ToString(),
+                        lastName = obj["lastName"]?.ToString(),
+                        email = obj["email"]?.ToString(),
+                        phone = obj["phone"]?.ToString(),
+                        title = obj["title"]?.ToString()
+                    },
+                    "partner" or "partners" => new
+                    {
+                        name = obj["name"]?.ToString(),
+                        partnerShortDescription = obj["partnerShortDescription"]?.ToString(),
+                        erpDimValue = obj["erpDimValue"]?.ToString(),
+                        status = obj["status"]?.ToString()
+                    },
+                    "interaction" or "interactions" => new
+                    {
+                        type = obj["type"]?.ToString(),
+                        subject = obj["subject"]?.ToString(),
+                        date = obj["date"]?.ToString(),
+                        description = obj["description"]?.ToString()
+                    },
+                    _ => new
+                    {
+                        name = obj["name"]?.ToString(),
+                        title = obj["title"]?.ToString(),
+                        email = obj["email"]?.ToString()
+                    }
+                };
+            }
+            catch (Exception)
+            {
+                return new { error = "Unable to extract display fields" };
+            }
+        }
+    }

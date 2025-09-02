@@ -499,6 +499,12 @@ export class ImportDialogService {
                 life: 5000
               });
               return;
+            } else if (response.intent === 'InternalDuplicatesFound') {
+              // Handle internal duplicates found in the uploaded file
+              this.isLoading.set(false);
+              this.loadingOverlayService.hide();
+              this.showInternalDuplicateError(response, type);
+              return;
             } else if (response.intent === 'Success') {
               // Parse the records from the response
               let parsedRecords;
@@ -714,5 +720,93 @@ export class ImportDialogService {
         });
       }
     });
+  }
+
+  /**
+   * Show internal duplicate error dialog with detailed information
+   */
+  public showInternalDuplicateError(response: any, type: string): void {
+    const duplicateInfo = response.internalDuplicates;
+    if (!duplicateInfo) {
+      this.feedbackDialogService.showErrorToast({ 
+        detail: 'Internal duplicates found in the file. Please fix the duplicates and try again.' 
+      });
+      return;
+    }
+
+    // Create detailed message about the duplicates
+    const fileId = response.fileId;
+    const fileIdDisplay = fileId ? ` (Sheet ID: ${fileId})` : '';
+    let detailsHtml = `
+      <div class="internal-duplicates-dialog">
+        <p><strong>Duplicate records found within your uploaded file${fileIdDisplay}:</strong></p>
+        <div class="duplicate-summary mb-3">
+          <p>• Total records: ${duplicateInfo.totalRecords}</p>
+          <p>• Clean records: ${duplicateInfo.cleanRecords}</p>
+          <p>• Duplicate groups: ${duplicateInfo.totalGroups}</p>
+          <p>• Total duplicate records: ${duplicateInfo.totalDuplicateRecords}</p>
+        </div>
+        <div class="duplicate-details">
+          <p><strong>Duplicate Groups:</strong></p>
+    `;
+
+    duplicateInfo.duplicateGroups.forEach((group: any, index: number) => {
+      detailsHtml += `
+        <div class="duplicate-group mb-2 p-2" style="border-left: 3px solid #ff6b35; background: #fff5f5;">
+          <p><strong>Group ${index + 1}:</strong></p>
+          <p>Master Record (Row ${group.masterRowNumber}): ${this.formatRecordForDisplay(group.masterRecord, type)}</p>
+          <p>Duplicate Rows: ${group.duplicateRowNumbers.join(', ')}</p>
+          <p>Match Reason: ${group.matchReasons.join(', ')}</p>
+        </div>
+      `;
+    });
+
+    detailsHtml += `
+        </div>
+        <div class="mt-3">
+          <p><strong>Please fix these duplicates in your Google Sheet and try importing again.</strong></p>
+        </div>
+      </div>
+    `;
+
+    // Show confirmation dialog with detailed information
+    const headerText = fileId 
+      ? `Internal Duplicates Found in ${type.charAt(0).toUpperCase() + type.slice(1)} File (Sheet ID: ${fileId})`
+      : `Internal Duplicates Found in ${type.charAt(0).toUpperCase() + type.slice(1)} File`;
+      
+    this.confirmationService.confirm({
+      message: detailsHtml,
+      header: headerText,
+      acceptLabel: 'OK',
+      rejectLabel: '',
+      acceptButtonStyleClass: 'p-button-primary',
+      rejectVisible: false,
+      dismissableMask: true,
+      accept: () => {
+        // Just close the dialog
+      }
+    });
+  }
+
+  /**
+   * Format a record for display in the duplicate error dialog
+   */
+  private formatRecordForDisplay(record: any, type: string): string {
+    if (!record) return 'N/A';
+    
+    try {
+      switch (type.toLowerCase()) {
+        case 'contact':
+          return `${record.firstName || ''} ${record.lastName || ''} (${record.email || 'No email'})`.trim();
+        case 'partner':
+          return `${record.name || 'Unnamed'} ${record.partnerShortDescription ? '- ' + record.partnerShortDescription : ''}`.trim();
+        case 'interaction':
+          return `${record.type || 'Unknown type'}: ${record.subject || 'No subject'} (${record.date || 'No date'})`.trim();
+        default:
+          return JSON.stringify(record).substring(0, 100) + '...';
+      }
+    } catch (error) {
+      return 'Error displaying record';
+    }
   }
 }

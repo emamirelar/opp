@@ -28,6 +28,6 @@ public class Engagement : ModifiableDeletableEntity
     public string? ImplementationCountriesDescriptionConcatenated { get; set; }
     
     // Navigation property
-    [ForeignKey("PartnerId")]
+    [ForeignKey("ErpDimValue")]
     public virtual Partner? Partner { get; set; }
 }

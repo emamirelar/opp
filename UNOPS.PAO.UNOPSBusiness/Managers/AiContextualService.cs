@@ -575,7 +575,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             int userId, 
             string entityName, 
             bool isAsync = false,
-            Func<int, int, List<dynamic>, Task<bool>> progressCallback = null)
+            Func<int, int, List<dynamic>, Task<bool>> progressCallback = null,
+            string fileId = null)
         {
             var finalResponse = new List<dynamic>();
 
@@ -653,13 +654,68 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 }
             }
 
+            // Apply duplicate detection for async processing (same as sync)
+            if (isAsync && finalResponse != null && finalResponse.Count > 0)
+            {
+                // Convert records to dynamic list for duplicate detection
+                var recordsList = finalResponse.Select(r => (dynamic)r).ToList();
+                
+                // Check for internal duplicates within the file first
+                var internalDuplicateResult = await DetectInternalDuplicatesAsync(entityName, recordsList, 0.8);
+                
+                // If internal duplicates are found, create error notification
+                if (internalDuplicateResult.HasInternalDuplicates)
+                {
+                    var errorNotification = new Notification
+                    {
+                        UserId = userId,
+                        Message = !string.IsNullOrEmpty(fileId) 
+                            ? $"Internal duplicates found in the uploaded file (Sheet ID: {fileId}). Please fix the duplicates before proceeding."
+                            : "Internal duplicates found in the uploaded file. Please fix the duplicates before proceeding.",
+                        Category = promptData.Type,
+                        ResponseType = "InternalDuplicatesFound",
+                        RecordData = JsonConvert.SerializeObject(new
+                        {
+                            intent = "InternalDuplicatesFound",
+                            fileId = fileId, // Include sheet ID in the data
+                            internalDuplicates = new
+                            {
+                                totalGroups = internalDuplicateResult.TotalDuplicateGroups,
+                                totalDuplicateRecords = internalDuplicateResult.TotalDuplicateRecords,
+                                totalRecords = internalDuplicateResult.TotalRecords,
+                                cleanRecords = internalDuplicateResult.CleanRecords,
+                                duplicateGroups = internalDuplicateResult.DuplicateGroups.Select(group => new
+                                {
+                                    masterRowNumber = group.MasterIndex + 2, // +2 because: +1 for 0-based index, +1 for header row
+                                    duplicateRowNumbers = group.DuplicateIndices.Select(idx => idx + 2).ToList(),
+                                    matchReasons = group.MatchReasons
+                                }).ToList()
+                            }
+                        }),
+                        IsRead = false,
+                        Status = NotificationStatus.Done,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _context.Notifications.AddAsync(errorNotification);
+                    await _context.SaveChangesAsync();
+                    return finalResponse; // Return without database duplicate detection
+                }
+                
+                // If no internal duplicates, proceed with database duplicate detection
+                var recordsWithDuplicates = await DetectDuplicatesAsync(entityName, recordsList, 0.65);
+                finalResponse = recordsWithDuplicates.Select(r => (object)r).ToList();
+            }
+
             if (isAsync)
             {
                 // Create a single notification for the entire batch
                 var notification = new Notification
                 {
                     UserId = userId,
-                    Message = "Batch processed successfully",
+                    Message = !string.IsNullOrEmpty(fileId) 
+                        ? $"Batch processed successfully with duplicate detection (Sheet ID: {fileId})"
+                        : "Batch processed successfully with duplicate detection",
                     Category = promptData.Type,
                     ResponseType = "Success",
                     RecordData = JsonConvert.SerializeObject(finalResponse),
@@ -1548,10 +1604,210 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             catch (Exception ex)
             {
                 throw new Exception($"Error detecting duplicate for single record: {ex.Message}", ex);
-         }
-    }
+            }
+        }
 
-    
+        /// <summary>
+        /// Detects duplicate records within the uploaded file data itself (before checking database)
+        /// </summary>
+        /// <param name="entityName">Name of the entity type</param>
+        /// <param name="records">List of records from the uploaded file</param>
+        /// <param name="fieldMatchThreshold">Threshold for field matching (0.0 to 1.0)</param>
+        /// <returns>Internal duplicate detection result</returns>
+        public async Task<InternalDuplicateResult> DetectInternalDuplicatesAsync(
+            string entityName, 
+            List<dynamic> records, 
+            double fieldMatchThreshold = 0.8)
+        {
+            try
+            {
+                var duplicateGroups = new List<InternalDuplicateGroup>();
+                var processedIndices = new HashSet<int>();
+
+                // Compare each record with every other record
+                for (int i = 0; i < records.Count; i++)
+                {
+                    if (processedIndices.Contains(i)) continue;
+
+                    var currentRecord = records[i];
+                    var duplicateGroup = new InternalDuplicateGroup
+                    {
+                        MasterIndex = i,
+                        MasterRecord = currentRecord,
+                        DuplicateIndices = new List<int>(),
+                        DuplicateRecords = new List<dynamic>(),
+                        MatchReasons = new List<string>()
+                    };
+
+                    // Compare with remaining records
+                    for (int j = i + 1; j < records.Count; j++)
+                    {
+                        if (processedIndices.Contains(j)) continue;
+
+                        var compareRecord = records[j];
+                        var matchResult = CompareRecordsForInternalDuplicates(entityName, currentRecord, compareRecord, fieldMatchThreshold);
+
+                        if (matchResult.IsMatch)
+                        {
+                            duplicateGroup.DuplicateIndices.Add(j);
+                            duplicateGroup.DuplicateRecords.Add(compareRecord);
+                            duplicateGroup.MatchReasons.Add(matchResult.MatchReason);
+                            processedIndices.Add(j);
+                        }
+                    }
+
+                    // Only add to duplicateGroups if we found duplicates
+                    if (duplicateGroup.DuplicateIndices.Count > 0)
+                    {
+                        processedIndices.Add(i);
+                        duplicateGroups.Add(duplicateGroup);
+                    }
+                }
+
+                return new InternalDuplicateResult
+                {
+                    HasInternalDuplicates = duplicateGroups.Count > 0,
+                    TotalDuplicateGroups = duplicateGroups.Count,
+                    TotalDuplicateRecords = duplicateGroups.Sum(g => g.DuplicateIndices.Count),
+                    DuplicateGroups = duplicateGroups,
+                    TotalRecords = records.Count,
+                    CleanRecords = records.Count - duplicateGroups.Sum(g => g.DuplicateIndices.Count + 1) // +1 for master record
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error detecting internal duplicates for {entityName}: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Compares two records to determine if they are internal duplicates
+        /// </summary>
+        private InternalMatchResult CompareRecordsForInternalDuplicates(string entityName, dynamic record1, dynamic record2, double threshold)
+        {
+            try
+            {
+                var matchReasons = new List<string>();
+                var matchScore = 0.0;
+                var totalFields = 0;
+
+                // Convert to JObjects for easier property access
+                var obj1 = JObject.FromObject(record1);
+                var obj2 = JObject.FromObject(record2);
+
+                // Define key fields to compare based on entity type
+                var keyFields = GetKeyFieldsForEntity(entityName);
+
+                foreach (var field in keyFields)
+                {
+                    var value1 = obj1[field]?.ToString()?.Trim();
+                    var value2 = obj2[field]?.ToString()?.Trim();
+
+                    if (string.IsNullOrEmpty(value1) || string.IsNullOrEmpty(value2))
+                        continue;
+
+                    totalFields++;
+
+                    // Exact match
+                    if (string.Equals(value1, value2, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matchScore += 1.0;
+                        matchReasons.Add($"Exact {field} match");
+                    }
+                    // Fuzzy match for text fields
+                    else if (field.ToLower().Contains("name") || field.ToLower().Contains("title") || field.ToLower().Contains("subject"))
+                    {
+                        var similarity = CalculateStringSimilarity(value1, value2);
+                        if (similarity >= 0.85) // High similarity threshold for internal duplicates
+                        {
+                            matchScore += similarity;
+                            matchReasons.Add($"Similar {field} ({(similarity * 100):F0}% match)");
+                        }
+                    }
+                }
+
+                if (totalFields == 0)
+                {
+                    return new InternalMatchResult { IsMatch = false, MatchReason = "No comparable fields found" };
+                }
+
+                var finalScore = matchScore / totalFields;
+                var isMatch = finalScore >= threshold;
+
+                return new InternalMatchResult
+                {
+                    IsMatch = isMatch,
+                    Score = finalScore,
+                    MatchReason = isMatch ? string.Join(", ", matchReasons) : "No significant matches"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new InternalMatchResult { IsMatch = false, MatchReason = $"Error comparing records: {ex.Message}" };
+            }
+        }
+
+        /// <summary>
+        /// Gets key fields to compare for internal duplicate detection based on entity type
+        /// </summary>
+        private List<string> GetKeyFieldsForEntity(string entityName)
+        {
+            return entityName.ToLower() switch
+            {
+                "contact" or "contacts" => new List<string> { "email", "firstName", "lastName", "phone", "mobile" },
+                "partner" or "partners" => new List<string> { "name", "partnerShortDescription", "erpDimValue" },
+                "interaction" or "interactions" => new List<string> { "type", "subject", "date", "description" },
+                _ => new List<string> { "name", "title", "email" } // Default fields
+            };
+        }
+
+        /// <summary>
+        /// Calculates string similarity using a simple algorithm
+        /// </summary>
+        private double CalculateStringSimilarity(string str1, string str2)
+        {
+            if (string.IsNullOrEmpty(str1) || string.IsNullOrEmpty(str2))
+                return 0.0;
+
+            str1 = str1.ToLowerInvariant();
+            str2 = str2.ToLowerInvariant();
+
+            if (str1 == str2) return 1.0;
+
+            // Simple Levenshtein distance-based similarity
+            var maxLen = Math.Max(str1.Length, str2.Length);
+            if (maxLen == 0) return 1.0;
+
+            var distance = LevenshteinDistance(str1, str2);
+            return 1.0 - (double)distance / maxLen;
+        }
+
+        /// <summary>
+        /// Calculates Levenshtein distance between two strings
+        /// </summary>
+        private int LevenshteinDistance(string str1, string str2)
+        {
+            var matrix = new int[str1.Length + 1, str2.Length + 1];
+
+            for (int i = 0; i <= str1.Length; i++)
+                matrix[i, 0] = i;
+
+            for (int j = 0; j <= str2.Length; j++)
+                matrix[0, j] = j;
+
+            for (int i = 1; i <= str1.Length; i++)
+            {
+                for (int j = 1; j <= str2.Length; j++)
+                {
+                    var cost = str1[i - 1] == str2[j - 1] ? 0 : 1;
+                    matrix[i, j] = Math.Min(
+                        Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
+                        matrix[i - 1, j - 1] + cost);
+                }
+            }
+
+            return matrix[str1.Length, str2.Length];
+        }
     }
 
     /// <summary>
@@ -1579,5 +1835,40 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
         public string MatchReason { get; set; }
         public dynamic MatchedData { get; set; }
         public string SearchType { get; set; }
+    }
+
+    /// <summary>
+    /// Result of internal duplicate detection within uploaded file
+    /// </summary>
+    public class InternalDuplicateResult
+    {
+        public bool HasInternalDuplicates { get; set; }
+        public int TotalDuplicateGroups { get; set; }
+        public int TotalDuplicateRecords { get; set; }
+        public int TotalRecords { get; set; }
+        public int CleanRecords { get; set; }
+        public List<InternalDuplicateGroup> DuplicateGroups { get; set; } = new List<InternalDuplicateGroup>();
+    }
+
+    /// <summary>
+    /// Represents a group of duplicate records within the file
+    /// </summary>
+    public class InternalDuplicateGroup
+    {
+        public int MasterIndex { get; set; }
+        public dynamic MasterRecord { get; set; }
+        public List<int> DuplicateIndices { get; set; } = new List<int>();
+        public List<dynamic> DuplicateRecords { get; set; } = new List<dynamic>();
+        public List<string> MatchReasons { get; set; } = new List<string>();
+    }
+
+    /// <summary>
+    /// Result of comparing two records for internal duplicates
+    /// </summary>
+    public class InternalMatchResult
+    {
+        public bool IsMatch { get; set; }
+        public double Score { get; set; }
+        public string MatchReason { get; set; } = string.Empty;
     }
 }

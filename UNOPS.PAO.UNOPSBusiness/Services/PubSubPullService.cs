@@ -334,7 +334,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Services
                     msg.UserId,
                     msg.EntityName,
                     true, 
-                    progressCallback
+                    progressCallback,
+                    msg.FileId // Pass the Google Sheet ID for identification
                 );
                 
                 // Final update if it wasn't already updated at 100%

@@ -617,9 +617,17 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   handleNotificationClick(notification: Notification) {
+
+    debugger;
     // Handle AI data modification notifications (category format: ENTITYTYPE_ID)
     if (notification.responseType.startsWith("data_")) {
       this.handleDataModificationNotification(notification);
+      return;
+    }
+
+    // Handle internal duplicates found in uploaded files
+    if (notification.responseType === 'InternalDuplicatesFound') {
+      this.handleInternalDuplicateNotification(notification);
       return;
     }
 
@@ -657,6 +665,57 @@ export class TopbarComponent implements OnInit, OnDestroy {
       }
     } else {
       // For notifications without records, just mark as read
+      this.markNotificationAsRead(notification.id);
+    }
+  }
+
+  handleInternalDuplicateNotification(notification: Notification): void {
+    try {
+      // Parse the record data to get the internal duplicate information
+      let duplicateResponse;
+      
+      // Check if records contain the duplicate data
+      if (notification.records && notification.records.length > 0) {
+        const recordData = notification.records[0];
+        
+        if (typeof recordData === 'string') {
+          duplicateResponse = JSON.parse(recordData);
+        } else {
+          duplicateResponse = recordData;
+        }
+      } else {
+        console.warn('No record data found in internal duplicate notification');
+        this.markNotificationAsRead(notification.id);
+        return;
+      }
+
+      if (!duplicateResponse || duplicateResponse.intent !== 'InternalDuplicatesFound') {
+        console.warn('Invalid internal duplicate notification data:', duplicateResponse);
+        this.markNotificationAsRead(notification.id);
+        return;
+      }
+
+      // Extract entity type from category (e.g., "Contact", "Partner", "Interaction")
+      const entityType = notification.category?.toLowerCase() || 'record';
+      
+      // Use the import dialog service to show the internal duplicate error
+      // This will display the same dialog that's shown during synchronous processing
+      this.importDialogService.showInternalDuplicateError(duplicateResponse, entityType);
+      
+      // Mark notification as read after showing the dialog
+      this.markNotificationAsRead(notification.id);
+      
+    } catch (error) {
+      console.error('Error handling internal duplicate notification:', error);
+      
+      // Fallback: show generic error message
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Internal Duplicates Found',
+        detail: notification.message || 'Duplicate records found in uploaded file. Please check and fix duplicates.',
+        life: 8000
+      });
+      
       this.markNotificationAsRead(notification.id);
     }
   }
