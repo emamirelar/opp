@@ -105,6 +105,18 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                 await AiPromptSeeder.SeedAiPromptsAsync(_context);
                 _logger.LogInformation("AI prompts seeded successfully.");
 
+                _logger.LogInformation("Seeding liaison offices...");
+                await LiaisonOfficeSeeder.SeedLiaisonOfficesAsync(_context);
+                _logger.LogInformation("Liaison offices seeded successfully.");
+
+                _logger.LogInformation("Seeding partner trees...");
+                await PartnerTreeSeeder.SeedPartnerTreesAsync(_context);
+                _logger.LogInformation("Partner trees seeded successfully.");
+
+                _logger.LogInformation("Seeding partners...");
+                await PartnerSeeder.SeedPartnersAsync(_context);
+                _logger.LogInformation("Partners seeded successfully.");
+
                 _logger.LogInformation("Seeding entity permissions...");
                 await EntityPermissionSeeder.SeedEntityPermissionsAsync(_context);
                 _logger.LogInformation("Entity permissions seeded successfully.");

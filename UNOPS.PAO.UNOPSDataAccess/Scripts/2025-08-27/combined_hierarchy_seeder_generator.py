@@ -1,0 +1,458 @@
+import csv
+import html
+import re
+from collections import defaultdict
+
+def clean_string_for_csharp(text):
+    """Clean and escape string for C# code"""
+    if not text:
+        return ""
+    # Remove HTML tags if any
+    text = re.sub('<[^<]+?>', '', text)
+    # Escape quotes for C#
+    text = text.replace('"', '\\"')
+    # Remove extra whitespace
+    text = text.strip()
+    return text
+
+def convert_status_to_entitystatus(status):
+    """Convert CSV status to EntityStatus enum value"""
+    if not status:
+        return "1"  # Default to Active
+    status_lower = status.lower()
+    if status_lower == "active":
+        return "1"  # EntityStatus.Active
+    elif status_lower == "inactive":
+        return "0"  # EntityStatus.Inactive  
+    else:
+        return "1"  # Default to Active
+
+def convert_boolean_field(value):
+    """Convert various boolean representations to C# bool"""
+    if not value:
+        return "false"
+    value_lower = str(value).lower()
+    if value_lower in ["true", "yes", "1", "allowed"]:
+        return "true"
+    elif value_lower in ["false", "no", "0", "not allowed"]:
+        return "false"
+    else:
+        return "false"  # Default
+
+def load_liaison_office_codes():
+    """Load valid liaison office codes from the liaison office CSV if it exists"""
+    valid_liaison_office_codes = set()
+    try:
+        with open('sf_prod_liaison_office_export - Sheet1.csv', 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                liaison_code = row['Id'].strip() if 'Id' in row and row['Id'] else ""
+                if liaison_code:
+                    valid_liaison_office_codes.add(liaison_code)
+        print(f"Loaded {len(valid_liaison_office_codes)} liaison office codes from CSV")
+    except FileNotFoundError:
+        print("Liaison office CSV not found - will use default null values for LiaisonOfficeId")
+    
+    return valid_liaison_office_codes
+
+def load_partner_liaison_mapping():
+    """Load mapping from AccountNumber to LiaisonOffice code from partners export CSV"""
+    account_to_liaison_mapping = {}
+    try:
+        with open('sf_prod_partners_export - Sheet1.csv', 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                account_number = row['AccountNumber'].strip() if 'AccountNumber' in row and row['AccountNumber'] else ""
+                liaison_office_code = row['SF_PRM_LiaisonOffice__c'].strip() if 'SF_PRM_LiaisonOffice__c' in row and row['SF_PRM_LiaisonOffice__c'] else ""
+                
+                if account_number and liaison_office_code:
+                    account_to_liaison_mapping[account_number] = liaison_office_code
+        
+        print(f"Loaded {len(account_to_liaison_mapping)} AccountNumber -> LiaisonOffice mappings from partners CSV")
+    except FileNotFoundError:
+        print("Partners export CSV not found - will use default null values for LiaisonOfficeId")
+    
+    return account_to_liaison_mapping
+
+def load_partner_logo_and_flag_mapping():
+    """Load mapping from partner_id to logo_url (with flag_url fallback) from the partner logos CSV"""
+    partner_to_logo_mapping = {}
+    logo_count = 0
+    flag_fallback_count = 0
+    
+    try:
+        with open('partner_logos_and_flags_results.csv', 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                partner_id = row['partner_id'].strip() if 'partner_id' in row and row['partner_id'] else ""
+                logo_url = row['logo_url'].strip() if 'logo_url' in row and row['logo_url'] else ""
+                flag_url = row['flag_url'].strip() if 'flag_url' in row and row['flag_url'] else ""
+                
+                if partner_id:
+                    # Prioritize logo_url, fallback to flag_url
+                    if logo_url:
+                        partner_to_logo_mapping[partner_id] = logo_url
+                        logo_count += 1
+                    elif flag_url:
+                        partner_to_logo_mapping[partner_id] = flag_url
+                        flag_fallback_count += 1
+        
+        print(f"Loaded {len(partner_to_logo_mapping)} partner -> image URL mappings from logos CSV")
+        print(f"  - {logo_count} with logo URLs")
+        print(f"  - {flag_fallback_count} with flag URLs as fallback")
+    except FileNotFoundError:
+        print("Partner logos CSV not found - will use default null values for LogoUrl")
+    
+    return partner_to_logo_mapping
+
+def is_circular_reference(level_code, partner_id):
+    """Check if a level code creates a circular reference with the partner ID"""
+    if not level_code or not partner_id:
+        return False
+    
+    try:
+        # Check if both can be converted to integers and are equal
+        return int(level_code) == int(partner_id)
+    except ValueError:
+        # If level_code is not a number, it's not a circular reference
+        return False
+
+def parse_combined_hierarchy_csv():
+    """Parse the Combined Hierarchy CSV and extract both partners and tree structure"""
+    partners = []
+    partner_tree_entries = set()  # Use set to avoid duplicates
+    level_hierarchy = defaultdict(set)  # Track parent-child relationships
+    circular_references_count = 0
+    
+    # Load valid liaison office codes and partner mapping
+    valid_liaison_office_codes = load_liaison_office_codes()
+    account_to_liaison_mapping = load_partner_liaison_mapping()
+    partner_to_logo_mapping = load_partner_logo_and_flag_mapping()
+    
+    print("Reading Combined Hierarchy CSV...")
+    
+    with open('PartnerTreeExport - TEST Combined Hierarchy 28 Aug 2025.csv', 'r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        headers = reader.fieldnames
+        print(f"CSV Headers: {headers}")
+        
+        for row in reader:
+            # Extract partner data
+            partner_id = row['Partner'].strip() if row['Partner'] else ""
+            partner_name = clean_string_for_csharp(row['Partner_Description']) if row['Partner_Description'] else ""
+            partner_short = clean_string_for_csharp(row['Partner_Description_Short']) if row['Partner_Description_Short'] else ""
+            
+            # Extract hierarchical levels
+            level1_code = row['Partner_Level1'].strip() if row['Partner_Level1'] else ""
+            level1_desc = clean_string_for_csharp(row['Partner_Level1_Description']) if row['Partner_Level1_Description'] else ""
+            level1_short = clean_string_for_csharp(row['Partner_Level1_Description_Short']) if row['Partner_Level1_Description_Short'] else ""
+            
+            level2_code = row['Partner_Level2'].strip() if row['Partner_Level2'] else ""
+            level2_desc = clean_string_for_csharp(row['Partner_Level2_Description']) if row['Partner_Level2_Description'] else ""
+            level2_short = clean_string_for_csharp(row['Partner_Level2_Description_Short']) if row['Partner_Level2_Description_Short'] else ""
+            
+            # Check for additional levels (3, 4, 5)
+            level3_code = row['Partner_Level3'].strip() if row['Partner_Level3'] else ""
+            level3_desc = clean_string_for_csharp(row['Partner_Level3_Description']) if row['Partner_Level3_Description'] else ""
+            
+            level4_code = row['Partner_Level4'].strip() if row['Partner_Level4'] else ""
+            level4_desc = clean_string_for_csharp(row['Partner_Level4_Description']) if row['Partner_Level4_Description'] else ""
+            
+            level5_code = row['Partner_Level5'].strip() if row['Partner_Level5'] else ""
+            level5_desc = clean_string_for_csharp(row['Partner_Level5_Description']) if row['Partner_Level5_Description'] else ""
+            
+            reporting_category = clean_string_for_csharp(row['Partner_Reporting_Category']) if row['Partner_Reporting_Category'] else ""
+            internal_code = row['Internal_Report_Level_Code'].strip() if row['Internal_Report_Level_Code'] else ""
+            internal_desc = clean_string_for_csharp(row['Internal_Report_Level_Description']) if row['Internal_Report_Level_Description'] else ""
+            
+            # Add Level 1 entry (main categories like FOUNDATION, GOVERNMENT, etc.)
+            if level1_code and level1_desc:
+                partner_tree_entries.add((level1_code, level1_desc, level1_short or level1_desc, "Level_1", ""))
+            
+            # Determine the hierarchy and partner group code
+            current_level = 1
+            parent_code = level1_code
+            
+            # Add Level 2 if exists and is not a circular reference
+            if level2_code and level2_desc and level2_code != level1_code and not is_circular_reference(level2_code, partner_id):
+                partner_tree_entries.add((level2_code, level2_desc, level2_short or level2_desc, "Level_2", level1_code))
+                parent_code = level2_code
+                current_level = 2
+            elif is_circular_reference(level2_code, partner_id):
+                circular_references_count += 1
+            
+            # Add Level 3 if exists and is not a circular reference
+            if level3_code and level3_desc and not is_circular_reference(level3_code, partner_id):
+                partner_tree_entries.add((level3_code, level3_desc, level3_desc, "Level_3", parent_code))
+                parent_code = level3_code
+                current_level = 3
+            elif is_circular_reference(level3_code, partner_id):
+                circular_references_count += 1
+            
+            # Add Level 4 if exists and is not a circular reference
+            if level4_code and level4_desc and not is_circular_reference(level4_code, partner_id):
+                partner_tree_entries.add((level4_code, level4_desc, level4_desc, "Level_4", parent_code))
+                parent_code = level4_code
+                current_level = 4
+            elif is_circular_reference(level4_code, partner_id):
+                circular_references_count += 1
+            
+            # Add Level 5 if exists and is not a circular reference
+            if level5_code and level5_desc and not is_circular_reference(level5_code, partner_id):
+                partner_tree_entries.add((level5_code, level5_desc, level5_desc, "Level_5", parent_code))
+                parent_code = level5_code
+                current_level = 5
+            elif is_circular_reference(level5_code, partner_id):
+                circular_references_count += 1
+            
+            # Determine PartnerGroupCode using hierarchical PartnerTree codes (not partner ID)
+            partner_group_code = ""
+            if level5_code and level5_desc and not is_circular_reference(level5_code, partner_id):
+                partner_group_code = level5_code
+            elif level4_code and level4_desc and not is_circular_reference(level4_code, partner_id):
+                partner_group_code = level4_code
+            elif level3_code and level3_desc and not is_circular_reference(level3_code, partner_id):
+                partner_group_code = level3_code
+            elif level2_code and level2_desc and level2_code != level1_code and not is_circular_reference(level2_code, partner_id):
+                partner_group_code = level2_code
+            else:
+                partner_group_code = level1_code
+            
+            # Extract liaison office information using AccountNumber lookup
+            liaison_office_code = ""
+            if partner_id in account_to_liaison_mapping:
+                liaison_office_code = account_to_liaison_mapping[partner_id]
+            
+            # Extract logo URL using partner_id lookup
+            logo_url = ""
+            if partner_id in partner_to_logo_mapping:
+                logo_url = partner_to_logo_mapping[partner_id]
+            
+            # Create partner entry
+            if partner_id and partner_name:
+                partner_data = {
+                    'partner_code': partner_id,
+                    'name': partner_name,
+                    'short_description': partner_short,
+                    'status': "1",  # Default to Active
+                    'partner_group_code': partner_group_code,
+                    'liaison_office_code': liaison_office_code,
+                    'logo_url': logo_url,
+                    'can_create_new_opportunities': "true",  # Default
+                    'pooled_fund': "false",  # Default
+                    'key_global_partner': "false",  # Default
+                    'un_secretariat_partner': "false",  # Default
+                    'reason_no_opportunity': ""  # Default
+                }
+                partners.append(partner_data)
+    
+    print(f"Detected and skipped {circular_references_count} circular references")
+    return partners, list(partner_tree_entries)
+
+def generate_partner_tree_seeder(tree_entries):
+    """Generate PartnerTreeSeeder.cs"""
+    print(f"Generating PartnerTree seeder with {len(tree_entries)} entries...")
+    
+    # Sort entries by level to ensure proper hierarchy
+    level_order = {'Level_1': 1, 'Level_2': 2, 'Level_3': 3, 'Level_4': 4, 'Level_5': 5}
+    tree_entries.sort(key=lambda x: (level_order.get(x[3], 6), x[0]))  # Sort by level, then by code
+    
+    seeder_code = '''using Microsoft.EntityFrameworkCore;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSDomain.Entities;
+
+namespace UNOPS.PAO.UNOPSDataAccess.Seed
+{
+    public static class PartnerTreeSeeder
+    {
+        public static async Task SeedPartnerTreesAsync(UNOPSAppDbContext context)
+        {
+            if (await context.PartnerTrees.AnyAsync())
+            {
+                return;
+            }
+
+            var partnerTrees = new List<UNOPSPartnerTree>
+            {
+'''
+
+    # Generate entries
+    for i, entry in enumerate(tree_entries):
+        code, name, description, level_type, parent = entry
+        id_value = i + 1  # Auto-increment ID starting from 1
+        
+        seeder_code += f'''                new UNOPSPartnerTree
+                {{
+                    Id = {id_value},
+                    Code = "{code}",
+                    Name = "{name}",
+                    Description = "{description}",
+                    Type = "{level_type}",
+                    Parent = "{parent}",
+                    Status = (EntityStatus)1,
+                    CreatedBy = 0,
+                    CreatedDate = DateTime.UtcNow,
+                    LastModifiedBy = 0,
+                    LastModifiedDate = DateTime.UtcNow,
+                    IsDeleted = false,
+                    DeletedBy = 0
+                }}'''
+        
+        # Add comma if not the last item
+        if i < len(tree_entries) - 1:
+            seeder_code += ','
+        
+        seeder_code += '\n'
+
+    # Close the seeder class
+    seeder_code += '''            };
+
+            await context.PartnerTrees.AddRangeAsync(partnerTrees);
+            await context.SaveChangesAsync();
+        }
+    }
+}'''
+
+    # Save to file
+    output_file = '../../Seed/PartnerTreeSeeder.cs'
+    with open(output_file, 'w', encoding='utf-8') as cs_file:
+        cs_file.write(seeder_code)
+
+    print(f"PartnerTree seeder code generated and saved to {output_file}")
+    return output_file
+
+def generate_partner_seeder(partners):
+    """Generate PartnerSeeder.cs"""
+    print(f"Generating Partner seeder with {len(partners)} entries...")
+    
+    seeder_code = '''using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using UNOPS.PAO.Domain.Entities;
+using UNOPS.PAO.UNOPSDataAccess.Context;
+using UNOPS.PAO.UNOPSDomain.Entities;
+
+namespace UNOPS.PAO.UNOPSDataAccess.Seed
+{
+    public static class PartnerSeeder
+    {
+        public static async Task SeedPartnersAsync(UNOPSAppDbContext context)
+        {
+            if (await context.Partners.AnyAsync())
+            {
+                return;
+            }
+
+            // Create mapping from LiaisonOffice Code to Id
+            var liaisonOfficeMapping = await context.LiaisonOffices
+                .ToDictionaryAsync(lo => lo.Code, lo => lo.Id);
+
+            var partners = new List<UNOPSPartner>
+            {
+'''
+
+    # Generate partner entries
+    for i, partner in enumerate(partners):
+        # Handle null values for nullable fields
+        partner_group_code = f'"{partner["partner_group_code"]}"' if partner['partner_group_code'] else "null"
+        
+        # Generate liaison office lookup code (using the same pattern as original seeder)
+        if partner['liaison_office_code']:
+            liaison_office_lookup = f'liaisonOfficeMapping.ContainsKey("{partner["liaison_office_code"]}") ? liaisonOfficeMapping["{partner["liaison_office_code"]}"] : (int?)null'
+        else:
+            liaison_office_lookup = "null"
+        
+        # Handle logo URL - use null if empty
+        logo_url_value = f'"{partner["logo_url"]}"' if partner['logo_url'] else 'null'
+        
+        seeder_code += f'''                new UNOPSPartner
+                {{
+                    PartnerCode = "{partner['partner_code']}",
+                    Name = "{partner['name']}",
+                    PartnerShortDescription = "{partner['short_description']}",
+                    Status = (EntityStatus){partner['status']},
+                    PartnerGroupCode = {partner_group_code},
+                    LiaisonOfficeId = {liaison_office_lookup},
+                    LogoUrl = {logo_url_value},
+                    CanCreateNewOpportunities = {partner['can_create_new_opportunities']},
+                    PooledFund = {partner['pooled_fund']},
+                    KeyGlobalPartner = {partner['key_global_partner']},
+                    UNSecretariatPartner = {partner['un_secretariat_partner']},
+                    ReasonForNoNewOpportunity = "{partner['reason_no_opportunity']}",
+                    ErpDimValue = {f'int.Parse("{partner["partner_code"]}")' if partner['partner_code'] and partner['partner_code'].isdigit() else 'null'},
+                    CreatedBy = 0,
+                    CreatedDate = DateTime.UtcNow,
+                    LastModifiedBy = 0,
+                    LastModifiedDate = DateTime.UtcNow,
+                    IsDeleted = false,
+                    DeletedBy = 0
+                }}'''
+        
+        # Add comma if not the last item
+        if i < len(partners) - 1:
+            seeder_code += ','
+        
+        seeder_code += '\n'
+
+    # Close the seeder class
+    seeder_code += '''            };
+
+            await context.Partners.AddRangeAsync(partners);
+            await context.SaveChangesAsync();
+        }
+    }
+}'''
+
+    # Save to file
+    output_file = '../../Seed/PartnerSeeder.cs'
+    with open(output_file, 'w', encoding='utf-8') as cs_file:
+        cs_file.write(seeder_code)
+
+    print(f"Partner seeder code generated and saved to {output_file}")
+    return output_file
+
+def main():
+    """Main execution function"""
+    print("=== Combined Hierarchy Seeder Generator ===")
+    print("Using: PartnerTreeExport - Combined Hierarchy 28 Aug 2025.csv")
+    
+    # Parse the CSV
+    partners, tree_entries = parse_combined_hierarchy_csv()
+    
+    print(f"\nExtracted {len(partners)} partners")
+    print(f"Extracted {len(tree_entries)} partner tree entries")
+    
+    # Show distribution by level
+    level_counts = defaultdict(int)
+    for entry in tree_entries:
+        level_counts[entry[3]] += 1
+    
+    print("\nPartner Tree Level Distribution:")
+    for level in ['Level_1', 'Level_2', 'Level_3', 'Level_4', 'Level_5']:
+        if level in level_counts:
+            print(f"  - {level}: {level_counts[level]}")
+    
+    # Generate seeders
+    tree_file = generate_partner_tree_seeder(tree_entries)
+    partner_file = generate_partner_seeder(partners)
+    
+    print(f"\n=== Generation Complete ===")
+    print(f"Generated: {tree_file}")
+    print(f"Generated: {partner_file}")
+    
+    # Show some examples
+    if partners:
+        print(f"\nFirst 5 partners:")
+        for i, p in enumerate(partners[:5]):
+            print(f"  {i+1}. {p['partner_code']}: {p['name']} (Group: {p['partner_group_code']})")
+    
+    if tree_entries:
+        print(f"\nFirst 5 tree entries:")
+        for i, entry in enumerate(tree_entries[:5]):
+            code, name, desc, level, parent = entry
+            parent_info = f" (Parent: {parent})" if parent else ""
+            print(f"  {i+1}. [{level}] {code}: {name}{parent_info}")
+
+if __name__ == "__main__":
+    main()
