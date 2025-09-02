@@ -120,7 +120,11 @@
         "includeBasicInfo": "Inclure: Informations de contact de base",
         "includeOrgDetails": "Détails de l'organisation",
         "includeRecentInteractions": "Interactions récentes",
-        "formatMarkdownSections": "Formatez la réponse en markdown avec des sections claires."
+        "formatMarkdownSections": "Formatez la réponse en markdown avec des sections claires.",
+        "exportDeveloper": "Exporter AiPrompt (Version Développeur)",
+        "exportSuccess": "Prompts IA exportés avec succès comme fichier seeder C#",
+        "exportError": "Échec de l'export des prompts IA",
+        "exporting": "Export en cours..."
     },
     "label": {
         "actions": "Actions",

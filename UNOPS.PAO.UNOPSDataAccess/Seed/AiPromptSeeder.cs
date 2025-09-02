@@ -266,24 +266,6 @@ namespace UNOPS.PAO.UNOPSDataAccess.Seed
                     PromptFunction = "GetInteractionDetailsAsync",
                     Description = "Generates a comprehensive summary of interaction details including participants, content, context, and outcomes in a structured Markdown format.",
                     AdminCanChange = true
-                },
-                new AiPrompt
-                {
-                    Type = "partner_funding_opportunities",
-                    Prompt = "",
-                    CreatedAt = DateTime.UtcNow,
-                    Name = "Partner",
-                    Status = (EntityStatus)1,
-                    ContentConfig = "{\"role\":\"user\",\"parts\":[{\"text\":\"{promptData}\"}]}",
-                    GenerationConfig = "{\"temperature\":0.7,\"top_p\":0.2,\"max_output_tokens\":65535}",
-                    Location = "europe-west4",
-                    Model = "gemini-2.5-flash",
-                    Project = "unops-partneropportunity",
-                    SafetySettings = null,
-                    ToolsConfig = null,
-                    PromptFunction = "GetBasicPartnerDetailsAsync",
-                    Description = "Partner Funding Opportunities",
-                    AdminCanChange = true
                 }
             };
 

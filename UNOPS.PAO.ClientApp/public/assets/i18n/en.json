@@ -811,7 +811,11 @@
       "format": "Specify the desired output format",
       "constraints": "Add any limitations or requirements"
     },
-    "descriptionPlaceholder": "Enter a brief description of what this prompt does..."
+    "descriptionPlaceholder": "Enter a brief description of what this prompt does...",
+    "exportDeveloper": "Export AiPrompt (Developer Version)",
+    "exportSuccess": "AI prompts exported successfully as C# seeder file",
+    "exportError": "Failed to export AI prompts",
+    "exporting": "Exporting..."
   },
   "entityManager": {
     "templatePattern": "Template Pattern",
