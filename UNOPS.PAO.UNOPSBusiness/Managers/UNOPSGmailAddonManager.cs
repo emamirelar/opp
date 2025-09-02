@@ -349,23 +349,51 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
     /// </summary>
     private ContactRequest CreateContactRequest(GmailSelectedEmailModel selectedEmail, int partnerId)
     {
-                    // Extract name parts from email
-                    var emailParts = selectedEmail.EmailAddress.Split('@');
-                    var namePart = emailParts[0];
-        var nameComponents = ExtractNameFromEmail(namePart);
+        // Use provided name information if available, otherwise extract from email
+        string firstName = selectedEmail.FirstName;
+        string middleName = selectedEmail.MiddleName;
+        string lastName = selectedEmail.LastName;
+
+        // If no name information provided, fall back to extracting from email prefix
+        if (string.IsNullOrEmpty(firstName) && string.IsNullOrEmpty(lastName))
+        {
+            var emailParts = selectedEmail.EmailAddress.Split('@');
+            var namePart = emailParts[0];
+            var nameComponents = ExtractNameFromEmail(namePart);
+            firstName = nameComponents.FirstName;
+            lastName = nameComponents.LastName;
+        }
+
+        // Ensure LastName is always populated since it's a required field
+        if (string.IsNullOrEmpty(lastName))
+        {
+            if (!string.IsNullOrEmpty(firstName))
+            {
+                // Use FirstName as LastName if LastName is empty
+                lastName = firstName;
+                firstName = ""; // Clear FirstName to avoid duplication
+            }
+            else
+            {
+                // As a last resort, use the email prefix as LastName
+                var emailParts = selectedEmail.EmailAddress.Split('@');
+                var namePart = emailParts[0];
+                lastName = char.ToUpper(namePart[0]) + namePart.Substring(1).ToLower();
+            }
+        }
 
         return new ContactRequest
-                    {
-                        Email = selectedEmail.EmailAddress,
-                        FirstName = nameComponents.FirstName,
-                        LastName = nameComponents.LastName,
-                        PartnerId = partnerId,
-                        // Set default values for required fields
-                        Salutation = "",
-                        MiddleName = "",
-                        Title = "",
-                        Status = EntityStatus.Draft.ToString()
-                    };
+        {
+            Email = selectedEmail.EmailAddress,
+            FirstName = firstName ?? "",
+            MiddleName = middleName ?? "",
+            LastName = lastName ?? "",
+            PartnerId = partnerId,
+            // Set default values for required fields
+            Salutation = "",
+            Title = "",
+            Status = EntityStatus.Draft.ToString()
+        };
     }
 
     /// <summary>

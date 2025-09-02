@@ -18,15 +18,12 @@ function onGmailMessageOpen(e) {
   const existingInteraction = findExistingInteraction(messageData.threadId, messageData.messageId);
   messageData.existingInteraction = existingInteraction;
 
-  // Extract all email addresses
-  const allEmails = [
-      extractEmailAddress(messageData.sender), // Extract email from sender
-      ...extractEmailAddresses(messageData.to),
-      ...extractEmailAddresses(messageData.cc),
-      ...extractEmailAddresses(messageData.bcc)
-    ].filter(email => email); // Remove null/undefined
+  // Extract all email addresses with their full information and parse names
+  const emailsWithNames = extractEmailsWithNamesFromMessage(messageData);
+  const uniqueEmails = removeDuplicatesUsingSet(emailsWithNames.map(item => item.email));
 
-  const uniqueEmails = removeDuplicatesUsingSet(allEmails);
+  // Store the parsed name information in messageData for later use
+  messageData.parsedEmailNames = emailsWithNames;
 
   const relatedRecords = findRelatedRecords(uniqueEmails);
 
@@ -173,4 +170,124 @@ function cleanEmailBody(body) {
 
 function removeDuplicatesUsingSet(originalList) {
   return [...new Set(originalList)];
+}
+
+/**
+ * Extracts emails with parsed name components from message data
+ * @param {Object} messageData - The message data object containing sender, to, cc, bcc fields
+ * @returns {Array} Array of objects with {email, firstName, middleName, lastName, originalString}
+ */
+function extractEmailsWithNamesFromMessage(messageData) {
+  const emailsWithNames = [];
+  const processedEmails = new Set(); // To avoid duplicates
+  
+  // Helper function to process a single email string
+  function processEmailString(emailString, source) {
+    if (!emailString || !emailString.trim()) return;
+    
+    const cleanEmailString = emailString.trim();
+    const extractedEmail = extractEmailAddress(cleanEmailString);
+    
+    if (extractedEmail && !processedEmails.has(extractedEmail.toLowerCase())) {
+      processedEmails.add(extractedEmail.toLowerCase());
+      
+      const nameComponents = extractNameComponents(cleanEmailString);
+      
+      emailsWithNames.push({
+        email: extractedEmail,
+        firstName: nameComponents.firstName || '',
+        middleName: nameComponents.middleName || '',
+        lastName: nameComponents.lastName || '',
+        originalString: cleanEmailString,
+        source: source // Track where this email came from (sender, to, cc, bcc)
+      });
+    }
+  }
+  
+  // Process sender
+  if (messageData.sender) {
+    processEmailString(messageData.sender, 'sender');
+  }
+  
+  // Process 'to' field
+  if (messageData.to) {
+    const toEmails = messageData.to.split(',');
+    toEmails.forEach(email => processEmailString(email, 'to'));
+  }
+  
+  // Process 'cc' field  
+  if (messageData.cc) {
+    const ccEmails = messageData.cc.split(',');
+    ccEmails.forEach(email => processEmailString(email, 'cc'));
+  }
+  
+  // Process 'bcc' field
+  if (messageData.bcc) {
+    const bccEmails = messageData.bcc.split(',');
+    bccEmails.forEach(email => processEmailString(email, 'bcc'));
+  }
+  
+  Logger.log('Extracted emails with names: ' + JSON.stringify(emailsWithNames));
+  
+  return emailsWithNames;
+}
+
+/**
+ * Extracts name from email string and splits it into name components
+ * @param {string} emailString - String like "John Doe <john.doe@example.com>" or just "john.doe@example.com"
+ * @returns {Object} Object with firstName, middleName, lastName properties
+ */
+function extractNameComponents(emailString) {
+  if (!emailString) {
+    return { firstName: '', middleName: '', lastName: '' };
+  }
+  
+  let nameString = '';
+  
+  // Check if email is in format "Name <email@domain.com>"
+  const angleBracketMatch = emailString.match(/^(.+?)\s*<[^>]+>$/);
+  if (angleBracketMatch) {
+    nameString = angleBracketMatch[1].trim();
+  } else {
+    // If no angle brackets, try to extract name from email prefix
+    const emailMatch = emailString.match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
+    if (emailMatch) {
+      const emailPrefix = emailMatch[0].split('@')[0];
+      // Replace common separators with spaces and capitalize
+      nameString = emailPrefix.replace(/[._-]/g, ' ')
+                              .split(' ')
+                              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                              .join(' ');
+    } else {
+      nameString = emailString.trim();
+    }
+  }
+  
+  // Clean up the name string (remove quotes, extra spaces)
+  nameString = nameString.replace(/['"]/g, '').replace(/\s+/g, ' ').trim();
+  
+  // Split name into components
+  const nameParts = nameString.split(' ').filter(part => part.length > 0);
+  
+  let firstName = '';
+  let middleName = '';
+  let lastName = '';
+  
+  if (nameParts.length === 1) {
+    // If only one name part, use it as lastName (required field)
+    lastName = nameParts[0];
+  } else if (nameParts.length === 2) {
+    firstName = nameParts[0];
+    lastName = nameParts[1];
+  } else if (nameParts.length >= 3) {
+    firstName = nameParts[0];
+    lastName = nameParts[nameParts.length - 1];
+    middleName = nameParts.slice(1, -1).join(' ');
+  }
+  
+  return { 
+    firstName: firstName, 
+    middleName: middleName, 
+    lastName: lastName 
+  };
 }
