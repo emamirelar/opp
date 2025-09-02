@@ -275,21 +275,29 @@ export class DuplicateIndicatorComponent {
 
   getEntityUrl(entityId: number): string {
     const entityType = this.entityType.toLowerCase();
+    let route = '';
     
     // Map entity types to correct URLs
     switch (entityType) {
       case 'contact':
       case 'contacts':
-        return `/partnerships/contacts/${entityId}`;
+        route = `/partnerships/contacts/${entityId}`;
+        break;
       case 'partner':
       case 'partners':
-        return `/partnerships/partners/${entityId}`;
+        route = `/partnerships/partners/${entityId}`;
+        break;
       case 'interaction':
       case 'interactions':
-        return `/partnerships/interactions/${entityId}`;
+        route = `/partnerships/interactions/${entityId}`;
+        break;
       default:
-        return `/partnerships/${entityType}/${entityId}`;
+        route = `/partnerships/${entityType}/${entityId}`;
+        break;
     }
+    
+    // Construct full URL with protocol, host, hash and route
+    return `${window.location.protocol}//${window.location.host}/#${route}`;
   }
 
   viewDuplicateDetails(entityId: number): void {

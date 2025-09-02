@@ -136,8 +136,11 @@ export class DuplicateConfirmationDialogComponent {
         route = `/partnerships/contacts/${entityId}`;
     }
     
+    // Construct full URL with protocol, host, hash and route
+    const fullUrl = `${window.location.protocol}//${window.location.host}/#${route}`;
+    
     // Open in new tab
-    window.open(route, '_blank');
+    window.open(fullUrl, '_blank');
   }
 
 

@@ -24,6 +24,21 @@ export interface ImportAnalysisResponse {
     type: string;
     records: any[];
     jobId?: string; // PubSub job ID for async operations
+    intent?: string; // 'Success' | 'Processing' | 'InternalDuplicatesFound' | 'Error'
+    internalDuplicates?: {
+        totalGroups: number;
+        totalDuplicateRecords: number;
+        totalRecords: number;
+        cleanRecords: number;
+        duplicateGroups: Array<{
+            masterRowNumber: number;
+            duplicateRowNumbers: number[];
+            matchReasons: string[];
+            masterRecord: any;
+            duplicateRecords: any[];
+        }>;
+    };
+    message?: string;
 }
 
 @Injectable({
