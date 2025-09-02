@@ -88,7 +88,9 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
   allTypeData = this.cachedDataService.allPartnerLevelTypes;
   allStatusData = this.cachedDataService.allStatus;
   parentOptions: PartnerTree[] = [];
+  partnerCategoryOptions: PartnerTree[] = [];
   filteredPartnerGroupOptions: PartnerTree[] = [];
+  allPartnerGroupOptions: PartnerTree[] = [];
 
   constructor() {
     this.record = this.dialogConfig.data?.record;
@@ -154,12 +156,20 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
         }
       });
     }
+
+    // Initialize options from service (after patchValue so category filtering works correctly)
+    this.loadPartnerCategoryAndGroupOptions();
     
     this.updateFormValidity();
 
     // Subscribe to form status changes
     this.formGroup.statusChanges.subscribe(() => {
       this.updateFormValidity();
+    });
+
+    // Subscribe to partner category changes to update group options
+    this.formGroup.get('partnerCategoryCode')?.valueChanges.subscribe((categoryCode) => {
+      this.updatePartnerGroupOptions(categoryCode);
     });
   }
 
@@ -319,6 +329,34 @@ export class PartnerTreeItemComponent implements OnInit, OnChanges {
     if (!this.parent) return false;
 
     return this.parent?.partnerGroupEditable || this.parent?.partnerCategoryEditable;
+  }
+
+  private loadPartnerCategoryAndGroupOptions() {
+    // Filter parent options to get only categories (Level_1 items typically)
+    this.partnerCategoryOptions = this.parentOptions.filter(item => 
+      item.type === 'Level_1' || item.partnerCategoryEditable === true
+    );
+
+    // Get all partner group options
+    this.allPartnerGroupOptions = this.parentOptions.filter(item => 
+      item.type === 'Level_2' || item.partnerGroupEditable === true
+    );
+
+    // Initialize filtered options based on current category selection
+    const currentCategoryCode = this.formGroup.get('partnerCategoryCode')?.value ?? null;
+    this.updatePartnerGroupOptions(currentCategoryCode);
+  }
+
+  private updatePartnerGroupOptions(categoryCode: string | null) {
+    if (!categoryCode) {
+      this.filteredPartnerGroupOptions = [];
+      return;
+    }
+
+    // Filter groups based on selected category
+    this.filteredPartnerGroupOptions = this.allPartnerGroupOptions.filter(group => 
+      group.parent === categoryCode
+    );
   }
 
 

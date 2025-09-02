@@ -1,15 +1,69 @@
-td.p-cell-editing {
-    input {
-        background-color: lightblue;
-        padding: 5px;
+// Modern Partner Tree Styles
+.modern-tree-table {
+  border-collapse: separate;
+  border-spacing: 0;
+
+  .p-treetable-table {
+    border: none;
+
+    thead tr th {
+      border-bottom: 1px solid #e5e7eb;
+      border-top: none;
+      border-left: none;
+      border-right: none;
     }
+
+    tbody tr td {
+      border-left: none;
+      border-right: none;
+      border-top: none;
+    }
+
+    // Remove border from last row to avoid double border with rounded container
+    tbody tr:last-child td {
+      border-bottom: none !important;
+    }
+  }
+
+  // Override border on cells of the last row with multiple selectors for maximum specificity
+  ::ng-deep .modern-tree-table .p-treetable-tbody > tr:last-child > td,
+  ::ng-deep .modern-tree-table tbody tr:last-child td,
+  ::ng-deep .p-treetable tbody tr:last-child td {
+    border-bottom: none !important;
+    border-bottom-width: 0 !important;
+    border-bottom-style: none !important;
+  }
 }
 
+// Global override for last row border - use component-level instead of ::ng-deep
+:host ::ng-deep .p-treetable .p-treetable-tbody > tr:last-child > td {
+  border-bottom: 0 !important;
+  border-bottom-color: transparent !important;
+}
+
+// Alternative approach - hide the border visually
+:host ::ng-deep tr:last-child td {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: white;
+    z-index: 1;
+  }
+}
+
+// Enhanced tree table cell styles
 .p-treetable .p-treetable-tbody > tr > td {
-    max-width: 200px; /* Adjust the max-width as needed */
+    max-width: 300px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    vertical-align: middle;
 }
 
 .p-treetable .p-treetable-tbody > tr > td.p-editable-column > p-treetablecelleditor {
@@ -20,18 +74,12 @@ td.p-cell-editing {
     text-overflow: ellipsis;
 }
 
-.updated-record {
-    background-color: lightseagreen !important;
+// Tree toggler improvements
+.p-treetable .p-treetable-toggler {
+    @apply w-8 h-8 rounded-md hover:bg-gray-100 flex items-center justify-center transition-colors duration-200;
+
+    .p-treetable-toggler-icon {
+        @apply text-gray-600 text-sm;
+    }
 }
 
-.table-container {
-    position: relative;
-}
-
-.spinner-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-}

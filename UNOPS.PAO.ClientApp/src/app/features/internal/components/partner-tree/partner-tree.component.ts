@@ -119,9 +119,18 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     return [];
   }
 
-  handleOnRecordUpdation(event: any) {
+  handleOnRecordUpdation(event: any, parentNodeId?: string) {
     this.updatePartnerLevel = false;
     this.createPartnerLevel = false;
+    
+    // Save current expansion state before reloading
+    this.saveExpansionState();
+    
+    // If we have a parent node ID, ensure it will be expanded after reload
+    if (parentNodeId) {
+      this.expandedNodes.set(parentNodeId, true);
+    }
+    
     this.loadPartnerTreeData();
   }
 
@@ -230,16 +239,25 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
 
         // Restore expanded state after loading data
         this.restoreExpansionState();
-        this.cdr.detectChanges(); // Trigger change detection
+        
         this.originalData = this.service.originalData;
         this.parentOptions = this.service.parentOptions;
         // Initialize partnerGroupOptions
         this.partnerGroupOptions = this.service.partnerGroupOptions || [];
         this.parentUpdated = false;
         this.changeRecord = null;
+        
+        // Force change detection to ensure UI updates
+        this.cdr.detectChanges();
+        
+        // Additional async change detection to handle any delayed tree operations
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        }, 0);
       },
       error: (err: any) => {
         console.error('Error loading partner tree data:', err);
+        this.cdr.detectChanges();
       }
     });
   }
@@ -299,9 +317,13 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
 
   onAddPartnerLevel(rowData: any) {
     let level = rowData.type.split('_')[0] + '_' + (parseInt(rowData.type.split('_')[1]) + 1);
+    
+    // Pre-populate partner category and group from parent
     this.changeRecord = {
       type: level,
       parent: rowData.code,
+      partnerCategoryCode: rowData.partnerCategoryCode || rowData.partnerCategory,
+      partnerGroupCode: rowData.partnerGroupCode || rowData.partnerGroup,
       id: null,
       status: 'Active'
     };
@@ -317,7 +339,9 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
 
     ref.onClose.subscribe((result: PartnerTree) => {
       if (result) {
-        this.handleOnRecordUpdation(result);
+        // Pass the parent row ID to ensure it gets expanded after adding child
+        const parentNodeId = rowData.id ? rowData.id.toString() : undefined;
+        this.handleOnRecordUpdation(result, parentNodeId);
       }
     });
   }
@@ -572,4 +596,5 @@ export class PartnerTreeComponent extends FeatureBaseComponent implements OnInit
     
     this.treeColumns.set(fallbackColumns);
   }
+
 }
