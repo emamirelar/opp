@@ -16,6 +16,7 @@ using UNOPS.PAO.Business.Repositories.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Linq;
+using System.Text.Json;
 using Newtonsoft.Json.Linq;
 using UNOPS.PAO.UNOPSDataAccess.Context;
 using System.Dynamic;
@@ -68,12 +69,13 @@ public class UNOPSGeminiManager : IGeminiManager
     private readonly IUserManagementManager _userManagementManager;
     private readonly IUserInfoService _userInfoService;
     private readonly UserManager<PAOIdentityUser> _userManager;
+    private readonly RoleManager<PAOIdentityRole> _roleManager;
     private readonly IUserPreferenceService _userPreferenceService;
     private readonly IUserProfileCacheService _userProfileCacheService;
     private readonly IScreenContextCacheService _screenContextCacheService;
     private readonly IGeoTimeCacheService _geoTimeCacheService;
 
-    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService)
+    public UNOPSGeminiManager(IMapper mapper, UNOPSAppDbContext context, IConfiguration configuration, ILogger<UNOPSGeminiManager> logger, IUserManagementManager userManagementManager, IUserInfoService userInfoService, UserManager<PAOIdentityUser> userManager, RoleManager<PAOIdentityRole> roleManager, IUserPreferenceService userPreferenceService, IUserProfileCacheService userProfileCacheService, IScreenContextCacheService screenContextCacheService, IGeoTimeCacheService geoTimeCacheService)
     {
         _mapper = mapper;
         _context = context;
@@ -83,6 +85,7 @@ public class UNOPSGeminiManager : IGeminiManager
         _userManagementManager = userManagementManager;
         _userInfoService = userInfoService;
         _userManager = userManager;
+        _roleManager = roleManager;
         _userPreferenceService = userPreferenceService;
         _userProfileCacheService = userProfileCacheService;
         _screenContextCacheService = screenContextCacheService;
@@ -1045,6 +1048,12 @@ public class UNOPSGeminiManager : IGeminiManager
     {
         var type = request.Type;
         var camelCaseType = char.ToUpper(type[0]) + type.Substring(1).ToLower();
+        
+        // Special handling for User Role Import (ASP.NET Core Identity User-Role assignments)
+        if (type.Equals("user_role_import", StringComparison.OrdinalIgnoreCase))
+        {
+            return await BulkInsertUserRolesAsync(request);
+        }
 
         var assembly = typeof(UNOPSContact).Assembly;
         var modelType = assembly.GetType($"UNOPS.PAO.UNOPSDomain.Entities.UNOPS{camelCaseType}", throwOnError: false, ignoreCase: true);
@@ -1113,9 +1122,6 @@ public class UNOPSGeminiManager : IGeminiManager
                 recordsToAdd.Add(record);
             }
         }
-        
-        _logger.LogInformation("Processing bulk insert for {EntityType}. Total records: {TotalCount}, To insert: {InsertCount}, To update: {UpdateCount}", 
-            tableName, convertedRecords.Count, recordsToAdd.Count, recordsToUpdate.Count);
 
         // Process updates
         foreach (var record in recordsToUpdate)
@@ -1714,6 +1720,163 @@ public class UNOPSGeminiManager : IGeminiManager
             catch (Exception)
             {
                 return new { error = "Unable to extract display fields" };
+            }
+        }
+
+        /// <summary>
+        /// Handles bulk user-role assignments for ASP.NET Core Identity
+        /// </summary>
+        private async Task<string> BulkInsertUserRolesAsync(BulkUploadRequest request)
+        {
+            try
+            {
+                var successList = new List<object>();
+                var errorMessages = new List<string>();
+                var isSuccess = true;
+
+                foreach (var record in request.Records)
+                {
+                    try
+                    {
+                        // Handle JsonElement properly - convert to JObject for easier access
+                        JObject userRoleData;
+                        if (record is JsonElement jsonElement)
+                        {
+                            var jsonString = jsonElement.GetRawText();
+                            userRoleData = JObject.Parse(jsonString);
+                        }
+                        else
+                        {
+                            // Fallback for other types
+                            var recordJson = JsonConvert.SerializeObject(record);
+                            userRoleData = JObject.Parse(recordJson);
+                        }
+                        
+                        // Extract resolved userId and roleIds (should already be resolved at this point)
+                        var userIdValue = userRoleData["userId"]?.ToString();
+                        var roleIdsArray = userRoleData["roleIds"]?.ToObject<List<string>>();
+                        
+                        if (string.IsNullOrEmpty(userIdValue))
+                        {
+                            errorMessages.Add("No user ID found in record");
+                            isSuccess = false;
+                            continue;
+                        }
+                        
+                        if (roleIdsArray == null || !roleIdsArray.Any())
+                        {
+                            errorMessages.Add("No role IDs found in record");
+                            isSuccess = false;
+                            continue;
+                        }
+
+                        // Parse userId (should be a resolved integer)
+                        if (!int.TryParse(userIdValue, out int userId))
+                        {
+                            errorMessages.Add($"Invalid user ID format: {userIdValue}");
+                            isSuccess = false;
+                            continue;
+                        }
+
+                        // Get the user object for AddToRolesAsync
+                        var user = await _userManager.FindByIdAsync(userId.ToString());
+                        if (user == null)
+                        {
+                            errorMessages.Add($"Could not find user with ID: {userId}");
+                            isSuccess = false;
+                            continue;
+                        }
+
+                        // Convert role IDs to role names and check for existing roles
+                        var roleNames = new List<string>();
+                        foreach (var roleId in roleIdsArray)
+                        {
+                            var role = await _roleManager.FindByIdAsync(roleId);
+                            if (role != null)
+                            {
+                                roleNames.Add(role.Name);
+                            }
+                            else
+                            {
+                                errorMessages.Add($"Could not find role with ID: {roleId}");
+                                isSuccess = false;
+                            }
+                        }
+
+                        if (!roleNames.Any())
+                        {
+                            errorMessages.Add($"No valid roles found for user: {userId}");
+                            isSuccess = false;
+                            continue;
+                        }
+
+                        // Get current user roles to avoid duplicates
+                        var currentRoles = await _userManager.GetRolesAsync(user);
+                        
+                        // Filter out roles the user already has
+                        var rolesToAdd = roleNames.Where(roleName => !currentRoles.Contains(roleName)).ToList();
+                        
+                        if (rolesToAdd.Any())
+                        {
+                            // Only add roles that the user doesn't already have
+                            var addRolesResult = await _userManager.AddToRolesAsync(user, rolesToAdd);
+                            if (!addRolesResult.Succeeded)
+                            {
+                                var errors = string.Join(", ", addRolesResult.Errors.Select(e => e.Description));
+                                errorMessages.Add($"Failed to assign roles to user {userId}: {errors}");
+                                isSuccess = false;
+                                continue;
+                            }
+                        }
+                        
+                        // Determine which roles were skipped (already existed)
+                        var skippedRoles = roleNames.Where(roleName => currentRoles.Contains(roleName)).ToList();
+                        
+                        successList.Add(new 
+                        { 
+                            userId = userId,
+                            rolesAdded = rolesToAdd,
+                            rolesSkipped = skippedRoles,
+                            allRequestedRoles = roleNames,
+                            action = rolesToAdd.Any() ? (skippedRoles.Any() ? "partially_assigned" : "assigned") : "already_assigned"
+                        });
+                    }
+                    catch (Exception recordEx)
+                    {
+                        errorMessages.Add($"Error processing user-role record: {recordEx.Message}");
+                        isSuccess = false;
+                    }
+                }
+
+                var result = new
+                {
+                    IsSuccess = isSuccess,
+                    SuccessCount = successList.Count,
+                    ErrorCount = errorMessages.Count,
+                    Errors = errorMessages.ToArray(),
+                    SuccessRecords = successList.ToArray(),
+                    Message = isSuccess ? 
+                        $"Successfully processed {successList.Count} user-role assignments" :
+                        $"Processed {successList.Count} user-role assignments with {errorMessages.Count} errors"
+                };
+
+                return JsonConvert.SerializeObject(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during bulk user-role operation");
+                
+                var errorResult = new
+                {
+                    IsSuccess = false,
+                    SuccessCount = 0,
+                    ErrorCount = 1,
+                    Errors = new[] { $"Bulk user-role operation failed: {ex.Message}" },
+                    SuccessRecords = new object[0],
+                    Message = $"Bulk user-role operation failed: {ex.Message}"
+                };
+
+                return JsonConvert.SerializeObject(errorResult);
             }
         }
     }

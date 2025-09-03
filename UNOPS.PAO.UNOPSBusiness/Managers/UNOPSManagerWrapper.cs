@@ -51,6 +51,9 @@ public class UNOPSManagerWrapper : ManagerWrapper
         // Create logger for UNOPSGeminiManager
         var geminiManagerLogger = loggerFactory.CreateLogger<UNOPSGeminiManager>();
         
+        // Create logger for UNOPSUserManagementManager
+        var userManagementManagerLogger = loggerFactory.CreateLogger<UNOPSUserManagementManager>();
+        
         // Create a PartnerTreeService instance
         var partnerTreeRepository = new DataRepository<UNOPSPartnerTree>(opsContext);
         var partnerTreeService = new PartnerTreeService(partnerTreeRepository, memoryCache);
@@ -61,8 +64,11 @@ public class UNOPSManagerWrapper : ManagerWrapper
         partnerTreeManager = new UNOPSPartnerTreeManager(mapper, opsContext, configuration, partnerTreeService, permissionService);
         partnerManager = new UNOPSPartnerManager(mapper, opsContext, configuration, partnerTreeService, partnerManagerLogger, permissionService, httpContextAccessor, serviceProvider);
         linkManager = new LinkManager(mapper, opsContext);
-        userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService);
-        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, userManagementManager, userInfoService, userManager, userPreferenceService, userProfileCacheService, screenContextCacheService, geoTimeCacheService);
+        // Create GeminiManager first (without userManagementManager dependency)
+        geminiManager = new UNOPSGeminiManager(mapper, opsContext, configuration, geminiManagerLogger, null, userInfoService, userManager, roleManager, userPreferenceService, userProfileCacheService, screenContextCacheService, geoTimeCacheService);
+        
+        // Create UserManagementManager with GeminiManager dependency
+        userManagementManager = new UNOPSUserManagementManager(mapper, opsContext, configuration, userManager, roleManager, permissionService, geminiManager, userManagementManagerLogger);
         aiPromptManager = new UNOPSAiPromptManager(mapper, opsContext, configuration, userManager, this, permissionService);
         entityConfigurationManager = new UNOPSEntityConfigurationManager(mapper, opsContext, configuration, permissionService);
     }

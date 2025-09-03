@@ -42,4 +42,14 @@ public class RoleModel
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+}
+
+public class ResolveUsersRequest
+{
+    public List<int> UserIds { get; set; } = new List<int>();
+}
+
+public class ResolveRolesRequest
+{
+    public List<int> RoleIds { get; set; } = new List<int>();
 } 

@@ -51,7 +51,6 @@
       </p-iconfield>
       <p-button
         icon="pi pi-search"
-        [label]="'common.search' | translate"
         severity="secondary"
         (onClick)="onSearchEnter()"
         [disabled]="!searchText.trim()"
@@ -483,11 +482,19 @@
             <div class="border-l border-gray-200 pl-6 flex flex-col overflow-hidden xl:col-span-1">
               <div class="space-y-6 h-full flex flex-col overflow-y-auto">
                 <!-- Test Section -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-shrink-0 test-prompt-section">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex-shrink-0 test-prompt-section" 
+                     [class.opacity-50]="isTestSectionDisabled()" 
+                     [class.pointer-events-none]="isTestSectionDisabled()">
                   <div class="space-y-4">
                     <div>
                       <h4 class="text-md font-semibold text-blue-800">{{ 'aiPrompt.testPrompt' | translate }}</h4>
-                      <p class="text-sm text-blue-600">{{ 'aiPrompt.testPromptDescription' | translate }}</p>
+                      <p class="text-sm text-blue-600">
+                        @if (isTestSectionDisabled()) {
+                          {{ 'aiPrompt.testPromptDisabledDescription' | translate }}
+                        } @else {
+                          {{ 'aiPrompt.testPromptDescription' | translate }}
+                        }
+                      </p>
                     </div>
 
                     <!-- Test Mode Selection -->
@@ -561,7 +568,7 @@
                       [label]="'aiPrompt.test' | translate"
                       icon="pi pi-play"
                       severity="info"
-                      [disabled]="!canRunTest()"
+                      [disabled]="isTestSectionDisabled() || !canRunTest()"
                       [loading]="testing()"
                       (onClick)="testPrompt()"
                       class="w-full">

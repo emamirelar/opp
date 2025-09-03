@@ -100,4 +100,34 @@ export class UserManagementService {
     );
     return response.isSelfManagementEnabled;
   }
+
+  async analyzeUserRoleFile(fileId: string, type: string): Promise<any> {
+    const payload = { type, fileId };
+    const response = await firstValueFrom(
+      this.http.post<any>(`${this.baseUrl}/analyse-file`, payload)
+    );
+    return response;
+  }
+
+  async bulkUploadUserRoles(records: any[], type: string): Promise<any> {
+    const payload = { type, records };
+    const response = await firstValueFrom(
+      this.http.post<any>(`${this.baseUrl}/bulk-upload`, payload)
+    );
+    return response;
+  }
+
+  async resolveUserIds(userIds: number[]): Promise<{[key: number]: {name: string, email: string}}> {
+    const response = await firstValueFrom(
+      this.http.post<{[key: number]: {name: string, email: string}}>(`${this.baseUrl}/resolve-users`, { userIds })
+    );
+    return response;
+  }
+
+  async resolveRoleIds(roleIds: number[]): Promise<{[key: number]: {name: string, description: string}}> {
+    const response = await firstValueFrom(
+      this.http.post<{[key: number]: {name: string, description: string}}>(`${this.baseUrl}/resolve-roles`, { roleIds })
+    );
+    return response;
+  }
 } 

@@ -19,10 +19,12 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { DropdownModule } from 'primeng/dropdown';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule, CheckboxChangeEvent } from 'primeng/checkbox';
+import { ChipModule } from 'primeng/chip';
 import { ComponentResolverService } from '../../../../../features/internal/services/component-resolver.service';
 import { ListViewColumn } from '../../../../../common/pages/components/listview/listview.model';
 import { ImportService } from '../import.service';
 import { DuplicateIndicatorComponent } from '../duplicate-indicator/duplicate-indicator.component';
+import { UserManagementService } from '../../../../../features/internal/admin/user-management/user-management.service';
 import { DuplicateSummaryComponent } from '../duplicate-summary/duplicate-summary.component';
 
 // Custom interface for import columns that extends ListViewColumn
@@ -53,6 +55,7 @@ interface ImportColumn extends ListViewColumn {
     DropdownModule,
     TooltipModule,
     CheckboxModule,
+    ChipModule,
     TitleCasePipe,
     DuplicateIndicatorComponent,
     DuplicateSummaryComponent
@@ -66,6 +69,7 @@ export class ImportDialogComponent implements OnInit {
   componentResolverService = inject(ComponentResolverService);
   importService = inject(ImportService);
   translateService = inject(TranslateService);
+  userManagementService = inject(UserManagementService);
   // Make Math available to the template
   Math = Math;
 
@@ -181,6 +185,12 @@ export class ImportDialogComponent implements OnInit {
     { field: 'organizationHierarchyIds', header: 'interaction.organizationUnitIds', required: false, label: 'Organization Unit IDs', type: 'text', sortable: false }
   ];
 
+  // User Role-specific columns
+  userRoleColumns: ImportColumn[] = [
+    { field: 'userDisplay', header: 'User', required: true, label: 'User', type: 'text', sortable: false },
+    { field: 'roleDisplay', header: 'Role(s)', required: true, label: 'Role(s)', type: 'text', sortable: false }
+  ];
+
   // Create data effect in the constructor to ensure injection context
   constructor() {
     // Setup effect to update paginated data when data changes
@@ -231,6 +241,8 @@ export class ImportDialogComponent implements OnInit {
       this.columns = this.partnerColumns;
     } else if (entityType === 'interaction') {
       this.columns = this.interactionColumns;
+    } else if (entityType === 'user_role_import') {
+      this.columns = this.userRoleColumns;
     } else {
       // Default to contact columns
       this.columns = this.contactColumns;
@@ -277,7 +289,7 @@ export class ImportDialogComponent implements OnInit {
   }
   
   // Check and process data - can be called multiple times if needed
-  checkAndProcessData(): void {
+  async checkAndProcessData(): Promise<void> {
     // Use the explicitly set import type from the service
     const entityType = this.importDialogService.getImportType();
     
@@ -290,9 +302,19 @@ export class ImportDialogComponent implements OnInit {
     
     if (initialData && initialData.length > 0) {
       // Add a unique non-conflicting ID to each row for selection purposes
-      const processedData = initialData.map((item, index) => {
+      let processedData = initialData.map((item, index) => {
         return { ...item, _importRowId: `import-${index}` };
       });
+
+      // Enrich user role data if this is a user role import
+      if (this.isUserRoleImport()) {
+        try {
+          processedData = await this.enrichUserRoleData(processedData);
+        } catch (error) {
+          console.error('Error enriching user role data:', error);
+          // Continue with original data if enrichment fails
+        }
+      }
       
       // Update the data in the service with the processed data
       this.importDialogService.data.set(processedData);
@@ -505,6 +527,8 @@ export class ImportDialogComponent implements OnInit {
         return 'partners';
       case 'interaction':
         return 'interactions';
+      case 'user_role_import':
+        return 'user_role';
       default:
         return 'contacts';
     }
@@ -968,4 +992,94 @@ export class ImportDialogComponent implements OnInit {
     // Update the service with the selected rows
     this.importDialogService.setSelectedRows(validRows);
   }
+
+  // Check if current import is a user role import
+  isUserRoleImport(): boolean {
+    return this.currentImportType().toLowerCase() === 'user_role_import';
+  }
+
+  /**
+   * Enrich user role import data with user names and role names
+   */
+  async enrichUserRoleData(data: any[]): Promise<any[]> {
+    if (!this.isUserRoleImport() || !data.length) {
+      return data;
+    }
+
+    try {
+      // Extract unique user IDs and role IDs
+      const userIds = new Set<number>();
+      const roleIds = new Set<number>();
+
+      data.forEach(record => {
+        if (record.userId && !isNaN(Number(record.userId))) {
+          userIds.add(Number(record.userId));
+        }
+        if (record.roleIds && Array.isArray(record.roleIds)) {
+          record.roleIds.forEach((roleId: any) => {
+            if (!isNaN(Number(roleId))) {
+              roleIds.add(Number(roleId));
+            }
+          });
+        }
+      });
+
+      // Fetch user and role data in parallel
+      const [userLookup, roleLookup] = await Promise.all([
+        userIds.size > 0 ? this.userManagementService.resolveUserIds(Array.from(userIds)) : Promise.resolve({}),
+        roleIds.size > 0 ? this.userManagementService.resolveRoleIds(Array.from(roleIds)) : Promise.resolve({})
+      ]);
+
+      // Enrich the data
+      return data.map(record => {
+        const enrichedRecord = { ...record };
+        
+        // Enrich user information
+        if (record.userId && (userLookup as any)[record.userId]) {
+          const userInfo = (userLookup as any)[record.userId];
+          enrichedRecord.userDisplay = userInfo.name || userInfo.email || `User ${record.userId}`;
+          enrichedRecord.userEmail = userInfo.email;
+          enrichedRecord.userName = userInfo.name;
+        } else {
+          enrichedRecord.userDisplay = `User ${record.userId}`;
+        }
+
+        // Enrich role information
+        if (record.roleIds && Array.isArray(record.roleIds)) {
+          enrichedRecord.roleNames = record.roleIds.map((roleId: any) => {
+            const roleInfo = (roleLookup as any)[roleId];
+            return roleInfo ? roleInfo.name : `Role ${roleId}`;
+          });
+          enrichedRecord.roleDisplay = enrichedRecord.roleNames.join(', ');
+        } else {
+          enrichedRecord.roleNames = [];
+          enrichedRecord.roleDisplay = '';
+        }
+
+        return enrichedRecord;
+      });
+    } catch (error) {
+      console.error('Error enriching user role data:', error);
+      // Return original data if enrichment fails
+      return data;
+    }
+  }
+
+  /**
+   * Get role severity for styling (same as user management component)
+   */
+  getRoleSeverity(role: string): string {
+    switch (role) {
+      case 'PARTNER_GLOB_ADMIN':
+        return 'danger';
+      case 'ORG_UNIT_ADMIN':
+        return 'warning';
+      case 'PARTNER_USER':
+        return 'info';
+      default:
+        return 'secondary';
+    }
+  }
+
+
 }

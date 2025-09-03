@@ -108,7 +108,10 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
 
         public async Task<dynamic> RetrieveEntityId(string entityName, string? vectorEmbedding, string? searchText=null, float similarityThreshold=0.3f, float embeddingThreshold=0.7f, string? where=null)
         {
-            entityName = entityName.Pluralize();
+            if (entityName != "UserProfile")
+            {
+                entityName = entityName.Pluralize();
+            }
 
             // Step 1: Try similarity search first (faster) if we have search text
             if (!string.IsNullOrEmpty(searchText))
@@ -1003,6 +1006,9 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
             {
                 entityName = "PartnerTrees";
                 whereCondition = "1=1";
+            } else if (dependent.Equals("roleIds", StringComparison.OrdinalIgnoreCase)) {
+                entityName = "AspNetRoles";
+                whereCondition = "1=1";
             }
             else
             {
@@ -1757,6 +1763,8 @@ namespace UNOPS.PAO.UNOPSBusiness.Managers
                 "contact" or "contacts" => new List<string> { "email", "firstName", "lastName", "phone", "mobile" },
                 "partner" or "partners" => new List<string> { "name", "partnerShortDescription", "erpDimValue" },
                 "interaction" or "interactions" => new List<string> { "type", "subject", "date", "description" },
+                "role" or "roles" => new List<string> { "name", "description" },
+                "user_role" => new List<string> { "userId", "roleIds" },
                 _ => new List<string> { "name", "title", "email" } // Default fields
             };
         }
