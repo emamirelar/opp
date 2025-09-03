@@ -26,8 +26,8 @@ public class InteractionRequest : ExtensibleModel
     
     public string? GmailThreadId { get; set; }
     public string? GmailMessageId { get; set; }
-    public EntityStatus Status { get; set; } = EntityStatus.Active;
-    
+    public string? Status { get; set; } = "Active";
+
     /// <summary>
     /// Flag to bypass duplicate detection when user confirms creation despite duplicates
     /// </summary>

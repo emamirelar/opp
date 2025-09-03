@@ -398,7 +398,7 @@ public class UNOPSGmailAddonManager : BaseUNOPSManager, IGmailAddonManager
             // Set default values for required fields
             Salutation = "",
             Title = "",
-            Status = EntityStatus.Draft.ToString()
+            Status = EntityStatus.Active.ToString()
         };
     }
 

@@ -275,14 +275,14 @@ namespace UNOPS.PAO.Presentation.Controllers
                                PartnerId = g.Key.Id,
                                PartnerName = g.Key.Name,
                                ContactCount = g.Count(),
-                               ActiveContacts = g.Count(x => x.contact.Status == "Active"),
+                               ActiveContacts = g.Count(x => x.contact.Status == EntityStatus.Active),
                                Contacts = g.Select(c => new
                                {
                                    Id = c.contact.Id,
                                    Name = $"{c.contact.FirstName} {c.contact.LastName}".Trim(),
                                    Email = c.contact.Email,
                                    Title = c.contact.Title,
-                                   Status = c.contact.Status
+                                   Status = c.contact.Status.ToString()
                                }).ToList()
                            };
 
@@ -388,7 +388,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                                    Name = $"{c.FirstName} {c.LastName}".Trim(),
                                    Email = c.Email,
                                    Country = c.MailingCountry,
-                                   Status = c.Status
+                                   Status = c.Status.ToString()
                                }).ToList()
                            };
 
@@ -455,7 +455,7 @@ namespace UNOPS.PAO.Presentation.Controllers
                            {
                                Period = $"{g.Key.Year}-{g.Key.Month:D2}{(period == "daily" ? $"-{g.Key.Day:D2}" : "")}",
                                NewContacts = g.Count(),
-                               ActiveContacts = g.Count(c => c.Status == "Active"),
+                               ActiveContacts = g.Count(c => c.Status == EntityStatus.Active),
                                Countries = g.Select(c => c.MailingCountry).Distinct().Count()
                            };
 

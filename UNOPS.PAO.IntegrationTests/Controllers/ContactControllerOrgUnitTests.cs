@@ -68,7 +68,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
                 Name = $"{firstName} {lastName}",
                 Title = "Manager",
                 Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com",
-                Status = "Active",
+                Status = EntityStatus.Active,
                 PartnerId = partnerId,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow,
@@ -287,7 +287,7 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
             };
             
             // Set status for contacts
-            contacts[1].Status = "Inactive";
+            contacts[1].Status = EntityStatus.Inactive;
             
             await dbContext.Contacts.AddRangeAsync(contacts);
             
@@ -414,9 +414,9 @@ namespace UNOPS.PAO.IntegrationTests.Controllers
 
             var contacts = new List<UNOPSContact>
             {
-                new UNOPSContact { FirstName = "John", LastName = "Manager", Name = "John Manager", Title = "Senior Manager", Department = "Sales", Email = "john.manager@example.com", Status = "Active", PartnerId = partner.Id, CreatedBy = 1, CreatedDate = DateTime.UtcNow, ContactNumber = "CON-001" },
-                new UNOPSContact { FirstName = "Jane", LastName = "Developer", Name = "Jane Developer", Title = "Software Developer", Department = "IT", Email = "jane.developer@example.com", Status = "Active", PartnerId = partner.Id, CreatedBy = 1, CreatedDate = DateTime.UtcNow, ContactNumber = "CON-002" },
-                new UNOPSContact { FirstName = "Bob", LastName = "Manager", Name = "Bob Manager", Title = "Junior Manager", Department = "Sales", Email = "bob.manager@example.com", Status = "Active", PartnerId = partner.Id, CreatedBy = 1, CreatedDate = DateTime.UtcNow, ContactNumber = "CON-003" }
+                new UNOPSContact { FirstName = "John", LastName = "Manager", Name = "John Manager", Title = "Senior Manager", Department = "Sales", Email = "john.manager@example.com", Status = EntityStatus.Active, PartnerId = partner.Id, CreatedBy = 1, CreatedDate = DateTime.UtcNow, ContactNumber = "CON-001" },
+                new UNOPSContact { FirstName = "Jane", LastName = "Developer", Name = "Jane Developer", Title = "Software Developer", Department = "IT", Email = "jane.developer@example.com", Status = EntityStatus.Active, PartnerId = partner.Id, CreatedBy = 1, CreatedDate = DateTime.UtcNow, ContactNumber = "CON-002" },
+                new UNOPSContact { FirstName = "Bob", LastName = "Manager", Name = "Bob Manager", Title = "Junior Manager", Department = "Sales", Email = "bob.manager@example.com", Status = EntityStatus.Active, PartnerId = partner.Id, CreatedBy = 1, CreatedDate = DateTime.UtcNow, ContactNumber = "CON-003" }
             };
             await dbContext.Contacts.AddRangeAsync(contacts);
             await dbContext.SaveChangesAsync();

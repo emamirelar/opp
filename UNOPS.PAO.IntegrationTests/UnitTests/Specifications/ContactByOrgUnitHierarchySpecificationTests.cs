@@ -302,7 +302,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Name = $"{firstName} {lastName}",
                 Title = "Manager",
                 Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com",
-                Status = "Active",
+                Status = EntityStatus.Active,
                 PartnerId = partnerId,
                 CreatedBy = 1,
                 CreatedDate = DateTime.UtcNow
