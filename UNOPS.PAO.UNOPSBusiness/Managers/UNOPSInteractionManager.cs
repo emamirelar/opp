@@ -805,7 +805,7 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         try
         {
-            entity.Name = model.Subject.Substring(0, Math.Max(model.Subject.Length, 20)) + " - " + model.Date;
+            entity.Name = model.Subject.Substring(0, Math.Min(model.Subject.Length, 20)) + " - " + model.Date;
 
             await context.Interactions.AddAsync(entity);
             await context.SaveChangesAsync();
