@@ -149,7 +149,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Name = "Contact One",
                 Title = "Manager",
                 Email = "contact.one@example.com",
-                Status = "Active"
+                Status = EntityStatus.Active
             };
             var contact2 = new Contact 
             { 
@@ -159,7 +159,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Name = "Contact Two",
                 Title = "Director",
                 Email = "contact.two@example.com",
-                Status = "Active"
+                Status = EntityStatus.Active
             };
             
             // Link contacts to partners
@@ -272,7 +272,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Name = "Test Contact",
                 Title = "Manager",
                 Email = "test.contact@example.com",
-                Status = "Active"
+                Status = EntityStatus.Active
             };
             partner2.Contacts = new List<Contact> { contact };
             
@@ -467,7 +467,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Name = "C1 L1",
                 Title = "Manager",
                 Email = "c1.l1@example.com",
-                Status = "Active"
+                Status = EntityStatus.Active
             };
             var contact2 = new Contact 
             { 
@@ -477,7 +477,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Name = "C2 L2",
                 Title = "Director",
                 Email = "c2.l2@example.com",
-                Status = "Active"
+                Status = EntityStatus.Active
             };
             var contact3 = new Contact 
             { 
@@ -487,7 +487,7 @@ namespace UNOPS.PAO.IntegrationTests.UnitTests.Specifications
                 Name = "C3 L3",
                 Title = "VP",
                 Email = "c3.l3@example.com",
-                Status = "Active"
+                Status = EntityStatus.Active
             };
             
             partner1.Contacts = new List<Contact> { contact1 };

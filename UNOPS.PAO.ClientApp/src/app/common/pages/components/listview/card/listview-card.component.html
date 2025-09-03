@@ -106,7 +106,7 @@
         } @else {
           <p-avatar [label]="getAvatarInitials(item, column.firstLetterFallbackField || column.field)"
                     shape="circle"
-                    size="normal"
+                  size="normal"
                     styleClass="bg-primary text-white"
                     [title]="getFieldTooltip(item, column)">
           </p-avatar>
@@ -340,7 +340,7 @@
                           <span class="text-gray-500">Relevance:</span>
                           <div class="flex items-center space-x-1">
                             <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
+                              <div
                                 class="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
                                 [style.width.%]="getRelevanceScore(getSearchMetadata(item))">
                               </div>

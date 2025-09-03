@@ -50,6 +50,7 @@ import { GeminiService } from '../../../services/gemini.service';
   ],
   providers: [DialogService, ConfirmationService],
   templateUrl: './interaction-detail.component.html',
+  styleUrl: './interaction-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InteractionDetailComponent implements OnInit {

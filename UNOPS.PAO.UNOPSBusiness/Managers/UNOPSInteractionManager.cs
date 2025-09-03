@@ -771,14 +771,29 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     public virtual async Task<InteractionModel> FindGmailInteractionAsync(GmailInteractionRequest model)
     {
-        var entity = await interactionRepository.GetAll().AsQueryable()
-            .FirstOrDefaultAsync(x => x.GmailThreadId == model.GmailThreadId && x.GmailMessageId == model.GmailMessageId && !x.IsDeleted);
+        var entity = await context.Interactions
+                            .FirstOrDefaultAsync(x => x.GmailThreadId == model.GmailThreadId && x.GmailMessageId == model.GmailMessageId && !x.IsDeleted);
 
         return mapper.Map<InteractionModel>(entity);
     }
 
     public virtual async Task<InteractionModel?> CreateGmailInteractionAsync(InteractionRequest model)
     {
+        // Check for existing interaction with same Gmail thread and message IDs
+        if (!string.IsNullOrWhiteSpace(model.GmailThreadId) || !string.IsNullOrWhiteSpace(model.GmailMessageId))
+        {
+            var existingInteraction = await context.Interactions
+                .FirstOrDefaultAsync(x => x.GmailThreadId == model.GmailThreadId && 
+                                        x.GmailMessageId == model.GmailMessageId && 
+                                        !x.IsDeleted);
+            
+            if (existingInteraction != null)
+            {
+                // Return the existing interaction instead of creating a duplicate
+                return mapper.Map<InteractionModel>(existingInteraction);
+            }
+        }
+
         await using var transaction = await context.Database.BeginTransactionAsync();
 
         if(model.EmailAddresses != null && model.EmailAddresses.Count > 0)
@@ -790,13 +805,9 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
         try
         {
-            // Use the ContactId from the model if provided, otherwise use the first ContactId from the list, or default to 0
-            var primaryContactId = model.ContactId > 0 ? model.ContactId : 
-                                  (model.ContactIds?.FirstOrDefault() ?? 0);
-            
-            entity.Name = primaryContactId + " - " + model.Date;
+            entity.Name = model.Subject.Substring(0, Math.Min(model.Subject.Length, 20)) + " - " + model.Date;
 
-            await interactionRepository.AddAsync(entity);
+            await context.Interactions.AddAsync(entity);
             await context.SaveChangesAsync();
 
 
@@ -815,17 +826,24 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
 
     public virtual async Task<InteractionModel?> UpdateGmailInteractionAsync(UpdateInteractionRequest model)
     {
-        var entity = await interactionRepository.GetByIdAsync(model.Id, includes: new[]
-            {
-                "InteractionContacts",
-                "InteractionPartners",
-                "InteractionUsers",
-                "InteractionContacts.Contact",
-                "InteractionContacts.Contact.Partner",
-                "InteractionPartners.Partner",
-                "InteractionUsers.User",
-                "Documents"
-            });
+        var includes = new[]
+        {
+            "InteractionContacts",
+            "InteractionContacts.Contact",
+            "InteractionContacts.Contact.Partner",
+            "InteractionPartners.Partner",
+            "InteractionUsers.User",
+            "Documents"
+        };
+
+        var query = context.Interactions.AsQueryable();
+        foreach (var include in includes)
+        {
+            query = query.Include(include);
+        }
+
+        var entity = await query.FirstOrDefaultAsync(i => i.Id == model.Id);
+
         if (entity == null)
         {
             throw new BusinessException($"Interaction {model.Id} does not exist.");
@@ -848,7 +866,8 @@ public class UNOPSInteractionManager : BaseUNOPSManager, IInteractionManager
         // Update junction tables
         await ProcessGmailInteractionJunctionTables(entity, model);
 
-        await interactionRepository.UpdateAsync(entity);
+        context.Interactions.Update(entity);
+        await context.SaveChangesAsync();
 
         return mapper.Map<InteractionModel>(entity);
     }

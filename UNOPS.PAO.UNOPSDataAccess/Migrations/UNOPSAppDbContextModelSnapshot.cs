@@ -256,9 +256,8 @@ namespace UNOPS.PAO.UNOPSDataAccess.Migrations
                     b.Property<string>("Salutation")
                         .HasColumnType("text");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Suffix")
                         .HasColumnType("text");

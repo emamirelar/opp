@@ -793,4 +793,9 @@ public class PartnerManager : IPartnerManager
         // Project management is handled by UNOPSPartnerManager
         throw new NotSupportedException("Partner projects are managed by UNOPSPartnerManager. Use the UNOPS-specific implementation.");
     }
+
+    public virtual async Task<PartnerModel?> GetPartnerByNameAsync(ClaimsPrincipal user, string name)
+    {
+        throw new NotImplementedException("Use UNOPSPartnerManager for UNOPS-specific implementation");
+    }
 }

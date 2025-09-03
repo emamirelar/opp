@@ -1,5 +1,6 @@
 using UNOPS.PAO.Domain.Enums;
 using System.Text.Json.Serialization;
+using UNOPS.PAO.Domain.Entities;
 
 namespace UNOPS.PAO.Models;
 
@@ -10,8 +11,6 @@ public class InteractionRequest : ExtensibleModel
     public DateTime Date { get; set; } = DateTime.UtcNow;
     
     public string? Description { get; set; }
-    
-    public int ContactId { get; set; }
     public List<string>? EmailAddresses { get; set; } = new List<string>();
     public List<string>? PhoneNumbers { get; set; } = new List<string>();
     public List<int>? ContactIds { get; set; } = new List<int>();
@@ -27,7 +26,8 @@ public class InteractionRequest : ExtensibleModel
     
     public string? GmailThreadId { get; set; }
     public string? GmailMessageId { get; set; }
-    
+    public string? Status { get; set; } = "Active";
+
     /// <summary>
     /// Flag to bypass duplicate detection when user confirms creation despite duplicates
     /// </summary>

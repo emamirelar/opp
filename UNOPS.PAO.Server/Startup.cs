@@ -413,8 +413,6 @@ public class Startup
         // Register HttpContextAccessor for accessing request context in managers
         services.AddHttpContextAccessor();
         
-        // Register GmailAddonHelper for Gmail addon functionality
-        services.AddScoped<UNOPS.PAO.Presentation.Helpers.GmailAddonHelper>();
         
         //services.AddScoped<IManagerWrapper, ManagerWrapper>();
         services.AddScoped<IManagerWrapper, UNOPSManagerWrapper>();

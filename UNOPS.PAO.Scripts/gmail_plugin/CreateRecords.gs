@@ -3,7 +3,9 @@ function createContactsFromSelectedEmails(selectedEmails, messageData) {
     var accessToken = getAccessToken();
     
     var payload = {
-      selectedContacts: selectedEmails
+      selectedContacts: selectedEmails,
+      gmailThreadId: messageData.threadId,
+      gmailMessageId: messageData.messageId
     };
     
     Logger.log('Sending payload to backend: ' + JSON.stringify(payload));
@@ -80,13 +82,13 @@ function refreshRelatedRecords(messageData) {
       
       return CardService.newActionResponseBuilder()
         .setNotification(CardService.newNotification()
-          .setText('Contacts created successfully!'))
+          .setText('Action completed successfully!'))
         .setNavigation(CardService.newNavigation().updateCard(refreshedCard))
         .build();
     } else {
       return CardService.newActionResponseBuilder()
         .setNotification(CardService.newNotification()
-          .setText('Contacts created, but failed to refresh. Please reload.'))
+          .setText('Action completed, but failed to refresh. Please reload.'))
         .build();
     }
     
@@ -94,7 +96,7 @@ function refreshRelatedRecords(messageData) {
     Logger.log('Error refreshing data: ' + error.toString());
     return CardService.newActionResponseBuilder()
       .setNotification(CardService.newNotification()
-        .setText('Contacts created, but failed to refresh: ' + error.toString()))
+        .setText('Action completed, but failed to refresh: ' + error.toString()))
       .build();
   }
 }

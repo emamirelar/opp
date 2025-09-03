@@ -143,7 +143,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
         var query = _context.Set<UNOPSContact>()
             .Include(c => c.Partner)
             .Where(c => (c.CreatedBy == userId.Value || c.LastModifiedBy == userId.Value) 
-                       && c.Status != "Draft")
+                       && c.Status != EntityStatus.Draft)
             .OrderByDescending(c => c.LastModifiedDate ?? c.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
@@ -225,7 +225,7 @@ public class DashboardService : BaseUNOPSManager, IDashboardService
         var query = _context.Set<UNOPSContact>()
             .Include(c => c.Partner)
             .Where(c => (c.CreatedBy == userId.Value || c.LastModifiedBy == userId.Value) 
-                       && c.Status == "Draft")
+                       && c.Status == EntityStatus.Draft)
             .OrderByDescending(c => c.CreatedDate);
 
         // Apply RBAC access control filters before counting and pagination
