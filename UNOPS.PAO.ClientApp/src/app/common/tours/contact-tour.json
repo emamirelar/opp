@@ -32,8 +32,8 @@
       }
     },
     {
-      "element": "p-button[icon=\"pi pi-search-plus\"]",
-      "fallbackType": "advanced-search",
+      "element": ".advanced-search",
+      "fallbackType": ".mobile-advanced-search",
       "popover": {
         "titleKey": "tour.contacts.steps.advancedSearch.title",
         "descriptionKey": "tour.contacts.steps.advancedSearch.description",
