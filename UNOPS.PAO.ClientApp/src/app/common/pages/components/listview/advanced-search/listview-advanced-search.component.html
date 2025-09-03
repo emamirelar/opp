@@ -136,7 +136,7 @@
         [(ngModel)]="selectedComparisonOperator"
         optionLabel="label"
         optionValue="value"
-        [placeholder]="'search.operator' | translate"
+        [placeholder]="'entityCards.operator' | translate"
         styleClass="w-48"
       >
         <ng-template pTemplate="selectedItem" let-selectedOption>
@@ -151,7 +151,7 @@
       @if (isDateField()) {
         <p-calendar
           [(ngModel)]="selectedDate"
-          [placeholder]="'search.selectDate' | translate"
+          [placeholder]="'entityCards.selectDate' | translate"
           dateFormat="dd/mm/yy"
           [showIcon]="true"
           styleClass="w-48 z-10"
@@ -159,10 +159,10 @@
 
         <!-- Second date for "between" operator -->
         @if (isBetweenOperator()) {
-          <span class="text-gray-600 px-2">{{ 'search.and' | translate }}</span>
+          <span class="text-gray-600 px-2">{{ 'entityCards.and' | translate }}</span>
           <p-calendar
             [(ngModel)]="selectedSecondDate"
-            [placeholder]="'search.selectEndDate' | translate"
+            [placeholder]="'entityCards.selectEndDate' | translate"
             dateFormat="dd/mm/yy"
             [showIcon]="true"
             styleClass="w-48"
@@ -186,10 +186,10 @@
       <p-button
         icon="pi pi-plus"
         class="ml-auto"
-        [label]="'search.addFilter' | translate"
+        [label]="'entityCards.addFilter' | translate"
         (onClick)="addSearchCriterion()"
         [disabled]="!canAddCriterion()"
-        [pTooltip]="'search.addFilter' | translate"
+        [pTooltip]="'entityCards.addFilter' | translate"
       ></p-button>
     </div>
   </div>

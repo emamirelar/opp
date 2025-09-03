@@ -151,6 +151,18 @@ export class ContactListComponent implements OnInit, OnDestroy {
             label: 'label.partner.partner',
             type: 'string',
             operators: ['is', 'is not', 'like', 'not like']
+          },
+          {
+            field: 'createdDate',
+            label: 'Created Date',
+            type: 'date',
+            operators: ['after', 'before', 'between']
+          },
+          {
+            field: 'lastModifiedDate',
+            label: 'Last Modified Date',
+            type: 'date',
+            operators: ['after', 'before', 'between']
           }
       ] as SearchField[]
     }

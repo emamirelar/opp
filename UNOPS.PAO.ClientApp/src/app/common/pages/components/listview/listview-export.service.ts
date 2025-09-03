@@ -180,33 +180,42 @@ export class ListviewExportService {
 
   /**
    * Special transform function for Partner entities
-   * Formats partner data with specific field names and order
+   * Formats partner data with current Partner entity fields
    */
   private partnerTransform(partners: any[]): Record<string, any>[] {
     return partners.map(partner => {
       return {
         ID: partner.id || '',
         Name: partner.name || '',
-        ShortName: partner.shortName || '',
+        ShortDescription: partner.partnerShortDescription || '',
+        LongDescription: partner.partnerLongDescription || '',
         Status: partner.status || '',
-        NewEngagement: partner.newEngagement || '',
-        Phone: partner.phone || '',
-        Website: partner.website || '',
-        PooledFund: partner.pooledFund || '',
-        DDRequired: partner.ddRequired || '',
-        DDEACDone: partner.ddeacDone || '',
-        EACReference: partner.eacReference || '',
-        GlobalKeyAccount: partner.globalKeyAccount || '',
-        UNSecretariatEntity: partner.unSecretariatEntity || '',
-        LevyPotentiallyApplies: partner.levyPotentiallyApplies || '',
-        ReasonForLevyNotApplying: partner.reasonForLevyNotApplying || '',
-        LevyTreatment: partner.levyTreatment || '',
-        Street: partner.address1Street || '',
-        Street2: partner.address1Street2 || '',
-        City: partner.address1City || '',
-        StateProvince: partner.address1StateProvince || '',
-        PostalCode: partner.address1PostalCode || '',
-        Country: partner.address1Country || ''
+        PartnerGroupCode: partner.partnerGroupCode || '',
+        PartnerGroupName: partner.partnerGroupName || '',
+        PartnerCategoryId: partner.partnerCategoryId || '',
+        PartnerCategoryName: partner.partnerCategoryName || '',
+        LiaisonOfficeId: partner.liaisonOfficeId || '',
+        PartnerFocalPointUserId: partner.partnerFocalPointUserId || '',
+        KeyGlobalPartner: partner.keyGlobalPartner || false,
+        UNSecretariatPartner: partner.unSecretariatPartner || false,
+        UNAndStateEntity: partner.unAndStateEntity || false,
+        PartnerApprovalStatus: partner.partnerApprovalStatus || '',
+        PartnerApprovalDate: partner.partnerApprovalDate || '',
+        PartnerApprovalReference: partner.partnerApprovalReference || '',
+        PartnerApprovedBy: partner.partnerApprovedBy || '',
+        PartnerLevyStatus: partner.partnerLevyStatus || '',
+        PooledFund: partner.pooledFund || false,
+        CanCreateNewOpportunities: partner.canCreateNewOpportunities || false,
+        ReasonForNoNewOpportunity: partner.reasonForNoNewOpportunity || '',
+        DueDiligenceRequired: partner.dueDiligenceRequired || false,
+        DueDiligenceApproval: partner.dueDiligenceApproval || '',
+        DueDiligenceApprovalDate: partner.dueDiligenceApprovalDate || '',
+        DueDiligenceExpiryDate: partner.dueDiligenceExpiryDate || '',
+        ErpDimValue: partner.erpDimValue || '',
+        CreatedDate: partner.createdDate || '',
+        LastModifiedDate: partner.lastModifiedDate || '',
+        CreatedBy: partner.createdBy || '',
+        LastModifiedBy: partner.lastModifiedBy || ''
       };
     });
   }

@@ -264,7 +264,7 @@ public class PartnerController : BaseController
     /// <searchCriteria_format>
     /// JSON array format: [{"field": "status", "operator": "is", "value": "Active", "logicalOperator": "AND"}]
     /// Available operators: is, is not, like, not like, greater than, less than, greater than or equal, less than or equal, this week, this month, this year
-    /// Available fields: name, status, partnerType, globalKeyAccount, createdDate, modifiedDate, description
+    /// Available fields: name, status, partnerShortDescription, partnerLongDescription, partnerCategoryId, liaisonOfficeId, partnerGroupCode, keyGlobalPartner, unSecretariatPartner, partnerApprovalStatus, partnerLevyStatus, pooledFund, canCreateNewOpportunities, createdDate, lastModifiedDate
     /// Logical operators: AND, OR
     /// </searchCriteria_format>
     /// <returns>Paginated list of partners matching the advanced search criteria</returns>

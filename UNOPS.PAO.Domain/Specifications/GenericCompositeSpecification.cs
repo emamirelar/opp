@@ -702,15 +702,10 @@ public abstract class GenericCompositeSpecification<TEntity, TFilter> : BaseComp
             searchableProperties.AddRange(new[]
             {
                 "Name",
-                "ShortName",
+                "PartnerShortDescription", // Updated from ShortName
+                "PartnerLongDescription",  // Added for long description
                 "Status",
-                "Phone",
-                "Website",
-                "Address1City",
-                "Address1StateProvince",
-                "Address1PostalCode",
-                "Address1Country",
-                "PartnerCode"
+                "PartnerGroupCode"         // Updated from PartnerCode
             });
 
             return searchableProperties;
