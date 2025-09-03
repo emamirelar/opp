@@ -333,7 +333,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                 LastName = "Contact",
                 Title = "Manager",
                 Email = "test.contact@example.com",
-                Status = "Active",
+                Status = EntityStatus.Active,
                 ContactNumber = "C001",
                 PartnerId = partner3.Id
             };
@@ -531,7 +531,7 @@ namespace UNOPS.PAO.IntegrationTests.IntegrationTests.Controllers
                 LastName = "Contact",
                 Title = "Director",
                 Email = "related.contact@example.com",
-                Status = "Active",
+                Status = EntityStatus.Active,
                 ContactNumber = "C002",
                 PartnerId = partner.Id
             };

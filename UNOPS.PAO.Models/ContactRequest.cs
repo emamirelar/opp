@@ -23,7 +23,7 @@ public class ContactRequest : ExtensibleModel
     public string? Assistant { get; set; }
     public string? AssistantPhone { get; set; }
     public string? AssistantEmail { get; set; }    
-    public string Status { get; set; } = "Active";
+    public string? Status { get; set; } = "Active";
     public string? MailingStreet { get; set; }
     public string? MailingStreet2 { get; set; }
     public string? MailingCity { get; set; }
